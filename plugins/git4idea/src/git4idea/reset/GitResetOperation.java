@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -15,20 +16,22 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
-import git4idea.GitUtil;
 import git4idea.branch.GitBranchUiHandlerImpl;
 import git4idea.branch.GitSmartOperationDialog;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
-import git4idea.config.GitVcsSettings;
 import git4idea.config.GitSaveChangesPolicy;
+import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 
+import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.GitUtil.*;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.RESET;
 
@@ -42,24 +45,34 @@ public class GitResetOperation {
   @NotNull private final Git myGit;
   @NotNull private final VcsNotifier myNotifier;
   @NotNull private final GitBranchUiHandlerImpl myUiHandler;
+  @NotNull private final OperationPresentation myPresentation;
 
   public GitResetOperation(@NotNull Project project,
                            @NotNull Map<GitRepository, Hash> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator) {
+    this(project, targetCommits, mode, indicator, new OperationPresentation());
+  }
+
+  public GitResetOperation(@NotNull Project project,
+                           @NotNull Map<GitRepository, Hash> targetCommits,
+                           @NotNull GitResetMode mode,
+                           @NotNull ProgressIndicator indicator,
+                           @NotNull OperationPresentation operationPresentation) {
     myProject = project;
     myCommits = targetCommits;
     myMode = mode;
     myIndicator = indicator;
+    myPresentation = operationPresentation;
     myGit = Git.getInstance();
     myNotifier = VcsNotifier.getInstance(project);
-    myUiHandler = new GitBranchUiHandlerImpl(myProject, myGit, indicator);
+    myUiHandler = new GitBranchUiHandlerImpl(myProject, indicator);
   }
 
   public void execute() {
     saveAllDocuments();
     Map<GitRepository, GitCommandResult> results = new HashMap<>();
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Git Reset")) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message(myPresentation.activityName))) {
       for (Map.Entry<GitRepository, Hash> entry : myCommits.entrySet()) {
         GitRepository repository = entry.getKey();
         VirtualFile root = repository.getRoot();
@@ -85,16 +98,18 @@ public class GitResetOperation {
   }
 
   private GitCommandResult proposeSmartReset(@NotNull GitLocalChangesWouldBeOverwrittenDetector detector,
-                                             @NotNull final GitRepository repository, @NotNull final String target) {
-    Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), detector.getRelativeFilePaths());
-    List<Change> affectedChanges = GitUtil.findLocalChangesForPaths(myProject, repository.getRoot(), absolutePaths, false);
+                                             @NotNull final GitRepository repository, @NotNull @NlsSafe String target) {
+    Collection<String> absolutePaths = toAbsolute(repository.getRoot(), detector.getRelativeFilePaths());
+    List<Change> affectedChanges = findLocalChangesForPaths(myProject, repository.getRoot(), absolutePaths, false);
     GitSmartOperationDialog.Choice choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths,
-                                                                                 "reset", "&Hard Reset");
+                                                                                 GitBundle.message(myPresentation.operationTitle),
+                                                                                 GitBundle.message(myPresentation.forceButtonTitle));
     if (choice == GitSmartOperationDialog.Choice.SMART) {
       final Ref<GitCommandResult> result = Ref.create();
       GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
-      new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()), "reset", target,
-                               saveMethod, myIndicator,
+      new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()),
+                               GitBundle.message(myPresentation.operationTitle),
+                               target, saveMethod, myIndicator,
                                () -> result.set(myGit.reset(repository, myMode, target))).execute();
       return result.get();
     }
@@ -119,18 +134,22 @@ public class GitResetOperation {
     }
 
     if (errors.isEmpty()) {
-      myNotifier.notifySuccess("", "Reset successful");
+      myNotifier.notifySuccess(RESET_SUCCESSFUL, "", GitBundle.message(myPresentation.notificationSuccess));
     }
     else if (!successes.isEmpty()) {
-      myNotifier.notifyImportantWarning("Reset partially failed",
-                                        "Reset was successful for " + joinRepos(successes.keySet())
-                                        + "<br/>but failed for " + joinRepos(errors.keySet()) + ": <br/>" + formErrorReport(errors));
+      myNotifier.notifyImportantWarning(RESET_PARTIALLY_FAILED,
+                                        GitBundle.message(myPresentation.notificationPartialFailureTitle),
+                                        GitBundle.message(myPresentation.notificationPartialFailureMessage,
+                                                          joinRepos(successes.keySet()),
+                                                          joinRepos(errors.keySet()),
+                                                          formErrorReport(errors)));
     }
     else {
-      myNotifier.notifyError("Reset Failed", formErrorReport(errors), true);
+      myNotifier.notifyError(RESET_FAILED, GitBundle.message(myPresentation.notificationFailure), formErrorReport(errors), true);
     }
   }
 
+  @NlsSafe
   @NotNull
   private static String formErrorReport(@NotNull Map<GitRepository, GitCommandResult> errorResults) {
     MultiMap<String, GitRepository> grouped = groupByResult(errorResults);
@@ -150,6 +169,7 @@ public class GitResetOperation {
     return grouped;
   }
 
+  @NlsSafe
   @NotNull
   private static String joinRepos(@NotNull Collection<? extends GitRepository> repositories) {
     return StringUtil.join(DvcsUtil.sortRepositories(repositories), ", ");
@@ -159,4 +179,17 @@ public class GitResetOperation {
     ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 
+  @PropertyKey(resourceBundle = GitBundle.BUNDLE)
+  public static class OperationPresentation {
+    public String activityName = "git.reset.process";
+    public String operationTitle = "git.reset.operation";
+    public String forceButtonTitle = "git.reset.hard.button";
+    public String notificationSuccess = "git.reset.successful.notification.message";
+    public String notificationFailure = "git.reset.failed.notification.title";
+    public String notificationPartialFailureTitle = "git.reset.partially.failed.notification.title";
+    /**
+     * {0} success repos, {1} failure repos, {2} error message
+     */
+    public String notificationPartialFailureMessage = "git.reset.partially.failed.notification.msg";
+  }
 }

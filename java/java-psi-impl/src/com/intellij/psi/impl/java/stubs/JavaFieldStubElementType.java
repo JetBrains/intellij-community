@@ -50,7 +50,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
 
   @NotNull
   @Override
-  public PsiFieldStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
+  public PsiFieldStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
 
     boolean isDeprecatedByComment = false;
@@ -103,7 +103,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
   @Override
   public void serialize(@NotNull PsiFieldStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    TypeInfo.writeTYPE(dataStream, stub.getType(false));
+    TypeInfo.writeTYPE(dataStream, stub.getType());
     dataStream.writeName(stub.getInitializerText());
     dataStream.writeByte(((PsiFieldStubImpl)stub).getFlags());
   }
@@ -125,7 +125,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
       sink.occurrence(JavaStubIndexKeys.FIELDS, name);
       if (RecordUtil.isStaticNonPrivateMember(stub)) {
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
-        sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getType(false).getShortTypeText());
+        sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getType().getShortTypeText());
       }
     }
   }

@@ -4,19 +4,17 @@ package org.jetbrains.idea.maven.dom.model.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
-
 import java.util.function.Consumer
 
 
-open class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContributor("dependency") {
+class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContributor("dependency") {
 
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,
                     parameters: CompletionParameters,
-                    consumer: Consumer<RepositoryArtifactData>): Promise<Int>? {
+                    consumer: Consumer<RepositoryArtifactData>): Promise<Int> {
 
     val text: String = trimDummy(coordinates.xmlTag?.value?.text)
     val splitted = text.split(':')

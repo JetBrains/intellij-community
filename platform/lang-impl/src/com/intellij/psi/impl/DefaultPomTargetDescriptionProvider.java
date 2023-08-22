@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.ide.TypePresentationService;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomDescriptionProvider;
 import com.intellij.pom.PomNamedTarget;
@@ -13,10 +14,7 @@ import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider {
+public final class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location) {
     if (element instanceof PsiElement) return null;
@@ -33,7 +31,7 @@ public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider 
     return null;
   }
 
-  private static String getTypeName(PomTarget element) {
+  private static @NlsSafe String getTypeName(PomTarget element) {
     TypePresentationService presentationService = TypePresentationService.getService();
     String elementTypeName = presentationService.getTypeName(element);
     if (elementTypeName != null) return elementTypeName;

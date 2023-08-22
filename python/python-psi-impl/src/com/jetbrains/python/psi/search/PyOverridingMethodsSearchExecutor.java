@@ -7,9 +7,7 @@ import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final PyOverridingMethodsSearch.SearchParameters queryParameters,

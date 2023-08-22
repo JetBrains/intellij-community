@@ -39,7 +39,7 @@ public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralContainer> {
   public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
     int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
     if (result == -1) return -1;
-    return (result <= rangeInsideHost.getLength() ? result : rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
+    return Math.min(result, rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
   }
 
   @Override

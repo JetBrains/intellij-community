@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class Container extends Content {
-    private final List<Content> children = new ArrayList<Content>();
+    private final List<Content> children = new ArrayList<>();
 
     private String excludes = null;
     private String includes = null;
@@ -77,7 +77,7 @@ public abstract class Container extends Content {
 
     @Override
     public List<LayoutFileSet> build(TempFileFactory temp) {
-        Set<LayoutFileSet> result = new LinkedHashSet<LayoutFileSet>();
+        Set<LayoutFileSet> result = new LinkedHashSet<>();
 
         for (Content child : children) {
             for (LayoutFileSet set : child.build(temp)) {
@@ -85,7 +85,7 @@ public abstract class Container extends Content {
             }
         }
 
-        ArrayList<LayoutFileSet> list = new ArrayList<LayoutFileSet>(result);
+        ArrayList<LayoutFileSet> list = new ArrayList<>(result);
         for (LayoutFileSet set : list) {
             if (includes != null) {
                 set.setIncludes(includes);

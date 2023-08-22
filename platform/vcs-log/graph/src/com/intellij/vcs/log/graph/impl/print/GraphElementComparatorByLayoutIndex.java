@@ -36,9 +36,7 @@ public class GraphElementComparatorByLayoutIndex implements Comparator<GraphElem
 
   @Override
   public int compare(@NotNull GraphElement o1, @NotNull GraphElement o2) {
-    if (o1 instanceof GraphEdge && o2 instanceof GraphEdge) {
-      GraphEdge edge1 = (GraphEdge)o1;
-      GraphEdge edge2 = (GraphEdge)o2;
+    if (o1 instanceof GraphEdge edge1 && o2 instanceof GraphEdge edge2) {
       NormalEdge normalEdge1 = asNormalEdge(edge1);
       NormalEdge normalEdge2 = asNormalEdge(edge2);
       if (normalEdge1 == null) return -compare2(edge2, new GraphNode(getNotNullNodeIndex(edge1)));

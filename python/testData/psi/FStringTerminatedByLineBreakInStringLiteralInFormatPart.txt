@@ -18,7 +18,7 @@ PyFile:FStringTerminatedByLineBreakInStringLiteralInFormatPart.py
               PsiElement(Py:FSTRING_FRAGMENT_START)('{')
               PyStringLiteralExpression: 
                 PsiElement(Py:TRIPLE_QUOTED_STRING)('"""')
-              PsiErrorElement:type conversion, : or } expected
+              PsiErrorElement:Type conversion, ':' or '}' expected
                 <empty list>
         PsiErrorElement:' expected
           <empty list>

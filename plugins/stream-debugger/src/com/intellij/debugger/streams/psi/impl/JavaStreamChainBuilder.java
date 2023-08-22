@@ -18,8 +18,6 @@ import java.util.*;
  * @author Vitaliy.Bibaev
  */
 public class JavaStreamChainBuilder implements StreamChainBuilder {
-  private final MyStreamChainExistenceChecker myExistenceChecker = new MyStreamChainExistenceChecker();
-
   private final ChainTransformer.Java myChainTransformer;
   private final ChainDetector myDetector;
 
@@ -31,10 +29,10 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
   @Override
   public boolean isChainExists(@NotNull PsiElement startElement) {
     PsiElement current = getLatestElementInCurrentScope(PsiUtil.ignoreWhiteSpaces(startElement));
+    MyStreamChainExistenceChecker existenceChecker = new MyStreamChainExistenceChecker();
     while (current != null) {
-      myExistenceChecker.reset();
-      current.accept(myExistenceChecker);
-      if (myExistenceChecker.found()) {
+      current.accept(existenceChecker);
+      if (existenceChecker.found()) {
         return true;
       }
       current = toUpperLevel(current);
@@ -94,16 +92,12 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     private boolean myFound = false;
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (myFound) return;
       super.visitMethodCallExpression(expression);
       if (!myFound && myDetector.isTerminationCall(expression)) {
         myFound = true;
       }
-    }
-
-    void reset() {
-      myFound = false;
     }
 
     boolean found() {
@@ -116,7 +110,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     private final Map<PsiMethodCallExpression, PsiMethodCallExpression> myPreviousCalls = new HashMap<>();
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!myPreviousCalls.containsKey(expression) && myDetector.isStreamCall(expression)) {
         updateCallTree(expression);
@@ -131,8 +125,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
       final PsiElement parent = expression.getParent();
       if (!(parent instanceof PsiReferenceExpression)) return;
       final PsiElement parentCall = parent.getParent();
-      if (parentCall instanceof PsiMethodCallExpression && myDetector.isStreamCall((PsiMethodCallExpression)parentCall)) {
-        final PsiMethodCallExpression parentCallExpression = (PsiMethodCallExpression)parentCall;
+      if (parentCall instanceof PsiMethodCallExpression parentCallExpression && myDetector.isStreamCall((PsiMethodCallExpression)parentCall)) {
         myPreviousCalls.put(parentCallExpression, expression);
         updateCallTree(parentCallExpression);
       }
@@ -160,11 +153,11 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
 
   private static class MyVisitorBase extends JavaRecursiveElementVisitor {
     @Override
-    public void visitCodeBlock(PsiCodeBlock block) {
+    public void visitCodeBlock(@NotNull PsiCodeBlock block) {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     }
   }
 }

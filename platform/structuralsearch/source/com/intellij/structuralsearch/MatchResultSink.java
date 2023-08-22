@@ -3,6 +3,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -11,21 +12,20 @@ import org.jetbrains.annotations.Nullable;
 public interface MatchResultSink {
   /**
    * Notifies sink about new match
-   * @param result
    */
-  void newMatch(MatchResult result);
+  void newMatch(@NotNull MatchResult result);
 
   /**
    *  Notifies sink about starting the matching for given element
    * @param element the current file
    */
-  void processFile(PsiFile element);
+  void processFile(@NotNull PsiFile element);
 
   /**
    * Sets the reference to the matching process
    * @param matchingProcess the matching process reference
    */
-  void setMatchingProcess(MatchingProcess matchingProcess);
+  void setMatchingProcess(@NotNull MatchingProcess matchingProcess);
 
   /**
    * Notifies sink about end of matching.

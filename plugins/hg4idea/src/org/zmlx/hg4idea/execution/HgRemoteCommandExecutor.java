@@ -29,6 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REMOTE_AUTH_ERROR;
+
 public class HgRemoteCommandExecutor extends HgCommandExecutor {
 
   @Nullable private final ModalityState myState;
@@ -56,7 +58,9 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     if (!myIgnoreAuthorizationRequest && HgErrorUtil.isAuthorizationError(result)) {
       if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
         new HgCommandResultNotifier(myProject)
-          .notifyError(result, HgBundle.message("hg4idea.command.executor.remote.auth.failed"),
+          .notifyError(REMOTE_AUTH_ERROR,
+                       result,
+                       HgBundle.message("hg4idea.command.executor.remote.auth.failed"),
                        HgBundle.message("hg4idea.command.executor.remote.auth.failed.msg"));
         return null;
       }
@@ -110,7 +114,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     super.logCommand(operation, null);
   }
 
-  private static class PassReceiver extends SocketServer.Protocol {
+  private static final class PassReceiver extends SocketServer.Protocol {
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;
     private final boolean myForceAuthorization;

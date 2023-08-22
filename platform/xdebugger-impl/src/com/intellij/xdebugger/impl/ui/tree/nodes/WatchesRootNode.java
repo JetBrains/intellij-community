@@ -1,23 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +34,35 @@ import java.util.List;
 public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   private final XWatchesView myWatchesView;
   private final List<WatchNodeImpl> myChildren;
+
+  static class RootContainerNode extends XValueContainer implements PinToTopParentValue {
+    private final XStackFrame stackFrame;
+    private final boolean watchesInVariables;
+
+    public RootContainerNode(@Nullable XStackFrame stackFrame,
+                             boolean watchesInVariables) {
+      this.stackFrame = stackFrame;
+      this.watchesInVariables = watchesInVariables;
+    }
+
+    @Override
+    public void computeChildren(@NotNull XCompositeNode node) {
+      if (stackFrame != null && watchesInVariables) {
+        stackFrame.computeChildren(node);
+      }
+      else {
+        node.addChildren(XValueChildrenList.EMPTY, true);
+      }
+    }
+
+    @Nullable
+    @Override
+    public String getTag() {
+      if (stackFrame instanceof PinToTopParentValue)
+        return ((PinToTopParentValue) stackFrame).getTag();
+      return null;
+    }
+  }
 
   @SuppressWarnings("unused")
   // required for com.google.gct.core
@@ -41,19 +77,19 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                          @NotNull List<? extends XExpression> expressions,
                          @Nullable XStackFrame stackFrame,
                          boolean watchesInVariables) {
-    super(tree, null, false, new XValueContainer() {
-      @Override
-      public void computeChildren(@NotNull XCompositeNode node) {
-        if (stackFrame != null && watchesInVariables) {
-          stackFrame.computeChildren(node);
-        }
-        else {
-          node.addChildren(XValueChildrenList.EMPTY, true);
-        }
-      }
-    });
+    super(tree, null, false, new RootContainerNode(stackFrame, watchesInVariables));
     myWatchesView = watchesView;
     myChildren = new ArrayList<>();
+    // copy evaluation result by default
+    if (stackFrame != null) {
+      XDebuggerTreeNode root = tree.getRoot();
+      if (root instanceof WatchesRootNode) {
+        StreamEx.of(((WatchesRootNode)root).myChildren)
+          .select(ResultNode.class)
+          .findFirst()
+          .ifPresent(node -> myChildren.add(new ResultNode(myTree, this, node.getExpression(), node.getValueContainer())));
+      }
+    }
     for (XExpression watchExpression : expressions) {
       myChildren.add(new WatchNodeImpl(myTree, this, watchExpression, stackFrame));
     }
@@ -72,18 +108,16 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     return ContainerUtil.concat(myChildren, children);
   }
 
-  /**
-   * @deprecated use {@link #getWatchChildren()} instead
-   */
-  @Deprecated
-  @NotNull
-  public List<? extends WatchNode> getAllChildren() {
-    return getWatchChildren();
-  }
-
   @NotNull
   public List<? extends WatchNode> getWatchChildren() {
     return myChildren;
+  }
+
+  public List<XExpression> getWatchExpressions() {
+    return StreamEx.of(getWatchChildren())
+      .filter(node -> !(node instanceof ResultNode))
+      .map(WatchNode::getExpression)
+      .toList();
   }
 
   @Override
@@ -96,15 +130,59 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     myChildren.forEach(WatchNodeImpl::computePresentationIfNeeded);
   }
 
-  /**
-   * @deprecated Use {@link #addWatchExpression(XStackFrame, XExpression, int, boolean)}
-   */
-  @Deprecated
-  public void addWatchExpression(@Nullable XDebuggerEvaluator evaluator,
-                                 @NotNull XExpression expression,
-                                 int index,
-                                 boolean navigateToWatchNode) {
-    addWatchExpression((XStackFrame)null, expression, index, navigateToWatchNode);
+  private static class ResultNode extends WatchNodeImpl {
+    ResultNode(@NotNull XDebuggerTree tree,
+               @NotNull WatchesRootNode parent,
+               @NotNull XExpression expression,
+               @Nullable XStackFrame stackFrame) {
+      super(tree, parent, expression, stackFrame, XDebuggerBundle.message("debugger.result.node.name"));
+    }
+
+    ResultNode(@NotNull XDebuggerTree tree,
+               @NotNull WatchesRootNode parent,
+               @NotNull XExpression expression,
+               @NotNull XValue value) {
+      super(tree, parent, expression, XDebuggerBundle.message("debugger.result.node.name"), value);
+    }
+
+    @Override
+    public void applyPresentation(@Nullable Icon icon, @NotNull XValuePresentation valuePresentation, boolean hasChildren) {
+      Icon resultIcon = AllIcons.Debugger.Db_evaluateNode;
+      if (icon instanceof CompositeIcon) {
+        IconUtil.replaceInnerIcon(icon, AllIcons.Debugger.Db_watch, resultIcon);
+      }
+      else {
+        icon = resultIcon;
+      }
+      super.applyPresentation(icon, valuePresentation, hasChildren);
+    }
+
+    @Override
+    protected void evaluated() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        XDebugSession session = XDebugView.getSession(getTree());
+        if (session != null) {
+          session.rebuildViews();
+        }
+      });
+    }
+  }
+
+  public void removeResultNode() {
+    myChildren.removeIf(node -> node instanceof ResultNode);
+  }
+
+  public void addResultNode(@Nullable XStackFrame stackFrame, @NotNull XExpression expression) {
+    WatchNodeImpl message = new ResultNode(myTree, this, expression, stackFrame);
+    if (ContainerUtil.getFirstItem(myChildren) instanceof ResultNode) {
+      myChildren.set(0, message);
+      message.fireNodeStructureChanged();
+    }
+    else {
+      myChildren.add(0, message);
+      fireNodeInserted(0);
+    }
+    TreeUtil.selectNode(myTree, message);
   }
 
   public void addWatchExpression(@Nullable XStackFrame stackFrame,
@@ -112,13 +190,10 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                                  int index,
                                  boolean navigateToWatchNode) {
     WatchNodeImpl message = new WatchNodeImpl(myTree, this, expression, stackFrame);
-    if (index == -1) {
-      myChildren.add(message);
-      index = myChildren.size() - 1;
+    if (index < 0 || index > myChildren.size()) {
+      index = myChildren.size();
     }
-    else {
-      myChildren.add(index, message);
-    }
+    myChildren.add(index, message);
     fireNodeInserted(index);
     TreeUtil.selectNode(myTree, message);
     if (navigateToWatchNode) {
@@ -127,11 +202,16 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   }
 
   private void fireNodeInserted(int index) {
-    myTree.getTreeModel().nodesWereInserted(this, new int[]{index});
+    myTree.getTreeModel().nodesWereInserted(this, new int[]{index + headerNodesCount()});
   }
 
   public int removeChildNode(XDebuggerTreeNode node) {
-    return removeChildNode(myChildren, node);
+    int index = myChildren.indexOf(node);
+    if (index != -1) {
+      myChildren.remove(node);
+      fireNodesRemoved(new int[]{index + headerNodesCount()}, new TreeNode[]{node});
+    }
+    return index;
   }
 
   public void removeChildren(Collection<? extends XDebuggerTreeNode> nodes) {
@@ -174,7 +254,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     if (index == -1) {
       int selectedIndex = myChildren.indexOf(ArrayUtil.getFirstElement(myTree.getSelectedNodes(WatchNodeImpl.class, null)));
       int targetIndex = selectedIndex == - 1 ? myChildren.size() : selectedIndex + 1;
-      messageNode = new WatchNodeImpl(myTree, this, XExpressionImpl.EMPTY_EXPRESSION, null);
+      messageNode = new WatchNodeImpl(myTree, this, XExpressionImpl.EMPTY_EXPRESSION, (XStackFrame)null);
       myChildren.add(targetIndex, messageNode);
       fireNodeInserted(targetIndex);
       getTree().setSelectionRows(ArrayUtilRt.EMPTY_INT_ARRAY);
@@ -183,5 +263,9 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       messageNode = node;
     }
     new WatchInplaceEditor(this, myWatchesView, messageNode, node).show();
+  }
+
+  public int headerNodesCount() {
+    return 0;
   }
 }

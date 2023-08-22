@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,17 +29,21 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
     this.predicate = predicate;
   }
 
+  @Override
+  public @NotNull VisitThread visitThread() {
+    return VisitThread.BGT;
+  }
+
   /**
    * @return an element to search in a tree or {@code null} if it is obsolete
    */
-  @Nullable
-  public final T getElement() {
+  public final @Nullable T getElement() {
     return supplier.get();
   }
 
-  @NotNull
   @Override
-  public Action visit(@NotNull TreePath path) {
+  @RequiresBackgroundThread
+  public @NotNull Action visit(@NotNull TreePath path) {
     if (LOG.isTraceEnabled()) LOG.debug("process ", path);
     T element = getElement();
     if (element == null) return Action.SKIP_SIBLINGS;
@@ -46,8 +51,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
     if (component instanceof AbstractTreeNode) {
       return visit(path, (AbstractTreeNode)component, element);
     }
-    if (component instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
+    if (component instanceof DefaultMutableTreeNode node) {
       Object object = node.getUserObject();
       if (object instanceof AbstractTreeNode) {
         return visit(path, (AbstractTreeNode)object, element);
@@ -74,8 +78,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @param element an element to find
    * @return an action that controls visiting a tree
    */
-  @NotNull
-  protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
+  protected @NotNull Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
     if (matches(node, element)) {
       LOG.debug("found ", path);
       if (predicate == null) return Action.INTERRUPT;
@@ -93,7 +96,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @param element an element to find
    * @return {@code true} if the specified node represents the given element
    */
-  protected boolean matches(@NotNull AbstractTreeNode node, @NotNull T element) {
+  protected boolean matches(@NotNull AbstractTreeNode<?> node, @NotNull T element) {
     return node.canRepresent(element);
   }
 
@@ -102,7 +105,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @param element an element to find
    * @return {@code true} if the specified node is an ancestor of the given element
    */
-  protected boolean contains(@NotNull AbstractTreeNode node, @NotNull T element) {
+  protected boolean contains(@NotNull AbstractTreeNode<?> node, @NotNull T element) {
     T content = getContent(node);
     return content != null && isAncestor(content, element);
   }

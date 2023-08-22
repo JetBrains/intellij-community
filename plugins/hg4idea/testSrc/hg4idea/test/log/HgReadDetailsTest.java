@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.log;
 
 import com.intellij.openapi.util.Couple;
@@ -33,11 +33,11 @@ public class HgReadDetailsTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     myProvider = findLogProvider(myProject);
-    cd(myProject.getBaseDir());
+    cd(getOrCreateProjectBaseDir());
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     myProvider = null;
     super.tearDown();
   }
@@ -45,7 +45,7 @@ public class HgReadDetailsTest extends HgPlatformTest {
   public void testReadFullDetailsByHash() throws IOException, VcsException {
     Map<String, String> commits = generateCommits();
     List<VcsFullCommitDetails> details = new ArrayList<>();
-    myProvider.readFullDetails(projectRoot, new ArrayList<>(commits.keySet()), details::add);
+    myProvider.readFullDetails(getProjectRoot(), new ArrayList<>(commits.keySet()), details::add);
     assertSameElements(ContainerUtil.map(details, d -> d.getFullMessage() + "\n" + getChanges(d)), commits.values());
   }
 
@@ -99,13 +99,13 @@ public class HgReadDetailsTest extends HgPlatformTest {
       addFile(file, changedFiles);
     }
 
-    myProject.getBaseDir().refresh(false, true);
+    getOrCreateProjectBaseDir().refresh(false, true);
 
     String message = "commit " + i + " subject\n\ncommit " + i + " body";
     hg("commit -m '" + message + "'");
 
-    return Couple.of(new HgWorkingCopyRevisionsCommand(myProject).tip(myProject.getBaseDir()).getChangeset(),
-                     message + "\n" + changedFiles.toString());
+    return Couple.of(new HgWorkingCopyRevisionsCommand(myProject).tip(getOrCreateProjectBaseDir()).getChangeset(),
+                     message + "\n" + changedFiles);
   }
 
   @NotNull
@@ -139,18 +139,10 @@ public class HgReadDetailsTest extends HgPlatformTest {
                                        @Nullable String before,
                                        @Nullable String after) {
     switch (type) {
-      case MODIFICATION:
-        sb.append("M ").append(after);
-        break;
-      case NEW:
-        sb.append("A ").append(after);
-        break;
-      case DELETED:
-        sb.append("D ").append(before);
-        break;
-      case MOVED:
-        sb.append("R ").append(before).append(" -> ").append(after);
-        break;
+      case MODIFICATION -> sb.append("M ").append(after);
+      case NEW -> sb.append("A ").append(after);
+      case DELETED -> sb.append("D ").append(before);
+      case MOVED -> sb.append("R ").append(before).append(" -> ").append(after);
     }
     sb.append("\n");
   }

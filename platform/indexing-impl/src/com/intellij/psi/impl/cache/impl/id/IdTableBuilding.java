@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -11,7 +11,6 @@ import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
@@ -23,16 +22,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IdTableBuilding {
+public final class IdTableBuilding {
   private IdTableBuilding() {
   }
 
   public interface ScanWordProcessor {
     void run(CharSequence chars, char @Nullable [] charsArray, int start, int end);
-  }
-
-  public static boolean isIdIndexerRegistered(@NotNull FileType fileType) {
-    return getIndexer(fileType) != null || fileType instanceof InternalFileType;
   }
 
   @Nullable

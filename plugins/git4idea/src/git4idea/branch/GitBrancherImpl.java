@@ -54,7 +54,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @NotNull
   private GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
-    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, Git.getInstance(), indicator));
+    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, indicator));
   }
 
   @Override
@@ -159,12 +159,17 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new GitCompareBranchesUi(myProject, repositories, branchName).create();
+    new GitCompareBranchesUi(myProject, repositories, branchName).open();
+  }
+
+  @Override
+  public void compareAny(@NotNull String branchName, @NotNull String otherBranchName, @NotNull List<? extends GitRepository> repositories) {
+    new GitCompareBranchesUi(myProject, repositories, branchName, otherBranchName).open();
   }
 
   @Override
   public void showDiffWithLocal(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new ShowDiffWithBranchDialog(myProject, branchName, repositories, GitBranchUtil.getCurrentBranchOrRev(repositories)).show();
+    new GitShowDiffWithBranchPanel(myProject, branchName, repositories, GitBranchUtil.getCurrentBranchOrRev(repositories)).showAsTab();
   }
 
   @Override

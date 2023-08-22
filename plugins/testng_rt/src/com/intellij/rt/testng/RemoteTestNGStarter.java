@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.rt.testng;
 
@@ -12,9 +12,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
-public class RemoteTestNGStarter {
+public final class RemoteTestNGStarter {
   private static final String SOCKET = "-socket";
 
   public static void main(String[] args) throws Exception {
@@ -22,7 +21,7 @@ public class RemoteTestNGStarter {
     String param = null;
     String commandFileName = null;
     String workingDirs = null;
-    Vector resultArgs = new Vector();
+    List<String> resultArgs = new ArrayList<>();
     for (; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith("@name")) {
@@ -44,12 +43,8 @@ public class RemoteTestNGStarter {
         final int port = Integer.parseInt(arg.substring(SOCKET.length()));
         try {
           final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
-          final DataInputStream os = new DataInputStream(socket.getInputStream());
-          try {
+          try (DataInputStream os = new DataInputStream(socket.getInputStream())) {
             os.readBoolean();//wait for ready flag
-          }
-          finally {
-            os.close();
           }
         }
         catch (IOException e) {
@@ -67,7 +62,7 @@ public class RemoteTestNGStarter {
 
     final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
-    final List newArgs = new ArrayList();
+    final List<String> newArgs = new ArrayList<>();
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {
@@ -105,7 +100,7 @@ public class RemoteTestNGStarter {
     }
     final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
     CommandLineArgs cla = new CommandLineArgs();
-    new JCommander(Collections.singletonList(cla), (String[])resultArgs.toArray(new String[0]));
+    new JCommander(Collections.singletonList(cla), resultArgs.toArray(new String[0]));
     testNG.configure(cla);
     testNG.run();
   }

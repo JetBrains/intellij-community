@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.codeEditor.printing.HTMLTextPainter
@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import com.vladsch.flexmark.ast.FencedCodeBlock
 import com.vladsch.flexmark.html.HtmlRenderer
@@ -19,16 +18,17 @@ import com.vladsch.flexmark.html.renderer.CoreNodeRenderer
 import com.vladsch.flexmark.html.renderer.NodeRendererContext
 import com.vladsch.flexmark.html.renderer.NodeRenderingHandler
 import com.vladsch.flexmark.parser.Parser
-import com.vladsch.flexmark.util.options.DataHolder
-import com.vladsch.flexmark.util.options.MutableDataSet
+import com.vladsch.flexmark.util.data.DataHolder
+import com.vladsch.flexmark.util.data.MutableDataSet
 import org.junit.ClassRule
 import org.junit.Test
 import java.io.StringWriter
 import java.nio.file.Paths
+import kotlin.io.path.inputStream
 
 //private class MyApp : CommandLineApplication(true, false, true)
 
-val packages = arrayOf(
+val packages: Array<String> = arrayOf(
   "platform/platform-api/src/com/intellij/util/io",
   "platform/util/src/com/intellij/util/xmlb/annotations"
 )
@@ -37,7 +37,7 @@ class PackageDocGenerator {
   companion object {
     @ClassRule
     @JvmField
-    val appRule = ProjectRule()
+    val appRule: ProjectRule = ProjectRule()
   }
 
   @Test
@@ -55,7 +55,7 @@ private fun main(communityPath: String) {
 //  IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
 
 //  MyApp()
-//  PluginManagerCore.getPlugins()
+//  PluginManagerCore.plugins
 //  ApplicationManagerEx.getApplicationEx().load(null)
 
   val options = MutableDataSet()
@@ -90,7 +90,7 @@ private class IntelliJNodeRenderer(options: DataHolder, private val htmlStyleMan
   override fun getNodeRenderingHandlers(): MutableSet<NodeRenderingHandler<*>> {
     val set = LinkedHashSet<NodeRenderingHandler<*>>()
     set.add(NodeRenderingHandler(FencedCodeBlock::class.java) { node, context, html -> renderCode(node, context, html) })
-    set.addAll(super.getNodeRenderingHandlers().filter { it.nodeType != FencedCodeBlock::class.java })
+    set.addAll(super.getNodeRenderingHandlers()?.filter { it.nodeType != FencedCodeBlock::class.java } ?: emptyList())
     return set
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.configurations.ConfigurationType;
@@ -14,9 +14,9 @@ import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSys
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
-import com.intellij.openapi.externalSystem.test.TestExternalProjectSettings;
-import com.intellij.openapi.externalSystem.test.TestExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.test.TestExternalSystemManager;
+import com.intellij.platform.externalSystem.testFramework.TestExternalProjectSettings;
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemExecutionSettings;
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.*;
-import static com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
+import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX;
 import static java.util.Collections.emptyList;
 
@@ -71,7 +71,7 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
   @Override
   public void tearDown() throws Exception {
     if (registryValue != null) {
-      Registry.removeKey(registryValue.getKey());
+      registryValue.setValue(false);
       registryValue = null;
     }
     edt(() -> super.tearDown());
@@ -107,17 +107,17 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     taskActivator.addTask(new ExternalSystemTaskActivator.TaskActivationEntry(TEST_EXTERNAL_SYSTEM_ID, phase, projectPath, taskName));
   }
 
-  private void build(@NotNull Module module) {
+  private static void build(@NotNull Module module) {
     Promise<ProjectTaskManager.Result> promise = ProjectTaskManager.getInstance(module.getProject()).build(module);
     edt(() -> PlatformTestUtil.waitForPromise(promise));
   }
 
-  private void rebuild(@NotNull Module module) {
+  private static void rebuild(@NotNull Module module) {
     Promise<ProjectTaskManager.Result> promise = ProjectTaskManager.getInstance(module.getProject()).rebuild(module);
     edt(() -> PlatformTestUtil.waitForPromise(promise));
   }
 
-  private static class TestTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {
+  private static final class TestTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {
     private TestTaskConfigurationType() {super(TEST_EXTERNAL_SYSTEM_ID);}
 
     @Override
@@ -126,7 +126,7 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     }
   }
 
-  private class MyTestExternalSystemManager extends TestExternalSystemManager {
+  private final class MyTestExternalSystemManager extends TestExternalSystemManager {
     private MyTestExternalSystemManager() {super(ExternalSystemTaskActivatorTest.this.myProject);}
 
     @NotNull

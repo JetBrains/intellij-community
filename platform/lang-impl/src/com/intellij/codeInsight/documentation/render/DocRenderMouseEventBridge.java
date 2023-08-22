@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.CustomFoldRegion;
+import com.intellij.openapi.editor.CustomFoldRegionRenderer;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -15,26 +17,40 @@ import sun.awt.AWTAccessor;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotionListener {
-  private DocRenderer.EditorPane myCurrentPane;
+final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotionListener {
+  private final DocRenderSelectionManager mySelectionManager;
+  private DocRenderer.EditorPane myMouseOverPane;
+  private DocRenderer.EditorPane myDragPane;
+
+  DocRenderMouseEventBridge(DocRenderSelectionManager selectionManager) {
+    mySelectionManager = selectionManager;
+  }
 
   @Override
   public void mouseMoved(@NotNull EditorMouseEvent event) {
     if (event.getArea() != EditorMouseEventArea.EDITING_AREA) return;
 
-    DocRenderer.EditorPane currentPane = redispatchEvent(event, MouseEvent.MOUSE_MOVED);
+    DocRenderer.EditorPane currentPane = redispatchEvent(event, MouseEvent.MOUSE_MOVED, null);
     if (currentPane == null) {
       restoreCursor();
     }
     else {
       ((EditorEx)event.getEditor()).setCustomCursor(DocRenderMouseEventBridge.class, currentPane.getCursor());
-      if (currentPane != myCurrentPane) {
-        if (myCurrentPane != null) {
-          dispatchMouseExitEvent(myCurrentPane);
+      if (currentPane != myMouseOverPane) {
+        if (myMouseOverPane != null) {
+          dispatchMouseExitEvent(myMouseOverPane);
         }
-        myCurrentPane = currentPane;
+        myMouseOverPane = currentPane;
       }
     }
+  }
+
+  @Override
+  public void mouseDragged(@NotNull EditorMouseEvent e) {
+    if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
+
+    checkPaneSelection(redispatchEvent(e, MouseEvent.MOUSE_DRAGGED, myDragPane));
+    if (myDragPane != null) e.consume();
   }
 
   @Override
@@ -45,40 +61,70 @@ class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotio
   }
 
   @Override
+  public void mousePressed(@NotNull EditorMouseEvent event) {
+    if (event.getArea() != EditorMouseEventArea.EDITING_AREA) return;
+
+    myDragPane = redispatchEvent(event, MouseEvent.MOUSE_PRESSED, null);
+    checkPaneSelection(myDragPane);
+  }
+
+  @Override
+  public void mouseReleased(@NotNull EditorMouseEvent event) {
+    if (event.getArea() != EditorMouseEventArea.EDITING_AREA) return;
+
+    checkPaneSelection(redispatchEvent(event, MouseEvent.MOUSE_RELEASED, null));
+    myDragPane = null;
+  }
+
+  @Override
   public void mouseClicked(@NotNull EditorMouseEvent event) {
     if (event.getArea() != EditorMouseEventArea.EDITING_AREA) return;
 
-    redispatchEvent(event, MouseEvent.MOUSE_CLICKED);
+    checkPaneSelection(redispatchEvent(event, MouseEvent.MOUSE_CLICKED, null));
   }
 
   private void restoreCursor() {
-    if (myCurrentPane != null) {
-      dispatchMouseExitEvent(myCurrentPane);
-      ((EditorEx)myCurrentPane.getEditor()).setCustomCursor(DocRenderMouseEventBridge.class, null);
-      myCurrentPane = null;
+    if (myMouseOverPane != null) {
+      dispatchMouseExitEvent(myMouseOverPane);
+      ((EditorEx)myMouseOverPane.getEditor()).setCustomCursor(DocRenderMouseEventBridge.class, null);
+      myMouseOverPane = null;
+    }
+  }
+
+  private void checkPaneSelection(@Nullable DocRenderer.EditorPane pane) {
+    if (pane != null && pane.hasSelection()) {
+      mySelectionManager.setPaneWithSelection(pane);
     }
   }
 
   @Nullable
-  private static DocRenderer.EditorPane redispatchEvent(@NotNull EditorMouseEvent event, int eventId) {
+  private static DocRenderer.EditorPane redispatchEvent(@NotNull EditorMouseEvent event,
+                                                        // we need a separately passed eventId because EditorImpl dispatches MOUSE_RELEASED
+                                                        // events to both 'mouseReleased' and 'mouseClicked' methods in listeners
+                                                        int eventId,
+                                                        @Nullable DocRenderer.EditorPane targetPane) {
     MouseEvent mouseEvent = event.getMouseEvent();
     Point mousePoint = mouseEvent.getPoint();
-    Inlay inlay = event.getInlay();
-    if (inlay != null) {
-      EditorCustomElementRenderer renderer = inlay.getRenderer();
-      if (renderer instanceof DocRenderer) {
-        Rectangle relativeBounds = ((DocRenderer)renderer).getEditorPaneBoundsWithinInlay(inlay);
-        Rectangle inlayBounds = inlay.getBounds();
-        assert inlayBounds != null;
-        int x = mousePoint.x - inlayBounds.x - relativeBounds.x;
-        int y = mousePoint.y - inlayBounds.y - relativeBounds.y;
+    Editor editor = event.getEditor();
+    FoldRegion foldRegion = event.getCollapsedFoldRegion();
+    if (foldRegion instanceof CustomFoldRegion cfr) {
+      CustomFoldRegionRenderer r = cfr.getRenderer();
+      if (r instanceof DocRenderer renderer) {
+        Rectangle relativeBounds = renderer.getEditorPaneBoundsWithinRenderer(cfr.getWidthInPixels(), cfr.getHeightInPixels());
+        Point location = cfr.getLocation();
+        assert location != null;
+        int x = mousePoint.x - location.x - relativeBounds.x;
+        int y = mousePoint.y - location.y - relativeBounds.y;
         if (x >= 0 && x < relativeBounds.width && y >= 0 && y < relativeBounds.height) {
-          DocRenderer.EditorPane editorPane = ((DocRenderer)renderer).getRendererComponent(inlay, relativeBounds.width);
-          int button = mouseEvent.getButton();
-          dispatchEvent(editorPane, new MouseEvent(editorPane, eventId, 0, 0, x, y, mouseEvent.getClickCount(), false,
-                                              // hack to process middle-button clicks (JEditorPane ignores them)
-                                              button == MouseEvent.BUTTON2 ? MouseEvent.BUTTON1 : button));
-          return editorPane;
+          DocRenderer.EditorPane editorPane = renderer.getRendererComponent(editor, relativeBounds.width);
+          if (eventId != MouseEvent.MOUSE_DRAGGED || targetPane == editorPane) {
+            int button = mouseEvent.getButton();
+            dispatchEvent(editorPane, new MouseEvent(editorPane, eventId, 0, mouseEvent.getModifiersEx(), x, y,
+                                                     mouseEvent.getClickCount(), false,
+                                                     // hack to process middle-button clicks (JEditorPane ignores them)
+                                                     button == MouseEvent.BUTTON2 ? MouseEvent.BUTTON1 : button));
+            return editorPane;
+          }
         }
       }
     }

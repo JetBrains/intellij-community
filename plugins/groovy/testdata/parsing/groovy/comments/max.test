@@ -7,9 +7,9 @@ Groovy script
   PsiComment(line comment)('//')
   PsiElement(new line)('\n')
   PsiComment(line comment)('//')
-  PsiWhiteSpace('\n')
+  PsiElement(new line)('\n')
   PsiComment(line comment)('//')
-  PsiWhiteSpace('\n')
+  PsiElement(new line)('\n')
   Package definition
     Modifiers
       <empty list>

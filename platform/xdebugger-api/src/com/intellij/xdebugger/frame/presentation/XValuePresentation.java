@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.frame.presentation;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ public abstract class XValuePresentation {
    * @return separator between name and value in a debugger tree
    */
   @NotNull
+  @NlsSafe
   public String getSeparator() {
     return DEFAULT_SEPARATOR;
   }
@@ -40,6 +42,7 @@ public abstract class XValuePresentation {
    * @return optional type of the value, it is shown in gray color and surrounded by braces
    */
   @Nullable
+  @NlsSafe
   public String getType() {
     return null;
   }
@@ -48,46 +51,47 @@ public abstract class XValuePresentation {
     /**
      * Appends {@code value} with to the node text. Invisible characters are shown in escaped form.
      */
-    void renderValue(@NotNull String value);
+    void renderValue(@NotNull @NlsSafe String value);
 
     /**
      * Appends {@code value} surrounded by quotes to the node text colored as a string
      */
-    void renderStringValue(@NotNull String value);
+    void renderStringValue(@NotNull @NlsSafe String value);
 
     /**
      * Appends {@code value} highlighted as a number
      */
-    void renderNumericValue(@NotNull String value);
+    void renderNumericValue(@NotNull @NlsSafe String value);
 
     /**
      * Appends {@code value} highlighted as a keyword
      */
-    void renderKeywordValue(@NotNull String value);
+    void renderKeywordValue(@NotNull @NlsSafe String value);
 
-    void renderValue(@NotNull String value, @NotNull TextAttributesKey key);
+    void renderValue(@NotNull @NlsSafe String value, @NotNull TextAttributesKey key);
 
     /**
      * Appends {@code value} surrounded by quotes to the node text colored as a string
-     * @param value value to be shown
+     *
+     * @param value                             value to be shown
      * @param additionalSpecialCharsToHighlight characters which should be highlighted in a special color
-     * @param maxLength maximum number of characters to show
+     * @param maxLength                         maximum number of characters to show
      */
-    void renderStringValue(@NotNull String value, @Nullable String additionalSpecialCharsToHighlight, int maxLength);
+    void renderStringValue(@NotNull @NlsSafe String value, @Nullable @NlsSafe String additionalSpecialCharsToHighlight, int maxLength);
 
     /**
      * Appends gray colored {@code comment}
      */
-    void renderComment(@NotNull String comment);
+    void renderComment(@NotNull @NlsSafe String comment);
 
     /**
      * Appends {@code symbol} which is not part of the value
      */
-    void renderSpecialSymbol(@NotNull String symbol);
+    void renderSpecialSymbol(@NotNull @NlsSafe String symbol);
 
     /**
      * Appends red colored {@code error}
      */
-    void renderError(@NotNull String error);
+    void renderError(@NotNull @NlsSafe String error);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.openapi.application.Experiments;
@@ -14,13 +14,14 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class LargeFileEditorProvider implements DefaultPlatformFileEditorProvider, DumbAware {
   public static final String PROVIDER_ID = "LargeFileEditorProvider";
 
-  private static final String CARET_PAGE_NUMBER_ATTR = "caret-page-number";
-  private static final String CARET_PAGE_SYMBOL_OFFSET_ATTR = "caret-page-symbol-offset";
+  private static final @NonNls String CARET_PAGE_NUMBER_ATTR = "caret-page-number";
+  private static final @NonNls String CARET_PAGE_SYMBOL_OFFSET_ATTR = "caret-page-symbol-offset";
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
@@ -31,21 +32,23 @@ public final class LargeFileEditorProvider implements DefaultPlatformFileEditorP
                && file.isInLocalFileSystem());
   }
 
-  @NotNull
   @Override
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public boolean acceptRequiresReadAction() {
+    return false;
+  }
+
+  @Override
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new LargeFileEditorImpl(project, file);
   }
 
-  @NotNull
   @Override
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return PROVIDER_ID;
   }
 
-  @NotNull
   @Override
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.NONE;
   }
 
@@ -59,9 +62,8 @@ public final class LargeFileEditorProvider implements DefaultPlatformFileEditorP
     }
   }
 
-  @NotNull
   @Override
-  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     LargeFileEditorState state = new LargeFileEditorState();
     if (JDOMUtil.isEmpty(sourceElement)) {
       return state;

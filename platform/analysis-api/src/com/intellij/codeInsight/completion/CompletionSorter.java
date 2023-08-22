@@ -18,9 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class CompletionSorter {
   public abstract CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers);
 

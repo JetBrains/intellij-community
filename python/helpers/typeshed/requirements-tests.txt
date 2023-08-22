@@ -1,0 +1,16 @@
+aiohttp==3.8.1
+black==22.8.0           # must match .pre-commit-config.yaml
+flake8==5.0.4           # must match .pre-commit-config.yaml
+flake8-bugbear==22.7.1  # must match .pre-commit-config.yaml
+flake8-noqa==1.2.9      # must match .pre-commit-config.yaml
+flake8-pyi==22.8.2      # must match .pre-commit-config.yaml
+isort==5.10.1           # must match .pre-commit-config.yaml
+mypy==0.971
+packaging==21.3
+pycln==2.1.1            # must match .pre-commit-config.yaml
+pyyaml==6.0
+pytype==2022.08.30; platform_system != "Windows"
+termcolor>=2
+tomli==1.2.2
+tomlkit==0.11.4
+types-pyyaml

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -12,25 +12,28 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.BDDAssertions.then
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import kotlin.reflect.jvm.jvmName
 
 class ExternalProjectsDataStorageTest: UsefulTestCase() {
   lateinit var myFixture: IdeaProjectTestFixture
 
-  @Before
   override fun setUp() {
     super.setUp()
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
     myFixture.setUp()
   }
 
-  @After
   override fun tearDown() {
-    myFixture.tearDown()
-    super.tearDown()
+    try {
+      myFixture.tearDown()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   @Test
@@ -67,16 +70,16 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
 
     val list = dataStorage.list(testSystemId)
     then(list).hasSize(2)
-    then(list)
-      .anyMatch { it.externalProjectStructure?.data?.externalName == externalName1 }
-      .anyMatch { it.externalProjectStructure?.data?.externalName == externalName2 }
+    val thenList = then(list)
+    thenList.anyMatch { it.externalProjectStructure?.data?.externalName == externalName1 }
+    thenList.anyMatch { it.externalProjectStructure?.data?.externalName == externalName2 }
   }
 
   private fun createExternalProjectInfo(testId: ProjectSystemId,
                                         externalName: String,
                                         externalProjectPath: String): InternalExternalProjectInfo {
     val projectData = ProjectData(testId, externalName, externalProjectPath, externalProjectPath)
-    val node = DataNode<ProjectData>(Key(ProjectData::class.jvmName, 0), projectData, null)
+    val node = DataNode(Key(ProjectData::class.jvmName, 0), projectData, null)
     return InternalExternalProjectInfo(testId, externalProjectPath, node)
   }
 }

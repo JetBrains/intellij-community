@@ -1,4 +1,4 @@
-// "Replace 'LinkedList<String>' with 'ArrayList<String>' in cast" "true"
+// "Replace 'LinkedList<String>' with 'ArrayList<String>' in cast" "true-preview"
 import java.util.*;
 
 class X {

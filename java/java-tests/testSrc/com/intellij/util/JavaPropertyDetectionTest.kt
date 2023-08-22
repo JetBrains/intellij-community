@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.ide.highlighter.JavaFileType
@@ -9,7 +9,8 @@ import com.intellij.psi.util.PropertyMemberType
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlin.test.assertNotEquals
 
 class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
@@ -17,20 +18,19 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
   // getter field test
 
   fun testFieldRef() {
-    assertPropertyMember("""class Some {private String name;public String getN<caret>ame() { return name; }}""", PropertyMemberType.GETTER) 
+    assertPropertyMember("""class Some {private String name;public String getN<caret>ame() { return name; }}""", PropertyMemberType.GETTER)
   }
 
   fun testUnresolvedRef() {
-    assertNotPropertyMember("class Some { public String getN<caret>ame() { return name; }}", PropertyMemberType.GETTER) 
+    assertNotPropertyMember("class Some { public String getN<caret>ame() { return name; }}", PropertyMemberType.GETTER)
   }
 
   fun testUnresolvedRef2() {
-    assertNotPropertyMember("""class Some {private String name;public static String getN<caret>ame() { return name; }}""", PropertyMemberType.GETTER) 
+    assertNotPropertyMember("""class Some {private String name;public static String getN<caret>ame() { return name; }}""", PropertyMemberType.GETTER)
   }
 
   fun testSuperFieldRef() {
-    doTest("""class Some extends SomeBase {public String getN<caret>ame() { return name; }}class SomeBase { private String name;}""", PropertyMemberType.GETTER,
-           false)
+    assertNotPropertyMember("""class Some extends SomeBase {public String getN<caret>ame() { return name; }}class SomeBase { private String name;}""", PropertyMemberType.GETTER)
   }
 
   fun testSuperFieldRef2() {
@@ -58,11 +58,33 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
                             }""", PropertyMemberType.GETTER)
   }
 
+  fun testParenthesesGetter() {
+    assertPropertyMember("""
+      class X {
+        String prop;
+        String getProp<caret>() {
+         return ((X.this).prop);
+        }
+      }
+      """, PropertyMemberType.GETTER)
+  }
+
   // setter field test
 
   fun testSimpleSetter() {
     assertPropertyMember("""class Some {
       |private String name;   public void set<caret>Name(String name) { this.name = name; }}""".trimMargin(), PropertyMemberType.SETTER)
+  }
+
+  fun testParenthesesSetter() {
+    assertPropertyMember("""
+      class Y {
+        private String prop;
+        void set<caret>Prop(String prop) {
+          ((Y.this).prop) = (prop);
+        }
+      }
+    """, PropertyMemberType.SETTER)
   }
 
   fun testFieldNotResolved() {
@@ -127,10 +149,16 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
             return Foo.this.getName(100);
           }
         }
+        
+        class X {
+          public String getX() {
+            return (((x)));
+          }
       }
-    """.trimIndent(), TIntObjectHashMap<PropertyIndexValue>().apply {
+    """.trimIndent(), Int2ObjectOpenHashMap<PropertyIndexValue>().apply {
       put(0, PropertyIndexValue("name", true))
       put(2, PropertyIndexValue("Boo.Foo.CONST", true))
+      put(6, PropertyIndexValue("(((x)))", true))
     })
   }
 
@@ -155,17 +183,17 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
           return new String();
         }
       }
-    """.trimIndent(), TIntObjectHashMap())
+    """.trimIndent(), Int2ObjectOpenHashMap())
   }
 
   private fun assertPropertyMember(text: String, memberType: PropertyMemberType) {
     doTest(text, memberType, true)
   }
-  
+
   private fun assertNotPropertyMember(text: String, memberType: PropertyMemberType) {
     doTest(text, memberType, false)
   }
-  
+
   private fun doTest(text: String, memberType: PropertyMemberType, expectedDecision: Boolean) {
     assertNotEquals(PropertyMemberType.FIELD, memberType)
     myFixture.configureByText(JavaFileType.INSTANCE, text)
@@ -177,7 +205,7 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method, false) else PropertyUtil.isSimpleSetter(method, false))
   }
 
-  private fun assertJavaSimplePropertyIndex(text: String, expected: TIntObjectHashMap<PropertyIndexValue>) {
+  private fun assertJavaSimplePropertyIndex(text: String, expected: Int2ObjectMap<PropertyIndexValue>) {
     val file = myFixture.configureByText(JavaFileType.INSTANCE, text)
     val data = javaSimplePropertyGist.getFileData(file)
     assertEquals(expected, data)

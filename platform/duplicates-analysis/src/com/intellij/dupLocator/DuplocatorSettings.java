@@ -1,8 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dupLocator;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-@State(name = "DuplocatorSettings", storages = @Storage("duplocatorSettings.xml"))
+@State(name = "DuplocatorSettings", storages = @Storage("duplocatorSettings.xml"), category = SettingsCategory.CODE)
 public class DuplocatorSettings implements PersistentStateComponent<DuplocatorSettings> {
   public boolean DISTINGUISH_VARIABLES = false;
   public boolean DISTINGUISH_FIELDS = false;
@@ -25,7 +26,7 @@ public class DuplocatorSettings implements PersistentStateComponent<DuplocatorSe
   public String LAST_SELECTED_LANGUAGE = null;
 
   public static DuplocatorSettings getInstance() {
-    return ServiceManager.getService(DuplocatorSettings.class);
+    return ApplicationManager.getApplication().getService(DuplocatorSettings.class);
   }
 
   @Override

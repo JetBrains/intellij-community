@@ -1,45 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ReferenceRange {
+public final class ReferenceRange {
   private ReferenceRange() {
   }
 
-  @NotNull
-  public static List<TextRange> getRanges(@NotNull PsiReference ref) {
-    return getRanges((PsiSymbolReference)ref);
-  }
-
-  @Experimental
-  @NotNull
-  public static List<TextRange> getRanges(@NotNull PsiSymbolReference ref) {
+  public static @NotNull List<TextRange> getRanges(@NotNull PsiReference ref) {
     if (ref instanceof MultiRangeReference) {
       return ((MultiRangeReference)ref).getRanges();
     }
     return Collections.singletonList(ref.getRangeInElement());
   }
 
-  @NotNull
-  public static List<TextRange> getAbsoluteRanges(@NotNull PsiReference ref) {
-    return getAbsoluteRanges((PsiSymbolReference)ref);
-  }
-
-  @Experimental
-  @NotNull
-  public static List<TextRange> getAbsoluteRanges(@NotNull PsiSymbolReference ref) {
+  public static @NotNull List<TextRange> getAbsoluteRanges(@NotNull PsiReference ref) {
     final PsiElement elt = ref.getElement();
     final List<TextRange> relativeRanges = getRanges(ref);
     final List<TextRange> answer = new ArrayList<>(relativeRanges.size());
@@ -60,11 +40,6 @@ public class ReferenceRange {
   }
 
   public static boolean containsOffsetInElement(@NotNull PsiReference ref, int offset) {
-    return containsOffsetInElement((PsiSymbolReference)ref, offset);
-  }
-
-  @Experimental
-  public static boolean containsOffsetInElement(@NotNull PsiSymbolReference ref, int offset) {
     if (ref instanceof MultiRangeReference) {
       for (TextRange range : ((MultiRangeReference)ref).getRanges()) {
         if (range.containsOffset(offset)) return true;
@@ -75,8 +50,7 @@ public class ReferenceRange {
     return ref.getRangeInElement().containsOffset(offset);
   }
 
-  @Experimental
-  public static boolean containsRangeInElement(@NotNull PsiSymbolReference ref, @NotNull TextRange rangeInElement) {
+  public static boolean containsRangeInElement(@NotNull PsiReference ref, @NotNull TextRange rangeInElement) {
     if (ref instanceof MultiRangeReference) {
       for (TextRange range : ((MultiRangeReference)ref).getRanges()) {
         if (range.contains(rangeInElement)) return true;

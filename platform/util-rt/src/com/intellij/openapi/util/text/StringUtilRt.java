@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -53,8 +53,9 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static char toLowerCase(char a) {
-    if (a < 'A' || a >= 'a' && a <= 'z') return a;
-    if (a <= 'Z') return (char)(a + ('a' - 'A'));
+    if (a <= 'z') {
+      return a >= 'A' && a <= 'Z' ? (char)(a + ('a' - 'A')) : a;
+    }
     return Character.toLowerCase(a);
   }
 
@@ -149,13 +150,11 @@ public class StringUtilRt {
           shiftOffsets(offsetsToKeep, buffer.length(), 1, newSeparator.length());
         }
       }
+      else if (buffer == null) {
+        intactLength++;
+      }
       else {
-        if (buffer == null) {
-          intactLength++;
-        }
-        else {
-          buffer.append(c);
-        }
+        buffer.append(c);
       }
     }
     return buffer == null ? text : buffer;
@@ -252,9 +251,14 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWithIgnoreCase(@NotNull String str, @NotNull String prefix) {
+    return startsWithIgnoreCase(str, 0, prefix);
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWithIgnoreCase(@NotNull String str, int startOffset, @NotNull String prefix) {
     int stringLength = str.length();
     int prefixLength = prefix.length();
-    return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
+    return stringLength >= prefixLength && str.regionMatches(true, startOffset, prefix, 0, prefixLength);
   }
 
   @Contract(pure = true)
@@ -324,21 +328,31 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     StringBuilder builder = new StringBuilder(s.length());
-    boolean inQuotes = false;
+    char quote = 0;
+    boolean isEscaped = false;
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
-      if (c == separator && !inQuotes) {
+      boolean isSeparator = c == separator;
+      boolean isQuote = c == '"' || c == '\'';
+      boolean isQuoted = quote != 0;
+      boolean isEscape = c == '\\';
+
+      if (!isQuoted && isSeparator) {
         if (builder.length() > 0) {
           result.add(builder.toString());
           builder.setLength(0);
         }
         continue;
       }
-      if ((c == '"' || c == '\'') && !(i > 0 && s.charAt(i - 1) == '\\')) {
-        inQuotes = !inQuotes;
+
+      if (!isEscaped && isQuote && (quote == 0 || quote == c)) {
+        quote = isQuoted ? 0 : c;
       }
+
+      isEscaped = isEscape && !isEscaped;
+
       builder.append(c);
     }
     if (builder.length() > 0) {
@@ -350,18 +364,39 @@ public class StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
-    return formatFileSize(fileSize, " ");
+    return formatFileSize(fileSize, " ", -1);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
+    return formatFileSize(fileSize, unitSeparator, -1);
+  }
+
+  /**
+   *
+   * @param fileSize - size of the file in bytes
+   * @param unitSeparator - separator inserted between value and unit
+   * @param rank - preferred rank. 0 - bytes, 1 - kilobytes, ..., 6 - exabytes. If less than 0 then picked automatically
+   * @return string with formatted file size
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
     if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
     if (fileSize == 0) return '0' + unitSeparator + 'B';
-    int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
+    if (rank < 0) {
+      rank = rankForFileSize(fileSize);
+    }
     double value = fileSize / Math.pow(1000, rank);
     String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
     return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
+  }
+
+  @Contract(pure = true)
+  public static int rankForFileSize(long fileSize) {
+    if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
+    return (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
   }
 
   /**
@@ -369,7 +404,11 @@ public class StringUtilRt {
    */
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
-    return s.length() > 1 && (s.charAt(0) == '\'' || s.charAt(0) == '\"') && s.charAt(0) == s.charAt(s.length() - 1);
+    int length = s.length();
+    if (length <= 1) return false;
+    char firstChar = s.charAt(0);
+    if (firstChar != '\'' && firstChar != '\"') return false;
+    return firstChar == s.charAt(length - 1);
   }
 
   @NotNull
@@ -383,5 +422,37 @@ public class StringUtilRt {
   public static String unquoteString(@NotNull String s, char quotationChar) {
     boolean quoted = s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1);
     return quoted ? s.substring(1, s.length() - 1) : s;
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
+    int l1 = text.length();
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i) != prefix.charAt(i)) return false;
+    }
+
+    return true;
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
+    return stringHashCodeInsensitive(chars, 0, chars.length());
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to) {
+    return stringHashCodeInsensitive(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
+    for (int off = from; off < to; off++) {
+      h = 31 * h + toLowerCase(chars.charAt(off));
+    }
+    return h;
   }
 }

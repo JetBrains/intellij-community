@@ -1,51 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 /**
  * An object responsible for loading classes and resources from a particular classpath element: a jar or a directory.
- * 
- * @see JarLoader
- * @see FileLoader
  */
-abstract class Loader {
-  @NotNull
-  private final URL myURL;
-  private final int myIndex;
-  private ClasspathCache.NameFilter myLoadingFilter;
+public interface Loader {
+  Path getPath();
 
-  Loader(@NotNull URL url, int index) {
-    myURL = url;
-    myIndex = index;
-  }
+  @Nullable Resource getResource(String name);
 
-  @NotNull
-  URL getBaseURL() {
-    return myURL;
-  }
+  void processResources(String dir,
+                        Predicate<? super String> fileNameFilter,
+                        BiConsumer<? super String, ? super InputStream> consumer) throws IOException;
 
-  @Nullable
-  abstract Resource getResource(@NotNull String name);
-  
-  @NotNull
-  abstract ClasspathCache.LoaderData buildData() throws IOException;
-
-  int getIndex() {
-    return myIndex;
-  }
-
-  boolean containsName(@NotNull String name, @NotNull String shortName) {
-    if (name.isEmpty()) return true;
-    ClasspathCache.NameFilter filter = myLoadingFilter;
-    return filter == null || filter.maybeContains(shortName);
-  }
-
-  void applyData(@NotNull ClasspathCache.LoaderData loaderData) {
-    myLoadingFilter = loaderData.getNameFilter();
-  }
+  @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException;
 }

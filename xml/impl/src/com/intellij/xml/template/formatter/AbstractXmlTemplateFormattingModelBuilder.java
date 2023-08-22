@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.*;
@@ -57,12 +43,12 @@ import java.util.List;
  * inside its surrounding 'if' block.
  */
 public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTemplateLanguageFormattingModelBuilder {
-  @NotNull
   @Override
-  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-    final PsiFile psiFile = element.getContainingFile();
-    if (psiFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-      final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)psiFile.getViewProvider();
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    final PsiFile psiFile = formattingContext.getContainingFile();
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
+    PsiElement element = formattingContext.getPsiElement();
+    if (psiFile.getViewProvider() instanceof TemplateLanguageFileViewProvider viewProvider) {
       if (isTemplateFile(psiFile)) {
         Language templateDataLanguage = viewProvider.getTemplateDataLanguage();
         if (templateDataLanguage != psiFile.getLanguage()) {
@@ -85,7 +71,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
         }
       }
     }
-    return super.createModel(element, settings);
+    return super.createModel(formattingContext);
   }
 
   @NotNull
@@ -198,7 +184,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       else {
         final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(language, dataElement);
         if (builder != null && !isInsideXmlAttributeValue(dataElement)) {
-          FormattingModel otherLanguageModel = builder.createModel(dataElement, settings);
+          FormattingModel otherLanguageModel = builder.createModel(FormattingContext.create(dataElement, settings));
           block = otherLanguageModel.getRootBlock();
         }
         else {
@@ -287,8 +273,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       rangeStart = Math.min(currRange.getStartOffset(), rangeStart);
       rangeEnd = Math.max(currRange.getEndOffset(), rangeEnd);
       boolean isMarkupBlock = true;
-      if (block instanceof AnotherLanguageBlockWrapper) {
-        AnotherLanguageBlockWrapper wrapper = (AnotherLanguageBlockWrapper)block;
+      if (block instanceof AnotherLanguageBlockWrapper wrapper) {
         PsiElement otherLangElement = wrapper.getNode().getPsi();
         if (isOuterLanguageElement(otherLangElement)) {
           isMarkupBlock = false;
@@ -318,7 +303,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   }
 
 
-  private List<Block> buildTemplateLanguageBlocksInside(@NotNull PsiFile templateFile,
+  protected List<Block> buildTemplateLanguageBlocksInside(@NotNull PsiFile templateFile,
                                                         @NotNull TextRange range,
                                                         CodeStyleSettings settings,
                                                         XmlFormattingPolicy xmlFormattingPolicy,

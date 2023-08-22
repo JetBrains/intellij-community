@@ -1,11 +1,11 @@
-<idea-plugin>
+<idea-plugin package="<error descr="Cannot resolve package INVALID_VALUE">INVALID_VALUE</error>">
   <id>com.intellij.myPlugin</id>
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
   <depends>com.intellij.modules.vcs</depends>
   <depends>com.intellij.custom</depends>
-  <depends><error descr="Cannot resolve plugin com.intellij.xxx">com.intellij.xxx</error></depends>
+  <depends><error descr="Cannot resolve plugin 'com.intellij.xxx' in dependencies (Reference: Plugin Dependencies)">com.intellij.xxx</error></depends>
 
 
   <depends <warning descr="Superfluous declaration">optional="false"</warning>>com.intellij.custom3</depends>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.configurationStore.JbXmlOutputter;
@@ -14,9 +14,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -31,9 +32,8 @@ final class SystemFileProcessor extends ProjectTemplateFileProcessor {
     "org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent"
   };
 
-  @Nullable
   @Override
-  protected String encodeFileText(String content, VirtualFile file, Project project) throws IOException {
+  protected @Nullable String encodeFileText(String content, VirtualFile file, @NotNull Project project) throws IOException {
     String fileName = file.getName();
     if (!file.getParent().getName().equals(Project.DIRECTORY_STORE_FOLDER) || !fileName.equals("workspace.xml")) {
       return null;
@@ -41,7 +41,17 @@ final class SystemFileProcessor extends ProjectTemplateFileProcessor {
 
     List<Object> componentList = new ArrayList<>();
     for (String componentName : COMPONENT_NAMES) {
-      Object component = componentName.equals("org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent") ? project.getPicoContainer().getComponentInstance(componentName) : project.getComponent(componentName);
+      Object component;
+      if (componentName.equals("org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent")) {
+        component = ((ComponentManagerImpl)project).getServiceByClassName(componentName);
+      }
+      else if (componentName.equals(FileEditorManager.class.getName())) {
+        component = FileEditorManager.getInstance(project);
+      }
+      else {
+        throw new IllegalStateException("Unknown component name: " + componentName);
+      }
+
       if (component == null) {
         try {
           Class<?> aClass = Class.forName(componentName);
@@ -53,7 +63,9 @@ final class SystemFileProcessor extends ProjectTemplateFileProcessor {
         catch (ClassNotFoundException ignore) {
         }
       }
-      ContainerUtil.addIfNotNull(componentList, component);
+      if (component != null) {
+        componentList.add(component);
+      }
     }
 
     if (componentList.isEmpty()) {
@@ -75,7 +87,7 @@ final class SystemFileProcessor extends ProjectTemplateFileProcessor {
           }
         }
         else if (component instanceof PersistentStateComponent) {
-          Object state = WriteAction.compute(() -> ((PersistentStateComponent)component).getState());
+          Object state = WriteAction.compute(() -> ((PersistentStateComponent<?>)component).getState());
 
           if(state == null){
             return;

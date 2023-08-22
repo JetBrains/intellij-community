@@ -22,8 +22,11 @@ import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.merge.TextMergeRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.util.Consumer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,15 +39,15 @@ public class TextMergeRequestImpl extends TextMergeRequest {
 
   @NotNull private final CharSequence myOriginalContent;
 
-  @Nullable private final String myTitle;
+  @Nullable private final @NlsContexts.DialogTitle String myTitle;
   @NotNull private final List<String> myTitles;
 
   public TextMergeRequestImpl(@Nullable Project project,
                               @NotNull DocumentContent output,
                               @NotNull CharSequence originalContent,
                               @NotNull List<DocumentContent> contents,
-                              @Nullable String title,
-                              @NotNull List<String> contentTitles) {
+                              @Nullable @NlsContexts.DialogTitle String title,
+                              @NotNull List<@Nls String> contentTitles) {
     assert contents.size() == 3;
     assert contentTitles.size() == 3;
     myProject = project;
@@ -55,8 +58,6 @@ public class TextMergeRequestImpl extends TextMergeRequest {
     myContents = contents;
     myTitles = contentTitles;
     myTitle = title;
-
-    onAssigned(true);
   }
 
   @NotNull
@@ -85,39 +86,30 @@ public class TextMergeRequestImpl extends TextMergeRequest {
 
   @Override
   public void applyResult(@NotNull MergeResult result) {
-    try {
-      final CharSequence applyContent;
-      switch (result) {
-        case CANCEL:
-          applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
-          break;
-        case LEFT:
-          CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
-          applyContent = StringUtil.convertLineSeparators(leftContent.toString());
-          break;
-        case RIGHT:
-          CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
-          applyContent = StringUtil.convertLineSeparators(rightContent.toString());
-          break;
-        case RESOLVED:
-          applyContent = null;
-          break;
-        default:
-          throw new IllegalArgumentException(result.toString());
+    final CharSequence applyContent;
+    switch (result) {
+      case CANCEL -> applyContent = MergeUtil.shouldRestoreOriginalContentOnCancel(this) ? myOriginalContent : null;
+      case LEFT -> {
+        CharSequence leftContent = ThreeSide.LEFT.select(getContents()).getDocument().getImmutableCharSequence();
+        applyContent = StringUtil.convertLineSeparators(leftContent.toString());
       }
-
-      if (applyContent != null) {
-        DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
+      case RIGHT -> {
+        CharSequence rightContent = ThreeSide.RIGHT.select(getContents()).getDocument().getImmutableCharSequence();
+        applyContent = StringUtil.convertLineSeparators(rightContent.toString());
       }
+      case RESOLVED -> applyContent = null;
+      default -> throw new IllegalArgumentException(result.toString());
+    }
 
-      MergeCallback.getCallback(this).applyResult(result);
+    if (applyContent != null) {
+      DiffUtil.executeWriteCommand(myOutput.getDocument(), myProject, null, () -> myOutput.getDocument().setText(applyContent));
     }
-    finally {
-      onAssigned(false);
-    }
+
+    MergeCallback.getCallback(this).applyResult(result);
   }
 
-  private void onAssigned(boolean assigned) {
+  @Override
+  public void onAssigned(boolean assigned) {
     myOutput.onAssigned(assigned);
     for (DocumentContent content : myContents) {
       content.onAssigned(assigned);

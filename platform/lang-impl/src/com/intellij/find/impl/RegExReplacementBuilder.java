@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +17,7 @@ import java.util.regex.Pattern;
  * <p>
  * Instances of this class are not safe for use by multiple concurrent threads, just as {@link Matcher} instances are.
  */
-public class RegExReplacementBuilder {
+public final class RegExReplacementBuilder {
   @NotNull private final MatchGroupContainer myMatcher;
 
   private String myTemplate;
@@ -57,7 +43,7 @@ public class RegExReplacementBuilder {
       }
     };
   }
-  
+
   private RegExReplacementBuilder(@NotNull Pattern pattern) {
     myMatcher = new MatchGroupContainer() {
       @Override
@@ -123,17 +109,12 @@ public class RegExReplacementBuilder {
     if (myCursor == myTemplate.length()) throw new IllegalArgumentException("character to be escaped is missing");
     nextChar = myTemplate.charAt(myCursor++);
     switch (nextChar) {
-      case 'n':
-        myReplacement.append('\n'); break;
-      case 'r':
-        myReplacement.append('\r'); break;
-      case 'b':
-        myReplacement.append('\b');  break;
-      case 't':
-        myReplacement.append('\t'); break;
-      case 'f':
-        myReplacement.append('\f'); break;
-      case 'x':
+      case 'n' -> myReplacement.append('\n');
+      case 'r' -> myReplacement.append('\r');
+      case 'b' -> myReplacement.append('\b');
+      case 't' -> myReplacement.append('\t');
+      case 'f' -> myReplacement.append('\f');
+      case 'x' -> {
         if (myCursor + 4 <= myTemplate.length()) {
           try {
             int code = Integer.parseInt(myTemplate.substring(myCursor, myCursor + 4), 16);
@@ -142,14 +123,13 @@ public class RegExReplacementBuilder {
           }
           catch (NumberFormatException ignored) {}
         }
-        break;
-      case 'l': startConversionForCharacter(false); break;
-      case 'u': startConversionForCharacter(true); break;
-      case 'L': startConversionForRegion(false); break;
-      case 'U': startConversionForRegion(true); break;
-      case 'E': resetConversionState(); break;
-      default:
-        myReplacement.append(nextChar);
+      }
+      case 'l' -> startConversionForCharacter(false);
+      case 'u' -> startConversionForCharacter(true);
+      case 'L' -> startConversionForRegion(false);
+      case 'U' -> startConversionForRegion(true);
+      case 'E' -> resetConversionState();
+      default -> myReplacement.append(nextChar);
     }
   }
 
@@ -272,7 +252,7 @@ public class RegExReplacementBuilder {
     return ((ch-'0')|('9'-ch)) >= 0;
   }
 
-  private static class CaseConversionRegion {
+  private static final class CaseConversionRegion {
     private final int start;
     private int end;
     private boolean toUpperCase;
@@ -283,7 +263,7 @@ public class RegExReplacementBuilder {
       this.toUpperCase = toUpperCase;
     }
   }
-  
+
   interface MatchGroupContainer {
     String group(String name);
     String group(int num);

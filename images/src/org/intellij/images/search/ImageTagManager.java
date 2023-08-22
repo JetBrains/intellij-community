@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.search;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -23,7 +23,7 @@ public class ImageTagManager implements PersistentStateComponent<ImageTagManager
   private State myState = new State();
 
   public static ImageTagManager getInstance(Project project) {
-    return ServiceManager.getService(project, ImageTagManager.class);
+    return project.getService(ImageTagManager.class);
   }
 
   public boolean hasTag(String tag, VirtualFile file) {
@@ -70,7 +70,7 @@ public class ImageTagManager implements PersistentStateComponent<ImageTagManager
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundKeyWithTag = false, surroundWithTag = false,
       entryTagName = "tag", keyAttributeName = "name", valueAttributeName = "values")
-    public final Map<String, Files> myTags = new LinkedHashMap<>();
+    public final Map<@NlsSafe String, Files> myTags = new LinkedHashMap<>();
 
     @Property(surroundWithTag = false)
     @Tag("files")

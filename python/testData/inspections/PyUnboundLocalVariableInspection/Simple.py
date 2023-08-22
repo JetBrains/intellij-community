@@ -20,7 +20,7 @@ def buzz():
 
 buzz()
 
-print BLA_BLA_BLA #pass
+print(BLA_BLA_BLA) #pass
 
 if foo():
     d = 1

@@ -18,14 +18,15 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.ReSTService;
-import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.rest.PythonRestBundle;
 import com.jetbrains.rest.RestBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class SphinxBaseCommand {
     return true;
   }
 
-  public static class AskForWorkDir extends DialogWrapper {
+  public static final class AskForWorkDir extends DialogWrapper {
     private TextFieldWithBrowseButton myInputFile;
     private JPanel myPanel;
 
@@ -94,6 +95,7 @@ public class SphinxBaseCommand {
     try {
       if (!setWorkDir(module)) return;
       final ProcessHandler process = createProcess(module);
+      process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
       new RunContentExecutor(project, process)
         .withFilter(new PythonTracebackFilter(project))
         .withTitle("reStructuredText")
@@ -124,7 +126,7 @@ public class SphinxBaseCommand {
   protected GeneralCommandLine createCommandLine(Module module, List<String> params) throws ExecutionException {
     Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk == null) {
-      throw new ExecutionException("No sdk specified");
+      throw new ExecutionException(PythonRestBundle.message("python.rest.no.sdk.specified"));
     }
 
     ReSTService service = ReSTService.getInstance(module);
@@ -139,7 +141,7 @@ public class SphinxBaseCommand {
         cmd.setExePath(executablePath);
       }
       else {
-        cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, new ArrayList<String>());
+        cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, new ArrayList<>());
       }
     }
 
@@ -169,10 +171,6 @@ public class SphinxBaseCommand {
     PythonCommandLineState.initPythonPath(cmd, true, pathList, sdkHomePath);
 
     PythonSdkType.patchCommandLineForVirtualenv(cmd, sdk);
-    BuildoutFacet facet = BuildoutFacet.getInstance(module);
-    if (facet != null) {
-      facet.patchCommandLineForBuildout(cmd);
-    }
 
     return cmd;
   }

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.TableSpeedSearch;
@@ -58,6 +59,7 @@ public class TargetOptionsComponent extends JPanel {
     myCbProjectTargetLevel = createTargetOptionsCombo();
 
     myTable = new JBTable(new ModuleOptionsTableModel());
+    myTable.setShowGrid(false);
     myTable.setRowHeight(JBUIScale.scale(22));
     myTable.getEmptyText().setText(JavaCompilerBundle.message("settings.all.modules.will.be.compiled.with.project.bytecode.version"));
 
@@ -75,7 +77,7 @@ public class TargetOptionsComponent extends JPanel {
     targetLevelColumn.setMinWidth(width);
     targetLevelColumn.setMaxWidth(width);
 
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
 
     JLabel label = new JLabel(JavaCompilerBundle.message("settings.project.bytecode.version"));
     label.setLabelFor(myCbProjectTargetLevel);
@@ -126,7 +128,7 @@ public class TargetOptionsComponent extends JPanel {
     }
   }
 
-  public void setProjectBytecodeTargetLevel(String level) {
+  public void setProjectBytecodeTargetLevel(@NlsSafe String level) {
     myCbProjectTargetLevel.setSelectedItem(level == null ? "" : level);
   }
 
@@ -144,7 +146,7 @@ public class TargetOptionsComponent extends JPanel {
     ((ModuleOptionsTableModel)myTable.getModel()).setModuleOptions(myProject, moduleLevels);
   }
 
-  private static class TargetLevelCellEditor extends DefaultCellEditor {
+  private static final class TargetLevelCellEditor extends DefaultCellEditor {
     private TargetLevelCellEditor() {
       super(createTargetOptionsCombo());
       setClickCountToStart(0);
@@ -155,8 +157,7 @@ public class TargetOptionsComponent extends JPanel {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      if (component instanceof JLabel) {
-        JLabel comp = (JLabel)component;
+      if (component instanceof JLabel comp) {
         comp.setHorizontalAlignment(SwingConstants.CENTER);
         if ("".equals(value)) {
           comp.setForeground(JBColor.GRAY);

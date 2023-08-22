@@ -2,7 +2,7 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
@@ -27,12 +27,12 @@ public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<Hg
   protected Set<FilePath> requestIgnored(@Nullable Collection<? extends FilePath> paths) throws VcsException {
     Set<FilePath> ignored = new HashSet<>();
     ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(repository.getProject())
-                     .getFilePaths(repository.getRoot(), paths != null ? new ArrayList<FilePath>(paths) : null));
+                     .getFilePaths(repository.getRoot(), paths != null ? new ArrayList<>(paths) : null));
     return ignored;
   }
 
   @Override
   protected boolean scanTurnedOff() {
-    return !Registry.is("hg4idea.process.ignored");
+    return !AdvancedSettings.getBoolean("vcs.process.ignored");
   }
 }

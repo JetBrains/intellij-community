@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -9,9 +10,9 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +23,7 @@ import java.util.Map;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
-/**
- * @author Irina.Chernushina on 2/13/2016.
- */
-public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderFactory {
+public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderFactory, DumbAware {
   @NotNull
   @Override
   public List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {
@@ -42,7 +40,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
                                    UserDefinedJsonSchemaConfiguration schema) {
     String relPath = schema.getRelativePathToSchema();
     return new MyProvider(project, schema.getSchemaVersion(), schema.getName(),
-                          isHttpPath(relPath) || relPath.startsWith(JsonSchemaObject.TEMP_URL) || new File(relPath).isAbsolute()
+                          isAbsoluteUrl(relPath) || new File(relPath).isAbsolute()
                             ? relPath
                             : new File(project.getBasePath(),
                           relPath).getAbsolutePath(),
@@ -52,14 +50,14 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
   static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
     @NotNull private final Project myProject;
     @NotNull private final JsonSchemaVersion myVersion;
-    @NotNull private final String myName;
+    @NotNull private final @Nls String myName;
     @NotNull private final String myFile;
     private VirtualFile myVirtualFile;
     @NotNull private final List<? extends PairProcessor<Project, VirtualFile>> myPatterns;
 
     MyProvider(@NotNull final Project project,
                       @NotNull final JsonSchemaVersion version,
-                      @NotNull final String name,
+                      @NotNull final @Nls String name,
                       @NotNull final String file,
                       @NotNull final List<? extends PairProcessor<Project, VirtualFile>> patterns) {
       myProject = project;

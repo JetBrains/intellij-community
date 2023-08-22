@@ -1,18 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,65 +33,75 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class LocalArchivedTemplate extends ArchivedProjectTemplate {
-  public static final String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
-  static final String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
-  static final String TEMPLATE_META_XML = "template-meta.xml";
+public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
+  private static final Logger LOG = Logger.getInstance(LocalArchivedTemplate.class);
+  public static final @NonNls String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
+  static final @NonNls String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
+  static final @NonNls String TEMPLATE_META_XML = "template-meta.xml";
   static final String META_TEMPLATE_DESCRIPTOR_PATH = Project.DIRECTORY_STORE_FOLDER + "/"+TEMPLATE_META_XML;
-  public static final String UNENCODED_ATTRIBUTE = "unencoded";
-  static final String ROOT_FILE_NAME = "root";
+  public static @NonNls final String UNENCODED_ATTRIBUTE = "unencoded";
+  static final @NonNls String ROOT_FILE_NAME = "root";
 
   private final URL myArchivePath;
-  private final ModuleType myModuleType;
-  @Nullable private final List<RootDescription> myModuleDescriptions;
+  private final NullableLazyValue<ModuleType<?>> myModuleType;
+  private final NullableLazyValue<List<RootDescription>> myModuleDescriptions;
   private boolean myEscaped = true;
-  private Icon myIcon;
+  private final NullableLazyValue<Icon> myIcon;
 
-  public LocalArchivedTemplate(@NotNull URL archivePath,
-                               @NotNull ClassLoader classLoader) {
+  public LocalArchivedTemplate(@NotNull URL archivePath, @NotNull ClassLoader classLoader) {
     super(getTemplateName(archivePath), null);
 
     myArchivePath = archivePath;
-    myModuleType = computeModuleType(this);
-    String s = readEntry(TEMPLATE_DESCRIPTOR);
-    if (s != null) {
-      try {
-        Element templateElement = JDOMUtil.load(s);
-        populateFromElement(templateElement);
-        String iconPath = templateElement.getChildText("icon-path");
-        if (iconPath != null) {
-          myIcon = IconLoader.findIcon(iconPath, classLoader);
+    myModuleType = NullableLazyValue.lazyNullable(() -> computeModuleType(this));
+    myIcon = NullableLazyValue.lazyNullable(() -> {
+      String s = readEntry(TEMPLATE_DESCRIPTOR);
+      if (s != null) {
+        try {
+          Element templateElement = JDOMUtil.load(s);
+          populateFromElement(templateElement);
+          String iconPath = templateElement.getChildText("icon-path");
+          if (iconPath != null) {
+            return IconLoader.findIcon(iconPath, classLoader);
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
+      return null;
+    });
 
-    String meta = readEntry(META_TEMPLATE_DESCRIPTOR_PATH);
-    if (meta != null) {
-      try {
-        Element templateElement = JDOMUtil.load(meta);
-        String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
-        if (unencoded != null) {
-          myEscaped = !Boolean.valueOf(unencoded);
+    myModuleDescriptions = NullableLazyValue.lazyNullable(() -> {
+      String meta = readEntry(META_TEMPLATE_DESCRIPTOR_PATH);
+      if (meta != null) {
+        try {
+          Element templateElement = JDOMUtil.load(meta);
+          String unencoded = templateElement.getAttributeValue(UNENCODED_ATTRIBUTE);
+          if (unencoded != null) {
+            myEscaped = !Boolean.parseBoolean(unencoded);
+          }
+
+          return RootDescription.readRoots(templateElement);
         }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+      return null;
+    });
+  }
 
-        myModuleDescriptions = RootDescription.readRoots(templateElement);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else {
-      myModuleDescriptions = null;
-    }
+  @Override
+  public @NotNull List<WizardInputField<?>> getInputFields() {
+    myIcon.getValue();
+    return super.getInputFields();
   }
 
   public ValidationResult validate(@NotNull String baseDirPath) {
-    if (myModuleDescriptions != null && !myModuleDescriptions.isEmpty()) {
+    List<RootDescription> descriptions = myModuleDescriptions.getValue();
+    if (descriptions != null && !descriptions.isEmpty()) {
       File baseDirFile = new File(baseDirPath);
-      for (RootDescription description : myModuleDescriptions) {
+      for (RootDescription description : descriptions) {
         File rootFile = new File(baseDirFile + "/" + description.myRelativePath);
         try {
           rootFile = rootFile.getCanonicalFile();
@@ -111,7 +125,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return null;
   }
 
-  private static String getTemplateName(URL url) {
+  private static @NlsSafe String getTemplateName(URL url) {
     String fileName = new File(url.getPath()).getName();
     return fileName.substring(0, fileName.length() - ArchivedTemplatesFactory.ZIP.length()).replace('_', ' ');
   }
@@ -123,23 +137,24 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   @Override
   public Icon getIcon() {
-    return myIcon == null ? super.getIcon() : myIcon;
+    return myIcon.getValue() == null ? super.getIcon() : myIcon.getValue();
   }
 
-  public boolean isEscaped(){
+  boolean isEscaped() {
+    myModuleDescriptions.getValue();
     return myEscaped;
   }
 
-  @Nullable
-  String readEntry(@NotNull final String endsWith) {
+  @Nullable @NlsSafe
+  private String readEntry(@NotNull final String endsWith) {
     try {
-      return processStream(new StreamProcessor<String>() {
+      return processStream(new StreamProcessor<>() {
         @Override
         public String consume(@NotNull ZipInputStream stream) throws IOException {
           ZipEntry entry;
           while ((entry = stream.getNextEntry()) != null) {
             if (entry.getName().endsWith(endsWith)) {
-              return StreamUtil.readText(stream, StandardCharsets.UTF_8);
+              return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
             }
           }
           return null;
@@ -152,7 +167,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @NotNull
-  private static ModuleType computeModuleType(LocalArchivedTemplate template) {
+  private static ModuleType<?> computeModuleType(LocalArchivedTemplate template) {
     String iml = template.readEntry(".iml");
     if (iml == null) return ModuleType.EMPTY;
     try {
@@ -165,13 +180,15 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   @Override
-  protected ModuleType getModuleType() {
-    return myModuleType;
+  protected ModuleType<?> getModuleType() {
+    return myModuleType.getValue();
   }
 
   @Override
   public <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException {
-    return consumeZipStream(consumer, new ZipInputStream(myArchivePath.openStream()));
+    try (ZipInputStream zip = new ZipInputStream(myArchivePath.openStream())) {
+      return consumer.consume(zip);
+    }
   }
 
   public URL getArchivePath() {
@@ -180,13 +197,14 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   @Override
   public void handleUnzippedDirectories(@NotNull File dir, @NotNull List<? super File> filesToRefresh) throws IOException {
-    if (myModuleDescriptions == null) {
+    if (myModuleDescriptions.getValue() == null) {
       filesToRefresh.add(dir);
       return;
     }
 
-    for (RootDescription description : myModuleDescriptions) {
+    for (RootDescription description : myModuleDescriptions.getValue()) {
       File root = new File(dir, ROOT_FILE_NAME + description.myIndex);
+      if (root.listFiles() == null) continue;
       File target = new File(dir.getAbsolutePath() + "/" + description.myRelativePath);
       //noinspection ResultOfMethodCallIgnored
       target.mkdirs();
@@ -196,11 +214,11 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     }
   }
 
-  static class RootDescription {
-    private static final String ROOTS_ELEMENT = "roots";
-    private static final String ROOT_ELEMENT = "root";
-    private static final String INDEX_ATTRIBUTE = "index";
-    private static final String PATH_ATTRIBUTE = "path";
+  static final class RootDescription {
+    private static final @NonNls String ROOTS_ELEMENT = "roots";
+    private static final @NonNls String ROOT_ELEMENT = "root";
+    private static final @NonNls String INDEX_ATTRIBUTE = "index";
+    private static final @NonNls String PATH_ATTRIBUTE = "path";
     final VirtualFile myFile;
     final String myRelativePath;
     final int myIndex;

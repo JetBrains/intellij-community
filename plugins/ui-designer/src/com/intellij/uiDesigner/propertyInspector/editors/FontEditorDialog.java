@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -22,12 +23,11 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class FontEditorDialog extends DialogWrapper {
   private final Model myModel = new Model();
   private JList myFontNameList;
@@ -72,7 +72,8 @@ public class FontEditorDialog extends DialogWrapper {
     myFontSizeEdit.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        myFontSizeList.setSelectedValue(myFontSizeEdit.getValue().toString(), true);
+        @NlsSafe String value = myFontSizeEdit.getValue().toString();
+        myFontSizeList.setSelectedValue(value, true);
         updateValue();
       }
     });
@@ -82,9 +83,9 @@ public class FontEditorDialog extends DialogWrapper {
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         FontDescriptor descriptor = (FontDescriptor) value;
         clear();
-        append(descriptor.getSwingFont(),
-               selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-        append(" (" + fontToString(UIManager.getFont(descriptor.getSwingFont())) + ")",
+        @NlsSafe String font = descriptor.getSwingFont();
+        append(font, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        append(" (" + fontToString(UIManager.getFont(font)) + ")",
                selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     });
@@ -121,7 +122,7 @@ public class FontEditorDialog extends DialogWrapper {
     });
   }
 
-  private static String fontToString(final Font font) {
+  private static @NlsSafe String fontToString(final Font font) {
     StringBuilder result = new StringBuilder(font.getFamily());
     result.append(" ").append(font.getSize());
     if ((font.getStyle() & Font.BOLD) != 0) {
@@ -144,7 +145,7 @@ public class FontEditorDialog extends DialogWrapper {
         result.add(FontDescriptor.fromSwingFont((String) key));
       }
     }
-    result.sort((o1, o2) -> o1.getSwingFont().compareTo(o2.getSwingFont()));
+    result.sort(Comparator.comparing(FontDescriptor::getSwingFont));
     return result.toArray(new FontDescriptor[0]);
   }
 
@@ -167,7 +168,7 @@ public class FontEditorDialog extends DialogWrapper {
       if (value.getFontSize() >= 0) {
         myFontSizeList.setSelectedValue(Integer.toString(value.getFontSize()), true);
         if (myFontSizeList.getSelectedIndex() < 0) {
-          myFontSizeEdit.setValue(new Integer(value.getFontSize()));
+          myFontSizeEdit.setValue(Integer.valueOf(value.getFontSize()));
         }
       }
       else {

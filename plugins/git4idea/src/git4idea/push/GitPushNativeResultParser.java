@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,7 +72,7 @@ import java.util.regex.Pattern;
  *     For a failed ref, the reason for failure is described.
  * </pre>
  */
-public class GitPushNativeResultParser {
+public final class GitPushNativeResultParser {
 
   private static final Logger LOG = Logger.getInstance(GitPushNativeResultParser.class);
   private static final Pattern PATTERN = Pattern.compile("^.*([ +\\-\\*!=])\t" +   // flag
@@ -114,14 +114,14 @@ public class GitPushNativeResultParser {
   }
 
   private static GitPushNativeResult.Type parseType(String flag) {
-    switch(flag.charAt(0)) {
-      case ' ' : return GitPushNativeResult.Type.SUCCESS;
-      case '+' : return GitPushNativeResult.Type.FORCED_UPDATE;
-      case '-' : return GitPushNativeResult.Type.DELETED;
-      case '*' : return GitPushNativeResult.Type.NEW_REF;
-      case '!' : return GitPushNativeResult.Type.REJECTED;
-      case '=' : return GitPushNativeResult.Type.UP_TO_DATE;
-    }
-    return null;
+    return switch (flag.charAt(0)) {
+      case ' ' -> GitPushNativeResult.Type.SUCCESS;
+      case '+' -> GitPushNativeResult.Type.FORCED_UPDATE;
+      case '-' -> GitPushNativeResult.Type.DELETED;
+      case '*' -> GitPushNativeResult.Type.NEW_REF;
+      case '!' -> GitPushNativeResult.Type.REJECTED;
+      case '=' -> GitPushNativeResult.Type.UP_TO_DATE;
+      default -> null;
+    };
   }
 }

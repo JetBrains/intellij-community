@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -39,6 +40,7 @@ public abstract class CustomAnnotationChecker {
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {return false;}
 
   @Nullable
+  @InspectionMessage
   static String checkAnnotationApplicable(@NotNull GrAnnotation annotation, @Nullable PsiAnnotationOwner owner) {
     if (!(owner instanceof PsiElement)) return null;
     PsiElement ownerToUse = owner instanceof PsiModifierList ? ((PsiElement)owner).getParent() : (PsiElement)owner;
@@ -52,9 +54,9 @@ public abstract class CustomAnnotationChecker {
     return null;
   }
 
-  public static Pair<PsiElement, String> checkAnnotationArguments(@NotNull PsiClass annotation,
-                                                                  GrAnnotationNameValuePair @NotNull [] attributes,
-                                                                  boolean checkMissedAttributes) {
+  public static Pair<PsiElement, @InspectionMessage String> checkAnnotationArguments(@NotNull PsiClass annotation,
+                                                                                     GrAnnotationNameValuePair @NotNull [] attributes,
+                                                                                     boolean checkMissedAttributes) {
     Set<String> usedAttrs = new HashSet<>();
 
     if (attributes.length > 0) {
@@ -116,9 +118,9 @@ public abstract class CustomAnnotationChecker {
     return null;
   }
 
-  public static Pair.NonNull<PsiElement,String> checkAnnotationValueByType(@NotNull GrAnnotationMemberValue value,
-                                                                   @Nullable PsiType ltype,
-                                                                   boolean skipArrays) {
+  public static Pair.NonNull<PsiElement, @InspectionMessage String> checkAnnotationValueByType(@NotNull GrAnnotationMemberValue value,
+                                                                                               @Nullable PsiType ltype,
+                                                                                               boolean skipArrays) {
     final GlobalSearchScope resolveScope = value.getResolveScope();
     final PsiManager manager = value.getManager();
 

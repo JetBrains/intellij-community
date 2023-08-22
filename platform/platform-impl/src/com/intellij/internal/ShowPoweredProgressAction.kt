@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("HardCodedStringLiteral")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.internal
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.DialogBuilder
@@ -12,12 +12,14 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.TimerUtil
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import javax.swing.*
 import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
+import kotlin.math.pow
 
-class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
+internal class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val builder = DialogBuilder()
     builder.addAction(object : AbstractAction("Restart Indicators") {
@@ -62,7 +64,7 @@ class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
     val timer = TimerUtil.createNamedTimer("progresses", 1) {
       for ((index, progress) in progresses.withIndex()) {
         values[index].set((values[index].get() + 1) % MAX)
-        progress.value = (MAX * Math.pow((values[index].get().toDouble() / MAX.toDouble()), powers[index].get())).toInt()
+        progress.value = (MAX * (values[index].get().toDouble() / MAX.toDouble()).pow(powers[index].get())).toInt()
       }
     }
     timer.isRepeats = true

@@ -29,9 +29,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 
-/**
- * @author peter
- */
 public class BracesTailType extends TailType {
 
   @Override

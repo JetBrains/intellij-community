@@ -1,3 +1,4 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16" viewBox="0 0 16 16">
   <defs>
     <path id="testignored-a" d="M14,7.74984741 C13.2650122,7.32512696 12.500824,7 11.3981018,7.00029147 C9.32839971,7.00083852 7.00029147,8.79821777 7,11.5083313 C6.99988878,12.5424805 7.30434449,13.2650122 7.72906494,14 C7.67330007,14.0013116 7.05608026,14 7,14 C3.134,14 0,10.866 0,7 C0,3.134 3.134,0 7,0 C10.866,0 14,3.134 14,7 C14,7.05608026 14.0013116,7.69408254 14,7.74984741 Z"/>

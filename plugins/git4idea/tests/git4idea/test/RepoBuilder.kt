@@ -54,7 +54,7 @@ class RepoBuilder(val repo: GitRepository) {
     commands()
   }
 
-  operator fun Int.invoke(file: String = this.toString() + ".txt",
+  operator fun Int.invoke(file: String = "$this.txt",
                           content: String = "More content in $myCurrentBranch: ${randomHash()}",
                           commitMessage: String = if (File(repo.root.path, file).exists()) "Created $file" else "Modified $file") {
     modifyAndCommit(this, file, content, commitMessage)

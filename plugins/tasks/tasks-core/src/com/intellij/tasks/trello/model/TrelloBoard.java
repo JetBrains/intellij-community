@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.trello.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public class TrelloBoard extends TrelloModel {
   @NotNull
   @Attribute("name")
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return name;
   }
 

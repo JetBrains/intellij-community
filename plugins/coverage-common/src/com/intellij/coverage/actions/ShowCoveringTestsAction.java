@@ -9,18 +9,13 @@ import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithText;
-import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.rt.coverage.data.LineCoverage;
@@ -29,25 +24,35 @@ import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class ShowCoveringTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
 
   private final String myClassFQName;
   private final LineData myLineData;
+  private final boolean myTestsAvailable;
 
-  public ShowCoveringTestsAction(final String classFQName, LineData lineData) {
+  public ShowCoveringTestsAction(@Nullable Project project, final String classFQName, LineData lineData) {
     super(CoverageBundle.message("action.text.show.tests.covering.line"),
           CoverageBundle.message("action.description.show.tests.covering.line"), PlatformIcons.TEST_SOURCE_FOLDER);
     myClassFQName = classFQName;
     myLineData = lineData;
+    boolean enabled = false;
+    if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE && project != null) {
+      final CoverageSuitesBundle bundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
+      enabled = bundle != null && bundle.isCoverageByTestEnabled() && bundle.getCoverageEngine().wasTestDataCollected(project);
+    }
+    myTestsAvailable = enabled;
   }
 
   @Override
@@ -75,19 +80,20 @@ public class ShowCoveringTestsAction extends AnAction {
       final String title = CoverageBundle.message("popup.title.tests.covering.line", myClassFQName, myLineData.getLineNumber());
       final ComponentPopupBuilder popupBuilder;
       if (!elements.isEmpty()) {
-        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);
+        Consumer<ImplementationViewComponent> processor = viewComponent -> viewComponent.showInUsageView();
+        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0, processor);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
           .setDimensionServiceKey(project, "ShowTestsPopup", false)
-          .setCouldPin(popup -> {
-            component.showInUsageView();
-            popup.cancel();
-            return false;
+          .addListener(new JBPopupListener() {
+            @Override
+            public void onClosed(@NotNull LightweightWindowEvent event) {
+              component.cleanup();
+            }
           });
       } else {
         component = null;
-        final JPanel panel = new PanelWithText(CoverageBundle
-                                                 .message("following.test.0.could.not.be.found.1", testNames.length > 1 ? "s" : "",
-                                                          StringUtil.join(testNames, "<br/>").replace("_", ".")));
+        @NonNls String testsPresentation = StringUtil.join(testNames, "<br/>").replace("_", ".");
+        final JPanel panel = new PanelWithText(CoverageBundle.message("following.test.could.not.be.found.1", testNames.length, testsPresentation));
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null);
       }
       final JBPopup popup = popupBuilder.setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
@@ -107,15 +113,11 @@ public class ShowCoveringTestsAction extends AnAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(false);
-    if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE) {
-      final Project project = e.getProject();
-      if (project != null) {
-        CoverageSuitesBundle currentSuitesBundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-        presentation.setEnabled(currentSuitesBundle != null &&
-                                currentSuitesBundle.isCoverageByTestEnabled() &&
-                                currentSuitesBundle.getCoverageEngine().wasTestDataCollected(project));
-      }
-    }
+    presentation.setEnabled(myTestsAvailable);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

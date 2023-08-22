@@ -16,19 +16,13 @@
 package com.intellij.java.psi.codeStyle.arrangement
 
 import groovy.transform.CompileStatic
-import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME
-
-/**
- * @author Denis Zhdanov
- */
 @CompileStatic
 class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
 
-  @Before
   void setUp() {
     super.setUp()
     commonSettings.BLANK_LINES_AROUND_METHOD = 0
@@ -446,13 +440,13 @@ public class Seq<T> {
         return new Seq<V>(x);
     }
 
-    int filed;
+    int field;
 }
 ''',
       expected: '''\
 public class Seq<T> {
 
-    int filed;
+    int field;
 
     public Seq(T x) {
     }

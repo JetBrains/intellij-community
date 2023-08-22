@@ -1,14 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.intention.AdvertisementAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -21,14 +23,14 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  */
 public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testEmptyIntentions() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {\n" +
-                                                     "  <caret>   private String test() {\n" +
-                                                     "        return null;\n" +
-                                                     "     }" +
-                                                     "}");
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Foo {
+        <caret>   private String test() {
+              return null;
+           }}""");
     myFixture.findAllGutters();
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
-    assertEmpty(intentions);
+    assertEmpty(ContainerUtil.filter(intentions, action -> !(action instanceof AdvertisementAction)));
   }
 
   public void testOptions() {
@@ -43,12 +45,14 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testRunLineMarker() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MainTest.java", "public class Main<caret>Test extends junit.framework.TestCase {\n" +
-                                               "    public void testFoo() {\n" +
-                                               "    }\n" +
-                                               "}");
+    myFixture.configureByText("MainTest.java", """
+      public class Main<caret>Test extends junit.framework.TestCase {
+          public void testFoo() {
+          }
+      }""");
     myFixture.doHighlighting();
     CachedIntentions intentions = IntentionsUI.getInstance(getProject()).getCachedIntentions(getEditor(), getFile());
+    intentions.wrapAndUpdateGutters();
     assertThat(intentions.getAllActions().get(0).getText()).startsWith("Run ");
   }
 
@@ -59,8 +63,8 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
     assertSize(1, myFixture.findGuttersAtCaret());
 
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile(), false);
-    List<HighlightInfo.IntentionActionDescriptor> descriptors = intentions.guttersToShow;
-    Set<String> names = descriptors.stream().map(descriptor -> descriptor.getDisplayName()).collect(Collectors.toSet());
+    List<AnAction> descriptors = intentions.guttersToShow;
+    Set<String> names = descriptors.stream().map(o -> o.getTemplatePresentation().getText()).collect(Collectors.toSet());
     assertEquals(descriptors.size(), names.size());
   }
 
@@ -74,13 +78,14 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testWarningFixesOnTop() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MainTest.java", "public class MainTest extends junit.framework.TestCase {\n" +
-                                               "    public void testFoo() throws Exce<caret>ption {\n" +
-                                               "    }\n" +
-                                               "}");
+    myFixture.configureByText("MainTest.java", """
+      public class MainTest extends junit.framework.TestCase {
+          public void testFoo() throws Exce<caret>ption {
+          }
+      }""");
     myFixture.enableInspections(new RedundantThrowsDeclarationLocalInspection());
     myFixture.doHighlighting();
-    CachedIntentions intentions = IntentionsUI.getInstance(getProject()).getCachedIntentions(getEditor(), getFile());
-    assertThat(intentions.getAllActions().get(0).getText()).startsWith("Remove ");
+    List<IntentionAction> actions = myFixture.getAvailableIntentions();
+    assertThat(actions.get(0).getText()).startsWith("Remove ");
   }
 }

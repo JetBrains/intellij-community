@@ -15,14 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import org.jetbrains.plugins.groovy.codeInspection.utils.InspectionUtil;
+import com.intellij.codeInspection.options.OptPane;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyMethodParameterCountInspection extends GroovyMethodParameterCountInspectionBase {
 
   @Override
-  public JComponent createOptionsPanel() {
-    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", "Maximum number of parameters:");
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      number("m_limit", GroovyBundle.message("method.parameters.count.max.parameters.option"), 1, 255));
   }
 }

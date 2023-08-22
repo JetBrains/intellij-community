@@ -61,7 +61,6 @@
     <keyboard-shortcut first-keystroke="control shift d"/>
   </action>
   <action id="Diff.ShowSettingsPopup"/>
-  <action id="TagDocumentationNavigation"/>
   <action id="CIDR.Lang.Cpp.GenerateDefinitions"/>
   <action id="EditorJoinLines">
     <keyboard-shortcut first-keystroke="control j"/>
@@ -132,9 +131,11 @@
   </action>
   <!--END EDIT-->
   <!--SELECTION-->
+  <action id="EditorSelectLine">
+    <keyboard-shortcut first-keystroke="control l"/>
+  </action>
   <action id="EditorSelectWord">
     <keyboard-shortcut first-keystroke="control shift SPACE"/>
-    <keyboard-shortcut first-keystroke="control l"/>
     <keyboard-shortcut first-keystroke="control shift a"/>
     <keyboard-shortcut first-keystroke="control shift j"/>
     <keyboard-shortcut first-keystroke="control shift m"/>
@@ -176,6 +177,7 @@
     <keyboard-shortcut first-keystroke="shift f11"/>
   </action>
   <action id="ShowBookmarks"/>
+  <action id="ShowTypeBookmarks"/>
   <action id="Move"/>
   <action id="ChangeSignature"/>
   <action id="ChangeTypeSignature"/>
@@ -286,4 +288,5 @@
     <mouse-shortcut keystroke="ctrl button2"/>
   </action>
   <action id="CheckinProject"/>
+  <action id="ZoomOutIdeAction"/>
 </keymap>

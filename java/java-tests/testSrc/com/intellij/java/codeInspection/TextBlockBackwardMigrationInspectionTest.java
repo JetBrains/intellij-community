@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.TextBlockBackwardMigrationInspection;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,24 +13,27 @@ import org.jetbrains.annotations.NotNull;
 public class TextBlockBackwardMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
 
   public void testTrailingWhitespace() {
-    configureFromFileText("TrailingWhitespace.java", "class TextBlockMigration {\n" +
-                                                     "\n" +
-                                                     "  String multipleLiterals() {\n" +
-                                                     "    return \"\"\"<caret> \t\f\n" +
-                                                     "           hello \t\f\n" +
-                                                     "           world \t\f\n" +
-                                                     "           \"\"\";\n" +
-                                                     "  }\n" +
-                                                     "}");
+    //noinspection UnnecessaryStringEscape
+    configureFromFileText("TrailingWhitespace.java", """
+      class TextBlockMigration {
+
+        String multipleLiterals() {
+          return ""\"<caret> \t\f
+                 hello \t\f
+                 world \t\f
+                 ""\";
+        }
+      }""");
     final IntentionAction action = findActionWithText("Replace with regular string literal");
     invoke(action);
-    checkResultByText("class TextBlockMigration {\n" +
-                      "\n" +
-                      "  String multipleLiterals() {\n" +
-                      "    return \"hello\\n\" +\n" +
-                      "           \"world\\n\";\n" +
-                      "  }\n" +
-                      "}");
+    checkResultByText("""
+                        class TextBlockMigration {
+
+                          String multipleLiterals() {
+                            return "hello\\n" +
+                                   "world\\n";
+                          }
+                        }""");
   }
 
   @Override
@@ -42,10 +44,5 @@ public class TextBlockBackwardMigrationInspectionTest extends LightQuickFixParam
   @Override
   protected String getBasePath() {
     return "/inspection/textBlockBackwardMigration/";
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_14_PREVIEW;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.codeInsight.completion.BaseCompletionLookupArranger;
@@ -43,10 +29,29 @@ import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIE
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
 import static org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem.Type.PROJECT;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenDependencyCompletionUtil {
+public final class MavenDependencyCompletionUtil {
+
+  public static boolean isPlugin(@NotNull MavenDomShortArtifactCoordinates dependency) {
+    return dependency instanceof MavenDomPlugin;
+  }
+
+  public static MavenDomPlugin findManagedPlugin(MavenDomProjectModel domModel, Project project,
+                                                 @NotNull final String groupId, @NotNull final String artifactId) {
+
+    final Ref<MavenDomPlugin> ref = new Ref<>();
+
+    MavenDomProjectProcessorUtils.processPluginsInPluginManagement(domModel, plugin -> {
+      if (groupId.equals(plugin.getGroupId().getStringValue())
+          && artifactId.equals(plugin.getArtifactId().getStringValue())
+          && null != plugin.getVersion().getStringValue()) {
+        ref.set(plugin);
+        return true;
+      }
+      return false;
+    }, project);
+
+    return ref.get();
+  }
 
   public static MavenDomDependency findManagedDependency(MavenDomProjectModel domModel, Project project,
                                                          @NotNull final String groupId, @NotNull final String artifactId) {
@@ -100,7 +105,8 @@ public class MavenDependencyCompletionUtil {
   }
 
   public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info, String presentableText) {
-    LookupElementBuilder elementBuilder = LookupElementBuilder.create(info, getLookupString(info.getItems()[0]))
+
+    LookupElementBuilder elementBuilder = LookupElementBuilder.create(info, getLookupString(info))
       .withPresentableText(presentableText);
     elementBuilder.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, new Object());
     if (info.getItems().length == 1) {
@@ -122,6 +128,14 @@ public class MavenDependencyCompletionUtil {
       return AllIcons.Nodes.Module;
     }
     return null;
+  }
+
+  public static String getLookupString(MavenRepositoryArtifactInfo info) {
+    MavenDependencyCompletionItem[] infoItems = info.getItems();
+    if (infoItems.length > 0) {
+      return getLookupString(infoItems[0]);
+    }
+    return info.getGroupId() + ":" + info.getArtifactId();
   }
 
   public static String getLookupString(MavenDependencyCompletionItem description) {

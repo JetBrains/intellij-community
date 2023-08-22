@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface XmlStructureViewElementProvider {
   @NonNls String EXTENSION_POINT_NAME = "com.intellij.xmlStructureViewElementProvider";
   ExtensionPointName<XmlStructureViewElementProvider> EP_NAME = ExtensionPointName.create(EXTENSION_POINT_NAME);

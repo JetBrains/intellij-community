@@ -1,0 +1,4 @@
+interface Service {
+  void foo();
+  void bar(int a);
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -18,8 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.HashSet;
@@ -125,7 +127,8 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   }
 
   private void processMethods(@NotNull GrMethod method, Set<GrMethod> dynamicMethods) {
-    boolean isOuterStatic = PsiUtil.isCompileStatic(method.getContainingClass());
+    PsiElement containingClass = method.getContainingClass();
+    boolean isOuterStatic = containingClass != null && CompileStaticUtil.isCompileStatic(containingClass);
     boolean isStatic = dynamicMethods.stream().noneMatch(method::isEquivalentTo);
 
     if (isOuterStatic != isStatic) {
@@ -134,7 +137,8 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   }
 
   private void processDefinitions(GrTypeDefinition typeDef, Set<GrTypeDefinition> dynamicClasses) {
-    boolean isOuterStatic = PsiUtil.isCompileStatic(typeDef.getContainingClass());
+    PsiElement containingClass = typeDef.getContainingClass();
+    boolean isOuterStatic = containingClass != null && CompileStaticUtil.isCompileStatic(containingClass);
 
     boolean isStatic = !dynamicClasses.contains(typeDef);
     if (isOuterStatic && !isStatic) {
@@ -153,7 +157,7 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
 
   void addAnnotation(@NotNull PsiMember owner, boolean isStatic) {
     PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList != null && GroovyPsiManager.getCompileStaticAnnotation(owner) == null) {
+    if (modifierList != null && CompileStaticUtil.getCompileStaticAnnotation(owner) == null) {
       String annotation = isStatic ? GROOVY_TRANSFORM_COMPILE_STATIC : GROOVY_TRANSFORM_COMPILE_DYNAMIC;
       modifierList.addAnnotation(annotation);
     }

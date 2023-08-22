@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,9 +18,9 @@ import java.util.regex.Pattern;
 public class VcsLinkedTextComponent extends JLabel {
   private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
-  @NotNull private final String myTextBefore;
-  @NotNull private final String myTextAfter;
-  @NotNull private String myHandledLink;
+  @NotNull private final @NlsSafe String myTextBefore;
+  @NotNull private final @NlsSafe String myTextAfter;
+  @NotNull private @NlsSafe String myHandledLink;
 
   @Nullable private final VcsLinkListener myLinkListener;
   private boolean mySelected;
@@ -40,7 +42,7 @@ public class VcsLinkedTextComponent extends JLabel {
     myLinkListener = listener;
   }
 
-  public void updateLinkText(@NotNull String text) {
+  public void updateLinkText(@NotNull @Nls String text) {
     myHandledLink = text;
   }
 

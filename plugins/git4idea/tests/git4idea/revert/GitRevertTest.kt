@@ -15,6 +15,7 @@
  */
 package git4idea.revert
 
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -23,6 +24,7 @@ import git4idea.GitContentRevision.createRevision
 import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
 import git4idea.history.GitLogUtil
+import git4idea.i18n.GitBundle
 import git4idea.test.*
 import java.nio.charset.Charset
 
@@ -53,9 +55,9 @@ class GitRevertTest : GitSingleRepoTest() {
 
     revertAutoCommit(commit)
 
-    assertErrorNotification("Revert Failed", """
+    assertErrorNotification("Revert failed", """
       ${commit.id.toShortString()} ${commit.subject}
-      Your local changes would be overwritten by revert. Commit your changes or stash them to proceed.""")
+      """ + GitBundle.message("apply.changes.would.be.overwritten", "revert"))
     assertEquals("File content shouldn't change", "initial\nsecond\n", file.read())
     assertEquals("No new commits should have been created", commit.id.asString(), last())
   }
@@ -92,10 +94,10 @@ class GitRevertTest : GitSingleRepoTest() {
 
     revertAutoCommit(commit2, commit1)
 
-    assertErrorNotification("Revert Failed","""
-      ${commit1.id.toShortString()} ${commit1.subject} Your local changes would be overwritten by revert.
-      Commit your changes or stash them to proceed.
-      However revert succeeded for the following commit:
+    assertErrorNotification("Revert failed","""
+      ${commit1.id.toShortString()} ${commit1.subject}
+      """ + GitBundle.message("apply.changes.would.be.overwritten", "revert") + """
+      """ + GitBundle.message("apply.changes.operation.successful.for.commits", "revert", 1) + """
       ${commit2.id.toShortString()} ${commit2.subject}""")
     assertFalse("File should have been deleted", rFile.exists())
     repo.assertLatestSubjects("Revert \"${commit2.subject}\"")
@@ -148,9 +150,14 @@ class GitRevertTest : GitSingleRepoTest() {
 
     revertAutoCommit(commitToRevert)
 
-    assertWarningNotification("Reverted with conflicts", """
+    val notification = assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Revert"), """
       ${commitToRevert.id.toShortString()} ${commitToRevert.subject}
-      Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>""")
+      There are unresolved conflicts in the working tree.""")
+    assertEquals(2, notification.actions.size)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text"),
+                 notification.actions[0].templateText)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text", "Revert"),
+                 notification.actions[1].templateText)
   }
 
   fun `test revert with conflicts resolve in chain`() {
@@ -222,7 +229,12 @@ class GitRevertTest : GitSingleRepoTest() {
     `revert without auto-commit`(commit)
 
     val comment = commitMessageForRevert(commit)
-    val list = changeListManager.assertChangeListExists(comment)
+    val list = if (VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) {
+      changeListManager.assertChangeListExists(comment)
+    }
+    else {
+      changeListManager.defaultChangeList
+    }
     val data = list.data
     assertNull("There should be no author information in the changelist: $data", data)
   }

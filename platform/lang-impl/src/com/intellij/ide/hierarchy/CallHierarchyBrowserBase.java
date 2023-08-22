@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -20,7 +6,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,10 +19,16 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  public static final String CALLEE_TYPE = "Callees of {0}";
-  public static final String CALLER_TYPE = "Callers of {0}";
-
-  private static final String CALL_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.CallHierarchyBrowserBase";
+  /**
+   * @deprecated use {@link #getCalleeType()}
+   */
+  @Deprecated(forRemoval = true)
+  @NonNls public static final String CALLEE_TYPE = "Callees of {0}";
+  /**
+   * @deprecated use {@link #getCallerType()}
+   */
+  @Deprecated(forRemoval = true)
+  @NonNls public static final String CALLER_TYPE = "Callers of {0}";
 
   public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {
     super(project, method);
@@ -43,12 +38,6 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   @Nullable
   protected JPanel createLegendPanel() {
     return null;
-  }
-
-  @Override
-  @NotNull
-  protected String getBrowserDataKey() {
-    return CALL_HIERARCHY_BROWSER_DATA_KEY;
   }
 
   @Override
@@ -82,28 +71,33 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected Map<String, Supplier<String>> getPresentableNameMap() {
+  protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(CALLER_TYPE, CallHierarchyBrowserBase::getCallerType);
-    map.put(CALLEE_TYPE, CallHierarchyBrowserBase::getCalleeType);
+    map.put(getCallerType(), CallHierarchyBrowserBase::getCallerType);
+    map.put(getCalleeType(), CallHierarchyBrowserBase::getCalleeType);
     return map;
   }
 
-  private class ChangeViewTypeActionBase extends ToggleAction {
-    private final String myTypeName;
+  private final class ChangeViewTypeActionBase extends ToggleAction {
+    private final @Nls String myTypeName;
 
-    private ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(@NlsActions.ActionText String shortDescription, @NlsActions.ActionDescription String longDescription, Icon icon, @Nls String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
 
     @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return myTypeName.equals(getCurrentViewType());
     }
 
     @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       if (flag) {
         // invokeLater is called to update state of button before long tree building operation
         ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
@@ -111,7 +105,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       setEnabled(isValidBase());
     }
@@ -119,17 +113,17 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
+      super(IdeBundle.messagePointer("action.base.on.this.method"), LanguageCallHierarchy.INSTANCE);
     }
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getCalleeType() {
+  public static @NotNull @Nls String getCalleeType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callees.of");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getCallerType() {
+  public static @NotNull @Nls String getCallerType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callers.of");
   }
 }

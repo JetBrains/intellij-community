@@ -2,7 +2,7 @@ import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
 import groovy.transform.stc.FromString
 
-def <T> Object foo(List<? extends T> list, @ClosureParams(value = FromString, options = ["T"]) Closure<Boolean> cl) {
+def <T> Object foo(ArrayList<? extends T> list, @ClosureParams(value = FromString, options = ["T"]) Closure<Boolean> cl) {
   bar(list, cl)
 }
 

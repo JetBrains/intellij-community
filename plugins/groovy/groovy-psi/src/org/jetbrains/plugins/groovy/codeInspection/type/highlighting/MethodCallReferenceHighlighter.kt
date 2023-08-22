@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type.highlighting
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.generateCreateMethodActions
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.isClosureCall
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.*
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
@@ -31,11 +33,15 @@ class MethodCallReferenceHighlighter(
       return false
     }
     val propertyType = getReadPropertyType(result)
-    if (propertyType !is GroovyClosureType) {
+    if (propertyType !is GroovyClosureType && !InheritanceUtil.isInheritor(propertyType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
       highlightCannotApplyError(methodReference.methodName, argumentsString(arguments))
       return true
     }
-    return highlightClosureCall(propertyType, arguments)
+    if (propertyType is GroovyClosureType) {
+      return highlightClosureCall(propertyType, arguments)
+    }
+    // todo: @ClosureParams also induces restrictions on arguments
+    return false
   }
 
   /**

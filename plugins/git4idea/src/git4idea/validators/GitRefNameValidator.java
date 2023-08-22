@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.validators;
 
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,13 +29,31 @@ public final class GitRefNameValidator implements InputValidator {
     sb.append("]");
     CONTROL_CHARS = sb.toString();
   }
-  private static final Pattern ILLEGAL = Pattern.compile(
+
+  private static final Pattern REPLACE = Pattern.compile(
+    " +|" +                           // space
+    CONTROL_CHARS
+  );
+
+  private static final Pattern DROP = Pattern.compile(
     "(^\\.)|" +                             // begins with a dot
-    "(^-)|" +                                 // begins with '-'
-    "[ ~:\\^\\?\\*\\[\\\\]+|(@\\{)+|" +     // contains invalid character: space, one of ~:^?*[\ or @{ sequence
-    "(\\.\\.)+|" +                          // two dots in a row
-    "(([\\./]|\\.lock)$)|" +                // ends with dot, slash or ".lock"
-    CONTROL_CHARS                           // contains a control character
+    "(^-)|" +                               // begins with '-'
+    "(^/)|" +                               // begins with '/'
+    "[~:^?*\"\\[\\\\]+|(@\\{)+|" +          // invalid character: one of ~:^?*"[\ or @{ sequence
+    "/(?=/)|" +                             // has a double slash
+    "(\\.(?=\\.))+|" +                      // two dots in a row
+    "\\.(?=/)|" +                           // has a dot before slash in the middle
+    "(?<=/)\\.|"                            // has a dot after slash in the middle
+  );
+
+  private static final Pattern ENDPATTERNS = Pattern.compile(
+    "(([./]|\\.lock)$)|"                    // ends with dot, slash or ".lock"
+  );
+
+  private static final Pattern VALIDATEPATTERNS = Pattern.compile(
+    DROP.pattern() +
+    ENDPATTERNS.pattern() +
+    REPLACE.pattern()
   );
 
   public static GitRefNameValidator getInstance() {
@@ -59,7 +64,7 @@ public final class GitRefNameValidator implements InputValidator {
 
   @Override
   public boolean checkInput(String inputString) {
-    return !StringUtil.isEmptyOrSpaces(inputString) && !ILLEGAL.matcher(inputString).find();
+    return !StringUtil.isEmptyOrSpaces(inputString) && !VALIDATEPATTERNS.matcher(inputString).find();
   }
 
   @Override
@@ -69,6 +74,12 @@ public final class GitRefNameValidator implements InputValidator {
 
   @NotNull
   public String cleanUpBranchName(@NotNull String branchName) {
-    return branchName.replaceAll(ILLEGAL.pattern(), "_").replaceAll("\"", "");
+    return cleanUpBranchNameOnTyping(branchName).replaceAll(ENDPATTERNS.pattern(), "");
+  }
+
+  // On typing replace only space, drop other invalid chars.
+  @NotNull
+  public String cleanUpBranchNameOnTyping(@NotNull String branchName) {
+    return branchName.replaceAll(DROP.pattern(), "").replaceAll(REPLACE.pattern(), AdvancedSettings.getString("git.branch.cleanup.symbol"));
   }
 }

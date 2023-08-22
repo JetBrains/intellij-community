@@ -1,23 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
-public class DefaultVcsRootChecker extends VcsRootChecker {
+final class DefaultVcsRootChecker extends VcsRootChecker {
   @NotNull private final AbstractVcs myVcs;
-  private final VcsDescriptor myVcsDescriptor;
+  @Nullable private final VcsDescriptor myVcsDescriptor;
 
-  public DefaultVcsRootChecker(@NotNull AbstractVcs vcs) {
+  DefaultVcsRootChecker(@NotNull AbstractVcs vcs, @Nullable VcsDescriptor vcsDescriptor) {
     myVcs = vcs;
-    myVcsDescriptor = ProjectLevelVcsManager.getInstance(vcs.getProject()).getDescriptor(vcs.getName());
+    myVcsDescriptor = vcsDescriptor;
   }
 
   @NotNull
@@ -27,15 +24,13 @@ public class DefaultVcsRootChecker extends VcsRootChecker {
   }
 
   @Override
-  public boolean isRoot(@NotNull String path) {
+  public boolean isRoot(@NotNull VirtualFile file) {
     if (myVcsDescriptor == null) return false;
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
-    if (file == null) return false;
-    return myVcsDescriptor.probablyUnderVcs(file, false);
+    return myVcsDescriptor.probablyUnderVcs(file);
   }
 
   @Override
-  public boolean validateRoot(@NotNull String path) {
+  public boolean validateRoot(@NotNull VirtualFile file) {
     return true;
   }
 

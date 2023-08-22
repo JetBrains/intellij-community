@@ -9,9 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class SuppressByCommentFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   protected Class<? extends PsiElement> mySuppressionHolderClass;
 
@@ -24,7 +21,7 @@ public class SuppressByCommentFix extends AbstractBatchSuppressByNoInspectionCom
     mySuppressionHolderClass = suppressionHolderClass;
   }
 
-  private SuppressByCommentFix(final String ID) {
+  private SuppressByCommentFix(String ID) {
     super(ID, false);
   }
 

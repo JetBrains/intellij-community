@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findInProject;
 
 import com.intellij.find.FindManager;
@@ -9,7 +8,6 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -22,7 +20,7 @@ public class FindInProjectManager {
   private volatile boolean myIsFindInProgress;
 
   public static FindInProjectManager getInstance(Project project) {
-    return ServiceManager.getService(project, FindInProjectManager.class);
+    return project.getService(FindInProjectManager.class);
   }
 
   public FindInProjectManager(Project project) {
@@ -34,9 +32,8 @@ public class FindInProjectManager {
    * @param model would be used for search if not null, otherwise shared (project-level) model would be used
    */
   public void findInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
-
-    final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel;
+    FindManager findManager = FindManager.getInstance(myProject);
+    FindModel findModel;
     if (model != null) {
       findModel = model.clone();
     }
@@ -59,13 +56,12 @@ public class FindInProjectManager {
     startFindInProject(findModel);
   }
 
-  @SuppressWarnings("WeakerAccess")
   protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
+    FindInProjectUtil.setScope(myProject, findModel, dataContext);
 
     String text = PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext);
     if (text != null) {
-      FindModel.initStringToFindNoMultiline(findModel, text);
+      FindModel.initStringToFind(findModel, text);
     }
     else {
       FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
@@ -80,12 +76,11 @@ public class FindInProjectManager {
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
 
     if (manager == null) return;
-    final FindManager findManager = FindManager.getInstance(myProject);
+    FindManager findManager = FindManager.getInstance(myProject);
     findManager.getFindInProjectModel().copyFrom(findModel);
-    final FindModel findModelCopy = findModel.clone();
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
-    final FindUsagesProcessPresentation processPresentation =
-      FindInProjectUtil.setupProcessPresentation(myProject, presentation);
+    FindModel findModelCopy = findModel.clone();
+    UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
+    FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(presentation);
     ConfigurableUsageTarget usageTarget = new FindInProjectUtil.StringUsageTarget(myProject, findModel);
 
     ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(usageTarget);

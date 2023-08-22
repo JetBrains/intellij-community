@@ -2,7 +2,7 @@ class A {
     A() {
     }
 
-    static A newA() {
+    static A createA() {
         return new A();
     }
 }

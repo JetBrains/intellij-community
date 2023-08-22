@@ -21,6 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.BranchChangeListener;
@@ -35,6 +37,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -46,8 +49,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static git4idea.GitNotificationIdsHolder.BRANCH_OPERATION_SUCCESS;
 import static git4idea.GitUtil.getRepositoryManager;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -57,17 +60,17 @@ abstract class GitBranchOperation {
 
   protected static final Logger LOG = Logger.getInstance(GitBranchOperation.class);
 
-  @NotNull protected final Project myProject;
-  @NotNull protected final Git myGit;
-  @NotNull protected final GitBranchUiHandler myUiHandler;
-  @NotNull private final Collection<GitRepository> myRepositories;
-  @NotNull protected final Map<GitRepository, String> myCurrentHeads;
-  @NotNull protected final Map<GitRepository, String> myInitialRevisions;
-  @NotNull private final GitVcsSettings mySettings;
+  protected final @NotNull Project myProject;
+  protected final @NotNull Git myGit;
+  protected final @NotNull GitBranchUiHandler myUiHandler;
+  private final @NotNull Collection<GitRepository> myRepositories;
+  protected final @NotNull Map<GitRepository, String> myCurrentHeads;
+  protected final @NotNull Map<GitRepository, String> myInitialRevisions;
+  private final @NotNull GitVcsSettings mySettings;
 
-  @NotNull private final Collection<GitRepository> mySuccessfulRepositories;
-  @NotNull private final Collection<GitRepository> mySkippedRepositories;
-  @NotNull private final Collection<GitRepository> myRemainingRepositories;
+  private final @NotNull Collection<GitRepository> mySuccessfulRepositories;
+  private final @NotNull Collection<GitRepository> mySkippedRepositories;
+  private final @NotNull Collection<GitRepository> myRemainingRepositories;
 
   protected GitBranchOperation(@NotNull Project project, @NotNull Git git,
                                @NotNull GitBranchUiHandler uiHandler, @NotNull Collection<? extends GitRepository> repositories) {
@@ -76,7 +79,8 @@ abstract class GitBranchOperation {
     myUiHandler = uiHandler;
 
     myRepositories = getRepositoryManager(project).sortByDependency(repositories);
-    myCurrentHeads = ContainerUtil.newMapFromKeys(repositories.iterator(), repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
+    myCurrentHeads =
+      ContainerUtil.newMapFromKeys(repositories.iterator(), repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
     myInitialRevisions = ContainerUtil.newMapFromKeys(repositories.iterator(), GitRepository::getCurrentRevision);
     mySuccessfulRepositories = new ArrayList<>();
     mySkippedRepositories = new ArrayList<>();
@@ -88,41 +92,35 @@ abstract class GitBranchOperation {
 
   protected abstract void rollback();
 
-  @NotNull
-  public abstract String getSuccessMessage();
+  protected abstract @NotNull @NlsContexts.NotificationContent String getSuccessMessage();
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  protected abstract String getRollbackProposal();
+  protected abstract @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getRollbackProposal();
 
   /**
    * Returns a short downcased name of the operation.
    * It is used by some dialogs or notifications which are common to several operations.
    * Some operations (like checkout new branch) can be not mentioned in these dialogs, so their operation names would be not used.
    */
-  @NotNull
-  @Nls
-  protected abstract String getOperationName();
+  protected abstract @NotNull @Nls String getOperationName();
 
   /**
    * @return next repository that wasn't handled (e.g. checked out) yet.
    */
-  @NotNull
-  protected GitRepository next() {
+  protected final @NotNull GitRepository next() {
     return myRemainingRepositories.iterator().next();
   }
 
   /**
    * @return true if there are more repositories on which the operation wasn't executed yet.
    */
-  protected boolean hasMoreRepositories() {
+  protected final boolean hasMoreRepositories() {
     return !myRemainingRepositories.isEmpty();
   }
 
   /**
    * Marks repositories as successful, i.e. they won't be handled again.
    */
-  protected void markSuccessful(GitRepository... repositories) {
+  protected final void markSuccessful(GitRepository... repositories) {
     for (GitRepository repository : repositories) {
       mySuccessfulRepositories.add(repository);
       myRemainingRepositories.remove(repository);
@@ -132,7 +130,7 @@ abstract class GitBranchOperation {
   /**
    * Marks repositories as successful, i.e. they won't be handled again.
    */
-  protected void markSkip(GitRepository... repositories) {
+  protected final void markSkip(GitRepository... repositories) {
     for (GitRepository repository : repositories) {
       mySkippedRepositories.add(repository);
       myRemainingRepositories.remove(repository);
@@ -142,43 +140,38 @@ abstract class GitBranchOperation {
   /**
    * @return true if the operation has already succeeded in at least one of repositories.
    */
-  protected boolean wereSuccessful() {
+  protected final boolean wereSuccessful() {
     return !mySuccessfulRepositories.isEmpty();
   }
 
-  protected boolean wereSkipped() {
+  protected final boolean wereSkipped() {
     return !mySkippedRepositories.isEmpty();
   }
-  
-  @NotNull
-  protected Collection<GitRepository> getSuccessfulRepositories() {
+
+  protected final @NotNull Collection<GitRepository> getSuccessfulRepositories() {
     return mySuccessfulRepositories;
   }
 
-  @NotNull
-  protected Collection<GitRepository> getSkippedRepositories() {
+  protected final @NotNull Collection<GitRepository> getSkippedRepositories() {
     return mySkippedRepositories;
   }
 
-  @NotNull
-  protected String successfulRepositoriesJoined() {
+  protected final @NotNull @NlsSafe String successfulRepositoriesJoined() {
     return GitUtil.joinToHtml(mySuccessfulRepositories);
   }
-  
-  @NotNull
-  protected Collection<GitRepository> getRepositories() {
+
+  protected final @NotNull Collection<GitRepository> getRepositories() {
     return myRepositories;
   }
 
-  @NotNull
-  protected List<GitRepository> getRemainingRepositoriesExceptGiven(@NotNull final GitRepository currentRepository) {
+  protected final @NotNull List<GitRepository> getRemainingRepositoriesExceptGiven(final @NotNull GitRepository currentRepository) {
     List<GitRepository> repositories = new ArrayList<>(myRemainingRepositories);
     repositories.remove(currentRepository);
     return repositories;
   }
 
-  protected void notifySuccess(@NotNull String message) {
-    VcsNotifier.getInstance(myProject).notifySuccess(message);
+  protected void notifySuccess(@NotNull @NlsContexts.NotificationContent String message) {
+    VcsNotifier.getInstance(myProject).notifySuccess(BRANCH_OPERATION_SUCCESS, "", message);
   }
 
   protected void notifySuccess() {
@@ -192,32 +185,34 @@ abstract class GitBranchOperation {
   /**
    * Show fatal error as a notification or as a dialog with rollback proposal.
    */
-  protected void fatalError(@NotNull String title, @NotNull String message) {
-    if (wereSuccessful())  {
+  protected final void fatalError(@NotNull @NlsContexts.NotificationTitle String title,
+                                  @NotNull @NlsContexts.NotificationContent String message) {
+    if (wereSuccessful()) {
       showFatalErrorDialogWithRollback(title, message);
     }
     else {
-      showFatalNotification(title, message);
+      notifyError(title, message);
     }
   }
 
-  protected void showFatalErrorDialogWithRollback(@NotNull final String title, @NotNull final String message) {
+  protected final void fatalError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull GitCommandResult result) {
+    fatalError(title, result.getErrorOutputAsHtmlString());
+  }
+
+  protected final void showFatalErrorDialogWithRollback(@NotNull @NlsContexts.DialogTitle String title,
+                                                        @NotNull @NlsContexts.DialogMessage String message) {
     boolean rollback = myUiHandler.notifyErrorWithRollbackProposal(title, message, getRollbackProposal());
     if (rollback) {
       rollback();
     }
   }
 
-  protected void showFatalNotification(@NotNull String title, @NotNull String message) {
-    notifyError(title, message);
+  protected final void notifyError(@NotNull @NlsContexts.NotificationTitle String title,
+                                   @NotNull @NlsContexts.NotificationContent String message) {
+    myUiHandler.notifyError(title, message);
   }
 
-  protected void notifyError(@NotNull String title, @NotNull String message) {
-    VcsNotifier.getInstance(myProject).notifyError(title, message);
-  }
-
-  @NotNull
-  protected ProgressIndicator getIndicator() {
+  protected final @NotNull ProgressIndicator getIndicator() {
     return myUiHandler.getProgressIndicator();
   }
 
@@ -225,7 +220,7 @@ abstract class GitBranchOperation {
    * Display the error saying that the operation can't be performed because there are unmerged files in a repository.
    * Such error prevents checking out and creating new branch.
    */
-  protected void fatalUnmergedFilesError() {
+  protected final void fatalUnmergedFilesError() {
     if (wereSuccessful()) {
       showUnmergedFilesDialogWithRollback();
     }
@@ -238,7 +233,7 @@ abstract class GitBranchOperation {
    * Updates the recently visited branch in the settings.
    * This is to be performed after successful checkout operation.
    */
-  protected void updateRecentBranch() {
+  protected final void updateRecentBranch() {
     if (getRepositories().size() == 1) {
       GitRepository repository = myRepositories.iterator().next();
       String currentHead = myCurrentHeads.get(repository);
@@ -257,7 +252,7 @@ abstract class GitBranchOperation {
     }
   }
 
-  protected void notifyBranchWillChange() {
+  protected final void notifyBranchWillChange() {
     String currentBranch = ContainerUtil.getFirstItem(myCurrentHeads.values());
     if (currentBranch != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -267,9 +262,9 @@ abstract class GitBranchOperation {
     }
   }
 
-  protected void notifyBranchHasChanged(@Nullable String branchName) {
+  protected final void notifyBranchHasChanged(@Nullable String branchName) {
     if (branchName != null) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (myProject.isDisposed()) return;
         myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
       });
@@ -279,13 +274,11 @@ abstract class GitBranchOperation {
   /**
    * Returns the hash of the revision which was current before the start of this GitBranchOperation.
    */
-  @NotNull
-  protected String getInitialRevision(@NotNull GitRepository repository) {
+  protected final @NotNull String getInitialRevision(@NotNull GitRepository repository) {
     return myInitialRevisions.get(repository);
   }
 
-  @Nullable
-  private String getRecentCommonBranch() {
+  private @Nullable String getRecentCommonBranch() {
     String recentCommonBranch = null;
     for (String branch : myCurrentHeads.values()) {
       if (recentCommonBranch == null) {
@@ -309,7 +302,7 @@ abstract class GitBranchOperation {
     myUiHandler.showUnmergedFilesNotification(getOperationName(), getRepositories());
   }
 
-  protected void fatalLocalChangesError(@NotNull String reference) {
+  protected final void fatalLocalChangesError(@NotNull String reference) {
     String title = GitBundle.message("branch.operation.could.not.0.operation.name.1.reference", getOperationName(), reference);
     if (wereSuccessful()) {
       showFatalErrorDialogWithRollback(title, "");
@@ -322,23 +315,16 @@ abstract class GitBranchOperation {
    * If some repositories succeeded, shows a dialog with the list of these files and a proposal to rollback the operation of those
    * repositories.
    */
-  protected void fatalUntrackedFilesError(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+  protected final void fatalUntrackedFilesError(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    String operationName = getOperationName();
     if (wereSuccessful()) {
-      showUntrackedFilesDialogWithRollback(root, relativePaths);
+      boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(operationName, getRollbackProposal(), root, relativePaths);
+      if (ok) {
+        rollback();
+      }
     }
     else {
-      showUntrackedFilesNotification(root, relativePaths);
-    }
-  }
-
-  private void showUntrackedFilesNotification(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
-    myUiHandler.showUntrackedFilesNotification(getOperationName(), root, relativePaths);
-  }
-
-  private void showUntrackedFilesDialogWithRollback(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
-    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), root, relativePaths);
-    if (ok) {
-      rollback();
+      myUiHandler.showUntrackedFilesNotification(operationName, root, relativePaths);
     }
   }
 
@@ -346,14 +332,13 @@ abstract class GitBranchOperation {
    * For each of the given repositories looks to the diff between current branch and the given branch and converts it to the list of
    * local changes.
    */
-  @NotNull
-  Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<? extends GitRepository> repositories,
-                                                                            @NotNull String otherBranch) {
+  private @NotNull Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<? extends GitRepository> repositories,
+                                                                                             @NotNull String otherBranch) {
     Map<GitRepository, List<Change>> changes = new HashMap<>();
     for (GitRepository repository : repositories) {
       Collection<Change> diffWithWorkingTree = GitChangeUtils.getDiffWithWorkingTree(repository, otherBranch, false);
       if (diffWithWorkingTree != null) {
-        List<String> diff = ChangesUtil.getPaths(diffWithWorkingTree.stream()).map(FilePath::getPath).collect(toList());
+        List<String> diff = ChangesUtil.iteratePaths(diffWithWorkingTree).map(FilePath::getPath).toList();
         List<Change> changesInRepo = GitUtil.findLocalChangesForPaths(myProject, repository.getRoot(), diff, false);
         if (!changesInRepo.isEmpty()) {
           changes.put(repository, changesInRepo);
@@ -374,8 +359,7 @@ abstract class GitBranchOperation {
    * @param nextBranch                 Branch to compare with (the branch to be checked out, or the branch to be merged).
    * @return Repositories that have failed or would fail with the "local changes" error, together with these local changes.
    */
-  @NotNull
-  protected Pair<List<GitRepository>, List<Change>> getConflictingRepositoriesAndAffectedChanges(
+  protected final @NotNull Pair<List<GitRepository>, List<Change>> getConflictingRepositoriesAndAffectedChanges(
     @NotNull GitRepository currentRepository, @NotNull GitMessageWithFilesDetector localChangesOverwrittenBy,
     String currentBranch, String nextBranch) {
 
@@ -398,8 +382,7 @@ abstract class GitBranchOperation {
     return Pair.create(allConflictingRepositories, affectedChanges);
   }
 
-  @NotNull
-  protected static String stringifyBranchesByRepos(@NotNull Map<GitRepository, String> heads) {
+  protected static @NotNull String stringifyBranchesByRepos(@NotNull Map<GitRepository, String> heads) {
     MultiMap<String, VirtualFile> grouped = groupByBranches(heads);
     if (grouped.size() == 1) {
       return grouped.keySet().iterator().next();
@@ -410,8 +393,7 @@ abstract class GitBranchOperation {
     }, UIUtil.BR);
   }
 
-  @NotNull
-  private static MultiMap<String, VirtualFile> groupByBranches(@NotNull Map<GitRepository, String> heads) {
+  private static @NotNull MultiMap<String, VirtualFile> groupByBranches(@NotNull Map<GitRepository, String> heads) {
     MultiMap<String, VirtualFile> result = MultiMap.createLinked();
     List<GitRepository> sortedRepos = DvcsUtil.sortRepositories(heads.keySet());
     for (GitRepository repo : sortedRepos) {
@@ -419,5 +401,4 @@ abstract class GitBranchOperation {
     }
     return result;
   }
-
 }

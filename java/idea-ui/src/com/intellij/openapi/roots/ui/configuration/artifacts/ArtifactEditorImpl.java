@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -8,7 +8,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -59,7 +58,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class ArtifactEditorImpl implements ArtifactEditorEx {
+public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;
@@ -105,11 +104,12 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         queueValidation();
       }
     });
+    myOutputDirectoryField.getTextField().getAccessibleContext().setAccessibleName(JavaUiBundle.message("label.text.output.directory"));
     myShowSpecificContentOptionsGroup = createShowSpecificContentOptionsGroup();
     myShowSpecificContentOptionsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, myShowSpecificContentOptionsGroup).getComponent().show(myShowSpecificContentOptionsButton, 0, 0);
+        ActionManager.getInstance().createActionPopupMenu("ArtifactEditor", myShowSpecificContentOptionsGroup).getComponent().show(myShowSpecificContentOptionsButton, 0, 0);
       }
     });
     setOutputPath(outputPath);
@@ -189,7 +189,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   public JComponent createMainComponent() {
     myLayoutTreeComponent.initTree();
-    DataManager.registerDataProvider(myMainPanel, new TypeSafeDataProviderAdapter(new MyDataProvider()));
+    DataManager.registerDataProvider(myMainPanel, this);
 
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
@@ -221,7 +221,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     link.setUseIconAsLink(true);
     link.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         final JLabel label = new JLabel(JavaUiBundle.message("artifact.source.items.tree.tooltip"));
         label.setBorder(HintUtil.createHintBorder());
         label.setBackground(HintUtil.getInformationColor());
@@ -273,11 +273,11 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureArtifactEditor", createToolbarActionGroup(), true);
     JComponent toolbarComponent = toolbar.getComponent();
+    toolbar.setTargetComponent(treePanel);
     if (StartupUiUtil.isUnderDarcula()) {
       toolbarComponent.setBorder(new CustomLineBorder(0, 0, 1, 0));
     }
     leftPanel.add(toolbarComponent, BorderLayout.NORTH);
-    toolbar.updateActionsImmediately();
     rightTopPanel.setPreferredSize(new Dimension(-1, toolbarComponent.getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);
@@ -287,7 +287,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     final LayoutTree tree = myLayoutTreeComponent.getLayoutTree();
     new ShowAddPackagingElementPopupAction(this).registerCustomShortcutSet(CommonShortcuts.getNew(), tree);
-    PopupHandler.installPopupHandler(tree, createPopupActionGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree, createPopupActionGroup(), "ArtifactLayoutTreePopup");
     ToolTipManager.sharedInstance().registerComponent(tree);
     rebuildTries();
     return getMainComponent();
@@ -328,8 +328,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     toolbarActionGroup.add(new RemovePackagingElementAction(this));
     toolbarActionGroup.add(Separator.getInstance());
     toolbarActionGroup.add(new SortElementsToggleAction(this.getLayoutTreeComponent()));
-    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, "Move Up", "", IconUtil.getMoveUpIcon(), -1));
-    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, "Move Down", "", IconUtil.getMoveDownIcon(), 1));
+    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, UIBundle.message("move.up.action.name"), "", IconUtil.getMoveUpIcon(), -1));
+    toolbarActionGroup.add(new MovePackagingElementAction(myLayoutTreeComponent, UIBundle.message("move.down.action.name"), "", IconUtil.getMoveDownIcon(), 1));
     return toolbarActionGroup;
   }
 
@@ -360,7 +360,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     popupActionGroup.add(Separator.getInstance());
     popupActionGroup.add(new HideContentAction(this));
     popupActionGroup.add(new LayoutTreeNavigateAction(myLayoutTreeComponent));
-    popupActionGroup.add(new LayoutTreeFindUsagesAction(myLayoutTreeComponent, myProject, myContext.getParent()));
+    popupActionGroup.add(new LayoutTreeFindUsagesAction(myLayoutTreeComponent, myContext.getParent()));
 
     popupActionGroup.add(Separator.getInstance());
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
@@ -412,7 +412,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     doReplaceElement(pathToParent, element, replacement);
   }
 
-  private void doReplaceElement(final @NotNull String pathToParent, final @NotNull PackagingElement<?> element, final @Nullable PackagingElement replacement) {
+  private void doReplaceElement(final @NotNull String pathToParent, final @NotNull PackagingElement<?> element, final @Nullable PackagingElement<?> replacement) {
     myLayoutTreeComponent.editLayout(() -> {
       final CompositePackagingElement<?> parent = findCompositeElementByPath(pathToParent);
       if (parent == null) return;
@@ -448,6 +448,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
   @Override
   public void dispose() {
+    myPropertiesEditors.disposeUIResources();
     myDisposed = true;
   }
 
@@ -548,13 +549,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     return helpId != null ? helpId : "reference.settingsdialog.project.structure.artifacts";
   }
 
-  private class MyDataProvider implements TypeSafeDataProvider {
-    @Override
-    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-      if (ARTIFACTS_EDITOR_KEY.equals(key)) {
-        sink.put(ARTIFACTS_EDITOR_KEY, ArtifactEditorImpl.this);
-      }
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (ARTIFACTS_EDITOR_KEY.is(dataId)) {
+      return this;
     }
+    return null;
   }
 
 }

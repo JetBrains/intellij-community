@@ -19,13 +19,7 @@ package org.jetbrains.jps.api;
  * @author Eugene Zhuravlev
  */
 public interface GlobalOptions {
-  /**
-   * @deprecated The possibility to keep intermediate cache changes in-memory was dropped, so the option has no effect.
-   */
-  @Deprecated
-  String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";
 
-  String GENERATE_CLASSPATH_INDEX_OPTION = "generate.classpath.index";
   String COMPILE_PARALLEL_OPTION = "compile.parallel";
   String ALLOW_PARALLEL_AUTOMAKE_OPTION = "allow.parallel.automake";
   String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";
@@ -34,6 +28,7 @@ public interface GlobalOptions {
   String FALLBACK_JDK_HOME = "jps.fallback.jdk.home";
   String FALLBACK_JDK_VERSION = "jps.fallback.jdk.version";
   String REPORT_BUILD_STATISTICS = "jps.report.build.statistics";
+  String JPS_IN_WSL_OPTION = "jps.in.wsl";
 
   /**
    * Set this property to 'false' to disable default logging. By default the log is written to build.log file in the directory specified by {@link #LOG_DIR_OPTION}.
@@ -49,4 +44,17 @@ public interface GlobalOptions {
    * The path to external project config directory (used for external system projects).
    */
   String EXTERNAL_PROJECT_CONFIG = "external.project.config";
+
+  /**
+   * The path to optional localization language bundle currently used by IDE.
+   * This will allow JPS process to access bundle's resources and provide localized error/warning/diagnostic messages
+   */
+  String LANGUAGE_BUNDLE = "jps.language.bundle";
+
+  /**
+   * Environment variable set to UNIX timestamp, defined as the number of seconds, excluding leap seconds, since 01 Jan 1970 00:00:00 UTC.
+   * Should be used instead of a current time for build process to have deterministic timestamps in artifacts like installer distributions.
+   * See <a href="https://reproducible-builds.org/specs/source-date-epoch/">specification</a>
+   */
+  String BUILD_DATE_IN_SECONDS = "SOURCE_DATE_EPOCH";
 }

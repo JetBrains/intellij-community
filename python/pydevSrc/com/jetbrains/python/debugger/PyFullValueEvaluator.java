@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class PyFullValueEvaluator extends XFullValueEvaluator {
@@ -11,10 +12,8 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
 
   /**
    * @param linkText     text of the link what will be appended to a variables tree node text
-   * @param debugProcess
-   * @param expression
    */
-  protected PyFullValueEvaluator(String linkText, @NotNull PyFrameAccessor debugProcess, @NotNull String expression) {
+  protected PyFullValueEvaluator(@Nls String linkText, @NotNull PyFrameAccessor debugProcess, @NotNull String expression) {
     super(linkText);
     myDebugProcess = debugProcess;
     myExpression = expression;
@@ -29,6 +28,14 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
 
   @Override
   public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
+    doEvaluate(callback, false);
+  }
+
+  protected boolean isCopyValueCallback(XFullValueEvaluationCallback callback) {
+    return callback instanceof PyCopyValueEvaluationCallback;
+  }
+
+  protected void doEvaluate(@NotNull XFullValueEvaluationCallback callback, boolean doTrunc) {
     String expression = myExpression.trim();
     if (expression.isEmpty()) {
       callback.evaluated("");
@@ -37,12 +44,14 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        final PyDebugValue value = myDebugProcess.evaluate(expression, false, false);
+        final PyDebugValue value = myDebugProcess.evaluate(expression, false, doTrunc);
         if (value.getValue() == null) {
           throw new PyDebuggerException("Failed to Load Value");
         }
         callback.evaluated(value.getValue());
-        ApplicationManager.getApplication().invokeLater(() -> showCustomPopup(myDebugProcess, value));
+        if (!isCopyValueCallback(callback)) {
+          ApplicationManager.getApplication().invokeLater(() -> showCustomPopup(myDebugProcess, value));
+        }
       }
       catch (PyDebuggerException e) {
         callback.errorOccurred(e.getTracebackError());

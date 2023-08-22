@@ -9,13 +9,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.descriptors.ConfigFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author Alexey Kudravtsev
- */
 public class DeploymentUtilImpl extends DeploymentUtil {
   private static final Logger LOG = Logger.getInstance(DeploymentUtilImpl.class);
 
@@ -39,6 +37,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
 
   @Override
   @Nullable
+  @Nls
   public String getConfigFileErrorMessage(final ConfigFile configFile) {
     if (configFile.getVirtualFile() == null) {
       String path = FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(configFile.getUrl()));

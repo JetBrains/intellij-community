@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
@@ -7,61 +6,51 @@ import com.intellij.conversion.ComponentManagerSettings;
 import com.intellij.conversion.ModuleSettings;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements ModuleSettings {
+@ApiStatus.Internal
+public final class ModuleSettingsImpl extends SettingsXmlFile implements ModuleSettings {
   private final String myModuleName;
+  private final ConversionContextImpl context;
 
-  public ModuleSettingsImpl(Path moduleFile, ConversionContextImpl context) throws CannotConvertException {
-    super(moduleFile, context);
-    myModuleName = getModuleName(moduleFile);
-  }
+  ModuleSettingsImpl(@NotNull Path moduleFile, @NotNull ConversionContextImpl context) throws CannotConvertException {
+    super(moduleFile);
 
-  public static String getModuleName(Path moduleFile) {
-    return StringUtil.trimEnd(moduleFile.getFileName().toString(), ModuleFileType.DOT_DEFAULT_EXTENSION);
+    myModuleName = Strings.trimEnd(moduleFile.getFileName().toString(), ModuleFileType.DOT_DEFAULT_EXTENSION);
+    this.context = context;
   }
 
   @Override
-  @NotNull
-  public String getModuleName() {
+  public @NotNull String getModuleName() {
     return myModuleName;
   }
 
   @Override
-  @Nullable
-  public String getModuleType() {
+  public @Nullable String getModuleType() {
     return getRootElement().getAttributeValue(Module.ELEMENT_TYPE);
   }
 
   @Override
-  @NotNull
-  public File getModuleFile() {
-    return mySettingsFile.getFile().toFile();
-  }
-
-  @Override
-  @NotNull
-  public Collection<? extends Element> getFacetElements(@NotNull String facetTypeId) {
-    final Element facetManager = getComponentElement(JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME);
-    final ArrayList<Element> elements = new ArrayList<>();
-
+  public @NotNull Collection<Element> getFacetElements(@NotNull String facetTypeId) {
+    Element facetManager = getComponentElement(JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME);
+    ArrayList<Element> elements = new ArrayList<>();
     addFacetTypes(facetTypeId, facetManager, elements);
-
     return elements;
   }
 
@@ -69,7 +58,8 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     for (Element child : JDOMUtil.getChildren(parent, JpsFacetSerializer.FACET_TAG)) {
       if (facetTypeId.equals(child.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {
         elements.add(child);
-      } else {
+      }
+      else {
         addFacetTypes(facetTypeId, child, elements);
       }
     }
@@ -97,20 +87,17 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   }
 
   @Override
-  @NotNull
-  public String expandPath(@NotNull String path) {
-    return myContext.expandPath(path, this);
+  public @NotNull String expandPath(@NotNull String path) {
+    return context.expandPath(path, this);
   }
 
-  @NotNull
   @Override
-  public String collapsePath(@NotNull String path) {
+  public @NotNull String collapsePath(@NotNull String path) {
     return ConversionContextImpl.collapsePath(path, this);
   }
 
   @Override
-  @NotNull
-  public Collection<File> getSourceRoots(boolean includeTests) {
+  public @NotNull Collection<File> getSourceRoots(boolean includeTests) {
     final List<File> result = new ArrayList<>();
     for (Element contentRoot : getContentRootElements()) {
       for (Element sourceFolder : JDOMUtil.getChildren(contentRoot, JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG)) {
@@ -128,8 +115,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   }
 
   @Override
-  @NotNull
-  public Collection<File> getContentRoots() {
+  public @NotNull Collection<File> getContentRoots() {
     final List<File> result = new ArrayList<>();
     for (Element contentRoot : getContentRootElements()) {
       String path = VfsUtilCore.urlToPath(contentRoot.getAttributeValue(JpsModuleRootModelSerializer.URL_ATTRIBUTE));
@@ -139,9 +125,8 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   }
 
   @Override
-  @Nullable
-  public String getProjectOutputUrl() {
-    final ComponentManagerSettings rootManagerSettings = myContext.getProjectRootManagerSettings();
+  public @Nullable String getProjectOutputUrl() {
+    final ComponentManagerSettings rootManagerSettings = context.getProjectRootManagerSettings();
     final Element projectRootManager = rootManagerSettings == null ? null : rootManagerSettings.getComponentElement("ProjectRootManager");
     final Element outputElement = projectRootManager == null ? null : projectRootManager.getChild("output");
     return outputElement == null ? null : outputElement.getAttributeValue("url");
@@ -149,7 +134,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
 
   @Override
   public void addExcludedFolder(@NotNull File directory) {
-    final ComponentManagerSettings rootManagerSettings = myContext.getProjectRootManagerSettings();
+    final ComponentManagerSettings rootManagerSettings = context.getProjectRootManagerSettings();
     if (rootManagerSettings != null) {
       final Element projectRootManager = rootManagerSettings.getComponentElement("ProjectRootManager");
       if (projectRootManager != null) {
@@ -174,10 +159,9 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   }
 
   @Override
-  @NotNull
-  public List<File> getModuleLibraryRoots(String libraryName) {
-    final Element library = findModuleLibraryElement(libraryName);
-    return library != null ? myContext.getClassRoots(library, this) : Collections.emptyList();
+  public @NotNull List<Path> getModuleLibraryRoots(String libraryName) {
+    Element library = findModuleLibraryElement(libraryName);
+    return library == null ? Collections.emptyList() : context.getClassRootPaths(library, this);
   }
 
   @Override
@@ -185,12 +169,11 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return findModuleLibraryElement(libraryName) != null;
   }
 
-  @Nullable
-  private Element findModuleLibraryElement(String libraryName) {
+  private @Nullable Element findModuleLibraryElement(String libraryName) {
     for (Element element : getOrderEntries()) {
       if (JpsModuleRootModelSerializer.MODULE_LIBRARY_TYPE.equals(element.getAttributeValue(JpsModuleRootModelSerializer.TYPE_ATTRIBUTE))) {
-        final Element library = element.getChild(LibraryImpl.ELEMENT);
-        if (library != null && libraryName.equals(library.getAttributeValue(LibraryImpl.LIBRARY_NAME_ATTR))) {
+        final Element library = element.getChild(JpsLibraryTableSerializer.LIBRARY_TAG);
+        if (library != null && libraryName.equals(library.getAttributeValue(JpsLibraryTableSerializer.NAME_ATTRIBUTE))) {
           return library;
         }
       }
@@ -205,8 +188,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   }
 
   @Override
-  @NotNull
-  public Collection<ModuleSettings> getAllModuleDependencies() {
+  public @NotNull Collection<ModuleSettings> getAllModuleDependencies() {
     Set<ModuleSettings> dependencies = new HashSet<>();
     collectDependencies(dependencies);
     return dependencies;
@@ -221,7 +203,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
       if (JpsModuleRootModelSerializer.MODULE_TYPE.equals(element.getAttributeValue(JpsModuleRootModelSerializer.TYPE_ATTRIBUTE))) {
         final String moduleName = element.getAttributeValue(JpsModuleRootModelSerializer.MODULE_NAME_ATTRIBUTE);
         if (moduleName != null) {
-          final ModuleSettings moduleSettings = myContext.getModuleSettings(moduleName);
+          final ModuleSettings moduleSettings = context.getModuleSettings(moduleName);
           if (moduleSettings != null) {
             ((ModuleSettingsImpl)moduleSettings).collectDependencies(dependencies);
           }

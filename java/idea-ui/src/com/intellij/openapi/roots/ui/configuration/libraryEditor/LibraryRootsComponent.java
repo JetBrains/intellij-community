@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.CommonBundle;
@@ -29,6 +29,8 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentation
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnActionButton;
@@ -44,6 +46,7 @@ import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,12 +66,12 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private JPanel myPanel;
   private JPanel myTreePanel;
-  private MultiLineLabel myPropertiesLabel;
+  protected MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
-  private JPanel myBottomPanel;
+  private JLabel myBottomLabel;
   private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
-  private final ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
+  private ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private VirtualFile myLastChosen;
 
   private final Collection<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -79,7 +82,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private Module myContextModule;
   private LibraryRootsComponent.AddExcludedRootActionButton myAddExcludedRootActionButton;
   private StructureTreeModel<AbstractTreeStructure> myTreeModel;
-  private LibraryRootsComponentDescriptor.RootRemovalHandler myRootRemovalHandler;
+  private final LibraryRootsComponentDescriptor.RootRemovalHandler myRootRemovalHandler;
 
   public LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
     this(project, new Computable.PredefinedValueComputable<>(libraryEditor));
@@ -102,8 +105,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       myDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
     myRootRemovalHandler = myDescriptor.createRootRemovalHandler();
-    myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
-    myBottomPanel.add(BorderLayout.CENTER, myModificationOfImportedModelWarningComponent.getLabel());
     init(new LibraryTreeStructure(this, myDescriptor));
     updatePropertiesLabel();
     onRootsChanged();
@@ -125,21 +126,23 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   public void updatePropertiesLabel() {
-    StringBuilder text = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
     final LibraryType<?> type = getLibraryEditor().getType();
     final Set<LibraryKind> excluded =
       type != null ? Collections.singleton(type.getKind()) : Collections.emptySet();
-    for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
-                                                                                       excluded)) {
-      if (text.length() > 0) {
-        text.append("\n");
+    for (@Nls String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
+                                                                                            excluded)) {
+      if (sb.length() > 0) {
+        sb.append("\n");
       }
-      text.append(description);
+      sb.append(description);
     }
-    myPropertiesLabel.setText(text.toString());
+    @NlsSafe final String text = sb.toString();
+    myPropertiesLabel.setText(text);
   }
 
   private void init(AbstractTreeStructure treeStructure) {
+    myPropertiesLabel.setBorder(JBUI.Borders.empty(0, 10));
     myTreeModel = new StructureTreeModel<>(treeStructure, this);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
     asyncTreeModel.addTreeModelListener(new TreeModelAdapter() {
@@ -159,12 +162,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTree = new Tree(asyncTreeModel);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    new LibraryRootsTreeSpeedSearch(myTree);
+    LibraryRootsTreeSpeedSearch.installOn(myTree);
     myTree.setCellRenderer(new LibraryTreeRenderer());
     myTreePanel.setLayout(new BorderLayout());
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
-      .setPanelBorder(JBUI.Borders.empty())
       .setRemoveActionName(JavaUiBundle.message("library.remove.action"))
       .disableRemoveAction();
     final List<AttachRootButtonDescriptor> popupItems = new ArrayList<>();
@@ -191,20 +193,19 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         ApplicationManager.getApplication().runWriteAction(() -> {
           for (Object selectedElement : selectedElements) {
             LibraryEditor libraryEditor = getLibraryEditor();
-            if (selectedElement instanceof ItemElement) {
-              final ItemElement itemElement = (ItemElement)selectedElement;
+            if (selectedElement instanceof ItemElement itemElement) {
               libraryEditor.removeRoot(itemElement.getUrl(), itemElement.getRootType());
               myRootRemovalHandler.onRootRemoved(itemElement.getUrl(), itemElement.getRootType(), libraryEditor);
             }
-            else if (selectedElement instanceof OrderRootTypeElement) {
-              final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
+            else if (selectedElement instanceof OrderRootTypeElement orderRootTypeElement) {
+              final OrderRootType rootType = orderRootTypeElement.getOrderRootType();
               final String[] urls = libraryEditor.getUrls(rootType);
               for (String url : urls) {
                 libraryEditor.removeRoot(url, rootType);
               }
             }
-            else if (selectedElement instanceof ExcludedRootElement) {
-              libraryEditor.removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
+            else if (selectedElement instanceof ExcludedRootElement excludedRootElement) {
+              libraryEditor.removeExcludedRoot(excludedRootElement.getUrl());
             }
           }
         });
@@ -221,6 +222,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         else {
           presentation.setText(getTemplatePresentation().getText());
         }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -250,7 +256,10 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       }
     });
 
-    myTreePanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
+    JPanel panel = toolbarDecorator.createPanel();
+    panel.setBorder(null);
+
+    myTreePanel.add(panel, BorderLayout.CENTER);
   }
 
   public JComponent getComponent() {
@@ -333,6 +342,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     updateModificationOfImportedModelWarning();
   }
 
+  private void createUIComponents() {
+    myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
+    myBottomLabel = myModificationOfImportedModelWarningComponent.getLabel();
+  }
+
   @Nullable
   private static Object getPathElement(final TreePath selectionPath) {
     if (selectionPath == null) {
@@ -346,7 +360,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (!(userObject instanceof NodeDescriptor)) {
       return null;
     }
-    final Object element = ((NodeDescriptor)userObject).getElement();
+    final Object element = ((NodeDescriptor<?>)userObject).getElement();
     if (!(element instanceof LibraryTableTreeContentElement)) {
       return null;
     }
@@ -381,7 +395,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   @Override
   public void updateRootsTree() {
-    myTreeModel.invalidate();
+    myTreeModel.invalidateAsync();
   }
 
   @Nullable
@@ -398,7 +412,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AttachFilesAction extends AttachItemActionBase {
-    AttachFilesAction(String title) {
+    AttachFilesAction(@NlsActions.ActionText String title) {
       super(title);
     }
 
@@ -417,7 +431,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   public abstract class AttachItemActionBase extends DumbAwareAction {
-    protected AttachItemActionBase(String text) {
+    protected AttachItemActionBase(@NlsActions.ActionText String text) {
       super(text);
     }
 
@@ -446,7 +460,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private class AttachItemAction extends AttachItemActionBase {
     private final AttachRootButtonDescriptor myDescriptor;
 
-    protected AttachItemAction(AttachRootButtonDescriptor descriptor, String title, final Icon icon) {
+    protected AttachItemAction(AttachRootButtonDescriptor descriptor, @NlsActions.ActionText String title, final Icon icon) {
       super(title);
       getTemplatePresentation().setIcon(icon);
       myDescriptor = descriptor;
@@ -471,7 +485,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       ApplicationManager.getApplication().runWriteAction(() -> getLibraryEditor().addRoots(rootsToAttach));
       updatePropertiesLabel();
       onRootsChanged();
-      myTreeModel.invalidate();
+      myTreeModel.invalidateAsync();
     }
     return rootsToAttach;
   }
@@ -490,7 +504,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private void libraryChanged(boolean putFocusIntoTree) {
     onRootsChanged();
     updatePropertiesLabel();
-    myTreeModel.invalidate();
+    myTreeModel.invalidateAsync();
     if (putFocusIntoTree) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
     }
@@ -509,7 +523,14 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     ProjectModelExternalSource externalSource = libraryEditor.getExternalSource();
     if (externalSource != null && hasChanges()) {
       String name = libraryEditor instanceof ExistingLibraryEditor ? ((ExistingLibraryEditor)libraryEditor).getLibrary().getName() : libraryEditor.getName();
-      myModificationOfImportedModelWarningComponent.showWarning(name != null ? "Library '" + name + "'" : "Library", externalSource);
+      final String description;
+      if (name != null) {
+        description = JavaUiBundle.message("library.0", name);
+      }
+      else {
+        description = JavaUiBundle.message("configurable.library.prefix");
+      }
+      myModificationOfImportedModelWarningComponent.showWarning(description, externalSource);
     }
     else {
       myModificationOfImportedModelWarningComponent.hideWarning();
@@ -576,6 +597,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         myLastChosen = files[0];
         libraryChanged(true);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

@@ -3,11 +3,15 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author Mikhail Golubev
@@ -50,7 +54,6 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
         final String typeText = docString.getReturnType();
         if (StringUtil.isNotEmpty(typeText)) {
           final Ref<PyType> typeRef = parseType(callable, typeText, context);
-
           if (callable instanceof PyFunction) {
             return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded((PyFunction)callable, typeRef.get()));
           }
@@ -63,11 +66,12 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static Ref<PyType> parseType(@NotNull PyCallable callable, @NotNull String typeText, @NotNull TypeEvalContext context) {
+  private Ref<PyType> parseType(@NotNull PyCallable callable, @NotNull String typeText, @NotNull TypeEvalContext context) {
     final PyType type = PyTypeParser.getTypeByName(callable, typeText, context);
     if (type != null) {
       type.assertValid("from docstring");
     }
+    setTypeVarScopeOwners(type, callable, context);
     return Ref.create(type);
   }
 
@@ -77,17 +81,40 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    final PyFunction init = cls.findInitOrNew(true, context);
+    PyFunction init = cls.findInitOrNew(true, context);
     if (init != null) {
-      final PyCallableType callableType = PyUtil.as(context.getType(init), PyCallableType.class);
-      if (callableType != null) {
-        final PyType returnType = PyUtil.as(callableType.getReturnType(context), PyCollectionType.class);
-        if (returnType != null) {
-          return returnType;
-        }
+      PyType returnType = Ref.deref(getReturnType(init, context));
+      if (returnType instanceof PyCollectionType) {
+        return returnType;
       }
     }
 
     return null;
+  }
+
+  // A hack to update scope owners of type parameters parsed out of docstrings
+  private void setTypeVarScopeOwners(@Nullable PyType type, @NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    if (!(callable instanceof PyFunction pyFunction)) return;
+    PyTypeChecker.Generics typeParameters = PyTypeChecker.collectGenerics(type, context);
+    if (typeParameters.isEmpty()) return;
+
+    PyClass pyClass = pyFunction.getContainingClass();
+
+    Function<PyGenericType, PyQualifiedNameOwner> findScopeOwner = typeVar -> pyFunction;
+    if (PyUtil.isInitOrNewMethod(callable)) {
+      findScopeOwner = typeVar -> pyClass;
+    }
+    else if (pyClass != null) {
+      PyType classGenericType = getGenericType(pyClass, context);
+      if (classGenericType != null) {
+        PyTypeChecker.Generics classTypeParameters = PyTypeChecker.collectGenerics(classGenericType, context);
+        Set<String> classTypeVarNames = ContainerUtil.map2Set(classTypeParameters.getTypeVars(), PyGenericType::getName);
+        findScopeOwner = typeVar -> classTypeVarNames.contains(typeVar.getName()) ? pyClass : pyFunction;
+      }
+    }
+
+    for (PyGenericType typeVar : typeParameters.getAllTypeVars()) {
+      typeVar.setScopeOwner(findScopeOwner.apply(typeVar));
+    }
   }
 }

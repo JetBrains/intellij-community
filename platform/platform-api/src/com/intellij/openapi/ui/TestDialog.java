@@ -7,6 +7,7 @@ public interface TestDialog {
   TestDialog DEFAULT = message -> {
     throw new RuntimeException(message);
   };
+  TestDialog YES = __ -> Messages.YES;
   TestDialog OK = __ -> Messages.OK;
   TestDialog NO = __ -> Messages.NO;
 

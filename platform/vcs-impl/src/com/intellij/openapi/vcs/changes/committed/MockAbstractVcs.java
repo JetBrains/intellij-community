@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
@@ -14,9 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MockAbstractVcs extends AbstractVcs {
-  private static final String NAME = "mock";
+  private static final String NAME = "mock"; // NON-NLS
   private static final VcsKey ourKey = createKey(NAME);
-  private boolean myMarkExternalChangesAsCurrent = false;
   private CheckinEnvironment myCheckinEnvironment;
   private CommittedChangesProvider myCommittedChangesProvider;
   private DiffProvider myDiffProvider;
@@ -50,26 +48,12 @@ public class MockAbstractVcs extends AbstractVcs {
   @Override
   @NotNull
   public String getDisplayName() {
-    return getName();
-  }
-
-  @Override
-  public Configurable getConfigurable() {
-    return null;
+    return getName(); //NON-NLS
   }
 
   @Override
   public ChangeProvider getChangeProvider() {
     return myChangeProvider;
-  }
-
-  @Override
-  public boolean markExternalChangesAsUpToDate() {
-    return myMarkExternalChangesAsCurrent ;
-  }
-
-  public void setMarkExternalChangesAsCurrent(boolean value){
-    myMarkExternalChangesAsCurrent = value;
   }
 
   @Override

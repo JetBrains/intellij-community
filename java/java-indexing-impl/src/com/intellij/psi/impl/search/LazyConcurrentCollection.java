@@ -1,35 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSetQueue;
-import com.intellij.util.containers.Predicate;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Collection of elements of type V which is
@@ -51,25 +37,27 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
   // - 'candidatesToFindSubclassesIterator' points to the next element for which direct inheritors haven't been searched yet.
   // - 'subClassIterator' created in AllSubClassesLazyCollection.iterator() maintains state of the AllSubClassesLazyCollection iterator in a lazy fashion.
   //    If more elements requested for this iterator, the processMoreSubclasses() is called which tries to populate 'subClasses' with more inheritors.
-  private final HashSetQueue<T> subClasses; // guarded by lock
+  private final HashSetQueue<@NotNull T> subClasses = new HashSetQueue<>(); // guarded by lock
   private final Object lock = new Object(); // MUST NOT acquire read action inside this lock
   @NotNull private final Function<? super T, ? extends V> myAnchorToValueConvertor;
   @NotNull private final MoreElementsGenerator<? extends T, ? super V> myGenerator;
   @NotNull private final Predicate<? super V> myApplicableForGenerationFilter;
   private final Semaphore currentlyProcessingClasses = new Semaphore();
 
+  /**
+   * iterator for {@link #subClasses} queue. Points to the next unprocessed element (i.e the element for which the {@link #myGenerator} wasn't called yet)
+   */
   private final HashSetQueue.PositionalIterator<T> candidatesToFindSubclassesIterator; // guarded by lock
   // classes for which DirectClassInheritorsSearch is running
-  private final Set<T> classesBeingProcessed = new THashSet<>(); // guarded by lock
+  private final Set<T> classesBeingProcessed = new HashSet<>(); // guarded by lock
   // Classes for which DirectClassInheritorsSearch has already run (maybe in the other thread),
   // but candidatesToFindSubclassesIterator hasn't caught them up yet. Elements from this set are removed as the iterator moves.
-  private final Set<T> classesProcessed = new THashSet<>(); // guarded by lock
+  private final Set<T> classesProcessed = new HashSet<>(); // guarded by lock
 
   LazyConcurrentCollection(@NotNull T seedElement,
                            @NotNull Function<? super T, ? extends V> convertor,
                            @NotNull Predicate<? super V> applicableForGenerationFilter,
                            @NotNull MoreElementsGenerator<? extends T, ? super V> generator) {
-    subClasses = new HashSetQueue<>();
     subClasses.add(seedElement);
     myAnchorToValueConvertor = convertor;
     myGenerator = generator;
@@ -79,19 +67,21 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
 
   @FunctionalInterface
   interface MoreElementsGenerator<T,V> {
-    void generateMoreElementsFor(@NotNull V element, @NotNull Consumer<? super T> processor);
+    void generateMoreElementsFor(@NotNull V element, @NotNull Consumer<? super @NotNull T> processor);
   }
 
   @NotNull
   @Override
   public Iterator<V> iterator() {
-    return new Iterator<V>() {
+    return new Iterator<>() {
       private final Iterator<T> subClassIterator = subClasses.iterator(); // guarded by lock
+
       {
         synchronized (lock) {
           subClassIterator.next(); //skip the baseClass which stored in the subClasses first element
         }
       }
+
       @Override
       public boolean hasNext() {
         synchronized (lock) {
@@ -111,12 +101,12 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
         synchronized (lock) {
           next = subClassIterator.next();
         }
-        return myAnchorToValueConvertor.fun(next);
+        return myAnchorToValueConvertor.apply(next);
       }
     };
   }
 
-  // polls 'subClasses' for more sub classes and call generator.generateMoreElementsFor() on them
+  // polls 'subClasses' for more subclasses and call generator.generateMoreElementsFor() on them
   // adds found classes to "subClasses" queue
   // returns as soon as something was added
   private void processMoreSubclasses(@NotNull Iterator<T> subClassIterator) {
@@ -128,7 +118,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
           ProgressManager.checkCanceled();
           synchronized (lock) {
             // Find the classes in subClasses collection to operate on
-            // (without advancing the candidatesToFindSubclassesIterator iterator - it will be moved after the class successfully handled - to protect against PCE, INRE, etc)
+            // (without advancing the candidatesToFindSubclassesIterator iterator - it will be moved after the class successfully handled - to protect against PCE, INRE, etc.)
             // The found class will be marked as being analyzed - placed in classesBeingProcessed collection
             HashSetQueue.PositionalIterator.IteratorPosition<T> startPosition = candidatesToFindSubclassesIterator.position().next();
             Pair.NonNull<T,V> next = startPosition == null ? null : findNextClassInQueue(startPosition);
@@ -156,7 +146,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
 
         // aaaaaaaa! Other threads were unable to produce anything. That can be because:
         // - the whole queue has been processed. => exit, return false
-        // - the other thread has been interrupted. => check the queue again to pickup the work it dropped.
+        // - the other thread has been interrupted. => check the queue again to pick up the work it dropped.
         synchronized (lock) {
           advanceIteratorOnSuccess(); // to skip unsuitable classes like final etc from the queue
           if (!candidatesToFindSubclassesIterator.hasNext()) {
@@ -180,7 +170,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
           classesProcessed.add(anchor);
           advanceIteratorOnSuccess();
           if (subClassIterator.hasNext()) {
-            // we've added something to subClasses so we can return and the iterator can move forward at least once;
+            // we've added something to subClasses, so we can return and the iterator can move forward at least once;
             // more elements will be added on the subsequent call to .next()
             return;
           }
@@ -199,7 +189,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
     // Found nothing, have to wait for other threads because:
     // The first thread comes and takes a class off the queue to search for inheritors,
     // the second thread comes and sees there is no classes in the queue.
-    // The second thread should not return nothing, it should wait for the first thread to finish.
+    // The second thread should not return nothing, it should wait for the first thread to finish instead.
     //
     // Wait within managedBlock to signal FJP this thread is locked (to avoid thread starvation and deadlocks)
     AtomicBoolean hasNext = new AtomicBoolean();
@@ -239,8 +229,8 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
       ProgressManager.checkCanceled();
       T anchor = position.peek();
       if (!classesProcessed.contains(anchor) && !classesBeingProcessed.contains(anchor)) {
-        V value = myAnchorToValueConvertor.fun(anchor);
-        boolean isAccepted = value != null && myApplicableForGenerationFilter.apply(value);
+        V value = myAnchorToValueConvertor.apply(anchor);
+        boolean isAccepted = value != null && myApplicableForGenerationFilter.test(value);
         if (isAccepted) {
           return Pair.createNonNull(anchor, value);
         }

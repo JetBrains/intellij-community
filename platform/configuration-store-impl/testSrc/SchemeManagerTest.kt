@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.Disposer
@@ -19,26 +20,24 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Function
-
-internal const val FILE_SPEC = "REMOTE"
+import java.nio.file.Paths
+import kotlin.io.path.inputStream
 
 /**
  * Functionality without stream provider covered, ICS has own test suite
  */
 internal class SchemeManagerTest {
   companion object {
+    internal const val FILE_SPEC = "REMOTE"
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
@@ -51,11 +50,14 @@ internal class SchemeManagerTest {
   @Rule
   @JvmField
   val fsRule = InMemoryFsRule()
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
 
   private var localBaseDir: Path? = null
   private var remoteBaseDir: Path? = null
 
-  private fun getTestDataPath() = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/options"
+  private fun getTestDataPath(): Path = Paths.get(PlatformTestUtil.getCommunityPath(), "platform/platform-tests/testData/options")
 
   @Test fun loadSchemes() {
     doLoadSaveTest("options1", "1->first;2->second")
@@ -136,7 +138,7 @@ internal class SchemeManagerTest {
   @Test fun testGenerateUniqueSchemeName() {
     val manager = createAndLoad("options1")
     val scheme = TestScheme("first")
-    manager.addScheme(scheme, false)
+    manager.addScheme(scheme = scheme, replaceExisting = false)
 
     assertThat("first2").isEqualTo(scheme.name)
   }
@@ -168,8 +170,8 @@ internal class SchemeManagerTest {
     val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
       override val isExclusive = true
 
-      override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-        getFile(fileSpec).write(content, 0, size)
+      override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+        getFile(fileSpec).write(content)
       }
 
       override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -276,7 +278,7 @@ internal class SchemeManagerTest {
     doReloadTest(RemoveScheme::class.java)
   }
 
-  private fun doReloadTest(kind: Class<out SchemeChangeEvent>) {
+  private fun doReloadTest(kind: Class<out SchemeChangeEvent<*,*>>) {
     val dir = fsRule.fs.getPath("/test").createDirectories()
     fun writeScheme(index: Int, value: String): TestScheme {
       val name = "s$index"
@@ -285,8 +287,8 @@ internal class SchemeManagerTest {
       return TestScheme(name, data)
     }
 
-    var s1 = writeScheme(1, "foo")
-    var s2 = writeScheme(2, "foo")
+    var s1 = writeScheme(1, "initial data")
+    var s2 = writeScheme(2, "initial data")
 
     fun createVirtualFile(scheme: TestScheme): VirtualFile {
       val fileName = "${scheme.name}.xml"
@@ -298,23 +300,22 @@ internal class SchemeManagerTest {
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).containsExactly(s1, s2)
 
-    s1 = writeScheme(1, "bar")
-    s2 = writeScheme(2, "bar")
+    s1 = writeScheme(1, "new data")
+    s2 = writeScheme(2, "new data")
 
-    @Suppress("UNCHECKED_CAST")
-    val schemeChangeApplicator = SchemeChangeApplicator(schemeManager as SchemeManagerImpl<Any, Any>)
+    val schemeChangeApplicator = SchemeChangeApplicator(schemeManager)
     if (kind == UpdateScheme::class.java) {
       schemeChangeApplicator.reload(listOf(UpdateScheme(createVirtualFile(s1)), UpdateScheme(createVirtualFile(s2))))
     }
     else {
       val sF2 = createVirtualFile(s2)
-      val updateEventS1 = UpdateScheme(createVirtualFile(s1))
-      val updateEventS2 = UpdateScheme(sF2)
+      val updateEventS1 = UpdateScheme<TestScheme,TestScheme>(createVirtualFile(s1))
+      val updateEventS2 = UpdateScheme<TestScheme,TestScheme>(sF2)
       val events = listOf(updateEventS1, RemoveScheme(sF2.name), updateEventS2)
 
       assertThat(sortSchemeChangeEvents(events)).containsExactly(updateEventS1, updateEventS2)
 
-      val removeAllSchemes = RemoveAllSchemes()
+      val removeAllSchemes = RemoveAllSchemes<TestScheme,TestScheme>()
       assertThat(sortSchemeChangeEvents(listOf(updateEventS1, RemoveScheme("foo"), updateEventS2, removeAllSchemes))).containsExactly(removeAllSchemes)
       assertThat(sortSchemeChangeEvents(listOf(updateEventS1, RemoveScheme("foo"), removeAllSchemes, updateEventS2))).containsExactly(removeAllSchemes, updateEventS2)
       assertThat(sortSchemeChangeEvents(listOf(removeAllSchemes, updateEventS2, RemoveScheme(sF2.name)))).containsExactly(removeAllSchemes, RemoveScheme(sF2.name))
@@ -423,8 +424,8 @@ internal class SchemeManagerTest {
   @Test fun `save only if scheme differs from bundled`() {
     val dir = tempDirManager.newPath()
     var schemeManager = createSchemeManager(dir)
-    val bundledPath = "/com/intellij/configurationStore/bundledSchemes/default"
-    schemeManager.loadBundledScheme(bundledPath, this)
+    val bundledPath = "/com/intellij/configurationStore/bundledSchemes/default.xml"
+    schemeManager.loadBundledScheme(bundledPath, this, null)
     val customScheme = TestScheme("default")
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)
 
@@ -442,7 +443,7 @@ internal class SchemeManagerTest {
     assertThat(dir.resolve("default.xml")).isRegularFile()
 
     schemeManager = createSchemeManager(dir)
-    schemeManager.loadBundledScheme(bundledPath, this)
+    schemeManager.loadBundledScheme(bundledPath, this, null)
     schemeManager.loadSchemes()
 
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)
@@ -543,7 +544,7 @@ internal class SchemeManagerTest {
     try {
       val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
         @Suppress("UNCHECKED_CAST")
-        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, projectRule.project)
+        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
         ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
       })
 
@@ -570,28 +571,22 @@ internal class SchemeManagerTest {
 
   @Test
   fun `VFS - vf resolver`() {
-    val dir = tempDirManager.newPath(refreshVfs = true)
-    val busDisposable = Disposer.newDisposable()
-    try {
-      val requestedPaths = linkedSetOf<String>()
-      val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = null, virtualFileResolver = object: VirtualFileResolver {
-        override fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation): VirtualFile? {
-          requestedPaths.add(PathUtil.getFileName(path))
-          return super.resolveVirtualFile(path, reasonOperation)
-        }
-      })
+    val dir = tempDirManager.newPath()
+    val requestedPaths = linkedSetOf<String>()
+    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = null, virtualFileResolver = object: VirtualFileResolver {
+      override fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation): VirtualFile? {
+        requestedPaths.add(PathUtil.getFileName(path))
+        return super.resolveVirtualFile(path, reasonOperation)
+      }
+    })
 
-      val a = TestScheme("a", "a")
-      val b = TestScheme("b", "b")
-      schemeManager.setSchemes(listOf(a, b))
-      runInEdtAndWait { schemeManager.save() }
+    val a = TestScheme("a", "a")
+    val b = TestScheme("b", "b")
+    schemeManager.setSchemes(listOf(a, b))
+    runInEdtAndWait { schemeManager.save() }
 
-      schemeManager.reload()
-      assertThat(requestedPaths).containsExactly("VFS - vf resolver")
-    }
-    finally {
-      Disposer.dispose(busDisposable)
-    }
+    schemeManager.reload()
+    assertThat(requestedPaths).containsExactly(dir.fileName.toString())
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
@@ -599,10 +594,13 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must be system-independent`() {
+    DefaultLogger.disableStderrDumping(disposableRule.disposable)
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
-  private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir)
+  private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> {
+    return SchemeManagerImpl(fileSpec = FILE_SPEC, processor = TestSchemeProcessor(), provider = null, ioDirectory = dir)
+  }
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -631,13 +629,13 @@ internal class SchemeManagerTest {
     val temp = tempDirManager.newPath()
     localBaseDir = temp.resolve("__local")
     remoteBaseDir = temp
-    FileUtil.copyDir(File("${getTestDataPath()}/$testData"), temp.resolve("REMOTE").toFile())
+    FileUtil.copyDir(getTestDataPath().resolve(testData).toFile(), temp.resolve("REMOTE").toFile())
   }
 }
 
 private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean) {
   val filesToScheme = StringUtil.split(expected, ";")
-  val fileToSchemeMap = Object2ObjectOpenHashMap<String, String>()
+  val fileToSchemeMap = HashMap<String, String>()
   for (fileToScheme in filesToScheme) {
     val index = fileToScheme.indexOf("->")
     fileToSchemeMap.put(fileToScheme.substring(0, index), fileToScheme.substring(index + 2))
@@ -665,7 +663,8 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
+data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:JvmField var name: String = "",
+                      @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
   override fun getName() = name
 
   override fun setName(value: String) {
@@ -678,7 +677,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
 open class TestSchemeProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
   override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>,
                             name: String,
-                            attributeProvider: Function<in String, String?>,
+                            attributeProvider: (String) -> String?,
                             isBundled: Boolean): TestScheme {
     val scheme = dataHolder.read().deserialize(TestScheme::class.java)
     dataHolder.updateDigest(scheme)

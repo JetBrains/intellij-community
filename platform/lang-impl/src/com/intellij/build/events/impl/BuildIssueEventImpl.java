@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.MessageEventResult;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssueEvent {
+public final class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssueEvent {
   private final BuildIssue myIssue;
   private final Kind myKind;
 
@@ -47,7 +48,7 @@ public class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssu
   @NotNull
   @Override
   public String getGroup() {
-    return "Build issues";
+    return LangBundle.message("build.event.title.build.issues");
   }
 
   @Nullable

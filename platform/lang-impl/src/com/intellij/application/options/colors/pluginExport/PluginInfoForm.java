@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.pluginExport;
 
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class PluginInfoForm {
+public final class PluginInfoForm {
   private JTextField myVendorMailField;
   private JTextField myVendorNameField;
   private JBTextField myVendorUrl;
@@ -50,11 +50,11 @@ public class PluginInfoForm {
   private static EditorTextField createDescriptionEditor() {
     EditorTextField descriptionEditor = new EditorTextField() {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         EditorEx editor = super.createEditor();
         editor.getSettings().setUseSoftWraps(true);
         editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        editor.setColorsScheme(EditorColorsUtil.getColorSchemeForComponent(this));
+        editor.setColorsScheme(editor.createBoundColorSchemeDelegate(EditorColorsUtil.getColorSchemeForComponent(this)));
         return editor;
       }
     };

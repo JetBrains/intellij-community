@@ -1,16 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -33,7 +35,7 @@ import java.util.List;
  */
 public class ViewTextAction extends XFetchValueActionBase {
   @Override
-  protected void handle(Project project, String value, XDebuggerTree tree) {}
+  protected void handle(Project project, String value, XDebuggerTree tree) { }
 
   @NotNull
   @Override
@@ -45,6 +47,7 @@ public class ViewTextAction extends XFetchValueActionBase {
       @Override
       public void handleInCollector(Project project, String value, XDebuggerTree tree) {
         // do not unquote here! Value here must be correct already
+        //noinspection UnnecessaryLocalVariable
         String text = value; //StringUtil.unquoteString(value);
         if (dialog == null) {
           dialog = new MyDialog(project, text, node);
@@ -62,6 +65,11 @@ public class ViewTextAction extends XFetchValueActionBase {
     if (getStringNode(e) != null) {
       e.getPresentation().setText(ActionsBundle.messagePointer("action.Debugger.ViewEditText.text"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static XValueNodeImpl getStringNode(@NotNull AnActionEvent e) {
@@ -86,7 +94,7 @@ public class ViewTextAction extends XFetchValueActionBase {
   //  dialog.show();
   //}
 
-  private static class MyDialog extends DialogWrapper {
+  private static final class MyDialog extends DialogWrapper {
     private final TextViewer myTextViewer;
     private final XValueNodeImpl myStringNode;
 
@@ -121,7 +129,7 @@ public class ViewTextAction extends XFetchValueActionBase {
         DebuggerUIUtil.setTreeNodeValue(myStringNode,
                                         XExpressionImpl.fromText(
                                           StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myTextViewer.getText()))),
-                                        errorMessage -> Messages.showErrorDialog(myStringNode.getTree(), errorMessage));
+                                        (@NlsContexts.DialogMessage String errorMessage) -> Messages.showErrorDialog(myStringNode.getTree(), errorMessage));
       }
       super.doOKAction();
     }

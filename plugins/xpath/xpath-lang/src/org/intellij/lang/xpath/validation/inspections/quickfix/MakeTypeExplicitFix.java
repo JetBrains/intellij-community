@@ -23,10 +23,11 @@ import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathFunctionCall;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
-    private final XPathType myType;
+    @SafeFieldForPreview private final XPathType myType;
 
     public MakeTypeExplicitFix(XPathExpression expression, XPathType type) {
         super(expression);
@@ -36,13 +37,13 @@ public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
     @Override
     @NotNull
     public String getText() {
-        return "Make Type Conversion Explicit";
+        return getFamilyName();
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-        return "ImplicitTypeConversion";
+        return XPathBundle.message("intention.family.name.make.type.conversion.explicit");
     }
 
     @Override

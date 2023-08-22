@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.maddyhome.idea.copyright.options;
 
@@ -29,7 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExternalOptionHelper {
+public final class ExternalOptionHelper {
 
 
   @Nullable
@@ -45,8 +31,8 @@ public class ExternalOptionHelper {
         for (Element component : root.getChildren("component")) {
           String name = component.getAttributeValue("name");
           if (name.equals("CopyrightManager")) {
-            for (Object o : component.getChildren("copyright")) {
-              extractNewNoticeAndKeyword((Element)o, profiles);
+            for (Element o : component.getChildren("copyright")) {
+              extractNewNoticeAndKeyword(o, profiles);
             }
           }
           else if (name.equals("copyright")) {
@@ -66,10 +52,10 @@ public class ExternalOptionHelper {
   public static void extractNoticeAndKeyword(Element valueElement, List<? super CopyrightProfile> profiles) {
     CopyrightProfile profile = new CopyrightProfile();
     boolean extract = false;
-    for (Object l : valueElement.getChildren("LanguageOptions")) {
-      if (((Element)l).getAttributeValue("name").equals("__TEMPLATE__")) {
-        for (Object o1 : ((Element)l).getChildren("option")) {
-          extract |= extract(profile, (Element)o1);
+    for (Element l : valueElement.getChildren("LanguageOptions")) {
+      if (l.getAttributeValue("name").equals("__TEMPLATE__")) {
+        for (Element o1 : l.getChildren("option")) {
+          extract |= extract(profile, o1);
         }
         break;
       }
@@ -80,8 +66,8 @@ public class ExternalOptionHelper {
   public static void extractNewNoticeAndKeyword(Element valueElement, List<? super CopyrightProfile> profiles) {
     CopyrightProfile profile = new CopyrightProfile();
     boolean extract = false;
-    for (Object l : valueElement.getChildren("option")) {
-      extract |= extract(profile, (Element)l);
+    for (Element l : valueElement.getChildren("option")) {
+      extract |= extract(profile, l);
     }
     if (extract) profiles.add(profile);
   }

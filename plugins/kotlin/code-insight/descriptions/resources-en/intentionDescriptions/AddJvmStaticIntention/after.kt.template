@@ -1,0 +1,4 @@
+object Example {
+    <spot>@JvmStatic</spot>
+    fun main(args: Array<String>) {}
+}

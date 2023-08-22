@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.testFramework.TestDataPath;
-import icons.DevkitIcons;
+import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.util.Collections;
@@ -38,8 +38,8 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends Descriptio
     List<GutterMark> gutters = myFixture.findAllGutters("MyIntentionActionWithDescription.java");
     assertThat(gutters.size()).isEqualTo(2);
     Collections.sort(gutters, Comparator.comparing(GutterMark::getTooltipText));
-    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(1), "Description", DevkitIcons.Gutter.DescriptionFile, "description.html");
-    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", DevkitIcons.Gutter.Diff,
+    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(1), "Description", DevKitIcons.Gutter.DescriptionFile, "description.html");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", DevKitIcons.Gutter.Diff,
                                                   "after.java.template", "before.java.template");
   }
 }

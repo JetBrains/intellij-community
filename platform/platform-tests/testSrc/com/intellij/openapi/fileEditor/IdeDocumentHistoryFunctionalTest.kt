@@ -21,6 +21,16 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
     myFixture.type(' ')
     moveCaret4LinesDown()
 
+    myFixture.checkResult("""
+       line1
+
+
+
+      l ine2
+
+
+
+      li<caret>ne3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
     myFixture.checkResult("""
        line1
@@ -65,6 +75,78 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
 
 
       line3""".trimIndent())
+  }
+
+  fun testNavigateBetweenEditLocationsWithMultiCaret() {
+    myFixture.configureByText("${getTestName(false)}.txt", """
+      <caret>li<caret>ne1
+      -------
+      -------
+      -------
+      line2
+      -------
+      -------
+      -------
+      longer_line3""".trimIndent())
+    myFixture.type("AAA")
+    moveCaret4LinesDown()
+    myFixture.type("BBB")
+    moveCaret4LinesDown()
+
+    myFixture.checkResult("""
+      AAAliAAAne1
+      -------
+      -------
+      -------
+      linBBBe2BBB
+      -------
+      -------
+      -------
+      longer<caret>_line<caret>3""".trimIndent())
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
+    myFixture.checkResult("""
+      AAAliAAAne1
+      -------
+      -------
+      -------
+      linBBB<caret>e2BBB<caret>
+      -------
+      -------
+      -------
+      longer_line3""".trimIndent())
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
+    myFixture.checkResult("""
+      AAA<caret>liAAA<caret>ne1
+      -------
+      -------
+      -------
+      linBBBe2BBB
+      -------
+      -------
+      -------
+      longer_line3""".trimIndent())
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_NEXT_CHANGE)
+    myFixture.checkResult("""
+      AAAliAAAne1
+      -------
+      -------
+      -------
+      linBBB<caret>e2BBB<caret>
+      -------
+      -------
+      -------
+      longer_line3""".trimIndent())
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_NEXT_CHANGE)
+    myFixture.checkResult("""
+      AAAliAAAne1
+      -------
+      -------
+      -------
+      linBBB<caret>e2BBB<caret>
+      -------
+      -------
+      -------
+      longer_line3""".trimIndent())
   }
 
   fun testForwardToANearPlace() {

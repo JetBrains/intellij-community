@@ -1,7 +1,7 @@
 package pkg;
 
 public class TestClassVar {
-   private boolean field_boolean = Math.random() > 0.0D;
+   private boolean field_boolean = Math.random() > 0.0;
    public int field_int = 0;
 
    public void testFieldSSAU() {

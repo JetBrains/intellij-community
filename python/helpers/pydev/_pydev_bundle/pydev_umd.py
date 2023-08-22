@@ -34,8 +34,8 @@ import os
 import sys
 
 from _pydev_bundle import pydev_imports
-from pydevd_file_utils import get_fullname, rPath
 from _pydevd_bundle.pydevd_utils import save_main_module
+from pydevd_file_utils import get_fullname, rPath
 
 
 # The following classes and functions are mainly intended to be used from

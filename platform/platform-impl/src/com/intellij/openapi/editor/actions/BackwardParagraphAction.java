@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.DocumentUtil.isLineEmpty;
 
@@ -19,18 +18,15 @@ public class BackwardParagraphAction extends EditorAction {
     super(new Handler(false));
   }
 
-  static class Handler extends EditorActionHandler {
+  static class Handler extends EditorActionHandler.ForEachCaret {
     private final boolean myWithSelection;
 
     Handler(boolean withSelection) {
-      super(true);
       myWithSelection = withSelection;
     }
 
     @Override
-    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      assert  caret != null;
-
+    protected void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       Document document = editor.getDocument();
       int currentLine = caret.getLogicalPosition().line;
       boolean atLineStart = caret.getLogicalPosition().column == 0;

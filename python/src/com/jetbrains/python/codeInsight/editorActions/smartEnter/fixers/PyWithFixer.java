@@ -18,11 +18,12 @@ package com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithItem;
 import com.jetbrains.python.psi.PyWithStatement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -38,34 +39,38 @@ public class PyWithFixer extends PyFixer<PyWithStatement> {
 
   @Override
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyWithStatement withStatement) throws IncorrectOperationException {
-    final PsiElement colonToken = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.COLON);
     final PsiElement withToken = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.WITH_KEYWORD);
+    assert withToken != null;
     final Document document = editor.getDocument();
-    if (colonToken == null && withToken != null) {
-      int insertAt = withToken.getTextRange().getEndOffset();
-      String textToInsert = ":";
-      final PyWithItem lastItem = ArrayUtil.getLastElement(withStatement.getWithItems());
-      if (lastItem == null || lastItem.getExpression() == null) {
-        textToInsert = " :";
-        processor.registerUnresolvedError(insertAt + 1);
-      }
-      else {
-        final PyExpression expression = lastItem.getExpression();
-        insertAt = expression.getTextRange().getEndOffset();
-        final PsiElement asToken = PyPsiUtils.getFirstChildOfType(lastItem, PyTokenTypes.AS_KEYWORD);
-        if (asToken != null) {
-          insertAt = asToken.getTextRange().getEndOffset();
-          final PyExpression target = lastItem.getTarget();
-          if (target != null) {
-            insertAt = target.getTextRange().getEndOffset();
+    final PsiElement colonToken = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.COLON);
+    if (colonToken == null) {
+      PsiElement closingParenthesis = PyPsiUtils.getFirstChildOfType(withStatement, PyTokenTypes.RPAR);
+      PyWithItem lastWithItem = ArrayUtil.getLastElement(withStatement.getWithItems());
+      PsiElement rightmostElement = closingParenthesis != null ? closingParenthesis :
+                                    lastWithItem != null ? lastWithItem :
+                                    withToken;
+      document.insertString(rightmostElement.getTextRange().getEndOffset(), ":");
+    }
+
+    if (withStatement.getWithItems().length != 0) {
+      for (PyWithItem withItem : withStatement.getWithItems()) {
+        final PsiElement asToken = PyPsiUtils.getFirstChildOfType(withItem, PyTokenTypes.AS_KEYWORD);
+        if (asToken != null && withItem.getTarget() == null) {
+          int asKeywordEndOffset = asToken.getTextRange().getEndOffset();
+          if (!(PsiTreeUtil.nextLeaf(asToken, true) instanceof PsiWhiteSpace)) {
+            document.insertString(asKeywordEndOffset," ");
           }
-          else {
-            textToInsert = " :";
-            processor.registerUnresolvedError(insertAt + 1);
-          }
+          processor.registerUnresolvedError(asKeywordEndOffset + 1);
+          break;
         }
       }
-      document.insertString(insertAt, textToInsert);
+    }
+    else {
+      int withKeywordEndOffset = withToken.getTextRange().getEndOffset();
+      if (!(PsiTreeUtil.nextLeaf(withToken, true) instanceof PsiWhiteSpace)) {
+        document.insertString(withKeywordEndOffset, " ");
+        processor.registerUnresolvedError(withKeywordEndOffset + 1);
+      }
     }
   }
 }

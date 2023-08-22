@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic
 
-import com.intellij.internal.statistic.eventLog.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 
 interface TestStatisticsEventsValidator {
   fun validateAll(events: List<LogEvent>)
@@ -37,6 +37,15 @@ private class EventDataNotExistsValidator(vararg fields: String) : SimpleTestSta
   }
 }
 
+private class EventDataValidator(val name: String, val value: Any, val condition: ((LogEvent) -> Boolean)? = null) : SimpleTestStatisticsEventValidator() {
+  override fun validate(event: LogEvent) {
+    if (condition == null || condition.invoke(event)) {
+      val actual = event.event.data[name]
+      assert(value == actual) { "Event data value is different from expected, expected: '$value', actual: $actual" }
+    }
+  }
+}
+
 private class EventIdValidator(val eventId: String) : SimpleTestStatisticsEventValidator() {
   override fun validate(event: LogEvent) {
     val actual = event.event.id
@@ -67,6 +76,11 @@ class TestStatisticsEventValidatorBuilder {
 
   fun hasEventId(eventId: String): TestStatisticsEventValidatorBuilder {
     validators.add(EventIdValidator(eventId))
+    return this
+  }
+
+  fun hasField(name: String, value: Any, condition: ((LogEvent) -> Boolean)? = null): TestStatisticsEventValidatorBuilder {
+    validators.add(EventDataValidator(name, value, condition))
     return this
   }
 

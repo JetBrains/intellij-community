@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,9 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 
-public class NSWorkspace {
-  @Nullable
-  public static String absolutePathForAppBundleWithIdentifier(@NotNull String bundleID) {
+public final class NSWorkspace {
+  public static @Nullable String absolutePathForAppBundleWithIdentifier(@NotNull String bundleID) {
     NSAutoreleasePool pool = new NSAutoreleasePool();
     try {
       ID workspace = getInstance();
@@ -20,8 +19,7 @@ public class NSWorkspace {
     }
   }
 
-  @NotNull
-  public static ID getInstance() {
+  public static @NotNull ID getInstance() {
     return invoke(getObjcClass("NSWorkspace"), "sharedWorkspace");
   }
 }

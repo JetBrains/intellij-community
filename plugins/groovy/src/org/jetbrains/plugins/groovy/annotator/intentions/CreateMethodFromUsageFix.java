@@ -1,15 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -24,9 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
-/**
- * @author ven
- */
+import java.util.List;
+
 public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implements IntentionAction {
 
   public CreateMethodFromUsageFix(@NotNull GrReferenceExpression refExpression) {
@@ -46,10 +48,39 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
   }
 
   @Override
-  protected void invokeImpl(Project project, @NotNull PsiClass targetClass) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    final List<PsiClass> classes = getTargetClasses();
+    if (classes.size() == 0) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    Data data = generateMethod(classes.get(0), true);
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, "", data.method.getText());
+  }
+
+  @Override
+  protected final void invokeImpl(Project project, @NotNull PsiClass targetClass) {
+    Data data = generateMethod(targetClass, false);
+
+    final PsiElement context = PsiTreeUtil.getParentOfType(getRefExpr(), PsiClass.class, PsiMethod.class, PsiFile.class);
+    IntentionUtils.createTemplateForMethod(data.paramTypesExpressions, data.method, targetClass, data.constraints, false, context);
+  }
+
+  private static class Data {
+    ChooseTypeExpression[] paramTypesExpressions;
+    PsiMethod method;
+    TypeConstraint[] constraints;
+
+    private Data(ChooseTypeExpression[] paramTypesExpression, PsiMethod method, TypeConstraint[] constraints) {
+      this.paramTypesExpressions = paramTypesExpression;
+      this.method = method;
+      this.constraints = constraints;
+    }
+  }
+
+  private Data generateMethod(@NotNull PsiClass targetClass, boolean readOnly) {
     final JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
     assert factory != null;
-    PsiMethod method = factory.createMethod(getMethodName(), PsiType.VOID);
+    PsiMethod method = factory.createMethod(getMethodName(), PsiTypes.voidType());
 
     final GrReferenceExpression ref = getRefExpr();
     if (GrStaticChecker.isInStaticContext(ref, targetClass)) {
@@ -64,7 +95,9 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     TypeConstraint[] constraints = getReturnTypeConstraints();
 
     final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
-    info.insert(targetClass, findInsertionAnchor(info, targetClass), false);
+    if (!readOnly) {
+      info.insert(targetClass, findInsertionAnchor(info, targetClass), false);
+    }
     method = info.getPsiMember();
 
     if (shouldBeAbstract(targetClass)) {
@@ -73,9 +106,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
         method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
       }
     }
-
-    final PsiElement context = PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiMethod.class, PsiFile.class);
-    IntentionUtils.createTemplateForMethod(paramTypesExpressions, method, targetClass, constraints, false, context);
+    return new Data(paramTypesExpressions, method, constraints);
   }
 
   protected TypeConstraint @NotNull [] getReturnTypeConstraints() {
@@ -113,7 +144,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];
     for (int i = 0; i < argTypes.length; i++) {
       PsiType argType = TypesUtil.unboxPrimitiveTypeWrapper(argTypes[i]);
-      if (argType == null || argType == PsiType.NULL) argType = TypesUtil.getJavaLangObject(getRefExpr());
+      if (argType == null || argType == PsiTypes.nullType()) argType = TypesUtil.getJavaLangObject(getRefExpr());
       final PsiParameter p = factory.createParameter("o", argType);
       parameterList.add(p);
       TypeConstraint[] constraints = {SupertypeConstraint.create(argType)};

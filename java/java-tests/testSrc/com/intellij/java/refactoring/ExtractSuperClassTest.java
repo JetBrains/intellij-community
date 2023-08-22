@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
@@ -19,10 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.function.Function;
 
-/**
- * @author yole
- */
+
 public class ExtractSuperClassTest extends LightMultiFileTestCase {
   @NotNull
   @Override
@@ -100,6 +100,25 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("a", PsiField.class), new RefactoringTestUtil.MemberDescriptor("b", PsiField.class));
   }
 
+
+  public void testDependentFields() {
+    doTest("Test", "TestSubclass",
+           new RefactoringTestUtil.MemberDescriptor("b", PsiField.class),
+           new RefactoringTestUtil.MemberDescriptor("a", PsiField.class),
+           new RefactoringTestUtil.MemberDescriptor("c", PsiField.class)
+           );
+  }
+  
+  public void testAccessibleClasses() {
+    doTest("a.Test", "TestSubclass", null, "a",
+           new RefactoringTestUtil.MemberDescriptor("a", PsiField.class));
+  }
+
+  public void testAbstractInSuper() {
+    doTest("Test", "TestSubclass",
+           new RefactoringTestUtil.MemberDescriptor("y", PsiMethod.class, true));
+  }
+
   public void testSameTypeParameterName() {
     doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("A", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("B", PsiClass.class));
   }
@@ -166,15 +185,16 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
       PsiClass psiClass = myFixture.findClass(className);
       assertNotNull(psiClass);
       final MemberInfo[] members = RefactoringTestUtil.findMembers(psiClass, membersToFind);
-      doTest(members, newClassName, targetPackageName, psiClass, conflicts);
+      doTest(members, targetPackageName, psiClass, conflicts, 
+             targetDirectory -> new ExtractSuperClassProcessor(getProject(), targetDirectory, newClassName, psiClass, members, false, new DocCommentPolicy<>(DocCommentPolicy.ASIS)));
     });
   }
 
-  private void doTest(MemberInfo[] members,
-                      @NonNls String newClassName,
-                      String targetPackageName,
-                      PsiClass psiClass,
-                      String[] conflicts) {
+  protected void doTest(MemberInfo[] members,
+                        String targetPackageName,
+                        PsiClass psiClass,
+                        String[] conflicts,
+                        Function<PsiDirectory, ExtractSuperBaseProcessor> createProcessor) {
     PsiDirectory targetDirectory;
     if (targetPackageName == null) {
       targetDirectory = psiClass.getContainingFile().getContainingDirectory();
@@ -183,12 +203,7 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
       assertNotNull(aPackage);
       targetDirectory = aPackage.getDirectories()[0];
     }
-    ExtractSuperClassProcessor processor = new ExtractSuperClassProcessor(getProject(),
-                                                                          targetDirectory,
-                                                                          newClassName,
-                                                                          psiClass, members,
-                                                                          false,
-                                                                          new DocCommentPolicy<>(DocCommentPolicy.ASIS));
+    ExtractSuperBaseProcessor processor = createProcessor.apply(targetDirectory);
     final PsiPackage targetPackage;
     if (targetDirectory != null) {
       targetPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
@@ -206,14 +221,14 @@ public class ExtractSuperClassTest extends LightMultiFileTestCase {
       }
       final HashSet<String> expectedConflicts = new HashSet<>(Arrays.asList(conflicts));
       final HashSet<String> actualConflicts = new HashSet<>(conflictsMap.values());
-      assertEquals(expectedConflicts.size(), actualConflicts.size());
+      assertEquals(actualConflicts.toString(), expectedConflicts.size(), actualConflicts.size());
       for (String actualConflict : actualConflicts) {
         if (!expectedConflicts.contains(actualConflict)) {
           fail("Unexpected conflict: " + actualConflict);
         }
       }
     } else if (!conflictsMap.isEmpty()) {
-      fail("Unexpected conflicts!!!");
+      fail("Unexpected conflicts!!!" + conflictsMap.toString());
     }
     processor.run();
   }

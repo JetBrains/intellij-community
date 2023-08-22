@@ -1,33 +1,19 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.reference.SoftReference;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.awt.*;
+import java.lang.ref.SoftReference;
 
-/**
- * @author yole
- */
-public class CachedGridImage {
+import static com.intellij.reference.SoftReference.dereference;
+
+
+public final class CachedGridImage {
   private static final Object CACHED_GRID_IMAGE_KEY = new Object();
   private static final float[] ourDashes = new float[] { 3.0f, 1.0f };
 
@@ -190,7 +176,7 @@ public class CachedGridImage {
   public static Image getGridImage(final RadContainer container) {
     //noinspection unchecked
     SoftReference<CachedGridImage> imageRef = (SoftReference<CachedGridImage>) container.getDelegee().getClientProperty(CACHED_GRID_IMAGE_KEY);
-    CachedGridImage gridImage = SoftReference.dereference(imageRef);
+    CachedGridImage gridImage = dereference(imageRef);
     if (gridImage != null && gridImage.sizeEquals(container)) {
       gridImage.update(container);
     }

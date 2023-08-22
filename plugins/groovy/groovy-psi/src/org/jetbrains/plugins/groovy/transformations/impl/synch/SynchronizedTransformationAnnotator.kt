@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl.synch
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -33,7 +20,7 @@ class SynchronizedTransformationAnnotator : Annotator {
     if (element is GrAnnotation && element.qualifiedName == ANNO_FQN) {
       val method = (element.owner as? GrModifierList)?.parent as? GrMethod ?: return
       if (GrTraitUtil.isMethodAbstract(method)) {
-        holder.newAnnotation(HighlightSeverity.ERROR, "@Synchronized not allowed on abstract method").range(element).create()
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("synchronized.not.allowed.on.abstract.method")).range(element).create()
       }
     }
     else if (element.node.elementType == GroovyTokenTypes.mIDENT) {
@@ -42,13 +29,13 @@ class SynchronizedTransformationAnnotator : Annotator {
       if (!staticField) {
         val hasStaticMethods = getMethodsReferencingLock(field).any { it.isStatic() }
         if (hasStaticMethods) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Lock field '${field.name}' must be static").range(element).create()
+          holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("lock.field.0.must.be.static", field.name)).range(element).create()
         }
       }
       else if (field.name == LOCK_NAME) {
         val hasInstanceMethods = getMethodsReferencingLock(field).any { !it.isStatic() }
         if (hasInstanceMethods) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Lock field '$LOCK_NAME' must not be static").range(element).create()
+          holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("lock.field.0.must.not.be.static", LOCK_NAME)).range(element).create()
         }
       }
     }
@@ -58,7 +45,7 @@ class SynchronizedTransformationAnnotator : Annotator {
       val field = reference.resolve() as? GrField
       if (field == null) {
         val range = reference.rangeInElement.shiftRight(element.textRange.startOffset)
-        holder.newAnnotation(HighlightSeverity.ERROR, "Lock field '${element.value}' not found").range(range).create()
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("lock.field.0.not.found", element.value)).range(range).create()
       }
     }
   }

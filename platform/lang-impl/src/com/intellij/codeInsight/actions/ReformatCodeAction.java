@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
@@ -31,12 +33,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
-public class ReformatCodeAction extends AnAction implements DumbAware {
+public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(ReformatCodeAction.class);
 
   private static ReformatFilesOptions myTestOptions;
 
   public ReformatCodeAction() {
+    setInjectedContext(true);
     setEnabledInModalContext(true);
   }
 
@@ -47,7 +50,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
@@ -86,7 +88,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       }
       return;
     }
-    else if (PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) != null || LangDataKeys.MODULE_CONTEXT.getData(dataContext) != null) {
+    else if (PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) != null || LangDataKeys.MODULE_CONTEXT.getData(dataContext) != null) {
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
       ReformatFilesOptions selectedFlags = getLayoutProjectOptions(project, moduleContext);
       if (selectedFlags != null) {
@@ -120,6 +122,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     if (file == null || editor == null) return;
 
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+
     LastRunReformatCodeOptionsProvider provider = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
     ReformatCodeRunOptions currentRunOptions = provider.getLastRunOptions(file);
 
@@ -145,7 +149,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   private static DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
     LayoutDirectoryDialog dialog = new LayoutDirectoryDialog(
       project,
-      CodeInsightBundle.message("process.reformat.code"),
+      CodeStyleBundle.message("process.reformat.code"),
       CodeInsightBundle.message("process.scope.directory", dir.getVirtualFile().getPath()),
       VcsFacade.getInstance().hasChanges(dir)
     );
@@ -163,6 +167,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   public static void reformatDirectory(@NotNull Project project,
                                        @NotNull PsiDirectory dir,
                                        @NotNull DirectoryFormattingOptions options) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(
       project, dir, options.isIncludeSubdirectories(), options.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
     );
@@ -189,11 +194,15 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     boolean shouldOptimizeImports = selectedFlags.isOptimizeImports() && !DumbService.getInstance(project).isDumb();
     boolean processOnlyChangedText = selectedFlags.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
 
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     AbstractLayoutCodeProcessor processor;
-    if (moduleContext != null)
+    if (moduleContext != null) {
       processor = new ReformatCodeProcessor(project, moduleContext, processOnlyChangedText);
-    else
+    }
+    else {
       processor = new ReformatCodeProcessor(project, processOnlyChangedText);
+    }
 
     registerScopeFilter(processor, selectedFlags.getSearchScope());
     registerFileMaskFilter(processor, selectedFlags.getFileTypeMask());
@@ -242,7 +251,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return PsiUtilCore.toPsiFileArray(list);
   }
 
-
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent event){
@@ -298,7 +310,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       // skip. Both directories and single files are supported.
     }
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
-             PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
+             PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) {
         return false;
@@ -338,7 +350,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                                                : VcsFacade.getInstance().hasChanges(project);
 
     LayoutProjectCodeDialog dialog =
-      new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
+      new LayoutProjectCodeDialog(project, CodeStyleBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
     if (!dialog.showAndGet()) {
       return null;
     }
@@ -358,5 +370,3 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return true;
   }
 }
-
-

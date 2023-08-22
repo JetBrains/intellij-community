@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -33,10 +19,8 @@ import java.awt.*;
 
 /**
  * Used for non-language settings (if file type is not supported by Intellij IDEA), for example, plain text.
- *
- * @author Rustam Vishnyakov.
  */
-public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
+public final class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   private final IndentOptionsEditorWithSmartTabs myIndentOptionsEditor;
   private JPanel myIndentOptionsPanel;
   private JPanel myTopPanel;
@@ -55,7 +39,7 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
 
   @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
@@ -72,7 +56,7 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     myIndentOptionsEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
@@ -88,12 +72,12 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
   }
 }
 
-class IndentOptionsEditorWithSmartTabs extends IndentOptionsEditor {
+final class IndentOptionsEditorWithSmartTabs extends IndentOptionsEditor {
   private JCheckBox myCbSmartTabs;
 
   @Override

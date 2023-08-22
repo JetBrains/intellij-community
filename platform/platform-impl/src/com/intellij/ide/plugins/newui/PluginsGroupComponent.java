@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -8,7 +8,6 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -19,23 +18,21 @@ import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
  */
-public class PluginsGroupComponent extends JBPanelWithEmptyText {
-  private final EventHandler myEventHandler;
-  private final Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> myFunction;
+public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
+
+  private final @NotNull EventHandler myEventHandler;
   private final List<UIPluginGroup> myGroups = new ArrayList<>();
 
-  public PluginsGroupComponent(@NotNull LayoutManager layout,
-                               @NotNull EventHandler eventHandler,
-                               @NotNull Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> function) {
-    super(layout);
+  public PluginsGroupComponent(@NotNull EventHandler eventHandler) {
+    super(new PluginListLayout());
     myEventHandler = eventHandler;
-    myFunction = function;
 
     myEventHandler.connect(this);
 
@@ -43,17 +40,17 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
   }
 
-  @NotNull
-  public List<UIPluginGroup> getGroups() {
-    return myGroups;
+  protected abstract @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group);
+
+  public final @NotNull List<UIPluginGroup> getGroups() {
+    return Collections.unmodifiableList(myGroups);
   }
 
   public void setSelectionListener(@Nullable Consumer<? super PluginsGroupComponent> listener) {
     myEventHandler.setSelectionListener(listener);
   }
 
-  @NotNull
-  public List<ListPluginComponent> getSelection() {
+  public final @NotNull List<ListPluginComponent> getSelection() {
     return myEventHandler.getSelection();
   }
 
@@ -61,7 +58,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelection(component);
   }
 
-  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
+  public void setSelection(@NotNull List<ListPluginComponent> components) {
     myEventHandler.setSelection(components);
   }
 
@@ -88,9 +85,13 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
             ListPluginComponent lastComponent = group.ui.plugins.get(fromIndex - 1);
             int uiIndex = getComponentIndex(lastComponent);
             int eventIndex = myEventHandler.getCellIndex(lastComponent);
-            PluginLogo.startBatchMode();
-            addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex, eventIndex);
-            PluginLogo.endBatchMode();
+            try {
+              PluginLogo.startBatchMode();
+              addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex, eventIndex);
+            }
+            finally {
+              PluginLogo.endBatchMode();
+            }
 
             if (group.descriptors.size() == group.ui.plugins.size()) {
               scrollBar.removeAdjustmentListener(this);
@@ -193,7 +194,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
                           int index,
                           int eventIndex) {
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      ListPluginComponent pluginComponent = myFunction.fun(descriptor);
+      ListPluginComponent pluginComponent = createListComponent(descriptor, group);
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, eventIndex);
@@ -225,7 +226,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
       uiIndex = getComponentIndex(anchor);
     }
 
-    ListPluginComponent pluginComponent = myFunction.fun(descriptor);
+    ListPluginComponent pluginComponent = createListComponent(descriptor, group);
     group.ui.plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);
@@ -247,7 +248,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void removeFromGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
+    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginDescriptor() == descriptor);
     assert index != -1;
     ListPluginComponent component = group.ui.plugins.remove(index);
     component.close();
@@ -286,7 +287,6 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void initialSelection(boolean scrollAndFocus) {
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       myEventHandler.initialSelection(scrollAndFocus);
       if (!myGroups.isEmpty()) {

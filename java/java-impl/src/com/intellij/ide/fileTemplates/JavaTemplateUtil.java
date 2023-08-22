@@ -18,6 +18,11 @@ public final class JavaTemplateUtil {
   public static final String TEMPLATE_I18NIZED_EXPRESSION = "I18nized Expression.java";
   public static final String TEMPLATE_I18NIZED_CONCATENATION = "I18nized Concatenation.java";
   public static final String TEMPLATE_I18NIZED_JSP_EXPRESSION = "I18nized JSP Expression.jsp";
+  public static final String TEMPLATE_JAVADOC_CLASS = "JavaDoc Class.java";
+  public static final String TEMPLATE_JAVADOC_FIELD = "JavaDoc Field.java";
+  public static final String TEMPLATE_JAVADOC_CONSTRUCTOR = "JavaDoc Constructor.java";
+  public static final String TEMPLATE_JAVADOC_METHOD = "JavaDoc Method.java";
+  public static final String TEMPLATE_JAVADOC_OVERRIDING_METHOD = "JavaDoc Overriding Method.java";
 
   public static final String INTERNAL_CLASS_TEMPLATE_NAME = "Class";
   public static final String INTERNAL_INTERFACE_TEMPLATE_NAME = "Interface";

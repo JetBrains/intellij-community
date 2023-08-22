@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.CommonBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
@@ -44,34 +45,30 @@ import java.util.function.BiFunction;
  * @see SchemeExporter
  */
 public abstract class AbstractSchemeActions<T extends Scheme> {
-  @NotNull
-  protected final AbstractSchemesPanel<T, ?> mySchemesPanel;
+  protected final @NotNull AbstractSchemesPanel<T, ?> mySchemesPanel;
 
   protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
   }
   
 
-  @NotNull
-  protected Collection<String> getSchemeImportersNames() {
+  protected @NotNull Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
     for (SchemeImporterEP<T> importerEP : SchemeImporterEP.getExtensions(getSchemeType())) {
-      importersNames.add(importerEP.name);
+      importersNames.add(importerEP.getLocalizedName());
     }
     return importersNames;
   }
 
-  @NotNull
-  private Collection<String> getSchemeExporterNames() {
+  private @NotNull Collection<String> getSchemeExporterNames() {
     List<String> exporterNames = new ArrayList<>();
     for (SchemeExporterEP<T> exporterEP : SchemeExporterEP.getExtensions(getSchemeType())) {
-      exporterNames.add(exporterEP.name);
+      exporterNames.add(exporterEP.getLocalizedName());
     }
     return exporterNames;
   }
 
-  @NotNull
-  public final Collection<AnAction> getActions() {
+  public final @NotNull Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
     if (mySchemesPanel.supportsProjectSchemes()) {
       actions.add(new CopyToProjectAction());
@@ -121,7 +118,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       p.setEnabledAndVisible(currentScheme != null && !getModel().isProjectScheme(currentScheme));
     }
-  }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+}
 
 
   private class CopyToIDEAction extends DumbAwareAction {
@@ -144,7 +146,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       p.setEnabledAndVisible(currentScheme != null && getModel().isProjectScheme(currentScheme));
     }
-  }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+}
   
   private class ResetAction extends DumbAwareAction {
     
@@ -173,6 +180,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
         p.setEnabledAndVisible(false);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
   
   
@@ -198,6 +210,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T scheme = getCurrentScheme();
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDuplicateScheme(scheme));
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
   
   
@@ -217,6 +234,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canRenameScheme(scheme));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
   
@@ -246,28 +268,31 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
         p.setEnabled(isEnabled);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
-  @NotNull
-  private static AnAction createImportExportAction(@NotNull String groupName,
-                                                   @NotNull Collection<String> actionNames,
-                                                   @NotNull BiFunction<? super String, ? super String, ? extends AnAction> createActionByName) {
+  private static @NotNull AnAction createImportExportAction(@NotNull @NlsActions.ActionText String groupName,
+                                                            @NotNull Collection<@NlsActions.ActionText String> actionNames,
+                                                            @NotNull BiFunction<? super String, ? super @NlsActions.ActionText String, ? extends AnAction> createActionByName) {
     if (actionNames.size() == 1) {
       return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName + "...");
     }
     return new ImportExportActionGroup(groupName, actionNames) {
-      @NotNull
       @Override
-      protected AnAction createAction(@NotNull String actionName) {
+      protected @NotNull AnAction createAction(@NotNull String actionName) {
         return createActionByName.apply(actionName, actionName);
       }
     };
   }
 
   private abstract static class ImportExportActionGroup extends ActionGroup {
-    private final Collection<String> myActionNames;
+    private final Collection<@NlsActions.ActionText String> myActionNames;
 
-    ImportExportActionGroup(@NotNull String groupName, @NotNull Collection<String> actionNames) {
+    ImportExportActionGroup(@NotNull @NlsActions.ActionText String groupName, @NotNull Collection<@NlsActions.ActionText String> actionNames) {
       super(groupName, true);
       myActionNames = actionNames;
     }
@@ -281,15 +306,14 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       return namedActions.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    @NotNull
-    protected abstract AnAction createAction(@NotNull String actionName);
+    protected abstract @NotNull AnAction createAction(@NotNull String actionName);
   }
   
   private class ImportAction extends DumbAwareAction {
 
     private final String myImporterName;
 
-    ImportAction(@NotNull String importerName, @NotNull String importerText) {
+    ImportAction(@NotNull String importerName, @NotNull @NlsActions.ActionText String importerText) {
       super(importerText);
       myImporterName = importerName;
     }
@@ -304,7 +328,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class ExportAction extends DumbAwareAction {
     private final String myExporterName;
 
-    ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
+    ExportAction(@NotNull String exporterName, @NotNull @NlsActions.ActionText String exporterText) {
       super(exporterText);
       myExporterName = exporterName;
     }
@@ -357,14 +381,6 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       Messages.getQuestionIcon()) == Messages.OK) {
       mySchemesPanel.getModel().removeScheme(scheme);
     }
-  }
-
-  /**
-   * @deprecated Use {@link #exportScheme(Project, Scheme, String)} instead.
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  protected void exportScheme(@NotNull T scheme, @NotNull String exporterName) {
   }
 
   /**
@@ -460,24 +476,20 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   protected void copyToIDE(@NotNull T scheme) {
   }
 
-  @NotNull
-  protected SchemesModel<T> getModel() {
+  protected @NotNull SchemesModel<T> getModel() {
     return mySchemesPanel.getModel();
   }
   
-  @Nullable
-  protected final T getCurrentScheme() {
+  protected final @Nullable T getCurrentScheme() {
     return mySchemesPanel.getSelectedScheme();
   }
 
   /**
    * @return The actual scheme type.
    */
-  @NotNull
-  protected abstract Class<T> getSchemeType();
+  protected abstract @NotNull Class<T> getSchemeType();
 
-  @NotNull
-  public final AbstractSchemesPanel<T, ?> getSchemesPanel() {
+  public final @NotNull AbstractSchemesPanel<T, ?> getSchemesPanel() {
     return mySchemesPanel;
   }
 }

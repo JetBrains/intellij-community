@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
@@ -10,13 +10,12 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class ModuleUtil extends ModuleUtilCore {
+public final class ModuleUtil extends ModuleUtilCore {
   private static final ParameterizedCachedValueProvider<MultiMap<ModuleType<?>, Module>, Project> MODULE_BY_TYPE_VALUE_PROVIDER = param -> {
     MultiMap<ModuleType<?>, Module> map = new MultiMap<>();
     for (Module module : ModuleManager.getInstance(param).getModules()) {
@@ -55,8 +54,7 @@ public class ModuleUtil extends ModuleUtilCore {
   }
 
   /** @deprecated use {@link ModuleType#get(Module)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static ModuleType<?> getModuleType(@NotNull Module module) {
     return ModuleType.get(module);
   }

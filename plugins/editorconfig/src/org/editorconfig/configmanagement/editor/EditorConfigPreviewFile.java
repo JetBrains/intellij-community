@@ -24,13 +24,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Paths;
 
-public class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyleSettingsListener, Disposable {
+final class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyleSettingsListener {
   private final Project  myProject;
   private final String   myOriginalPath;
   private final Document myDocument;
 
-  EditorConfigPreviewFile(@NotNull Project project, @NotNull VirtualFile originalFile, @NotNull Document document) {
+  EditorConfigPreviewFile(@NotNull Project project,
+                          @NotNull VirtualFile originalFile,
+                          @NotNull Document document,
+                          @NotNull Disposable disposable) {
     super(originalFile.getName());
+
     myProject = project;
     myOriginalPath = originalFile.getPath();
     myDocument = document;
@@ -40,19 +44,24 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
     }
     super.setContent(this, myDocument.getText(), false);
     reformat();
-    CodeStyleSettingsManager.getInstance(project).addListener(this);
+    CodeStyleSettingsManager.getInstance(project).subscribe(this, disposable);
   }
 
-  @NotNull
-  private PsiFile createPsi(@NotNull FileType fileType) {
+  private @NotNull PsiFile createPsi(@NotNull FileType fileType) {
     return PsiFileFactory.getInstance(myProject)
-      .createFileFromText(
-        "preview", fileType, myDocument.getText(), LocalTimeCounter.currentTime(), false);
+      .createFileFromText("preview", fileType, myDocument.getText(), LocalTimeCounter.currentTime(), false);
   }
 
   @Override
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
-    reformat();
+    VirtualFile virtualFile = event.getVirtualFile();
+    if (virtualFile == null || isOriginalFile(virtualFile)) {
+      reformat();
+    }
+  }
+
+  private boolean isOriginalFile(@NotNull VirtualFile file) {
+    return file.getPath().equals(myOriginalPath);
   }
 
   private void reformat() {
@@ -65,6 +74,7 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
           if (originalPsiFile != null) {
             CodeStyleSettings settings = CodeStyle.getSettings(originalPsiFile);
             PsiFile psiFile = createPsi(originalPsiFile.getFileType());
+            psiFile.putUserData(PsiFileFactory.ORIGINAL_FILE, originalPsiFile);
             CodeStyle.doWithTemporarySettings(
               myProject, settings, () -> CodeStyleManager.getInstance(myProject).reformatText(psiFile, 0, psiFile.getTextLength()));
             myDocument.replaceString(0, myDocument.getTextLength(), psiFile.getText());
@@ -73,8 +83,7 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
       EditorConfigBundle.message("command.name.reformat"), null);
   }
 
-  @Nullable
-  public PsiFile resolveOriginalPsi() {
+  public @Nullable PsiFile resolveOriginalPsi() {
     VirtualFile virtualFile =  VfsUtil.findFile(Paths.get(myOriginalPath), true);
     if (virtualFile != null) {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
@@ -83,10 +92,5 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
       }
     }
     return null;
-  }
-
-  @Override
-  public void dispose() {
-    CodeStyleSettingsManager.removeListener(myProject, this);
   }
 }

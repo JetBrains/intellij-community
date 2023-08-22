@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T> {
   private static final Logger LOG = Logger.getInstance(DomAnchorImpl.class);
 
@@ -59,8 +42,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       LOG.error("Parent null: " + t);
     }
 
-    if (parent instanceof DomFileElementImpl) {
-      final DomFileElementImpl fileElement = (DomFileElementImpl)parent;
+    if (parent instanceof DomFileElementImpl fileElement) {
       //noinspection unchecked
       return new RootAnchor<>(fileElement.getFile(), fileElement.getRootElementClass());
     }
@@ -99,7 +81,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       if (value.toString().equals(t.toString())) {
         final XmlElement tElement = t.getXmlElement();
         final XmlElement valElement = value.getXmlElement();
-        diag.append(" hasSame, i=" + i + 
+        diag.append(" hasSame, i=" + i +
                     "; same=" + (value == t) +
                     ", equal=" + value.equals(t) +
                     ", equal2=" + t.equals(value) +
@@ -108,13 +90,13 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
                     ", sameElements=" + (tElement == value.getXmlElement()) +
                     "\n");
         if (tElement != null && valElement != null) {
-          diag.append("  sameFile=" + (tElement.getContainingFile() == valElement.getContainingFile()) + 
+          diag.append("  sameFile=" + (tElement.getContainingFile() == valElement.getContainingFile()) +
                       ", sameParent=" + (tElement.getParent() == valElement.getParent()) +
                       "\n");
         }
       }
     }
-    
+
     if (parentTag != null) {
       diag.append("Parent tag: ").append(parentTag.getName()).append("\n");
       if (t instanceof GenericAttributeValue) {
@@ -129,7 +111,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       diag.append("\n");
     }
     diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
-    LOG.error(diag);
+    LOG.error(diag.toString());
   }
 
 
@@ -147,7 +129,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   @NotNull
   public abstract XmlFile getContainingFile();
 
-  private static class NamedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
+  private static final class NamedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
     private final DomAnchor myParent;
     private final AbstractDomChildrenDescription myDescr;
     private final String myName;
@@ -163,9 +145,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (!(o instanceof NamedAnchor)) return false;
-
-      final NamedAnchor that = (NamedAnchor)o;
+      if (!(o instanceof NamedAnchor that)) return false;
 
       if (myDescr != null ? !myDescr.equals(that.myDescr) : that.myDescr != null) return false;
       if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
@@ -212,7 +192,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     }
   }
 
-  private static class IndexedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
+  private static final class IndexedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
     private final DomAnchor myParent;
     private final AbstractDomChildrenDescription myDescr;
     private final int myIndex;
@@ -226,9 +206,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (!(o instanceof IndexedAnchor)) return false;
-
-      final IndexedAnchor that = (IndexedAnchor)o;
+      if (!(o instanceof IndexedAnchor that)) return false;
 
       if (myIndex != that.myIndex) return false;
       if (myDescr != null ? !myDescr.equals(that.myDescr) : that.myDescr != null) return false;
@@ -265,7 +243,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     }
   }
 
-  private static class RootAnchor<T extends DomElement> extends DomAnchorImpl<T> {
+  private static final class RootAnchor<T extends DomElement> extends DomAnchorImpl<T> {
     private final XmlFile myFile;
     private final Class<T> myClass;
 
@@ -277,9 +255,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (!(o instanceof RootAnchor)) return false;
-
-      final RootAnchor that = (RootAnchor)o;
+      if (!(o instanceof RootAnchor that)) return false;
 
       if (myClass != null ? !myClass.equals(that.myClass) : that.myClass != null) return false;
       if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
@@ -360,7 +336,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     }
   }
 
-  private static class StubAnchor<T extends DomElement> implements DomAnchor<T> {
+  private static final class StubAnchor<T extends DomElement> implements DomAnchor<T> {
 
     private final DomInvocationHandler myHandler;
 
@@ -368,9 +344,8 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       myHandler = handler;
     }
 
-    @Nullable
     @Override
-    public T retrieveDomElement() {
+    public @NotNull T retrieveDomElement() {
       return (T)myHandler.getProxy();
     }
 

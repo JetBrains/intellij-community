@@ -31,16 +31,13 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
   @Override
   protected int[] getDivisionStates() {
-    return new int[] {YYINITIAL, IN_INJECTION, IN_PARENS_BRACKETS, IN_BRACES};
+    return new int[] {YYINITIAL, IN_INJECTION};
   }
 %}
 
-// nls as whitespace
-%state IN_PARENS_BRACKETS
-// nls as nl but return to previous state instead of YYINITIAL
-%state IN_BRACES
-// nls as nl but return to previous IN_xxx_STRING state
+// return to previous IN_xxx_STRING state
 %state IN_INJECTION
+%state IN_INJECTION_BRACES
 
 %xstate DIVISION_EXPECTED
 
@@ -54,11 +51,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 %xstate IN_GSTRING_DOT
 %xstate IN_GSTRING_DOT_IDENT
 
-// Not to separate NewLine sequence by comments
-%xstate NLS_AFTER_COMMENT
 // Special hacks for IDEA formatter
 %xstate NLS_AFTER_LBRACE
-%xstate NLS_AFTER_NLS
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// NewLines and spaces /////////////////////////////////////////////////////////////////////////////////////////
@@ -97,17 +91,18 @@ mNUM_BIN = 0 (b | B) [0-1] ("_"* [0-1])*
 mNUM_HEX= 0(x | X) {mHEX_DIGIT} ("_"* {mHEX_DIGIT})*
 mNUM_OCT = 0[0-7] ("_"* [0-7])*
 mNUM_DEC = {mDIGIT} ("_"* {mDIGIT})*
+mNUM_FLOAT_DEC = "." {mNUM_DEC}
 
 mNUM_INT_PART = {mNUM_BIN} | {mNUM_HEX} | {mNUM_OCT} | {mNUM_DEC}
 mNUM_INT = {mNUM_INT_PART} {mINT_SUFFIX}?
 mNUM_LONG = {mNUM_INT_PART} {mLONG_SUFFIX}
 mNUM_BIG_INT = {mNUM_INT_PART} {mBIG_SUFFIX}
-mNUM_FLOAT = {mNUM_DEC} ("." {mNUM_DEC})? {mEXPONENT}? {mFLOAT_SUFFIX}
-mNUM_DOUBLE = {mNUM_DEC} ("." {mNUM_DEC})? {mEXPONENT}? {mDOUBLE_SUFFIX}
-mNUM_BIG_DECIMAL = {mNUM_DEC} (
-  ({mEXPONENT} {mBIG_SUFFIX}?) |
-  ("." {mNUM_DEC} {mEXPONENT}? {mBIG_SUFFIX}?) |
-  {mBIG_SUFFIX}
+mNUM_FLOAT = ({mNUM_DEC} {mNUM_FLOAT_DEC}? | {mNUM_FLOAT_DEC}) {mEXPONENT}? {mFLOAT_SUFFIX}
+mNUM_DOUBLE = ({mNUM_DEC} {mNUM_FLOAT_DEC}? | {mNUM_FLOAT_DEC}) {mEXPONENT}? {mDOUBLE_SUFFIX}
+mNUM_BIG_DECIMAL = (
+  ({mNUM_DEC} {mNUM_FLOAT_DEC}? {mEXPONENT} {mBIG_SUFFIX}?) |
+  ({mNUM_DEC}? {mNUM_FLOAT_DEC} {mEXPONENT}? {mBIG_SUFFIX}?) |
+  ({mNUM_DEC} {mBIG_SUFFIX})
 )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,6 +112,7 @@ mNUM_BIG_DECIMAL = {mNUM_DEC} (
 mLETTER = [:letter:] | "_"
 mIDENT = ({mLETTER}|\$) ({mLETTER} | {mDIGIT} | \$)*
 mIDENT_NOBUCKS = {mLETTER} ({mLETTER} | {mDIGIT})*
+NOT_IDENT_PART=[^_[:letter:]0-9$]
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// String & regexprs ///////////////////////////////////////////////////////////////////////////////////////////
@@ -134,16 +130,18 @@ mDOUBLE_QUOTED_LITERAL = \" {mDOUBLE_QUOTED_CONTENT}* \"
 mTRIPLE_DOUBLE_QUOTED_CONTENT = {mDOUBLE_QUOTED_CONTENT} | {mSTRING_NL} | \"(\")?[^\"\\$]
 mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 %%
-<YYINITIAL, IN_PARENS_BRACKETS, IN_BRACES, IN_INJECTION, IN_GSTRING_DOLLAR> {
+<YYINITIAL, IN_INJECTION, IN_GSTRING_DOLLAR> {
   "package"       { return storeToken(KW_PACKAGE); }
   "strictfp"      { return storeToken(KW_STRICTFP); }
   "import"        { return storeToken(KW_IMPORT); }
   "static"        { return storeToken(KW_STATIC); }
   "def"           { return storeToken(KW_DEF); }
+  "var"           { return storeToken(KW_VAR); }
   "class"         { return storeToken(KW_CLASS); }
   "interface"     { return storeToken(KW_INTERFACE); }
   "enum"          { return storeToken(KW_ENUM); }
   "trait"         { return storeToken(KW_TRAIT); }
+  "record"        { return storeToken(KW_RECORD); }
   "extends"       { return storeToken(KW_EXTENDS); }
   "super"         { return storeToken(KW_SUPER); }
   "void"          { return storeToken(KW_VOID); }
@@ -163,11 +161,14 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "transient"     { return storeToken(KW_TRANSIENT); }
   "native"        { return storeToken(KW_NATIVE); }
   "synchronized"  { return storeToken(KW_SYNCHRONIZED); }
+  "sealed"        { return storeToken(KW_SEALED); }
+  "non-sealed"    { return storeToken(KW_NON_SEALED); }
   "volatile"      { return storeToken(KW_VOLATILE); }
   "default"       { return storeToken(KW_DEFAULT); }
   "do"            { return storeToken(KW_DO); }
   "throws"        { return storeToken(KW_THROWS); }
   "implements"    { return storeToken(KW_IMPLEMENTS); }
+  "permits"       { return storeToken(KW_PERMITS); }
   "this"          { return storeToken(KW_THIS); }
   "if"            { return storeToken(KW_IF); }
   "else"          { return storeToken(KW_ELSE); }
@@ -178,6 +179,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "return"        { return storeToken(KW_RETURN); }
   "break"         { return storeToken(KW_BREAK); }
   "continue"      { return storeToken(KW_CONTINUE); }
+  "yield"         { return storeToken(KW_YIELD); }
   "throw"         { return storeToken(KW_THROW); }
   "assert"        { return storeToken(KW_ASSERT); }
   "case"          { return storeToken(KW_CASE); }
@@ -192,34 +194,11 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "final"         { return storeToken(KW_FINAL); }
 }
 
-<NLS_AFTER_COMMENT> {
-  {mSL_COMMENT}                             { return SL_COMMENT; }
-  {mML_COMMENT}                             { return ML_COMMENT; }
-  {mDOC_COMMENT}                            { return GROOVY_DOC_COMMENT; }
-
-  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
-
-  [^] {
-    yypushback(1);
-    yyendstate(NLS_AFTER_COMMENT);
-  }
-}
-
 <NLS_AFTER_LBRACE> {
   ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
   [^] {
     yypushback(1);
     yyendstate(NLS_AFTER_LBRACE);
-  }
-}
-
-<NLS_AFTER_NLS>{
-  ({mNLS}|{WHITE_SPACE})+                   { return TokenType.WHITE_SPACE; }
-
-  [^] {
-    yypushback(1);
-    yyendstate(NLS_AFTER_NLS);
-    yybeginstate(NLS_AFTER_COMMENT);
   }
 }
 
@@ -344,57 +323,31 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Parentheses and braces ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-<YYINITIAL, IN_BRACES, IN_INJECTION> {
-  {mNLS} { yybeginstate(NLS_AFTER_NLS); return storeToken(NL); }
-}
-
-<IN_PARENS_BRACKETS> {
-  {mNLS} { yybeginstate(NLS_AFTER_NLS); return TokenType.WHITE_SPACE; }
-}
-
-<YYINITIAL, IN_PARENS_BRACKETS, IN_BRACES, IN_INJECTION> {
-  "("    { yybeginstate(IN_PARENS_BRACKETS); return storeToken(T_LPAREN); }
-  "["    { yybeginstate(IN_PARENS_BRACKETS); return storeToken(T_LBRACK); }
-}
-
-<IN_PARENS_BRACKETS, IN_BRACES, IN_INJECTION> {
-  "{"    { yybeginstate(IN_BRACES, NLS_AFTER_LBRACE); return storeToken(T_LBRACE); }
-}
-<YYINITIAL> {
-  "{"    { yybeginstate(NLS_AFTER_LBRACE); return storeToken(T_LBRACE); }
-}
-
-<YYINITIAL, IN_BRACES, IN_INJECTION> {
-  ")"    { return storeToken(T_RPAREN); }
-  "]"    { return storeToken(T_RBRACK); }
-}
-<IN_PARENS_BRACKETS> {
-  ")"    { yyendstate(IN_PARENS_BRACKETS); return storeToken(T_RPAREN); }
-  "]"    { yyendstate(IN_PARENS_BRACKETS); return storeToken(T_RBRACK); }
-}
+"("      { return storeToken(T_LPAREN); }
+")"      { return storeToken(T_RPAREN); }
+"["      { return storeToken(T_LBRACK); }
+"]"      { return storeToken(T_RBRACK); }
 
 <YYINITIAL> {
+  "{"    { yybeginstate(NLS_AFTER_LBRACE); return storeToken(T_LBRACE); } // stay in YYINITIAL state
   "}"    { return storeToken(T_RBRACE); }
 }
-<IN_PARENS_BRACKETS> {
-  "}"    {
-    while (yystate() == IN_PARENS_BRACKETS) {
-      yyendstate(IN_PARENS_BRACKETS);
-    }
-    return storeToken(T_RBRACE);
-  }
-}
-<IN_BRACES> {
-  "}"    { yyendstate(IN_BRACES); return storeToken(T_RBRACE); }
-}
+
 <IN_INJECTION> {
-  "}"    { yyendstate(IN_INJECTION, IN_GSTRING_DOLLAR); return storeToken(T_RBRACE); }
+  "{"    { yybeginstate(NLS_AFTER_LBRACE, IN_INJECTION_BRACES); return storeToken(T_LBRACE); }
+  "}"    { yyendstate(IN_INJECTION, IN_GSTRING_DOLLAR); return storeToken(T_RBRACE); } // injection end, back to IN_xxx_STRING state
+}
+
+<IN_INJECTION_BRACES> {
+  "{"    { yybeginstate(NLS_AFTER_LBRACE, IN_INJECTION_BRACES); return storeToken(T_LBRACE); }
+  "}"    { yyendstate(IN_INJECTION_BRACES); return storeToken(T_RBRACE); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// White spaces ////////// //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {WHITE_SPACE}                             { return TokenType.WHITE_SPACE; }
+{mNLS}                                    { return storeToken(NL); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////Comments //////////////////////////////////////////////////////////////////////////////////////
@@ -487,6 +440,8 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "==="                                     { return storeToken(T_ID); }
 "=="                                      { return storeToken(T_EQ); }
 "!"                                       { return storeToken(T_NOT); }
+"!in"/{NOT_IDENT_PART}                    { return storeToken(T_NOT_IN); }
+"!instanceof"/{NOT_IDENT_PART}            { return storeToken(T_NOT_INSTANCEOF); }
 "~"                                       { return storeToken(T_BNOT); }
 "!=="                                     { return storeToken(T_NID); }
 "!="                                      { return storeToken(T_NEQ); }
@@ -519,9 +474,12 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
 "&&"                                      { return storeToken(T_LAND); }
 ";"                                       { return storeToken(T_SEMI); }
 ".."                                      { return storeToken(T_RANGE); }
-"..<"                                     { return storeToken(T_RANGE_EX); }
+"..<"                                     { return storeToken(T_RANGE_RIGHT_OPEN); }
+"<.."                                     { return storeToken(T_RANGE_LEFT_OPEN); }
+"<..<"                                    { return storeToken(T_RANGE_BOTH_OPEN); }
 "..."                                     { return storeToken(T_ELLIPSIS); }
 "*."                                      { return storeToken(T_SPREAD_DOT); }
+"??."                                     { return storeToken(T_SAFE_CHAIN_DOT); }
 "?."                                      { return storeToken(T_SAFE_DOT); }
 ".&"                                      { return storeToken(T_METHOD_CLOSURE); }
 "::"                                      { return storeToken(T_METHOD_REFERENCE); }

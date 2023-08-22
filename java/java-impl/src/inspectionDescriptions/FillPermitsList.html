@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports sealed classes whose permits clauses do not contain some of the subclasses from the same file.
+<p>Example:</p>
+<pre><code>
+  sealed class A {}
+  final class B extends A {}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  sealed class A permits B {}
+  final class B extends A {}
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -31,7 +32,7 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Conditional expression with identical branches #loc";
+    return GroovyBundle.message("inspection.message.conditional.expression.with.identical.branches");
   }
 
   @Override
@@ -43,14 +44,15 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Collapse conditional expression";
+      return GroovyBundle.message("intention.family.name.collapse.conditional.expressions");
     }
 
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof GrConditionalExpression)) return;
-      final GrConditionalExpression expression = (GrConditionalExpression)element;
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null) return;
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof GrConditionalExpression expression)) return;
       final GrExpression thenBranch = expression.getThenBranch();
       replaceExpression(expression, thenBranch.getText());
     }

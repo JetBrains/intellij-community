@@ -152,8 +152,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       return null;
     }
     Object element = selection.getLastPathComponent();
-    if (element instanceof RepositoryTreeNode) {
-      RepositoryTreeNode node = (RepositoryTreeNode)element;
+    if (element instanceof RepositoryTreeNode node) {
       return node.getSVNDirEntry();
     }
     return null;
@@ -172,8 +171,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       return null;
     }
     Object element = selection.getLastPathComponent();
-    if (element instanceof RepositoryTreeNode) {
-      RepositoryTreeNode node = (RepositoryTreeNode)element;
+    if (element instanceof RepositoryTreeNode node) {
       return node.getURL();
     }
     return null;
@@ -201,7 +199,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       ScrollPaneFactory.createScrollPane(myRepositoryTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
-    TreeSpeedSearch search = new TreeSpeedSearch(myRepositoryTree, o -> {
+    TreeSpeedSearch search = TreeSpeedSearch.installOn(myRepositoryTree, false, o -> {
       Object component = o.getLastPathComponent();
       if (component instanceof RepositoryTreeNode) {
         return ((RepositoryTreeNode)component).getURL().toDecodedString();
@@ -257,7 +255,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final Project project = myVCS.getProject();
-      if (project == null || project.isDefault()) {
+      if (project.isDefault()) {
         return null;
       }
       final VirtualFile vcsFile = getSelectedVcsFile();

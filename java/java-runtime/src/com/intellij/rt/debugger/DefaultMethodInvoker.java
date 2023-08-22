@@ -4,19 +4,17 @@ package com.intellij.rt.debugger;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class DefaultMethodInvoker {
+@Deprecated
+public final class DefaultMethodInvoker {
 
   // only methods without arguments for now
   public static Object invoke(Object obj, String name)
     throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
     Method method = obj.getClass().getMethod(name, null);
-    if (method != null) {
-      method.setAccessible(true);
-      Object res = method.invoke(obj, null);
-      method.setAccessible(false);
-      return res;
-    }
-    return null;
+    method.setAccessible(true);
+    Object res = method.invoke(obj, null);
+    method.setAccessible(false);
+    return res;
   }
 }

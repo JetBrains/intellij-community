@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.project.open.canOpenGradleProject
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -23,5 +24,5 @@ class JavaGradleProjectImportProvider : AbstractExternalProjectImportProvider(Ja
 
   override fun canImportFromFile(file: VirtualFile) = canOpenGradleProject(file)
 
-  override fun getFileSample() = "<b>Gradle</b> build script (${GradleConstants.BUILD_FILE_EXTENSIONS.joinToString { "*.$it" }})"
+  override fun getFileSample() = GradleInspectionBundle.message("gradle.build.script.with.name", GradleConstants.BUILD_FILE_EXTENSIONS.joinToString { "*.$it" })
 }

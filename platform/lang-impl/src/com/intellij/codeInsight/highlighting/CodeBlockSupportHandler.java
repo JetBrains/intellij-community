@@ -55,8 +55,7 @@ public interface CodeBlockSupportHandler {
    * Attempts to find code block range using extension points.
    */
   @NotNull
-  static TextRange findCodeBlockRange(@NotNull Editor editor,
-                                      @NotNull PsiFile psiFile) {
+  static TextRange findCodeBlockRange(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     int offset = TargetElementUtil.adjustOffset(psiFile, editor.getDocument(), editor.getCaretModel().getOffset());
     PsiElement contextElement = psiFile.findElementAt(offset);
     if (contextElement == null) return EMPTY_RANGE;

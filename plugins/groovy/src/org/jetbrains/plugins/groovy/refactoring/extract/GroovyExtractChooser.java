@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -28,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrAllVarsInitializedPolicy;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
@@ -43,15 +42,12 @@ import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Max Medvedev
  */
-public class GroovyExtractChooser {
+public final class GroovyExtractChooser {
   private static final Logger LOG = Logger.getInstance(GroovyExtractChooser.class);
 
   public static InitialInfo invoke(Project project, Editor editor, PsiFile file, int start, int end, boolean forceStatements) throws GrRefactoringError {
@@ -121,7 +117,7 @@ public class GroovyExtractChooser {
     if (declarationOwner == null &&
         ExtractUtil.isSingleExpression(statements) &&
         statement0 instanceof GrExpression &&
-        PsiType.VOID.equals(((GrExpression)statement0).getType())) {
+        PsiTypes.voidType().equals(((GrExpression)statement0).getType())) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
     }
 
@@ -140,8 +136,8 @@ public class GroovyExtractChooser {
     Set<GrStatement> allReturnStatements = new HashSet<>();
     GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(statement0);
     LOG.assertTrue(controlFlowOwner != null);
-    final Instruction[] flow = new ControlFlowBuilder(GrAllVarsInitializedPolicy.getInstance()).buildControlFlow(controlFlowOwner);
-    allReturnStatements.addAll(ControlFlowUtils.collectReturns(flow, true));
+    final GroovyControlFlow flow = ControlFlowBuilder.buildControlFlow(controlFlowOwner, GrAllVarsInitializedPolicy.getInstance());
+    allReturnStatements.addAll(ControlFlowUtils.collectReturns(flow.getFlow(), controlFlowOwner, true));
 
     ArrayList<GrStatement> returnStatements = new ArrayList<>();
     for (GrStatement returnStatement : allReturnStatements) {
@@ -227,7 +223,7 @@ public class GroovyExtractChooser {
     if (statement instanceof GrReturnStatement) return true;
     if (statement instanceof GrIfStatement) {
       boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement)statement), returnStatements);
-      return checked & returnStatements.isEmpty();
+      return checked && returnStatements.isEmpty();
     }
     if (statement instanceof GrExpression) {
       return returnStatements.contains(statement);

@@ -57,7 +57,7 @@ public abstract class ParamHintProcessor extends SignatureHintProcessor {
 
   @NotNull
   protected static ArrayList<PsiType[]> produceResult(@Nullable PsiType type) {
-    PsiType notNull = type != null ? type : PsiType.NULL;
+    PsiType notNull = type != null ? type : (PsiPrimitiveType)PsiTypes.nullType();
     PsiType[] signature = {notNull};
     ArrayList<PsiType[]> result = new ArrayList<>();
     result.add(signature);

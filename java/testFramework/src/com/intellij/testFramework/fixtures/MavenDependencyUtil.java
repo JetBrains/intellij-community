@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -15,9 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-public class MavenDependencyUtil {
+public final class MavenDependencyUtil {
   /**
    * Adds a Maven library to given model as {@link DependencyScope#COMPILE} dependency including transitive dependencies.
    *
@@ -47,14 +50,30 @@ public class MavenDependencyUtil {
    * @param includeTransitiveDependencies true for include transitive dependencies, false otherwise
    * @param dependencyScope               scope of the library
    */
-  public static void addFromMaven(@NotNull ModifiableRootModel model, String mavenCoordinates,
-                                  boolean includeTransitiveDependencies, DependencyScope dependencyScope) {
-    List<RemoteRepositoryDescription> remoteRepositoryDescriptions = getRemoteRepositoryDescriptions();
+  public static void addFromMaven(@NotNull ModifiableRootModel model,
+                                  String mavenCoordinates,
+                                  boolean includeTransitiveDependencies,
+                                  DependencyScope dependencyScope) {
+    addFromMaven(model, mavenCoordinates, includeTransitiveDependencies, dependencyScope, Collections.emptyList());
+  }
+
+  /**
+   * Adds a Maven library to {@code model}
+   * @param additionalRepositories additional Maven repositories where the artifacts should be searched (in addition to repositories
+   *                               configured in intellij project)
+   */
+  public static void addFromMaven(@NotNull ModifiableRootModel model,
+                                  String mavenCoordinates,
+                                  boolean includeTransitiveDependencies,
+                                  DependencyScope dependencyScope,
+                                  List<RemoteRepositoryDescription> additionalRepositories) {
+    List<RemoteRepositoryDescription> remoteRepositoryDescriptions = ContainerUtil.concat(getRemoteRepositoryDescriptions(),
+                                                                                          additionalRepositories);
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(mavenCoordinates, includeTransitiveDependencies);
     Collection<OrderRoot> roots =
       JarRepositoryManager.loadDependenciesModal(model.getProject(), libraryProperties, false, false, null, remoteRepositoryDescriptions);
     LibraryTable.ModifiableModel tableModel = model.getModuleLibraryTable().getModifiableModel();
-    Library library = tableModel.createLibrary(mavenCoordinates);
+    Library library = tableModel.createLibrary(mavenCoordinates, RepositoryLibraryType.REPOSITORY_LIBRARY_KIND);
     Library.ModifiableModel libraryModel = library.getModifiableModel();
     if (roots.isEmpty()) {
       throw new IllegalStateException(String.format("No roots for '%s'", mavenCoordinates));
@@ -63,6 +82,7 @@ public class MavenDependencyUtil {
     for (OrderRoot root : roots) {
       libraryModel.addRoot(root.getFile(), root.getType());
     }
+    ((LibraryEx.ModifiableModelEx) libraryModel).setProperties(libraryProperties);
 
     LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(library);
     if (libraryOrderEntry == null) {

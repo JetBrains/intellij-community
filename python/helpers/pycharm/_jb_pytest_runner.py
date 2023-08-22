@@ -1,14 +1,24 @@
 # coding=utf-8
-import sys
+
+#  Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import pytest
+import sys
 from _pytest.config import get_plugin_manager
+import warnings
 
-from pkg_resources import iter_entry_points
+if sys.version_info[:2] >= (3, 10):
+    from importlib.metadata import entry_points as iter_entry_points
+else:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        from pkg_resources import iter_entry_points
 
-from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING, start_protocol, parse_arguments, \
-    set_parallel_mode
+from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING, \
+    start_protocol, parse_arguments, \
+    set_parallel_mode, jb_finish_tests
 from teamcity import pytest_plugin
+import os
 
 if __name__ == '__main__':
     path, targets, additional_args = parse_arguments()
@@ -26,8 +36,14 @@ if __name__ == '__main__':
             plugins_to_load.append(pytest_plugin)
 
     args = sys.argv[1:]
+    if "--jb-show-summary" in args:
+        args.remove("--jb-show-summary")
+    elif int(pytest.__version__.split('.')[0]) >= 6:
+        args += ["--no-header", "--no-summary", "-q"]
+
     if JB_DISABLE_BUFFERING and "-s" not in args:
-        args += ["-s"]
+      args += ["-s"]
+
 
     jb_doc_args("pytest", args)
 
@@ -39,5 +55,8 @@ if __name__ == '__main__':
                 set_parallel_mode()
             start_protocol()
 
-
-    sys.exit(pytest.main(args, plugins_to_load + [Plugin]))
+    os.environ["_JB_PPRINT_PRIMITIVES"] = "1"
+    try:
+        sys.exit(pytest.main(args, plugins_to_load + [Plugin]))
+    finally:
+        jb_finish_tests()

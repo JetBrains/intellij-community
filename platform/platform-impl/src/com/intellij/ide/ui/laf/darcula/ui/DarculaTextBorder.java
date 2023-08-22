@@ -41,7 +41,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     Rectangle r = new Rectangle(x, y, width, height);
     boolean focused = isFocused(c);
 
-    if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
+    if (TextFieldWithPopupHandlerUI.isSearchField(c) || DarculaTextFieldProperties.isTextFieldRounded(c)) {
       paintSearchArea((Graphics2D)g, r, (JTextComponent)c, false);
     }
     else if (isTableCellEditor(c)) {
@@ -62,9 +62,9 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
 
         clipForBorder(c, g2, r.width, r.height);
 
-        Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+        Outline op = getOutline((JComponent)c);
         if (c.isEnabled() && op != null) {
-          paintOutlineBorder(g2, r.width, r.height, 0, isSymmetric(), focused, Outline.valueOf(op.toString()));
+          paintOutlineBorder(g2, r.width, r.height, 0, isSymmetric(), focused, op);
         }
         else {
           if (focused) {
@@ -90,6 +90,10 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
   }
 
   public static void paintDarculaSearchArea(Graphics2D g, Rectangle r, JTextComponent c, boolean fillBackground) {
+    paintDarculaSearchArea(g, r, c, fillBackground, c.isEditable() && c.isEnabled());
+  }
+
+  public static void paintDarculaSearchArea(Graphics2D g, Rectangle r, JComponent c, boolean fillBackground, boolean enabled) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -118,7 +122,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         arc = arc > lw ? arc - lw : 0.0f;
         path.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
 
-        g2.setColor(DarculaUIUtil.getOutlineColor(c.isEnabled() && c.isEditable(), c.hasFocus()));
+        g2.setColor(DarculaUIUtil.getOutlineColor(enabled, c.hasFocus()));
         g2.fill(path);
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.ui;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,10 +16,10 @@ import java.awt.*;
 public class YesNoPreviewUsagesDialog extends DialogWrapper {
   private JCheckBox myCbPreviewResults;
   private final boolean myToPreviewUsages;
-  private final String myMessage;
+  private final @NlsContexts.DialogMessage String myMessage;
   private final String myHelpID;
 
-  public YesNoPreviewUsagesDialog(String title, String message, boolean previewUsages, String helpID, Project project) {
+  public YesNoPreviewUsagesDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DialogMessage String message, boolean previewUsages, String helpID, Project project) {
     super(project, false);
     myHelpID = helpID;
     setTitle(title);
@@ -26,7 +27,6 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
     myToPreviewUsages = previewUsages;
     setOKButtonText(RefactoringBundle.message("yes.button"));
     setCancelButtonText(RefactoringBundle.message("no.button"));
-    setButtonsAlignment(SwingConstants.CENTER);
     init();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
   public static final BooleanProperty SORT_ALPHABETICALLY = new BooleanProperty("sortTestsAlphabetically", false);
   public static final BooleanProperty SORT_BY_DURATION = new BooleanProperty("sortTestsByDuration", false);
+  public static final BooleanProperty SUITES_ALWAYS_ON_TOP = new BooleanProperty("suitesAlwaysOnTop", true);
   public static final BooleanProperty SELECT_FIRST_DEFECT = new BooleanProperty("selectFirtsDefect", false);
   public static final BooleanProperty TRACK_RUNNING_TEST = new BooleanProperty("trackRunningTest", true);
   public static final BooleanProperty HIDE_IGNORED_TEST = new BooleanProperty("hideIgnoredTests", false);
@@ -71,6 +73,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myProject;
   }
 
+  /**
+   * @return scope which was used to compose tests classpath
+   */
   @NotNull
   public GlobalSearchScope getScope() {
     if (myScope == null) {
@@ -127,7 +132,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public boolean isDebug() {
-    return myExecutor.getId() == DefaultDebugExecutor.EXECUTOR_ID;
+    return myExecutor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID);
   }
 
   public boolean isPaused() {
@@ -173,10 +178,14 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return false;
   }
 
-  protected ExecutionConsole getConsole() {
+  @ApiStatus.Internal
+  public ExecutionConsole getConsole() {
     return myConsole;
   }
 
+  /**
+   * Override to customize console used
+   */
   @NotNull
   public ConsoleView createConsole() {
     return new TestsConsoleBuilderImpl(getProject(),
@@ -199,12 +208,18 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return null;
   }
 
+  /**
+   * If supported by the framework, can be used in additional actions toolbar
+   */
   @NotNull
   protected ToggleBooleanProperty createIncludeNonStartedInRerun(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
     return new DumbAwareToggleBooleanProperty(text, null, null, target, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
   }
 
+  /**
+   * If supported by the framework, can be used in additional actions toolbar
+   */
   @NotNull
   protected ToggleBooleanProperty createHideSuccessfulConfig(TestConsoleProperties target) {
     String text = ExecutionBundle.message("junit.runing.info.hide.successful.config.action.name");
@@ -212,6 +227,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return new DumbAwareToggleBooleanProperty(text, null, null, target, HIDE_SUCCESSFUL_CONFIG);
   }
 
+  /**
+   * Override if framework supports running tests on multiple selection
+   */
   @JdkConstants.TreeSelectionMode
   public int getSelectionMode() {
     return TreeSelectionModel.SINGLE_TREE_SELECTION;
@@ -222,6 +240,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return DefaultExecutionTarget.INSTANCE;
   }
 
+  /**
+   * Override to choose toolwindow where test finished notification would be shown
+   */
   @NotNull
   public String getWindowId() {
     return isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;

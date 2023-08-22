@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
@@ -12,10 +12,7 @@ import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -25,6 +22,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
@@ -47,6 +45,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
 import java.util.*;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnDiffViewer implements DiffViewer {
   private static final Logger LOG = Logger.getInstance(SvnDiffViewer.class);
@@ -84,7 +84,7 @@ public class SvnDiffViewer implements DiffViewer {
 
     mySettings = initSettings(context);
 
-    mySplitter = new MySplitter("Property Changes");
+    mySplitter = new MySplitter(message("separator.property.changes"));
     mySplitter.setProportion(mySettings.getSplitterProportion());
     mySplitter.setFirstComponent(myContentViewer.getComponent());
 
@@ -158,7 +158,7 @@ public class SvnDiffViewer implements DiffViewer {
   @Nullable
   private JComponent createNotification() {
     if (myPropertyRequest instanceof ErrorDiffRequest) {
-      return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage());
+      return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage(), EditorNotificationPanel.Status.Error);
     }
 
     List<DiffContent> contents = ((SvnPropertiesDiffRequest)myPropertyRequest).getContents();
@@ -169,11 +169,13 @@ public class SvnDiffViewer implements DiffViewer {
     if (before.isEmpty() && after.isEmpty()) return null;
 
     if (!before.keySet().equals(after.keySet())) {
-      return createNotification("SVN Properties changed");
+      return createNotification(message("label.svn.properties.changed"), EditorNotificationPanel.Status.Info);
     }
 
     for (String key : before.keySet()) {
-      if (!Comparing.equal(before.get(key), after.get(key))) return createNotification("SVN Properties changed");
+      if (!Comparing.equal(before.get(key), after.get(key))) {
+        return createNotification(message("label.svn.properties.changed"), EditorNotificationPanel.Status.Info);
+      }
     }
 
     return null;
@@ -196,8 +198,8 @@ public class SvnDiffViewer implements DiffViewer {
   }
 
   @NotNull
-  private static JPanel createNotification(@NotNull String text) {
-    return new EditorNotificationPanel().text(text);
+  private static JPanel createNotification(@NlsContexts.Label @NotNull String text, @NotNull EditorNotificationPanel.Status status) {
+    return new EditorNotificationPanel(status).text(text);
   }
 
   //
@@ -299,6 +301,11 @@ public class SvnDiffViewer implements DiffViewer {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return !mySettings.isHideProperties();
     }
@@ -351,9 +358,9 @@ public class SvnDiffViewer implements DiffViewer {
   }
 
   private static class MySplitter extends Splitter {
-    @NotNull private final String myLabelText;
+    private final @NlsContexts.Separator @NotNull String myLabelText;
 
-    MySplitter(@NotNull String text) {
+    MySplitter(@NlsContexts.Separator @NotNull String text) {
       super(true);
       myLabelText = text;
     }

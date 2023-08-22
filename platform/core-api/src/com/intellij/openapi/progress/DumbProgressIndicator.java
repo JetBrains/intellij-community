@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
@@ -73,9 +74,8 @@ public class DumbProgressIndicator implements StandardProgressIndicator {
   }
 
   @Override
-  @NotNull
-  public ModalityState getModalityState() {
-    return ModalityState.NON_MODAL;
+  public @NotNull ModalityState getModalityState() {
+    return ModalityState.nonModal();
   }
 
   @Override

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @deprecated use {@link com.intellij.codeInsight.intention.AddAnnotationPsiFix#createAddNotNullFix(PsiModifierListOwner)}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class AddNotNullAnnotationFix extends AddNullableNotNullAnnotationFix {
   public AddNotNullAnnotationFix(@NotNull PsiModifierListOwner owner) {
     super(NullableNotNullManager.getInstance(owner.getProject()).getDefaultNotNull(),

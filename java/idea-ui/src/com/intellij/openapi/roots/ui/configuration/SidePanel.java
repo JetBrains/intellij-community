@@ -3,14 +3,17 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +29,7 @@ public final class SidePanel extends JPanel {
   private final DefaultListModel<SidePanelItem> myModel;
   private final Place.Navigator myNavigator;
 
-  private final Int2ObjectOpenHashMap<String> myIndex2Separator = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<@Nls String> myIndex2Separator = new Int2ObjectOpenHashMap<>();
 
   public SidePanel(Place.Navigator navigator) {
     myNavigator = navigator;
@@ -37,7 +40,7 @@ public final class SidePanel extends JPanel {
     myList = new JBList<>(myModel);
     myList.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     myList.setBorder(JBUI.Borders.emptyTop(5));
-    final ListItemDescriptor<SidePanelItem> descriptor = new ListItemDescriptor<SidePanelItem>() {
+    final ListItemDescriptor<SidePanelItem> descriptor = new ListItemDescriptor<>() {
       @Override
       public String getTextFor(final SidePanelItem value) {
         return value.myText;
@@ -50,7 +53,7 @@ public final class SidePanel extends JPanel {
 
       @Override
       public Icon getIconFor(final SidePanelItem value) {
-        return JBUI.scale(EmptyIcon.create(16, 20));
+        return JBUIScale.scaleIcon(EmptyIcon.create(16, 20));
       }
 
       @Override
@@ -64,7 +67,7 @@ public final class SidePanel extends JPanel {
       }
     };
 
-    myList.setCellRenderer(new GroupedItemsListRenderer<SidePanelItem>(descriptor) {
+    myList.setCellRenderer(new GroupedItemsListRenderer<>(descriptor) {
       JPanel myExtraPanel;
       SidePanelCountLabel myCountLabel;
       final CellRendererPane myValidationParent = new CellRendererPane();
@@ -81,16 +84,20 @@ public final class SidePanel extends JPanel {
       @Override
       protected void layout() {
         myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-        myExtraPanel.add(myComponent, BorderLayout.CENTER);
+        myExtraPanel.add(getItemComponent(), BorderLayout.CENTER);
         myExtraPanel.add(myCountLabel, BorderLayout.EAST);
         myRendererComponent.add(myExtraPanel, BorderLayout.CENTER);
       }
 
       @Override
-      public Component getListCellRendererComponent(JList<? extends SidePanelItem> list, SidePanelItem value, int index, boolean isSelected, boolean cellHasFocus) {
+      public Component getListCellRendererComponent(JList<? extends SidePanelItem> list,
+                                                    SidePanelItem value,
+                                                    int index,
+                                                    boolean isSelected,
+                                                    boolean cellHasFocus) {
         layout();
         myCountLabel.setText("");
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
           final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)value.myPlace.getPath("category");
           int errorsCount;
@@ -99,12 +106,12 @@ public final class SidePanel extends JPanel {
             myCountLabel.setText(errorsCount > 100 ? "100+" : String.valueOf(errorsCount));
           }
         }
-        if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
+        if (ClientProperty.isTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
           Rectangle bounds = list.getCellBounds(index, index);
           bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
           AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
           myExtraPanel.setSize((int)myExtraPanel.getPreferredSize().getWidth(), myExtraPanel.getHeight());
-          ComponentUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+          myExtraPanel.putClientProperty(ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
           return myExtraPanel;
         }
         return component;
@@ -113,6 +120,7 @@ public final class SidePanel extends JPanel {
       @Override
       protected JComponent createItemComponent() {
         myExtraPanel = new NonOpaquePanel(new BorderLayout());
+
         myCountLabel = new SidePanelCountLabel();
         final JComponent component = super.createItemComponent();
 
@@ -158,7 +166,7 @@ public final class SidePanel extends JPanel {
   }
 
   @Nullable
-  private String getSeparatorAbove(final SidePanelItem item) {
+  private @NlsContexts.Separator String getSeparatorAbove(final SidePanelItem item) {
     return myIndex2Separator.get(myModel.indexOf(item));
   }
 
@@ -173,9 +181,9 @@ public final class SidePanel extends JPanel {
 
   private static class SidePanelItem {
     private final Place myPlace;
-    private final String myText;
+    private final @Nls String myText;
 
-    SidePanelItem(Place place, String text) {
+    SidePanelItem(Place place, @Nls String text) {
       myPlace = place;
       myText = text;
     }

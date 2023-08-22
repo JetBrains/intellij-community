@@ -37,8 +37,6 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
   protected lateinit var repository: GitRepository
 
-  override fun runInDispatchThread(): Boolean = true
-
   public override fun setUp() {
     super.setUp()
 
@@ -47,7 +45,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
     cd(projectRoot)
     git("commit --allow-empty -m initial")
 
-    touch(FILE, "original" + FILE_CONTENT)
+    touch(FILE, "original$FILE_CONTENT")
     git("add .")
     git("commit -m Base")
   }
@@ -104,7 +102,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
   protected fun `init branch - change`(branch: String) {
     doInitBranch(branch, {
-      overwrite(FILE, "modified: $branch" + FILE_CONTENT)
+      overwrite(FILE, "modified: $branch$FILE_CONTENT")
     })
   }
 
@@ -116,7 +114,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
   protected fun `init branch - change and rename`(branch: String, newFileName: String = FILE_RENAME) {
     doInitBranch(branch, {
-      overwrite(FILE, "modified: $branch" + FILE_CONTENT)
+      overwrite(FILE, "modified: $branch$FILE_CONTENT")
       mv(FILE, newFileName)
     })
   }

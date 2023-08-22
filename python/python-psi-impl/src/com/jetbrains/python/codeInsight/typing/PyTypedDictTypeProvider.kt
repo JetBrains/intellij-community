@@ -3,14 +3,16 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
+import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypedDictStubImpl
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
 import com.jetbrains.python.psi.types.*
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
@@ -23,11 +25,24 @@ typealias TDFields = LinkedHashMap<String, PyTypedDictType.FieldTypeAndTotality>
 
 class PyTypedDictTypeProvider : PyTypeProviderBase() {
   override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
-    return getTypedDictTypeForCallee(referenceExpression, context)
+    return getTypedDictTypeForCallee(referenceExpression, context) ?: getTypedDictGetType(referenceExpression, context)
+  }
+
+  override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
+    return PyTypeUtil.notNullToRef(getTypedDictTypeForResolvedCallee(referenceTarget, context))
+  }
+
+  override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
+    return if (type is PyTypedDictType) Ref.create(type) else null
   }
 
   companion object {
     val nameIsTypedDict = { name: String? -> name == TYPED_DICT || name == TYPED_DICT_EXT }
+
+    fun isGetMethodToOverride(call: PyCallExpression, context: TypeEvalContext): Boolean {
+      val callee = call.callee
+      return callee != null && resolveToQualifiedNames(callee, context).any { it == "dict.get" /* py3 */ || it == MAPPING_GET /* py2 */ }
+    }
 
     fun isTypedDict(expression: PyExpression, context: TypeEvalContext): Boolean {
       return resolveToQualifiedNames(expression, context).any(nameIsTypedDict)
@@ -57,7 +72,38 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       }
     }
 
-    fun getTypedDictTypeForResolvedCallee(referenceTarget: PsiElement, context: TypeEvalContext): PyTypedDictType? {
+    private fun getTypedDictGetType(referenceTarget: PsiElement, context: TypeEvalContext): PyCallableType? {
+      val callExpression =
+        if (context.maySwitchToAST(referenceTarget)) PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceTarget) else null
+      if (callExpression == null || callExpression.callee == null) return null
+      val receiver = callExpression.getReceiver(null) ?: return null
+      val type = context.getType(receiver)
+      if (type !is PyTypedDictType || type.isInferred()) return null
+
+      if (isGetMethodToOverride(callExpression, context)) {
+        val parameters = mutableListOf<PyCallableParameter>()
+        val builtinCache = PyBuiltinCache.getInstance(referenceTarget)
+        val elementGenerator = PyElementGenerator.getInstance(referenceTarget.project)
+        parameters.add(PyCallableParameterImpl.nonPsi("key", builtinCache.strType))
+        parameters.add(PyCallableParameterImpl.nonPsi("default", null,
+                                                      elementGenerator.createExpressionFromText(LanguageLevel.forElement(referenceTarget),
+                                                                                                "None")))
+        val key = PyEvaluator.evaluate(callExpression.getArgument(0, "key", PyExpression::class.java), String::class.java)
+        val defaultArgument = callExpression.getArgument(1, "default", PyExpression::class.java)
+        val default = if (defaultArgument != null) context.getType(defaultArgument) else PyNoneType.INSTANCE
+        val valueTypeAndTotality = type.fields[key]
+        return PyCallableTypeImpl(parameters,
+                                  when {
+                                    valueTypeAndTotality == null -> default
+                                    valueTypeAndTotality.isRequired -> valueTypeAndTotality.type
+                                    else -> PyUnionType.union(valueTypeAndTotality.type, default)
+                                  })
+      }
+
+      return null
+    }
+
+    private fun getTypedDictTypeForResolvedCallee(referenceTarget: PsiElement, context: TypeEvalContext): PyTypedDictType? {
       return when (referenceTarget) {
         is PyClass -> getTypedDictTypeForTypingTDInheritorAsCallee(referenceTarget, context, false)
         is PyTargetExpression -> getTypedDictTypeForTarget(referenceTarget, context)
@@ -68,53 +114,25 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
       if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
-      val resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false)
+      if (isTypedDict(referenceExpression, context)) {
+        val parameters = mutableListOf<PyCallableParameter>()
 
-      for (element in PyUtil.filterTopPriorityResults(resolveResults)) {
-        if (element is PyTargetExpression) {
-          val result = getTypedDictTypeForTarget(element, context)
-          if (result != null) {
-            return result
-          }
-        }
+        val builtinCache = PyBuiltinCache.getInstance(referenceExpression)
+        val languageLevel = LanguageLevel.forElement(referenceExpression)
+        val generator = PyElementGenerator.getInstance(referenceExpression.project)
 
-        if (element is PyClass) {
-          val result = getTypedDictTypeForTypingTDInheritorAsCallee(element, context, false)
-          if (result != null) {
-            return result
-          }
-        }
+        parameters.add(PyCallableParameterImpl.nonPsi(TYPED_DICT_NAME_PARAMETER, builtinCache.getStringType(languageLevel)))
+        val dictClassType = builtinCache.dictType
+        parameters.add(PyCallableParameterImpl.nonPsi(TYPED_DICT_FIELDS_PARAMETER,
+                                                      if (dictClassType != null) PyCollectionTypeImpl(dictClassType.pyClass, false,
+                                                                                                      listOf(builtinCache.strType, null))
+                                                      else null))
+        parameters.add(
+          PyCallableParameterImpl.nonPsi(TYPED_DICT_TOTAL_PARAMETER,
+                                         builtinCache.boolType,
+                                         generator.createExpressionFromText(languageLevel, PyNames.TRUE)))
 
-        if (element is PyTypedElement) {
-          val type = context.getType(element)
-          if (type is PyClassType) {
-            if (isTypingTypedDictInheritor(type.pyClass, context)) {
-              return getTypedDictTypeForTypingTDInheritorAsCallee(type.pyClass, context, false)
-            }
-          }
-        }
-
-        if (isTypedDict(referenceExpression, context)) {
-          val parameters = mutableListOf<PyCallableParameter>()
-
-          val builtinCache = PyBuiltinCache.getInstance(referenceExpression)
-          val languageLevel = LanguageLevel.forElement(referenceExpression)
-          val generator = PyElementGenerator.getInstance(referenceExpression.project)
-
-          parameters.add(PyCallableParameterImpl.nonPsi(TYPED_DICT_NAME_PARAMETER, builtinCache.getStringType(languageLevel)))
-          val dictClassType = builtinCache.dictType
-          parameters.add(PyCallableParameterImpl.nonPsi(TYPED_DICT_FIELDS_PARAMETER,
-                                                        if (dictClassType != null) PyCollectionTypeImpl(dictClassType.pyClass, false,
-                                                                                                        listOf(builtinCache.strType, null))
-                                                        else dictClassType))
-          parameters.add(
-            PyCallableParameterImpl.nonPsi(TYPED_DICT_TOTAL_PARAMETER,
-                                           builtinCache.boolType,
-                                           generator.createExpressionFromText(languageLevel, PyNames.TRUE)))
-
-          return PyCallableTypeImpl(parameters, null)
-        }
+        return PyCallableTypeImpl(parameters, null)
       }
 
       return null
@@ -129,7 +147,8 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
                                false,
                                PyBuiltinCache.getInstance(cls).dictType?.pyClass ?: return null,
                                if (isInstance) PyTypedDictType.DefinitionLevel.INSTANCE else PyTypedDictType.DefinitionLevel.NEW_TYPE,
-                               cls.getAncestorTypes(context).filterIsInstance<PyTypedDictType>())
+                               cls.getAncestorTypes(context).filterIsInstance<PyTypedDictType>(),
+                               cls)
       }
 
       return null
@@ -161,24 +180,64 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
         return TDFields(type.fields)
       }
 
-      val fields = mutableListOf<PyTargetExpression>()
+      val fields = mutableListOf<Pair<PyExpression, Boolean?>>()
 
       cls.processClassLevelDeclarations { element, _ ->
-        if (element is PyTargetExpression && element.annotationValue != null) {
-          fields.add(element)
+        if (element is PyTargetExpression) {
+          val stub = element.stub
+          if (context.maySwitchToAST(cls) || stub == null) {
+            if (element.annotation != null) {
+              fields.add(Pair(element, checkTypeSpecification(element.annotation!!.value, context)))
+            }
+          }
+          else {
+            if (stub.annotation != null) {
+              val annotation = PyUtil.createExpressionFromFragment(stub.annotation!!, cls)
+              fields.add(Pair(stub.psi, checkTypeSpecification(annotation, context)))
+            }
+          }
         }
-
         true
       }
 
       val totality = getTotality(cls)
-      val toTDFields = Collectors.toMap<PyTargetExpression, String, PyTypedDictType.FieldTypeAndTotality, TDFields>(
-        { it.name },
-        { field -> PyTypedDictType.FieldTypeAndTotality(context.getType(field), totality) },
+      val toTDFields = Collectors.toMap<Pair<PyExpression, Boolean?>, String, PyTypedDictType.FieldTypeAndTotality, TDFields>(
+        { it.first.name },
+        { field -> PyTypedDictType.FieldTypeAndTotality(field.first, context.getType(field.first), field.second ?: totality) },
         { _, v2 -> v2 },
         { TDFields() })
 
       return fields.stream().collect(toTDFields)
+    }
+
+    private fun checkTypeSpecification(annotation: PyExpression?, context: TypeEvalContext): Boolean? {
+      if (annotation is PySubscriptionExpression) {
+        var operand = annotation.operand
+        if (operand is PyReferenceExpression) {
+          if (resolveToQualifiedNames(operand, context).any { name -> ANNOTATED == name || ANNOTATED_EXT == name }) {
+            val annotatedType = (annotation as? PySubscriptionExpression)?.indexExpression?.children?.get(0)
+            if (annotatedType is PySubscriptionExpression) {
+              operand = annotatedType.operand
+            }
+          }
+          return isRequired(operand, context)
+        }
+      }
+      return null
+    }
+
+    /**
+     * @return true - if value type is Required, false - if it is NotRequired, and null if it does not have any type specification
+     */
+    fun isRequired(expression: PyExpression, context: TypeEvalContext): Boolean? {
+      val resolvedNames = resolveToQualifiedNames(expression, context)
+      if (resolvedNames.any { name -> REQUIRED == name || REQUIRED_EXT == name }) {
+        return true
+      }
+      else if (resolvedNames.any { name -> NOT_REQUIRED == name || NOT_REQUIRED_EXT == name }) {
+        return false
+      }
+      return null
     }
 
     private fun getTotality(cls: PyClass): Boolean {
@@ -191,18 +250,20 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     }
 
     private fun getTypedDictTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyTypedDictType? {
-      val stub = target.stub
-
-      return if (stub != null) {
-        getTypedDictTypeFromStub(target,
-                                 stub.getCustomStub(PyTypedDictStub::class.java),
-                                 context,
-                                 false)
-      }
-      else getTypedDictTypeFromAST(target, context)
+      return StubAwareComputation.on(target)
+        .withCustomStub { it.getCustomStub(PyTypedDictStub::class.java) }
+        .overStub { getTypedDictTypeFromStub(target, it, context, false) }
+        .withStubBuilder { PyTypedDictStubImpl.create(it) }
+        .compute(context)
     }
 
-    fun getTypedDictTypeForResolvedElement(resolved: PsiElement, context: TypeEvalContext): PyType? {
+    fun getTypedDictTypeForResolvedElement(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
+      return Ref.deref(PyUtil.getParameterizedCachedValue(resolved, context) { typeEvalContext ->
+        return@getParameterizedCachedValue Ref.create(calculateTypeDictType(resolved, typeEvalContext))
+      })
+    }
+
+    private fun calculateTypeDictType(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
       if (resolved is PyClass && isTypingTypedDictInheritor(resolved, context)) {
         return getTypedDictTypeForTypingTDInheritorAsCallee(resolved, context, true)
       }
@@ -219,31 +280,24 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return null
     }
 
-    private fun getTypedDictTypeFromAST(expression: PyCallExpression, context: TypeEvalContext): PyTypedDictType? {
-      return if (context.maySwitchToAST(expression)) {
-        getTypedDictTypeFromStub(expression, PyTypedDictStubImpl.create(expression), context, true)
+    private fun getTypedDictTypeFromAST(call: PyCallExpression, context: TypeEvalContext): PyTypedDictType? {
+      return if (context.maySwitchToAST(call)) {
+        getTypedDictTypeFromStub(call, PyTypedDictStubImpl.create(call), context, true)
       }
       else null
     }
 
-    private fun getTypedDictTypeFromAST(expression: PyTargetExpression, context: TypeEvalContext): PyTypedDictType? {
-      return if (context.maySwitchToAST(expression)) {
-        getTypedDictTypeFromStub(expression, PyTypedDictStubImpl.create(expression), context, false)
-      }
-      else null
-    }
-
-    private fun getTypedDictTypeFromStub(referenceTarget: PsiElement,
+    private fun getTypedDictTypeFromStub(targetOrCall: PsiElement,
                                          stub: PyTypedDictStub?,
                                          context: TypeEvalContext,
                                          isInstance: Boolean): PyTypedDictType? {
       if (stub == null) return null
 
-      val dictClass = PyBuiltinCache.getInstance(referenceTarget).dictType?.pyClass
+      val dictClass = PyBuiltinCache.getInstance(targetOrCall).dictType?.pyClass
       if (dictClass == null) return null
       val fields = stub.fields
       val total = stub.isRequired
-      val typedDictFields = parseTypedDictFields(referenceTarget, fields, context, total)
+      val typedDictFields = parseTypedDictFields(targetOrCall, fields, context, total)
 
       return PyTypedDictType(stub.name,
                              typedDictFields,
@@ -251,7 +305,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
                              dictClass,
                              if (isInstance) PyTypedDictType.DefinitionLevel.INSTANCE else PyTypedDictType.DefinitionLevel.NEW_TYPE,
                              emptyList(),
-                             referenceTarget as? PyTargetExpression)
+                             getDeclaration(targetOrCall))
     }
 
     private fun parseTypedDictFields(anchor: PsiElement,
@@ -265,89 +319,59 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return result
     }
 
+    private fun getDeclaration(targetOrCall: PsiElement): PyQualifiedNameOwner? {
+      return when (targetOrCall) {
+        is PyTargetExpression -> targetOrCall
+        is PyCallExpression -> (targetOrCall.parent as? PyAssignmentStatement)?.leftHandSideExpression as? PyTargetExpression
+        else -> null
+      }
+    }
+
     private fun parseTypedDictField(anchor: PsiElement,
                                     type: String?,
                                     context: TypeEvalContext,
                                     total: Boolean): PyTypedDictType.FieldTypeAndTotality {
-      if (type == null) return PyTypedDictType.FieldTypeAndTotality(null)
+      if (type == null) return PyTypedDictType.FieldTypeAndTotality(null, null)
 
-      val pyType = Ref.deref(getStringBasedType(type, anchor, context))
-      return PyTypedDictType.FieldTypeAndTotality(pyType, total)
+      val valueTypeWithTotality = getStringBasedTypeForTypedDict(type, anchor, context)
+      if (valueTypeWithTotality == null) return PyTypedDictType.FieldTypeAndTotality(null, null)
+
+      val pyType = Ref.deref(valueTypeWithTotality.first)
+      val requiredField = valueTypeWithTotality.second
+
+      return PyTypedDictType.FieldTypeAndTotality(null, pyType, requiredField ?: total)
     }
 
-    /**
-     * If [expected] type is `typing.TypedDict[...]`,
-     * then tries to infer `typing.TypedDict[...]` for [expression],
-     * otherwise returns type inferred by [context].
-     */
-    fun promoteToTypedDict(expression: PyExpression, expected: PyType?, context: TypeEvalContext): PyType? {
-      if (expected is PyTypedDictType) {
-        return fromValue(expression, context) ?: context.getType(expression)
+    private fun getStringBasedTypeForTypedDict(contents: String,
+                                               anchor: PsiElement,
+                                               context: TypeEvalContext): Pair<Ref<PyType?>?, Boolean?>? {
+      val file = FileContextUtil.getContextFile(anchor) ?: return null
+      val expr = PyUtil.createExpressionFromFragment(contents, file)
+      var required: Boolean? = null
+      if (expr is PySubscriptionExpression) {
+        required = isRequired(expr.operand, context)
       }
-      else {
-        return context.getType(expression)
-      }
+      return if (expr != null) Pair(getType(expr, context), required) else null
     }
 
-    /**
-     * Tries to construct TypedDict type for a value that could be considered as TypedDict and downcasted to `typing.TypedDict[...]` type.
-     */
-    private fun fromValue(expression: PyExpression, context: TypeEvalContext): PyType? = newInstance(expression, context)
 
-    private fun newInstance(expression: PyExpression, context: TypeEvalContext): PyType? {
-      return when (expression) {
-        is PyTupleExpression -> {
-          val elements = expression.elements
-          val classes = elements.mapNotNull { toTypedDictType(it, context) }
-          if (elements.size == classes.size) PyUnionType.union(classes) else null
-        }
-        else -> toTypedDictType(expression, context)
-      }
-    }
-
-    private fun toTypedDictType(expression: PyExpression, context: TypeEvalContext): PyType? {
-      if (expression is PyDictLiteralExpression) {
-        val fields = getTypingTDFieldsFromDictLiteral(expression, context)
-        if (fields != null) {
-          val dictClass = PyBuiltinCache.getInstance(expression).dictType?.pyClass
-          if (dictClass == null) return null
-          return PyTypedDictType("TypedDict", fields, true, dictClass,
-                                 PyTypedDictType.DefinitionLevel.INSTANCE,
-                                 emptyList())
-        }
-      }
-      else if (expression is PyCallExpression) {
-        val resolvedQualifiedNames = if (expression.callee != null) resolveToQualifiedNames(expression.callee!!, context) else return null
-        if (resolvedQualifiedNames.any { it == PyNames.DICT }) {
-          val arguments = expression.arguments
-          if (arguments.size > 1) {
-            val fields = getTypingTDFieldsFromDictKeywordArguments(arguments, context)
-            if (fields != null) {
-              val dictClass = PyBuiltinCache.getInstance(expression).dictType?.pyClass
-              if (dictClass == null) return null
-              return PyTypedDictType("TypedDict", fields, true, dictClass,
-                                     PyTypedDictType.DefinitionLevel.INSTANCE,
-                                     emptyList())
-            }
+    fun inferTypedDictFromCallExpression(callExpression: PyCallExpression, context: TypeEvalContext): PyTypedDictType? {
+      val resolvedQualifiedNames = if (callExpression.callee != null) resolveToQualifiedNames(callExpression.callee!!, context)
+      else return null
+      if (resolvedQualifiedNames.any { it == PyNames.DICT }) {
+        val arguments = callExpression.arguments
+        if (arguments.size > 1) {
+          val fields = getTypingTDFieldsFromDictKeywordArguments(arguments, context)
+          if (fields != null) {
+            val dictClass = PyBuiltinCache.getInstance(callExpression).dictType?.pyClass
+            if (dictClass == null) return null
+            return PyTypedDictType("TypedDict", fields, true, dictClass,
+                                   PyTypedDictType.DefinitionLevel.INSTANCE,
+                                   emptyList())
           }
         }
       }
       return null
-    }
-
-    private fun getTypingTDFieldsFromDictLiteral(dictLiteral: PyDictLiteralExpression, context: TypeEvalContext): TDFields? {
-      val fields = LinkedHashMap<String, PyExpression?>()
-
-      dictLiteral.elements.forEach {
-        val name = it.key
-        val value = it.value
-
-        if (name !is PyStringLiteralExpression) return null
-
-        fields[name.stringValue] = value
-      }
-
-      return typedDictFieldsFromKeysAndValues(fields, context)
     }
 
     private fun getTypingTDFieldsFromDictKeywordArguments(keywordArguments: Array<PyExpression>, context: TypeEvalContext): TDFields? {
@@ -361,11 +385,11 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return typedDictFieldsFromKeysAndValues(fields, context)
     }
 
-    private fun typedDictFieldsFromKeysAndValues(fields: Map<String, PyExpression?>, context: TypeEvalContext): TDFields? {
+    private fun typedDictFieldsFromKeysAndValues(fields: Map<String, PyExpression?>, context: TypeEvalContext): TDFields {
       val result = TDFields()
-      for ((name, type) in fields) {
-        result[name] = if (type != null) PyTypedDictType.FieldTypeAndTotality(context.getType(type))
-        else PyTypedDictType.FieldTypeAndTotality(null)
+      for ((key, value) in fields) {
+        result[key] = if (value != null) PyTypedDictType.FieldTypeAndTotality(value, context.getType(value))
+        else PyTypedDictType.FieldTypeAndTotality(null, null)
       }
       return result
     }

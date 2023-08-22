@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui;
 
@@ -18,7 +18,7 @@ import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.Comparator;
 
-public class InspectionResultsViewComparator implements Comparator<InspectionTreeNode> {
+public final class InspectionResultsViewComparator implements Comparator<InspectionTreeNode> {
   private static final Logger LOG = Logger.getInstance(InspectionResultsViewComparator.class);
 
   public static final InspectionResultsViewComparator INSTANCE = new InspectionResultsViewComparator();
@@ -29,9 +29,7 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
 
   @Override
   public int compare(InspectionTreeNode node1, InspectionTreeNode node2) {
-    if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
-      final InspectionSeverityGroupNode groupNode1 = (InspectionSeverityGroupNode)node1;
-      final InspectionSeverityGroupNode groupNode2 = (InspectionSeverityGroupNode)node2;
+    if (node1 instanceof InspectionSeverityGroupNode groupNode1 && node2 instanceof InspectionSeverityGroupNode groupNode2) {
       return -groupNode1.getSeverityRegistrar().compare(groupNode1.getSeverityLevel().getSeverity(), groupNode2.getSeverityLevel().getSeverity());
     }
     if (node1 instanceof InspectionSeverityGroupNode) return -1;

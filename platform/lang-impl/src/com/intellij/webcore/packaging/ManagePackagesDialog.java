@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,19 +15,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +41,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 
@@ -76,6 +79,12 @@ public class ManagePackagesDialog extends DialogWrapper {
 
   public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
                               @Nullable final PackageManagementService.Listener packageListener) {
+    this(project, packageManagementService, packageListener, new PackagesNotificationPanel());
+  }
+
+  public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
+                              @Nullable final PackageManagementService.Listener packageListener,
+                              @NotNull final PackagesNotificationPanel notificationPanel) {
     super(project, true);
     myProject = project;
     myController = packageManagementService;
@@ -84,7 +93,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     init();
     setTitle(IdeBundle.message("available.packages.dialog.title"));
     myPackages = new JBList();
-    myNotificationArea = new PackagesNotificationPanel();
+    myNotificationArea = notificationPanel;
     myNotificationsAreaPlaceholder.add(myNotificationArea.getComponent(), BorderLayout.CENTER);
 
     final AnActionButton reloadButton =
@@ -109,8 +118,12 @@ public class ManagePackagesDialog extends DialogWrapper {
           }
         });
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
-    myListSpeedSearch = new ListSpeedSearch(myPackages, (Function<Object, String>)o -> {
+    myListSpeedSearch = ListSpeedSearch.installOn(myPackages, o -> {
       if (o instanceof RepoPackage)
         return ((RepoPackage)o).getName();
       return "";
@@ -195,8 +208,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent event) {
         final Object pyPackage = myPackages.getSelectedValue();
-        if (pyPackage instanceof RepoPackage) {
-          RepoPackage repoPackage = (RepoPackage)pyPackage;
+        if (pyPackage instanceof RepoPackage repoPackage) {
 
           String extraOptions = null;
           if (myOptionsCheckBox.isEnabled() && myOptionsCheckBox.isSelected()) {
@@ -264,15 +276,13 @@ public class ManagePackagesDialog extends DialogWrapper {
   private void updateInstalledPackages() {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        final Collection<InstalledPackage> installedPackages = myController.getInstalledPackages();
+        List<String> installedPackages = ContainerUtil.map(myController.getInstalledPackagesList(), InstalledPackage::getName);
         UIUtil.invokeLaterIfNeeded(() -> {
           myInstalledPackages.clear();
-          for (InstalledPackage pkg : installedPackages) {
-            myInstalledPackages.add(pkg.getName());
-          }
+          myInstalledPackages.addAll(installedPackages);
         });
       }
-      catch(IOException e) {
+      catch (ExecutionException e) {
         LOG.info("Error updating list of installed packages", e);
       }
     });
@@ -338,7 +348,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myOptionsField.setText(optionsText);
   }
 
-  private class MyPackageFilter extends FilterComponent {
+  private final class MyPackageFilter extends FilterComponent {
     MyPackageFilter() {
       super("PACKAGE_FILTER", 5);
       getTextEditor().addKeyListener(new KeyAdapter() {
@@ -362,7 +372,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
   }
 
-  private class PackagesModel extends CollectionListModel<RepoPackage> {
+  private final class PackagesModel extends CollectionListModel<RepoPackage> {
     protected final List<RepoPackage> myFilteredOut = new ArrayList<>();
     protected List<RepoPackage> myView = new ArrayList<>();
 
@@ -428,10 +438,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     return ((FilterComponent)myFilter).getTextEditor();
   }
 
-  private class MyPackageSelectionListener implements ListSelectionListener {
-    @NonNls
-    private static final String DESCRIPTION_TEXT_HTML_TEMPLATE = "<html><body style='text-align: center;padding-top:20px;'>{0}</body></html>";
-
+  private final class MyPackageSelectionListener implements ListSelectionListener {
     @Override
     public void valueChanged(ListSelectionEvent event) {
       myOptionsCheckBox.setEnabled(myPackages.getSelectedIndex() >= 0);
@@ -440,20 +447,20 @@ public class ManagePackagesDialog extends DialogWrapper {
       myVersionCheckBox.setSelected(false);
       myVersionComboBox.setEnabled(false);
       myOptionsField.setEnabled(false);
-      myDescriptionTextArea.setText(MessageFormat.format(DESCRIPTION_TEXT_HTML_TEMPLATE, IdeBundle.message("loading.in.progress")));
+      myDescriptionTextArea.setText(IdeBundle.message("loading.in.progress"));
       final Object pyPackage = myPackages.getSelectedValue();
       if (pyPackage instanceof RepoPackage) {
         final String packageName = ((RepoPackage)pyPackage).getName();
         mySelectedPackageName = packageName;
         myVersionComboBox.removeAllItems();
         if (myVersionCheckBox.isEnabled()) {
-          myController.fetchPackageVersions(packageName, new CatchingConsumer<List<String>, Exception>() {
+          myController.fetchPackageVersions(packageName, new CatchingConsumer<>() {
             @Override
-            public void consume(final List<String> releases) {
+            public void consume(final List<@NlsSafe String> releases) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (myPackages.getSelectedValue() == pyPackage) {
                   myVersionComboBox.removeAllItems();
-                  for (String release : releases) {
+                  for (@NlsSafe String release : releases) {
                     myVersionComboBox.addItem(release);
                   }
                 }
@@ -468,9 +475,9 @@ public class ManagePackagesDialog extends DialogWrapper {
         }
         myInstallButton.setEnabled(!myCurrentlyInstalling.contains(packageName));
 
-        myController.fetchPackageDetails(packageName, new CatchingConsumer<String, Exception>() {
+        myController.fetchPackageDetails(packageName, new CatchingConsumer<@Nls String, Exception>() {
           @Override
-          public void consume(final String details) {
+          public void consume(final @Nls String details) {
             UIUtil.invokeLaterIfNeeded(() -> {
               if (myPackages.getSelectedValue() == pyPackage) {
                 myDescriptionTextArea.setText(details);
@@ -500,7 +507,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     return new Action[0];
   }
 
-  private class MyTableRenderer implements ListCellRenderer<RepoPackage> {
+  private final class MyTableRenderer implements ListCellRenderer<RepoPackage> {
     private final SimpleColoredComponent myNameComponent = new SimpleColoredComponent();
     private final SimpleColoredComponent myRepositoryComponent = new SimpleColoredComponent();
     private final JPanel myPanel = new JPanel(new BorderLayout());
@@ -526,7 +533,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       SimpleTextAttributes defaultText = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, defaultForeground);
       myNameComponent.append(packageName, myInstalledPackages.contains(packageName) ? blueText : defaultText, true);
       if (myCurrentlyInstalling.contains(packageName)) {
-        myNameComponent.append("(installing)", blueText, false);
+        myNameComponent.append(LangBundle.message("package.component.installing.suffix"), blueText, false);
       }
       String repoUrl = repoPackage.getRepoUrl();
       if (StringUtil.isNotEmpty(repoUrl)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.print.PageFormat;
@@ -37,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class TextPrintHandler extends PrintActionHandler {
+public final class TextPrintHandler extends PrintActionHandler {
   private static final Logger LOG = Logger.getInstance(TextPrintHandler.class);
 
   @Override
@@ -162,7 +163,7 @@ public class TextPrintHandler extends PrintActionHandler {
           }
           catch (PrinterException e) {
             LOG.warn(e);
-            String message = ObjectUtils.notNull(e.getMessage(), e.getClass().getName());
+            @NonNls String message = ObjectUtils.notNull(e.getMessage(), e.getClass().getName());
             Notifications.Bus.notify(new Notification("Print", CommonBundle.getErrorTitle(), message, NotificationType.ERROR));
           }
           catch (Exception e) {

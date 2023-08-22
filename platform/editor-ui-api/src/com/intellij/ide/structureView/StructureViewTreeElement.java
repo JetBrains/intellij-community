@@ -21,7 +21,7 @@ import com.intellij.pom.Navigatable;
 /**
  * An element in the structure view tree model.
  *
- * @see com.intellij.ide.structureView.StructureViewModel#getRoot()
+ * @see StructureViewModel#getRoot()
  */
 
 public interface StructureViewTreeElement extends TreeElement, Navigatable{

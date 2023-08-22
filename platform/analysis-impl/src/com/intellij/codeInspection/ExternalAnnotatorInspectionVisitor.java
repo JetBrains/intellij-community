@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,15 +17,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotatorInspectionVisitor.class);
 
   private final ProblemsHolder myHolder;
-  private final ExternalAnnotator myAnnotator;
+  private final ExternalAnnotator<?, ?> myAnnotator;
   private final boolean myIsOnTheFly;
 
-  public ExternalAnnotatorInspectionVisitor(ProblemsHolder holder, ExternalAnnotator annotator, boolean isOnTheFly) {
+  public ExternalAnnotatorInspectionVisitor(ProblemsHolder holder, ExternalAnnotator<?, ?> annotator, boolean isOnTheFly) {
     myHolder = holder;
     myAnnotator = annotator;
     myIsOnTheFly = isOnTheFly;
@@ -51,12 +53,11 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       if (annotationResult == null) {
         return ProblemDescriptor.EMPTY_ARRAY;
       }
-      return ReadAction.compute(() -> {
-        AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), true);
+      return ReadAction.compute(() -> AnnotationSessionImpl.computeWithSession(file, true, annotationHolder -> {
         annotationHolder.applyExternalAnnotatorWithContext(file, annotator, annotationResult);
         annotationHolder.assertAllAnnotationsCreated();
         return ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file);
-      });
+      }));
     }
     return ProblemDescriptor.EMPTY_ARRAY;
   }
@@ -91,6 +92,13 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       myAction.invoke(project, null, getPsiFile(descriptor));
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return myAction.generatePreview(project,
+                                      Objects.requireNonNull(IntentionPreviewUtils.getPreviewEditor()),
+                                      Objects.requireNonNull(getPsiFile(previewDescriptor)));
     }
 
     @Nullable

@@ -1,22 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.impl
 
-import com.intellij.find.usages.SearchTarget
-import com.intellij.find.usages.SymbolSearchTargetFactory
-import com.intellij.find.usages.SymbolUsageHandlerFactory
-import com.intellij.find.usages.UsageHandler
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
+import com.intellij.find.usages.api.*
+import com.intellij.find.usages.symbol.SearchTargetSymbol
+import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
+import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.model.psi.impl.targetSymbols
+import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
+import com.intellij.model.search.impl.buildTextUsageQuery
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.psi.PsiFile
-import com.intellij.usages.Usage
+import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import com.intellij.usages.Usage as UVUsage
 
 @ApiStatus.Internal
-fun symbolSearchTargets(file: PsiFile, offset: Int): List<SearchTarget> {
+fun searchTargets(file: PsiFile, offset: Int): List<SearchTarget> {
   val targetSymbols = targetSymbols(file, offset)
   if (targetSymbols.isEmpty()) {
     return emptyList()
@@ -25,57 +30,97 @@ fun symbolSearchTargets(file: PsiFile, offset: Int): List<SearchTarget> {
 }
 
 internal fun symbolSearchTargets(project: Project, targetSymbols: Collection<Symbol>): List<SearchTarget> {
-  return targetSymbols.mapTo(LinkedHashSet()) {
+  return targetSymbols.mapNotNullTo(LinkedHashSet()) {
     symbolSearchTarget(project, it)
   }.toList()
 }
 
-private val SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.symbolSearchTarget")
+private val SYMBOL_SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.symbolSearchTarget")
 
-private fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget {
-  for (factory in SEARCH_TARGET_EXTENSION.forKey(symbol.javaClass)) {
+@ApiStatus.Internal
+fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
+  for (factory in SYMBOL_SEARCH_TARGET_EXTENSION.forKey(symbol.javaClass)) {
     @Suppress("UNCHECKED_CAST")
     val factory_ = factory as SymbolSearchTargetFactory<Symbol>
-    val target = factory_.createTarget(project, symbol)
+    val target = factory_.searchTarget(project, symbol)
     if (target != null) {
       return target
     }
   }
-  return DefaultSymbolSearchTarget(project, symbol)
+  if (symbol is SearchTargetSymbol) {
+    return symbol.searchTarget
+  }
+  if (symbol is SearchTarget) {
+    return symbol
+  }
+  return null
 }
 
-private val USAGE_HANDLER_EXTENSION = ClassExtension<SymbolUsageHandlerFactory<*>>("com.intellij.lang.symbolUsageHandler")
-
-internal fun symbolUsageHandler(project: Project, symbol: Symbol): UsageHandler<*> {
-  for (factory in USAGE_HANDLER_EXTENSION.forKey(symbol.javaClass)) {
-    @Suppress("UNCHECKED_CAST")
-    val factory_ = factory as SymbolUsageHandlerFactory<Symbol>
-    val handler = factory_.createHandler(project, symbol)
-    if (handler != null) {
-      return handler
-    }
-  }
-  return DefaultSymbolUsageHandler(project, symbol)
+internal fun usageAccess(usage: Usage): UsageAccess? {
+  return if (usage is ReadWriteUsage) usage.computeAccess() else null
 }
 
 @ApiStatus.Internal
-fun <O> buildQuery(project: Project,
-                   target: SearchTarget,
-                   handler: UsageHandler<O>,
-                   allOptions: AllSearchOptions<O>): Query<out Usage> {
-  val (options, textSearch, customOptions) = allOptions
-  val usageQuery = handler.buildSearchQuery(options, customOptions)
-  if (textSearch != true) {
-    return usageQuery
+fun buildUsageViewQuery(
+  project: Project,
+  target: SearchTarget,
+  allOptions: AllSearchOptions,
+): Query<out UVUsage> {
+  return buildQuery(project, target, allOptions).transforming {
+    if (it is PsiUsage && !it.declaration) {
+      val access = when (usageAccess(it)) {
+        UsageAccess.Read -> ReadWriteAccessDetector.Access.Read
+        UsageAccess.Write -> ReadWriteAccessDetector.Access.Write
+        UsageAccess.ReadWrite -> ReadWriteAccessDetector.Access.ReadWrite
+        null -> null
+      }
+
+      if (access != null) {
+        listOf(Psi2ReadWriteAccessUsageInfo2UsageAdapter(PsiUsage2UsageInfo(it), access))
+      }
+      else {
+        listOf(Psi2UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
+      }
+    }
+    else {
+      emptyList()
+    }
   }
-  val textSearchStrings = target.textSearchStrings
-  if (textSearchStrings.isEmpty()) {
-    return usageQuery
+}
+
+@ApiStatus.Internal
+fun buildQuery(
+  project: Project,
+  target: SearchTarget,
+  allOptions: AllSearchOptions,
+): Query<out Usage> {
+  val queries = ArrayList<Query<out Usage>>()
+  val (options, textSearch) = allOptions
+  if (options.isUsages) {
+    queries += SearchService.getInstance().searchParameters(DefaultUsageSearchParameters(project, target, options.searchScope))
   }
-  val queries = ArrayList<Query<out Usage>>(textSearchStrings.size + 1)
-  queries += usageQuery
-  textSearchStrings.mapTo(queries) {
-    buildTextQuery(project, it, options.searchScope)
+  if (textSearch == true) {
+    target.textSearchRequests.mapTo(queries) { searchRequest ->
+      buildTextUsageQuery(project, searchRequest, options.searchScope, textSearchContexts).mapping(::PlainTextUsage)
+    }
   }
   return SearchService.getInstance().merge(queries)
 }
+
+private class DefaultUsageSearchParameters(
+  private val project: Project,
+  target: SearchTarget,
+  override val searchScope: SearchScope
+) : UsageSearchParameters {
+  private val pointer: Pointer<out SearchTarget> = target.createPointer()
+  override fun areValid(): Boolean = pointer.dereference() != null
+  override fun getProject(): Project = project
+  override val target: SearchTarget get() = requireNotNull(pointer.dereference())
+}
+
+private val textSearchContexts: Set<SearchContext> = EnumSet.of(
+  SearchContext.IN_COMMENTS, SearchContext.IN_STRINGS,
+  SearchContext.IN_PLAIN_TEXT
+)
+
+internal fun SearchTarget.hasTextSearchStrings(): Boolean = textSearchRequests.isNotEmpty()

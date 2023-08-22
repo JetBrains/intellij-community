@@ -18,8 +18,9 @@ package com.intellij.concurrency;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Author: dmitrylomov
+ * @deprecated Use coroutines or CompletableFuture.
  */
+@Deprecated
 public interface ResultConsumer<V> {
   void onSuccess(V value);
   void onFailure(@NotNull Throwable t);

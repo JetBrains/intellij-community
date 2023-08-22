@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.CallTraceInterpreter;
@@ -48,13 +48,10 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
   private static Map<TraceElement, List<TraceElement>> resolve(@NotNull Value value,
                                                                @NotNull TraceInfo order,
                                                                @NotNull Direction direction) {
-    if (value instanceof ArrayReference) {
-      final ArrayReference convertedMap = (ArrayReference)value;
+    if (value instanceof ArrayReference convertedMap) {
       final Value keys = convertedMap.getValue(0);
       final Value values = convertedMap.getValue(1);
-      if (keys instanceof ArrayReference && values instanceof ArrayReference) {
-        final ArrayReference keysArray = (ArrayReference)keys;
-        final ArrayReference valuesArray = (ArrayReference)values;
+      if (keys instanceof ArrayReference keysArray && values instanceof ArrayReference valuesArray) {
         return Direction.DIRECT.equals(direction)
                ? resolveDirectTrace(keysArray, valuesArray, order)
                : resolveReverseTrace(keysArray, valuesArray, order);
@@ -112,7 +109,7 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
     return result;
   }
 
-  private static class MyDistinctInfo extends ValuesOrderInfo {
+  private static final class MyDistinctInfo extends ValuesOrderInfo {
     private final Map<TraceElement, List<TraceElement>> myDirectTrace;
     private final Map<TraceElement, List<TraceElement>> myReverseTrace;
 

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-@ApiStatus.Experimental
 public interface ForwardIndexAccessor<Key, Value> {
   /**
    * creates a diff builder for given inputId.

@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.source;
 
 import com.intellij.lang.jvm.JvmElement;
 import com.intellij.lang.jvm.source.JvmDeclarationSearcher;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -18,5 +20,12 @@ public class JavaDeclarationSearcher implements JvmDeclarationSearcher {
   public Collection<JvmElement> findDeclarations(@NotNull PsiElement declaringElement) {
     return declaringElement instanceof JvmElement ? singletonList((JvmElement)declaringElement)
                                                   : emptyList();
+  }
+
+  @Override
+  public @Nullable PsiElement adjustIdentifierElement(@NotNull PsiElement identifierElement) {
+    PsiElement parent = identifierElement.getParent();
+    return parent instanceof PsiAnonymousClass &&
+           ((PsiAnonymousClass)parent).getBaseClassReference() == identifierElement ? parent : null;
   }
 }

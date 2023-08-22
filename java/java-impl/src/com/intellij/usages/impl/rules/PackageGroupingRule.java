@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -15,13 +13,13 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class PackageGroupingRule extends DirectoryGroupingRule {
-  public PackageGroupingRule(Project project) {
+  public PackageGroupingRule(@NotNull Project project) {
     super(project);
   }
 
@@ -40,11 +38,11 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
   }
 
   @Override
-  public String getActionTitle() {
-    return JavaBundle.message("action.group.by.package");
+  public @NotNull String getGroupingActionId() {
+    return "UsageGrouping.Package";
   }
 
-  private class PackageGroup implements UsageGroup, TypeSafeDataProvider {
+  private final class PackageGroup implements UsageGroup, DataProvider {
     private final PsiPackage myPackage;
     private Icon myIcon;
 
@@ -61,13 +59,13 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myPackage.getQualifiedName();
     }
 
@@ -100,7 +98,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
     public boolean equals(Object o) {
@@ -115,11 +113,18 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, myPackage);
+    public @Nullable Object getData(@NotNull String dataId) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowId -> getSlowData(slowId);
       }
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return myPackage;
+      }
+      return null;
     }
   }
 }

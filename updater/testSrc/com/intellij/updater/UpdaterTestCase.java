@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -10,6 +10,10 @@ import org.junit.Rule;
 import java.io.File;
 
 public abstract class UpdaterTestCase {
+  static {
+    UtilsTest.setRequiredDiskSpace();
+  }
+
   protected static class TestUpdaterUI extends ConsoleUpdaterUI {
     public boolean cancelled = false;
 
@@ -26,11 +30,10 @@ public abstract class UpdaterTestCase {
   protected CheckSums CHECKSUMS;
 
   @Before
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     dataDir = PathManagerEx.findFileUnderCommunityHome("updater/testData");
 
     Runner.checkCaseSensitivity(dataDir.getPath());
-    Runner.initTestLogger();
 
     TEST_UI = new TestUpdaterUI();
 
@@ -40,7 +43,7 @@ public abstract class UpdaterTestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     Utils.cleanup();
   }
 
@@ -49,7 +52,7 @@ public abstract class UpdaterTestCase {
   }
 
   @SuppressWarnings("FieldMayBeStatic")
-  protected static class CheckSums {
+  protected static final class CheckSums {
     public final long README_TXT;
     public final long IDEA_BAT;
     public final long ANNOTATIONS_JAR = 2119442657L;
@@ -68,7 +71,7 @@ public abstract class UpdaterTestCase {
 
     public CheckSums(boolean crLfs, boolean backwardSlashes) {
       README_TXT = crLfs ? 1272723667L : 7256327L;
-      IDEA_BAT = crLfs ? 3088608749L : 1493936069L;
+      IDEA_BAT = crLfs ? 3088608749L : 1681106766L;
       LINK_TO_DOT_README_TXT = backwardSlashes ? 2305843011210142148L : 2305843009503057206L;
     }
   }

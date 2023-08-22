@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -23,11 +26,9 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-class RegistrationCheckerUtil {
+final class RegistrationCheckerUtil {
   enum RegistrationType {
     ALL,
     ALL_COMPONENTS,
@@ -37,6 +38,9 @@ class RegistrationCheckerUtil {
     ACTION
   }
 
+  /**
+   * @return the classes that the given {@code psiClass} is registered as, e.g., PsiClass representing AnAction, ProjectComponent, etc.
+   */
   @Nullable
   static Set<PsiClass> getRegistrationTypes(@NotNull PsiClass psiClass, @NotNull RegistrationType registrationType) {
     final Project project = psiClass.getProject();
@@ -71,15 +75,13 @@ class RegistrationCheckerUtil {
   }
 
   @Nullable
-  private static Set<PsiClass> checkIdeaProject(Project project,
-                                                RegistrationTypeFinder finder) {
+  private static Set<PsiClass> checkIdeaProject(Project project, RegistrationTypeFinder finder) {
     finder.processScope(GlobalSearchScopesCore.projectProductionScope(project));
     return finder.getTypes();
   }
 
   @Nullable
-  private static Set<PsiClass> checkModule(Module module,
-                                           RegistrationTypeFinder finder) {
+  private static Set<PsiClass> checkModule(Module module, RegistrationTypeFinder finder) {
     final DomFileElement<IdeaPlugin> pluginXml = getPluginXmlFile(module);
     if (pluginXml == null) {
       return null;
@@ -95,7 +97,7 @@ class RegistrationCheckerUtil {
     processedFiles.add(pluginXmlFile);
 
     // <depends> plugin.xml files
-    for (Dependency dependency : pluginXml.getRootElement().getDependencies()) {
+    for (Dependency dependency : pluginXml.getRootElement().getDepends()) {
       XmlFile depPluginXml = dependency.getResolvedConfigFile();
       if (depPluginXml != null) {
         final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPluginFileElement(depPluginXml);
@@ -141,12 +143,11 @@ class RegistrationCheckerUtil {
   }
 
 
-  private static class RegistrationTypeFinder {
-
+  private static final class RegistrationTypeFinder {
     private final PsiClass myPsiClass;
     private final RegistrationType myRegistrationType;
 
-    private final Set<PsiClass> myTypes = ContainerUtil.newIdentityTroveSet(1);
+    private final Set<PsiClass> myTypes = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private RegistrationTypeFinder(PsiClass psiClass, RegistrationType registrationType) {
       myPsiClass = psiClass;
@@ -177,8 +178,7 @@ class RegistrationCheckerUtil {
       }
 
       if (findAll || myRegistrationType == RegistrationType.ACTION) {
-        if (IdeaPluginRegistrationIndex.isRegisteredAction(myPsiClass,
-                                                           scope)) {
+        if (IdeaPluginRegistrationIndex.isRegisteredActionOrGroup(myPsiClass, scope)) {
           addType(ActionType.ACTION.myClassName);
           return false;
         }

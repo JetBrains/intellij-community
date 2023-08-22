@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -15,9 +16,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem {
   @NonNls private static final String DOT_CLASS = ".class";
   @Nullable private final SmartPsiElementPointer<PsiClass> myClass;
@@ -41,7 +39,7 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
     presentation.setIcon(myExpr.getIcon(0));
     String pkg = StringUtil.getPackageName(myCanonicalText);
@@ -83,9 +81,15 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
     final Document document = context.getEditor().getDocument();
-    document.replaceString(context.getStartOffset(), context.getTailOffset(), myCanonicalText + DOT_CLASS);
+    int offset = context.getTailOffset();
+    String replacement = myCanonicalText + DOT_CLASS;
+    if (document.getTextLength() > offset + DOT_CLASS.length() &&
+        document.getText(TextRange.from(offset, DOT_CLASS.length())).equals(DOT_CLASS)) {
+      replacement = myCanonicalText;
+    }
+    document.replaceString(context.getStartOffset(), offset, replacement);
     final Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(context.getFile(), context.getStartOffset(), context.getTailOffset());
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(context.getFile(), context.getStartOffset(), offset);
   }
 }

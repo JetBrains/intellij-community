@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.unwrap;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,13 +14,12 @@ import java.util.List;
 public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
 
   public JavaSwitchStatementUnwrapper() {
-    super("Unwrap 'switch' statement");
+    super(JavaBundle.message("unwrap.switch.statement"));
   }
 
   @Override
   public boolean isApplicableTo(@NotNull PsiElement e) {
-    if (e instanceof PsiSwitchLabeledRuleStatement) {
-      PsiSwitchLabeledRuleStatement switchLabeledRuleStatement = (PsiSwitchLabeledRuleStatement)e;
+    if (e instanceof PsiSwitchLabeledRuleStatement switchLabeledRuleStatement) {
       return switchLabeledRuleStatement.getEnclosingSwitchBlock() instanceof PsiSwitchStatement;
     }
     if (e instanceof PsiStatement || e instanceof PsiWhiteSpace) {
@@ -32,7 +32,7 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return e.getParent().getParent();
   }
@@ -40,8 +40,7 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
   @Override
   protected void doUnwrap(PsiElement element, Context context) {
     PsiSwitchStatement switchStatement = (PsiSwitchStatement)element.getParent().getParent();
-    if (element instanceof PsiSwitchLabeledRuleStatement) {
-      PsiSwitchLabeledRuleStatement switchLabeledRuleStatement = (PsiSwitchLabeledRuleStatement)element;
+    if (element instanceof PsiSwitchLabeledRuleStatement switchLabeledRuleStatement) {
       PsiStatement body = switchLabeledRuleStatement.getBody();
       if (body instanceof PsiBlockStatement) {
         context.extractFromCodeBlock(((PsiBlockStatement)body).getCodeBlock(), switchStatement);
@@ -60,8 +59,7 @@ public class JavaSwitchStatementUnwrapper extends JavaUnwrapper {
       if (!(element instanceof PsiBreakStatement) && element != null) {
         outer: while (true) {
           if (!(element instanceof PsiSwitchLabelStatement)) {
-            if (element instanceof PsiBlockStatement) {
-              final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
+            if (element instanceof PsiBlockStatement blockStatement) {
               final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
               PsiElement start = codeBlock.getFirstBodyElement();
               final PsiElement end = codeBlock.getLastBodyElement();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Performs replacement of single return statement as the part of {@link ConvertToSingleReturnAction}.
  */
-class ReturnReplacementContext {
+final class ReturnReplacementContext {
   private final Project myProject;
   private final PsiElementFactory myFactory;
   private final PsiCodeBlock myBlock;
@@ -96,20 +95,18 @@ class ReturnReplacementContext {
       }
       break;
     }
-    if (!(parent instanceof PsiStatement)) {
+    if (!(parent instanceof PsiStatement currentContext)) {
       throw new RuntimeExceptionWithAttachments("Unexpected structure: " + parent.getClass(),
                                                 new Attachment("body.txt", myBlock.getText()),
                                                 new Attachment("context.txt", parent.getText()));
     }
-    PsiStatement currentContext = (PsiStatement)parent;
     PsiStatement loopOrSwitch = PsiTreeUtil.getNonStrictParentOfType(currentContext, PsiLoopStatement.class, PsiSwitchStatement.class);
     if (loopOrSwitch != null && PsiTreeUtil.isAncestor(myBlock, loopOrSwitch, true)) {
       myReplacements.add("break;");
       return loopOrSwitch;
     }
     while (true) {
-      if (currentContext instanceof PsiIfStatement) {
-        PsiIfStatement ifStatement = (PsiIfStatement)currentContext;
+      if (currentContext instanceof PsiIfStatement ifStatement) {
         boolean inThen = PsiTreeUtil.isAncestor(ifStatement.getThenBranch(), myReturnStatement, false);
         PsiElement ifParent = currentContext.getParent();
         if (ifParent instanceof PsiCodeBlock) {
@@ -147,7 +144,7 @@ class ReturnReplacementContext {
         currentContext = loopOrSwitch;
         return currentContext;
       }
-      List<PsiStatement> statements = StreamEx.of(tail).select(PsiStatement.class).toList();
+      List<PsiStatement> statements = ContainerUtil.filterIsInstance(tail, PsiStatement.class);
       if (!statements.isEmpty()) {
         PsiStatement statement = statements.get(0);
         if (statements.size() == 1 && myExitContext.isDefaultReturn(statement)) {
@@ -209,7 +206,7 @@ class ReturnReplacementContext {
     if (!locals.isEmpty()) {
       ControlFlow flow;
       try {
-        flow = ControlFlowFactory.getInstance(myProject).getControlFlow(myBlock, new LocalsControlFlowPolicy(myBlock), false, false);
+        flow = ControlFlowFactory.getControlFlow(myBlock, new LocalsControlFlowPolicy(myBlock), ControlFlowOptions.NO_CONST_EVALUATE);
       }
       catch (AnalysisCanceledException ignored) {
         return;
@@ -241,7 +238,7 @@ class ReturnReplacementContext {
                                    PsiIfStatement ifStatement,
                                    boolean inThen, PsiCodeBlock ifParent) {
     PsiElement[] tail = extractTail(currentContext, ifParent);
-    if (Arrays.stream(tail).noneMatch(PsiStatement.class::isInstance)) return null;
+    if (!ContainerUtil.exists(tail, PsiStatement.class::isInstance)) return null;
     PsiBlockStatement blockForTail = getBlockFromIf(ifStatement, inThen);
     PsiCodeBlock codeBlock = blockForTail.getCodeBlock();
     PsiJavaToken brace = requireNonNull(codeBlock.getRBrace());

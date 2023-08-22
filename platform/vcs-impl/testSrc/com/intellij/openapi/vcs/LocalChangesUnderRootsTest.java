@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Pair;
@@ -23,7 +23,6 @@ import java.util.*;
 public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
   private static final String MOCK = "Mock";
 
-  private LocalChangesUnderRoots myLocalChangesUnderRoots;
   private MockChangeListManager myChangeListManager;
   private VirtualFile myBaseDir;
 
@@ -32,8 +31,7 @@ public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
     super.setUp();
 
     myChangeListManager = new MockChangeListManager();
-    myBaseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject);
-    myLocalChangesUnderRoots = new LocalChangesUnderRoots(myChangeListManager, ProjectLevelVcsManager.getInstance(myProject));
+    myBaseDir = PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
   }
 
   public void testChangesInTwoGitRoots() {
@@ -54,7 +52,7 @@ public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
     expected.put(roots.get(0), Arrays.asList(changeBeforeCommunity, changeAfterCommunity));
     expected.put(roots.get(1), Collections.singletonList(changeInCommunity));
 
-    Map<VirtualFile, Collection<Change>> changesUnderRoots = myLocalChangesUnderRoots.getChangesUnderRoots(roots);
+    Map<VirtualFile, Collection<Change>> changesUnderRoots = LocalChangesUnderRoots.getChangesUnderRoots(roots, myChangeListManager, myProject);
     assertEqualMaps(expected, changesUnderRoots);
   }
 
@@ -105,5 +103,4 @@ public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
     ContentRevision afterRevision = new MockContentRevision(filePath, new VcsRevisionNumber.Int(2));
     return new Change(beforeRevision, afterRevision);
   }
-
 }

@@ -27,16 +27,19 @@ import git4idea.commands.GitLineHandlerListener;
  * discarded while merging. In that case 'git rebase --skip' is used.
  * </p>
  * <p>
- * To use the detector add it as a {@link git4idea.commands.GitLineHandlerListener} to {@link git4idea.commands.GitLineHandler}
+ * To use the detector add it as a {@link GitLineHandlerListener} to {@link git4idea.commands.GitLineHandler}
  * </p>
  */
 public class GitRebaseProblemDetector implements GitLineHandlerListener {
   private final static String[] REBASE_CONFLICT_INDICATORS = {
     "Merge conflict in",
-    "hint: after resolving the conflicts, mark the corrected paths",
+    "after resolving the conflicts, mark the corrected paths",
+    "After resolving the conflicts, mark them with",
+    "Resolve all conflicts manually, mark them as resolved with",
     "You must edit all merge conflicts",
     "Failed to merge in the changes",
     "could not apply"};
+  // since git 2.26 rebase backend changed to merge, git doesn't print this error
   private static final String REBASE_NO_CHANGE_INDICATOR = "No changes - did you forget to use 'git add'?";
   private static final String[] DIRTY_TREE_INDICATORS = {
     "you have unstaged changes",

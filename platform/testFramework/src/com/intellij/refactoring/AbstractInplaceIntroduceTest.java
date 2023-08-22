@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -32,6 +33,7 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.gotoEnd(true);
+      UIUtil.dispatchAllInvocationEvents();
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {
@@ -53,9 +55,10 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
       if (pass != null) {
         pass.accept(introducer);
       }
-      TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(getEditor()));
+      TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageEditorUtil.getTopLevelEditor(getEditor()));
       assert state != null;
       state.gotoEnd(false);
+      UIUtil.dispatchAllInvocationEvents();
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
     }
     finally {

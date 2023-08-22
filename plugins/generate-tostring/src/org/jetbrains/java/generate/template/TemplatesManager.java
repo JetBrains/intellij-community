@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package org.jetbrains.java.generate.template;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -10,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +32,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
    *
    * @param resource the resource name. Will lookup using the classpath.
    * @return the content if the resource
-   * @throws java.io.IOException error reading the file.
+   * @throws IOException error reading the file.
    */
   protected static String readFile(String resource, Class<? extends TemplatesManager> templatesManagerClass) throws IOException {
     BufferedInputStream in = new BufferedInputStream(templatesManagerClass.getResourceAsStream(resource));
@@ -125,7 +118,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
         return JavaPsiFacade.getElementFactory(project).createType(listClass, classType);
       }
     }
-    return PsiType.NULL;
+    return PsiTypes.nullType();
   }
 
   public static @NotNull PsiType createElementType(Project project, Class<?> elementClass) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
@@ -40,9 +41,9 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import static com.intellij.openapi.util.RemoveUserDataKt.removeUserData;
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getWorkingDirectory;
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.hasNeededDependenciesToRunConsole;
-import static org.jetbrains.plugins.groovy.util.UserDataHolderUtilKt.removeUserData;
 
 public final class GroovyConsole {
 
@@ -196,7 +197,13 @@ public final class GroovyConsole {
     try {
       final JavaParameters javaParameters = createJavaParameters(module);
       final GeneralCommandLine commandLine = javaParameters.toCommandLine();
-      return new OSProcessHandler.Silent(commandLine) {
+      return new ColoredProcessHandler(commandLine) {
+
+        @Override
+        protected @NotNull BaseOutputReader.Options readerOptions() {
+          return BaseOutputReader.Options.forMostlySilentProcess();
+        }
+
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;

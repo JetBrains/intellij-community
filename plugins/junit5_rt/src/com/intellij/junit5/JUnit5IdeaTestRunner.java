@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListenerEx;
 import com.intellij.rt.junit.IdeaTestRunner;
 import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherFactory;
 
@@ -27,13 +15,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class JUnit5IdeaTestRunner implements IdeaTestRunner {
+public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
   private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
-  private ArrayList myListeners;
+  private ArrayList<String> myListeners;
   private Launcher myLauncher;
 
   @Override
-  public void createListeners(ArrayList listeners, int count) {
+  public void createListeners(ArrayList<String> listeners, int count) {
     myListeners = listeners;
     do {
       JUnit5TestExecutionListener currentListener = new JUnit5TestExecutionListener();
@@ -47,16 +35,16 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   }
 
   @Override
-  public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, String programParam, int count, boolean sendTree) {
     try {
       JUnit5TestExecutionListener listener = myExecutionListeners.get(0);
       listener.initializeIdSuffix(!sendTree);
       final String[] packageNameRef = new String[1];
-      final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
+      final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef, programParam);
       List<TestExecutionListener> listeners = new ArrayList<>();
       listeners.add(listener);
-      for (Object listenerClassName : myListeners) {
-        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)listenerClassName).newInstance();
+      for (String listenerClassName : myListeners) {
+        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName(listenerClassName).newInstance();
         listeners.add(new MyCustomListenerWrapper(junitListener));
       }
       if (sendTree) {
@@ -81,10 +69,10 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   }
 
   private TestPlan myForkedTestPlan;
-  private static final Object FAKE_ROOT = new Object();
+  private static final TestIdentifier FAKE_ROOT = TestIdentifier.from(new EngineDescriptor(UniqueId.forEngine("FAKE_ENGINE"), "FAKE ENGINE"));
   @Override
-  public Object getTestToStart(String[] args, String name) {
-    final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1]);
+  public TestIdentifier getTestToStart(String[] args, String name) {
+    final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1], "");
     myForkedTestPlan = LauncherFactory.create().discover(discoveryRequest);
     final Set<TestIdentifier> roots = myForkedTestPlan.getRoots();
     if (roots.isEmpty()) return null;
@@ -96,26 +84,26 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   }
 
   @Override
-  public List getChildTests(Object description) {
+  public List<TestIdentifier> getChildTests(TestIdentifier description) {
     if (description == FAKE_ROOT) {
       return myForkedTestPlan.getRoots()
         .stream()
         .flatMap(root -> myForkedTestPlan.getChildren(root).stream())
         .collect(Collectors.toList());
     }
-    return new ArrayList<>(myForkedTestPlan.getChildren((TestIdentifier)description));
+    return new ArrayList<>(myForkedTestPlan.getChildren(description));
   }
 
   /**
-   * {@link com.intellij.execution.junit.TestClass#getForkMode()} 
+   * {@link com.intellij.execution.junit.TestClass#getForkMode()}
    */
   @Override
-  public String getStartDescription(Object child) {
-    if (!myForkedTestPlan.getParent((TestIdentifier)child).isPresent()) {
+  public String getStartDescription(TestIdentifier child) {
+    if (!myForkedTestPlan.getParent(child).isPresent()) {
       //if fork mode is "repeat", then the only child is the corresponding class
-      child = myForkedTestPlan.getChildren((TestIdentifier)child).iterator().next();
+      child = myForkedTestPlan.getChildren(child).iterator().next();
     }
-    final TestIdentifier testIdentifier = (TestIdentifier)child;
+    final TestIdentifier testIdentifier = child;
     final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
     final String methodSignature = JUnit5TestExecutionListener.getMethodSignature(testIdentifier);
     if (methodSignature != null) {
@@ -125,7 +113,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   }
 
   @Override
-  public String getTestClassName(Object child) {
+  public String getTestClassName(TestIdentifier child) {
     return child.toString();
   }
 

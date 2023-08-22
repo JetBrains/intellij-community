@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,9 +33,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Function;
 
-import static com.intellij.openapi.util.Pair.pair;
-
-class ImportOldConfigsPanel extends JDialog {
+final class ImportOldConfigsPanel extends JDialog {
   private JPanel myRootPanel;
   private JRadioButton myRbImportAuto;
   private JRadioButton myRbImport;
@@ -46,18 +44,18 @@ class ImportOldConfigsPanel extends JDialog {
   private ComboBox<Path> myComboBoxOldPaths;
 
   private final List<Path> myGuessedOldConfigDirs;
-  private final Function<Path, Pair<Path, Path>> myValidator;
+  private final Function<? super Path, ? extends Pair<Path, Path>> myValidator;
   private final String myProductName;
   private Path myLastSelection = null;
   private Pair<Path, Path> myResult;
 
-  ImportOldConfigsPanel(List<Path> guessedOldConfigDirs, Function<Path, Pair<Path, Path>> validator) {
+  ImportOldConfigsPanel(List<Path> guessedOldConfigDirs, Function<? super Path, ? extends Pair<Path, Path>> validator) {
     super((Dialog)null, true);
 
     myGuessedOldConfigDirs = guessedOldConfigDirs;
     myValidator = validator;
     myProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-    setTitle(ApplicationBundle.message("title.import.settings", myProductName));
+    setTitle(BootstrapBundle.message("import.settings.title", myProductName));
     init();
   }
 
@@ -70,13 +68,11 @@ class ImportOldConfigsPanel extends JDialog {
     group.add(myRbDoNotImport);
     myRbDoNotImport.setSelected(true);
 
-    myRbDoNotImport.setText(ApplicationBundle.message("radio.do.not.import"));
     if (myGuessedOldConfigDirs.isEmpty()) {
       myRbImportAuto.setVisible(false);
       myComboBoxOldPaths.setVisible(false);
     }
     else {
-      myRbImportAuto.setText(ApplicationBundle.message("radio.import.auto"));
       myComboBoxOldPaths.setModel(new CollectionComboBoxModel<>(myGuessedOldConfigDirs));
       myComboBoxOldPaths.setSelectedItem(myGuessedOldConfigDirs.get(0));
       myRbImportAuto.setSelected(true);
@@ -102,7 +98,7 @@ class ImportOldConfigsPanel extends JDialog {
       Ref<File> fileRef = Ref.create();
       PathChooserDialog chooser = FileChooserFactoryImpl.createNativePathChooserIfEnabled(chooserDescriptor, null, myRootPanel);
       if (chooser != null) {
-        VirtualFile vf = myLastSelection != null ? new CoreLocalVirtualFile(new CoreLocalFileSystem(), myLastSelection.toFile(), true) : null;
+        VirtualFile vf = myLastSelection != null ? new CoreLocalVirtualFile(new CoreLocalFileSystem(), myLastSelection) : null;
         chooser.choose(vf, files -> fileRef.set(new File(files.get(0).getPresentableUrl())));
       }
       else {
@@ -153,7 +149,7 @@ class ImportOldConfigsPanel extends JDialog {
     if (myRbImport.isSelected()) {
       String text = myPrevInstallation.getText();
       if (StringUtil.isEmptyOrSpaces(text)) {
-        showError(ApplicationBundle.message("error.please.select.previous.installation.home", myProductName));
+        showError(BootstrapBundle.message("import.chooser.error.empty", myProductName));
         return;
       }
 
@@ -161,26 +157,21 @@ class ImportOldConfigsPanel extends JDialog {
 
       if (Files.isRegularFile(selectedDir)) {
         if (!ConfigImportHelper.isValidSettingsFile(selectedDir.toFile())) {
-          showError(IdeBundle.message("error.file.contains.no.settings.to.import", selectedDir, IdeBundle.message("message.please.ensure.correct.settings")));
+          showError(BootstrapBundle.message("import.chooser.error.invalid", selectedDir));
           return;
         }
-        myResult = pair(selectedDir, null);
+        myResult = new Pair<>(selectedDir, null);
       }
       else {
         if (FileUtil.pathsEqual(selectedDir.toString(), PathManager.getHomePath()) ||
             FileUtil.pathsEqual(selectedDir.toString(), PathManager.getConfigPath())) {
-          showError(ApplicationBundle.message("error.selected.current.installation.home", myProductName));
+          showError(BootstrapBundle.message("import.chooser.error.current", myProductName));
           return;
         }
 
         Pair<Path, Path> result = myValidator.apply(selectedDir);
         if (result == null) {
-          showError(ApplicationBundle.message("error.does.not.appear.to.be.installation.home", selectedDir, myProductName));
-          return;
-        }
-
-        if (!Files.isReadable(result.first)) {
-          showError(ApplicationBundle.message("error.no.read.permissions", result));
+          showError(BootstrapBundle.message("import.chooser.error.unrecognized", selectedDir, myProductName));
           return;
         }
 
@@ -191,16 +182,20 @@ class ImportOldConfigsPanel extends JDialog {
     dispose();
   }
 
-  private void showError(String message) {
-    String title = ApplicationBundle.message("title.installation.home.required");
+  private void showError(@NlsContexts.DialogMessage String message) {
+    String title = BootstrapBundle.message("import.chooser.error.title");
     JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
   }
 
   @Nullable Pair<Path, Path> getSelectedFile() {
-    ImportOldConfigsState.getInstance().saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport, myResult != null);
+    ImportOldConfigsState.Companion.getInstance().saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport, myResult != null);
 
-    if (myRbImportAuto.isSelected()) return pair(myGuessedOldConfigDirs.get(Math.max(myComboBoxOldPaths.getSelectedIndex(), 0)), null);
-    if (myRbImport.isSelected()) return myResult;
+    if (myRbImportAuto.isSelected()) {
+      return new Pair<>(myGuessedOldConfigDirs.get(Math.max(myComboBoxOldPaths.getSelectedIndex(), 0)), null);
+    }
+    if (myRbImport.isSelected()) {
+      return myResult;
+    }
     return null;
   }
 }

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
+import org.jetbrains.plugins.textmate.TestUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,6 +22,12 @@ abstract public class TextMateSelectorWeigherTestCase {
     String selector = "text.html.basic source.php.embedded.html string.quoted.double.php";
     assertGreaterThan(getWeigh("source.php string", selector), 0);
     assertGreaterThan(getWeigh("text.html source.php", selector), 0);
+  }
+
+  @Test
+  public void testDoNotMatchPartialPrefix() {
+    String selector = "source.rust string";
+    assertEquals(0, getWeigh("source.r string", selector));
   }
 
   @Test
@@ -217,8 +224,8 @@ abstract public class TextMateSelectorWeigherTestCase {
     assertEquals(0, getWeigh(selector, "foo text.html bar source"));
   }
 
-  private int getWeigh(String selector, String scope) {
-    return weigher.weigh(selector, scope).weigh;
+  private int getWeigh(String selector, String scopeString) {
+    return weigher.weigh(selector, TestUtil.scopeFromString(scopeString)).weigh;
   }
 
   private static void assertGreaterThan(int firstValue, int secondValue) {

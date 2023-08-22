@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 import com.intellij.remoteServer.agent.util.log.TerminalListener;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
@@ -17,15 +16,6 @@ public class CloudSilentLoggingHandlerImpl implements CloudAgentLoggingHandler {
   private static final Logger LOG = Logger.getInstance(CloudSilentLoggingHandlerImpl.class);
 
   private final String myProjectLocationHash;
-
-  /**
-   * @deprecated left for compatibility, remove for 2020.1
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public CloudSilentLoggingHandlerImpl() {
-    this(null);
-  }
 
   public CloudSilentLoggingHandlerImpl(@Nullable Project project) {
     myProjectLocationHash = project == null ? "" : project.getLocationHash();

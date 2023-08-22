@@ -1,0 +1,5 @@
+fun foo(index: Int, list: List<String>) {
+    for ((index1, s) in list.withIndex()) {
+        <caret>
+    }
+}

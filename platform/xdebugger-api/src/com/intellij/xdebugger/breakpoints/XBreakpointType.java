@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -86,6 +86,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   @NotNull
+  @Nls
   public String getTitle() {
     return myTitle;
   }
@@ -131,6 +132,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return AllIcons.Debugger.Db_dep_line_breakpoint;
   }
 
+  @Nls
   public abstract String getDisplayText(B breakpoint);
 
   @Nullable 
@@ -146,7 +148,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @deprecated override {@link #createCustomPropertiesPanel(Project)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel() {
     return null;
@@ -182,7 +184,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @NotNull 
   public Comparator<B> getBreakpointComparator() {
-    return (b, b1) -> (int)(b1.getTimeStamp() - b.getTimeStamp());
+    return (b, b1) -> Long.compare(b1.getTimeStamp(), b.getTimeStamp());
     //return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
   }
 
@@ -197,8 +199,6 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   /**
    * This method is called then "Add" button is pressed in the "Breakpoints" dialog 
-   * @param project
-   * @param parentComponent
    * @return the created breakpoint or {@code null} if breakpoint wasn't created
    */
   @Nullable
@@ -234,6 +234,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  @Nls
   public String getShortText(B breakpoint) {
     return getDisplayText(breakpoint);
   }

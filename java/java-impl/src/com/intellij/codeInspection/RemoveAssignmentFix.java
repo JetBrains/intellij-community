@@ -1,31 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class RemoveAssignmentFix extends RemoveInitializerFix {
+import java.util.List;
+
+public class RemoveAssignmentFix extends ModCommandQuickFix {
   @NotNull
   @Override
   public String getFamilyName() {
@@ -33,45 +25,66 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PsiElement parent;
-    if (element instanceof PsiReferenceExpression) {
-      parent = element.getParent();
-    } else {
-      parent = element;
-    }
-    if (!(parent instanceof PsiAssignmentExpression)) return;
-    final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
-    PsiExpression rExpression = ((PsiAssignmentExpression)parent).getRExpression();
-    if (JavaTokenType.EQ != operationSign && rExpression != null ) {
-      rExpression = DeclarationJoinLinesHandler.getInitializerExpression(((PsiAssignmentExpression)parent).getLExpression(), 
-                                                                         (PsiAssignmentExpression)parent);
-    }
-    final PsiElement gParent = parent.getParent();
-    if ((gParent instanceof PsiExpression || gParent instanceof PsiExpressionList || gParent instanceof PsiReturnStatement) && rExpression != null) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(gParent.getContainingFile())) return;
-      PsiExpression finalRExpr = rExpression;
-      WriteAction.run(() -> {
-        if (gParent instanceof PsiParenthesizedExpression) {
-          gParent.replace(finalRExpr);
+    PsiAssignmentExpression parentExpr = getAssignment(descriptor);
+    if (parentExpr == null) return ModCommand.nop();
+    if (!ExpressionUtils.isVoidContext(parentExpr)) {
+      return ModCommand.psiUpdate(parentExpr, p -> {
+        PsiExpression initializer = getInitializer(p);
+        if (initializer == null) return;
+        PsiElement gp = p.getParent();
+        if (gp instanceof PsiParenthesizedExpression) {
+          gp.replace(initializer);
         } else {
-          parent.replace(finalRExpr);
+          p.replace(initializer);
         }
       });
-      return;
     }
 
-    PsiElement resolve = null;
-    if (element instanceof PsiReferenceExpression) {
-      resolve = ((PsiReferenceExpression)element).resolve();
+    PsiExpression initializer = parentExpr.getRExpression();
+    if (initializer == null) return ModCommand.nop();
+    PsiElement resolve = resolveExpression(element, parentExpr);
+    if (!(resolve instanceof PsiVariable)) return ModCommand.nop();
+    List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
+    List<ModCommandAction> subActions;
+    if (!sideEffects.isEmpty()) {
+      subActions = List.of(new RemoveInitializerFix.SideEffectAwareRemove(initializer),
+                           new DeleteElementFix(parentExpr, JavaBundle.message("delete.assignment.completely")));
+    }
+    else {
+      subActions = List.of(new DeleteElementFix(parentExpr));
+    }
+    return new ModChooseAction(JavaBundle.message("inspection.unused.assignment.remove.assignment.quickfix.title"), subActions);
+  }
+
+  PsiAssignmentExpression getAssignment(@NotNull ProblemDescriptor descriptor) {
+    final PsiElement element = descriptor.getPsiElement();
+    final PsiElement parent = element instanceof PsiReferenceExpression ? element.getParent() : element;
+    return ObjectUtils.tryCast(parent, PsiAssignmentExpression.class);
+  }
+
+  @Nullable
+  private static PsiExpression getInitializer(@NotNull PsiAssignmentExpression assignmentExpr) {
+    final IElementType operationSign = assignmentExpr.getOperationTokenType();
+    PsiExpression result = assignmentExpr.getRExpression();
+    if (JavaTokenType.EQ != operationSign && result != null) {
+      result = DeclarationJoinLinesHandler.getInitializerExpression(assignmentExpr.getLExpression(), assignmentExpr);
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement resolveExpression(@NotNull PsiElement expr, @NotNull PsiAssignmentExpression parentExpr) {
+    PsiElement result = null;
+    if (expr instanceof PsiReferenceExpression) {
+      result = ((PsiReferenceExpression)expr).resolve();
     } else {
-      final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(((PsiAssignmentExpression)parent).getLExpression());
+      final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(parentExpr.getLExpression());
       if (lExpr instanceof PsiReferenceExpression) {
-        resolve = ((PsiReferenceExpression)lExpr).resolve();
+        result = ((PsiReferenceExpression)lExpr).resolve();
       }
     }
-    if (!(resolve instanceof PsiVariable)) return;
-    sideEffectAwareRemove(project, rExpression, parent, (PsiVariable)resolve);
+    return result;
   }
 }

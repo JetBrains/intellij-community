@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class JDOMExternalizableStringList extends ArrayList<String> implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(JDOMExternalizableStringList.class);
 

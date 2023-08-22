@@ -34,7 +34,7 @@ internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: List
   //255 is the maximum number of method parameters
   for (i in 0 until minOf(parameters.size, 255)) {
     val parameterInfo = parameters[i]
-    val dummyParameter = factory.createParameter("p$i", PsiType.VOID)
+    val dummyParameter = factory.createParameter("p$i", PsiTypes.voidType())
     if (isInterface) {
       PsiUtil.setModifierProperty(dummyParameter, PsiModifier.FINAL, false)
     }

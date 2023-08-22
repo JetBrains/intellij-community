@@ -26,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigInteger;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -201,7 +198,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       project.setFilters(projectFilters);
     }
 
-    commonFilters.sort((f1, f2) -> f1.getName().compareTo(f2.getName()));
+    commonFilters.sort(Comparator.comparing(MantisFilter::getName));
     commonFilters.add(0, MantisFilter.newUndefined());
 
     MantisProject undefined = MantisProject.newUndefined();
@@ -258,7 +255,7 @@ public class MantisRepository extends BaseRepositoryImpl {
   @Nullable
   private IssueData fetchIssueById(@NotNull MantisConnectPortType soap, @NotNull String id) throws Exception {
     try {
-      return soap.mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.valueOf(id)));
+      return soap.mc_issue_get(getUsername(), getPassword(), BigInteger.valueOf(Integer.parseInt(id)));
     }
     catch (RemoteException e) {
       throw handleException(e);

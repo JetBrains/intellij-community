@@ -27,12 +27,9 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
@@ -103,8 +100,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     if (element == null) return false;
 
-    if (element.getParent() instanceof PyCallExpression) {
-      final PyCallExpression call = (PyCallExpression)element.getParent();
+    if (element.getParent() instanceof PyCallExpression call) {
       // Don't modify the call that was the cause of Change Signature invocation
       if (call.getUserData(PyChangeSignatureQuickFix.CHANGE_SIGNATURE_ORIGINAL_CALL) != null) {
         return true;
@@ -116,7 +112,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
         final PyExpression newCall;
         if (call instanceof PyDecorator) {
-          newCall = elementGenerator.createDecoratorList("@" + builder.toString()).getDecorators()[0];
+          newCall = elementGenerator.createDecoratorList("@" + builder).getDecorators()[0];
         }
         else {
           newCall = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());
@@ -168,11 +164,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     List<PyParameterInfo> newParamInfos = Arrays.asList(changeInfo.getNewParameters());
     
     final int posVarargIndex = ContainerUtil.indexOf(newParamInfos, info -> isPositionalVarargName(info.getName()));
-    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> "/".equals(info.getName()));
+    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> PySlashParameter.TEXT.equals(info.getName()));
     final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos.get(posVarargIndex).getOldIndex()).isEmpty();
-    List<PyExpression> notInsertedVariadicKeywordArgs = ContainerUtil.filter(call.getArguments(), a -> {
-      return a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword();
-    });
+    List<PyExpression> notInsertedVariadicKeywordArgs =
+      new ArrayList<>(ContainerUtil.filter(call.getArguments(), a -> a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword()));
     boolean variadicKeywordArgsUsed = false;
     final int implicitCount = mapping.getImplicitParameters().size();
     for (int paramIndex = implicitCount; paramIndex < newParamInfos.size(); paramIndex++) {
@@ -184,11 +179,11 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       final boolean defaultShouldBeInlined = beforePositionalOnlyMarker &&
                                              ContainerUtil.exists(newParamInfos.subList(paramIndex + 1, posOnlyMarkerIndex),
                                                                   i -> !i.isNew() && !oldParamIndexToArgs.get(i.getOldIndex()).isEmpty());
-      if (paramName.equals("*")) {
+      if (paramName.equals(PySingleStarParameter.TEXT)) {
         keywordArgsRequired = true;
         continue;
       }
-      if (paramName.equals("/")) {
+      if (paramName.equals(PySlashParameter.TEXT)) {
         continue;
       }
       final String paramDefault = StringUtil.notNullize(info.getDefaultValue());
@@ -199,7 +194,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           // Imagine "def f(x, y=None): ..." -> "def f(x, foo=None, y=None): ..." and a call "f(1, 2)"
           keywordArgsRequired = true;
         }
-        else {
+        else if (!isKeywordVararg && !isPositionalVararg) {
           newArguments.add(formatArgument(paramName, paramDefault, keywordArgsRequired));
         }
       }
@@ -254,7 +249,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   private static boolean isPositionalVarargName(@NotNull String paramName) {
-    return !isKeywordVarargName(paramName) && !paramName.equals("*") && paramName.startsWith("*");
+    return !isKeywordVarargName(paramName) && !paramName.equals(PySingleStarParameter.TEXT) && paramName.startsWith("*");
   }
 
   private static boolean isKeywordVarargName(@NotNull String paramName) {
@@ -264,6 +259,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @NotNull
   private static String formatArgument(@NotNull String name, @NotNull String value, boolean keywordArgument) {
     if (keywordArgument && !value.startsWith("*")) {
+      assert !name.startsWith("*");
       return name + "=" + value;
     }
     else {
@@ -280,8 +276,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @Override
   public boolean processPrimaryMethod(ChangeInfo changeInfo) {
-    if (changeInfo instanceof PyChangeInfo && changeInfo.getLanguage().is(PythonLanguage.getInstance())) {
-      final PyChangeInfo pyChangeInfo = (PyChangeInfo)changeInfo;
+    if (changeInfo instanceof PyChangeInfo pyChangeInfo && changeInfo.getLanguage().is(PythonLanguage.getInstance())) {
       processFunctionDeclaration(pyChangeInfo, pyChangeInfo.getMethod());
       return true;
     }
@@ -400,7 +395,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   @Override
-  public void registerConflictResolvers(List<ResolveSnapshotProvider.ResolveSnapshot> snapshots,
+  public void registerConflictResolvers(List<? super ResolveSnapshotProvider.ResolveSnapshot> snapshots,
                                         @NotNull ResolveSnapshotProvider resolveSnapshotProvider,
                                         UsageInfo[] usages, ChangeInfo changeInfo) {
   }

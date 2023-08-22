@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,17 +9,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NamedRunnable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -32,23 +31,26 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   private static final Logger LOG = Logger.getInstance(AbstractVcsLogUi.class);
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
-  @NotNull private final String myId;
-  @NotNull protected final Project myProject;
-  @NotNull protected final VcsLogData myLogData;
-  @NotNull protected final VcsLogColorManager myColorManager;
-  @NotNull protected final VcsLog myLog;
-  @NotNull protected final VisiblePackRefresher myRefresher;
+  private final @NotNull String myId;
+  protected final @NotNull Project myProject;
+  protected final @NotNull VcsLogData myLogData;
+  protected final @NotNull VcsLogColorManager myColorManager;
+  protected final @NotNull VcsLogImpl myLog;
+  protected final @NotNull VisiblePackRefresher myRefresher;
+  protected final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
-  @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
+  protected final @NotNull Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  protected final @NotNull VisiblePackChangeListener myVisiblePackChangeListener;
 
-  @NotNull protected VisiblePack myVisiblePack = VisiblePack.EMPTY;
+  protected volatile @NotNull VisiblePack myVisiblePack = VisiblePack.EMPTY;
 
   public AbstractVcsLogUi(@NotNull String id,
                           @NotNull VcsLogData logData,
@@ -61,19 +63,19 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     myColorManager = manager;
 
     Disposer.register(this, myRefresher);
+    Disposer.register(this, myDisposableFlag);
 
     myLog = new VcsLogImpl(logData, this);
     myVisiblePackChangeListener = visiblePack -> UIUtil.invokeLaterIfNeeded(() -> {
-      if (!Disposer.isDisposed(this)) {
+      if (!myDisposableFlag.isDisposed()) {
         setVisiblePack(visiblePack);
       }
     });
     myRefresher.addVisiblePackChangeListener(myVisiblePackChangeListener);
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
@@ -93,25 +95,22 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   protected abstract void onVisiblePackUpdated(boolean permGraphChanged);
 
   @Override
-  @NotNull
-  public VisiblePackRefresher getRefresher() {
+  public @NotNull VisiblePackRefresher getRefresher() {
     return myRefresher;
   }
 
   @Override
-  @NotNull
-  public VcsLogColorManager getColorManager() {
+  public @NotNull VcsLogColorManager getColorManager() {
     return myColorManager;
   }
 
   @Override
-  @NotNull
-  public VcsLog getVcsLog() {
+  public @NotNull VcsLog getVcsLog() {
     return myLog;
   }
 
-  @NotNull
-  public VcsLogData getLogData() {
+  @Override
+  public @NotNull VcsLogData getLogData() {
     return myLogData;
   }
 
@@ -121,103 +120,86 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   }
 
   @Override
-  @NotNull
-  public VisiblePack getDataPack() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public @NotNull VisiblePack getDataPack() {
     return myVisiblePack;
   }
 
   @Override
-  public void jumpToRow(int row, boolean silently) {
-    jumpTo(row, (model, r) -> {
-      if (model.getRowCount() <= r) return -1;
-      return r;
-    }, SettableFuture.create(), silently);
-  }
-
-  @Override
-  @NotNull
-  public ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
-    SettableFuture<Boolean> future = SettableFuture.create();
-    jumpTo(commitHash, (model, hash) -> model.getRowOfCommit(hash, root), future, false);
-    return future;
-  }
-
-  @NotNull
-  @Override
-  public ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
-    SettableFuture<Boolean> future = SettableFuture.create();
-    String trimmed = StringUtil.trim(commitHash, ch -> !StringUtil.containsChar("()'\"`", ch));
-    if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject,
-                                                    VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
-                                                    MessageType.WARNING);
-      future.set(false);
-      return future;
+  public <T> void jumpTo(@NotNull T commitId,
+                         @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                         @NotNull SettableFuture<JumpResult> future,
+                         boolean silently,
+                         boolean focus) {
+    if (!silently) {
+      future.addListener(() -> {
+        try {
+          JumpResult result = future.get();
+          if (result != JumpResult.SUCCESS) {
+            handleCommitNotFound(commitId, result == JumpResult.COMMIT_DOES_NOT_MATCH, rowGetter);
+          }
+        }
+        catch (InterruptedException | ExecutionException | CancellationException ignore) {
+        }
+      }, MoreExecutors.directExecutor());
     }
-    jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future, false);
-    return future;
+
+    tryJumpTo(commitId, rowGetter, future, focus);
   }
 
-  @Override
-  public <T> void jumpTo(@NotNull final T commitId,
-                         @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
-                         @NotNull final SettableFuture<? super Boolean> future,
-                         boolean silently) {
+  public <T> void tryJumpTo(@NotNull T commitId,
+                            @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                            @NotNull SettableFuture<JumpResult> future,
+                            boolean focus) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
 
-    int result = rowGetter.fun(model, commitId);
+    int result = rowGetter.fun(myVisiblePack, commitId);
     if (result >= 0) {
-      getTable().jumpToRow(result);
-      future.set(true);
+      getTable().jumpToRow(result, focus);
+      future.set(JumpResult.SUCCESS);
     }
     else if (model.canRequestMore()) {
-      model.requestToLoadMore(() -> jumpTo(commitId, rowGetter, future, silently));
+      model.requestToLoadMore(() -> tryJumpTo(commitId, rowGetter, future, focus));
+    }
+    else if (myLogData.getDataPack() != myVisiblePack.getDataPack()) {
+      invokeOnChange(() -> tryJumpTo(commitId, rowGetter, future, focus));
+    }
+    else if (myVisiblePack.getDataPack() instanceof DataPack.ErrorDataPack ||
+             myVisiblePack instanceof VisiblePack.ErrorVisiblePack) {
+      future.set(JumpResult.fromInt(result));
     }
     else if (!myVisiblePack.isFull()) {
-      invokeOnChange(() -> jumpTo(commitId, rowGetter, future, silently));
+      invokeOnChange(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else {
-      if (!silently) handleCommitNotFound(commitId, result == GraphTableModel.COMMIT_DOES_NOT_MATCH, rowGetter);
-      future.set(false);
+      future.set(JumpResult.fromInt(result));
     }
   }
 
   protected <T> void handleCommitNotFound(@NotNull T commitId,
                                           boolean commitExists,
-                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+                                          @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     String message = getCommitNotFoundMessage(commitId, commitExists);
     VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
   }
 
-  @NotNull
-  @Nls
-  protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
-    return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match", getCommitPresentation(commitId)) :
-           VcsLogBundle.message("vcs.log.commit.not.found", getCommitPresentation(commitId));
+  protected static @NotNull @Nls <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
+    String commitPresentation = getCommitPresentation(commitId);
+    return exists ? VcsLogBundle.message("vcs.log.commit.does.not.match", commitPresentation) :
+           VcsLogBundle.message("vcs.log.commit.not.found", commitPresentation);
   }
 
-  @NotNull
-  protected static <T> String getCommitPresentation(@NotNull T commitId) {
+  protected static @NotNull <T> String getCommitPresentation(@NotNull T commitId) {
     if (commitId instanceof Hash) {
-      return ((Hash)commitId).toShortString();
+      return VcsLogBundle.message("vcs.log.commit.prefix", ((Hash)commitId).toShortString());
     }
-    else if (commitId instanceof String) {
-      return VcsLogUtil.getShortHash((String)commitId);
+    if (commitId instanceof String commitString) {
+      if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(commitString).matches()) {
+        return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", VcsLogUtil.getShortHash(commitString));
+      }
     }
-    return commitId.toString();
-  }
-
-  protected void showWarningWithLink(@Nls @NotNull String mainText, @Nls @NotNull String linkText, @NotNull Runnable onClick) {
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, mainText, MessageType.WARNING,
-                                                  new NamedRunnable(linkText) {
-                                                    @Override
-                                                    public void run() {
-                                                      onClick.run();
-                                                    }
-                                                  });
+    return VcsLogBundle.message("vcs.log.commit.or.reference.prefix", commitId.toString());
   }
 
   @Override
@@ -240,25 +222,17 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     }
   }
 
-  public void invokeOnChange(@NotNull Runnable runnable) {
+  protected void invokeOnChange(@NotNull Runnable runnable) {
     invokeOnChange(runnable, Conditions.alwaysTrue());
   }
 
-  public void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<? super VcsLogDataPack> condition) {
-    addLogListener(new VcsLogListener() {
-      @Override
-      public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        if (condition.value(dataPack)) {
-          runnable.run();
-          removeLogListener(this);
-        }
-      }
-    });
+  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<? super VcsLogDataPack> condition) {
+    VcsLogUtil.invokeOnChange(this, runnable, condition);
   }
 
   @Override
   public void dispose() {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.debug("Disposing VcsLogUi '" + myId + "'");
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();

@@ -16,7 +16,6 @@
 
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
@@ -26,16 +25,16 @@ import org.jetbrains.annotations.NonNls;
  * Allows to specify indent options for specific file types as opposed to languages. For a language it is highly recommended to use
  * {@code LanguageCodeStyleSettingsProvider}.
  * @see LanguageCodeStyleSettingsProvider
- * @see com.intellij.psi.codeStyle.CodeStyleSettings#getIndentOptions(FileType)
+ * @see CodeStyleSettings#getIndentOptions(FileType)
  */
-public interface FileTypeIndentOptionsProvider {
+public interface FileTypeIndentOptionsProvider extends FileTypeIndentOptionsFactory {
   ExtensionPointName<FileTypeIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeIndentOptionsProvider");
-  
+
+  @Override
   CommonCodeStyleSettings.IndentOptions createIndentOptions();
 
+  @Override
   FileType getFileType();
-
-  IndentOptionsEditor createOptionsEditor();
 
   @NonNls
   String getPreviewText();

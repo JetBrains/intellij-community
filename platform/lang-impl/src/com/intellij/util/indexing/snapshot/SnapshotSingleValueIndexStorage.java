@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.snapshot;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,8 @@ import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
+import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,11 +22,11 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * {@link VfsAwareIndexStorage} implementation for {@link SingleEntryFileBasedIndexExtension} indexes.
  */
-public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+public final class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(SnapshotSingleValueIndexStorage.class);
 
   // shareable snapshots
-  private volatile SnapshotInputMappings<Key, Value> mySnapshotInputMappings;
+  private volatile UpdatableSnapshotInputMappingIndex<Key, Value, FileContent> mySnapshotInputMappings;
 
   // input -> hash (client instance dependent)
   private volatile IntForwardIndex myForwardIndex;
@@ -33,7 +35,7 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   private final SLRUCache<Key, ValueContainer<Value>> myCache;
 
   public SnapshotSingleValueIndexStorage(int cacheSize) {
-    myCache = new SLRUCache<Key, ValueContainer<Value>>(cacheSize, (int)(Math.ceil(cacheSize * 0.25))) {
+    myCache = new SLRUCache<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25))) {
       @NotNull
       @Override
       public ValueContainer<Value> createValue(Key key) {
@@ -124,11 +126,22 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   }
 
   @Override
+  public int keysCountApproximately() {
+    assert myInitialized;
+    return MeasurableIndexStore.keysCountApproximatelyIfPossible(myForwardIndex);
+  }
+
+  @Override
   public void close() throws StorageException {}
 
   @Override
   public void flush() throws IOException {
     clearCaches();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return mySnapshotInputMappings.isDirty();
   }
 
   private void checkKeyInputIdConsistency(Key key, int inputId) {

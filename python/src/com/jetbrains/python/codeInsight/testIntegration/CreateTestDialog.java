@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -64,20 +63,44 @@ public final class CreateTestDialog extends DialogWrapper {
     myClassName.setText(clazz);
     final List<String> methods = model.getMethods();
     final String[] columnNames = new String[]{"", "Test function"};
+    final int columnWithCheckbox = 0;
     myTableModel = new DefaultTableModel(
       methods.stream().map(name -> new Object[]{Boolean.FALSE, name}).toArray(size -> new Object[size][columnNames.length]),
       columnNames
-    );
+    ) {
+      @Override
+      public boolean isCellEditable(int row, int column) {
+        return column == columnWithCheckbox;
+      }
+
+      @Override
+      public Class<?> getColumnClass(int columnIndex) {
+        return columnIndex == columnWithCheckbox ? Boolean.class : String.class;
+      }
+    };
+
+    // Support "invert all selected with space"
+    final String actionName = "InvertSelected";
+    myMethodsTable.getInputMap().put(KeyStroke.getKeyStroke("SPACE"), actionName);
+    myMethodsTable.getActionMap().put(actionName, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        for (int selectedRow : myMethodsTable.getSelectedRows()) {
+          int row = myMethodsTable.convertRowIndexToModel(selectedRow);
+          boolean value = !(Boolean)myTableModel.getValueAt(row, columnWithCheckbox);
+          myTableModel.setValueAt(value, row, columnWithCheckbox);
+        }
+      }
+    });
+
     // If only one method, then select it by default
     if (methods.size() == 1) {
-      myTableModel.setValueAt(Boolean.TRUE, myTableModel.getRowCount() - 1, 0);
+      myTableModel.setValueAt(Boolean.TRUE, myTableModel.getRowCount() - 1, columnWithCheckbox);
     }
     myMethodsTable.setModel(myTableModel);
+    myMethodsTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    TableColumn checkColumn = myMethodsTable.getColumnModel().getColumn(0);
-    TableUtil.setupCheckboxColumn(checkColumn);
-    checkColumn.setCellRenderer(new BooleanTableCellRenderer());
-    checkColumn.setCellEditor(new DefaultCellEditor(new JCheckBox()));
+    TableUtil.setupCheckboxColumn(myMethodsTable, columnWithCheckbox);
 
     getOKAction().setEnabled(isValid());
   }
@@ -130,6 +153,7 @@ public final class CreateTestDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
+    myMainPanel.setBorder(JBUI.Borders.empty());
     return myMainPanel;
   }
 

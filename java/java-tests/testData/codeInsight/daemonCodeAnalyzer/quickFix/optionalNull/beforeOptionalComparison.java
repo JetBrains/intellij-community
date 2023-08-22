@@ -1,5 +1,6 @@
 // "Fix all 'Null value for Optional type' problems in file" "true"
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -37,4 +38,11 @@ public class Test {
     }
   }
 
+  void test6(Map<String, Optional<String>> map) {
+    Optional<String> result = map.get("key");
+    if (result == null) {
+      return;
+    }
+    System.out.println(result);
+  }
 }

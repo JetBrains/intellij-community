@@ -2,6 +2,8 @@
 package org.zmlx.hg4idea.ui;
 
 import com.google.common.primitives.Ints;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,10 +20,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
@@ -46,7 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, HgUpdater {
+public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, HgUpdater, Disposable {
 
   public static final DataKey<HgMqUnAppliedPatchesPanel> MQ_PATCHES = DataKey.create("Mq.Patches");
   private static final String POPUP_ACTION_GROUP = "Mq.Patches.ContextMenu";
@@ -78,10 +83,10 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     });
     myPatchTable.setShowColumns(true);
     myPatchTable.setFillsViewportHeight(true);
-    myPatchTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+    myPatchTable.getEmptyText().setText(IdeCoreBundle.message("message.nothingToShow"));
     myPatchTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     myPatchTable.setDragEnabled(true);
-    new TableSpeedSearch(myPatchTable);
+    TableSpeedSearch.installOn(myPatchTable);
     myPatchTable.setDropMode(DropMode.INSERT_ROWS);
     myPatchTable.setTransferHandler(new TableRowsTransferHandler(myPatchTable));
 
@@ -89,7 +94,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPatchTable);
     add(scrollPane, BorderLayout.CENTER);
-    myProject.getMessageBus().connect(myProject).subscribe(HgVcs.STATUS_TOPIC, this);
+    myProject.getMessageBus().connect(this).subscribe(HgVcs.STATUS_TOPIC, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private JComponent createToolbar() {
@@ -99,7 +108,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     MqDeleteAction mqDeleteAction = new MqDeleteAction();
     EmptyAction.setupAction(mqDeleteAction, "hg4idea.QDelete", this);
 
-    PopupHandler.installPopupHandler(myPatchTable, POPUP_ACTION_GROUP, ActionPlaces.PROJECT_VIEW_POPUP);
+    PopupHandler.installPopupMenu(myPatchTable, POPUP_ACTION_GROUP, ActionPlaces.PROJECT_VIEW_POPUP);
 
     ActionManager actionManager = ActionManager.getInstance();
 
@@ -113,7 +122,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     return toolbar.getComponent();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updatePatchSeriesInBackground(@Nullable final Runnable runAfterUpdate) {
     final String newContent = myNeedToUpdateFileContent ? getContentFromModel() : null;
     myNeedToUpdateFileContent = false;
@@ -142,7 +151,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private String getContentFromModel() {
     StringBuilder content = new StringBuilder();
     String separator = "\n";
@@ -155,7 +164,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     return content.toString();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private String getPatchName(int i) {
     return myPatchTable.getModel().getPatchName(i);
   }
@@ -163,9 +172,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof HgMqUnAppliedPatchesPanel)) return false;
-
-    HgMqUnAppliedPatchesPanel panel = (HgMqUnAppliedPatchesPanel)o;
+    if (!(o instanceof HgMqUnAppliedPatchesPanel panel)) return false;
 
     if (!myRepository.equals(panel.myRepository)) return false;
 
@@ -185,7 +192,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   public List<String> getSelectedPatchNames() {
     return getPatchNames(myPatchTable.getSelectedRows());
   }
@@ -245,6 +252,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedRowsCount() != 0 && !myPatchTable.isEditing());
     }
@@ -291,7 +303,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
     @Override
     public String getColumnName(int col) {
-      return myColumnNames[col].toString();
+      return myColumnNames[col].getColumnName();
     }
 
     @Override

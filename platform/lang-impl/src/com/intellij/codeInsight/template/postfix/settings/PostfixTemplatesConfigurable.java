@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -17,9 +18,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Alarm;
@@ -38,8 +41,8 @@ import java.util.List;
 import java.util.*;
 
 @SuppressWarnings("rawtypes")
-public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll,
-                                                     Configurable.WithEpDependencies {
+public final class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll,
+                                                           Configurable.WithEpDependencies {
   public static final Comparator<PostfixTemplate> TEMPLATE_COMPARATOR = Comparator.comparing(PostfixTemplate::getKey);
 
   @Nullable
@@ -50,7 +53,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   @Nullable
   private PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
-  
+
   private JComponent myPanel;
   private JBCheckBox myCompletionEnabledCheckbox;
   private JBCheckBox myPostfixTemplatesEnabled;
@@ -95,13 +98,14 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
       }
     };
 
-    
+
     JPanel panel = new JPanel(new BorderLayout());
     boolean canAddTemplate = ContainerUtil.find(getProviders(), p -> StringUtil.isNotEmpty(p.getPresentableName())) != null;
-    
+
     panel.add(ToolbarDecorator.createDecorator(myCheckboxTree)
                               .setAddActionUpdater(e -> canAddTemplate)
                               .setAddAction(button -> myCheckboxTree.addTemplate(button))
+                              .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
                               .setEditActionUpdater(e -> myCheckboxTree.canEditSelectedTemplate())
                               .setEditAction(button -> myCheckboxTree.editSelectedTemplate())
                               .setRemoveActionUpdater(e -> myCheckboxTree.canRemoveSelectedTemplates())
@@ -125,6 +129,11 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
       @Override
       public void updateButton(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myCheckboxTree != null && myCheckboxTree.canDuplicateSelectedTemplate());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     button.registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myCheckboxTree, myCheckboxTree);
@@ -273,7 +282,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     return TemplateSettings.TAB_CHAR;
   }
 
-  private static String shortcutToString(char shortcut) {
+  private static @ListItem String shortcutToString(char shortcut) {
     if (shortcut == TemplateSettings.SPACE_CHAR) {
       return getSpace();
     }
@@ -283,15 +292,15 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     return getTab();
   }
 
-  private static String getSpace() {
+  private static @ListItem String getSpace() {
     return CodeInsightBundle.message("template.shortcut.space");
   }
 
-  private static String getTab() {
+  private static @ListItem String getTab() {
     return CodeInsightBundle.message("template.shortcut.tab");
   }
 
-  private static String getEnter() {
+  private static @ListItem String getEnter() {
     return CodeInsightBundle.message("template.shortcut.enter");
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.wrapper.CallArgument;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,15 +17,13 @@ public class CallArgumentImpl implements CallArgument {
     myText = text;
   }
 
-  @NotNull
   @Override
-  public String getType() {
+  public @NotNull @NlsSafe String getType() {
     return myType;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull @NlsSafe String getText() {
     return myText;
   }
 }

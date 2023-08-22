@@ -10,15 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    if (!(element instanceof XmlAttribute) || !JavaFxFileTypeFactory.isFxml(element.getContainingFile())) return PsiReference.EMPTY_ARRAY;
+    if (!(element instanceof XmlAttribute xmlAttribute) || !JavaFxFileTypeFactory.isFxml(element.getContainingFile())) return PsiReference.EMPTY_ARRAY;
 
-    final XmlAttribute xmlAttribute = (XmlAttribute)element;
     final String name = xmlAttribute.getName();
     final int dotIndex = name.indexOf('.');
     if (dotIndex <= 0 || name.indexOf('.', dotIndex + 1) >= 0) return PsiReference.EMPTY_ARRAY;

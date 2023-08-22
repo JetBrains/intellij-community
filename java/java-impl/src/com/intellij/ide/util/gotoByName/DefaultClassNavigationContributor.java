@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.lang.Language;
@@ -24,7 +10,6 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -43,7 +28,7 @@ import java.util.regex.Matcher;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor, PossiblyDumbAware {
   @Override
-  public String getQualifiedName(final NavigationItem item) {
+  public String getQualifiedName(final @NotNull NavigationItem item) {
     if (item instanceof PsiClass) {
       return getQualifiedNameForClass((PsiClass)item);
     }
@@ -66,53 +51,69 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = scope.getProject();
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
       PsiShortNamesCache.getInstance(project).processAllClassNames(processor, scope, filter);
-    }, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
+    });
   }
 
   @Override
   public void processElementsWithName(@NotNull String name,
                                       @NotNull final Processor<? super NavigationItem> processor,
                                       @NotNull final FindSymbolParameters parameters) {
-    String namePattern = StringUtil.getShortName(parameters.getCompletePattern());
-    boolean hasDollar = namePattern.contains("$");
-    if (hasDollar) {
-      Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(namePattern);
-      if (matcher.matches()) {
-        namePattern = matcher.group(1);
-        hasDollar = namePattern.contains("$");
-      }
-    }
-    final MinusculeMatcher innerMatcher = hasDollar ? NameUtil.buildMatcher("*" + namePattern).build() : null;
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
-      PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
-        final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      DefaultClassProcessor defaultClassProcessor = new DefaultClassProcessor(processor, parameters, false);
+      PsiShortNamesCache.getInstance(parameters.getProject())
+        .processClassesWithName(name, defaultClassProcessor, parameters.getSearchScope(), parameters.getIdFilter());
+    });
+  }
 
-        @Override
-        public boolean process(PsiClass aClass) {
-          if (!isPhysical(aClass)) return true;
-          if (isAnnotation && !aClass.isAnnotationType()) return true;
-          if (innerMatcher != null) {
-            if (aClass.getContainingClass() == null) return true;
-            String jvmQName = ClassUtil.getJVMClassName(aClass);
-            if (jvmQName == null || !innerMatcher.matches(StringUtil.getShortName(jvmQName))) return true;
-          }
-          return processor.process(aClass);
+  public static class DefaultClassProcessor implements Processor<PsiClass> {
+    private @NotNull final Processor<? super NavigationItem> processor;
+    private @Nullable final MinusculeMatcher innerClassMatcher;
+    private final boolean allowNonPhysicalClasses;
+    private final boolean isAnnotation;
+
+    DefaultClassProcessor(@NotNull final Processor<? super NavigationItem> processor, @NotNull final FindSymbolParameters parameters,
+                          boolean allowNonPhysicalClasses) {
+      this.processor = processor;
+      this.innerClassMatcher = getInnerClassMatcher(parameters);
+      this.allowNonPhysicalClasses = allowNonPhysicalClasses;
+      isAnnotation = parameters.getLocalPatternName().startsWith("@");
+    }
+
+    @Override
+    public boolean process(PsiClass aClass) {
+      if (!DefaultSymbolNavigationContributor.isOpenable(aClass) || (!allowNonPhysicalClasses && !aClass.isPhysical())) {
+        return true;
+      }
+      if (isAnnotation && !aClass.isAnnotationType()) return true;
+      if (innerClassMatcher != null) {
+        if (aClass.getContainingClass() == null) return true;
+        String jvmQName = ClassUtil.getJVMClassName(aClass);
+        if (jvmQName == null || !innerClassMatcher.matches(StringUtil.getShortName(jvmQName))) return true;
+      }
+      return processor.process(aClass);
+    }
+
+    @Nullable
+    private static MinusculeMatcher getInnerClassMatcher(@NotNull FindSymbolParameters parameters) {
+      String namePattern = StringUtil.getShortName(parameters.getCompletePattern());
+      boolean hasDollar = namePattern.contains("$");
+      if (hasDollar) {
+        Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(namePattern);
+        if (matcher.matches()) {
+          namePattern = matcher.group(1);
+          hasDollar = namePattern.contains("$");
         }
-      }, parameters.getSearchScope(), parameters.getIdFilter());
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+      }
+      return hasDollar ? NameUtil.buildMatcher("*" + namePattern).build() : null;
+    }
   }
 
   @Nullable
   @Override
   public Language getElementLanguage() {
     return JavaLanguage.INSTANCE;
-  }
-
-  private static boolean isPhysical(PsiClass aClass) {
-    PsiFile file = aClass.getContainingFile();
-    return file != null && file.getVirtualFile() != null && aClass.isPhysical();
   }
 
   @Override

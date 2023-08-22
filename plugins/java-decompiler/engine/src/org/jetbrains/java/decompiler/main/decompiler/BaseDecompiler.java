@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.decompiler;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -13,8 +15,13 @@ import java.util.Map;
 public class BaseDecompiler {
   private final Fernflower engine;
 
-  public BaseDecompiler(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
-    engine = new Fernflower(provider, saver, options, logger);
+  public BaseDecompiler(IBytecodeProvider provider, IResultSaver saver, @Nullable Map<String, Object> options, IFernflowerLogger logger) {
+    this(provider, saver, options, logger, null);
+  }
+
+  public BaseDecompiler(IBytecodeProvider provider, IResultSaver saver, @Nullable Map<String, Object> options, IFernflowerLogger logger,
+                        @Nullable CancellationManager cancellationManager) {
+    engine = new Fernflower(provider, saver, options, logger, cancellationManager);
   }
 
   public void addSource(File source) {
@@ -23,17 +30,6 @@ public class BaseDecompiler {
 
   public void addLibrary(File library) {
     engine.addLibrary(library);
-  }
-
-  /** @deprecated use {@link #addSource(File)} / {@link #addLibrary(File)} instead */
-  @Deprecated
-  public void addSpace(File file, boolean own) {
-    if (own) {
-      addSource(file);
-    }
-    else {
-      addLibrary(file);
-    }
   }
 
   public void decompileContext() {

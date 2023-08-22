@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -31,7 +32,7 @@ public class HgMerge extends HgAbstractGlobalSingleRepoAction {
   @Override
   public void execute(@NotNull final Project project,
                       @NotNull final Collection<HgRepository> repos,
-                      @Nullable final HgRepository selectedRepo) {
+                      @Nullable final HgRepository selectedRepo, @NotNull DataContext dataContext) {
     final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, selectedRepo);
     if (mergeDialog.showAndGet()) {
       final String targetValue = StringUtil.escapeBackSlashes(mergeDialog.getTargetValue());

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -27,8 +28,11 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnMergeProvider implements MergeProvider {
+  private static final @NonNls String TEXT_MIME_TYPE_PREFIX = "text/";
+  private static final @NonNls String WORKING_MARKER = "working";
 
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance(SvnMergeProvider.class);
@@ -41,34 +45,28 @@ public class SvnMergeProvider implements MergeProvider {
   @NotNull
   public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final MergeData data = new MergeData();
-    File oldFile = null;
-    File newFile = null;
-    File workingFile = null;
-    boolean mergeCase = false;
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     Info info = vcs.getInfo(file);
 
-    if (info != null) {
-      oldFile = info.getConflictOldFile();
-      newFile = info.getConflictNewFile();
+    if (info == null) {
+      throw new VcsException(message("error.could.not.get.info.for.path", file.getPath()));
+    }
+    File oldFile = info.getConflictOldFile();
+    File newFile = info.getConflictNewFile();
+    File workingFile = info.getConflictWrkFile();
+    boolean mergeCase = workingFile == null || workingFile.getName().contains(WORKING_MARKER);
+    // for debug
+    if (workingFile == null) {
+      LOG
+        .info("Null working file when merging text conflict for " + file.getPath() + " old file: " + oldFile + " new file: " + newFile);
+    }
+    if (mergeCase) {
+      // this is merge case
+      oldFile = info.getConflictNewFile();
+      newFile = info.getConflictOldFile();
       workingFile = info.getConflictWrkFile();
-      mergeCase = workingFile == null || workingFile.getName().contains("working");
-      // for debug
-      if (workingFile == null) {
-        LOG
-          .info("Null working file when merging text conflict for " + file.getPath() + " old file: " + oldFile + " new file: " + newFile);
-      }
-      if (mergeCase) {
-        // this is merge case
-        oldFile = info.getConflictNewFile();
-        newFile = info.getConflictOldFile();
-        workingFile = info.getConflictWrkFile();
-      }
-      data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
     }
-    else {
-      throw new VcsException("Could not get info for " + file.getPath());
-    }
+    data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
     if (oldFile == null || newFile == null || workingFile == null) {
       ByteArrayOutputStream bos = getBaseRevisionContents(vcs, file);
       data.ORIGINAL = bos.toByteArray();
@@ -92,7 +90,7 @@ public class SvnMergeProvider implements MergeProvider {
     return data;
   }
 
-  private ByteArrayOutputStream getBaseRevisionContents(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+  private static ByteArrayOutputStream getBaseRevisionContents(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
       byte[] contents = SvnUtil.getFileContents(vcs, Target.on(virtualToIoFile(file)), Revision.BASE, Revision.UNDEFINED);
@@ -153,6 +151,6 @@ public class SvnMergeProvider implements MergeProvider {
   }
 
   private static boolean isBinaryMimeType(@NotNull String mimeType) {
-    return !mimeType.startsWith("text/");
+    return !mimeType.startsWith(TEXT_MIME_TYPE_PREFIX);
   }
 }

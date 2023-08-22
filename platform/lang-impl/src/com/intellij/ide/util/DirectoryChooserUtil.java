@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeView;
@@ -25,13 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.ide.IdeBundle.message;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.roots.ProjectRootManager.getInstance;
 
-public class DirectoryChooserUtil {
+public final class DirectoryChooserUtil {
   private DirectoryChooserUtil() {
   }
 
@@ -55,12 +41,11 @@ public class DirectoryChooserUtil {
                                              @Nullable String postfixToShow) {
     ProjectFileIndex projectFileIndex = getInstance(project).getFileIndex();
 
-    ArrayList<PsiDirectory> possibleDirs = new ArrayList<>();
+    List<PsiDirectory> possibleDirs = new ArrayList<>();
     for (PsiDirectory dir : packageDirectories) {
-      if (!dir.isValid()) continue;
-      if (!dir.isWritable()) continue;
-      if (possibleDirs.contains(dir)) continue;
-      if (!projectFileIndex.isInContent(dir.getVirtualFile())) continue;
+      if (!dir.isValid() || !dir.isWritable() || possibleDirs.contains(dir) || !projectFileIndex.isInContent(dir.getVirtualFile())) {
+        continue;
+      }
       possibleDirs.add(dir);
     }
 

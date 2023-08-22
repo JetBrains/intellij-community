@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Nikolay Matveev
- */
 public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElement> extends AnAction {
   @NotNull
   protected final Class<T> myClass;
@@ -49,7 +46,7 @@ public abstract class SelectionBasedPsiElementInternalAction<T extends PsiElemen
     if (expressions.size() > 1) {
       IntroduceTargetChooser.showChooser(
         editor, expressions,
-        new Pass<T>() {
+        new Pass<>() {
           @Override
           public void pass(@NotNull T expression) {
             performOnElement(editor, expression);

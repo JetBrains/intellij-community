@@ -21,6 +21,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.FunctionValue
 
 const val VM_SCHEME: String = "vm"
+const val WEBPACK_INTERNAL_SCHEME: String = "webpack-internal"
 
 interface ScriptManager {
   fun getSource(script: Script): Promise<String>

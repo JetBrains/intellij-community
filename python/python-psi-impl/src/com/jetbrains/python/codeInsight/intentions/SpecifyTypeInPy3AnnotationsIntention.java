@@ -23,7 +23,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,6 +35,7 @@ import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,18 +45,10 @@ import org.jetbrains.annotations.NotNull;
  * Helps to specify type  in annotations in python3
  */
 public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
-  private String myText = PyPsiBundle.message("INTN.specify.type.in.annotation");
-
-  @Override
-  @NotNull
-  public String getText() {
-    return myText;
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.specify.type.in.annotation");
+    return PyPsiBundle.message("INTN.NAME.specify.type.in.annotation");
   }
 
   @Override
@@ -100,7 +92,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
                                                    boolean createTemplate) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
-    final String paramName = StringUtil.notNullize(parameter.getName());
+    final String paramName = ParamHelper.getNameInSignature(parameter);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     final String defaultParamText = defaultParamValue == null ? null : defaultParamValue.getText();
@@ -131,6 +123,13 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   static String parameterType(PyParameter parameter) {
     String paramType = PyNames.OBJECT;
 
+    if (parameter instanceof PyNamedParameter) {
+      PyAnnotation annotation = ((PyNamedParameter)parameter).getAnnotation();
+      if (annotation != null && annotation.getValue() != null) {
+        return annotation.getValue().getText();
+      }
+    }
+
     PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (function != null) {
       final PySignature signature = PySignatureCacheManager.getInstance(parameter.getProject()).findSignature(
@@ -140,17 +139,23 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
         paramType = ObjectUtils.chooseNotNull(signature.getArgTypeQualifiedName(parameterName), paramType);
       }
     }
+
     return paramType;
   }
 
 
   static String returnType(@NotNull PyFunction function) {
-    String returnType = PyNames.OBJECT;
+    if (function.getAnnotation() != null && function.getAnnotation().getValue() != null) {
+      return function.getAnnotation().getValue().getText();
+    }
+
     final PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
     if (signature != null) {
-      returnType = ObjectUtils.chooseNotNull(signature.getReturnTypeQualifiedName(), returnType);
+      final String qualifiedName = signature.getReturnTypeQualifiedName();
+      if (qualifiedName != null) return qualifiedName;
     }
-    return returnType;
+
+    return PyNames.OBJECT;
   }
 
   public static PyExpression annotateReturnType(Project project, PyFunction function, boolean createTemplate) {
@@ -202,17 +207,20 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   protected boolean isParamTypeDefined(@NotNull PyNamedParameter parameter) {
-    return parameter.getAnnotation() != null;
+    if (parameter.getAnnotation() != null) return true;
+    if (parameter.getTypeComment() != null) return true;
+    PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+    return function != null && function.getTypeComment() != null;
   }
 
   @Override
   protected boolean isReturnTypeDefined(@NotNull PyFunction function) {
-    return function.getAnnotation() != null;
+    return function.getAnnotation() != null || function.getTypeComment() != null;
   }
 
   @Override
   protected void updateText(boolean isReturn) {
-    myText = isReturn ? PyPsiBundle.message("INTN.specify.return.type.in.annotation") : PyPsiBundle
-      .message("INTN.specify.type.in.annotation");
+    setText(isReturn ? PyPsiBundle.message("INTN.specify.return.type.in.annotation")
+                     : PyPsiBundle.message("INTN.specify.type.in.annotation"));
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index.stubs
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
@@ -9,9 +10,9 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestApplicationManager
-import com.intellij.util.ui.UIUtil
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -44,8 +45,8 @@ abstract class ProjectSdkStubsGenerator {
   }
 
   private fun indexSdkAndStoreSerializedStubs(projectPath: String, sdkPath: String, stubsFilePath: String) {
-    val pair = openProjectWithSdk(projectPath, moduleTypeId, createSdkProducer(sdkPath))
-    val project = pair.first
+    val testRootDisposable = Disposer.newDisposable()
+    val pair = openProjectWithSdk(projectPath, moduleTypeId, createSdkProducer(sdkPath), testRootDisposable)
     val sdk = pair.second
 
     try {
@@ -54,8 +55,8 @@ abstract class ProjectSdkStubsGenerator {
       stubsGenerator.buildStubsForRoots(roots)
     }
     finally {
-      UIUtil.invokeAndWaitIfNeeded(Runnable {
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+      ApplicationManager.getApplication().invokeAndWait(Runnable {
+        Disposer.dispose(testRootDisposable)
         WriteAction.run<Throwable> {
           SdkConfigurationUtil.removeSdk(sdk!!)
         }

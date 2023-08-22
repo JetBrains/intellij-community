@@ -21,7 +21,7 @@ public final  class PyToxConfigurationFactory extends PythonConfigurationFactory
   @NotNull
   @Override
   public String getName() {
-    return "Tox";
+    return "Tox"; //NON-NLS
   }
 
   @Override

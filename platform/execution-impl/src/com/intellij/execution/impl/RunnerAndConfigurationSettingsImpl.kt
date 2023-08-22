@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
@@ -12,23 +14,22 @@ import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
-import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.nullize
-import gnu.trove.THashMap
-import gnu.trove.THashSet
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import java.util.*
 
 private const val RUNNER_ID = "RunnerId"
 
@@ -40,6 +41,7 @@ const val DUMMY_ELEMENT_NAME: String = "dummy"
 private const val TEMPORARY_ATTRIBUTE = "temporary"
 private const val EDIT_BEFORE_RUN = "editBeforeRun"
 private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
+private const val FOCUS_TOOLWINDOW_BEFORE_RUN = "focusToolWindowBeforeRun"
 
 private const val TEMP_CONFIGURATION = "tempConfiguration"
 internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
@@ -55,11 +57,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   private var _configuration: RunConfiguration? = null,
   private var isTemplate: Boolean = false,
   private var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE
-) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
-
-  @Deprecated("isSingleton parameter removed", level = DeprecationLevel.ERROR)
-  @Suppress("UNUSED_PARAMETER")
-  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean, isSingleton: Boolean) : this(manager, configuration, isTemplate)
+) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme, Scheme {
 
   init {
     (_configuration as? PersistentAwareRunConfiguration)?.setTemplate(isTemplate)
@@ -75,7 +73,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
         }
       }
       // we cannot use here configuration.type.id because it will break previously stored list of stored settings
-      @Suppress("DEPRECATION")
       return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
     }
   }
@@ -91,10 +88,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   private var pathIfStoredInArbitraryFile: String? = null
   private var isEditBeforeRun = false
   private var isActivateToolWindowBeforeRun = true
+  private var isFocusToolWindowBeforeRun = false
   private var wasSingletonSpecifiedExplicitly = false
   private var folderName: String? = null
 
   private var uniqueId: String? = null
+
+  var filePathIfRunningCurrentFile: String? = null
 
   override fun getFactory() = _configuration?.factory ?: UnknownConfigurationType.getInstance()
 
@@ -104,6 +104,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun setTemporary(value: Boolean) {
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
+    pathIfStoredInArbitraryFile = null
   }
 
   override fun storeInLocalWorkspace() {
@@ -140,7 +141,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
       val configuration = configuration
-      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration))
+      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration("", configuration), isTemplate)
     }
   }
 
@@ -166,7 +167,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     // check name if configuration name was changed not using our setName
     if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
-      @Suppress("DEPRECATION")
       result = getUniqueIdFor(configuration)
       uniqueId = result
     }
@@ -185,6 +185,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun isActivateToolWindowBeforeRun() = isActivateToolWindowBeforeRun
 
+  override fun setFocusToolWindowBeforeRun(value: Boolean) {
+    isFocusToolWindowBeforeRun = value
+  }
+
+  override fun isFocusToolWindowBeforeRun() = isFocusToolWindowBeforeRun
+
   override fun setFolderName(value: String?) {
     folderName = value
   }
@@ -201,12 +207,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       level = if (element.getAttributeBooleanValue(TEMPORARY_ATTRIBUTE) || TEMP_CONFIGURATION == element.name) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
     }
 
-    isEditBeforeRun = (element.getAttributeBooleanValue(EDIT_BEFORE_RUN))
+    isEditBeforeRun = element.getAttributeBooleanValue(EDIT_BEFORE_RUN)
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
-    @Suppress("PlatformExtensionReceiverOfInline")
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
+    isFocusToolWindowBeforeRun = element.getAttributeBooleanValue(FOCUS_TOOLWINDOW_BEFORE_RUN)
     folderName = element.getAttributeValue(FOLDER_NAME)
-    val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
+    val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate)
 
     val configuration = factory.createTemplateConfiguration(manager.project, manager)
     if (!isTemplate) {
@@ -238,7 +244,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
     else {
       wasSingletonSpecifiedExplicitly = true
-      @Suppress("PlatformExtensionReceiverOfInline")
       configuration.isAllowRunningInParallel = !singletonStr.toBoolean()
     }
 
@@ -281,6 +286,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
+      if (isFocusToolWindowBeforeRun) {
+        element.setAttribute(FOCUS_TOOLWINDOW_BEFORE_RUN, "true")
+      }
       if (wasSingletonSpecifiedExplicitly || configuration.isAllowRunningInParallel != factory.singletonPolicy.isAllowRunningInParallel) {
         element.setAttribute(SINGLETON, (!configuration.isAllowRunningInParallel).toString())
       }
@@ -297,7 +305,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     if (configuration.type.isManaged) {
-      manager.writeBeforeRunTasks(configuration)?.let {
+      manager.writeBeforeRunTasks(configuration).let {
         element.addContent(it)
       }
     }
@@ -331,17 +339,27 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    var warning: RuntimeConfigurationWarning?
+    var warning: RuntimeConfigurationException? = null
+    val dataContext = ProgramParametersConfigurator.projectContext(configuration.project, null, null)
 
-    warning = doCheck { runReadAction { configuration.checkConfiguration() } }
+     ReadAction.nonBlocking {
+      try {
+        ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
+          configuration.checkConfiguration()
+        }
+      }
+      catch (e: RuntimeConfigurationException) {
+        warning = e
+      }
+    }.executeSynchronously()
     if (configuration !is RunConfigurationBase<*>) {
       if (warning != null) {
-        throw warning
+        throw warning as RuntimeConfigurationException
       }
       return
     }
 
-    val runners = THashSet<ProgramRunner<*>>()
+    val runners = HashSet<ProgramRunner<*>>()
     runners.addAll(runnerSettings.settings.keys.mapNotNull { ProgramRunner.findRunnerById(it) })
     runners.addAll(configurationPerRunnerSettings.settings.keys.mapNotNull { ProgramRunner.findRunnerById(it) })
     executor?.let { ProgramRunner.getRunner(executor.id, configuration)?.let { runners.add(it) } }
@@ -350,22 +368,28 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       if (executor == null || runner.canRun(executor.id, configuration)) {
         val runnerWarning = doCheck { configuration.checkRunnerSettings(runner, runnerSettings.settings[runner.runnerId], configurationPerRunnerSettings.settings[runner.runnerId]) }
         if (runnerWarning != null) {
-          if (warning == null) warning = runnerWarning
-        } else {
-          runnerFound = true // there is at least one runner to run specified configuration
+          if (warning == null) {
+            warning = runnerWarning
+          }
+        }
+        else {
+          // there is at least one runner to run specified configuration
+          runnerFound = true
         }
       }
     }
     if (executor != null && executor != DefaultRunExecutor.getRunExecutorInstance() && !runnerFound) {
-      throw RuntimeConfigurationError(executor.id + ": there are no runners for " + configuration)
+      throw RuntimeConfigurationError(ExecutionBundle.message("dialog.message.no.runners.for.configuration", executor.id, configuration))
     }
     if (executor != null) {
       val beforeRunWarning = doCheck { configuration.checkSettingsBeforeRun() }
-      if (warning == null && beforeRunWarning != null) warning = beforeRunWarning
+      if (warning == null && beforeRunWarning != null) {
+        warning = beforeRunWarning
+      }
     }
 
     if (warning != null) {
-      throw warning
+      throw warning as RuntimeConfigurationException
     }
   }
 
@@ -390,6 +414,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   public override fun clone(): RunnerAndConfigurationSettingsImpl {
     val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone())
     copy.importRunnerAndConfigurationSettings(this)
+
+    copy.level = this.level
+    copy.pathIfStoredInArbitraryFile = this.pathIfStoredInArbitraryFile
+
     return copy
   }
 
@@ -399,8 +427,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
-    level = template.level
-    pathIfStoredInArbitraryFile = template.pathIfStoredInArbitraryFile
   }
 
   private fun <T> importFromTemplate(templateItem: RunnerItem<T>, item: RunnerItem<T>) {
@@ -461,11 +487,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   fun needsToBeMigrated(): Boolean = (_configuration as? PersistentAwareRunConfiguration)?.needsToBeMigrated() ?: false
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
-    val settings = THashMap<String, T>()
+    val settings: MutableMap<String, T?> = HashMap()
 
     private var unloadedSettings: MutableList<Element>? = null
     // to avoid changed files
-    private val loadedIds = THashSet<String>()
+    private val loadedIds = HashSet<String>()
 
     fun loadState(element: Element) {
       settings.clear()
@@ -481,13 +507,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
         if (runner == null) {
           iterator.remove()
         }
-        @Suppress("IfThenToSafeAccess")
         add(state, runner, if (runner == null) null else createSettings(runner))
       }
     }
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
-      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.iterable.filter { runnerId == it.runnerId }
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.lazySequence().filter { runnerId == it.runnerId }.toList()
       return when {
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()
@@ -580,7 +605,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode || isStoredInLocalWorkspace
+  get() = ApplicationManager.getApplication().isUnitTestMode && writeDefaultAttributeWithFalseValueInTests || isStoredInLocalWorkspace
+
+@set:TestOnly
+var writeDefaultAttributeWithFalseValueInTests: Boolean = true
 
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
   when (configuration) {

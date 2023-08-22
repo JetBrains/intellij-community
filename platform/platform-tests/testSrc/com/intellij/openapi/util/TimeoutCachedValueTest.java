@@ -12,7 +12,7 @@ public class TimeoutCachedValueTest extends TestCase {
   public void testNoCache() throws Exception {
     final int[] counter = new int[1];
 
-    final TimeoutCachedValue<Integer> cachedValue = new TimeoutCachedValue<Integer>(0, TimeUnit.MILLISECONDS, ()-> counter[0] ++);
+    final TimeoutCachedValue<Integer> cachedValue = new TimeoutCachedValue<>(0, TimeUnit.MILLISECONDS, () -> counter[0]++);
 
     assertEquals(0, cachedValue.get().intValue());
     Thread.sleep(10);
@@ -22,7 +22,7 @@ public class TimeoutCachedValueTest extends TestCase {
   public void testTimeout() throws Exception {
     final int[] counter = new int[1];
 
-    final TimeoutCachedValue<Integer> cachedValue = new TimeoutCachedValue<Integer>(50, TimeUnit.MILLISECONDS, ()-> counter[0] ++);
+    final TimeoutCachedValue<Integer> cachedValue = new TimeoutCachedValue<>(50, TimeUnit.MILLISECONDS, () -> counter[0]++);
 
     assertEquals(0, cachedValue.get().intValue());
     assertEquals(0, cachedValue.get().intValue());
@@ -35,7 +35,7 @@ public class TimeoutCachedValueTest extends TestCase {
   public void testExceptionDuringComputingValue() {
     final int[] counter = new int[1];
 
-    final TimeoutCachedValue<Integer> cachedValue = new TimeoutCachedValue<Integer>(50, TimeUnit.MILLISECONDS, ()-> {
+    final TimeoutCachedValue<Integer> cachedValue = new TimeoutCachedValue<>(50, TimeUnit.MILLISECONDS, () -> {
       int current = counter[0]++;
       if (current == 0) {
         throw new TestProgressCancelException();

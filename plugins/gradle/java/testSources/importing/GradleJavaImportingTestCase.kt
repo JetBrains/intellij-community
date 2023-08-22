@@ -2,19 +2,21 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
+import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.UsefulTestCase
+import junit.framework.AssertionFailedError
 
 abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
 
@@ -36,8 +38,7 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
   }
 
   private fun getLanguageLevelForModule(module: Module): LanguageLevel? {
-    val moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module)
-    val moduleLanguageLevel = moduleExtension.languageLevel
+    val moduleLanguageLevel = LanguageLevelUtil.getCustomLanguageLevel(module)
     return moduleLanguageLevel ?: getLanguageLevelForProject(module.project)
   }
 
@@ -57,53 +58,10 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
     return compilerConfiguration.getBytecodeTargetLevel(module)
   }
 
-  private fun getSdkForProject(): Sdk? {
-    return ProjectRootManager.getInstance(myProject).projectSdk
-  }
-
   fun getSdkForModule(moduleName: String): Sdk? {
     return ModuleRootManager.getInstance(getModule(moduleName)).sdk
   }
 
-  fun createAndRegisterSdk(isProjectSdk: Boolean = false): Sdk {
-    val sdk = ExternalSystemImportingTestCase.createJdk()
-    registerSdk(sdk, isProjectSdk)
-    return sdk
-  }
-
-  private fun registerSdk(sdk: Sdk, isProjectSdk: Boolean = false) {
-    registerSdk(sdk)
-    if (isProjectSdk) {
-      setProjectSdk(sdk)
-    }
-  }
-
-  private fun registerSdk(sdk: Sdk) {
-    invokeAndWaitIfNeeded {
-      runWriteAction {
-        val jdkTable = ProjectJdkTable.getInstance()
-        jdkTable.addJdk(sdk, testRootDisposable)
-      }
-    }
-  }
-
-  fun removeSdk(sdk: Sdk) {
-    invokeAndWaitIfNeeded {
-      runWriteAction {
-        val jdkTable = ProjectJdkTable.getInstance()
-        jdkTable.removeJdk(sdk)
-      }
-    }
-  }
-
-  fun setProjectSdk(sdk: Sdk) {
-    invokeAndWaitIfNeeded {
-      runWriteAction {
-        val rootManager = ProjectRootManager.getInstance(myProject)
-        rootManager.projectSdk = sdk
-      }
-    }
-  }
 
   fun setProjectLanguageLevel(languageLevel: LanguageLevel) {
     val languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(myProject)
@@ -113,13 +71,6 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
   fun setProjectTargetBytecodeVersion(targetBytecodeVersion: String) {
     val compilerConfiguration = CompilerConfiguration.getInstance(myProject)
     compilerConfiguration.projectBytecodeTarget = targetBytecodeVersion
-  }
-
-  fun assertSdks(sdkName: String?, vararg moduleNames: String) {
-    assertProjectSdk(sdkName)
-    for (moduleName in moduleNames) {
-      assertModuleSdk(moduleName, sdkName)
-    }
   }
 
   fun assertLanguageLevels(languageLevel: LanguageLevel, vararg moduleNames: String) {
@@ -134,16 +85,6 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
     for (moduleName in moduleNames) {
       assertModuleTargetBytecodeVersion(moduleName, targetBytecodeVersion)
     }
-  }
-
-  fun assertProjectSdk(sdkName: String?) {
-    val projectSdk = getSdkForProject()
-    assertEquals(sdkName, projectSdk?.name)
-  }
-
-  fun assertModuleSdk(moduleName: String, sdkName: String?) {
-    val moduleSdk = getSdkForModule(moduleName)
-    assertEquals(sdkName, moduleSdk?.name)
   }
 
   fun assertProjectLanguageLevel(languageLevel: LanguageLevel) {
@@ -162,5 +103,27 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
   fun assertModuleTargetBytecodeVersion(moduleName: String, version: String) {
     val targetBytecodeVersion = getBytecodeTargetLevelForModule(moduleName)
     assertEquals(version, targetBytecodeVersion)
+  }
+
+  open fun assertProjectLibraryCoordinates(libraryName: String,
+                                           groupId: String?,
+                                           artifactId: String?,
+                                           version: String?) {
+    val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libraryName)
+    assertNotNull("Library [$libraryName] not found", lib)
+    val libraryProperties = (lib as? LibraryEx?)?.properties
+    UsefulTestCase.assertInstanceOf(libraryProperties, LibraryWithMavenCoordinatesProperties::class.java)
+    val coords = (libraryProperties as LibraryWithMavenCoordinatesProperties).mavenCoordinates
+    assertNotNull("Expected non-empty maven coordinates", coords)
+    coords!!
+    assertEquals("Unexpected groupId", groupId, coords.groupId)
+    assertEquals("Unexpected artifactId", artifactId, coords.artifactId)
+    assertEquals("Unexpected version", version, coords.version)
+  }
+
+  fun assertModuleSdk(moduleName: String, expectedLevel: JavaSdkVersion) {
+    val module = getModule(moduleName)
+    val sdk: Sdk = ModuleRootManager.getInstance(module).sdk ?: throw AssertionFailedError("SDK should be configured")
+    assertEquals(expectedLevel, JavaSdkVersionUtil.getJavaSdkVersion(sdk))
   }
 }

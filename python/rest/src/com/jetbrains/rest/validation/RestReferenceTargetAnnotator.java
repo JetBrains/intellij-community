@@ -42,7 +42,7 @@ public class RestReferenceTargetAnnotator extends RestAnnotator {
         if ((element.getReferenceName().equalsIgnoreCase(name) || element.getReferenceName(false).equalsIgnoreCase(name) ||
             element.getReferenceName().equalsIgnoreCase(quotedName) || element.getReferenceName(false).equalsIgnoreCase(quotedName)) &&
                                     !element.equals(node) && ! "__".equals(name) && !"[#]".equals(quotedName) && !"[*]".equals(quotedName)) {
-          getHolder().createWarningAnnotation(element, RestBundle.message("ANN.duplicate.target", name));
+          getHolder().newAnnotation(HighlightSeverity.WARNING, RestBundle.message("ANN.duplicate.target", name)).create();
         }
       }
     }

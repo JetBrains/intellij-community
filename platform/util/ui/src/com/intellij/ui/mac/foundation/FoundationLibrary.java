@@ -1,13 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Library;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 
-/**
- * @author spleaner
- */
 public interface FoundationLibrary extends Library {
   void NSLog(Pointer pString, Object thing);
 
@@ -26,8 +21,6 @@ public interface FoundationLibrary extends Library {
   long CFStringConvertIANACharSetNameToEncoding(ID encodingName);
   long CFStringConvertEncodingToNSStringEncoding(long cfEncoding);
 
-  ID CGWindowListCreateImage(Foundation.NSRect screenBounds, int windowOption, ID windowID, int imageOption);
-
   void CFRetain(ID cfTypeRef);
   void CFRelease(ID cfTypeRef);
   int CFGetRetainCount (Pointer cfTypeRef);
@@ -42,8 +35,10 @@ public interface FoundationLibrary extends Library {
 
   ID objc_getMetaClass(String name);
 
-  ID objc_msgSend(ID receiver, Pointer selector, Object... args);
-  double objc_msgSend_fpret(ID receiver, Pointer selector, Object... args); // the same as objc_msgSend but returns double
+  /**
+   * Note: Vararg version. Should only be used only for selectors with a single fixed argument followed by varargs.
+   */
+  ID objc_msgSend(ID receiver, Pointer selector, Object firstArg, Object... args);
 
   boolean class_respondsToSelector(ID cls, Pointer selName);
   boolean class_addMethod(ID cls, Pointer selName, Callback imp, String types);
@@ -54,6 +49,7 @@ public interface FoundationLibrary extends Library {
   boolean class_isMetaClass(ID cls);
 
   ID NSStringFromSelector(Pointer selector);
+  ID NSStringFromClass(ID aClass);
 
   Pointer objc_getClass(Pointer clazz);
 

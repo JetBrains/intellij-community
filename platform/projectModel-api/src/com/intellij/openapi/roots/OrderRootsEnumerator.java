@@ -63,7 +63,7 @@ public interface OrderRootsEnumerator {
 
   /**
    * This method makes sense only when dependencies of a module are processed (i.e. the enumerator instance is obtained by using {@link OrderEnumerator#orderEntries(com.intellij.openapi.module.Module)} or
-   * {@link ModuleRootModel#orderEntries()}). It instructs the enumerator to skip the output of the main module (if {@link com.intellij.openapi.roots.OrderEnumerator#productionOnly()}
+   * {@link ModuleRootModel#orderEntries()}). It instructs the enumerator to skip the output of the main module (if {@link OrderEnumerator#productionOnly()}
    * option is not specified then only the test output will be skipped)
    *
    * @return this instance
@@ -72,11 +72,18 @@ public interface OrderRootsEnumerator {
   OrderRootsEnumerator withoutSelfModuleOutput();
 
   /**
-   * Use {@code provider} to obtain roots of an library or jdk order entry instead of {@link OrderEntry#getFiles(OrderRootType)} method. Note that
-   * this option won't affect result of {@link #getUrls()} method
-   * @param provider function to evaluate roots for an order entry
+   * @deprecated use {@link #usingCustomSdkRootProvider(NotNullFunction)} instead.
+   */
+  @Deprecated
+  @NotNull
+  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider);
+
+  /**
+   * Instructs the enumerator to use {@code provider} to obtain roots of an SDK order entry instead of taking them from SDK configuration. 
+   * Note that this option won't affect the result of {@link #getUrls()} method
+   * 
    * @return this instance
    */
   @NotNull
-  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider);
+  OrderRootsEnumerator usingCustomSdkRootProvider(@NotNull NotNullFunction<? super JdkOrderEntry, VirtualFile[]> provider);
 }

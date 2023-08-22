@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -6,23 +6,20 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Objects;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class SimpleTextAttributes {
-
   @MagicConstant(flags = {
     STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE,
     STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE,
-    STYLE_CLICKABLE, STYLE_HOVERED, STYLE_NO_BORDER})
+    STYLE_CLICKABLE, STYLE_HOVERED, STYLE_NO_BORDER, STYLE_BOLD_UNDERLINE, STYLE_USE_EFFECT_COLOR})
   public @interface StyleAttributeConstant { }
 
   public static final int STYLE_PLAIN = Font.PLAIN;
@@ -39,32 +36,39 @@ public final class SimpleTextAttributes {
   public static final int STYLE_CLICKABLE = STYLE_OPAQUE << 1;
   public static final int STYLE_HOVERED = STYLE_CLICKABLE << 1;
   public static final int STYLE_NO_BORDER = STYLE_HOVERED << 1;
+  public static final int STYLE_BOLD_UNDERLINE = STYLE_NO_BORDER << 1;
+  public static final int STYLE_USE_EFFECT_COLOR = STYLE_BOLD_UNDERLINE << 1;
 
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
   public static final SimpleTextAttributes REGULAR_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, null);
-  public static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBColor.red);
+  public static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, NamedColorUtil.getErrorForeground());
 
-  public static final SimpleTextAttributes GRAYED_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getInactiveTextColor());
-  public static final SimpleTextAttributes GRAYED_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, UIUtil.getInactiveTextColor());
-  public static final SimpleTextAttributes GRAYED_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, UIUtil.getInactiveTextColor());
-  public static final SimpleTextAttributes GRAYED_SMALL_ATTRIBUTES = new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getInactiveTextColor());
+  public static final SimpleTextAttributes GRAYED_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, NamedColorUtil.getInactiveTextColor());
+  public static final SimpleTextAttributes GRAYED_BOLD_ATTRIBUTES =
+    new SimpleTextAttributes(STYLE_BOLD, NamedColorUtil.getInactiveTextColor());
+  public static final SimpleTextAttributes GRAYED_ITALIC_ATTRIBUTES =
+    new SimpleTextAttributes(STYLE_ITALIC, NamedColorUtil.getInactiveTextColor());
+  public static final SimpleTextAttributes GRAYED_SMALL_ATTRIBUTES =
+    new SimpleTextAttributes(STYLE_SMALLER, NamedColorUtil.getInactiveTextColor());
+
+  public static final SimpleTextAttributes SHORTCUT_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Tooltip.shortcutForeground());
 
   public static final SimpleTextAttributes SYNTHETIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBColor.blue);
 
-  public static final SimpleTextAttributes GRAY_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, Color.GRAY);
-  public static final SimpleTextAttributes GRAY_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
-  public static final SimpleTextAttributes GRAY_SMALL_ATTRIBUTES = new SimpleTextAttributes(STYLE_SMALLER, Color.GRAY);
+  public static final SimpleTextAttributes GRAY_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBColor.GRAY);
+  public static final SimpleTextAttributes GRAY_ITALIC_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, JBColor.GRAY);
+  public static final SimpleTextAttributes GRAY_SMALL_ATTRIBUTES = new SimpleTextAttributes(STYLE_SMALLER, JBColor.GRAY);
 
   public static final SimpleTextAttributes DARK_TEXT = new SimpleTextAttributes(STYLE_PLAIN, new Color(112, 112, 164));
   public static final SimpleTextAttributes SIMPLE_CELL_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, new JBColor(Gray._0, Gray._187));
-  public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES =
-    new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground());
-  public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
+  public static final SimpleTextAttributes SELECTED_SIMPLE_CELL_ATTRIBUTES
+    = new SimpleTextAttributes(STYLE_PLAIN, NamedColorUtil.getListSelectionForeground(true));
+  public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, JBColor.GRAY);
 
-  public static final SimpleTextAttributes LINK_PLAIN_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor());
-  public static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor());
-  public static final SimpleTextAttributes LINK_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE | STYLE_BOLD, JBUI.CurrentTheme.Link.linkColor());
+  public static final SimpleTextAttributes LINK_PLAIN_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.ENABLED);
+  public static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.Foreground.ENABLED);
+  public static final SimpleTextAttributes LINK_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE | STYLE_BOLD, JBUI.CurrentTheme.Link.Foreground.ENABLED);
 
   private final Color myBgColor;
   private final Color myFgColor;
@@ -99,7 +103,9 @@ public final class SimpleTextAttributes {
            STYLE_OPAQUE |
            STYLE_CLICKABLE |
            STYLE_HOVERED |
-           STYLE_NO_BORDER) & style) != 0) {
+           STYLE_NO_BORDER |
+           STYLE_BOLD_UNDERLINE |
+           STYLE_USE_EFFECT_COLOR) & style) != 0) {
       throw new IllegalArgumentException("Wrong style: " + style);
     }
 
@@ -120,8 +126,7 @@ public final class SimpleTextAttributes {
   /**
    * @return background color
    */
-  @Nullable
-  public Color getBgColor() {
+  public @Nullable Color getBgColor() {
     return myBgColor;
   }
 
@@ -129,8 +134,7 @@ public final class SimpleTextAttributes {
    * @return wave color. The method can return {@code null}. {@code null}
    *         means that color of wave is the same as foreground color.
    */
-  @Nullable
-  public Color getWaveColor() {
+  public @Nullable Color getWaveColor() {
     return myWaveColor;
   }
 
@@ -164,7 +168,7 @@ public final class SimpleTextAttributes {
   public boolean isSearchMatch() {
     return BitUtil.isSet(myStyle, STYLE_SEARCH_MATCH);
   }
-  
+
   public boolean isSmaller() {
     return BitUtil.isSet(myStyle, STYLE_SMALLER);
   }
@@ -185,8 +189,15 @@ public final class SimpleTextAttributes {
     return BitUtil.isSet(myStyle, STYLE_NO_BORDER);
   }
 
-  @NotNull
-  public static SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
+  public boolean isBoldUnderline() {
+    return BitUtil.isSet(myStyle, STYLE_BOLD_UNDERLINE);
+  }
+
+  public boolean useEffectColor() {
+    return BitUtil.isSet(myStyle, STYLE_USE_EFFECT_COLOR);
+  }
+
+  public static @NotNull SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
     if (attributes == null) return REGULAR_ATTRIBUTES;
 
     Color fgColor = attributes.getForegroundColor();
@@ -202,10 +213,14 @@ public final class SimpleTextAttributes {
       else if (effectType == EffectType.WAVE_UNDERSCORE) {
         style |= STYLE_WAVED;
       }
-      else if (effectType == EffectType.LINE_UNDERSCORE ||
-               effectType == EffectType.BOLD_LINE_UNDERSCORE ||
-               effectType == EffectType.BOLD_DOTTED_LINE) {
+      else if (effectType == EffectType.LINE_UNDERSCORE) {
         style |= STYLE_UNDERLINE;
+      }
+      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
+        style |= STYLE_BOLD_DOTTED_LINE;
+      }
+      else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
+        style |= STYLE_BOLD_UNDERLINE;
       }
       else if (effectType == EffectType.SEARCH_MATCH) {
         style |= STYLE_SEARCH_MATCH;
@@ -241,6 +256,10 @@ public final class SimpleTextAttributes {
     else if (isBoldDottedLine()) {
       effectColor = myWaveColor;
       effectType = EffectType.BOLD_DOTTED_LINE;
+    }
+    else if (isBoldUnderline()) {
+      effectColor = myWaveColor;
+      effectType = EffectType.BOLD_LINE_UNDERSCORE;
     }
     else if (isSearchMatch()) {
       effectColor = myWaveColor;
@@ -285,5 +304,26 @@ public final class SimpleTextAttributes {
     }
 
     return new SimpleTextAttributes(bg, fg, wave, style);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SimpleTextAttributes that = (SimpleTextAttributes)o;
+    return myStyle == that.myStyle &&
+           Objects.equals(myBgColor, that.myBgColor) &&
+           Objects.equals(myFgColor, that.myFgColor) &&
+           Objects.equals(myWaveColor, that.myWaveColor);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myBgColor, myFgColor, myWaveColor, myStyle);
+  }
+
+  @Override
+  public String toString() {
+    return "[" + myBgColor + ", " + myFgColor + ", " + myWaveColor + ", " + myStyle + "]";
   }
 }

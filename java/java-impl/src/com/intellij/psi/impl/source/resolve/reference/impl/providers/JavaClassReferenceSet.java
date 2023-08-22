@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,9 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
-*/
 public class JavaClassReferenceSet {
   public static final char DOT = '.';
   public static final char DOLLAR = '$';
@@ -270,7 +268,7 @@ public class JavaClassReferenceSet {
 
   @SuppressWarnings({"UnresolvedPropertyKey"})
   @NotNull
-  public String getUnresolvedMessagePattern(int index){
+  public @InspectionMessage String getUnresolvedMessagePattern(int index){
     if (canReferencePackage(index)) {
       return JavaErrorBundle.message("error.cannot.resolve.class.or.package");
     }

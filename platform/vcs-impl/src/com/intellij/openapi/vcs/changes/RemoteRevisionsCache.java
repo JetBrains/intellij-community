@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -16,12 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
-public class RemoteRevisionsCache implements VcsListener {
-  private static final Logger LOG = Logger.getInstance(RemoteRevisionsCache.class);
-
+public final class RemoteRevisionsCache implements VcsListener {
   public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
   public static final int DEFAULT_REFRESH_INTERVAL = 3 * 60 * 1000;
 
@@ -32,17 +26,14 @@ public class RemoteRevisionsCache implements VcsListener {
 
   @NotNull private final RemoteStatusChangeNodeDecorator myChangeDecorator;
   private final Project myProject;
-  private final Object myLock;
-  private final Map<String, RemoteDifferenceStrategy> myKinds;
   private final ControlledCycle myControlledCycle;
 
   public static RemoteRevisionsCache getInstance(final Project project) {
-    return ServiceManager.getService(project, RemoteRevisionsCache.class);
+    return project.getService(RemoteRevisionsCache.class);
   }
 
   private RemoteRevisionsCache(final Project project) {
     myProject = project;
-    myLock = new Object();
 
     myRemoteRevisionsNumbersCache = new RemoteRevisionsNumbersCache(myProject);
     myRemoteRevisionsStateCache = new RemoteRevisionsStateCache(myProject);
@@ -50,7 +41,6 @@ public class RemoteRevisionsCache implements VcsListener {
     myChangeDecorator = new RemoteStatusChangeNodeDecorator(this);
 
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myKinds = new HashMap<>();
 
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     myControlledCycle = new ControlledCycle(project, () -> {
@@ -64,13 +54,11 @@ public class RemoteRevisionsCache implements VcsListener {
         }
       }
       return shouldBeDone;
-    }, "Finishing \"changed on server\" update", DEFAULT_REFRESH_INTERVAL);
+    }, VcsBundle.message("changes.finishing.changed.on.server.update"), DEFAULT_REFRESH_INTERVAL);
 
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
-
-    updateRoots();
 
     if ((!myProject.isDefault()) && vcsConfiguration.isChangedOnServerEnabled()) {
       myVcsManager.runAfterInitialization(() -> {
@@ -96,18 +84,6 @@ public class RemoteRevisionsCache implements VcsListener {
     }
   }
 
-  private void updateRoots() {
-    final VcsRoot[] roots = myVcsManager.getAllVcsRoots();
-    synchronized (myLock) {
-      for (VcsRoot root : roots) {
-        final AbstractVcs vcs = root.getVcs();
-        if (! myKinds.containsKey(vcs.getName())) {
-          myKinds.put(vcs.getName(), vcs.getRemoteDifferenceStrategy());
-        }
-      }
-    }
-  }
-
   @Override
   public void directoryMappingChanged() {
     if (! VcsConfiguration.getInstance(myProject).isChangedOnServerEnabled()) {
@@ -115,7 +91,6 @@ public class RemoteRevisionsCache implements VcsListener {
     } else {
       BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
         try {
-          updateRoots();
           myRemoteRevisionsNumbersCache.directoryMappingChanged();
           myRemoteRevisionsStateCache.directoryMappingChanged();
           manageAlarm();
@@ -136,23 +111,16 @@ public class RemoteRevisionsCache implements VcsListener {
   }
 
   public void invalidate(final UpdatedFiles updatedFiles) {
-    final Map<String, RemoteDifferenceStrategy> strategyMap;
-    synchronized (myLock) {
-      strategyMap = new HashMap<>(myKinds);
-    }
     final Collection<String> newForTree = new ArrayList<>();
     final Collection<String> newForUsual = new ArrayList<>();
     UpdateFilesHelper.iterateAffectedFiles(updatedFiles, pair -> {
-      final String vcsName = pair.getSecond();
-      RemoteDifferenceStrategy strategy = strategyMap.get(vcsName);
-      if (strategy == null) {
-        final AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
-        if (vcs == null) return;
-        strategy = vcs.getRemoteDifferenceStrategy();
-      }
-      if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(strategy)) {
+      AbstractVcs vcs = myVcsManager.findVcsByName(pair.getSecond());
+      if (vcs == null) return;
+
+      if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
         newForTree.add(pair.getFirst());
-      } else {
+      }
+      else {
         newForUsual.add(pair.getFirst());
       }
     });

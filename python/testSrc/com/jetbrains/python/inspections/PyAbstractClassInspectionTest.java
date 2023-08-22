@@ -15,18 +15,19 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testSuperMethodRaisesNotImplementerError() {
+  // PY-38680
+  public void testClassWithMethodWhichRaisesNotImplementedErrorNotTreatedAsAbstract() {
     doTest();
   }
 
   // PY-16035
   public void testHiddenForAbstractSubclassWithExplicitMetaclass() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   // PY-16035
   public void testHiddenForAbstractSubclassWithExplicitMetaclassPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest());
+    doTest();
   }
 
   // PY-16035
@@ -67,7 +68,12 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
 
   // PY-26628
   public void testTypingProtocolSubclass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+    doTest();
+  }
+
+  // PY-30789
+  public void testHiddenForAbstractSubclassWithABCSuperclass() {
+    doMultiFileTest();
   }
 
   @NotNull

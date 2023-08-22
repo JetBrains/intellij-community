@@ -1,29 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.internal.statistic.eventLog.*
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 
 /**
  * An entry point class to record in event log an information about feature usages.
  *
- * There are two types of events:
- * 1) Regular events, recorded when they occur, e.g. open project, invoked action;
- * 2) State events, should be recorded regularly by scheduler, e.g. configured libraries/frameworks;
+ * DO NOT use this class directly, implement collectors according to "fus-collectors.md" dev guide.
  *
- * Each event might be recorded together with an additional (context) information, e.g. source and shortcut for action.
- *
- * Note: FeatureUsageCollector API use this class under the hood.
- * Therefore, if you record statistic with FeatureUsageCollector API there's no need to record events in event log manually.
- *
- * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+ * @see com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
  * @see com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
  * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
 object FeatureUsageLogger {
-  internal var loggerProvider = getEventLogProvider("FUS")
-  @TestOnly internal set
+  private val loggerProvider
+    get() = StatisticsEventLogProviderUtil.getEventLogProvider("FUS")
 
   init {
     if (isEnabled()) {
@@ -34,8 +26,8 @@ object FeatureUsageLogger {
   /**
    * Records that in a group (e.g. 'dialogs', 'intentions') a new event occurred.
    */
-  fun log(group: EventLogGroup, action: String) {
-    loggerProvider.logger.logAsync(group, action, false)
+  fun log(group: EventLogGroup, action: String): CompletableFuture<Void> {
+    return loggerProvider.logger.logAsync(group, action, false)
   }
 
   /**
@@ -49,8 +41,8 @@ object FeatureUsageLogger {
   /**
    * Records a new state event in a group (e.g. 'run.configuration.type').
    */
-  fun logState(group: EventLogGroup, action: String) {
-    loggerProvider.logger.logAsync(group, action, true)
+  fun logState(group: EventLogGroup, action: String): CompletableFuture<Void> {
+    return loggerProvider.logger.logAsync(group, action, true)
   }
 
   /**

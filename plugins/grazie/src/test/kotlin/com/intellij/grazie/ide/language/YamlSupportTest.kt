@@ -2,9 +2,16 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextExtractor
 
 class YamlSupportTest : GrazieTestBase() {
   fun `test grammar check in yaml file`() {
     runHighlightTestForFile("ide/language/yaml/Example.yaml")
+  }
+
+  fun `test text extraction`() {
+    val file = myFixture.configureByText("a.yaml", "foo: 'bar'")
+    assertEquals("bar", TextExtractor.findTextAt(file, 6, TextContent.TextDomain.ALL).toString())
   }
 }

@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +14,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class InheritanceUtil {
+public final class InheritanceUtil {
   private InheritanceUtil() { }
 
   /**
@@ -49,7 +34,7 @@ public class InheritanceUtil {
 
     if (includeSelf && !superProcessor.process(aClass)) return false;
 
-    return processSupers(aClass, superProcessor, new THashSet<>());
+    return processSupers(aClass, superProcessor, new HashSet<>());
   }
 
   private static boolean processSupers(@NotNull PsiClass aClass, @NotNull Processor<? super PsiClass> superProcessor, @NotNull Set<? super PsiClass> visited) {
@@ -68,6 +53,7 @@ public class InheritanceUtil {
   @Contract("null, _ -> false")
   public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
     if (type instanceof PsiClassType) {
+      PsiUtil.ensureValidType(type);
       return isInheritor(((PsiClassType)type).resolve(), baseClassName);
     }
 
@@ -101,12 +87,9 @@ public class InheritanceUtil {
 
   /**
    * Gets all superclasses. Classes are added to result in DFS order
-   * @param aClass
-   * @param results
-   * @param includeNonProject
    */
   public static void getSuperClasses(@NotNull PsiClass aClass, @NotNull Set<? super PsiClass> results, boolean includeNonProject) {
-    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new THashSet<>(), aClass.getManager());
+    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new HashSet<>(), aClass.getManager());
   }
 
   public static LinkedHashSet<PsiClass> getSuperClasses(@NotNull PsiClass aClass) {
@@ -141,7 +124,7 @@ public class InheritanceUtil {
 
   public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                     PsiElement scope,
-                                                    Condition<? super PsiClass> isSuperClassAccepted,
+                                                    @NotNull Condition<? super PsiClass> isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
     return findEnclosingInstanceInScope(aClass, scope, isSuperClassAccepted, isTypeParamsAccepted) != null;
   }
@@ -149,7 +132,7 @@ public class InheritanceUtil {
   @Nullable
   public static PsiClass findEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                       PsiElement scope,
-                                                      Condition<? super PsiClass> isSuperClassAccepted,
+                                                      @NotNull Condition<? super PsiClass> isSuperClassAccepted,
                                                       boolean isTypeParamsAccepted) {
     PsiManager manager = aClass.getManager();
     PsiElement place = scope;
@@ -175,7 +158,7 @@ public class InheritanceUtil {
     }
     return null;
   }
-  
+
   public static boolean processSuperTypes(@NotNull PsiType type, boolean includeSelf, @NotNull Processor<? super PsiType> processor) {
     if (includeSelf && !processor.process(type)) return false;
     return processSuperTypes(type, processor, new HashSet<>());
@@ -197,20 +180,32 @@ public class InheritanceUtil {
     }
     try {
       usedClasses.add(aClass);
-      PsiClass[] superTypes = aClass.getSupers();
-      for (PsiElement superType : superTypes) {
-        while (superType instanceof PsiClass) {
-          if (!CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)superType).getQualifiedName())) {
-            PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
-            if (circularClass != null) return circularClass;
-          }
-          // check class qualifier
-          superType = superType.getParent();
+      PsiClassType[] superTypes = aClass.getSuperTypes();
+      for (PsiClassType superType : superTypes) {
+        PsiClass circularClass = getCircularClassInner(superType.resolve(), usedClasses);
+        if (circularClass != null) return circularClass;
+        for (PsiAnnotation annotation : superType.getAnnotations()) {
+          circularClass = getCircularClassInner(annotation.resolveAnnotationType(), usedClasses);
+          if (circularClass != null) return circularClass;
         }
       }
     }
     finally {
       usedClasses.remove(aClass);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiClass getCircularClassInner(@Nullable PsiElement superType,
+                                                @NotNull Collection<? super PsiClass> usedClasses) {
+    while (superType instanceof PsiClass) {
+      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)superType).getQualifiedName())) {
+        PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
+        if (circularClass != null) return circularClass;
+      }
+      // check class qualifier
+      superType = superType.getParent();
     }
     return null;
   }

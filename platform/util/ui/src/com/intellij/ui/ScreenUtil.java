@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,13 +11,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
-  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache =
-    Patches.isJdkBugId8004103() ? ContainerUtil.createWeakMap() : null;
-  private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
+  private static final @Nullable Map<GraphicsConfiguration, Pair<Insets, Long>> insetCache = Boolean.getBoolean("ide.cache.screen.insets")
+                                                                                             ? new WeakHashMap<>() : null;
+  private static final int ourInsetsTimeout = SystemProperties.getIntProperty("ide.insets.cache.timeout", 5000);  // shouldn't be too long
 
   private ScreenUtil() { }
 
@@ -173,26 +173,22 @@ public final class ScreenUtil {
   }
 
   public static Insets getScreenInsets(final GraphicsConfiguration gc) {
-    if (ourInsetsCache == null) {
+    if (insetCache == null) {
       return calcInsets(gc);
     }
 
-    synchronized (ourInsetsCache) {
-      Pair<Insets, Long> data = ourInsetsCache.get(gc);
-      final long now = System.currentTimeMillis();
+    synchronized (insetCache) {
+      Pair<Insets, Long> data = insetCache.get(gc);
+      long now = System.currentTimeMillis();
       if (data == null || now > data.second + ourInsetsTimeout) {
-        data = Pair.create(calcInsets(gc), now);
-        ourInsetsCache.put(gc, data);
+        data = new Pair<>(calcInsets(gc), now);
+        insetCache.put(gc, data);
       }
       return data.first;
     }
   }
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
-    if (Patches.SUN_BUG_ID_8020443 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
-      return new Insets(0, 0, 0, 0);
-    }
-
     return Toolkit.getDefaultToolkit().getScreenInsets(gc);
   }
 
@@ -224,6 +220,9 @@ public final class ScreenUtil {
    * @return a visible area rectangle
    */
   public static Rectangle getScreenRectangle(int x, int y) {
+    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) {
+      return new Rectangle(x, y, 0, 0);
+    }
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     if (devices.length == 0) {
       return new Rectangle(x, y, 0, 0);
@@ -295,6 +294,41 @@ public final class ScreenUtil {
     return x * x + y * y;
   }
 
+  public static void moveAndScale(@NotNull Point location, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    location.setLocation(toScreen.x + (location.x - fromScreen.x) * kw, toScreen.y + (location.y - fromScreen.y) * kh);
+  }
+
+  public static void moveAndScale(@NotNull Dimension size, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    size.setSize(size.width * kw, size.height * kh);
+  }
+
+  public static void moveAndScale(@NotNull Rectangle bounds, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    bounds.setRect(
+      toScreen.x + (bounds.x - fromScreen.x) * kw,
+      toScreen.y + (bounds.y - fromScreen.y) * kh,
+      bounds.width * kw,
+      bounds.height * kh
+    );
+  }
+
+  private static void checkScreensNonEmpty(@NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    if (fromScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move from an empty screen: " + fromScreen);
+    }
+    if (toScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move to an empty screen: " + toScreen);
+    }
+  }
+
   public static void moveRectangleToFitTheScreen(Rectangle aRectangle) {
     int screenX = aRectangle.x + aRectangle.width / 2;
     int screenY = aRectangle.y + aRectangle.height / 2;
@@ -304,24 +338,31 @@ public final class ScreenUtil {
   }
 
   public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
+    moveToFit(rectangle, container, padding, false);
+  }
+
+  public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding, boolean crop) {
     Rectangle move = new Rectangle(rectangle);
     JBInsets.addTo(move, padding);
 
     if (move.getMaxX() > container.getMaxX()) {
       move.x = (int)container.getMaxX() - move.width;
     }
-
-
     if (move.getMinX() < container.getMinX()) {
       move.x = (int)container.getMinX();
+    }
+    if (move.getMaxX() > container.getMaxX() && crop) {
+      move.width = (int)container.getMaxX() - move.x;
     }
 
     if (move.getMaxY() > container.getMaxY()) {
       move.y = (int)container.getMaxY() - move.height;
     }
-
     if (move.getMinY() < container.getMinY()) {
       move.y = (int)container.getMinY();
+    }
+    if (move.getMaxY() > container.getMaxY() && crop) {
+      move.height = (int)container.getMaxY() - move.y;
     }
 
     JBInsets.removeFrom(move, padding);
@@ -442,7 +483,7 @@ public final class ScreenUtil {
    * @param bounds - area to check if location shifted towards or not. Also in screen coordinates
    * @return true if movement from prevLocation to location is towards specified rectangular area
    */
-  public static boolean isMovementTowards(final Point prevLocation, final Point location, final Rectangle bounds) {
+  public static boolean isMovementTowards(final Point prevLocation, @NotNull Point location, final Rectangle bounds) {
     if (bounds == null) {
       return false;
     }

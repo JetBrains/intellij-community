@@ -23,6 +23,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.plugins.xpathView.XPathBundle;
@@ -62,8 +63,7 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
       myConfig = (XsltConfigImpl)XsltConfig.getInstance();
       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-      myShowLinkedFiles = new JCheckBox("Show Associated Files in Project View");
-      myShowLinkedFiles.setMnemonic('A');
+      myShowLinkedFiles = new JBCheckBox(XPathBundle.message("checkbox.show.associated.files.in.project.view"));
       myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
 
       add(myShowLinkedFiles);
@@ -79,7 +79,7 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
 
     @Override
   public String getDisplayName() {
-    return XPathBundle.message("configurable.UIImpl.display.name");
+    return XPathBundle.message("configurable.xslt.display.name");
   }
 
     @Override

@@ -6,6 +6,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.RenameableFakePsiElement;
+import org.jetbrains.idea.maven.dom.MavenDomBundle;
 
 import javax.swing.*;
 
@@ -42,7 +43,7 @@ public class MavenPsiElementWrapper extends RenameableFakePsiElement {
 
   @Override
   public String getTypeName() {
-    return "Property";
+    return MavenDomBundle.message("maven.type.name.property");
   }
 
   @Override

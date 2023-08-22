@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,16 +41,22 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
     ".*Your local changes to '(.*)' would be overwritten by merge.*"
   );
 
-  private static final Pattern[] RESET_PATTERNS = new Pattern[]{Pattern.compile(
-    ".*Entry '(.*)' not uptodate. Cannot merge.*"
-  ),
-  Pattern.compile(
-    ".*Entry '(.*)' would be overwritten by merge.*"
-  )};
+  private static final Pattern[] RESET_PATTERNS = new Pattern[]{
+    Pattern.compile(
+      ".*Entry '(.*)' not uptodate. Cannot merge.*"
+    ),
+    Pattern.compile(
+      ".*Entry '(.*)' would be overwritten by merge.*"
+    )};
 
   // common for checkout and merge
-  public static final Event NEW_PATTERN = new Event("LocalChangesDetector",
-    "Your local changes to the following files would be overwritten by", "commit your changes or stash them before");
+  public static final Event NEW_PATTERN = new Event(
+    "LocalChangesDetector",
+    List.of(Pattern.compile(".*Your local changes to the following files would be overwritten by.*")),
+    List.of(Pattern.compile(".*commit your changes or stash them before.*"),
+            Pattern.compile(".*Merge with strategy .* failed.*"),
+            Pattern.compile(".*No merge strategy handled the merge.*"))
+  );
 
   @NotNull private final Operation myOperation;
 

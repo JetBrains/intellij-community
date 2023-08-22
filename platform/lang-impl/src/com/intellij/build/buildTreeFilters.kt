@@ -1,26 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("BuildTreeFilters")
 package com.intellij.build
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.NlsContext
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
+
+
+
 
 private val SUCCESSFUL_STEPS_FILTER = Predicate { node: ExecutionNode -> !node.isFailed && !node.hasWarnings() }
 private val WARNINGS_FILTER = Predicate { node: ExecutionNode -> node.hasWarnings() || node.hasInfos() }
 
 @ApiStatus.Experimental
 fun createFilteringActionsGroup(filterable: Filterable<ExecutionNode>): DefaultActionGroup {
-  val actionGroup = DefaultActionGroup("Filters", true)
+  val actionGroup = DefaultActionGroup(LangBundle.message("action.filters.text"), true)
   actionGroup.templatePresentation.icon = AllIcons.Actions.Show
   actionGroup.add(WarningsToggleAction(filterable))
   actionGroup.add(SuccessfulStepsToggleAction(filterable))
@@ -36,17 +38,13 @@ fun install(filterable: Filterable<ExecutionNode>) {
 }
 
 @ApiStatus.Experimental
-open class FilterToggleAction constructor(text: @NlsContexts.Command String,
+open class FilterToggleAction constructor(@NlsContexts.Command text: String,
                                           private val stateKey: String?,
                                           private val filterable: Filterable<ExecutionNode>,
                                           private val filter: Predicate<ExecutionNode>,
                                           private val defaultState: Boolean) : ToggleAction(text), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     val presentation = e.presentation
-    if (!Registry.`is`("build.view.side-by-side", true)) {
-      presentation.isVisible = false
-      return false
-    }
     val filteringEnabled = filterable.isFilteringEnabled
     presentation.isEnabledAndVisible = filteringEnabled
     if (filteringEnabled && stateKey != null &&
@@ -57,6 +55,8 @@ open class FilterToggleAction constructor(text: @NlsContexts.Command String,
 
     return filterable.contains(filter)
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {

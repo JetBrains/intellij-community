@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
@@ -13,14 +12,13 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandlerKt;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -31,34 +29,7 @@ public final class TemporaryPlacesRegistry {
 
   private volatile long myPsiModificationCounter;
 
-  private final LanguageInjectionSupport myInjectorSupport = new AbstractLanguageInjectionSupport() {
-    @NotNull
-    @Override
-    public String getId() {
-      return "temp";
-    }
-
-    @Override
-    public boolean isApplicableTo(PsiLanguageInjectionHost host) {
-      return true;
-    }
-
-    @Override
-    public Class<?> @NotNull [] getPatternClasses() {
-      return ArrayUtil.EMPTY_CLASS_ARRAY;
-    }
-
-    @Override
-    public boolean addInjectionInPlace(Language language, PsiLanguageInjectionHost host) {
-      addHostWithUndo(host, InjectedLanguage.create(language.getID()));
-      return true;
-    }
-
-    @Override
-    public boolean removeInjectionInPlace(PsiLanguageInjectionHost psiElement) {
-      return removeHostWithUndo(myProject, psiElement);
-    }
-  };
+  public final static String SUPPORT_ID = "temp";
 
   public static TemporaryPlacesRegistry getInstance(@NotNull Project project) {
     return project.getService(TemporaryPlacesRegistry.class);
@@ -69,7 +40,7 @@ public final class TemporaryPlacesRegistry {
   }
 
   private List<TempPlace> getInjectionPlacesSafe() {
-    long modificationCount = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
+    long modificationCount = PsiModificationTracker.getInstance(myProject).getModificationCount();
     if (myPsiModificationCounter == modificationCount) {
       return myTempPlaces;
     }
@@ -108,7 +79,7 @@ public final class TemporaryPlacesRegistry {
     PsiLanguageInjectionHost host = place.elementPointer.getElement();
     if (host == null) return;
 
-    Set<PsiLanguageInjectionHost> hosts = new SmartHashSet<>(1);
+    Set<PsiLanguageInjectionHost> hosts = new HashSet<>();
     hosts.add(host); // because `enumerate` doesn't handle reference injections
 
     InjectedLanguageManager.getInstance(myProject).enumerate(host, (injectedPsi, places) -> {
@@ -148,6 +119,16 @@ public final class TemporaryPlacesRegistry {
     return true;
   }
 
+  public boolean removeHost(final PsiLanguageInjectionHost host) {
+    InjectedLanguage prevLanguage = host.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
+    if (prevLanguage == null) return false;
+    SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+    SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = manager.createSmartPsiElementPointer(host);
+    TempPlace nextPlace = new TempPlace(null, pointer);
+    addInjectionPlace(nextPlace);
+    return true;
+  }
+
   public void addHostWithUndo(final PsiLanguageInjectionHost host, final InjectedLanguage language) {
     InjectedLanguage prevLanguage = host.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
     SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(host);
@@ -161,8 +142,14 @@ public final class TemporaryPlacesRegistry {
       });
   }
 
+  public void addHost(final PsiLanguageInjectionHost host, final InjectedLanguage language) {
+    SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(host);
+    TempPlace place = new TempPlace(language, pointer);
+    addInjectionPlace(place);
+  }
+
   public LanguageInjectionSupport getLanguageInjectionSupport() {
-    return myInjectorSupport;
+    return InjectorUtils.findInjectionSupport(SUPPORT_ID);
   }
 
   @Nullable

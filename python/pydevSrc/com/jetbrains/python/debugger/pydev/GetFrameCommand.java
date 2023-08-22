@@ -1,3 +1,4 @@
+// Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -13,9 +14,11 @@ public class GetFrameCommand extends AbstractFrameCommand {
 
   protected final IPyDebugProcess myDebugProcess;
   private XValueChildrenList myFrameVariables = null;
+  private ProcessDebugger.GROUP_TYPE myGroupType = ProcessDebugger.GROUP_TYPE.DEFAULT;
 
-  public GetFrameCommand(final RemoteDebugger debugger, final String threadId, final String frameId) {
+  public GetFrameCommand(final RemoteDebugger debugger, final String threadId, final String frameId, ProcessDebugger.GROUP_TYPE groupType) {
     this(debugger, GET_FRAME, threadId, frameId);
+    myGroupType = groupType;
   }
 
   protected GetFrameCommand(final RemoteDebugger debugger, final int command, final String threadId, final String frameId) {
@@ -27,6 +30,7 @@ public class GetFrameCommand extends AbstractFrameCommand {
   protected void buildPayload(Payload payload) {
     super.buildPayload(payload);
     payload.add("FRAME");
+    payload.add(myGroupType.ordinal());
   }
 
   @Override
@@ -57,5 +61,4 @@ public class GetFrameCommand extends AbstractFrameCommand {
   public XValueChildrenList getVariables() {
     return myFrameVariables;
   }
-
 }

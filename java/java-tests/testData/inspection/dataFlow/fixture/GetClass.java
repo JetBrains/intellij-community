@@ -2,6 +2,14 @@ import java.util.*;
 
 class GetClass {
   native void unknown();
+  
+  private Class myCls;
+  
+  void testSimple(Class<? extends Number> cls, Number n) {
+    if (cls.equals(n.getClass())) {}
+    if (cls == n.getClass()) {}
+    if (myCls == n.getClass()) {}
+  }
 
   public static void testIntClass() {
     Class<?> cls = someIntClass();
@@ -90,5 +98,46 @@ class GetClass {
         if (<warning descr="Condition 'o2 instanceof Integer' is always 'false'">o2 instanceof Integer</warning>) {}
       }
     }
+  }
+  
+  void testGetSimpleName(Object obj) {
+    if (obj.getClass() == Integer.class || obj.getClass() == Long.class) {
+      Class<?> cls = obj.getClass();
+      if (<warning descr="Condition 'cls.getSimpleName().startsWith(\"X\")' is always 'false'">cls.getSimpleName().startsWith("X")</warning>) {}
+      if (cls.getSimpleName().startsWith("I")) {
+        System.out.println((<warning descr="Casting 'obj' to 'Long' will produce 'ClassCastException' for any non-null value">Long</warning>)obj);
+      }
+    }
+  }
+  
+  void testAnonymous() {
+    Runnable r = new Runnable() {
+      public void run() {
+        if (<warning descr="Condition 'getClass().getSimpleName().isEmpty()' is always 'true'">getClass().getSimpleName().isEmpty()</warning>) {}
+        if (getClass().getName().isEmpty()) {}
+        if (getClass().getCanonicalName().<warning descr="Method invocation 'isEmpty' will produce 'NullPointerException'">isEmpty</warning>()) {}
+      }
+    };
+  }
+  
+  static final class X {}
+  
+  void testNested(X x) {
+    if (<warning descr="Condition 'x.getClass().getSimpleName().equals(\"X\")' is always 'true'">x.getClass().getSimpleName().equals("X")</warning>) {}
+    if (<warning descr="Condition 'x.getClass().getName().equals(\"GetClass$X\")' is always 'true'">x.getClass().getName().equals("GetClass$X")</warning>) {}
+    if (<warning descr="Condition 'x.getClass().getCanonicalName().equals(\"GetClass.X\")' is always 'true'">x.getClass().getCanonicalName().equals("GetClass.X")</warning>) {}
+  }
+  
+  void testLocal() {
+    class X {}
+    X x = new X();
+    if (<warning descr="Condition 'x.getClass().getSimpleName().equals(\"X\")' is always 'true'">x.getClass().getSimpleName().equals("X")</warning>) {}
+    if (x.getClass().getName().equals("GetClass$X")) {}
+    if (x.getClass().getCanonicalName().<warning descr="Method invocation 'equals' will produce 'NullPointerException'">equals</warning>("GetClass.X")) {}
+  }
+
+  boolean isSorted(Collection<?> c) {
+    Class<?> klass = c.getClass();
+    return <warning descr="Condition 'klass == SortedSet.class' is always 'false'">klass == SortedSet.class</warning>;
   }
 }

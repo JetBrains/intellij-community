@@ -5,18 +5,23 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestInClassConfigurationProducer;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.BaseConfigurationTestCase;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +29,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.TestActionEvent;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -64,12 +70,12 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
 
     MapDataContext dataContext = new MapDataContext();
     dataContext.put(CommonDataKeys.PROJECT, myProject);
-    if (LangDataKeys.MODULE.getData(dataContext) == null) {
-      dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(testMethod));
+    if (PlatformCoreDataKeys.MODULE.getData(dataContext) == null) {
+      dataContext.put(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(testMethod));
     }
     dataContext.put(Location.DATA_KEY, MethodLocation.elementInClass(testMethod, psiClass));
 
-    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
     JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
 
@@ -89,12 +95,12 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
 
     MapDataContext dataContext = new MapDataContext();
     dataContext.put(CommonDataKeys.PROJECT, myProject);
-    if (LangDataKeys.MODULE.getData(dataContext) == null) {
-      dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(testMethod));
+    if (PlatformCoreDataKeys.MODULE.getData(dataContext) == null) {
+      dataContext.put(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(testMethod));
     }
     dataContext.put(Location.DATA_KEY, new PsiMemberParameterizedLocation(myProject, testMethod, psiClass, "param"));
 
-    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
     JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
 
@@ -146,7 +152,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
     final MapDataContext dataContext = new MapDataContext();
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    dataContext.put(LangDataKeys.MODULE.getName(), module);
+    dataContext.put(PlatformCoreDataKeys.MODULE.getName(), module);
     JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
     checkPackage(PACKAGE_NAME, configuration);
@@ -159,7 +165,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     PsiPackage defaultPackage = psiPackage.getParentPackage();
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     final MapDataContext dataContext = new MapDataContext();
-    dataContext.put(LangDataKeys.MODULE.getName(), module);
+    dataContext.put(PlatformCoreDataKeys.MODULE.getName(), module);
     JUnitConfiguration configuration = createJUnitConfiguration(defaultPackage, AllInPackageConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
     checkPackage("", configuration);
@@ -173,6 +179,20 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     assertEquals(CLASS_NAME, configuration.getMainClassName());
     assertEquals(configuration.suggestedName(), configuration.getName());
     assertEquals(SHORT_CLASS_NAME, configuration.getName());
+  }
+
+  public void testApplicationFromConsoleContext() {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiMethod psiMethod = psiClass.findMethodsByName("main", false)[0];
+    ApplicationConfiguration configuration = createConfiguration(psiMethod);
+    RunnerAndConfigurationSettingsImpl settings =
+      new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration);
+    ExecutionEnvironment e = ExecutionEnvironmentBuilder.createOrNull(DefaultRunExecutor.getRunExecutorInstance(), settings).build();
+    MapDataContext dataContext = new MapDataContext();
+    dataContext.put(ExecutionDataKeys.EXECUTION_ENVIRONMENT, e);
+    AnActionEvent event = TestActionEvent.createTestEvent(dataContext);
+    new CreateAction().update(event);
+    assertTrue(event.getPresentation().isEnabledAndVisible());
   }
 
   public void testReusingConfiguration() {

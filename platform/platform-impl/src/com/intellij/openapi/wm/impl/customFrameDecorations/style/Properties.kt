@@ -12,6 +12,9 @@ class Properties {
   var background: Color?
     set(value) = setValue(StyleProperty.BACKGROUND, value)
     get() = getValue(StyleProperty.BACKGROUND) as Color
+  var hover: Color?
+    set(value) = setValue(StyleProperty.HOVER, value)
+    get() = getValue(StyleProperty.HOVER) as Color
   var isOpaque: Boolean?
     set(value) = setValue(StyleProperty.OPAQUE, value)
     get() = getValue(StyleProperty.OPAQUE) as Boolean

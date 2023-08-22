@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup
 
 import com.intellij.codeInsight.completion.PrefixMatcher
@@ -24,8 +24,19 @@ object LookupUtil {
                                            editor: Editor, caretOffset: Int,
                                            prefix: Int,
                                            lookupString: String): Int {
-    val document = getInjectedDocument(project, editor, caretOffset)
-    if (document == null) return insertLookupInDocument(caretOffset, editor.document, prefix, lookupString)
+    val injectedDocument = getInjectedDocument(project, editor, caretOffset)
+    return if (injectedDocument != null)
+      insertLookupInInjectedDocument(project, injectedDocument, caretOffset, prefix, editor, lookupString)
+    else
+      insertLookupInDocument(caretOffset, editor.document, prefix, lookupString)
+  }
+
+  private fun insertLookupInInjectedDocument(project: Project,
+                                             document: DocumentWindow,
+                                             caretOffset: Int,
+                                             prefix: Int,
+                                             editor: Editor,
+                                             lookupString: String): Int {
     val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
     val offset = document.hostToInjected(caretOffset)
     val lookupStart = min(offset, max(offset - prefix, 0))
@@ -35,13 +46,17 @@ object LookupUtil {
         .intersectWithAllEditableFragments(file, TextRange.create(lookupStart, offset))
       if (ranges.isNotEmpty()) {
         diff = ranges[0].startOffset - lookupStart
-        if (ranges.size == 1 && diff == 0) diff = -1
+        if (ranges.size == 1 && diff == 0)
+          diff = -1
       }
     }
-    return if (diff == -1) insertLookupInDocument(caretOffset, editor.document, prefix, lookupString)
-    else document.injectedToHost(
-      insertLookupInDocument(offset, document, prefix - diff, if (diff == 0) lookupString else lookupString.substring(diff))
-    )
+    return if (diff == -1)
+      insertLookupInDocument(caretOffset, editor.document, prefix, lookupString)
+    else {
+      val lookupSubstring = if (diff == 0) lookupString else lookupString.substring(diff)
+      val injectedOffset = insertLookupInDocument(offset, document, prefix - diff, lookupSubstring)
+      document.injectedToHost(injectedOffset)
+    }
   }
 
   @JvmStatic
@@ -98,5 +113,16 @@ object LookupUtil {
     LOG.assertTrue(caretOffset in 0..len, "co: $caretOffset doc: $len")
     document.replaceString(lookupStart, caretOffset, lookupString)
     return lookupStart + lookupString.length
+  }
+
+  @JvmStatic
+  fun performGuardedChange(editor: Editor?, action: Runnable) {
+    val lookup = editor?.let(LookupManager::getActiveLookup)
+    if (lookup == null) {
+      action.run()
+    }
+    else {
+      lookup.performGuardedChange(action)
+    }
   }
 }

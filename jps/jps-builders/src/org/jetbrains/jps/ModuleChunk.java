@@ -3,6 +3,9 @@ package org.jetbrains.jps;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -15,7 +18,7 @@ public class ModuleChunk {
   private final boolean myContainsTests;
   private final Set<ModuleBuildTarget> myTargets;
 
-  public ModuleChunk(Set<ModuleBuildTarget> targets) {
+  public ModuleChunk(@NotNull Set<ModuleBuildTarget> targets) {
     boolean containsTests = false;
     myTargets = targets;
     myModules = new LinkedHashSet<>();
@@ -26,27 +29,31 @@ public class ModuleChunk {
     myContainsTests = containsTests;
   }
 
-  public String getPresentableShortName() {
-    String name = myModules.iterator().next().getName();
+  public @Nls @NotNull String getPresentableShortName() {
+    String first = myModules.iterator().next().getName();
+    String name;
     if (myModules.size() > 1) {
-      name += " and " + (myModules.size() - 1) + " more";
+      name = JpsBuildBundle.message("target.description.0.and.1.more", first, myModules.size() - 1);
       String fullName = getName();
       if (fullName.length() < name.length()) {
         name = fullName;
       }
     }
+    else {
+      name = first;
+    }
     if (containsTests()) {
-      name = "tests of " + name;
+      return JpsBuildBundle.message("target.description.tests.of.0", name);
     }
     return name;
   }
 
-  public String getName() {
+  public @NotNull String getName() {
     if (myModules.size() == 1) return myModules.iterator().next().getName();
     return StringUtil.join(myModules, GET_NAME, ",");
   }
 
-  public Set<JpsModule> getModules() {
+  public @NotNull Set<JpsModule> getModules() {
     return myModules;
   }
 
@@ -54,7 +61,7 @@ public class ModuleChunk {
     return myContainsTests;
   }
 
-  public Set<ModuleBuildTarget> getTargets() {
+  public @NotNull Set<ModuleBuildTarget> getTargets() {
     return myTargets;
   }
 

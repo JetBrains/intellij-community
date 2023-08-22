@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -18,6 +18,7 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
 import org.intellij.lang.xpath.xslt.impl.references.PrefixReference;
 import org.intellij.lang.xpath.xslt.impl.references.XsltReferenceProvider;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +30,8 @@ import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
 import static com.intellij.patterns.XmlPatterns.xmlTag;
 
-/**
- * @author yole
- */
-public class XsltReferenceContributor {
+
+public final class XsltReferenceContributor {
   private XsltReferenceContributor() {
   }
 
@@ -80,7 +79,7 @@ public class XsltReferenceContributor {
     }
 
     @Override
-    public LocalQuickFix @Nullable [] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       final XmlAttributeValue valueElement = myAttribute.getValueElement();
       if (valueElement != null) {
         return new LocalQuickFix[] {
@@ -96,7 +95,7 @@ public class XsltReferenceContributor {
     }
   }
 
-  public static class SchemaTypeReference extends TypeOrElementOrAttributeReference implements
+  public static final class SchemaTypeReference extends TypeOrElementOrAttributeReference implements
                                                                                                              EmptyResolveMessageProvider {
     private static final Pattern NAME_PATTERN = Pattern.compile("(?:[\\w-]+:)[\\w-]+");
 
@@ -127,7 +126,7 @@ public class XsltReferenceContributor {
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Unknown Type";
+      return XPathBundle.message("inspection.message.unknown.type");
     }
 
     @Nullable

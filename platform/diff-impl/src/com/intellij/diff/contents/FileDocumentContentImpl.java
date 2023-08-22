@@ -16,7 +16,6 @@
 package com.intellij.diff.contents;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
@@ -87,6 +86,6 @@ public class FileDocumentContentImpl extends DocumentContentBase implements File
 
   @Override
   public void onAssigned(boolean isAssigned) {
-    if (isAssigned && GeneralSettings.getInstance().isSyncOnFrameActivation()) DiffUtil.markDirtyAndRefresh(true, false, false, myFile);
+    if (isAssigned) DiffUtil.refreshOnFrameActivation(myFile);
   }
 }

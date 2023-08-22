@@ -11,6 +11,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -35,7 +36,6 @@ import java.util.List;
 
 /**
  * Base class that simplifies external system settings management.
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalSystemConfigurable<
   ProjectSettings extends ExternalProjectSettings,
@@ -54,8 +54,8 @@ public abstract class AbstractExternalSystemConfigurable<
   @Nullable private ExternalSystemSettingsControl<ProjectSettings> myActiveProjectSettingsControl;
 
   private PaintAwarePanel  myComponent;
-  private JBList           myProjectsList;
-  private DefaultListModel myProjectsModel;
+  private JBList<String>           myProjectsList;
+  private DefaultListModel<String> myProjectsModel;
 
   protected AbstractExternalSystemConfigurable(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     myProject = project;
@@ -81,11 +81,7 @@ public abstract class AbstractExternalSystemConfigurable<
       SystemSettings settings = getSettings();
       prepareSystemSettings(settings);
       prepareProjectSettings(settings);
-
-      JComponent component = ScrollPaneFactory.createScrollPane(myComponent, true);
-      component.setSize(myComponent.getPreferredSize());
-      myComponent.setPreferredSize(myComponent.getMinimumSize());
-      return component;
+      return myComponent;
     }
     return myComponent;
   }
@@ -99,7 +95,6 @@ public abstract class AbstractExternalSystemConfigurable<
     return manager.getSettingsProvider().fun(myProject);
   }
 
-  @SuppressWarnings("unchecked")
   private void prepareProjectSettings(@NotNull SystemSettings s) {
     List<ProjectSettings> settings = new ArrayList<>(s.getLinkedProjectsSettings());
     if (settings.isEmpty()) {
@@ -113,8 +108,8 @@ public abstract class AbstractExternalSystemConfigurable<
 
     OnePixelSplitter splitter = new OnePixelSplitter(false, .16f);
 
-    myProjectsModel = new DefaultListModel();
-    myProjectsList = new JBList(myProjectsModel);
+    myProjectsModel = new DefaultListModel<>();
+    myProjectsList = new JBList<>(myProjectsModel);
     myProjectsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JBScrollPane scrollPane = new JBScrollPane(myProjectsList);
@@ -140,7 +135,7 @@ public abstract class AbstractExternalSystemConfigurable<
       myProjectsModel.addElement(getProjectName(setting.getExternalProjectPath()));
       myProjectSettingsControls.add(control);
       if (control instanceof AbstractExternalProjectSettingsControl<?>) {
-        ((AbstractExternalProjectSettingsControl)control).setCurrentProject(myProject);
+        ((AbstractExternalProjectSettingsControl<?>)control).setCurrentProject(myProject);
       }
       control.showUi(false);
     }
@@ -184,7 +179,7 @@ public abstract class AbstractExternalSystemConfigurable<
   protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
 
   @NotNull
-  protected String getProjectName(@NotNull String path) {
+  protected @NlsSafe String getProjectName(@NotNull String path) {
     File file = new File(path);
     return file.isDirectory() || file.getParentFile() == null ? file.getName() : file.getParentFile().getName();
   }
@@ -241,7 +236,7 @@ public abstract class AbstractExternalSystemConfigurable<
       systemSettings.setLinkedProjectsSettings(projectSettings);
       for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
         if(control instanceof AbstractExternalProjectSettingsControl) {
-          ((AbstractExternalProjectSettingsControl)control).updateInitialSettings();
+          ((AbstractExternalProjectSettingsControl<?>)control).updateInitialSettings();
         }
       }
       if (mySystemSettingsControl != null) {

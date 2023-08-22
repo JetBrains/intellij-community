@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -6,11 +6,14 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,13 +26,13 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
-/**
- * @author peter
- */
-class CompletionAssertions {
+final class CompletionAssertions {
 
   static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
     Document document = editor.getDocument();
@@ -89,7 +92,8 @@ class CompletionAssertions {
   }
 
   private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {
-    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree.txt", DebugUtil.psiToString(fileCopy, false, true));
+    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree.txt", DebugUtil.psiToString(fileCopy,
+                                                                                                                                   true, true));
   }
 
   private static Attachment createFileTextAttachment(PsiFile fileCopy, final PsiFile originalFile) {
@@ -134,7 +138,7 @@ class CompletionAssertions {
                   insertedElement.getNode().getChars())) {
       throw new RuntimeExceptionWithAttachments(
         "Inconsistent completion tree",
-        "range=" + range,
+        "range=" + range + "; fileLength=" + fileCopyText.length(),
         createFileTextAttachment(fileCopy, originalFile),
         createAstAttachment(fileCopy, originalFile),
         new Attachment("Element at caret.txt", insertedElement.getText()));
@@ -149,7 +153,7 @@ class CompletionAssertions {
     return left.toString().equals(right.toString());
   }
 
-  static void assertCorrectOriginalFile(String prefix, PsiFile file, PsiFile copy) {
+  static void assertCorrectOriginalFile(@NonNls String prefix, PsiFile file, PsiFile copy) {
     if (copy.getOriginalFile() != file) {
       throw new AssertionError(prefix + " copied file doesn't have correct original: noOriginal=" + (copy.getOriginalFile() == copy) +
                                "\n file " + fileInfo(file) +
@@ -157,13 +161,13 @@ class CompletionAssertions {
     }
   }
 
-  private static String fileInfo(PsiFile file) {
+  private static @NonNls String fileInfo(PsiFile file) {
     return file + " of " + file.getClass() +
            " in " + file.getViewProvider() + ", languages=" + file.getViewProvider().getLanguages() +
            ", physical=" + file.isPhysical();
   }
 
-  static class WatchingInsertionContext extends InsertionContext {
+  static class WatchingInsertionContext extends InsertionContext implements Disposable {
     private RangeMarkerEx tailWatcher;
     Throwable invalidateTrace;
     DocumentEvent killer;
@@ -188,21 +192,16 @@ class CompletionAssertions {
         throw new AssertionError(getDocument() + "; offset=" + offset);
       }
       tailWatcher.setGreedyToRight(true);
-      spy = new RangeMarkerSpy(tailWatcher) {
-        @Override
-        protected void invalidated(DocumentEvent e) {
-          if (invalidateTrace == null) {
-            invalidateTrace = new Throwable();
-            killer = e;
-          }
-        }
-      };
+      spy = new RangeMarkerSpy(this, tailWatcher);
       getDocument().addDocumentListener(spy);
     }
 
     void stopWatching() {
       if (tailWatcher != null) {
-        getDocument().removeDocumentListener(spy);
+        if (spy != null) {
+          getDocument().removeDocumentListener(spy);
+          spy = null;
+        }
         tailWatcher.dispose();
       }
     }
@@ -220,6 +219,37 @@ class CompletionAssertions {
 
       return offset;
     }
+
+    @Override
+    public void dispose() {
+      stopWatching(); // used by Fleet as ad-hoc memory leak fix
+    }
   }
 
+  private static class RangeMarkerSpy implements DocumentListener {
+    // Do not leak the whole InsertionContext via DocumentListener.
+    private final WeakReference<WatchingInsertionContext> myContextRef;
+    private final RangeMarker myMarker;
+
+    RangeMarkerSpy(@NotNull WatchingInsertionContext context, @NotNull RangeMarker marker) {
+      myContextRef = new WeakReference<>(context);
+      myMarker = marker;
+      assert myMarker.isValid();
+    }
+
+    protected void invalidated(@NotNull DocumentEvent e) {
+      WatchingInsertionContext context = myContextRef.get();
+      if (context != null && context.invalidateTrace == null) {
+        context.invalidateTrace = new Throwable();
+        context.killer = e;
+      }
+    }
+
+    @Override
+    public void documentChanged(@NotNull DocumentEvent e) {
+      if (!myMarker.isValid()) {
+        invalidated(e);
+      }
+    }
+  }
 }

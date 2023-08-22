@@ -17,15 +17,12 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
-class SuperCalls {
-  static Set<LookupElement> suggestQualifyingSuperCalls(PsiElement element,
-                                                        PsiJavaReference javaReference,
-                                                        ElementFilter elementFilter,
-                                                        JavaCompletionProcessor.Options options,
-                                                        Condition<? super String> nameCondition) {
+final class SuperCalls {
+  static @NotNull Set<LookupElement> suggestQualifyingSuperCalls(@NotNull PsiElement element,
+                                                                 @NotNull PsiJavaReference javaReference,
+                                                                 @NotNull ElementFilter elementFilter,
+                                                                 @NotNull JavaCompletionProcessor.Options options,
+                                                                 @NotNull Condition<? super String> nameCondition) {
     Set<LookupElement> set = new LinkedHashSet<>();
     for (final String className : getContainingClassNames(element)) {
       PsiReferenceExpression fakeSuper = JavaCompletionUtil.createReference(className + ".super.rulez", element);
@@ -45,10 +42,10 @@ class SuperCalls {
 
   @NotNull
   private static LookupElement withQualifiedSuper(final String className, LookupElement item) {
-    return PrioritizedLookupElement.withExplicitProximity(new LookupElementDecorator<LookupElement>(item) {
+    return PrioritizedLookupElement.withExplicitProximity(new LookupElementDecorator<>(item) {
 
       @Override
-      public void renderElement(LookupElementPresentation presentation) {
+      public void renderElement(@NotNull LookupElementPresentation presentation) {
         super.renderElement(presentation);
         presentation.setItemText(className + ".super." + presentation.getItemText());
       }
@@ -59,7 +56,7 @@ class SuperCalls {
         PsiJavaCodeReferenceElement ref = PsiTreeUtil
           .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null) {
-          context.getDocument().insertString(ref.getTextRange().getStartOffset(),  className + ".");
+          context.getDocument().insertString(ref.getTextRange().getStartOffset(), className + ".");
         }
 
         super.handleInsert(context);
@@ -67,7 +64,7 @@ class SuperCalls {
     }, -1);
   }
 
-  private static Set<String> getContainingClassNames(PsiElement position) {
+  private static @NotNull Set<String> getContainingClassNames(@NotNull PsiElement position) {
     Set<String> result = new LinkedHashSet<>();
     boolean add = false;
     while (position != null) {

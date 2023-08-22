@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -29,10 +30,10 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
   @Override
   public String buildErrorString(Object... args) {
     if (args[0] instanceof GrIfStatement) {
-      return "'#ref' statement has empty branch";
+      return GroovyBundle.message("inspection.message.ref.statement.has.empty.branch");
     }
     else {
-      return "'#ref' statement has empty body";
+      return GroovyBundle.message("inspection.message.ref.statement.has.empty.body");
     }
   }
 
@@ -91,10 +92,9 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
     }
 
     private static boolean isEmpty(GroovyPsiElement body) {
-      if (!(body instanceof GrBlockStatement)) {
+      if (!(body instanceof GrBlockStatement block)) {
         return false;
       }
-      final GrBlockStatement block = (GrBlockStatement)body;
       final GrOpenBlock openBlock = block.getBlock();
 
       final PsiElement brace = openBlock.getLBrace();

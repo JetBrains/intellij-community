@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.profiling;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,25 +15,24 @@ import java.util.Deque;
 /**
  * @author Max Medvedev
  */
-public class ResolveProfiler {
-  @NonNls private static final String PATH = "../../resolve_info/";
+public final class ResolveProfiler {
+  private static final @NonNls String PATH = "../../resolve_info/";
   private static final boolean DISABLED = true;
 
   private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<>();
   private static volatile int fileCount;
 
-  private static class ThreadInfo {
+  private static final class ThreadInfo {
     private final String myFileName;
     private final Deque<Long> myTimeStack = new ArrayDeque<>();
 
     private String myPrefix = "";
 
-    private ThreadInfo(@NotNull String name) {
+    private ThreadInfo(@NotNull @NonNls String name) {
       myFileName = name;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myFileName;
     }
 
@@ -78,7 +63,7 @@ public class ResolveProfiler {
     return getThreadInfo().finish();
   }
 
-  public static void write(String prefix, @NotNull PsiElement expression, long time) {
+  public static void write(@NonNls String prefix, @NotNull PsiElement expression, long time) {
     if (DISABLED) return;
 
     write(getInfo(prefix, expression, time));
@@ -102,8 +87,7 @@ public class ResolveProfiler {
     }
   }
 
-  @NotNull
-  private static ThreadInfo getThreadInfo() {
+  private static @NotNull ThreadInfo getThreadInfo() {
     ThreadInfo info = threadMap.get();
     if (info == null) {
       synchronized (ResolveProfiler.class) {
@@ -115,7 +99,7 @@ public class ResolveProfiler {
     return info;
   }
 
-  public static String getInfo(String prefix, @NotNull PsiElement expression, long time) {
+  public static @NonNls String getInfo(String prefix, @NotNull PsiElement expression, long time) {
     PsiFile file = expression.getContainingFile();
     String text = expression.getText();
     String textInfo = text != null ? StringUtil.escapeLineBreak(text) : "<null>";

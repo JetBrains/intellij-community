@@ -13,9 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStatement {
   private static final TokenSet TARGET_EXPRESSION_SET = TokenSet.create(PyElementTypes.TARGET_EXPRESSION);
 

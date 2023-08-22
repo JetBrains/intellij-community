@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
@@ -56,6 +56,8 @@ import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.getBunchSize;
 import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.loadChangeLists;
 
@@ -81,7 +83,6 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   public ToBeMergedDialog(@NotNull MergeContext mergeContext,
                           @NotNull List<SvnChangeList> changeLists,
-                          final String title,
                           @NotNull MergeChecker mergeChecker,
                           boolean allStatusesCalculated,
                           boolean allListsLoaded) {
@@ -91,13 +92,13 @@ public class ToBeMergedDialog extends DialogWrapper {
     myStatusMap = synchronizedMap(new HashMap<>());
     myMergeChecker = mergeChecker;
     myAllStatusesCalculated = allStatusesCalculated;
-    setTitle(title);
+    setTitle(myMergeContext.getMergeTitle());
 
     myRevisionsModel = new ListTableModel<>(new ColumnInfo[]{FAKE_COLUMN}, changeLists);
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<>(allStatusesCalculated);
     myAlreadyMerged = new HashSet<>();
-    setOKButtonText("Merge Selected");
+    setOKButtonText(message("button.merge.selected"));
     initUI();
     init();
     enableLoadButtons();
@@ -168,27 +169,17 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   @NotNull
   private static ListMergeStatus toListMergeStatus(@NotNull MergeCheckResult mergeCheckResult) {
-    ListMergeStatus result;
-
-    switch (mergeCheckResult) {
-      case MERGED:
-        result = ListMergeStatus.MERGED;
-        break;
-      case NOT_EXISTS:
-        result = ListMergeStatus.ALIEN;
-        break;
-      default:
-        result = ListMergeStatus.REFRESHING;
-        break;
-    }
-
-    return result;
+    return switch (mergeCheckResult) {
+      case MERGED -> ListMergeStatus.MERGED;
+      case NOT_EXISTS -> ListMergeStatus.ALIEN;
+      default -> ListMergeStatus.REFRESHING;
+    };
   }
 
   @Override
   protected Action @NotNull [] createActions() {
     if (myAllStatusesCalculated) {
-      return new Action[]{getOKAction(), new DialogWrapperAction("Merge All") {
+      return new Action[]{getOKAction(), new DialogWrapperAction(message("button.merge.all")) {
         @Override
         protected void doAction(ActionEvent e) {
           close(MERGE_ALL_CODE);
@@ -232,7 +223,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       myRepositoryChangesBrowser.repaint();
     };
     final MyListCellRenderer listCellRenderer = new MyListCellRenderer();
-    myRevisionsList = new TableView<SvnChangeList>() {
+    myRevisionsList = new TableView<>() {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return listCellRenderer;
@@ -245,12 +236,13 @@ public class ToBeMergedDialog extends DialogWrapper {
       }
     };
     myRevisionsList.setExpandableItemsEnabled(false);
-    new TableViewSpeedSearch<SvnChangeList>(myRevisionsList) {
+    TableViewSpeedSearch<SvnChangeList> search = new TableViewSpeedSearch<>(myRevisionsList, null) {
       @Override
       protected String getItemText(@NotNull SvnChangeList element) {
         return element.getComment();
       }
     };
+    search.setupListeners();
     myRevisionsList.setModelAndUpdateColumns(myRevisionsModel);
     myRevisionsList.setTableHeader(null);
     myRevisionsList.setShowGrid(false);
@@ -314,7 +306,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       @Override
       public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
         if (myAlreadyMerged.contains(change)) {
-          renderer.append(" [already merged] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          renderer.append(" [" + message("label.already.merged") + "] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
     };
@@ -369,11 +361,11 @@ public class ToBeMergedDialog extends DialogWrapper {
     return myPanel;
   }
 
-  private class MoreXAction extends MoreAction {
+  private final class MoreXAction extends MoreAction {
     private final int myQuantity;
 
     private MoreXAction(final int quantity) {
-      super("Load +" + quantity);
+      super(message("button.load.quantity", quantity));
       myQuantity = quantity;
     }
 
@@ -388,9 +380,13 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private class MySelectAll extends DumbAwareAction {
+  private final class MySelectAll extends DumbAwareAction {
     private MySelectAll() {
-      super("Select All", "Select All", AllIcons.Actions.Selectall);
+      super(
+        messagePointer("action.Subversion.SelectAllRevisions.text"),
+        messagePointer("action.Subversion.SelectAllRevisions.description"),
+        AllIcons.Actions.Selectall
+      );
     }
 
     @Override
@@ -400,9 +396,13 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private class MyUnselectAll extends DumbAwareAction {
+  private final class MyUnselectAll extends DumbAwareAction {
     private MyUnselectAll() {
-      super("Unselect All", "Unselect All", AllIcons.Actions.Unselectall);
+      super(
+        messagePointer("action.Subversion.UnselectAllRevisions.text"),
+        messagePointer("action.Subversion.UnselectAllRevisions.description"),
+        AllIcons.Actions.Unselectall
+      );
     }
 
     @Override
@@ -420,7 +420,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     private boolean myIsLastListLoaded;
 
     LoadChangeListsTask(long startNumber, int quantity) {
-      super(myMergeContext.getProject(), "Loading recent " + myMergeContext.getBranchName() + " revisions", true);
+      super(myMergeContext.getProject(), message("progress.title.loading.recent.branch.revisions", myMergeContext.getBranchName()), true);
       myStartNumber = startNumber;
       myQuantity = quantity;
     }
@@ -463,7 +463,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private class MyListCellRenderer implements TableCellRenderer {
+  private final class MyListCellRenderer implements TableCellRenderer {
     private final JPanel myPanel;
     private final CommittedChangeListRenderer myRenderer;
     private final JCheckBox myCheckBox;
@@ -482,15 +482,14 @@ public class ToBeMergedDialog extends DialogWrapper {
       }));
     }
 
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected) {
+    private void customizeCellRenderer(JTable table, Object value, boolean selected) {
       myPanel.removeAll();
       myPanel.setBackground(null);
       myRenderer.clear();
       myRenderer.setBackground(null);
 
       // 7-8, a hack
-      if (value instanceof SvnChangeList) {
-        final SvnChangeList changeList = (SvnChangeList)value;
+      if (value instanceof SvnChangeList changeList) {
         myRenderer.renderChangeList(table, changeList);
 
         final Color bg = selected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
@@ -511,7 +510,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     @Override
-    public final Component getTableCellRendererComponent(
+    public Component getTableCellRendererComponent(
       JTable table,
       Object value,
       boolean isSelected,
@@ -524,7 +523,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<SvnChangeList, SvnChangeList>("fake column") {
+  private static final ColumnInfo<SvnChangeList, SvnChangeList> FAKE_COLUMN = new ColumnInfo<>("") {
     @Override
     public SvnChangeList valueOf(SvnChangeList changeList) {
       return changeList;

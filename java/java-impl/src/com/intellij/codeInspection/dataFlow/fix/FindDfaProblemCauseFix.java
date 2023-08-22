@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -40,16 +42,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityAction {
-  private final boolean myUnknownMembersAsNullable;
   private final boolean myIgnoreAssertStatements;
   private final SmartPsiElementPointer<PsiExpression> myAnchor;
   private final TrackingRunner.DfaProblemType myProblemType;
 
-  public FindDfaProblemCauseFix(boolean unknownMembersAsNullable,
-                                boolean ignoreAssertStatements,
+  public FindDfaProblemCauseFix(boolean ignoreAssertStatements,
                                 PsiExpression anchor,
                                 TrackingRunner.DfaProblemType problemType) {
-    myUnknownMembersAsNullable = unknownMembersAsNullable;
     myIgnoreAssertStatements = ignoreAssertStatements;
     myAnchor = SmartPointerManager.createPointer(anchor);
     myProblemType = problemType;
@@ -57,6 +56,11 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
 
   @Override
   public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
+  public boolean availableInBatchMode() {
     return false;
   }
 
@@ -72,7 +76,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     ThrowableComputable<TrackingRunner.CauseItem, RuntimeException> causeFinder = () -> {
       PsiExpression element = myAnchor.getElement();
       if (element == null) return null;
-      return TrackingRunner.findProblemCause(myUnknownMembersAsNullable, myIgnoreAssertStatements, element, myProblemType);
+      return TrackingRunner.findProblemCause(myIgnoreAssertStatements, element, myProblemType);
     };
     TrackingRunner.CauseItem item = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.compute(causeFinder), JavaBundle.message("progress.title.finding.cause"), true, project);
@@ -80,6 +84,11 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     if (item != null && file != null) {
       displayProblemCause(file, item);
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return new IntentionPreviewInfo.Html(JavaBundle.message("quickfix.find.cause.description"));
   }
 
   private static void displayProblemCause(PsiFile file, TrackingRunner.CauseItem root) {
@@ -114,7 +123,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     }
     if (causes.isEmpty()) {
       HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
-      hintManager.showErrorHint(editor, "Unable to find the cause");
+      hintManager.showErrorHint(editor, JavaAnalysisBundle.message("dfa.find.cause.unable"));
       return;
     }
     if (causes.size() == 1) {

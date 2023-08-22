@@ -14,10 +14,12 @@ import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
-import git4idea.config.GitVcsSettings;
 import git4idea.config.GitSaveChangesPolicy;
+import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +72,7 @@ public class GitRebaseSpec {
                                                           @NotNull GitRepository repository,
                                                           @NotNull ProgressIndicator indicator) {
     if (!repository.isRebaseInProgress()) return null;
-    GitRebaseStatus suspended = new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, Collections.emptyList());
+    GitRebaseStatus suspended = new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED);
     return new GitRebaseSpec(null, Collections.singletonMap(repository, suspended),
                              Collections.emptyMap(), Collections.emptyMap(), newSaver(project, indicator), false);
   }
@@ -145,7 +147,8 @@ public class GitRebaseSpec {
   private static GitChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     Git git = Git.getInstance();
     GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
-    return GitChangesSaver.getSaver(project, git, indicator, VcsBundle.message("stash.changes.message", "rebase"), saveMethod);
+    return GitChangesSaver.getSaver(project, git, indicator,
+                                    VcsBundle.message("stash.changes.message", GitBundle.message("rebase.operation.name")), saveMethod);
   }
 
   @NotNull
@@ -217,6 +220,7 @@ public class GitRebaseSpec {
     return true;
   }
 
+  @NonNls
   @Override
   public String toString() {
     String initialHeadPositions = StringUtil.join(myInitialHeadPositions.keySet(),

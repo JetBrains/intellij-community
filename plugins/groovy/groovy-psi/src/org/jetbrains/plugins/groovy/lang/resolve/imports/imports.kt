@@ -1,12 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyImports")
-
 package org.jetbrains.plugins.groovy.lang.resolve.imports
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
@@ -19,11 +18,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.StarImportHashingS
 internal val defaultRegularImports = GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES.map(::RegularImport)
 internal val defaultStarImports = GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES.map(::StarImport)
 internal val defaultImports = defaultStarImports + defaultRegularImports
-internal val defaultRegularImportsSet = THashSet(defaultRegularImports, RegularImportHashingStrategy)
-internal val defaultStarImportsSet = THashSet(defaultStarImports, StarImportHashingStrategy)
+internal val defaultRegularImportsSet = ObjectOpenCustomHashSet(defaultRegularImports, RegularImportHashingStrategy)
+internal val defaultStarImportsSet = ObjectOpenCustomHashSet(defaultStarImports, StarImportHashingStrategy)
 
-val importKey: Key<GroovyImport> = Key.create<GroovyImport>("groovy.imported.via")
-val importedNameKey: Key<String> = Key.create<String>("groovy.imported.via.name")
+val importKey: Key<GroovyImport> = Key.create("groovy.imported.via")
+val importedNameKey: Key<String> = Key.create("groovy.imported.via.name")
 
 fun GroovyFile.getFileImports(): GroovyFileImports {
   return CachedValuesManager.getCachedValue(this) {

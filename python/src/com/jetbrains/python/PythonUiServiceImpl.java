@@ -2,42 +2,35 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ui.ListEditForm;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.ElementsChooser;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.PopupContent;
+import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.ui.OnePixelSplitter;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
@@ -52,11 +45,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
-public class PythonUiServiceImpl extends PythonUiService {
+public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void showBalloonInfo(Project project, @PopupContent String message) {
     PyUiUtil.showBalloon(project, message, MessageType.INFO);
@@ -74,6 +65,17 @@ public class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
+  public FileEditor getSelectedEditor(@NotNull Project project, VirtualFile virtualFile) {
+    return FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+  }
+
+  @Override
+  public Editor openTextEditor(@NotNull Project project, PsiElement anchor) {
+    PsiFile file = InjectedLanguageManager.getInstance(project).getTopLevelFile(anchor);
+    return openTextEditor(project, file.getVirtualFile());
+  }
+
+  @Override
   public Editor openTextEditor(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     return FileEditorManager.getInstance(project).openTextEditor(
       new OpenFileDescriptor(project, virtualFile), true);
@@ -87,34 +89,12 @@ public class PythonUiServiceImpl extends PythonUiService {
 
   @Override
   public boolean showYesDialog(Project project, String message, String title) {
-    return Messages.showYesNoDialog(message, title, Messages.getQuestionIcon()) == Messages.YES;
+    return MessageDialogBuilder.yesNo(title, message).ask(project);
   }
 
   @Override
   public @Nullable LocalQuickFix createPyRenameElementQuickFix(@NotNull PsiElement element) {
     return new PyRenameElementQuickFix(element);
-  }
-
-  //TODO: rewrite in dsl
-  @Override
-  public JComponent createCompatibilityInspectionOptionsPanel(@NotNull List<String> supportedInSettings,
-                                                              JDOMExternalizableStringList ourVersions) {
-    final ElementsChooser<String> chooser = new ElementsChooser<>(true);
-    chooser.setElements(supportedInSettings, false);
-    chooser.markElements(ContainerUtil.filter(ourVersions, supportedInSettings::contains));
-    chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
-      @Override
-      public void elementMarkChanged(String element, boolean isMarked) {
-        ourVersions.clear();
-        ourVersions.addAll(chooser.getMarkedElements());
-      }
-    });
-    final JPanel versionPanel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel(PyPsiBundle.message("INSP.compatibility.check.for.compatibility.with.python.versions"));
-    label.setLabelFor(chooser);
-    versionPanel.add(label, BorderLayout.PAGE_START);
-    versionPanel.add(chooser);
-    return versionPanel;
   }
 
   //TODO: find a better place or, even better, port it to analysis module
@@ -143,134 +123,8 @@ public class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public JComponent createSingleCheckboxOptionsPanel(String label, InspectionProfileEntry inspection, String property) {
-    return new SingleCheckboxOptionsPanel(label, inspection, property);
-  }
-
-  @Override
   public void annotateTypesIntention(Editor editor, PyFunction function) {
     PyAnnotateTypesIntention.annotateTypes(editor, function);
-  }
-
-  @Override
-  @NotNull
-  public JComponent createEncodingsOptionsPanel(String[] possibleEncodings,
-                                                final String defaultEncoding,
-                                                String[] possibleFormats,
-                                                final int formatIndex,
-                                                Consumer<String> encodingChanged,
-                                                Consumer<Integer> formatIndexChanged) {
-    final JComboBox defaultEncodingCombo = new ComboBox(possibleEncodings);
-    defaultEncodingCombo.setSelectedItem(defaultEncoding);
-
-    defaultEncodingCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        encodingChanged.consume((String)cb.getSelectedItem());
-      }
-    });
-
-    final ComboBox encodingFormatCombo = new ComboBox(possibleFormats);
-
-    encodingFormatCombo.setSelectedIndex(formatIndex);
-    encodingFormatCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        formatIndexChanged.consume(cb.getSelectedIndex());
-      }
-    });
-
-    return createEncodingOptionsPanel(defaultEncodingCombo, encodingFormatCombo);
-  }
-
-  public static JComponent createEncodingOptionsPanel(JComboBox defaultEncoding, JComboBox encodingFormat) {
-    final JPanel optionsPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints c = new GridBagConstraints();
-
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.NORTH;
-    c.gridx = 0;
-    c.gridy = 0;
-    final JLabel encodingLabel = new JLabel(PyBundle.message("code.insight.select.default.encoding"));
-    final JPanel encodingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    encodingPanel.add(encodingLabel);
-    optionsPanel.add(encodingPanel, c);
-
-    c.gridx = 1;
-    c.gridy = 0;
-    optionsPanel.add(defaultEncoding, c);
-
-    c.gridx = 0;
-    c.gridy = 1;
-    c.weighty = 1;
-    final JLabel formatLabel = new JLabel(PyBundle.message("code.insight.encoding.comment.format"));
-    final JPanel formatPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    formatPanel.add(formatLabel);
-    optionsPanel.add(formatPanel, c);
-
-    c.gridx = 1;
-    c.gridy = 1;
-    optionsPanel.add(encodingFormat, c);
-
-    return optionsPanel;
-  }
-
-  @Override
-  public JCheckBox createInspectionCheckBox(String message, InspectionProfileEntry inspection, String property) {
-    return new CheckBox(message, inspection, property);
-  }
-
-  @Override
-  public <E> JComboBox<E> createComboBox(E[] items) {
-    return new ComboBox<E>(items);
-  }
-
-  @Override
-  public <E> JComboBox<E> createComboBox(E[] items, int width) {
-    return new ComboBox<E>(items, width);
-  }
-
-  @Override
-  public JComponent createListEditForm(String title, List<String> stringList) {
-    final ListEditForm form = new ListEditForm(title, stringList);
-    return form.getContentPanel();
-  }
-
-  @Override
-  @NotNull
-  public JComponent createComboBoxWithLabel(@NotNull String label,
-                                            String[] items,
-                                            final String selectedItem,
-                                            Consumer<Object> selectedItemChanged) {
-    ComboBox comboBox = new ComboBox<>(items);
-    comboBox.setSelectedItem(selectedItem);
-    comboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        selectedItemChanged.consume(cb.getSelectedItem());
-      }
-    });
-
-    JPanel option = new JPanel(new BorderLayout());
-    option.add(new JLabel(label), BorderLayout.WEST);
-    option.add(comboBox, BorderLayout.EAST);
-
-    final JPanel root = new JPanel(new BorderLayout());
-    root.add(option, BorderLayout.PAGE_START);
-    return root;
-  }
-
-  @Override
-  public JComponent onePixelSplitter(boolean vertical, JComponent first, JComponent second) {
-    final OnePixelSplitter splitter = new OnePixelSplitter(vertical);
-
-    splitter.setFirstComponent(first);
-    splitter.setSecondComponent(second);
-
-    return splitter;
   }
 
   @Override
@@ -287,7 +141,6 @@ public class PythonUiServiceImpl extends PythonUiService {
   /**
    * Shows a panel with name redefinition conflicts, if needed.
    *
-   * @param project
    * @param conflicts what {@link #findDefinitions} would return
    * @param obscured  name or its topmost qualifier that is obscured, used at top of pane.
    * @param name      full name (maybe qualified) to show as obscured and display as qualifier in "would be" chunks.
@@ -306,9 +159,8 @@ public class PythonUiServiceImpl extends PythonUiService {
         i += 1;
       }
       UsageViewPresentation prsnt = new UsageViewPresentation();
-      prsnt.setTabText(PyBundle.message("CONFLICT.name.$0.obscured", obscured));
-      prsnt.setCodeUsagesString(PyBundle.message("CONFLICT.name.$0.obscured.cannot.convert", obscured));
-      prsnt.setUsagesWord(PyBundle.message("CONFLICT.occurrence.sing"));
+      prsnt.setTabText(PyBundle.message("CONFLICT.name.obscured.by.local.definitions", obscured));
+      prsnt.setCodeUsagesString(PyBundle.message("CONFLICT.name.obscured.cannot.convert", obscured));
       prsnt.setUsagesString(PyBundle.message("CONFLICT.occurrence.pl"));
       UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, usages, prsnt);
       return true;
@@ -318,7 +170,6 @@ public class PythonUiServiceImpl extends PythonUiService {
 
   /**
    * Simplistic usage object for demonstration of name clashes, etc.
-   * User: dcheryasov
    */
   public static class NameUsage implements PsiElementUsage {
 
@@ -446,8 +297,8 @@ public class PythonUiServiceImpl extends PythonUiService {
 
   @Override
   public @Nullable String showInputDialog(@Nullable Project project,
-                                          @NlsContexts.DialogMessage String message,
-                                          @NlsContexts.DialogTitle String title,
+                                          @DialogMessage String message,
+                                          @DialogTitle String title,
                                           @Nullable String initialValue,
                                           @Nullable InputValidator validator) {
     return Messages.showInputDialog(project, message,
@@ -455,17 +306,17 @@ public class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public void showErrorHint(Editor editor, String message) {
+  public void showErrorHint(Editor editor, @NotNull @HintText String message) {
     HintManager.getInstance().showErrorHint(editor, message);
   }
 
   @Override
   public int showChooseDialog(@Nullable Project project,
                               @Nullable Component parentComponent,
-                              String message,
-                              String title,
-                              String[] values,
-                              String initialValue,
+                              @DialogMessage String message,
+                              @DialogTitle String title,
+                              String @ListItem [] values,
+                              @ListItem String initialValue,
                               @Nullable Icon icon) {
     return MessagesService.getInstance().showChooseDialog(project, parentComponent, message, title, values, initialValue, icon);
   }

@@ -78,7 +78,7 @@ class CommonButtonUI extends BasicButtonUI {
     Graphics2D g = (Graphics2D)g2;
     Dimension size = component.getSize();
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    RoundRectangle2D.Double rect = new RoundRectangle2D.Double(1.0, 1.0, (double)(size.width - 3), (double)(size.height - 3), 4.0, 4.0);
+    RoundRectangle2D.Double rect = new RoundRectangle2D.Double(1.0, 1.0, size.width - 3, size.height - 3, 4.0, 4.0);
 
     if (UIUtil.isUnderDefaultMacTheme()) {
       g.setColor(Gray.xE0);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.EditorFactory;
@@ -6,18 +6,11 @@ import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/**
- * @author cdr
- */
 @TestOnly
 public final class EditorListenerTracker {
   private final Map<Class<? extends EventListener>, List<? extends EventListener>> before;
@@ -49,6 +42,7 @@ public final class EditorListenerTracker {
           // app level listener
           String name = listener.getClass().getName();
           return name.startsWith("com.intellij.copyright.CopyrightManagerDocumentListener$") ||
+                 name.startsWith("com.intellij.model.BranchServiceImpl$") ||
                  name.startsWith("com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener");
         });
         if (!afterList.isEmpty()) {

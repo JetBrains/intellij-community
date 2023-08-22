@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.openapi.editor.Document;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * Many of this methods could be used in other plug-ins (especially for indent-based languages).
  * Maybe it will be better to move this class or part of it into IDEA platform.
  */
-public class YAMLTextUtil {
+public final class YAMLTextUtil {
   private YAMLTextUtil() {}
 
 

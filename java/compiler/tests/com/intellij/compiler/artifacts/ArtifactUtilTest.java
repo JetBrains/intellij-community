@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.module.Module;
@@ -46,20 +47,26 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     final MyParentElementProcessor processor = new MyParentElementProcessor();
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 2);
-    assertEquals("war:dir\n" +
-                 "war:web.war/dir\n" +
-                 "ear:ear.ear/web.war/dir\n", processor.getLog());
+    assertEquals("""
+                   war:dir
+                   war:web.war/dir
+                   ear:ear.ear/web.war/dir
+                   """, processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 1);
-    assertEquals("war:dir\n" +
-                 "war:web.war/dir\n", processor.getLog());
+    assertEquals("""
+                   war:dir
+                   war:web.war/dir
+                   """, processor.getLog());
 
     ArtifactUtil.processParents(exploded, getContext(), processor, 0);
     assertEquals("war:dir\n", processor.getLog());
 
     ArtifactUtil.processParents(war, getContext(), processor, 2);
-    assertEquals("war:web.war\n" +
-                 "ear:ear.ear/web.war\n", processor.getLog());
+    assertEquals("""
+                   war:web.war
+                   ear:ear.ear/web.war
+                   """, processor.getLog());
 
   }
 
@@ -84,7 +91,7 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     ArtifactUtil.processDirectoryChildren(rootElement, PackagingElementPath.EMPTY, relativePath, getContext(), PlainArtifactType.getInstance(), processor);
   }
 
-  private static class ElementToStringCollector extends PackagingElementProcessor<PackagingElement<?>> {
+  private static final class ElementToStringCollector extends PackagingElementProcessor<PackagingElement<?>> {
     private final StringBuilder myBuilder = new StringBuilder();
     private final boolean myAddParentPaths;
 

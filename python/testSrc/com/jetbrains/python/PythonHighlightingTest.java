@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -6,27 +6,34 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 /**
  * Test highlighting added by annotators.
- *
- * @author yole
  */
 public class PythonHighlightingTest extends PyTestCase {
+
+  private EditorColorsScheme myOriginalScheme;
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testBuiltins() {
     EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey;
     TextAttributes xAttributes;
-    
+
     xKey = TextAttributesKey.find("PY.BUILTIN_NAME");
     xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
     scheme.setAttributes(xKey, xAttributes);
@@ -65,9 +72,9 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAssignmentTargets3K() {
-    doTest(LanguageLevel.PYTHON34, true, false);    
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
-  
+
   public void testBreakOutsideOfLoop() {
     doTest(true, false);
   }
@@ -106,7 +113,7 @@ public class PythonHighlightingTest extends PyTestCase {
   public void testYieldInLambda() {
     doTest();
   }
-  
+
   public void testImportStarAtTopLevel() {
     doTest(true, false);
   }
@@ -206,6 +213,25 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest();
   }
 
+  // PY-33235
+  public void testNestedFunction() {
+    EditorColorsScheme scheme = createTemporaryColorScheme();
+
+    TextAttributesKey xKey = TextAttributesKey.find("PY.CLASS_DEFINITION");
+    TextAttributes xAttributes = new TextAttributes(Color.blue, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
+    scheme.setAttributes(xKey, xAttributes);
+
+    xKey = TextAttributesKey.find("PY.FUNC_DEFINITION");
+    xAttributes = new TextAttributes(Color.red, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
+    scheme.setAttributes(xKey, xAttributes);
+
+    xKey = TextAttributesKey.find("PY.NESTED_FUNC_DEFINITION");
+    xAttributes = new TextAttributes(Color.green, Color.blue, Color.white, EffectType.BOXED, Font.BOLD);
+    scheme.setAttributes(xKey, xAttributes);
+
+    doTest();
+  }
+
   public void testAsync() {
     doTest(LanguageLevel.PYTHON35, true, true);
   }
@@ -261,6 +287,51 @@ public class PythonHighlightingTest extends PyTestCase {
 
   public void testUnpackingStar() {
     doTest(LanguageLevel.PYTHON35, false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupsStarNoWarning() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupsStarOlderPythonWarning() {
+    doTest(LanguageLevel.PYTHON310, false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInExceptOk() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInTupleInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptStarAndExceptInTheSameTry() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testContinueBreakReturnInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testContinueBreakInsideLoopInExceptStarPart() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testReturnInsideFunctionInExceptStarPart() {
+    doTest(LanguageLevel.getLatest(), false, false);
   }
 
   // PY-35961
@@ -358,7 +429,7 @@ public class PythonHighlightingTest extends PyTestCase {
   public void testFStringSingleRightBraces() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
   }
-  
+
   // PY-20901
   public void testFStringTooDeeplyNestedExpressionFragments() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
@@ -367,6 +438,11 @@ public class PythonHighlightingTest extends PyTestCase {
   // PY-12634
   public void testSpaceBetweenAtAndDecorator() {
     doTest(true, true);
+  }
+
+  // PY-41305
+  public void testExpressionAsDecorator() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 
   // PY-25381
@@ -464,6 +540,46 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON38, false, false);
   }
 
+  // PY-36478
+  public void testAssignmentExpressionAsATarget() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-43619
+  public void testAssignmentExpressionInAnIterable() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-48008
+  public void testMatchAndCaseKeywords() {
+    doTest(LanguageLevel.PYTHON310, false, true);
+  }
+
+  // PY-24653
+  public void testSelfHighlightingInInnerFunc() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
+  // PY-24653
+  public void testNestedParamHighlightingInInnerFunc() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
+  // PY-32302
+  public void testLocalVariables() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
+  // PY-32302
+  public void testVariableAnnotatedWithNonLocalNotHighlightedAsLocal() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
+  // PY-32302
+  public void testVariableAnnotatedWithGlobalNotHighlightedAsLocal() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
@@ -484,6 +600,25 @@ public class PythonHighlightingTest extends PyTestCase {
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
     myFixture.testHighlighting(checkWarnings, checkInfos, false, getTestName(true) + PyNames.DOT_PY);
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myOriginalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      EditorColorsManager.getInstance().setGlobalScheme(myOriginalScheme);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override

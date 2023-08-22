@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -12,13 +12,11 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public class LiveTemplateLookupActionProvider implements LookupActionProvider {
+public final class LiveTemplateLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(LookupElement element, final Lookup lookup, Consumer<LookupElementAction> consumer) {
+  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
     if (element instanceof LiveTemplateLookupElementImpl) {
       final TemplateImpl template = ((LiveTemplateLookupElementImpl)element).getTemplate();
       final TemplateImpl templateFromSettings = TemplateSettings.getInstance().getTemplate(template.getKey(), template.getGroupName());
@@ -39,7 +37,7 @@ public class LiveTemplateLookupActionProvider implements LookupActionProvider {
         });
 
 
-        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel, String.format("Disable '%s' template", template.getKey())) {
+        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel, CodeInsightBundle.message("action.text.disable.live.template", template.getKey())) {
           @Override
           public Result performLookupAction() {
             ApplicationManager.getApplication().invokeLater(() -> templateFromSettings.setDeactivated(true));

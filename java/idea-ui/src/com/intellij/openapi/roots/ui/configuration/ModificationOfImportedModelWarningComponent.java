@@ -16,9 +16,12 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,7 +38,7 @@ public class ModificationOfImportedModelWarningComponent {
     return myLabel;
   }
 
-  public void showWarning(@NotNull String elementDescription, @NotNull ProjectModelExternalSource externalSource) {
+  public void showWarning(@NotNull @Nls String elementDescription, @NotNull ProjectModelExternalSource externalSource) {
     myLabel.setVisible(true);
     myLabel.setBorder(JBUI.Borders.empty(5, 5));
     myLabel.setIcon(AllIcons.General.BalloonWarning);
@@ -43,8 +46,8 @@ public class ModificationOfImportedModelWarningComponent {
   }
 
   @NotNull
-  public static String getWarningText(@NotNull String elementDescription, @NotNull ProjectModelExternalSource externalSource) {
-    return elementDescription + " is imported from " + externalSource.getDisplayName() + ". Any changes made in its configuration may be lost after reimporting.";
+  public static @NlsContexts.Label String getWarningText(@NotNull @Nls String elementDescription, @NotNull ProjectModelExternalSource externalSource) {
+    return JavaUiBundle.message("modification.imported.model.warning.label.text", elementDescription, externalSource.getDisplayName());
   }
 
   public void hideWarning() {

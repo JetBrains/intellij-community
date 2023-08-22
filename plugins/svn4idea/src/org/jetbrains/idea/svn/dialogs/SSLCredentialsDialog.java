@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -85,7 +85,7 @@ public class SSLCredentialsDialog extends DialogWrapper {
       ++ gb.gridy;
       gb.gridwidth = 2;
       final JLabel cannotSaveLabel = new JLabel(SvnBundle.message("svn.cannot.save.credentials.store-auth-creds"));
-      cannotSaveLabel.setForeground(UIUtil.getInactiveTextColor());
+      cannotSaveLabel.setForeground(NamedColorUtil.getInactiveTextColor());
       myPanel.add(cannotSaveLabel, gb);
     }
   }

@@ -1,16 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.CommonBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguagePerFileMappings;
-import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
+import com.intellij.lang.PerFileMappingsEx;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -42,9 +43,12 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,30 +59,29 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.ui.IdeBorderFactory.*;
 
-/**
- * @author peter
- */
 public abstract class PerFileConfigurableBase<T> implements SearchableConfigurable, Configurable.NoScroll {
-
-  protected static final Key<String> DESCRIPTION = KeyWithDefaultValue.create("DESCRIPTION", "");
-  protected static final Key<String> TARGET_TITLE = KeyWithDefaultValue.create("TARGET_TITLE", "Path");
-  protected static final Key<String> MAPPING_TITLE = KeyWithDefaultValue.create("MAPPING_TITLE", "Mapping");
-  protected static final Key<String> EMPTY_TEXT = KeyWithDefaultValue.create("EMPTY_TEXT", "New Mapping $addShortcut");
-  protected static final Key<String> OVERRIDE_QUESTION = Key.create("OVERRIDE_QUESTION");
-  protected static final Key<String> OVERRIDE_TITLE = Key.create("OVERRIDE_TITLE");
-  protected static final Key<String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", "<None>");
+  public record Mapping<T>(@Nls String name, @NotNull Supplier<? extends T> getter, @NotNull Consumer<? super T> setter) {
+  }
+  protected static final Key<@NlsContexts.Label String> DESCRIPTION = KeyWithDefaultValue.create("DESCRIPTION", "");
+  protected static final Key<@NlsContexts.ColumnName String> TARGET_TITLE = KeyWithDefaultValue.create("TARGET_TITLE", () -> LangBundle.message("PerFileConfigurableBase.target.title"));
+  protected static final Key<@NlsContexts.ColumnName String> MAPPING_TITLE = KeyWithDefaultValue.create("MAPPING_TITLE", () -> LangBundle.message("PerFileConfigurableBase.mapping.title"));
+  protected static final Key<@NlsContexts.Label String> EMPTY_TEXT = KeyWithDefaultValue.create("EMPTY_TEXT", () -> LangBundle.message("PerFileConfigurableBase.empty.text"));
+  protected static final Key<@Nls String> OVERRIDE_QUESTION = Key.create("OVERRIDE_QUESTION");
+  protected static final Key<@NlsContexts.DialogTitle String> OVERRIDE_TITLE = Key.create("OVERRIDE_TITLE");
+  protected static final Key<@NlsActions.ActionText String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", () -> LangBundle.message("PerFileConfigurableBase.null.text"));
   protected static final Key<Boolean> ADD_PROJECT_MAPPING = KeyWithDefaultValue.create("ADD_PROJECT_MAPPING", Boolean.TRUE);
   protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
   protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
 
+  @NotNull
   protected final Project myProject;
-  protected final PerFileMappings<T> myMappings;
+  protected final PerFileMappingsEx<T> myMappings;
 
   /** @noinspection FieldCanBeLocal */
   private JPanel myPanel;
@@ -87,16 +90,21 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   private final List<Runnable> myResetRunnables = new ArrayList<>();
   private final Map<String, T> myDefaultVals = new HashMap<>();
-  private final List<Trinity<String, Supplier<T>, Consumer<T>>> myDefaultProps = new ArrayList<>();
+  private final List<Mapping<T>> myDefaultProps = new ArrayList<>();
   private VirtualFile myFileToSelect;
+  private final Mapping<T> myProjectMapping;
 
-  protected interface Value<T> extends Setter<T>, Getter<T> {
+  protected interface Value<T> extends Setter<T>, Supplier<T> {
     void commit();
   }
 
-  protected PerFileConfigurableBase(@NotNull Project project, @NotNull PerFileMappings<T> mappings) {
+  protected PerFileConfigurableBase(@NotNull Project project, @NotNull PerFileMappingsEx<T> mappings) {
     myProject = project;
     myMappings = mappings;
+    myProjectMapping = new Mapping<>(
+      LangBundle.message("PerFileConfigurableBase.project.mapping", StringUtil.capitalize(param(MAPPING_TITLE))),
+      () -> ((LanguagePerFileMappings<T>)myMappings).getConfiguredMapping(null),
+      o -> myMappings.setMapping(null, o));
   }
 
   @Override
@@ -108,8 +116,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @Nullable
   protected abstract <S> Object getParameter(@NotNull Key<S> key);
 
-  @NotNull
-  protected List<Trinity<String, Supplier<T>, Consumer<T>>> getDefaultMappings() {
+  protected @NotNull List<Mapping<T>> getDefaultMappings() {
     return ContainerUtil.emptyList();
   }
 
@@ -127,23 +134,24 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   protected abstract void renderValue(@Nullable Object target, @NotNull T t, @NotNull ColoredTextContainer renderer);
 
-  protected void renderDefaultValue(@Nullable Object target, @NotNull ColoredTextContainer renderer) {
-  }
-
+  protected void renderDefaultValue(@Nullable Object target, @NotNull ColoredTextContainer renderer) { }
 
   private <S> S param(@NotNull Key<S> key) {
     Object o = getParameter(key);
     if (o == null && key instanceof KeyWithDefaultValue) return ((KeyWithDefaultValue<S>)key).getDefaultValue();
-    //noinspection unchecked
-    return (S)o;
+    @SuppressWarnings("unchecked") S s = (S)o;
+    return s;
   }
 
   @NotNull
   @Override
   public JComponent createComponent() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
     myPanel = new JPanel(new BorderLayout());
-    myTable = new JBTable(myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE))) {
+    myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE));
+    myTable = new JBTable(myModel) {
+      @SuppressWarnings("unchecked")
       @Override
       public String getToolTipText(@NotNull MouseEvent event) {
         Point point = event.getPoint();
@@ -159,9 +167,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     JPanel tablePanel = ToolbarDecorator.createDecorator(myTable)
       .disableUpAction()
       .disableDownAction()
-      .setAddAction(button -> doAddAction(button))
-      .setRemoveAction(button -> doRemoveAction(button))
-      .setEditAction(button -> doEditAction(button))
+      .setAddAction(button -> doAddAction())
+      .setRemoveAction(button -> doRemoveAction())
+      .setEditAction(button -> doEditAction())
       .setEditActionUpdater(e -> myTable.getSelectedRows().length > 0)
       .createPanel();
     myTable.getEmptyText().setText(param(EMPTY_TEXT).replace(
@@ -180,6 +188,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return myPanel;
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   protected String getToolTipFor(@Nullable T value) {
     return null;
@@ -189,9 +198,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected JComponent createDefaultMappingComponent() {
     myDefaultProps.addAll(getDefaultMappings());
     if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
-      myDefaultProps.add(Trinity.create("Project " + StringUtil.capitalize(param(MAPPING_TITLE)),
-                                        () -> ((LanguagePerFileMappings<T>)myMappings).getConfiguredMapping(null),
-                                        o -> myMappings.setMapping(null, o)));
+     myDefaultProps.add(myProjectMapping);
     }
     if (myDefaultProps.size() == 0) return null;
     JPanel panel = new JPanel(new GridBagLayout());
@@ -207,11 +214,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     cons2.weightx = 0;
     cons2.gridx = 1;
     cons2.insets = cons1.insets;
-    panel.add(Box.createGlue(), new GridBagConstraints(2, 0, 1, 1, 1., 1., GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(Box.createGlue(), new GridBagConstraints(2, 0, 1, 1, 1., 1., GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                       JBInsets.emptyInsets(), 0, 0));
 
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
-      myDefaultVals.put(prop.first, prop.second.get());
-      JPanel p = createActionPanel(null, new Value<T>() {
+    for (Mapping<T> prop : myDefaultProps) {
+      myDefaultVals.put(prop.name, prop.getter.get());
+      JPanel p = createActionPanel(null, new Value<>() {
         @Override
         public void commit() {
           myModel.fireTableDataChanged();
@@ -219,21 +227,21 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
         @Override
         public T get() {
-          return myDefaultVals.get(prop.first);
+          return myDefaultVals.get(prop.name);
         }
 
         @Override
         public void set(T value) {
-          myDefaultVals.put(prop.first, adjustChosenValue(null, value));
+          myDefaultVals.put(prop.name, adjustChosenValue(null, value));
         }
       });
-      panel.add(new JBLabel(prop.first + ":"), cons1);
+      panel.add(new JBLabel(prop.name + ":"), cons1);
       panel.add(p, cons2);
     }
     return panel;
   }
 
-  private void doAddAction(@NotNull AnActionButton button) {
+  private void doAddAction() {
     TableCellEditor editor = myTable.getCellEditor();
     if (editor != null) editor.cancelCellEditing();
 
@@ -251,17 +259,19 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
     for (VirtualFile file : chosen) {
       if (!set.add(file)) continue;
-      myModel.data.add(Pair.create(file, getNewMapping(file)));
+      myModel.data.add(pair(file, getNewMapping(file)));
     }
     myModel.fireTableDataChanged();
-    TIntArrayList rowList = new TIntArrayList();
+    IntList rowList = new IntArrayList();
     for (int i = 0, size = myModel.data.size(); i < size; i++) {
-      if (chosen.contains(myModel.data.get(i).first)) rowList.add(i);
+      if (chosen.contains(myModel.data.get(i).first)) {
+        rowList.add(i);
+      }
     }
-    selectRows(rowList.toNativeArray(), true);
+    selectRows(rowList.toIntArray(), true);
   }
 
-  private void doRemoveAction(@NotNull AnActionButton button) {
+  private void doRemoveAction() {
     TableCellEditor editor = myTable.getCellEditor();
     if (editor != null) editor.cancelCellEditing();
 
@@ -279,12 +289,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
   }
 
-  private void doEditAction(@NotNull AnActionButton button) {
+  private void doEditAction() {
     TableUtil.editCellAt(myTable, myTable.getSelectedRow(), 0);
     TextFieldWithBrowseButton panel = ObjectUtils.tryCast(myTable.getEditorComponent(), TextFieldWithBrowseButton.class);
     if (panel != null) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (myTable.getEditorComponent() == panel) {
           panel.getButton().doClick();
         }
@@ -298,16 +307,29 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       if (keyMatches(p.first, file, false) && p.second != null) return p.second;
     }
     ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
-      if (prop.first.startsWith("Project ") && file != null && index.isInContent(file) || prop.first.startsWith("Global ")) {
-        T t = myDefaultVals.get(prop.first);
+    for (Mapping<T> prop : ContainerUtil.reverse(myDefaultProps)) {
+      if (isProjectMapping(prop) && file != null && index.isInContent(file) || isGlobalMapping(prop)) {
+        T t = myDefaultVals.get(prop.name);
         if (t != null) return t;
       }
     }
+    return getDefaultNewMapping(file);
+  }
+
+  @Nullable
+  protected T getDefaultNewMapping(@Nullable VirtualFile file) {
     return myMappings.getDefaultMapping(file);
   }
 
-  private boolean keyMatches(@Nullable Object key, @Nullable VirtualFile file, boolean strict) {
+  protected boolean isGlobalMapping(Mapping<T> prop) {
+    return false;
+  }
+
+  protected boolean isProjectMapping(Mapping<T> prop) {
+    return prop == myProjectMapping;
+  }
+
+  private static boolean keyMatches(@Nullable Object key, @Nullable VirtualFile file, boolean strict) {
     if (file == null) return key == null;
     if (key instanceof VirtualFile) return VfsUtilCore.isAncestor((VirtualFile)key, file, strict);
     // todo also patterns
@@ -317,8 +339,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   @Override
   public boolean isModified() {
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
-      if (!Comparing.equal(prop.second.get(), myDefaultVals.get(prop.first))) {
+    for (Mapping<T> prop : myDefaultProps) {
+      if (!Comparing.equal(prop.getter.get(), myDefaultVals.get(prop.name))) {
         return true;
       }
     }
@@ -331,8 +353,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @Override
   public void apply() throws ConfigurationException {
     myMappings.setMappings(getNewMappings());
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
-      prop.third.consume(myDefaultVals.get(prop.first));
+    for (Mapping<T> prop : myDefaultProps) {
+      prop.setter.consume(myDefaultVals.get(prop.name));
     }
   }
 
@@ -340,11 +362,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   public void reset() {
     myModel.data.clear();
     for (Map.Entry<VirtualFile, T> e : myMappings.getMappings().entrySet()) {
-      if (myMappings instanceof LanguagePerFileMappings && e.getKey() == null) continue;
-      myModel.data.add(Pair.create(e.getKey(), e.getValue()));
+      if (e.getKey() == null) continue;
+      myModel.data.add(pair(e.getKey(), e.getValue()));
     }
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
-      myDefaultVals.put(prop.first, prop.second.get());
+    for (Mapping<T> prop : myDefaultProps) {
+      myDefaultVals.put(prop.name, prop.getter.get());
     }
 
     for (Runnable runnable : myResetRunnables) {
@@ -367,6 +389,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected Map<VirtualFile, T> getNewMappings() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myModel == null) {
+      throw new AssertionError("createComponent() was not called first on " + getClass().getName());
+    }
     HashMap<VirtualFile, T> map = new HashMap<>();
     for (Pair<Object, T> p : myModel.data) {
       if (p.second != null) {
@@ -374,9 +400,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
     }
     if (myMappings instanceof LanguagePerFileMappings) {
-      for (Trinity<String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
-        if (prop.first.startsWith("Project ")) {
-          T t = myDefaultVals.get(prop.first);
+      for (Mapping<T> prop : ContainerUtil.reverse(myDefaultProps)) {
+        if (isProjectMapping(prop)) {
+          T t = myDefaultVals.get(prop.name);
           if (t != null) map.put(null, t);
           break;
         }
@@ -402,7 +428,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected int[] findRow(VirtualFile file, boolean strict, boolean all) {
-    TIntArrayList rows = new TIntArrayList();
+    IntList rows = new IntArrayList();
     List<Pair<Object, T>> reversed = ContainerUtil.reverse(myModel.data);
     for (int i = 0, size = reversed.size(); i < size; i++) {
       Pair<Object, T> p = reversed.get(i);
@@ -411,7 +437,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         if (!all) break;
       }
     }
-    return rows.toNativeArray();
+    return rows.toIntArray();
   }
 
   private static String keyToString(Object o) {
@@ -446,7 +472,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     sorter.setSortsOnUpdates(true);
     myTable.setRowSorter(sorter);
     myTable.getRowSorter().setSortKeys(Collections.singletonList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
-    new TableSpeedSearch(myTable, o -> keyToString(o));
+    TableSpeedSearch.installOn(myTable, o -> keyToString(o));
 
     FontMetrics metrics = myTable.getFontMetrics(myTable.getFont());
     int maxValueWidth = 2 * metrics.stringWidth(myTable.getModel().getColumnName(1));
@@ -467,7 +493,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
 
       @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
         renderTarget(value, this);
         SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
       }
@@ -479,7 +505,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
 
       @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
         Pair<Object, T> p = myModel.data.get(myTable.convertRowIndexToModel(row));
         if (p.second != null) {
           setTransparentIconBackground(true);
@@ -533,7 +559,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         editorValue = pair.second; // (T)value
         if (!canEditTarget(target, editorValue)) return null;
 
-        JPanel panel = createActionPanel(target, new Value<T>() {
+        JPanel panel = createActionPanel(target, new Value<>() {
           @Override
           public T get() {
             return editorValue;
@@ -559,19 +585,6 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
               selectRows(new int[]{modelRow}, true);
             }          }
         }, true);
-
-        AbstractButton button = UIUtil.uiTraverser(panel).filter(JButton.class).first();
-        if (button != null) {
-          AtomicInteger clickCount = new AtomicInteger();
-          button.addActionListener(e -> clickCount.incrementAndGet());
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {
-            if (clickCount.get() == 0 && myTable.getEditorComponent() == panel) {
-              button.doClick();
-            }
-          });
-        }
-
         return panel;
       }
 
@@ -590,6 +603,14 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @NotNull
   private JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
     AnAction changeAction = createValueAction(target, value);
+    return createActionPanel(editor, changeAction);
+  }
+
+  protected JPanel createActionPanel(AnAction changeAction) {
+    return createActionPanel(false, changeAction);
+  }
+
+  private @NotNull JPanel createActionPanel(boolean editor, AnAction changeAction) {
     JComponent comboComponent = ((CustomComponentAction)changeAction).createCustomComponent(
       changeAction.getTemplatePresentation(), ActionPlaces.UNKNOWN);
     JPanel panel = new JPanel(new BorderLayout()) {
@@ -611,7 +632,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private int clearSubdirectoriesOnDemandOrCancel(boolean keysToo, Object... keys) {
-    TIntArrayList rows = new TIntArrayList();
+    IntList rows = new IntArrayList();
     boolean toOverride = false;
     for (int i = 0, size = myModel.data.size(); i < size; i++) {
       Pair<Object, T> p = myModel.data.get(i);
@@ -632,7 +653,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     int ret = !toOverride ? Messages.NO : askUserToOverrideSubdirectories();
     if (ret == Messages.CANCEL) return ret;
     int count = 0;
-    for (int i : rows.toNativeArray()) {
+    for (int i : rows.toIntArray()) {
       if (i >= 0 && ret == Messages.NO) continue;
       int index = (i >= 0 ? i : -i - 1) - count;
       if (canRemoveTarget(myModel.data.get(index).first)) {
@@ -640,7 +661,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         count ++;
       }
       else {
-        myModel.data.set(index, Pair.create(myModel.data.get(0).first, null));
+        myModel.data.set(index, pair(myModel.data.get(0).first, null));
       }
     }
     if (!rows.isEmpty()) {
@@ -658,13 +679,14 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
   }
 
-  private String renderValue(@Nullable Object value, @NotNull String nullValue) {
+  private @NlsActions.ActionText String renderValue(@Nullable Object value, @NlsActions.ActionText @NotNull String nullValue) {
     if (value == null) {
       return nullValue;
     }
     else {
       SimpleColoredText text = new SimpleColoredText();
-      renderValue(null, (T)value, text);
+      @SuppressWarnings("unchecked") T t = (T)value;
+      renderValue(null, t, text);
       return text.toString();
     }
   }
@@ -675,8 +697,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       renderer.setIcon(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, myProject));
       VirtualFile parent = file.getParent();
       if (parent != null) {
-        VirtualFile dir = myProject.getBaseDir();
-        String projectPath = dir == null ? null : dir.getPath();
+        String projectPath = myProject.getBasePath();
         String parentPath = parent.getPath();
         String relativePath = projectPath != null && parentPath.startsWith(projectPath) ?
                               "..." + parentPath.substring(projectPath.length()) : parentPath;
@@ -686,51 +707,13 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     else if (target == null) {
-      renderer.append("Project", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      renderer.append(LangBundle.message("PerFileConfigurableBase.label.project"), SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }
 
   @NotNull
   protected final AnAction createValueAction(@Nullable Object target, @NotNull Value<T> value) {
-    return new ComboBoxAction() {
-      void updateText(Presentation p) {
-        String text = renderValue(value.get(), StringUtil.notNullize(getNullValueText(target)));
-        p.setText(StringUtil.shortenTextWithEllipsis(text, 40, 0));
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        updateText(getTemplatePresentation());
-      }
-
-      @NotNull
-      @Override
-      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      protected ComboBoxButton createComboBoxButton(Presentation presentation) {
-        return new ComboBoxButton(presentation) {
-          @Override
-          protected JBPopup createPopup(Runnable onDispose) {
-            JBPopup popup = createValueEditorPopup(target, value.get(), onDispose, getDataContext(), o -> {
-              value.set(o);
-              updateText(presentation);
-            }, value::commit);
-            popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
-            return popup;
-          }
-
-          @Nullable
-          @Override
-          public String getToolTipText() {
-            boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
-            return cellEditor ? null : getToolTipFor(value.get());
-          }
-        };
-      }
-    };
+    return new PerFileConfigurableComboBoxAction(value, target, StringUtil.notNullize(getNullValueText(target)));
   }
 
   @NotNull
@@ -762,13 +745,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return null;
   }
 
-  @Nullable
-  protected String getClearValueText(@Nullable Object target) {
+  protected @NlsActions.ActionText @Nullable String getClearValueText(@Nullable Object target) {
     return target == null ? getNullValueText(null) : null;
   }
 
-  @Nullable
-  protected String getNullValueText(@Nullable Object target) {
+  protected @NlsActions.ActionText @Nullable String getNullValueText(@Nullable Object target) {
     return param(NULL_TEXT);
   }
 
@@ -813,8 +794,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return group;
   }
 
-  private static class MyModel<T> extends AbstractTableModel {
-
+  private static final class MyModel<T> extends AbstractTableModel {
     final String[] columnNames;
     final List<Pair<Object, T>> data = new ArrayList<>();
 
@@ -852,11 +832,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       Pair<Object, T> pair = data.get(rowIndex);
       if (columnIndex == 1) {
         if (Comparing.equal(aValue, pair.second)) return;
-        data.set(rowIndex, Pair.create(pair.first, (T)aValue));
+        @SuppressWarnings("unchecked") T t = (T)aValue;
+        data.set(rowIndex, pair(pair.first, t));
       }
       else {
         if (Comparing.equal(aValue, pair.first)) return;
-        data.set(rowIndex, Pair.create(aValue, pair.second));
+        data.set(rowIndex, pair(aValue, pair.second));
       }
       fireTableRowsUpdated(rowIndex, rowIndex);
     }
@@ -865,6 +846,57 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     public void fireTableDataChanged() {
       data.sort((o1, o2) -> StringUtil.naturalCompare(keyToString(o1.first), keyToString(o2.first)));
       super.fireTableDataChanged();
+    }
+  }
+
+  public final class PerFileConfigurableComboBoxAction extends ComboBoxAction {
+    private final @NotNull Value<T> myValue;
+    private @Nullable final Object myTarget;
+    private final @NlsActions.ActionText @NotNull String myNullValue;
+
+    public PerFileConfigurableComboBoxAction(@NotNull Value<T> value,
+                                             @Nullable Object target,
+                                             @NotNull @NlsActions.ActionText String nullValue) {
+      myValue = value;
+      myTarget = target;
+      myNullValue = nullValue;
+    }
+
+    private void updateText(Presentation p) {
+      final String text = renderValue(myValue.get(), myNullValue);
+      p.setText(StringUtil.shortenTextWithEllipsis(text, 40, 0));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      updateText(getTemplatePresentation());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
+      return new ComboBoxButton(presentation) {
+        @Override
+        protected @NotNull JBPopup createPopup(Runnable onDispose) {
+          JBPopup popup = createValueEditorPopup(myTarget, myValue.get(), onDispose, getDataContext(), o -> {
+            myValue.set(o);
+            updateText(presentation);
+          }, myValue::commit);
+          popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
+          return popup;
+        }
+
+        @Nullable
+        @Override
+        public String getToolTipText() {
+          boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
+          return cellEditor ? null : getToolTipFor(myValue.get());
+        }
+      };
     }
   }
 }

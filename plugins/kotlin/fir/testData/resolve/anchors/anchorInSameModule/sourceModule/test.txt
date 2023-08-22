@@ -1,0 +1,3 @@
+// module: anchor
+// file: psi/Element.kt
+// expected class: Element

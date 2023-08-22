@@ -1,13 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +27,7 @@ import static com.intellij.openapi.components.StorageScheme.DIRECTORY_BASED;
 /**
  * @author Eugene Zhuravlev
  */
-public class ProjectNameStep extends ModuleWizardStep {
+public final class ProjectNameStep extends ModuleWizardStep {
   private final NamePathComponent myNamePathComponent;
   private final JPanel myPanel;
   private final WizardContext myWizardContext;
@@ -117,14 +120,14 @@ public class ProjectNameStep extends ModuleWizardStep {
     final File projectFile = new File(path);
     if (projectFile.exists()) {
       final String title = myWizardContext.isCreatingNewProject()
-                           ? IdeBundle.message("title.new.project")
-                           : IdeBundle.message("title.add.module");
+                           ? IdeCoreBundle.message("title.new.project")
+                           : IdeCoreBundle.message("title.add.module");
       final String message = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
                              ? JavaUiBundle.message("prompt.overwrite.project.folder",
                                                  Project.DIRECTORY_STORE_FOLDER, projectFile.getParentFile().getAbsolutePath())
-                             : JavaUiBundle.message("prompt.overwrite.project.file",
-                                                 projectFile.getAbsolutePath(), myWizardContext.getPresentationName());
-      int answer = Messages.showYesNoDialog(message, title, Messages.getQuestionIcon());
+                             : CoreBundle.message("prompt.overwrite.project.file",
+                                                  projectFile.getAbsolutePath(), myWizardContext.getPresentationName());
+      int answer = MessageDialogBuilder.yesNo(title, message).show();
       shouldContinue = answer == Messages.YES;
     }
 

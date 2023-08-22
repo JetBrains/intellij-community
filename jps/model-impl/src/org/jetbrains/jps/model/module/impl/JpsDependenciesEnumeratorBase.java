@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.module.impl;
 
 import com.intellij.openapi.util.Condition;
@@ -20,27 +6,30 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependenciesEnumerator> implements JpsDependenciesEnumerator {
   private boolean myWithoutSdk;
   private boolean myWithoutLibraries;
-  protected boolean myWithoutDepModules;
+  private boolean myWithoutDepModules;
   private boolean myWithoutModuleSourceEntries;
   protected boolean myRecursively;
-  protected final Collection<JpsModule> myRootModules;
+  private final Set<JpsModule> myRootModules;
   private Condition<? super JpsDependencyElement> myCondition;
 
   protected JpsDependenciesEnumeratorBase(Collection<JpsModule> rootModules) {
-    myRootModules = rootModules;
+    myRootModules = Collections.unmodifiableSet(
+      rootModules instanceof Set? (Set<JpsModule>)rootModules : new LinkedHashSet<>(rootModules)
+    );
   }
 
   @NotNull
@@ -105,7 +94,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   }
 
   public boolean processDependencies(Processor<? super JpsDependencyElement> processor) {
-    THashSet<JpsModule> processed = new THashSet<>();
+    Set<JpsModule> processed = CollectionFactory.createSmallMemoryFootprintSet();
     for (JpsModule module : myRootModules) {
       if (!doProcessDependencies(module, processor, processed)) {
         return false;
@@ -137,7 +126,9 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
         if (myRecursively && shouldProcessDependenciesRecursively()) {
           JpsModule depModule = ((JpsModuleDependency)element).getModule();
           if (depModule != null) {
-            doProcessDependencies(depModule, processor, processed);
+            if (!doProcessDependencies(depModule, processor, processed)) {
+              return false;
+            }
             continue;
           }
         }

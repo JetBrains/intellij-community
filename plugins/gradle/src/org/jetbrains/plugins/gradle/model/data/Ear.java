@@ -58,10 +58,9 @@ public class Ear extends Jar {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof Ear)) return false;
+    if (!(o instanceof Ear that)) return false;
     if (!super.equals(o)) return false;
 
-    Ear that = (Ear)o;
     if (!appDirName.equals(that.appDirName)) return false;
     if (!libDirName.equals(that.libDirName)) return false;
 

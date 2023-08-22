@@ -15,14 +15,18 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 
@@ -55,7 +59,7 @@ public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new JavaFxWrapWithDefineIntention(PsiTreeUtil.findSameElementInCopy(myTag, target), myId);
   }
 }

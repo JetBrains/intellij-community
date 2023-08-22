@@ -1,59 +1,59 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
+import java.util.function.Function;
 
 /**
- * Use to assert that no AWT events are pumped during some activity (e.g. action update, write operations, etc)
- *
- * @author peter
+ * Use to assert that no AWT events are pumped during some activity (e.g., action update, write operations, etc.)
  */
-public class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
+public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance(ProhibitAWTEvents.class);
 
   private final String myActivityName;
+  private final Function<? super AWTEvent, String> myErrorFunction;
   private boolean myReported;
 
-  private ProhibitAWTEvents(@NotNull String activityName) {
+  private ProhibitAWTEvents(@NotNull String activityName, @Nullable Function<? super AWTEvent, String> errorFunction) {
     myActivityName = activityName;
+    myErrorFunction = errorFunction;
   }
 
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
-    if (!myReported) {
+    String message = myReported ? null :
+                     myErrorFunction == null ? "AWT events are prohibited inside " + myActivityName + "; got " + e :
+                     myErrorFunction.apply(e);
+    if (message != null) {
       myReported = true;
-      LOG.error("AWT events are prohibited inside " + myActivityName + "; got " + e);
+      LOG.error(message);
     }
     return true;
   }
 
-  @NotNull
-  public static AccessToken start(@NotNull String activityName) {
-    if (!SwingUtilities.isEventDispatchThread()) {
-      // some crazy highlighting queries getData outside EDT: https://youtrack.jetbrains.com/issue/IDEA-162970
+  public static @NotNull AccessToken start(@NotNull @NonNls String activityName) {
+    return doStart(activityName, null);
+  }
+
+  public static @NotNull AccessToken startFiltered(@NotNull @NonNls String activityName, @NotNull Function<? super AWTEvent, String> errorFunction) {
+    return doStart(activityName, errorFunction);
+  }
+
+  private static @NotNull AccessToken doStart(@NotNull @NonNls String activityName, @Nullable Function<? super AWTEvent, String> errorFunction) {
+    if (!EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
-    ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName);
-    IdeEventQueue.getInstance().addPostprocessor(dispatcher, null);
+
+    ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName, errorFunction);
+    IdeEventQueue.getInstance().addPostprocessor(dispatcher, (Disposable)null);
     return new AccessToken() {
       @Override
       public void finish() {

@@ -139,6 +139,12 @@ public class SplitterTest {
   }
 
   @Test
+  public void testUnicodeCombiningChars() {
+    correctListToCheck(PlainTextSplitter.getInstance(), "бо́льшую", "бо́льшую");
+    correctListToCheck(PlainTextSplitter.getInstance(), "dafür", "dafür");
+  }
+
+  @Test
   public void testConstantName() {
     String text = "TEST_CONSTANT";
     correctListToCheck(IdentifierSplitter.getInstance(), text, "TEST", "CONSTANT");
@@ -414,6 +420,30 @@ public class SplitterTest {
     String text = convertStreamToString(stream);
     List<String> words = wordsToCheck(PlainTextSplitter.getInstance(), text);
     assertEquals(0, words.size());
+  }
+
+  @Test
+  public void testMd5InsideText() {
+    String text = "asdasd 79054025255fb1a26e4bc422adfebeed asdasd";
+    correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasd", "asdasd");
+  }
+
+  @Test
+  public void testSha1InsideText() {
+    String text = "asdasd c3499c2729730aaff07efb8676a92dcb6f8a3f8f asdasd";
+    correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasd", "asdasd");
+  }
+
+  @Test
+  public void testSha256InsideText() {
+    String text = "asdasd 50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c asdasd";
+    correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasd", "asdasd");
+  }
+
+  @Test
+  public void testJwtInsideText() {
+    String text = "asdasd eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.dyt0CoTl4WoVjAHI9Q_CwSKhl6d_9rhM3NrXuJttkao asdasd";
+    correctListToCheck(PlainTextSplitter.getInstance(), text, "asdasd", "asdasd");
   }
 
   @NotNull

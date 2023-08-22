@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ExecutionException;
@@ -66,14 +66,14 @@ public class ExternalSystemTaskActivator {
       @Override
       public void beforeRun(@NotNull ProjectTaskContext context) throws ExecutionException {
         if (!doExecuteBuildPhaseTriggers(true, context)) {
-          throw new ExecutionException("Before build triggering task failed");
+          throw new ExecutionException(ExternalSystemBundle.message("dialog.message.before.build.triggering.task.failed"));
         }
       }
 
       @Override
       public void afterRun(@NotNull ProjectTaskManager.Result result) throws ExecutionException {
         if (!doExecuteBuildPhaseTriggers(false, result.getContext())) {
-          throw new ExecutionException("After build triggering task failed");
+          throw new ExecutionException(ExternalSystemBundle.message("dialog.message.after.build.triggering.task.failed"));
         }
       }
     });
@@ -201,7 +201,8 @@ public class ExternalSystemTaskActivator {
         continue;
       }
 
-      if (ExternalProjectsManager.getInstance(myProject).isIgnored(activation.systemId, activation.projectPath)) {
+      if (ExternalProjectsManager.getInstance(myProject).isIgnored(activation.systemId, activation.projectPath)
+          && !"true".equals(System.getProperty("force.execute.activated.tasks", "false"))) {
           continue;
       }
 
@@ -229,11 +230,13 @@ public class ExternalSystemTaskActivator {
     return projectSettings != null ? projectSettings.getExternalProjectPath() : null;
   }
 
-  private boolean runTasksQueue(final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue) {
+  private boolean runTasksQueue(final Queue<? extends Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue) {
     final Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings> pair = tasksQueue.poll();
     if (pair == null) {
       return true;
     }
+    String tasks = String.join(", ", pair.second.getTaskNames());
+    LOG.info(String.format("Started execution of %s", tasks));
 
     final ProjectSystemId systemId = pair.first;
     final ExternalSystemTaskExecutionSettings executionSettings = pair.getSecond();
@@ -256,6 +259,7 @@ public class ExternalSystemTaskActivator {
                                },
                                ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);
     targetDone.waitFor();
+    LOG.info(String.format("Finished execution of %s", tasks));
     return result.get();
   }
 

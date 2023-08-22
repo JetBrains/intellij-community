@@ -87,16 +87,6 @@ public class CompiledClass extends UserDataHolderBase{
     return ContainerUtil.map(mySourceFiles, file -> file.getPath());
   }
 
-  /**
-   * @deprecated use {@link CompiledClass#getSourceFiles()} or {{@link CompiledClass#getSourceFilesPaths()}
-   */
-  @Deprecated
-  @NotNull
-  public File getSourceFile() {
-    //noinspection ConstantConditions
-    return ContainerUtil.getFirstItem(getSourceFiles());
-  }
-
   @Nullable
   public String getClassName() {
     return myClassName;

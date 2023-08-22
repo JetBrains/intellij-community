@@ -22,19 +22,8 @@ import org.jetbrains.annotations.NotNull;
  * Defines whether or not some elements can be indented when a user selects a fragment of text and invokes "indent" action (normally by
  * pressing [TAB]). The elements which are said to be unmovable ({@link #canIndent(int, int, PsiElement)} returns {@code false}) do not change their indentation.
  * This may be useful for cases like HEREDOC text handling.
- *
- * @author Rustam Vishnyakov
  */
 public interface IndentStrategy {
-  /**
-   * @deprecated use {@link #canIndent(int, int, PsiElement)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  default boolean canIndent(@SuppressWarnings("unused") @NotNull PsiElement element) {
-    return true;
-  }
-
   /**
    * Checks if an element can be indented.
    * @param indentationStartOffset The start offset of the whole indentation.
@@ -42,7 +31,5 @@ public interface IndentStrategy {
    * @param element The element to check.
    * @return True if the element can change its indentation, false if the indentation must be preserved.
    */
-  default boolean canIndent(int indentationStartOffset, int indentationEndOffset, @NotNull PsiElement element) {
-    return canIndent(element);
-  }
+  boolean canIndent(int indentationStartOffset, int indentationEndOffset, @NotNull PsiElement element);
 }

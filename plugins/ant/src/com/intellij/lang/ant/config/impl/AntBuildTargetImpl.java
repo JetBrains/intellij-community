@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -12,6 +12,7 @@ import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +20,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.xml.DomTarget;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -33,7 +36,7 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   private final int myHashCode;
   private final String myName;
   private final String myDisplayName;
-  private final String myDescription;
+  private final @Nls String myDescription;
   private final Project myProject;
   private final int myTextOffset;
 
@@ -67,10 +70,9 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   }
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof AntBuildTargetImpl)) {
+    if (!(obj instanceof AntBuildTargetImpl that)) {
       return false;
     }
-    final AntBuildTargetImpl that = (AntBuildTargetImpl)obj;
     return Objects.equals(myName, that.myName) && Comparing.equal(myFile, that.myFile);
   }
 
@@ -81,19 +83,19 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   @Override
   @Nullable
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
   @Override
   @Nullable
-  public String getDisplayName() {
+  public @NlsSafe String getDisplayName() {
     return myDisplayName;
   }
 
   @Override
   @Nullable
-  public String getNotEmptyDescription() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getNotEmptyDescription() {
     return myDescription;
   }
 
@@ -120,11 +122,25 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
     final String modelName = myModel.getName();
     if (!StringUtil.isEmptyOrSpaces(modelName)) {
-      name.append("_").append(modelName);
+      name.append("_").append(modelName.trim());
     }
 
     name.append('_').append(getName());
     return name.toString();
+  }
+
+  @Nullable
+  public static String parseBuildFileName(@Nullable Project project, @NotNull String actionId) {
+    // expected format antIdPrefix{_modelName}_targetName
+    String idPrefix = project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX;
+    if (actionId.length() <= idPrefix.length() || !actionId.startsWith(idPrefix)) {
+      return null;
+    }
+    if (actionId.charAt(idPrefix.length()) != '_') {
+      return null;
+    }
+    int nextSeparatorIndex = actionId.indexOf('_', idPrefix.length() + 1);
+    return nextSeparatorIndex > idPrefix.length()? actionId.substring(idPrefix.length() + 1, nextSeparatorIndex) : null;
   }
 
   @Override

@@ -117,7 +117,7 @@ public class GitPushTarget implements PushTarget {
   }
 
   @Nullable
-  static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull GitLocalBranch sourceBranch) {
+  public static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull GitLocalBranch sourceBranch) {
     List<String> specs = remote.getPushRefSpecs();
     if (specs.isEmpty()) return null;
 
@@ -148,9 +148,7 @@ public class GitPushTarget implements PushTarget {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GitPushTarget)) return false;
-
-    GitPushTarget target = (GitPushTarget)o;
+    if (!(o instanceof GitPushTarget target)) return false;
 
     if (myIsNewBranchCreated != target.myIsNewBranchCreated) return false;
     if (!myRemoteBranch.equals(target.myRemoteBranch)) return false;

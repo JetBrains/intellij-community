@@ -3,7 +3,7 @@ import os
 import sys
 import pytest
 
-# Note: ant.jar and junit.jar must be in the PYTHONPATH (see jython_test_deps)
+# Note: ant.jar and junit.jar must be in the PYTHONPATH
 
 IS_JYTHON = False
 if sys.platform.find('java') != -1:
@@ -230,7 +230,7 @@ class TestCompl(unittest.TestCase):
 # Run for jython in command line:
 
 # On Windows:
-# c:/bin/jython2.7.0/bin/jython.exe -Dpython.path=jython_test_deps/ant.jar;jython_test_deps/junit.jar -m py.test tests/test_jysimpleTipper.py
+# c:/bin/jython2.7.0/bin/jython.exe -Dpython.path=<...>/ant.jar;<...>/junit.jar -m py.test tests/test_jysimpleTipper.py
 
 # On Linux (different path separator for jars)
-# jython -Dpython.path=jython_test_deps/ant.jar:jython_test_deps/junit.jar -m py.test tests/test_jysimpleTipper.py
+# jython -Dpython.path=<...>/ant.jar:<...>/junit.jar -m py.test tests/test_jysimpleTipper.py

@@ -1,17 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -63,11 +63,10 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       fragment = factory.createCodeBlockCodeFragment(text, context, true);
     }
 
-    if(item.getImports().length() > 0) {
+    if (!item.getImports().isEmpty()) {
       fragment.addImportsFromString(item.getImports());
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    //noinspection HardCodedStringLiteral
     fragment.putUserData(KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
     fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, (expression, parameters) -> {
       if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
@@ -114,7 +113,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   @Override
   @NotNull
   public LanguageFileType getFileType() {
-    return StdFileTypes.JAVA;
+    return JavaFileType.INSTANCE;
   }
 
   @Override

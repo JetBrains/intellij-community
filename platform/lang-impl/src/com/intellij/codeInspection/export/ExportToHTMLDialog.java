@@ -3,8 +3,10 @@ package com.intellij.codeInspection.export;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.OptionGroup;
 import com.intellij.util.ui.GraphicsUtil;
@@ -30,7 +32,12 @@ public final class ExportToHTMLDialog extends DialogWrapper{
   @Override
   protected JComponent createNorthPanel() {
     myTargetDirectoryField = new TextFieldWithBrowseButton();
-    return com.intellij.codeEditor.printing.ExportToHTMLDialog.assignLabel(myTargetDirectoryField, myProject);
+    com.intellij.codeEditor.printing.ExportToHTMLDialog.addBrowseDirectoryListener(myTargetDirectoryField, myProject);
+
+    LabeledComponent<TextFieldWithBrowseButton> labeledComponent = new LabeledComponent<>();
+    labeledComponent.setText(EditorBundle.message("export.to.html.output.directory.label"));
+    labeledComponent.setComponent(myTargetDirectoryField);
+    return labeledComponent;
   }
 
   @Override

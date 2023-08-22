@@ -2,7 +2,6 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Set;
 
@@ -21,17 +21,10 @@ public class MockLocalFileSystem extends LocalFileSystem {
   private final MockVirtualFileSystem myDelegate = new MockVirtualFileSystem();
 
   @Override
-  public VirtualFile findFileByIoFile(@NotNull File file) {
-    return myDelegate.findFileByPath(FileUtil.toSystemIndependentName(file.getPath()));
-  }
-
-  @Override
-  public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
-    return findFileByIoFile(file);
-  }
-
-  @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }
+
+  @Override
+  public void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }
 
   @Override
   public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }

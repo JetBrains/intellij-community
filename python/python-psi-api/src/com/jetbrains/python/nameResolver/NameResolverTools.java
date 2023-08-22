@@ -21,14 +21,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiCacheKey;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -51,7 +48,7 @@ public final class NameResolverTools {
    * Cache: pair [qualified element name, class name (may be null)] by any psi element.
    */
   private static final PsiCacheKey<Pair<String, String>, PyElement> QUALIFIED_AND_CLASS_NAME =
-    PsiCacheKey.create(NameResolverTools.class.getName(), new QualifiedAndClassNameObtainer(), PsiModificationTracker.MODIFICATION_COUNT);
+    PsiCacheKey.create(NameResolverTools.class.getName(), new QualifiedAndClassNameObtainer());
 
   private NameResolverTools() {
 
@@ -170,7 +167,6 @@ public final class NameResolverTools {
    * Checks if some string contains last component one of name
    *
    * @param text  test to check
-   * @param names
    */
   public static boolean isContainsName(@NotNull final String text, @NotNull final FQNamesProvider names) {
     for (final String lastComponent : getLastComponents(names)) {
@@ -185,7 +181,6 @@ public final class NameResolverTools {
    * Checks if some file contains last component one of name
    *
    * @param file  file to check
-   * @param names
    */
   public static boolean isContainsName(@NotNull final PsiFile file, @NotNull final FQNamesProvider names) {
     return isContainsName(file.getText(), names);
@@ -220,8 +215,7 @@ public final class NameResolverTools {
 
     @Override
     public boolean value(final PsiElement element) {
-      if (element instanceof PyCallExpression) {
-        PyCallExpression callExpression = (PyCallExpression)element;
+      if (element instanceof PyCallExpression callExpression) {
         return isCalleeShortCut(callExpression, myNameToSearch);
       }
       return false;
@@ -240,7 +234,8 @@ public final class NameResolverTools {
       // Trying to use no implicit context if possible...
       final PsiReference reference;
       if (param instanceof PyReferenceOwner) {
-        reference = ((PyReferenceOwner)param).getReference(PyResolveContext.defaultContext());
+        final var context = TypeEvalContext.codeInsightFallback(param.getProject());
+        reference = ((PyReferenceOwner)param).getReference(PyResolveContext.defaultContext(context));
       }
       else {
         reference = param.getReference();

@@ -1,45 +1,33 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class LambdaHighlightingUtil {
+public final class LambdaHighlightingUtil {
   private static final Logger LOG = Logger.getInstance(LambdaHighlightingUtil.class);
 
-  public static String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
+  public static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
     return checkInterfaceFunctional(psiClass, JavaErrorBundle.message("target.type.of.a.lambda.conversion.must.be.an.interface"));
   }
 
-  static String checkInterfaceFunctional(@NotNull PsiClass psiClass, @NotNull String interfaceNonFunctionalMessage) {
+  static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiClass psiClass, @NotNull @Nls String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
-    final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
+    List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
     if (signatures == null) return interfaceNonFunctionalMessage;
     if (signatures.isEmpty()) return JavaErrorBundle.message("no.target.method.found");
     if (signatures.size() == 1) {
@@ -48,15 +36,14 @@ public class LambdaHighlightingUtil {
     return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.interface.0", HighlightUtil.formatClass(psiClass));
   }
 
-  static HighlightInfo checkParametersCompatible(@NotNull PsiLambdaExpression expression,
+  static HighlightInfo.Builder checkParametersCompatible(@NotNull PsiLambdaExpression expression,
                                                  PsiParameter @NotNull [] methodParameters,
                                                  @NotNull PsiSubstitutor substitutor) {
-    final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
+    PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
     if (lambdaParameters.length != methodParameters.length) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(expression.getParameterList())
-        .descriptionAndTooltip(JavaErrorBundle.message("incompatible.parameter.types.in.lambda.wrong.number.of.parameters", methodParameters.length, lambdaParameters.length))
-        .create();
+        .descriptionAndTooltip(JavaErrorBundle.message("incompatible.parameter.types.in.lambda.wrong.number.of.parameters", methodParameters.length, lambdaParameters.length));
     }
     boolean hasFormalParameterTypes = expression.hasFormalParameterTypes();
     for (int i = 0; i < lambdaParameters.length; i++) {
@@ -65,32 +52,31 @@ public class LambdaHighlightingUtil {
       PsiType substitutedParamType = substitutor.substitute(methodParameters[i].getType());
       if (hasFormalParameterTypes &&!PsiTypesUtil.compareTypes(lambdaParameterType, substitutedParamType, true) ||
           !TypeConversionUtil.isAssignable(substitutedParamType, lambdaParameterType)) {
-        final String expectedType = substitutedParamType != null ? substitutedParamType.getPresentableText() : null;
-        final String actualType = lambdaParameterType.getPresentableText();
+        String expectedType = substitutedParamType != null ? substitutedParamType.getPresentableText() : null;
+        String actualType = lambdaParameterType.getPresentableText();
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(expression.getParameterList())
           .descriptionAndTooltip(
-            JavaErrorBundle.message("incompatible.parameter.types.in.lambda", expectedType, actualType))
-          .create();
+            JavaErrorBundle.message("incompatible.parameter.types.in.lambda", expectedType, actualType));
       }
     }
     return null;
   }
 
   public static boolean insertSemicolonAfter(@NotNull PsiLambdaExpression lambdaExpression) {
-    return lambdaExpression.getBody() instanceof PsiCodeBlock || !insertSemicolon(lambdaExpression.getParent());
+    return lambdaExpression.getBody() instanceof PsiCodeBlock || insertSemicolon(lambdaExpression.getParent());
   }
 
   public static boolean insertSemicolon(PsiElement parent) {
-    return parent instanceof PsiExpressionList || parent instanceof PsiExpression;
+    return !(parent instanceof PsiExpressionList) && !(parent instanceof PsiExpression);
   }
 
-  public static String checkInterfaceFunctional(@NotNull PsiType functionalInterfaceType) {
+  public static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
-      final Set<MethodSignature> signatures = new HashSet<>();
+      Set<MethodSignature> signatures = new HashSet<>();
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
         if (checkInterfaceFunctional(type) == null) {
-          final MethodSignature signature = LambdaUtil.getFunction(PsiUtil.resolveClassInType(type));
+          MethodSignature signature = LambdaUtil.getFunction(PsiUtil.resolveClassInType(type));
           LOG.assertTrue(signature != null, type.getCanonicalText());
           signatures.add(signature);
         }
@@ -101,8 +87,8 @@ public class LambdaHighlightingUtil {
       }
       return null;
     }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-    final PsiClass aClass = resolveResult.getElement();
+    PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
       MethodSignature functionalMethod = LambdaUtil.getFunction(aClass);
@@ -113,7 +99,7 @@ public class LambdaHighlightingUtil {
     return JavaErrorBundle.message("not.a.functional.interface",functionalInterfaceType.getPresentableText());
   }
 
-  static HighlightInfo checkConsistentParameterDeclaration(@NotNull PsiLambdaExpression expression) {
+  static HighlightInfo.Builder checkConsistentParameterDeclaration(@NotNull PsiLambdaExpression expression) {
     PsiParameter[] parameters = expression.getParameterList().getParameters();
     if (parameters.length < 2) return null;
     boolean hasExplicitParameterTypes = hasExplicitType(parameters[0]);
@@ -121,8 +107,7 @@ public class LambdaHighlightingUtil {
       if (hasExplicitParameterTypes != hasExplicitType(parameters[i])) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                             .descriptionAndTooltip(JavaErrorBundle.message("lambda.parameters.consistency.message"))
-                            .range(expression.getParameterList())
-                            .create();
+                            .range(expression.getParameterList());
       }
     }
 

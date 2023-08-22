@@ -9,15 +9,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ShowHintAction extends AnAction {
   private final QuickFixManager myManager;
 
-  ShowHintAction(@NotNull final QuickFixManager manager, @NotNull final JComponent component) {
+  ShowHintAction(@NotNull final QuickFixManager manager) {
     myManager = manager;
+  }
+
+  void registerShortcutSet(@NotNull JComponent component) {
     registerCustomShortcutSet(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcutSet(),
       component
@@ -38,6 +37,11 @@ final class ShowHintAction extends AnAction {
       propertyInspector.stopEditing();
     }
     myManager.showIntentionPopup();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

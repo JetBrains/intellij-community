@@ -1,14 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class SplitterAction extends DumbAwareAction {
+public abstract class SplitterAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   abstract void actionPerformed(@NotNull EditorWindow window);
 
   @Override
@@ -24,17 +28,18 @@ public abstract class SplitterAction extends DumbAwareAction {
     presentation.setVisible(presentation.isEnabled() || !ActionPlaces.isPopupPlace(event.getPlace()));
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   boolean isEnabled(@NotNull AnActionEvent event) {
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    return window != null && isEnabled(event, window);
-  }
-
-  boolean isEnabled(@NotNull AnActionEvent event, @NotNull EditorWindow window) {
-    return window.inSplitter();
+    return window != null && window.inSplitter();
   }
 
 
-  public static abstract class Goto extends SplitterAction {
+  public abstract static class Goto extends SplitterAction {
     abstract EditorWindow getDestination(@NotNull EditorWindow window);
 
     @Override
@@ -42,16 +47,14 @@ public abstract class SplitterAction extends DumbAwareAction {
       window.getManager().setCurrentWindow(getDestination(window));
     }
 
-
-    public static final class Next extends Goto {
+    static final class Next extends Goto {
       @Override
       EditorWindow getDestination(@NotNull EditorWindow window) {
         return window.getManager().getNextWindow(window);
       }
     }
 
-
-    public static final class Previous extends Goto {
+    static final class Previous extends Goto {
       @Override
       EditorWindow getDestination(@NotNull EditorWindow window) {
         return window.getManager().getPrevWindow(window);
@@ -59,16 +62,14 @@ public abstract class SplitterAction extends DumbAwareAction {
     }
   }
 
-
-  public static final class ChangeOrientation extends SplitterAction {
+  static final class ChangeOrientation extends SplitterAction {
     @Override
     void actionPerformed(@NotNull EditorWindow window) {
       window.getManager().changeSplitterOrientation();
     }
   }
 
-
-  public static final class Unsplit extends SplitterAction {
+  static final class Unsplit extends SplitterAction {
     @Override
     void actionPerformed(@NotNull EditorWindow window) {
       window.getManager().unsplitWindow();
@@ -76,15 +77,32 @@ public abstract class SplitterAction extends DumbAwareAction {
   }
 
 
-  public static final class UnsplitAll extends SplitterAction {
+  static final class UnsplitAll extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     @Override
-    void actionPerformed(@NotNull EditorWindow window) {
-      window.getManager().unsplitAllWindow();
+    public void actionPerformed(@NotNull AnActionEvent event) {
+      FileEditorManagerEx manager = getManager(event);
+      if (manager != null) manager.unsplitAllWindow();
     }
 
     @Override
-    boolean isEnabled(@NotNull AnActionEvent event, @NotNull EditorWindow window) {
-      return super.isEnabled(event, window) && window.getManager().getWindowSplitCount() > 2;
+    public void update(@NotNull AnActionEvent event) {
+      FileEditorManagerEx manager = getManager(event);
+      if (ActionPlaces.isPopupPlace(event.getPlace())) {
+        event.getPresentation().setVisible(manager != null && manager.getWindowSplitCount() > 2);
+      }
+      else {
+        event.getPresentation().setEnabled(manager != null && manager.isInSplitter());
+      }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    private static FileEditorManagerEx getManager(@NotNull AnActionEvent event) {
+      Project project = event.getProject();
+      return project == null ? null : FileEditorManagerEx.getInstanceEx(project);
     }
   }
 }

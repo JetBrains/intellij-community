@@ -4,7 +4,7 @@ class Test {
     final Object o = null;
     class A {
       static final String t = s;
-      <error descr="Inner classes cannot have static declarations">static</error> final Object j = <error descr="Non-static variable 'o' cannot be referenced from a static context">o</error>;
+      <error descr="Static declarations in inner classes are not supported at language level '6'">static</error> final Object j = <error descr="Non-static variable 'o' cannot be referenced from a static context">o</error>;
     }
   }
 

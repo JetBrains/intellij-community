@@ -1,8 +1,7 @@
+// Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.console.pydev;
 
-/**
- * @author yole
- */
+
 public class PydevCompletionVariant {
   private final String myName;
   private final String myDescription;

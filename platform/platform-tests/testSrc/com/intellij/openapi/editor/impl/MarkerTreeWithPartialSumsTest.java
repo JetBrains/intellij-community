@@ -20,6 +20,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
                                                                     new RemoveCharacters(),
                                                                     new MoveCharacters());
   private final Random myRandom = new Random() {{
+    //noinspection ConstantValue
     setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
   }};
   private long mySeed;
@@ -187,7 +188,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     return result;
   }
 
-  private class MyRange extends RangeMarkerWithGetterImpl implements IntSupplier {
+  private class MyRange extends RangeMarkerImpl implements IntSupplier {
     private int myValue;
 
     MyRange(int offset, int value) {
@@ -195,7 +196,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     }
 
     MyRange(int offset, int value, boolean stickToRight) {
-      super(myDocument, offset, offset, false);
+      super(myDocument, offset, offset, false, true);
       myValue = value;
       myTree.addInterval(this, offset, offset, false, false, stickToRight, 0);
     }

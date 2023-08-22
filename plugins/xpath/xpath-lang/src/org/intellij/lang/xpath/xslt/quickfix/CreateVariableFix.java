@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -32,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +47,12 @@ public class CreateVariableFix extends AbstractFix {
     @Override
     @NotNull
     public String getText() {
-        return "Create Variable '" + myReference.getReferencedName() + "'";
+        return XPathBundle.message("intention.name.create.variable", myReference.getReferencedName());
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.create.variable");
     }
 
     @Override
@@ -89,16 +96,22 @@ public class CreateVariableFix extends AbstractFix {
 
     @Override
     public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!myReference.isValid()) {
-            return false;
-        }
-        final PsiFile psiFile = myReference.getContainingFile();
-        assert psiFile != null;
-        return myReference.isValid() && psiFile.isValid();
+      if (!myReference.isValid()) {
+        return false;
+      }
+      final PsiFile psiFile = myReference.getContainingFile();
+      assert psiFile != null;
+      //noinspection ConstantValue -- rechecking of isValid is intended
+      return myReference.isValid() && psiFile.isValid();
     }
 
     @Override
     protected boolean requiresEditor() {
         return true;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new CreateVariableFix(PsiTreeUtil.findSameElementInCopy(myReference, target));
     }
 }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -25,9 +26,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDunderAllReference;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
@@ -75,6 +78,13 @@ public class PyMoveSymbolProcessor {
       }
       final PsiElement[] unwrappedElements = ContainerUtil.mapNotNull(myAllMovedElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
       PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, unwrappedElements);
+      final PyTrailingBlankLinesPostFormatProcessor postFormatProcessor = new PyTrailingBlankLinesPostFormatProcessor();
+      if (PsiTreeUtil.nextVisibleLeaf(newElementBody) == null) {
+        PyUtil.updateDocumentUnblockedAndCommitted(myDestinationFile, document -> {
+          PsiDocumentManager.getInstance(newElementBody.getProject()).commitDocument(document);
+          postFormatProcessor.processElement(newElementBody, CodeStyle.getSettings(myDestinationFile));
+        });
+      }
       deleteElement();
     }
     return new PyMoveSymbolResult(myFilesWithStarUsages);
@@ -97,8 +107,7 @@ public class PyMoveSymbolProcessor {
     if (belongsToSomeMovedElement(usage)) {
       return;
     }
-    if (usage instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)usage;
+    if (usage instanceof PyQualifiedExpression qualifiedExpr) {
       if (myMovedElement instanceof PyClass && PyNames.INIT.equals(qualifiedExpr.getName())) {
         return;
       }
@@ -204,7 +213,8 @@ public class PyMoveSymbolProcessor {
     // Don't use PyUtil#multiResolveTopPriority here since it filters out low priority ImportedResolveResults
     final List<PsiElement> resolvedElements = new ArrayList<>();
     if (usage instanceof PyReferenceOwner) {
-      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.implicitContext());
+      final var context = TypeEvalContext.codeInsightFallback(usage.getProject());
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.implicitContext(context));
       for (ResolveResult result : reference.multiResolve(false)) {
         resolvedElements.add(result.getElement());
       }

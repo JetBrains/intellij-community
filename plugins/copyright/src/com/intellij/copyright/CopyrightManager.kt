@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.copyright
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -28,7 +29,6 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.containers.ContainerUtil
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import com.maddyhome.idea.copyright.options.LanguageOptions
@@ -36,7 +36,6 @@ import com.maddyhome.idea.copyright.options.Options
 import com.maddyhome.idea.copyright.util.FileTypeUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
@@ -46,7 +45,7 @@ private const val COPYRIGHT = "copyright"
 private const val ELEMENT = "element"
 private const val MODULE = "module"
 
-private val LOG = Logger.getInstance(CopyrightManager::class.java)
+private val LOG = logger<CopyrightManager>()
 
 @State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
 class CopyrightManager @NonInjectable constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
@@ -78,7 +77,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
   private val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
-                              attributeProvider: Function<in String, String?>,
+                              attributeProvider: (String) -> String?,
                               isBundled: Boolean): SchemeWrapper<CopyrightProfile> {
       return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
@@ -217,7 +216,7 @@ class CopyrightManager @NonInjectable constructor(private val project: Project, 
 }
 
 private class CopyrightManagerDocumentListener : BulkFileListener {
-  private val newFilePaths = ContainerUtil.newConcurrentSet<String>()
+  private val newFilePaths = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
   private val isDocumentListenerAdded = AtomicBoolean()
 
@@ -261,22 +260,28 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
   }
 
   private fun handleEvent(virtualFile: VirtualFile, project: Project) {
+    val copyrightManager = CopyrightManager.getInstance(project)
+    if (!copyrightManager.hasAnyCopyrights()) return
+
     val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(virtualFile) ?: return
-    if (!FileTypeUtil.isSupportedFile(virtualFile) || PsiManager.getInstance(project).findFile(virtualFile) == null) {
+    if (!FileTypeUtil.isSupportedFile(virtualFile)) {
       return
     }
 
-    AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
-      if (project.isDisposed || !virtualFile.isValid) {
+    val file = PsiManager.getInstance(project).findFile(virtualFile) ?: return
+
+    if (!file.isWritable) {
+      return
+    }
+
+    copyrightManager.getCopyrightOptions(file) ?: return
+
+    AppUIExecutor.onUiThread(ModalityState.nonModal()).later().withDocumentsCommitted(project).execute {
+      if (project.isDisposed || !file.isValid) {
         return@execute
       }
 
-      val file = PsiManager.getInstance(project).findFile(virtualFile)
-      if (file != null && file.isWritable) {
-        CopyrightManager.getInstance(project).getCopyrightOptions(file)?.let {
-          UpdateCopyrightProcessor(project, module, file).run()
-        }
-      }
+      UpdateCopyrightProcessor(project, module, file).run()
     }
   }
 }

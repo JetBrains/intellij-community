@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,8 +14,8 @@ import java.awt.*;
  * Represents a range of text in the document which has specific markup (special text attributes,
  * line marker, gutter icon, error stripe marker or line separator).
  *
- * @see MarkupModel#addRangeHighlighter(int, int, int, TextAttributes, HighlighterTargetArea)
- * @see MarkupModel#addLineHighlighter(int, int, TextAttributes)
+ * @see MarkupModel#addRangeHighlighter(TextAttributesKey, int, int, int, HighlighterTargetArea)
+ * @see MarkupModel#addLineHighlighter(TextAttributesKey, int, int)
  * @see com.intellij.lang.annotation.Annotation
  */
 public interface RangeHighlighter extends RangeMarker {
@@ -38,13 +40,36 @@ public interface RangeHighlighter extends RangeMarker {
   HighlighterTargetArea getTargetArea();
 
   /**
-   * Returns the text attributes used for highlighting.
-   *
-   * @return the attributes to use for highlighting, or {@code null} if the highlighter
-   * does not modify the text attributes.
+   * Returns the text attributes key used for highlighting.
+   * Having a key is preferred over raw attributes which makes it impossible to update it on a {@link EditorColorsScheme} changes
+   * @return the attributes key or {@code null} if the highlighter does not have a key.
    */
   @Nullable
-  TextAttributes getTextAttributes();
+  TextAttributesKey getTextAttributesKey();
+
+  /**
+   * Sets the text attributes key used for highlighting.
+   * Having a key is preferred over raw attributes which makes it impossible to update it on a {@link EditorColorsScheme} changes
+   * @param textAttributesKey a attributes key.
+   */
+  void setTextAttributesKey(@NotNull TextAttributesKey textAttributesKey);
+
+  /**
+   * @deprecated Use the overload with {@link EditorColorsScheme} and prefer using {@link #getTextAttributesKey()}
+   */
+  @Deprecated
+  default @Nullable TextAttributes getTextAttributes() {
+    return getTextAttributes(null);
+  }
+
+  /**
+   * Returns text attributes used for highlighting.
+   * @param scheme color scheme for which text attributes are requested
+   * @return the attributes, or null if highlighter does not modify the text attributes.
+   * @see RangeHighlighter#getTextAttributesKey()
+   */
+  @Nullable
+  TextAttributes getTextAttributes(@Nullable("when null, the global scheme will be used") EditorColorsScheme scheme);
 
   /**
    * Returns the renderer used for drawing line markers in the area covered by the
@@ -95,13 +120,21 @@ public interface RangeHighlighter extends RangeMarker {
   void setGutterIconRenderer(@Nullable GutterIconRenderer renderer);
 
   /**
+   * @deprecated Use the overload with {@link EditorColorsScheme}
+   */
+  @Deprecated(forRemoval = true)
+  default @Nullable Color getErrorStripeMarkColor() {
+    return getErrorStripeMarkColor(null);
+  }
+
+  /**
    * Returns the color of the marker drawn in the error stripe in the area covered by the highlighter.
    *
    * @return the error stripe marker color, or {@code null} if the highlighter does not add any
    * error stripe markers.
    */
   @Nullable
-  Color getErrorStripeMarkColor();
+  Color getErrorStripeMarkColor(@Nullable("when null, the global scheme will be used") EditorColorsScheme scheme);
 
   /**
    * Sets the color of the marker drawn in the error stripe in the area covered by the highlighter.

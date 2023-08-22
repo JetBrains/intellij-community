@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -7,7 +7,10 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -36,6 +39,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.MANAGE_IGNORE_FILES;
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY;
 import static java.lang.System.lineSeparator;
@@ -156,6 +160,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
       myIgnoreFileRootNotificationShowFor = ignoreFileRoot;
       myNotification = VcsNotifier.getInstance(project).notifyMinorInfo(
+        MANAGE_IGNORE_FILES,
         true,
         "",
         VcsBundle.message("ignored.file.manage.message",
@@ -219,7 +224,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       return false;
     }
 
-    boolean needGenerateRegistryFlag = Registry.is("vcs.ignorefile.generation", true);
+    boolean needGenerateRegistryFlag = Registry.is("vcs.ignorefile.generation");
     if (!needGenerateRegistryFlag) {
       return false;
     }
@@ -245,10 +250,8 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     return !askedToManageIgnores && !isManageIgnoreTurnOn(project);
   }
 
-  @State(name = "IgnoredFileRootStore", storages = {
-    @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-  })
-  static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
+  @State(name = "IgnoredFileRootStore", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+  final static class IgnoredFileRootStore implements PersistentStateComponent<IgnoredFileRootStore.State> {
     static class State {
       public Set<String> generatedRoots = new HashSet<>();
     }
@@ -256,7 +259,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     State myState = new State();
 
     static IgnoredFileRootStore getInstance(Project project) {
-      return ServiceManager.getService(project, IgnoredFileRootStore.class);
+      return project.getService(IgnoredFileRootStore.class);
     }
 
     boolean containsRoot(@NotNull String root) {

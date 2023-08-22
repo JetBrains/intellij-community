@@ -1,3 +1,4 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <g fill="#7F8B91" fill-opacity=".5" fill-rule="evenodd" transform="translate(1 1)">
     <rect width="2" height="4" x="2.471" y="1.471" transform="rotate(-45 3.471 3.471)"/>

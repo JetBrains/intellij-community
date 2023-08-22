@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -50,8 +49,8 @@ public final class HgLogProvider implements VcsLogProvider {
 
   public HgLogProvider(@NotNull Project project) {
     myProject = project;
-    myRefSorter = new HgRefManager(project, getHgRepoManager(project));
-    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
+    myRefSorter = new HgRefManager(project);
+    myVcsObjectsFactory = project.getService(VcsLogObjectsFactory.class);
   }
 
   @NotNull
@@ -104,11 +103,10 @@ public final class HgLogProvider implements VcsLogProvider {
                           });
   }
 
-  @NotNull
   @Override
-  public List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes)
+  public void readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
-    return HgHistoryUtil.readCommitMetadata(myProject, root, hashes);
+    HgHistoryUtil.readCommitMetadata(myProject, root, hashes, consumer);
   }
 
   @NotNull
@@ -181,7 +179,7 @@ public final class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public Disposable subscribeToRootRefreshEvents(@NotNull final Collection<? extends VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
-    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(HgVcs.STATUS_TOPIC, new HgUpdater() {
       @Override
       public void update(Project project, @Nullable VirtualFile root) {
@@ -325,7 +323,7 @@ public final class HgLogProvider implements VcsLogProvider {
 
   @NotNull
   private static HgRepositoryManager getHgRepoManager(@NotNull Project project) {
-    return ServiceManager.getService(project, HgRepositoryManager.class);
+    return project.getService(HgRepositoryManager.class);
   }
 
   @Nullable

@@ -1,10 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -19,25 +23,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public final class CollapseAnnotationsFix extends PsiUpdateModCommandAction<PsiAnnotation> {
   private CollapseAnnotationsFix(PsiAnnotation annotation) {
     super(annotation);
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return JavaBundle.message("intention.text.collapse.repeating.annotations");
+  protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiAnnotation element) {
+    return Presentation.of(getFamilyName()).withFixAllOption(this);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    if (!(startElement instanceof PsiAnnotation)) return;
-    PsiAnnotation annotation = (PsiAnnotation)startElement;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull ModPsiUpdater updater) {
     PsiNameValuePair attribute = ArrayUtil.getFirstElement(annotation.getParameterList().getAttributes());
     if (attribute == null) return;
     PsiAnnotationMemberValue origValue = attribute.getValue();
@@ -61,7 +58,8 @@ public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsi
       }
     }
     String newValue = StreamEx.of(values).map(PsiElement::getText).joining(", ", "{", "}");
-    PsiAnnotation dummy = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@x(" + newValue + ")", origValue);
+    PsiAnnotation dummy = JavaPsiFacade.getElementFactory(context.project())
+      .createAnnotationFromText("@x(" + newValue + ")", origValue);
     ct.replaceAndRestoreComments(origValue, Objects.requireNonNull(dummy.getParameterList().getAttributes()[0].getValue()));
   }
 
@@ -69,7 +67,7 @@ public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsi
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return JavaBundle.message("intention.text.collapse.repeating.annotations");
   }
 
   private static List<PsiAnnotation> findCollapsibleAnnotations(PsiAnnotation annotation, PsiNameValuePair attribute) {
@@ -94,18 +92,22 @@ public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsi
   }
 
   @Nullable
-  public static CollapseAnnotationsFix from(PsiAnnotation annotation) {
+  public static IntentionAction from(PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
     String name = annotation.getQualifiedName();
+    if (owner == null || name == null) return null;
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    if (owner == null || name == null || attributes.length != 1) return null;
+    if (attributes.length == 0) {
+      return QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
+    }
+    if (attributes.length != 1) return null;
     PsiNameValuePair attribute = attributes[0];
     if (attribute.getValue() == null) return null;
     PsiMethod annoMethod = findAttributeMethod(attribute);
     if (annoMethod == null || !(annoMethod.getReturnType() instanceof PsiArrayType)) return null;
     List<PsiAnnotation> annotations = findCollapsibleAnnotations(annotation, attribute);
     if (annotations.size() < 2) return null;
-    return new CollapseAnnotationsFix(annotation);
+    return new CollapseAnnotationsFix(annotation).asIntention();
   }
 
   @Nullable

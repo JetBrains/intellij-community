@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.HighlighterColors;
@@ -45,7 +31,7 @@ public class IterationStateTest extends AbstractEditorTest {
     DEFAULT_BACKGROUND = colorsScheme.getDefaultBackground();
     CARET_ROW_BACKGROUND = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
     SELECTION_BACKGROUND = colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
-    assertEquals(3, ContainerUtil.set(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND).size());
+    assertEquals(3, ContainerUtil.immutableSet(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND).size());
   }
 
   public void testBlockSelection() {
@@ -62,9 +48,10 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelection() {
-    init("a\n" +
-         "bbb\n" +
-         "ccccc");
+    init("""
+           a
+           bbb
+           ccccc""");
     setColumnModeOn();
     mouse().pressAt(0, 2).dragTo(2, 4).release();
     verifySplitting(false,
@@ -79,9 +66,10 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelectionAtLastNonEmptyLine() {
-    init("a\n" +
-         "bbb\n" +
-         "ccccc");
+    init("""
+           a
+           bbb
+           ccccc""");
     setColumnModeOn();
     mouse().pressAt(0, 2).dragTo(2, 6).release();
     verifySplitting(false,
@@ -95,8 +83,7 @@ public class IterationStateTest extends AbstractEditorTest {
   }
 
   public void testColumnModeBlockSelectionAtLastEmptyLine() {
-    init("a\n" +
-         "");
+    init("a\n");
     setColumnModeOn();
     mouse().pressAt(1, 1).dragTo(1, 2).release();
     verifySplitting(false,
@@ -150,7 +137,7 @@ public class IterationStateTest extends AbstractEditorTest {
                     new Segment(11, 16, DEFAULT_BACKGROUND),
                     new Segment(16, 21, DEFAULT_BACKGROUND));
   }
-  
+
   public void testBoldDefaultFont() {
     init("abc");
     getEditor().getColorsScheme().setAttributes(HighlighterColors.TEXT,
@@ -214,7 +201,7 @@ public class IterationStateTest extends AbstractEditorTest {
     ((EditorEx)getEditor()).setColumnMode(true);
   }
 
-  private static class Segment {
+  private static final class Segment {
     private final int start;
     private final int end;
     private final Color color;

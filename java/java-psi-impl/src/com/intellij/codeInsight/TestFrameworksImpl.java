@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight;
 
@@ -6,14 +6,15 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestFrameworksImpl extends TestFrameworks {
+public final class TestFrameworksImpl extends TestFrameworks {
   private TestFrameworksImpl() {
   }
 
   @Override
-  public boolean isTestClass(final PsiClass psiClass) {
+  public boolean isTestClass(final @NotNull PsiClass psiClass) {
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (framework.isTestClass(psiClass)) {
         return true;
@@ -23,7 +24,7 @@ public class TestFrameworksImpl extends TestFrameworks {
   }
 
   @Override
-  public boolean isPotentialTestClass(PsiClass psiClass) {
+  public boolean isPotentialTestClass(@NotNull PsiClass psiClass) {
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (framework.isPotentialTestClass(psiClass)) {
         return true;

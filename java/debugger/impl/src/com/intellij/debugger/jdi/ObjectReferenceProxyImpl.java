@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -8,8 +6,8 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +33,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
-    return (VirtualMachineProxyImpl) myTimer;
+    return (VirtualMachineProxyImpl)myTimer;
   }
 
   public ReferenceType referenceType() {
@@ -57,8 +55,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   @NonNls
   public String toString() {
     final ObjectReference objectReference = getObjectReference();
-    //noinspection HardCodedStringLiteral
-    final String objRefString = objectReference != null? objectReference.toString() : "[referenced object collected]";
+    final String objRefString = objectReference != null ? objectReference.toString() : "[referenced object collected]";
     return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
   }
 
@@ -89,10 +86,9 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   /**
    * @return a list of waiting ThreadReferenceProxies
-   * @throws IncompatibleThreadStateException
    */
   public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
-    return StreamEx.of(getObjectReference().waitingThreads()).map(getVirtualMachineProxy()::getThreadReferenceProxy).toList();
+    return ContainerUtil.map(getObjectReference().waitingThreads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 
   public ThreadReferenceProxyImpl owningThread() throws IncompatibleThreadStateException {
@@ -107,7 +103,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     if (!(o instanceof ObjectReferenceProxyImpl)) {
       return false;
     }
-    if(this == o) return true;
+    if (this == o) return true;
 
     return myObjectReference.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
   }

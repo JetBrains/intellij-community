@@ -6,8 +6,10 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.remote.RemoteConfiguration
 import com.intellij.execution.remote.RemoteConfigurationType
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension
+import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension.RUNTIME_MODULE_DIR_KEY
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.service.execution.loadJvmDebugInitScript
 
 class GradleJvmDebuggerBackend : DebuggerBackendExtension {
   override fun id() = "Gradle JVM"
@@ -23,27 +25,12 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     configuration.PORT = description[ForkedDebuggerHelper.DEBUG_SERVER_PORT_KEY]
     configuration.USE_SOCKET_TRANSPORT = true
     configuration.SERVER_MODE = true
-
+    configuration.putUserData(RUNTIME_MODULE_DIR_KEY, description[ForkedDebuggerHelper.RUNTIME_MODULE_DIR_KEY])
     return runSettings
   }
 
-  override fun initializationCode(dispatchPort: String, parameters: String) = listOf(
-    "import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper",
-    "gradle.taskGraph.beforeTask { Task task ->",
-    "  if (task instanceof org.gradle.api.tasks.testing.Test) {",
-    "    task.maxParallelForks = 1",
-    "    task.forkEvery = 0",
-    "  }",
-    "  if (task instanceof JavaForkOptions) {",
-    "    def debugPort = ForkedDebuggerHelper.setupDebugger('${id()}', task.path, '$parameters', $dispatchPort)",
-    "    def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
-    "    jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + debugPort",
-    "    task.jvmArgs = jvmArgs",
-    "  }",
-    "}",
-    "gradle.taskGraph.afterTask { Task task ->",
-    "  if (task instanceof JavaForkOptions) {",
-    "    ForkedDebuggerHelper.signalizeFinish('${id()}', task.path, $dispatchPort)",
-    "  }",
-    "}")
+  override fun initializationCode(dispatchPort: String, parameters: String): List<String> {
+    val initScript = loadJvmDebugInitScript(id(), parameters)
+    return initScript.split("\n")
+  }
 }

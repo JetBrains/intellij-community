@@ -19,20 +19,18 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.jetbrains.python.PythonParserDefinition;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyiParserDefinition extends PythonParserDefinition {
   public static final IFileElementType PYTHON_STUB_FILE = new PyiFileElementType(PyiLanguageDialect.getInstance());
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new PyiFile(viewProvider);
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return PYTHON_STUB_FILE;
   }
 }

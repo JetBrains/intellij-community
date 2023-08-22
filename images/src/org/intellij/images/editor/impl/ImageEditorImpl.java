@@ -26,8 +26,8 @@ import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
-import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,20 +41,22 @@ public final class ImageEditorImpl implements ImageEditor {
   private final Project project;
   private final VirtualFile file;
   private final ImageEditorUI editorUI;
+  private final @NotNull ImageFileLoader imageFileLoader;
   private boolean disposed;
 
   public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, false);
+    this(project, file, false, false);
   }
 
     /**
      * @param isEmbedded if it's true the toolbar and the image info are disabled and an image is left-side aligned
+     * @param isOpaque if it's false, all components of the editor are transparent
      */
-  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file, boolean isEmbedded) {
+  public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file, boolean isEmbedded, boolean isOpaque) {
     this.project = project;
     this.file = file;
 
-    editorUI = new ImageEditorUI(this, isEmbedded);
+    editorUI = new ImageEditorUI(this, isEmbedded, isOpaque);
     Disposer.register(this, editorUI);
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
@@ -69,17 +71,18 @@ public final class ImageEditorImpl implements ImageEditor {
       }
     }, this);
 
+    imageFileLoader = project.getService(ImageFileService.class).createImageFileLoader(this);
+    Disposer.register(this, imageFileLoader);
+
     setValue(file);
   }
 
   void setValue(VirtualFile file) {
-    try {
-      editorUI.setImageProvider(IfsUtil.getImageProvider(file), IfsUtil.getFormat(file));
-    }
-    catch (Exception e) {
-      //     Error loading image file
-      editorUI.setImageProvider(null, null);
-    }
+    imageFileLoader.loadFile(file);
+  }
+
+  void setImageProvider(@Nullable ImageDocument.ScaledImageProvider imageProvider, @Nullable String format) {
+    editorUI.setImageProvider(imageProvider, format);
   }
 
   @Override
@@ -188,8 +191,12 @@ public final class ImageEditorImpl implements ImageEditor {
   void contentsChanged(@NotNull VirtualFileEvent event) {
     if (file.equals(event.getFile())) {
       // Change document
-      Runnable postRunnable = () -> setValue(file);
-      RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
+      refreshFile();
     }
+  }
+
+  public void refreshFile() {
+    Runnable postRunnable = () -> setValue(file);
+    RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
   }
 }

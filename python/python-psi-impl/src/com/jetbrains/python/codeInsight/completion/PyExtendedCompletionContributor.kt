@@ -4,7 +4,8 @@ package com.jetbrains.python.codeInsight.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
+import com.intellij.openapi.project.DumbAware
+import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -19,7 +20,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder
  *
  * To provide variants for extended completion override [doFillCompletionVariants]
  */
-abstract class PyExtendedCompletionContributor : CompletionContributor() {
+abstract class PyExtendedCompletionContributor : CompletionContributor(), DumbAware {
 
   protected val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
     addImportForLookupElement(context, item, context.tailOffset - 1)
@@ -59,7 +60,7 @@ abstract class PyExtendedCompletionContributor : CompletionContributor() {
    * Checks whether completion should be performed for a given [parameters] and delegates actual work to [doFillCompletionVariants].
    */
   final override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    if (!shouldDoCompletion(parameters)) return
+    if (!shouldDoCompletion(parameters, result)) return
     doFillCompletionVariants(parameters, result)
   }
 
@@ -68,8 +69,13 @@ abstract class PyExtendedCompletionContributor : CompletionContributor() {
    */
   protected abstract fun doFillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet)
 
-  private fun shouldDoCompletion(parameters: CompletionParameters): Boolean {
+  private fun shouldDoCompletion(parameters: CompletionParameters, result: CompletionResultSet): Boolean {
     if (!parameters.isExtendedCompletion) {
+      return false
+    }
+
+    if (result.prefixMatcher.prefix.isEmpty()) {
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().longerThan(0))
       return false
     }
 
@@ -83,10 +89,6 @@ abstract class PyExtendedCompletionContributor : CompletionContributor() {
       if (prefix.contains(".")) {
         return false
       }
-    }
-    val provider = element.containingFile.viewProvider
-    if (provider is MultiplePsiFilesPerDocumentFileViewProvider) {
-      return false
     }
 
     return PsiTreeUtil.getParentOfType(element, PyImportStatementBase::class.java) == null

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementUiUtil;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
@@ -29,10 +30,8 @@ import java.util.*;
  * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementMatchRule}.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
-public class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
+public final class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
 
   @NotNull private final Map<ArrangementSettingsToken, ArrangementUiComponent> myComponents =
     new HashMap<>();
@@ -100,7 +99,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     for (CompositeArrangementSettingsToken token : tokens) {
       StdArrangementTokenUiRole role = token.getRole();
       if (role != prevRole && !prevTokens.isEmpty()) {
-        component = ArrangementUtil.buildUiComponent(
+        component = ArrangementUiUtil.buildUiComponent(
           role, prevTokens, myColorsProvider, mySettingsManager
         );
         component.setListener(this);
@@ -112,22 +111,22 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
         prevRole = null;
         prevTokens.clear();
       }
-      component = ArrangementUtil.buildUiComponent(
+      component = ArrangementUiUtil.buildUiComponent(
         role, Collections.singletonList(token.getToken()), myColorsProvider, mySettingsManager
       );
       component.setListener(this);
       uiComponent = component.getUiComponent();
       switch (role) {
-        case LABEL:
+        case LABEL -> {
           panel = addRowIfNecessary(panel);
           add(uiComponent, labelConstraints);
           myLabelWidth = Math.max(myLabelWidth, uiComponent.getPreferredSize().width);
           prevRole = null;
-          break;
-        case TEXT_FIELD:
+        }
+        case TEXT_FIELD -> {
           panel = addRowIfNecessary(panel);
 
-          ArrangementUiComponent textLabel = ArrangementUtil.buildUiComponent(
+          ArrangementUiComponent textLabel = ArrangementUiUtil.buildUiComponent(
             StdArrangementTokenUiRole.LABEL, Collections.singletonList(token.getToken()), myColorsProvider, mySettingsManager
           );
           JComponent textLabelComponent = textLabel.getUiComponent();
@@ -143,8 +142,8 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
           if (myDefaultFocusRequestor == null) {
             myDefaultFocusRequestor = uiComponent;
           }
-          break;
-        default:
+        }
+        default -> {
           if (role == StdArrangementTokenUiRole.COMBO_BOX) {
             prevTokens.add(token.getToken());
             prevRole = role;
@@ -153,11 +152,12 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
 
           panel.add(uiComponent);
           myComponents.put(token.getToken(), component);
+        }
       }
     }
 
     if (prevRole != null && !prevTokens.isEmpty()) {
-      component = ArrangementUtil.buildUiComponent(prevRole, prevTokens, myColorsProvider, mySettingsManager);
+      component = ArrangementUiUtil.buildUiComponent(prevRole, prevTokens, myColorsProvider, mySettingsManager);
       panel.add(component.getUiComponent());
       component.setListener(this);
       for (ArrangementSettingsToken prevToken : prevTokens) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.revertion;
 
@@ -9,6 +9,7 @@ import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.command.impl.DocumentUndoProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Set;
 
 public class UndoChangeRevertingVisitor extends ChangeVisitor {
+  private static final Logger LOG = Logger.getInstance(UndoChangeRevertingVisitor.class);
+
   private final IdeaGateway myGateway;
   private final Set<DelayedApply> myDelayedApplies = new HashSet<>();
 
@@ -43,7 +46,11 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     if (c.getId() == myFromChangeId) {
       isReverting = true;
     }
-    return isReverting && !(c instanceof ContentChange);
+    boolean shouldRevert = isReverting && !(c instanceof ContentChange);
+    if (shouldRevert && LOG.isDebugEnabled()) {
+      LOG.debug("Reverting " + c);
+    }
+    return shouldRevert;
   }
 
   protected void checkShouldStop(Change c) throws StopVisitingException {
@@ -246,7 +253,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  private static class DelayedROStatusApply extends DelayedApply {
+  private static final class DelayedROStatusApply extends DelayedApply {
     private final boolean isReadOnly;
 
     private DelayedROStatusApply(VirtualFile f, boolean isReadOnly) {

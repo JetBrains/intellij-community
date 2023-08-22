@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -53,7 +52,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
   public Result preprocessEnter(@NotNull final PsiFile file,
                                 @NotNull final Editor editor,
                                 @NotNull final Ref<Integer> caretOffsetRef,
-                                @NotNull final Ref<Integer> caretAdvance,
+                                final @NotNull Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
 
@@ -336,7 +335,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
       return -1;
     }
 
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
 

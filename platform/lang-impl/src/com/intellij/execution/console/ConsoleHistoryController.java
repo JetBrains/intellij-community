@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.console.ConsoleHistoryModel.Entry;
 import com.intellij.ide.scratch.ScratchFileService;
@@ -14,7 +15,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.ContentChooser;
@@ -27,10 +29,10 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,10 +42,8 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -60,14 +60,29 @@ import java.util.*;
  */
 public class ConsoleHistoryController implements Disposable {
   private static final Logger LOG = Logger.getInstance(ConsoleHistoryController.class);
+  private static final char P = 'P';
 
-  private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
-    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  @Service
+  private static final class ControllerRegistry implements SettingsSavingComponentJavaAdapter {
+    static ControllerRegistry getInstance() {
+      return ApplicationManager.getApplication().getService(ControllerRegistry.class);
+    }
+
+    private final Map<LanguageConsoleView, ConsoleHistoryController> controllers = CollectionFactory.createConcurrentWeakIdentityMap();
+
+    @Override
+    public void doSave() {
+      for (ConsoleHistoryController controller : controllers.values()) {
+        controller.saveHistory();
+      }
+    }
+  }
+
 
   private final LanguageConsoleView myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
   private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
-  private final AnAction myBrowseHistory = new MyBrowseAction();
+  private final AnAction myBrowseHistory = createBrowseAction();
   private boolean myMultiline;
   private ModelHelper myHelper;
   private long myLastSaveStamp;
@@ -75,7 +90,7 @@ public class ConsoleHistoryController implements Disposable {
   /**
    * @deprecated use {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView)} or {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView, ConsoleHistoryModel)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
     this(new ConsoleRootType(type, null) { }, persistenceId, console);
   }
@@ -102,7 +117,7 @@ public class ConsoleHistoryController implements Disposable {
 
   @Nullable
   public static ConsoleHistoryController getController(@NotNull LanguageConsoleView console) {
-    return ourControllers.get(console);
+    return ApplicationManager.getApplication().getService(ControllerRegistry.class).controllers.get(console);
   }
 
   public static void addToHistory(@NotNull LanguageConsoleView consoleView, @Nullable String command) {
@@ -141,14 +156,7 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   public void install() {
-    MessageBusConnection busConnection = myConsole.getProject().getMessageBus().connect(myConsole);
-    busConnection.subscribe(ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
-      @Override
-      public void duringSave(@NotNull Project project) {
-        saveHistory();
-      }
-    });
-    busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
         if (document == myConsole.getEditorDocument()) {
@@ -157,7 +165,7 @@ public class ConsoleHistoryController implements Disposable {
       }
     });
 
-    ConsoleHistoryController original = ourControllers.put(myConsole, this);
+    ConsoleHistoryController original = ControllerRegistry.getInstance().controllers.put(myConsole, this);
     LOG.assertTrue(original == null,
                    "History controller already installed for: " + myConsole.getTitle());
     Disposer.register(myConsole, this);
@@ -166,7 +174,10 @@ public class ConsoleHistoryController implements Disposable {
       public void dispose() {
         ConsoleHistoryController controller = getController(myConsole);
         if (controller == ConsoleHistoryController.this) {
-          ourControllers.remove(myConsole);
+          ControllerRegistry controllerRegistry = ApplicationManager.getApplication().getServiceIfCreated(ControllerRegistry.class);
+          if (controllerRegistry != null) {
+            controllerRegistry.controllers.remove(myConsole);
+          }
         }
         saveHistory();
       }
@@ -233,17 +244,17 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   protected void setConsoleText(final Entry command, final boolean storeUserText, final boolean regularMode) {
-    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.getText())) return;
+    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.text())) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     WriteCommandAction.writeCommandAction(myConsole.getProject()).run(() -> {
       if (storeUserText) {
         String text = document.getText();
-        if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
+        if (Comparing.equal(command.text(), text) && myHelper.getContent() != null) return;
         myHelper.setContent(text);
         myHelper.getModel().setContent(text);
       }
-      CharSequence text = ObjectUtils.chooseNotNull(command.getText(), "");
+      CharSequence text = Objects.requireNonNullElse(command.text(), "");
       int offset;
       if (regularMode) {
         if (myMultiline) {
@@ -251,18 +262,12 @@ public class ConsoleHistoryController implements Disposable {
         }
         else {
           document.setText(text);
-          offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
+          offset = command.offset() == -1 ? document.getTextLength() : command.offset();
         }
       }
       else {
         offset = 0;
-        try {
-          document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-          document.setText(text);
-        }
-        finally {
-          document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
-        }
+        UndoUtil.disableUndoIn(document, () -> document.setText(text));
       }
       editor.getCaretModel().moveToOffset(offset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -280,7 +285,7 @@ public class ConsoleHistoryController implements Disposable {
     return start;
   }
 
-  private class MyAction extends DumbAwareAction {
+  private final class MyAction extends DumbAwareAction {
     private final boolean myNext;
 
     @NotNull
@@ -289,7 +294,6 @@ public class ConsoleHistoryController implements Disposable {
     MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
       myNext = next;
       myUpDownKeystrokes = upDownKeystrokes;
-      getTemplatePresentation().setVisible(false);
     }
 
     @Override
@@ -302,10 +306,15 @@ public class ConsoleHistoryController implements Disposable {
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
       boolean enabled = myMultiline || !isUpDownKey(e) || canMoveInEditor(myNext);
       //enabled &= getModel().hasHistory(myNext);
       e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(false);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     private boolean isUpDownKey(@NotNull AnActionEvent e) {
@@ -337,7 +346,11 @@ public class ConsoleHistoryController implements Disposable {
 
 
 
-  private class MyBrowseAction extends DumbAwareAction {
+  protected BrowseAction createBrowseAction() {
+    return new BrowseAction();
+  }
+
+  protected class BrowseAction extends DumbAwareAction {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -346,12 +359,17 @@ public class ConsoleHistoryController implements Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String title = LangBundle.message("dialog.title.history", myConsole.getTitle());
-      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true, true) {
+      String title = getTitle();
+      final ContentChooser<String> chooser = new ContentChooser<>(myConsole.getProject(), title, true, true) {
         {
           setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
-          setOKButtonMnemonic('P');
+          setOKButtonMnemonic(P);
           setCancelButtonText(CommonBundle.getCloseButtonText());
           setUseNumbering(false);
         }
@@ -404,6 +422,13 @@ public class ConsoleHistoryController implements Disposable {
       if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
         setConsoleText(new Entry(chooser.getSelectedText(), -1), false, true);
       }
+    }
+
+
+    @NotNull
+    @NlsContexts.DialogTitle
+    protected String getTitle() {
+      return LangBundle.message("dialog.title.history", myConsole.getTitle());
     }
   }
 

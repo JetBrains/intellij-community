@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
@@ -29,10 +15,7 @@ import com.intellij.diff.tools.util.side.TwosideDiffViewer;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -45,6 +28,7 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +79,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     group.add(Separator.getInstance());
     group.add(myTransferableStateSupport.createToggleAction());
     group.addAll(super.createToolbarActions());
+
+    group.add(ActionManager.getInstance().getAction("Diff.Binary.Settings"));
 
     return group;
   }
@@ -236,6 +222,11 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       VirtualFile baseFile = getContentFile(myBaseSide);
       VirtualFile targetFile = getContentFile(myBaseSide.other());
@@ -275,14 +266,14 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     }
   }
 
-  private static class ComparisonData {
+  private static final class ComparisonData {
     public static final ComparisonData UNKNOWN = new ComparisonData(ThreeState.UNSURE, () -> null);
     public static final ComparisonData ERROR = new ComparisonData(ThreeState.UNSURE, () -> DiffBundle.message("diff.cant.calculate.diff"));
 
     @NotNull public final ThreeState isContentsEqual;
-    @NotNull public final NullableComputable<String> notification;
+    @NotNull public final NullableComputable<@Nls String> notification;
 
-    private ComparisonData(@NotNull ThreeState isContentsEqual, @NotNull NullableComputable<String> notification) {
+    private ComparisonData(@NotNull ThreeState isContentsEqual, @NotNull NullableComputable<@Nls String> notification) {
       this.isContentsEqual = isContentsEqual;
       this.notification = notification;
     }

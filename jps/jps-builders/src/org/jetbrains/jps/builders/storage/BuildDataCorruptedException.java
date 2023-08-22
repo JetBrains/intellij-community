@@ -30,10 +30,9 @@ public class BuildDataCorruptedException extends RuntimeException {
     super(message);
   }
 
-  /** @deprecated use {@link #BuildDataCorruptedException(IOException)} instead*/
-  @Deprecated
-  public BuildDataCorruptedException(Exception cause) {
-    super(cause);
+  @Override
+  public synchronized Throwable initCause(Throwable cause) {
+    throw new UnsupportedOperationException("Overwriting of cause field is not supported for " + BuildDataCorruptedException.class.getName());
   }
 
   @Override

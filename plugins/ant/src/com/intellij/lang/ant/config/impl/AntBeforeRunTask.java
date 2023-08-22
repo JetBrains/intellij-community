@@ -3,7 +3,9 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -13,15 +15,22 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
+public final class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
+  private final Project project;
   private String myTargetName;
   private String myAntFileUrl;
 
-  public AntBeforeRunTask() {
+  public AntBeforeRunTask(@NotNull Project project) {
     super(AntBeforeRunTaskProvider.ID);
+
+    this.project = project;
   }
 
-  public String getAntFileUrl() {
+  public @NotNull Project getProject() {
+    return project;
+  }
+
+  public @NlsSafe String getAntFileUrl() {
     return myAntFileUrl;
   }
 
@@ -29,7 +38,7 @@ public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     myAntFileUrl = url;
   }
 
-  public String getTargetName() {
+  public @NlsSafe String getTargetName() {
     return myTargetName;
   }
 
@@ -62,7 +71,7 @@ public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
     if (vFile == null) {
       return false;
     }
-    if (myAntFileUrl == null || !FileUtil.pathsEqual(myAntFileUrl, vFile.getUrl())) {
+    if (myAntFileUrl == null || !VfsUtilCore.pathEqualsTo(vFile, VfsUtilCore.urlToPath(myAntFileUrl))) {
       return false;
     }
     return Objects.equals(myTargetName, target.getName());

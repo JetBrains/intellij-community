@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -41,19 +42,18 @@ public class HideContentAction extends DumbAwareAction {
     if (node != null) {
       final Collection<PackagingNodeSource> sources = node.getNodeSources();
       if (!sources.isEmpty()) {
-        String description;
-        if (sources.size() == 1) {
-          description = "Hide Content of '" + sources.iterator().next().getPresentableName() + "'";
-        }
-        else {
-          description = "Hide Content";
-        }
+        final String name = sources.iterator().next().getPresentableName();
         e.getPresentation().setVisible(true);
-        e.getPresentation().setText(description);
+        e.getPresentation().setText(JavaUiBundle.message("action.hide.content.text", name, sources.size()));
         return;
       }
     }
     e.getPresentation().setVisible(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

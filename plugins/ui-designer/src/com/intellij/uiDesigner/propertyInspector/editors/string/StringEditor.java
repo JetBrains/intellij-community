@@ -27,10 +27,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class StringEditor extends PropertyEditor<StringDescriptor> {
   private static final Logger LOG = Logger.getInstance(StringEditor.class);
 

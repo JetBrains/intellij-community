@@ -1,0 +1,4 @@
+version = "5.2.*"
+
+[tool.stubtest]
+ignore_missing_stub = false

@@ -24,6 +24,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
@@ -34,7 +35,7 @@ import java.util.*;
 public abstract class Reverter {
   private final Project myProject;
   protected LocalHistoryFacade myVcs;
-  protected IdeaGateway myGateway;
+  protected final IdeaGateway myGateway;
 
   protected Reverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw) {
     myProject = p;
@@ -91,6 +92,7 @@ public abstract class Reverter {
     }
   }
 
+  @NlsContexts.Command
   public String getCommandName() {
     Revision to = getTargetRevision();
     String name = to.getChangeSetName();

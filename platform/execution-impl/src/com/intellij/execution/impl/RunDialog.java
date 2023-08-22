@@ -14,14 +14,15 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
     myProject = project;
     myExecutor = executor;
 
-    setTitle(executor.getId());
+    setTitle(executor.getActionName());
 
     setOKButtonText(executor.getActionName());
     //setOKButtonIcon(executor.getIcon());
@@ -111,6 +112,11 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
           //setOKButtonIcon(executor.getIcon());
         }
       }
+
+      @Override
+      public Dimension getInitialSize() {
+        return new Dimension(650, 500);
+      }
     };
 
     dialog.setTitle(title);
@@ -129,7 +135,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
            JComponent cp = component.getComponent();
             if (cp instanceof ComboBox) {
               ApplicationManager.getApplication().invokeLater(() -> {
-                ComboPopup popup = ((ComboBox)cp).getPopup();
+                ComboPopup popup = ((ComboBox<?>)cp).getPopup();
                 if (popup != null && cp.isShowing()) {
                   popup.show();
                 }

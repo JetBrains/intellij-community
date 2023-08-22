@@ -72,19 +72,20 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
                                  ClassMember[] members,
                                  List<? extends GenerationInfo> generatedMembers) {
     super.notifyOnSuccess(editor, members, generatedMembers);
-    if (Arrays.stream(members).anyMatch(fm -> fm instanceof PsiFieldMember && 
+    if (Arrays.stream(members).anyMatch(fm -> fm instanceof PsiFieldMember &&
                                               GetterSetterPrototypeProvider.isReadOnlyProperty(((PsiFieldMember)fm).getElement()))) {
-      HintManager.getInstance().showErrorHint(editor, "Setters for read-only fields were not generated", HintManager.ABOVE);
+      HintManager.getInstance().showErrorHint(editor,
+                                              JavaBundle.message("generate.getter.and.setter.error.setters.for.read.only.not.generated"), HintManager.ABOVE);
     }
   }
 
   @Override
   protected String getNothingFoundMessage() {
-    return "No fields have been found to generate getters/setters for";
+    return JavaBundle.message("generate.getter.and.setter.error.no.fields");
   }
 
   @Override
   protected String getNothingAcceptedMessage() {
-    return "No fields without getter/setter were found";
+    return JavaBundle.message("generate.getter.and.setter.error.no.fields.without.getters.and.setters");
   }
 }

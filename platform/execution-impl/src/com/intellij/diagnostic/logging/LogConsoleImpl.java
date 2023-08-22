@@ -17,6 +17,8 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +26,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Arrays;
 
 public abstract class LogConsoleImpl extends LogConsoleBase {
-  private final String myPath;
+  private final @NlsSafe String myPath;
   @NotNull
   private final File myFile;
   @NotNull
@@ -38,7 +41,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
                         @NotNull File file,
                         @NotNull Charset charset,
                         long skippedContents,
-                        @NotNull String title,
+                        @NlsContexts.TabTitle @NotNull String title,
                         final boolean buildInActions,
                         final GlobalSearchScope searchScope) {
     super(project, getReader(file, charset, skippedContents), title, buildInActions, new DefaultLogFilterModel(project),
@@ -54,7 +57,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     try {
       try {
         @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-        FileInputStream inputStream = new FileInputStream(file);
+        InputStream inputStream = Files.newInputStream(file.toPath());
         //do not skip forward
         if (file.length() >= skippedContents) {
           long skipped = 0;
@@ -66,7 +69,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
       }
       catch (FileNotFoundException ignored) {
         if (FileUtilRt.createIfNotExists(file)) {
-          return new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+          return new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath()), charset));
         }
         return null;
       }
@@ -97,7 +100,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     if (myOldSnapshot.rolloverDetected(snapshot)) {
       reader.close();
       //noinspection IOResourceOpenedButNotSafelyClosed
-      reader = new BufferedReader(new InputStreamReader(new FileInputStream(myFile), myCharset));
+      reader = new BufferedReader(new InputStreamReader(Files.newInputStream(myFile.toPath()), myCharset));
     }
     myOldSnapshot = snapshot;
     return reader;
@@ -111,7 +114,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
       this.length = myFile.length();
 
       byte[] bytes = new byte[20];
-      try (FileInputStream stream = new FileInputStream(myFile)) {
+      try (InputStream stream = Files.newInputStream(myFile.toPath())) {
         //noinspection ResultOfMethodCallIgnored
         stream.read(bytes);
       }

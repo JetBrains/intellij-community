@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
+import static org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION;
+import static org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION;
 
 /**
  * @author Vladislav.Soroka
@@ -101,15 +104,20 @@ public class GradleExecutionErrorHandler {
   public static Pair<Throwable, String> getRootCauseAndLocation(@NotNull Throwable error) {
     Throwable rootCause = error;
     String location = null;
+
     while (true) {
       if (location == null) {
         location = getLocationFrom(rootCause);
       }
       Throwable cause = rootCause.getCause();
-      if (cause == null || cause.getMessage() == null && !(cause instanceof StackOverflowError)) {
+      if (cause == null || cause == rootCause || cause.getMessage() == null && !(cause instanceof StackOverflowError)) {
         break;
       }
       rootCause = cause;
+    }
+
+    if (location == null) {
+      location = searchForLocationInStacks(error);
     }
     return Pair.create(rootCause, location);
   }
@@ -130,6 +138,42 @@ public class GradleExecutionErrorHandler {
         String[] lines = splitByLines(location);
         return lines.length > 0 ? lines[0] : null;
       }
+    }
+    return null;
+  }
+
+
+  @Nullable
+  private static String searchForLocationInStacks(@NotNull Throwable error) {
+    var current = error;
+    while (true) {
+      var location = getLocationFromStack(current);
+      if (location != null) {
+        return location;
+      }
+      var cause = current.getCause();
+      if (cause == null || cause == current) {
+        break;
+      } else {
+        current = cause;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Retrieves the error location in build.gradle file from stack frames
+   */
+  @Nullable
+  private static String getLocationFromStack(@NotNull Throwable error) {
+    // run through stacktrace and see if it has frames pointing to specific groovy script
+    StackTraceElement scriptFrame = ContainerUtil.find(error.getStackTrace(),
+                                                       (element -> {
+                                                         String fileName = element.getFileName();
+                                                         return fileName != null && (fileName.endsWith("." + EXTENSION) || fileName.endsWith("." + KOTLIN_DSL_SCRIPT_EXTENSION));
+                                                       }));
+    if (scriptFrame != null) {
+      return "Build file '" + scriptFrame.getFileName() + "' line: " + scriptFrame.getLineNumber();
     }
     return null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.SavingRequestor;
@@ -39,8 +39,7 @@ public abstract class VFileEvent {
    * asynchronously from the event dispatching procedure
    * (e.g. {@code event.getPath()} can become not equal to {@code event.getFile().getPath()}).
    */
-  @NotNull
-  public String getPath() {
+  public @NotNull String getPath() {
     String path = myCachedPath;
     if (path == null) {
       myCachedPath = path = computePath();
@@ -48,8 +47,7 @@ public abstract class VFileEvent {
     return path;
   }
 
-  @NotNull
-  protected abstract String computePath();
+  protected abstract @NotNull String computePath();
 
   /**
    * Returns the VirtualFile which this event belongs to.
@@ -58,11 +56,9 @@ public abstract class VFileEvent {
    * NB: Use this method with caution, because {@link VFileCreateEvent#getFile()} needs
    * {@link VirtualFile#findChild(String)} which may be a performance leak.
    */
-  @Nullable
-  public abstract VirtualFile getFile();
+  public abstract @Nullable VirtualFile getFile();
 
-  @NotNull
-  public abstract VirtualFileSystem getFileSystem();
+  public abstract @NotNull VirtualFileSystem getFileSystem();
 
   public abstract boolean isValid();
 

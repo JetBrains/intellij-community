@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.build.BuildTreeConsoleView
@@ -16,13 +16,13 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
-import com.intellij.testFramework.PlatformTestUtil.waitWhileBusy
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
-import groovyjarjarcommonscli.Option
+import org.apache.commons.cli.Option
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
@@ -47,8 +47,8 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
 
   fun getCommonTasks(prefix: String = "") =
     listOf(
-      "components", "projects", "dependentComponents", "buildEnvironment", "dependencyInsight",
-      "dependencies", "prepareKotlinBuildScriptModel", "help", "model", "properties", "tasks"
+      "components", "projects", "buildEnvironment", "dependencyInsight",
+      "dependencies", "help", "model", "properties", "tasks"
     ).map { prefix + it }
 
   fun getGradleOptions(prefix: String = ""): List<String> {
@@ -74,10 +74,9 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
   }
 
   private fun withVariantsFor(context: RunAnythingContext, command: String, action: (List<String>) -> Unit) {
-    val contextKey = RunAnythingProvider.EXECUTING_CONTEXT.name
-    val dataContext = SimpleDataContext.getSimpleContext(contextKey, context, myDataContext)
+    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext)
     val variants = provider.getValues(dataContext, "gradle $command")
-    action(variants.map { StringUtil.trimStart(it, "gradle ") })
+    action(variants.map { it.removePrefix("gradle ") })
   }
 
   private fun executeAndWait(context: RunAnythingContext, command: String): BuildView {
@@ -110,7 +109,7 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
         }
       }
     )
-    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT.name, context, myDataContext)
+    val dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext)
     provider.execute(dataContext, "gradle $command")
 
     for (i in 0..5000) {
@@ -121,9 +120,9 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     val buildView = result.get()!!
     val eventView = buildView.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
     val tree = eventView!!.tree
-    edt {
+    runInEdtAndWait {
       dispatchAllEventsInIdeEventQueue()
-      waitWhileBusy(tree)
+      PlatformTestUtil.waitWhileBusy(tree)
     }
 
     val buildNode = Ref<ExecutionNode>()
@@ -137,9 +136,9 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     for (i in 0..5000) {
       if (!buildNode.get().isRunning) break
       TimeoutUtil.sleep(5)
-      edt {
+      runInEdtAndWait {
         dispatchAllEventsInIdeEventQueue()
-        waitWhileBusy(tree)
+        PlatformTestUtil.waitWhileBusy(tree)
       }
     }
     Assert.assertFalse(buildNode.get().isRunning)
@@ -159,6 +158,21 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     )
   }
 
+
+  fun BuildView.assertExecutionTree(
+    expected: String
+  ): BuildView = apply {
+    BuildViewTestFixture.assertExecutionTree(this, expected, false)
+  }
+
+  fun BuildView.assertExecutionTreeNode(
+    nodeText: String,
+    assertSelected: Boolean = false,
+    consoleTextChecker: (String?) -> Unit
+  ): BuildView = apply {
+    BuildViewTestFixture.assertExecutionTreeNode(this, nodeText, consoleTextChecker, null, assertSelected)
+  }
+
   companion object {
     /**
      * It's sufficient to run the test against one gradle version
@@ -167,14 +181,4 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
     @JvmStatic
     fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
   }
-}
-
-fun BuildView.assertExecutionTree(expected: String): BuildView {
-  BuildViewTestFixture.assertExecutionTree(this, expected, false)
-  return this
-}
-
-fun BuildView.assertExecutionTreeNode(nodeText: String, consoleTextChecker: (String?) -> Unit, assertSelected: Boolean = false): BuildView {
-  BuildViewTestFixture.assertExecutionTreeNode(this, nodeText, consoleTextChecker, assertSelected)
-  return this
 }

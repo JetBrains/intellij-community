@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -6,14 +6,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public final class LibraryData extends AbstractNamedData implements Named, ProjectCoordinate {
-  private final static Interner<String> ourPathInterner = new WeakInterner<>();
+  private final static Interner<String> ourPathInterner = Interner.createWeakInterner();
 
   private final Map<LibraryPathType, Set<String>> paths = new EnumMap<>(LibraryPathType.class);
 

@@ -16,7 +16,7 @@ public class HtmlCodeStyleSettings extends CustomCodeStyleSettings {
     super("HTMLCodeStyleSettings", container);
   }
 
-  @Property(externalName = "uniform_ident")
+  @Property(externalName = "uniform_indent")
   public boolean HTML_UNIFORM_INDENT = false;
 
   @Property(externalName = "keep_whitespaces")

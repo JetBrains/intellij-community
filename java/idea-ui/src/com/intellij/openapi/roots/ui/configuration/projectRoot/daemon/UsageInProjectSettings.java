@@ -2,8 +2,8 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.roots.ui.configuration.GeneralProjectSettingsElement;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.navigation.Place;
 
 import javax.swing.*;
@@ -11,10 +11,10 @@ import javax.swing.*;
 public class UsageInProjectSettings extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
   private final ProjectStructureElement mySourceElement;
-  private final String myPresentableName;
+  private final @NlsContexts.Label String myPresentableName;
 
   public UsageInProjectSettings(StructureConfigurableContext context,
-                                ProjectStructureElement sourceElement, String presentableName) {
+                                ProjectStructureElement sourceElement, @NlsContexts.Label String presentableName) {
     myContext = context;
     mySourceElement = sourceElement;
     myPresentableName = presentableName;
@@ -37,7 +37,7 @@ public class UsageInProjectSettings extends ProjectStructureElementUsage {
 
   @Override
   public PlaceInProjectStructure getPlace() {
-    Place configurablePlace = ProjectStructureConfigurable.getInstance(myContext.getProject()).createProjectConfigurablePlace();
+    Place configurablePlace = myContext.getModulesConfigurator().getProjectStructureConfigurable().createProjectConfigurablePlace();
     return new PlaceInProjectStructureBase(myContext.getProject(), configurablePlace, getContainingElement(), false);
   }
 

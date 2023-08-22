@@ -40,7 +40,7 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
     if (document == null) {
       return true;
     }
-    final String contextId = document.getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID);
+    final String contextId = document.getUserData(StructuralSearchDialogKeys.STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID);
     if (contextId == null) {
       return true;
     }
@@ -60,7 +60,7 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
     }
     final boolean result = profile.shouldShowProblem(error);
     if (result) {
-      final Runnable callback = document.getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_ERROR_CALLBACK);
+      final Runnable callback = document.getUserData(StructuralSearchDialogKeys.STRUCTURAL_SEARCH_ERROR_CALLBACK);
       if (callback != null) {
         ApplicationManager.getApplication().invokeLater(callback);
       }

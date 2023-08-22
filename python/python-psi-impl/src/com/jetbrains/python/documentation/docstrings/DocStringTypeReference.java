@@ -43,9 +43,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     if (element.equals(resolve())) {
       return element;
     }
-    if (myElement instanceof PyStringLiteralExpression && element instanceof PyClass) {
-      final PyStringLiteralExpression e = (PyStringLiteralExpression)myElement;
-      final PyClass cls = (PyClass)element;
+    if (myElement instanceof PyStringLiteralExpression e && element instanceof PyClass cls) {
       QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(cls, element);
       if (qname != null) {
         qname = qname.append(cls.getName());
@@ -77,13 +75,13 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
 
   @Override
   public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    PyElement result = null;
+    PsiElement result = null;
     final ResolveResultList results = new ResolveResultList();
     if (myType instanceof PyClassType) {
       result = ((PyClassType)myType).getPyClass();
     }
     else if (myType instanceof PyImportedModuleType) {
-      result = (PyElement)((PyImportedModuleType)myType).getImportedModule().resolve();
+      result = ((PyImportedModuleType)myType).getImportedModule().resolve();
     }
     else if (myType instanceof PyModuleType) {
       result = ((PyModuleType)myType).getModule();

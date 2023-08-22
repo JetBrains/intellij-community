@@ -37,9 +37,9 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
       float bw = BW.getFloat();
       float arc = COMPONENT_ARC.getFloat();
 
-      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      Outline op = getOutline((JComponent)c);
       if (c.isEnabled() && op != null) {
-        paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), Outline.valueOf(op.toString()));
+        paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), op);
       }
       else {
         if (isFocused(c)) {
@@ -73,8 +73,7 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
   public static boolean isFocused(Component c) {
     if (c.hasFocus()) return true;
 
-    if (c instanceof JSpinner) {
-      JSpinner spinner = (JSpinner)c;
+    if (c instanceof JSpinner spinner) {
       if (spinner.getEditor() != null) {
         synchronized (spinner.getEditor().getTreeLock()) {
           return spinner.getEditor().getComponent(0).hasFocus();

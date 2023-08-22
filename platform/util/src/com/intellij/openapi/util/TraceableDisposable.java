@@ -1,21 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,52 +39,13 @@ public class TraceableDisposable {
     }
   }
 
-  /**
-   * Call when object is not disposed while it should
-   */
-  public void throwObjectNotDisposedError(@NonNls @NotNull final String msg) {
-    throw new ObjectNotDisposedException(msg);
-  }
-
-  private final class ObjectNotDisposedException extends RuntimeException implements ExceptionWithAttachments {
-
-    ObjectNotDisposedException(@Nullable @NonNls final String msg) {
-      super(msg);
-      KILL_TRACE = ThrowableInterner.intern(new Throwable(msg));
-    }
-
-    @Override
-    public Attachment @NotNull [] getAttachments() {
-      return new Attachment[]{new Attachment("kill", KILL_TRACE)};
-    }
-
-    @Override
-    public void printStackTrace(@NotNull PrintStream s) {
-      PrintWriter writer = new PrintWriter(s);
-      printStackTrace(writer);
-      writer.flush();
-    }
-
-    @SuppressWarnings("HardCodedStringLiteral")
-    @Override
-    public void printStackTrace(PrintWriter s) {
-      final List<StackTraceElement> stack = new ArrayList<>(Arrays.asList(CREATE_TRACE.getStackTrace()));
-      stack.remove(0); // this line is useless it stack
-      s.write(ObjectNotDisposedException.class.getCanonicalName() +
-              ": See stack trace responsible for creation of unreleased object below \n\tat " +
-              StringUtil.join(stack, "\n\tat "));
-    }
-  }
-
-  /**
-   * in case of "object not disposed" use {@link #throwObjectNotDisposedError(String)} instead
-   */
-  public void throwDisposalError(@NonNls String msg) throws RuntimeException {
+  @Contract("_->fail")
+  public void throwDisposalError(@NotNull @NonNls String msg) throws RuntimeException {
     throw new DisposalException(msg);
   }
 
-  private class DisposalException extends RuntimeException implements ExceptionWithAttachments {
-    private DisposalException(String message) {
+  private final class DisposalException extends RuntimeException implements ExceptionWithAttachments {
+    private DisposalException(@NotNull String message) {
       super(message);
     }
 
@@ -105,10 +62,9 @@ public class TraceableDisposable {
     }
   }
 
-  @NotNull
-  public String getStackTrace() {
+  public @NotNull String getStackTrace() {
     StringWriter s = new StringWriter();
-    PrintWriter out = new PrintWriter(s);
+    @NonNls PrintWriter out = new PrintWriter(s);
     if (CREATE_TRACE != null) {
       out.println("--------------Creation trace: ");
       CREATE_TRACE.printStackTrace(out);
@@ -118,7 +74,7 @@ public class TraceableDisposable {
       KILL_TRACE.printStackTrace(out);
     }
     out.println("-------------Own trace:");
-    new DisposalException("" + System.identityHashCode(this)).printStackTrace(out);
+    new DisposalException(String.valueOf(System.identityHashCode(this))).printStackTrace(out);
     out.flush();
     return s.toString();
   }

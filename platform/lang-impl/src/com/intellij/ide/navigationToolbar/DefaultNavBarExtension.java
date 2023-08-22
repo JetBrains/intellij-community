@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -46,8 +46,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
       final String libraryName = ((LibraryOrderEntry)object).getLibraryName();
       return libraryName != null ? libraryName : CodeInsightBundle.message("package.dependencies.library.node.text");
     }
-    else if (object instanceof ModuleOrderEntry) {
-      final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)object;
+    else if (object instanceof ModuleOrderEntry moduleOrderEntry) {
       return moduleOrderEntry.getModuleName();
     }
     return null;
@@ -68,8 +67,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
     else if (object instanceof Module) {
       return processChildren((Module)object, processor);
     }
-    else if (object instanceof PsiDirectoryContainer) {
-      final PsiDirectoryContainer psiPackage = (PsiDirectoryContainer)object;
+    else if (object instanceof PsiDirectoryContainer psiPackage) {
       final PsiDirectory[] psiDirectories = ReadAction.compute(() -> rootElement instanceof Module
                                                                      ? psiPackage.getDirectories(
         GlobalSearchScope.moduleScope((Module)rootElement))
@@ -128,7 +126,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   private static boolean processChildren(final PsiFileSystemItem object, final Processor<Object> processor) {
     return ReadAction.compute(() -> object.processChildren(new PsiFileSystemItemProcessor() {
       @Override
-      public boolean acceptItem(String name, boolean isDirectory) {
+      public boolean acceptItem(@NotNull String name, boolean isDirectory) {
         return true;
       }
 
@@ -149,8 +147,7 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
         return containingDirectory;
       }
     }
-    else if (psiElement instanceof PsiDirectory) {
-      PsiDirectory psiDirectory = (PsiDirectory)psiElement;
+    else if (psiElement instanceof PsiDirectory psiDirectory) {
       Project project = psiElement.getProject();
       PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
       if (parentDirectory == null) {

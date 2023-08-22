@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiArrayType;
@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCompileStatic;
 
 public class GrContainerConverter extends GrTypeConverter {
 

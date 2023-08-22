@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class EditLogPatternDialog extends DialogWrapper {
     init();
   }
 
-  public void init(String name, String pattern, boolean showAll){
+  public void init(@NlsSafe String name, @NlsSafe String pattern, boolean showAll){
     myNameField.setText(name);
     myFilePattern.setText(pattern);
     myShowFilesCombo.setSelected(showAll);
@@ -40,7 +41,7 @@ public class EditLogPatternDialog extends DialogWrapper {
     myFilePattern.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        setOKActionEnabled(myFilePattern.getText() != null && myFilePattern.getText().length() > 0);
+        setOKActionEnabled(myFilePattern.getText().length() > 0);
       }
     });
     return myWholePanel;

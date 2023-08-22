@@ -19,7 +19,7 @@ public final class ThumbnailViewActionUtil {
      * Extract current thumbnail view from event context.
      *
      * @param e Action event
-     * @return Current {@link org.intellij.images.thumbnail.ThumbnailView} or {@code null}
+     * @return Current {@link ThumbnailView} or {@code null}
      */
     public static ThumbnailView getVisibleThumbnailView(@NotNull AnActionEvent e) {
         ThumbnailView thumbnailView = getThumbnailView(e);

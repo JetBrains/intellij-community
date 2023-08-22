@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +16,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Proxy;
@@ -51,9 +39,8 @@ public class InlineModuleDependencyAction extends AnAction {
   }
 
   static void inlineEntry(ClasspathPanel classpathPanel, OrderEntry entry, Predicate<? super OrderEntry> dependencyEntryFilter) {
-    if (!(entry instanceof ModuleOrderEntry)) return;
+    if (!(entry instanceof ModuleOrderEntry entryToInline)) return;
 
-    ModuleOrderEntry entryToInline = (ModuleOrderEntry)entry;
     Module module = entryToInline.getModule();
     if (module == null) return;
 
@@ -78,10 +65,10 @@ public class InlineModuleDependencyAction extends AnAction {
       if (dependencyEntryFilter.test(depEntry)) {
         LOG.assertTrue(depEntry instanceof ClonableOrderEntry, depEntry);
         ExportableOrderEntry entryToCopy = (ExportableOrderEntry)depEntry;
-        ExportableOrderEntry cloned = (ExportableOrderEntry)((ClonableOrderEntry)depEntry).cloneEntry(modelImpl, rootManager, virtualFilePointerManager);
+        model.addOrderEntry(((ClonableOrderEntry)depEntry).cloneEntry(modelImpl, rootManager, virtualFilePointerManager));
+        ExportableOrderEntry cloned = (ExportableOrderEntry)ArrayUtil.getLastElement(model.getOrderEntries());
         cloned.setExported(entryToInline.isExported() && entryToCopy.isExported());
         cloned.setScope(OrderEntryUtil.intersectScopes(entryToInline.getScope(), entryToCopy.getScope()));
-        model.addOrderEntry(cloned);
         addedCount++;
       }
     }
@@ -111,6 +98,11 @@ public class InlineModuleDependencyAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isEnabled());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private boolean isEnabled() {

@@ -10,7 +10,7 @@ public abstract class XValueModifier {
   /**
    * @deprecated Use {@link #setValue(XExpression, XModificationCallback)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setValue(@NotNull String expression, @NotNull XModificationCallback callback) {
     throw new AbstractMethodError();
   }

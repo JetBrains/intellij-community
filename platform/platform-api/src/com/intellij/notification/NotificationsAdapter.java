@@ -4,6 +4,6 @@ package com.intellij.notification;
 /**
  * @deprecated Use {@link Notifications} directly
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class NotificationsAdapter implements Notifications {
 }

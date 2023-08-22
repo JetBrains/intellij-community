@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -9,10 +9,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-/**
- * @author ven
- */
-public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
+public final class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
   private static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";
 
@@ -28,7 +25,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   private NotNullVerifyingInstrumenter(ClassVisitor classVisitor, ClassReader reader, String[] notNullAnnotations) {
     super(Opcodes.API_VERSION, classVisitor);
-    Set<String> annoSet = new HashSet<String>();
+    Set<String> annoSet = new HashSet<>();
     for (String annotation : notNullAnnotations) {
       annoSet.add('L' + annotation.replace('.', '/') + ';');
     }
@@ -36,7 +33,15 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     myAuxGenerator = new AuxiliaryMethodGenerator(reader);
   }
 
+  /**
+   * @deprecated use {@link NotNullVerifyingInstrumenter#processClassFile(ClassReader, ClassVisitor, String[])} instead
+   */
+  @Deprecated
   public static boolean processClassFile(FailSafeClassReader reader, ClassVisitor writer, String[] notNullAnnotations) {
+    return processClassFile((ClassReader)reader, writer, notNullAnnotations);
+  }
+
+  public static boolean processClassFile(ClassReader reader, ClassVisitor writer, String[] notNullAnnotations) {
     NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader, notNullAnnotations);
     reader.accept(instrumenter, 0);
     return instrumenter.myIsModification;
@@ -44,8 +49,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   private static class MethodInfo {
     final NotNullState nullability = new NotNullState();
-    final Map<Integer, String> paramNames = new HashMap<Integer, String>();
-    final Map<Integer, NotNullState> paramNullability = new LinkedHashMap<Integer, NotNullState>();
+    final Map<Integer, String> paramNames = new HashMap<>();
+    final Map<Integer, NotNullState> paramNullability = new LinkedHashMap<>();
     boolean isStable;
     int paramAnnotationOffset;
 
@@ -61,7 +66,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   private static final class MethodData {
     private String myClassName;
-    private final Map<String, MethodInfo> myMethodInfos = new HashMap<String, MethodInfo>();
+    private final Map<String, MethodInfo> myMethodInfos = new HashMap<>();
 
     static String key(String methodName, String desc) {
       return methodName + desc;
@@ -107,7 +112,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         final Type[] args = Type.getArgumentTypes(desc);
         final boolean methodCanHaveNullability = isReferenceType(Type.getReturnType(desc));
 
-        final Map<Integer, Integer> paramSlots = new LinkedHashMap<Integer, Integer>(); // map: localVariableSlot -> methodParameterIndex
+        final Map<Integer, Integer> paramSlots = new LinkedHashMap<>(); // map: localVariableSlot -> methodParameterIndex
         int slotIndex = isStatic(access) ? 0 : 1;
         for (int paramIndex = 0; paramIndex < args.length; paramIndex++) {
           Type arg = args[paramIndex];

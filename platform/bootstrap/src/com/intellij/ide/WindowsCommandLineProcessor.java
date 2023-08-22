@@ -1,47 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import com.intellij.idea.StartupUtil;
 
 /**
- * This class is initialized in two class loaders: the bootstrap classloader and the main IDEA classloader. The bootstrap instance
- * has ourMirrorClass initialized by the Bootstrap class; it calls the main instance of itself via reflection.
- *
- * @author yole
+ * <b>NOTE:</b> This method is called through JNI by the Windows launcher. Please do not delete or rename it.
  */
-public class WindowsCommandLineProcessor {
-  // The MainRunner class which is loaded in the main IDEA (non-bootstrap) classloader.
-  public static Class<?> ourMainRunnerClass;
-
-  /**
-   * NOTE: This method is called through JNI by the Windows launcher. Please do not delete or rename it.
-   */
-  @SuppressWarnings("unused")
-  public static int processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
-    if (ourMainRunnerClass != null) {
-      try {
-        Method method = ourMainRunnerClass.getMethod("processWindowsLauncherCommandLine", String.class, String[].class);
-        return (Integer)method.invoke(null, currentDirectory, args);
-      }
-      catch (NoSuchMethodException ignored) { }
-      catch (InvocationTargetException ignored) { }
-      catch (IllegalAccessException ignored) { }
-    }
-    return 1;
+@SuppressWarnings("unused")
+public final class WindowsCommandLineProcessor {
+  public static int processWindowsLauncherCommandLine(String currentDirectory, String[] args) {
+    return StartupUtil.processWindowsLauncherCommandLine(currentDirectory, args);
   }
 }

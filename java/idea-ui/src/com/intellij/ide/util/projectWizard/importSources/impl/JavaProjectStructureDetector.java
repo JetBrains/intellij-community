@@ -10,7 +10,9 @@ import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetector;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.java.JavaBundle;
 import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,8 +23,8 @@ public class JavaProjectStructureDetector extends JavaSourceRootDetector {
 
   @NotNull
   @Override
-  protected String getLanguageName() {
-    return "Java";
+  protected @Nls(capitalization = Nls.Capitalization.Sentence) String getLanguageName() {
+    return JavaBundle.message("options.java.display.name");
   }
 
   @NotNull

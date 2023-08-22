@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -34,12 +35,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
-public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
+import static java.util.Objects.requireNonNull;
+
+public class CompareWithSelectedRevisionAction extends DumbAwareAction {
   private static class Holder {
     private static final ColumnInfo<TreeNodeAdapter, String> BRANCH_COLUMN =
-      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.branch")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revisions.list.branch")) {
         @Override
         public String valueOf(final TreeNodeAdapter object) {
           return object.getRevision().getBranchName();
@@ -47,7 +49,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       };
 
     private static final ColumnInfo<TreeNodeAdapter, String> REVISION_COLUMN =
-      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.revision")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.revision")) {
         @Override
         public String valueOf(final TreeNodeAdapter object) {
           return object.getRevision().getRevisionNumber().asString();
@@ -55,7 +57,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       };
 
     private static final ColumnInfo<TreeNodeAdapter, String> DATE_COLUMN =
-      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.filter")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revisions.list.filter")) {
         @Override
         public String valueOf(final TreeNodeAdapter object) {
           return DateFormatUtil.formatPrettyDateTime(object.getRevision().getRevisionDate());
@@ -63,7 +65,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       };
 
     private static final ColumnInfo<TreeNodeAdapter, String> AUTHOR_COLUMN =
-      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.author")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.author")) {
         @Override
         public String valueOf(final TreeNodeAdapter object) {
           return object.getRevision().getAuthor();
@@ -71,7 +73,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       };
 
     private static final ColumnInfo<VcsFileRevision, String> REVISION_TABLE_COLUMN =
-      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.revision")) {
         @Override
         public String valueOf(final VcsFileRevision vcsFileRevision) {
           return vcsFileRevision.getRevisionNumber().asString();
@@ -79,7 +81,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       };
 
     private static final ColumnInfo<VcsFileRevision, String> DATE_TABLE_COLUMN =
-      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.revision")) {
         @Override
         public String valueOf(final VcsFileRevision vcsFileRevision) {
           final Date date = vcsFileRevision.getRevisionDate();
@@ -88,7 +90,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       };
 
     private static final ColumnInfo<VcsFileRevision, String> AUTHOR_TABLE_COLUMN =
-      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.author")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revision.list.author")) {
         @Override
         public String valueOf(final VcsFileRevision vcsFileRevision) {
           return vcsFileRevision.getAuthor();
@@ -96,53 +98,58 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       };
 
     private static final ColumnInfo<VcsFileRevision, String> BRANCH_TABLE_COLUMN =
-      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revisions.list.branch")) {
+      new ColumnInfo<>(VcsBundle.message("column.name.revisions.list.branch")) {
         @Override
         public String valueOf(final VcsFileRevision vcsFileRevision) {
           return vcsFileRevision.getBranchName();
         }
       };
   }
+
   @Override
-  public void update(@NotNull VcsContext e, @NotNull Presentation presentation) {
-    final FilePath filePath = e.getSelectedFilePath();
-    if (filePath != null && filePath.isDirectory()) {
-      presentation.setVisible(isVisibleForDirectory(e));
-      presentation.setEnabled(isEnabledForDirectory(e, filePath));
+  public void update(@NotNull AnActionEvent e) {
+    final VirtualFile file = VcsContextUtil.selectedFile(e.getDataContext());
+    if (file != null && file.isDirectory()) {
+      Project project = e.getProject();
+      e.getPresentation().setVisible(isVisibleForDirectory(project));
+      e.getPresentation().setEnabled(isEnabledForDirectory(project, file));
     }
     else {
-      AbstractShowDiffAction.updateDiffAction(presentation, e);
+      AbstractShowDiffAction.updateDiffAction(e.getPresentation(), e.getDataContext());
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
-  protected void actionPerformed(@NotNull VcsContext vcsContext) {
-    final VirtualFile file = vcsContext.getSelectedFiles()[0];
-    final Project project = vcsContext.getProject();
-    final AbstractVcs vcs = Objects.requireNonNull(ProjectLevelVcsManager.getInstance(project).getVcsFor(file));
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final VirtualFile file = requireNonNull(VcsContextUtil.selectedFile(e.getDataContext()));
+    final Project project = requireNonNull(e.getProject());
+    final AbstractVcs vcs = requireNonNull(ProjectLevelVcsManager.getInstance(project).getVcsFor(file));
 
-    VcsCachingHistory.collectInBackground(vcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.COMPARE_WITH,
-                       session -> {
-                         if (session == null) return;
-                         final List<VcsFileRevision> revisions = session.getRevisionList();
-                         final HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
-                         if (treeHistoryProvider != null) {
-                           showTreePopup(treeHistoryProvider.createTreeOn(revisions), project,
-                                         selected -> showSelectedRevision(selected.getRevisionNumber(), vcs, file, project));
-                         }
-                         else {
-                           showListPopup(revisions, project,
-                                         selected -> showSelectedRevision(selected.getRevisionNumber(), vcs, file, project),
-                                         true);
-                         }
-                       });
+    VcsCachingHistory.collectInBackground(vcs, VcsUtil.getFilePath(file), VcsBackgroundableActions.COMPARE_WITH, session -> {
+      if (session == null) return;
+      final List<VcsFileRevision> revisions = session.getRevisionList();
+      final HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
+      if (treeHistoryProvider != null) {
+        showTreePopup(treeHistoryProvider.createTreeOn(revisions), project,
+                      selected -> showSelectedRevision(selected.getRevisionNumber(), vcs, file, project));
+      }
+      else {
+        showListPopup(revisions, project,
+                      selected -> showSelectedRevision(selected.getRevisionNumber(), vcs, file, project),
+                      true);
+      }
+    });
   }
 
   protected void showSelectedRevision(@NotNull VcsRevisionNumber selected, @NotNull AbstractVcs vcs,
                                       @NotNull VirtualFile file, @NotNull Project project) {
     if (file.isDirectory()) {
-      final DiffProvider diffProvider = Objects.requireNonNull(vcs.getDiffProvider());
+      final DiffProvider diffProvider = requireNonNull(vcs.getDiffProvider());
       VcsDiffUtil.showChangesWithWorkingDirLater(
         project,
         file,
@@ -176,7 +183,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
     new PopupChooserBuilder(treeTable).
       setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
-      setItemChoosenCallback(runnable).
+      setItemChosenCallback(runnable).
       setSouthComponent(createCommentsPanel(treeTable)).
       setResizable(true).
       setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").
@@ -258,35 +265,36 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       table.clearSelection();
     }
 
-    new SpeedSearchBase<TableView>(table) {
+    SpeedSearchBase<TableView> search = new SpeedSearchBase<>(table, null) {
       @Override
       protected int getSelectedIndex() {
         return table.getSelectedRow();
       }
 
       @Override
-      protected int convertIndexToModel(int viewIndex) {
-        return table.convertRowIndexToModel(viewIndex);
+      protected int getElementCount() {
+        return revisions.size();
       }
 
       @Override
-      protected Object @NotNull [] getAllElements() {
-        return revisions.toArray();
+      protected Object getElementAt(int viewIndex) {
+        return revisions.get(table.convertRowIndexToModel(viewIndex));
       }
 
       @Override
       protected String getElementText(Object element) {
-        VcsFileRevision revision = (VcsFileRevision) element;
+        VcsFileRevision revision = (VcsFileRevision)element;
         return revision.getRevisionNumber().asString() + " " + revision.getBranchName() + " " + revision.getAuthor();
       }
 
       @Override
       protected void selectElement(Object element, String selectedText) {
-        VcsFileRevision revision = (VcsFileRevision) element;
-        TableUtil.selectRows(myComponent, new int[] {myComponent.convertRowIndexToView(revisions.indexOf(revision))});
+        VcsFileRevision revision = (VcsFileRevision)element;
+        TableUtil.selectRows(myComponent, new int[]{myComponent.convertRowIndexToView(revisions.indexOf(revision))});
         TableUtil.scrollSelectionToVisible(myComponent);
       }
     };
+    search.setupListeners();
 
     table.setMinimumSize(new JBDimension(300, 50));
     final PopupChooserBuilder builder = new PopupChooserBuilder(table);
@@ -296,8 +304,9 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     }
 
     builder.setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
-        setItemChoosenCallback(runnable).
+        setItemChosenCallback(runnable).
         setResizable(true).
+        setMovable(true).
         setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new JBDimension(300, 300));
     final JBPopup popup = builder.createPopup();
 
@@ -352,15 +361,13 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   //////////////////////////////////////////////////
   // Implementation for directories
 
-  private static boolean isVisibleForDirectory(@NotNull VcsContext vcsContext) {
-    return vcsContext.getProject() != null;
+  private static boolean isVisibleForDirectory(@Nullable Project project) {
+    return project != null;
   }
 
-  private static boolean isEnabledForDirectory(@NotNull VcsContext vcsContext, @NotNull FilePath filePath) {
-    assert filePath.isDirectory() : "Implementation only for directories!";
-    final Project project = vcsContext.getProject();
+  private static boolean isEnabledForDirectory(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null) return false;
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(filePath);
+    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
     return diffProvider != null && diffProvider.canCompareWithWorkingDir();
   }

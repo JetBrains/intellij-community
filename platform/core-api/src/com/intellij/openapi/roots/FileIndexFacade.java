@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
@@ -6,15 +6,11 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
 public abstract class FileIndexFacade {
   protected final Project myProject;
 
@@ -29,6 +25,7 @@ public abstract class FileIndexFacade {
   public abstract boolean isInContent(@NotNull VirtualFile file);
   public abstract boolean isInSource(@NotNull VirtualFile file);
   public abstract boolean isInSourceContent(@NotNull VirtualFile file);
+  public abstract boolean isInLibrary(@NotNull VirtualFile file);
   public abstract boolean isInLibraryClasses(@NotNull VirtualFile file);
 
   public abstract boolean isInLibrarySource(@NotNull VirtualFile file);
@@ -46,15 +43,6 @@ public abstract class FileIndexFacade {
    * @return true if it's a valid ancestor, false otherwise.
    */
   public abstract boolean isValidAncestor(@NotNull VirtualFile baseDir, @NotNull VirtualFile child);
-
-  /**
-   * @deprecated always returns true, just remove the calls
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public boolean shouldBeFound(@NotNull GlobalSearchScope scope, @NotNull VirtualFile virtualFile) {
-    return true;
-  }
 
   public abstract @NotNull ModificationTracker getRootModificationTracker();
 

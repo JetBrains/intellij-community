@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
@@ -27,10 +14,11 @@ import org.jetbrains.annotations.NotNull;
  * Queue with a limited number of tasks, and with higher priority for new tasks, than for older ones.
  */
 public class SequentialLimitedLifoExecutor<Task> implements Disposable {
+  private static final Logger LOG = Logger.getInstance(SequentialLimitedLifoExecutor.class);
 
   private final int myMaxTasks;
-  @NotNull private final ThrowableConsumer<? super Task, ? extends Throwable> myLoadProcess;
-  @NotNull private final QueueProcessor<Task> myLoader;
+  private final @NotNull ThrowableConsumer<? super Task, ? extends Throwable> myLoadProcess;
+  private final @NotNull QueueProcessor<Task> myLoader;
 
   public SequentialLimitedLifoExecutor(Disposable parentDisposable, int maxTasks,
                                        @NotNull ThrowableConsumer<? super Task, ? extends Throwable> loadProcess) {
@@ -64,7 +52,7 @@ public class SequentialLimitedLifoExecutor<Task> implements Disposable {
         throw e;
       }
       catch (Throwable e) {
-        throw new RuntimeException(e); // todo
+        LOG.error(e);
       }
     }
   }

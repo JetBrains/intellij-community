@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="snakeyaml" type="repository">
-    <properties maven-id="org.yaml:snakeyaml:1.26" />
+    <properties jar-repository-id="central-proxy" maven-id="org.yaml:snakeyaml:2.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.1/snakeyaml-2.1.jar">
+          <sha256sum>69a4537045ddbcaed4c68eef074462eb12d324d7953f62c5ecd35df645e8aec9</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/1.26/snakeyaml-1.26.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.1/snakeyaml-2.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/1.26/snakeyaml-1.26-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/yaml/snakeyaml/2.1/snakeyaml-2.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -49,9 +49,8 @@ public class WebResource implements Serializable {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof WebResource)) return false;
+    if (!(o instanceof WebResource resource)) return false;
 
-    WebResource resource = (WebResource)o;
     if (!file.getPath().equals(resource.file.getPath())) return false;
     if (warDirectory != resource.warDirectory) return false;
     if (!warRelativePath.equals(resource.warRelativePath)) return false;

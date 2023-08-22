@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class EclipseUserLibrariesHelper {
+public final class EclipseUserLibrariesHelper {
   //private static final String ORG_ECLIPSE_JDT_CORE_PREFS = "org.eclipse.jdt.core.prefs";
   //private static final String ORG_ECLIPSE_JDT_CORE_USER_LIBRARY = "org.eclipse.jdt.core.userLibrary.";
 
@@ -87,29 +87,27 @@ public class EclipseUserLibrariesHelper {
           libraryByName = model.createLibrary(libName);
           model.commit();
         }
-        if (libraryByName != null) {
-          Library.ModifiableModel model = libraryByName.getModifiableModel();
-          for (Element a : libElement.getChildren("archive")) {
-            String rootPath = a.getAttributeValue("path");
-            // IDEA-138039 Eclipse import: Unix file system: user library gets wrong paths
-            LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-            VirtualFile localFile = fileSystem.findFileByPath(rootPath);
-            if (rootPath.startsWith("/") && (localFile == null || !localFile.isValid())) {
-              // relative to workspace root
-              rootPath = project.getBasePath() + rootPath;
-              localFile = fileSystem.findFileByPath(rootPath);
-            }
-            String url = localFile == null ? VfsUtilCore.pathToUrl(rootPath) : localFile.getUrl();
-            if (localFile != null) {
-              VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
-              if (jarFile != null) {
-                url = jarFile.getUrl();
-              }
-            }
-            model.addRoot(url, OrderRootType.CLASSES);
+        Library.ModifiableModel model = libraryByName.getModifiableModel();
+        for (Element a : libElement.getChildren("archive")) {
+          String rootPath = a.getAttributeValue("path");
+          // IDEA-138039 Eclipse import: Unix file system: user library gets wrong paths
+          LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+          VirtualFile localFile = fileSystem.findFileByPath(rootPath);
+          if (rootPath.startsWith("/") && (localFile == null || !localFile.isValid())) {
+            // relative to workspace root
+            rootPath = project.getBasePath() + rootPath;
+            localFile = fileSystem.findFileByPath(rootPath);
           }
-          model.commit();
+          String url = localFile == null ? VfsUtilCore.pathToUrl(rootPath) : localFile.getUrl();
+          if (localFile != null) {
+            VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+            if (jarFile != null) {
+              url = jarFile.getUrl();
+            }
+          }
+          model.addRoot(url, OrderRootType.CLASSES);
         }
+        model.commit();
         unknownLibraries.remove(libName);  //ignore finally found libraries
       }
     });

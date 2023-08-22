@@ -15,14 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
+import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyIfStatementWithTooManyBranchesInspection extends GroovyIfStatementWithTooManyBranchesInspectionBase {
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum number of branches:", this, "m_limit");
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("if.statement.with.too.many.branches.max.option"), 2, 100));
   }
 }

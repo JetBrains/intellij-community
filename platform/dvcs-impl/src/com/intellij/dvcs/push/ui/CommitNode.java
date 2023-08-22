@@ -3,6 +3,7 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
@@ -17,6 +18,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 
 public class CommitNode extends DefaultMutableTreeNode implements CustomRenderedTreeNode, TooltipNode {
+
+  private static final ExtensionPointName<CommitNodeUiRenderExtension> COMMIT_NODE_RENDERER_EP =
+    ExtensionPointName.create("com.intellij.commitNodeUiRenderExtension");
 
   @NotNull private final Project myProject;
 
@@ -33,6 +37,7 @@ public class CommitNode extends DefaultMutableTreeNode implements CustomRendered
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
     renderer.append("   ");
+    COMMIT_NODE_RENDERER_EP.forEachExtensionSafe(it -> it.render(myProject, renderer, this));
     TreeNode parent = getParent();
     new IssueLinkRenderer(myProject, renderer).appendTextWithLinks(getUserObject().getSubject(), PushLogTreeUtil
       .addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES,

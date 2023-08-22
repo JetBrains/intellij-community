@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -18,31 +20,31 @@ import java.util.List;
  * Plugin repository XML parser.
  * Supports both updates.xml and plugins.jetbrains.com formats.
  */
-class RepositoryContentHandler extends DefaultHandler {
-  private static final String CATEGORY = "category";
-  private static final String PLUGIN = "plugin";
-  private static final String IDEA_PLUGIN = "idea-plugin";
-  private static final String NAME = "name";
-  private static final String ID = "id";
-  private static final String DESCRIPTION = "description";
-  private static final String VERSION = "version";
-  private static final String VENDOR = "vendor";
-  private static final String EMAIL = "email";
-  private static final String URL = "url";
-  private static final String IDEA_VERSION = "idea-version";
-  private static final String SINCE_BUILD = "since-build";
-  private static final String UNTIL_BUILD = "until-build";
-  private static final String CHANGE_NOTES = "change-notes";
-  private static final String DEPENDS = "depends";
-  private static final String DOWNLOADS = "downloads";
-  private static final String DOWNLOAD_URL = "downloadUrl";
-  private static final String DOWNLOAD_URL_NEW_STYLE = "download-url";
-  private static final String SIZE = "size";
-  private static final String RATING = "rating";
-  private static final String DATE = "date";
-  private static final String PLUGIN_UPDATED_DATE = "updatedDate";
-  private static final String TAGS = "tags";
-  private static final String PRODUCT_CODE = "productCode";
+final class RepositoryContentHandler extends DefaultHandler {
+  private static final @NonNls String CATEGORY = "category";
+  private static final @NonNls String PLUGIN = "plugin";
+  private static final @NonNls String IDEA_PLUGIN = "idea-plugin";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String ID = "id";
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String VERSION = "version";
+  private static final @NonNls String VENDOR = "vendor";
+  private static final @NonNls String EMAIL = "email";
+  private static final @NonNls String URL = "url";
+  private static final @NonNls String IDEA_VERSION = "idea-version";
+  private static final @NonNls String SINCE_BUILD = "since-build";
+  private static final @NonNls String UNTIL_BUILD = "until-build";
+  private static final @NonNls String CHANGE_NOTES = "change-notes";
+  private static final @NonNls String DEPENDS = "depends";
+  private static final @NonNls String DOWNLOADS = "downloads";
+  private static final @NonNls String DOWNLOAD_URL = "downloadUrl";
+  private static final @NonNls String DOWNLOAD_URL_NEW_STYLE = "download-url";
+  private static final @NonNls String SIZE = "size";
+  private static final @NonNls String RATING = "rating";
+  private static final @NonNls String DATE = "date";
+  private static final @NonNls String PLUGIN_UPDATED_DATE = "updatedDate";
+  private static final @NonNls String TAGS = "tags";
+  private static final @NonNls String PRODUCT_CODE = "productCode";
 
   private final StringBuilder currentValue = new StringBuilder();
   private PluginNode currentPlugin;
@@ -52,7 +54,7 @@ class RepositoryContentHandler extends DefaultHandler {
 
   @NotNull
   List<PluginNode> getPluginsList() {
-    return plugins != null ? plugins : Collections.emptyList();
+    return plugins == null ? Collections.emptyList() : plugins;
   }
 
   @Override
@@ -71,7 +73,7 @@ class RepositoryContentHandler extends DefaultHandler {
       }
     }
     else if (qName.equals(IDEA_PLUGIN)) {
-      currentPlugin = new PluginNode();
+      currentPlugin = new PluginNode(PluginId.getId("unknown"));
       currentPlugin.setCategory(buildCategoryName());
       currentPlugin.setDownloads(attributes.getValue(DOWNLOADS));
       currentPlugin.setSize(attributes.getValue(SIZE));
@@ -84,18 +86,15 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(attributes.getValue(SINCE_BUILD));
-      currentPlugin.setUntilBuild(IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
+      currentPlugin.setUntilBuild(PluginManager.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
     }
     else if (qName.equals(VENDOR)) {
       currentPlugin.setVendorEmail(attributes.getValue(EMAIL));
       currentPlugin.setVendorUrl(attributes.getValue(URL));
     }
     else if (qName.equals(PLUGIN)) {
-      currentPlugin = new PluginNode();
       String id = attributes.getValue(ID);
-      if (id != null) {
-        currentPlugin.setId(id);
-      }
+      currentPlugin = id == null ? new PluginNode(PluginId.getId("unknown")) : new PluginNode(PluginId.getId(id));
       currentPlugin.setDownloadUrl(attributes.getValue(URL));
       currentPlugin.setVersion(attributes.getValue(VERSION));
       currentPlugin.setIncomplete(true);
@@ -108,48 +107,28 @@ class RepositoryContentHandler extends DefaultHandler {
     String currentValueString = currentValue.toString();
     currentValue.setLength(0);
 
-    if (qName.equals(ID)) {
-      currentPlugin.setId(currentValueString);
-    }
-    else if (qName.equals(NAME)) {
-      currentPlugin.setName(currentValueString);
-    }
-    else if (qName.equals(DESCRIPTION)) {
-      currentPlugin.setDescription(currentValueString);
-    }
-    else if (qName.equals(VERSION)) {
-      currentPlugin.setVersion(currentValueString);
-    }
-    else if (qName.equals(VENDOR)) {
-      currentPlugin.setVendor(currentValueString);
-    }
-    else if (qName.equals(DEPENDS)) {
-      currentPlugin.addDepends(currentValueString);
-    }
-    else if (qName.equals(CHANGE_NOTES)) {
-      currentPlugin.setChangeNotes(currentValueString);
-    }
-    else if (qName.equals(CATEGORY)) {
-      categories.pop();
-      categoryName = null;
-    }
-    else if (qName.equals(RATING)) {
-      currentPlugin.setRating(currentValueString);
-    }
-    else if (qName.equals(DOWNLOAD_URL) || qName.equals(DOWNLOAD_URL_NEW_STYLE)) {
-      currentPlugin.setDownloadUrl(currentValueString);
-    }
-    else if (qName.equals(IDEA_PLUGIN) || qName.equals(PLUGIN)) {
-      if (currentPlugin != null) {
-        plugins.add(currentPlugin);
+    switch (qName) {
+      case ID -> currentPlugin.setId(currentValueString);
+      case NAME -> currentPlugin.setName(currentValueString);
+      case DESCRIPTION -> currentPlugin.setDescription(currentValueString);
+      case VERSION -> currentPlugin.setVersion(currentValueString);
+      case VENDOR -> currentPlugin.setVendor(currentValueString);
+      case DEPENDS -> currentPlugin.addDepends(currentValueString, false);
+      case CHANGE_NOTES -> currentPlugin.setChangeNotes(currentValueString);
+      case CATEGORY -> {
+        categories.pop();
+        categoryName = null;
       }
-      currentPlugin = null;
-    }
-    else if (qName.equals(TAGS)) {
-      currentPlugin.addTags(currentValueString);
-    }
-    else if (qName.equals(PRODUCT_CODE)) {
-      currentPlugin.setProductCode(currentValueString);
+      case RATING -> currentPlugin.setRating(currentValueString);
+      case DOWNLOAD_URL, DOWNLOAD_URL_NEW_STYLE -> currentPlugin.setDownloadUrl(currentValueString);
+      case IDEA_PLUGIN, PLUGIN -> {
+        if (currentPlugin != null) {
+          plugins.add(currentPlugin);
+        }
+        currentPlugin = null;
+      }
+      case TAGS -> currentPlugin.addTags(currentValueString);
+      case PRODUCT_CODE -> currentPlugin.setProductCode(currentValueString);
     }
   }
 
@@ -158,8 +137,7 @@ class RepositoryContentHandler extends DefaultHandler {
     currentValue.append(ch, start, length);
   }
 
-  @NotNull
-  private String buildCategoryName() {
+  private @NotNull String buildCategoryName() {
     if (categoryName == null) {
       categoryName = String.join("/", categories);
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -24,10 +25,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadRootContainer extends RadContainer implements IRootContainer {
   private String myClassToBind;
   private String myMainComponentBinding;
@@ -36,7 +33,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   private final List<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<>();
 
   public RadRootContainer(final ModuleProvider module, final String id) {
-    super(module, JPanel.class, id);
+    super(module, RootPanel.class, id);
     getDelegee().setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
   }
 
@@ -60,7 +57,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
    */
   @Override
   @Nullable
-  public String getClassToBind(){
+  public @NlsSafe String getClassToBind() {
     return myClassToBind;
   }
 
@@ -153,7 +150,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     return myButtonGroups.toArray(new RadButtonGroup[0]);
   }
 
-  public String suggestGroupName() {
+  public @NlsSafe String suggestGroupName() {
     int groupNumber = 1;
     group: while(true) {
       @NonNls String suggestedName = "buttonGroup" + groupNumber;
@@ -275,6 +272,25 @@ public final class RadRootContainer extends RadContainer implements IRootContain
           Objects.equals(existing.getComponentId(), suppression.getComponentId())) {
         myInspectionSuppressions.remove(existing);
         break;
+      }
+    }
+  }
+
+  public static class RootPanel extends JPanel {
+    // public constructor for reflection
+    public RootPanel() {
+    }
+
+    @Override
+    public void doLayout() {
+      super.doLayout();
+      int count = getComponentCount();
+      for (int i = 0; i < count; i++) {
+        Component component = getComponent(i);
+        Rectangle bounds = component.getBounds();
+        if (bounds.x < 0 || bounds.y < 0) {
+          component.setBounds(bounds.x < 0 ? 20 : bounds.x, bounds.y < 0 ? 20 : bounds.y, bounds.width, bounds.height);
+        }
       }
     }
   }

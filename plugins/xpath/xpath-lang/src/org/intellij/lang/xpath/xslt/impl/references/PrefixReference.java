@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,6 @@ public class PrefixReference extends SimpleAttributeReference implements EmptyRe
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return "Undeclared namespace prefix ''{0}''";
+    return XPathBundle.partialMessage("inspection.message.undeclared.namespace.prefix", 1);
   }
 }

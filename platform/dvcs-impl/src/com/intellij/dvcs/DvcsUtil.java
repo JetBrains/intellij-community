@@ -2,15 +2,13 @@
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
-import com.intellij.dvcs.repo.AbstractRepositoryManager;
-import com.intellij.dvcs.repo.RepoStateException;
-import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.dvcs.repo.*;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -19,19 +17,20 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.status.StatusBarUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Function;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
@@ -46,11 +45,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-public class DvcsUtil {
+public final class DvcsUtil {
 
   private static final Logger LOG = Logger.getInstance(DvcsUtil.class);
 
-  private static final Logger LOGGER = Logger.getInstance(DvcsUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
 
   /**
@@ -80,40 +78,27 @@ public class DvcsUtil {
     return ContainerUtil.mapNotNull(files, file -> VfsUtil.findFileByIoFile(file, false));
   }
 
-  /**
-   * @deprecated use {@link VcsImplUtil#getShortVcsRootName}
-   */
-  @NotNull
-  @Deprecated
-  public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {
-    return VcsImplUtil.getShortVcsRootName(project, root);
-  }
-
+  @NlsSafe
   @NotNull
   public static String getShortRepositoryName(@NotNull Repository repository) {
     return VcsImplUtil.getShortVcsRootName(repository.getProject(), repository.getRoot());
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortNames(@NotNull Collection<? extends Repository> repositories) {
-    return StringUtil.join(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository), ", ");
+    return StringUtil.join(repositories, repository -> getShortRepositoryName(repository), ", ");
   }
 
-  @NotNull
-  public static String fileOrFolder(@NotNull VirtualFile file) {
-    if (file.isDirectory()) {
-      return "folder";
+  public static <T extends Repository> void disableActionIfAnyRepositoryIsFresh(@NotNull AnActionEvent e,
+                                                                                @NotNull List<T> repositories,
+                                                                                @Nls String operationName) {
+    boolean isFresh = ContainerUtil.exists(repositories, Repository::isFresh);
+    if (isFresh) {
+      Presentation p = e.getPresentation();
+      p.setEnabled(false);
+      p.setDescription(DvcsBundle.messagePointer("action.not.possible.in.fresh.repo.description", operationName));
     }
-    return "file";
-  }
-
-  public static boolean anyRepositoryIsFresh(Collection<? extends Repository> repositories) {
-    for (Repository repository : repositories) {
-      if (repository.isFresh()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Nullable
@@ -126,27 +111,24 @@ public class DvcsUtil {
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
    */
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(statusBar);
-    VirtualFile result = null;
-    if (fileEditor != null) {
-      result = fileEditor.getFile();
-    }
-
-    if (result == null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      if (manager != null) {
-        Editor editor = manager.getSelectedTextEditor();
-        if (editor != null) {
-          result = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        }
-      }
-    }
-    return result;
+    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor();
+    return fileEditor == null ? null : fileEditor.getFile();
   }
 
+  /**
+   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   */
+  @Nullable
+  @Deprecated
+  @CalledInAny
+  public static VirtualFile getSelectedFile(@NotNull DataContext dataProvider) {
+    FileEditor fileEditor = PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(dataProvider);
+    return fileEditor == null ? null : fileEditor.getFile();
+  }
+
+  @NlsSafe
   @NotNull
   public static String getShortHash(@NotNull String hash) {
     if (hash.length() < VcsLogUtil.SHORT_HASH_LENGTH) {
@@ -158,6 +140,7 @@ public class DvcsUtil {
     return VcsLogUtil.getShortHash(hash);
   }
 
+  @NlsSafe
   @NotNull
   public static String getDateString(@NotNull TimedVcsCommit commit) {
     return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp()) + " ";
@@ -169,7 +152,7 @@ public class DvcsUtil {
   }
 
   @NotNull
-  public static AccessToken workingTreeChangeStarted(@NotNull Project project, @Nullable String activityName) {
+  public static AccessToken workingTreeChangeStarted(@NotNull Project project, @Nullable @Nls String activityName) {
     BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project, activityName);
     return new AccessToken() {
       @Override
@@ -179,17 +162,9 @@ public class DvcsUtil {
     };
   }
 
-  /**
-   * @deprecated Call {@link AccessToken#finish()} directly from the AccessToken received by {@link #workingTreeChangeStarted(Project)}
-   */
-  @Deprecated
-  public static void workingTreeChangeFinished(@NotNull Project project, @NotNull AccessToken token) {
-    token.finish();
-  }
-
   public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);
 
-  public static void assertFileExists(File file, String message) throws IllegalStateException {
+  public static void assertFileExists(File file, @NonNls @Nls String message) throws IllegalStateException {
     if (!file.exists()) {
       throw new IllegalStateException(message);
     }
@@ -203,30 +178,36 @@ public class DvcsUtil {
    * @param file File to read.
    * @return file content.
    */
+  @NlsSafe
   @NotNull
   public static String tryLoadFile(@NotNull final File file) throws RepoStateException {
     return tryLoadFile(file, null);
   }
 
+  @NlsSafe
   @NotNull
   public static String tryLoadFile(@NotNull final File file, @Nullable String encoding) throws RepoStateException {
     return tryOrThrow(() -> StringUtil.convertLineSeparators(FileUtil.loadFile(file, encoding)).trim(), file);
   }
 
+  @NlsSafe
   @Nullable
   @Contract("_ , !null -> !null")
-  public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue) {
+  public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable @NlsSafe String defaultValue) {
     return tryLoadFileOrReturn(file, defaultValue, null);
   }
 
+  @NlsSafe
   @Nullable
   @Contract("_ , !null, _ -> !null")
-  public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue, @Nullable String encoding) {
+  public static String tryLoadFileOrReturn(@NotNull final File file,
+                                           @Nullable @NlsSafe String defaultValue,
+                                           @Nullable @NonNls String encoding) {
     try {
       return tryLoadFile(file, encoding);
     }
     catch (RepoStateException e) {
-      LOG.error(e);
+      LOG.warn(e);
       return defaultValue;
     }
   }
@@ -237,21 +218,21 @@ public class DvcsUtil {
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  private static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
+  public static <T> T tryOrThrow(Callable<? extends T> actionToTry, Object details) throws RepoStateException {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {
         return actionToTry.call();
       }
       catch (IOException e) {
-        LOG.info("IOException while loading " + fileToLoad, e);
+        LOG.info("IOException while loading " + details, e);
         cause = e;
       }
       catch (Exception e) {    // this shouldn't happen since only IOExceptions are thrown in clients.
-        throw new RepoStateException("Couldn't load file " + fileToLoad, e);
+        throw new RepoStateException("Couldn't load file " + details, e);
       }
     }
-    throw new RepoStateException("Couldn't load file " + fileToLoad, cause);
+    throw new RepoStateException("Couldn't load file " + details, cause);
   }
 
   public static void visitVcsDirVfs(@NotNull VirtualFile vcsDir, @NotNull Collection<String> subDirs) {
@@ -269,44 +250,156 @@ public class DvcsUtil {
     }
   }
 
-  @CalledInAwt
-  public static void addMappingIfSubRoot(@NotNull Project project, @NotNull String newRepositoryPath, @NotNull String vcsName) {
+  public static void addMappingIfSubRoot(@NotNull Project project,
+                                         @NotNull @NonNls String newRepositoryPath,
+                                         @NotNull @NonNls String vcsName) {
     if (!project.isDisposed() && project.getBasePath() != null && FileUtil.isAncestor(project.getBasePath(), newRepositoryPath, true)) {
       ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
       manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), newRepositoryPath, vcsName));
     }
   }
 
+  /**
+   * Find the VCS root to use as a 'current' in a status bar widget.
+   * <p>
+   * Note: Do not call directly, use per-vcs utility method that provides correct {@code recentRootPath}.
+   *
+   * @param recentRootPath The last repository root that was shown in the widget,
+   *                       see {@link com.intellij.dvcs.ui.DvcsStatusWidget#rememberRecentRoot(String)}.
+   * @param selectedFile   The file in context, see {@link #getSelectedFile(Project)}.
+   */
   @Nullable
+  @CalledInAny
+  public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
+                                                               @NotNull AbstractRepositoryManager<T> manager,
+                                                               @Nullable @NonNls @SystemIndependent String recentRootPath,
+                                                               @Nullable VirtualFile selectedFile) {
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, selectedFile));
+    if (repository != null) return repository;
+
+    repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), recentRootPath));
+    if (repository != null) return repository;
+
+    return null;
+  }
+
+  @Nullable
+  @CalledInAny
+  public static <T extends Repository> T guessWidgetRepository(@NotNull Project project,
+                                                               @NotNull AbstractRepositoryManager<T> manager,
+                                                               @Nullable @NonNls @SystemIndependent String recentRootPath,
+                                                               @NotNull DataContext dataContext) {
+    VirtualFile file = getSelectedFile(dataContext);
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
+    if (repository != null) return repository;
+
+    repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), recentRootPath));
+    if (repository != null) return repository;
+
+    return null;
+  }
+
+  /**
+   * Find the VCS root on which a repository-wide AnAction is to be invoked in an unspecified context.
+   * <p>
+   * Prefer using {@link #guessRepositoryForOperation(Project, AbstractRepositoryManager, DataContext)} whenever possible.
+   */
+  @Nullable
+  @RequiresEdt
+  public static <T extends Repository> T guessRepositoryForOperation(@NotNull Project project,
+                                                                     @NotNull AbstractRepositoryManager<T> manager) {
+    DataContext dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR, FileEditorManager.getInstance(project).getSelectedEditor())
+      .build();
+
+    return guessRepositoryForOperation(project, manager, dataContext);
+  }
+
+  /**
+   * Find the VCS root on which a repository-wide AnAction is to be invoked in a given context.
+   */
+  @Nullable
+  @CalledInAny
+  public static <T extends Repository> T guessRepositoryForOperation(@NotNull Project project,
+                                                                     @NotNull AbstractRepositoryManager<T> manager,
+                                                                     @NotNull DataContext dataContext) {
+    VirtualFile file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
+    T repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
+    if (repository != null) return repository;
+
+    file = getSelectedFile(dataContext); // last active FileEditor
+    repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
+    if (repository != null) return repository;
+
+    repository = manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), null));
+    if (repository != null) return repository;
+
+    return null;
+  }
+
+  /**
+   * Find the VCS root on which a DVCS-generic repository-wide AnAction is to be invoked in a given context.
+   */
+  @Nullable
+  @CalledInAny
+  public static Repository guessRepositoryForOperation(@NotNull Project project,
+                                                       @NotNull DataContext dataContext) {
+    VcsRepositoryManager manager = VcsRepositoryManager.getInstance(project);
+
+    VirtualFile file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
+    Repository repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, file));
+    if (repository != null) return repository;
+
+    VirtualFile selectedFile = getSelectedFile(dataContext);
+    repository = manager.getRepositoryForRootQuick(findVcsRootFor(project, selectedFile));
+    if (repository != null) return repository;
+
+    return null;
+  }
+
+  /**
+   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   */
+  @Nullable
+  @Deprecated
   @CalledInAny
   public static <T extends Repository> T guessRepositoryForFile(@NotNull Project project,
                                                                 @NotNull RepositoryManager<T> manager,
                                                                 @Nullable VirtualFile file,
-                                                                @Nullable String defaultRootPathValue) {
+                                                                @Nullable @NonNls String defaultRootPathValue) {
     T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, file));
-    return repository != null ? repository : manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
+    if (repository != null) return repository;
+    return manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
+  /**
+   * @deprecated Prefer {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   */
   @Nullable
-  @CalledInAwt
+  @Deprecated
+  @RequiresEdt
   public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
                                                                      @NotNull AbstractRepositoryManager<T> manager,
-                                                                     @Nullable String defaultRootPathValue) {
+                                                                     @Nullable @NonNls String defaultRootPathValue) {
     T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, getSelectedFile(project)));
-    return repository != null
-           ? repository
-           : manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
+    if (repository != null) return repository;
+    return manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
+  /**
+   * Take configured VCS root in order:
+   * 1) Matching 'defaultRootPathValue' path
+   * 2) Matching {@link Project#getBaseDir()} or its ancestor
+   * 3) Any (typically - first one by {@link NewMappings#MAPPINGS_COMPARATOR})
+   */
   @Nullable
-  private static VirtualFile guessRootForVcs(@NotNull Project project, @Nullable AbstractVcs vcs, @Nullable String defaultRootPathValue) {
+  private static VirtualFile guessRootForVcs(@NotNull Project project,
+                                             @NotNull AbstractVcs vcs,
+                                             @Nullable @NonNls String defaultRootPathValue) {
     if (project.isDisposed()) return null;
     LOG.debug("Guessing vcs root...");
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (vcs == null) {
-      LOG.debug("Vcs not found.");
-      return null;
-    }
     String vcsName = vcs.getDisplayName();
     VirtualFile[] vcsRoots = vcsManager.getRootsUnderVcs(vcs);
     if (vcsRoots.length == 0) {
@@ -323,7 +416,7 @@ public class DvcsUtil {
     // get remembered last visited repository root
     if (defaultRootPathValue != null) {
       VirtualFile recentRoot = VcsUtil.getVirtualFile(defaultRootPathValue);
-      if (recentRoot != null) {
+      if (ArrayUtil.contains(recentRoot, vcsRoots)) {
         LOG.debug("Returning the recent root: " + recentRoot);
         return recentRoot;
       }
@@ -349,73 +442,86 @@ public class DvcsUtil {
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<? extends T> repositories) {
     List<T> validRepositories = ContainerUtil.filter(repositories, t -> t.getRoot().isValid());
-    validRepositories.sort(REPOSITORY_COMPARATOR);
-    return validRepositories;
+    return ContainerUtil.sorted(validRepositories, REPOSITORY_COMPARATOR);
   }
 
+  /**
+   * Check if passed file is a part of a project library, and find a relevant VCS mapping (ex: for its module).
+   */
   @Nullable
   private static VirtualFile getVcsRootForLibraryFile(@NotNull Project project, @NotNull VirtualFile file) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    // for a file inside .jar/.zip consider the .jar/.zip file itself
+
+    // For a file inside .jar/.zip, check VCS for the .jar/.zip file itself
     VirtualFile root = vcsManager.getVcsRootFor(VfsUtilCore.getVirtualFileForJar(file));
     if (root != null) {
-      LOGGER.debug("Found root for zip/jar file: " + root);
+      LOG.debug("Found root for zip/jar file: " + root);
       return root;
     }
 
-    // for other libs which don't have jars inside the project dir (such as JDK) take the owner module of the lib
+    // For libraries, check VCS for the owner module
     List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
-    Set<VirtualFile> libraryRoots = new HashSet<>();
+    Set<VirtualFile> modulesVcsRoots = new HashSet<>();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
-        VirtualFile moduleRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
-        if (moduleRoot != null) {
-          libraryRoots.add(moduleRoot);
+        VirtualFile moduleVcsRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
+        if (moduleVcsRoot != null) {
+          modulesVcsRoots.add(moduleVcsRoot);
         }
       }
     }
 
-    if (libraryRoots.isEmpty()) {
-      LOGGER.debug("No library roots");
+    if (modulesVcsRoots.isEmpty()) {
+      LOG.debug("No library roots");
       return null;
     }
 
-    // if the lib is used in several modules, take the top module
-    // (for modules of the same level we can't guess anything => take the first one)
-    Iterator<VirtualFile> libIterator = libraryRoots.iterator();
-    VirtualFile topLibraryRoot = libIterator.next();
-    while (libIterator.hasNext()) {
-      VirtualFile libRoot = libIterator.next();
-      if (VfsUtilCore.isAncestor(libRoot, topLibraryRoot, true)) {
-        topLibraryRoot = libRoot;
+    // If the lib is used in several modules under different VCS roots, take the topmost one.
+    // For modules not sharing ancestry, we can't guess anything => take the first one.
+    VirtualFile topRoot = null;
+    for (VirtualFile vcsRoot : modulesVcsRoots) {
+      if (topRoot == null || VfsUtilCore.isAncestor(vcsRoot, topRoot, true)) {
+        topRoot = vcsRoot;
       }
     }
-    LOGGER.debug("Several library roots, returning " + topLibraryRoot);
-    return topLibraryRoot;
+    LOG.debug("Several library roots, returning " + topRoot);
+    return topRoot;
   }
 
+  /**
+   * @deprecated Prefer {@link #findVcsRootFor}, {@link #guessWidgetRepository} or {@link #guessRepositoryForOperation}.
+   */
   @Nullable
+  @Deprecated
   public static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
-    VirtualFile root = null;
+    return findVcsRootFor(project, file);
+  }
+
+  /**
+   * Find relevant VCS root for a given file, if any. Note that this root might not track the file itself.
+   */
+  @Nullable
+  public static VirtualFile findVcsRootFor(@NotNull Project project, @Nullable VirtualFile file) {
+    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+    if (root != null) return root;
+
     if (file != null) {
-      root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
-      if (root == null) {
-        LOGGER.debug("Cannot get root by file. Trying with get by library: " + file);
-        root = getVcsRootForLibraryFile(project, file);
-      }
+      root = getVcsRootForLibraryFile(project, file);
+      if (root != null) return root;
     }
-    return root;
+
+    return null;
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
                                                                                               @NotNull List<? extends VcsFullCommitDetails> commits) {
     Map<R, List<VcsFullCommitDetails>> groupedCommits = new HashMap<>();
     for (VcsFullCommitDetails commit : commits) {
       R repository = repoManager.getRepositoryForRoot(commit.getRoot());
       if (repository == null) {
-        LOGGER.info("No repository found for commit " + commit);
+        LOG.info("No repository found for commit " + commit);
         continue;
       }
       List<VcsFullCommitDetails> commitsInRoot = groupedCommits.computeIfAbsent(repository, __ -> new ArrayList<>());
@@ -430,39 +536,22 @@ public class DvcsUtil {
                               support -> support.getVcs().equals(vcs));
   }
 
+  @NlsSafe
   @NotNull
   public static String joinShortNames(@NotNull Collection<? extends Repository> repositories) {
     return joinShortNames(repositories, -1);
   }
 
+  @NlsSafe
   @NotNull
   public static String joinShortNames(@NotNull Collection<? extends Repository> repositories, int limit) {
-    return joinWithAnd(ContainerUtil.map(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository)),
+    return joinWithAnd(ContainerUtil.map(repositories, repository -> getShortRepositoryName(repository)),
                        limit);
   }
 
+  @Nls
   @NotNull
-  public static String joinWithAnd(@NotNull List<String> strings, int limit) {
-    int size = strings.size();
-    if (size == 0) return "";
-    if (size == 1) return strings.get(0);
-    if (size == 2) return strings.get(0) + " and " + strings.get(1);
-
-    boolean isLimited = limit >= 2 && limit < size;
-    int listCount = (isLimited ? limit : size) - 1;
-
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < listCount; i++) {
-      if (i != 0) sb.append(", ");
-      sb.append(strings.get(i));
-    }
-
-    if (isLimited) {
-      sb.append(" and ").append(size - limit + 1).append(" others");
-    }
-    else {
-      sb.append(" and ").append(strings.get(size - 1));
-    }
-    return sb.toString();
+  public static String joinWithAnd(@NotNull List<@Nls String> strings, int limit) {
+    return VcsUtil.joinWithAnd(strings, limit);
   }
 }

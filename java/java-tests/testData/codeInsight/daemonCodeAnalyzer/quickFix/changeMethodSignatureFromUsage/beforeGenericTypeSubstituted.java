@@ -1,4 +1,4 @@
-// "Remove 2nd parameter from method 'update'" "true"
+// "Remove 2nd parameter from method 'update'" "true-preview"
 class Test<T> {
 
   void update(T a, String b) {}

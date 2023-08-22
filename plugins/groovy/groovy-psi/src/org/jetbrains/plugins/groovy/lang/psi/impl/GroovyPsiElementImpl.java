@@ -18,9 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implements GroovyPsiElement {
 
   public GroovyPsiElementImpl(@NotNull ASTNode node) {

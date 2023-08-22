@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NonNls;
@@ -107,7 +108,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
   }
 
   @Nullable
-  private static String getAttributeValue(AntDomElement element, final String attributeName) {
+  private static @NlsSafe String getAttributeValue(AntDomElement element, final @NonNls String attributeName) {
     final DomAttributeChildDescription description = element.getGenericInfo().getAttributeChildDescription(attributeName);
     if (description == null) {
       return null;
@@ -158,11 +159,11 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
 
   private static boolean isEnabled(AntDomElement element) {
     final String ifProperty = getAttributeValue(element, "if");
-    if (ifProperty != null && PropertyResolver.resolve(element.getContextAntProject(), ifProperty, element).getFirst() == null) {
+    if (ifProperty != null && PropertyResolver.resolve(element.getContextAntProject(), ifProperty, element).element() == null) {
       return false;
     }
     final String unlessProperty = getAttributeValue(element, "unless");
-    if (unlessProperty != null && PropertyResolver.resolve(element.getContextAntProject(), unlessProperty, element).getFirst() != null) {
+    if (unlessProperty != null && PropertyResolver.resolve(element.getContextAntProject(), unlessProperty, element).element() != null) {
       return false;
     }
     return true;

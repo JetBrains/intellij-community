@@ -41,7 +41,7 @@ public class ComboboxEditorTextField extends EditorTextField {
   protected void updateBorder(@NotNull EditorEx editor) {}
 
   @Override
-  protected EditorEx createEditor() {
+  protected @NotNull EditorEx createEditor() {
     EditorEx result = super.createEditor();
 
     result.addFocusListener(new FocusChangeListener() {

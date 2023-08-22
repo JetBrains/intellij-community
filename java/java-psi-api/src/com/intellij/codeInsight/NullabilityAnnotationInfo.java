@@ -2,7 +2,9 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a particular nullability annotation instance
@@ -10,11 +12,20 @@ import org.jetbrains.annotations.NotNull;
 public class NullabilityAnnotationInfo {
   private final @NotNull PsiAnnotation myAnnotation;
   private final @NotNull Nullability myNullability;
+  private final @Nullable PsiModifierListOwner myInheritedFrom;
   private final boolean myContainer;
 
   public NullabilityAnnotationInfo(@NotNull PsiAnnotation annotation, @NotNull Nullability nullability, boolean container) {
+    this(annotation, nullability, null, container);
+  }
+
+  NullabilityAnnotationInfo(@NotNull PsiAnnotation annotation,
+                            @NotNull Nullability nullability,
+                            @Nullable PsiModifierListOwner inheritedFrom,
+                            boolean container) {
     myAnnotation = annotation;
     myNullability = nullability;
+    myInheritedFrom = inheritedFrom;
     myContainer = container;
   }
 
@@ -55,11 +66,23 @@ public class NullabilityAnnotationInfo {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
   }
 
+  /**
+   * @return an element the annotation was inherited from (PsiParameter or PsiMethod), or null if the annotation was not inherited.
+   */
+  public @Nullable PsiModifierListOwner getInheritedFrom() {
+    return myInheritedFrom;
+  }
+
+  @NotNull NullabilityAnnotationInfo withInheritedFrom(@Nullable PsiModifierListOwner owner) {
+    return new NullabilityAnnotationInfo(myAnnotation, myNullability, owner, myContainer);
+  }
+
   @Override
   public String toString() {
     return "NullabilityAnnotationInfo{" +
            myNullability + "(" + myAnnotation.getQualifiedName() + ")" +
-           (myContainer ? ", container=" : "") +
+           (myContainer ? ", container" : "") +
+           (myInheritedFrom != null ? ", inherited from: " + myInheritedFrom : "") +
            "}";
   }
 }

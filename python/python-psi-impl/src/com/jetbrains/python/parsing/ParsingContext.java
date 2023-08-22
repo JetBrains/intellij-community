@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.parsing;
 
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.SyntaxTreeBuilder;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,16 +26,18 @@ public class ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;
   private final FunctionParsing functionParser;
-  private final PsiBuilder myBuilder;
+  private final PatternParsing patternParser;
+  private final SyntaxTreeBuilder myBuilder;
   private final LanguageLevel myLanguageLevel;
   private final Deque<ParsingScope> myScopes;
 
-  public ParsingContext(final PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+  public ParsingContext(final SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
     myBuilder = builder;
     myLanguageLevel = languageLevel;
-    stmtParser = new StatementParsing(this, futureFlag);
+    stmtParser = new StatementParsing(this);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
+    patternParser = new PatternParsing(this);
     myScopes = new ArrayDeque<>();
     myScopes.push(emptyParsingScope());
   }
@@ -70,7 +72,11 @@ public class ParsingContext {
     return functionParser;
   }
 
-  public PsiBuilder getBuilder() {
+  public @NotNull PatternParsing getPatternParser() {
+    return patternParser;
+  }
+
+  public SyntaxTreeBuilder getBuilder() {
     return myBuilder;
   }
 

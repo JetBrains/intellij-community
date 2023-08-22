@@ -100,8 +100,7 @@ public abstract class BasicDomElementComponent<T extends DomElement> extends Abs
       try {
         field.setAccessible(true);
 
-        if (description instanceof DomChildrenDescription) {
-          final DomChildrenDescription childrenDescription = (DomChildrenDescription)description;
+        if (description instanceof DomChildrenDescription childrenDescription) {
           if (convertFieldName(field.getName(), childrenDescription).equals(childrenDescription.getXmlElementName()) && field.get(this) instanceof JComponent) {
             return (JComponent)field.get(this);
           }

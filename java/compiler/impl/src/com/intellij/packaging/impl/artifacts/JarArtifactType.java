@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -30,7 +31,7 @@ import java.util.List;
 
 public class JarArtifactType extends ArtifactType {
   public JarArtifactType() {
-    super("jar", "JAR");
+    super("jar", JavaCompilerBundle.messagePointer("jar.text"));
   }
 
   public static JarArtifactType getInstance() {

@@ -1,29 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.codeStyle.autodetect;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.FormatterBasedLineIndentInfoBuilder;
 import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
@@ -112,35 +99,37 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
   
   public void testSpacesInSimpleClass() {
     doTestLineToIndentMapping(
-      "public class A {\n" +
-      "    public void test() {\n" +
-      "      int a = 2;\n" +
-      "    }\n" +
-      "    public void a() {\n" +
-      "    }\n" +
-      "}",
+      """
+        public class A {
+            public void test() {
+              int a = 2;
+            }
+            public void a() {
+            }
+        }""",
       0, 4, 6, 4, 4, 4, 0
     );
   }
 
   public void testComplexIndents() {
     doTestLineToIndentMapping(
-      "class Test\n" +
-      "{\n" +
-      "  int a;\n" +
-      "  int b;\n" +
-      "  public void test() {\n" +
-      "    int c;\n" +
-      "  }\n" +
-      "  public void run() {\n" +
-      "    Runnable runnable = new Runnable() {\n" +
-      "      @Override\n" +
-      "      public void run() {\n" +
-      "        System.out.println(\"Hello!\");\n" +
-      "      }\n" +
-      "    };\n" +
-      "  }\n" +
-      "}",
+      """
+        class Test
+        {
+          int a;
+          int b;
+          public void test() {
+            int c;
+          }
+          public void run() {
+            Runnable runnable = new Runnable() {
+              @Override
+              public void run() {
+                System.out.println("Hello!");
+              }
+            };
+          }
+        }""",
       0, 0, 2, 2, 2, 4, 2, 2, 4, 6, 6, 8, 6, 4, 2, 0
     );
   }
@@ -149,14 +138,15 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
     configureFromFileText("x.java", text);
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getFile());
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(getFile());
-    
+
     Assert.assertNotNull(document);
     Assert.assertNotNull(builder);
-    
-    FormattingModel model = builder.createModel(getFile(), CodeStyleSettingsManager.getSettings(getProject()));
+
+    FormattingModel model =
+      builder.createModel(FormattingContext.create(getFile(), CodeStyle.getSettings(getProject())));
     Block block = model.getRootBlock();
     List<LineIndentInfo> list = new FormatterBasedLineIndentInfoBuilder(document, block, null).build();
-    
+
     Assert.assertEquals(list.size(), spacesForLine.length);
     for (int i = 0; i < spacesForLine.length; i++) {
       int indentSize = list.get(i).getIndentSize();

@@ -15,14 +15,17 @@
  */
 package com.intellij.remoteServer.util;
 
+import com.intellij.openapi.util.NlsContexts;
+
 public abstract class Column<T> {
 
-  private final String myName;
+  private final @NlsContexts.ColumnName String myName;
 
-  public Column(String name) {
+  public Column(@NlsContexts.ColumnName String name) {
     myName = name;
   }
 
+  @NlsContexts.ColumnName
   public String getName() {
     return myName;
   }

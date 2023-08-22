@@ -1,4 +1,4 @@
-// "Add method body" "true"
+// "Add method body" "true-preview"
 
 interface Some {
     public static void m() {

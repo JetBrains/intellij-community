@@ -1,23 +1,42 @@
-# Some PEP8 deviations are considered irrelevant to stub files:
-# (error counts as of 2017-05-22)
-# 17952 E704 multiple statements on one line (def)
-# 12197 E301 expected 1 blank line
-#  7155 E302 expected 2 blank lines
-#  1463 F401 imported but unused
-#   967 E701 multiple statements on one line (colon)
-#   457 F811 redefinition (should be fixed in pyflakes 2.1.2)
-#   390 E305 expected 2 blank lines
-#     4 E741 ambiguous variable name
+# The following rules are incompatible with or enforced by black:
+#     E203   whitespace before ':' -- scripts only
+#     E301   expected 1 blank line
+#     E302   expected 2 blank lines
+#     E305   expected 2 blank lines
+#     E501   line too long
 
-# Nice-to-haves ignored for now
-#  2307 E501 line too long
+# Some rules are considered irrelevant to stub files:
+#     E701   multiple statements on one line (colon) -- disallows "..." on the same line
+#     F401   imported but unused -- does not recognize re-exports
+#            https://github.com/PyCQA/pyflakes/issues/474
+#     F822   undefined name in __all__ -- flake8 does not recognize 'foo: Any'
+#            https://github.com/PyCQA/pyflakes/issues/533
 
-# Other ignored warnings
-#       W504 line break after binary operator
+# Rules that are out of the control of stub authors:
+#     E741   ambiguous variable name
+#     F403   import *' used; unable to detect undefined names
+#     F405   defined from star imports
+
+# Rules that we'd like to enable in the future:
+#     Y037   Use PEP 604 syntax instead of `typing.Union` and `typing.Optional`.
+#            Currently can't be enabled due to a few lingering bugs in mypy regarding
+#            PEP 604 type aliases (see #4819).
+#     NQA102 "noqa" code has no matching violations. We often introduce "noqa" comments
+#            into the typeshed codebase to unblock flake8-pyi PRs, meaning these comments
+#            have "no matching violations" since the relevant flake8-pyi checks haven't
+#            yet been released.
 
 [flake8]
-ignore = F401, F403, F405, F811, E301, E302, E305, E501, E701, E704, E741, B303, W504
-# We are checking with Python 3 but many of the stubs are Python 2 stubs.
-builtins = StandardError,apply,basestring,buffer,cmp,coerce,execfile,file,intern,long,raw_input,reduce,reload,unichr,unicode,xrange
-exclude = .venv*,@*,.git
-max-line-length = 130
+per-file-ignores =
+  *.py: E203, E301, E302, E305, E501
+  *.pyi: E301, E302, E305, E501, E701, E741, NQA102, F401, F403, F405, F822, Y037
+  # Since typing.pyi defines "overload" this is not recognized by flake8 as typing.overload.
+  # Unfortunately, flake8 does not allow to "noqa" just a specific error inside the file itself.
+  # https://github.com/PyCQA/flake8/issues/1079
+  #     F811 redefinition of unused '...'
+  stdlib/typing.pyi: E301, E302, E305, E501, E701, E741, NQA102, F401, F403, F405, F811, F822, Y037
+  # Generated protobuf files include docstrings
+  *_pb2.pyi: E301, E302, E305, E501, E701, NQA102, Y021, Y026
+
+exclude = .venv*,.git,stdlib/@python2/*
+noqa_require_code = true

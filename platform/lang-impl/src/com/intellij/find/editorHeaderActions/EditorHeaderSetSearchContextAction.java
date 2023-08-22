@@ -17,12 +17,13 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorHeaderSetSearchContextAction extends EditorHeaderToggleAction {
   private final FindModel.SearchContext myContext;
 
-  protected EditorHeaderSetSearchContextAction(@NotNull String text, @NotNull FindModel.SearchContext context) {
+  protected EditorHeaderSetSearchContextAction(@NotNull @NlsContexts.Checkbox String text, @NotNull FindModel.SearchContext context) {
     super(text);
 
     myContext = context;

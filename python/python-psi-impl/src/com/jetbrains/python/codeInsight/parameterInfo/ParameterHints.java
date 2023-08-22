@@ -12,10 +12,12 @@ public final class ParameterHints {
 
   private final List<String> myHints;
   private final Map<Integer, EnumSet<ParameterFlag>> myFlags;
+  private final List<String> myAnnotations;
 
-  public ParameterHints(List<String> hints, Map<Integer, EnumSet<ParameterFlag>> flags) {
+  public ParameterHints(List<String> hints, Map<Integer, EnumSet<ParameterFlag>> flags, List<String> annotations) {
     myHints = hints;
     myFlags = flags;
+    myAnnotations = annotations;
   }
 
   public List<String> getHints() {
@@ -24,5 +26,9 @@ public final class ParameterHints {
 
   public Map<Integer, EnumSet<ParameterFlag>> getFlags() {
     return myFlags;
+  }
+
+  public List<String> getAnnotations() {
+    return myAnnotations;
   }
 }

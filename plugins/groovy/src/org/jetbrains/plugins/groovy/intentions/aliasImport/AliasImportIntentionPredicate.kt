@@ -14,8 +14,7 @@ object AliasImportIntentionPredicate : PsiElementPredicate {
       is GrReferenceExpression -> {
         val result = element.advancedResolve()
         val context = result.currentFileResolveContext as? GrImportStatement ?: return false
-        if (!context.isStatic || context.isAliasedImport) return false
-        return true
+        return context.isStatic && !context.isAliasedImport
       }
       is GrImportStatement -> {
         if (!element.isStatic || element.isAliasedImport || element.isOnDemand) return false

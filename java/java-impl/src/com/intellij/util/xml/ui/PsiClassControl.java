@@ -40,9 +40,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author peter
- */
 public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
 
   public PsiClassControl(final DomWrapper<String> domWrapper) {
@@ -95,7 +92,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
 
         PsiClass initialClass = null;
         if (domElement instanceof GenericDomValue) {
-          final Object value = ((GenericDomValue)domElement).getValue();
+          final Object value = ((GenericDomValue<?>)domElement).getValue();
           if (value instanceof PsiClass)
             initialClass = (PsiClass)value;
         }

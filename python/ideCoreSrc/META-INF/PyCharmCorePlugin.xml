@@ -3,11 +3,21 @@
   <module value="com.intellij.modules.pycharm.community"/>
   <module value="com.intellij.modules.python-core-capable"/>
 
+  <content>
+    <module name="intellij.notebooks.visualization"/>
+    <module name="intellij.notebooks.ui"/>
+    <module name="intellij.platform.images.copyright"/>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
+  </content>
+
   <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
                         overrides="true"/>
+    <ide.newUiOnboarding ideHelpName="pycharm">
+      <remove stepId="codeWithMe"/>
+    </ide.newUiOnboarding>
   </extensions>
 </idea-plugin>

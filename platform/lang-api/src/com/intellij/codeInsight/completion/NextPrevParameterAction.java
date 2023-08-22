@@ -8,19 +8,17 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
-import com.intellij.codeInsight.actions.CodeInsightEditorAction;
-import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated Use {@link NextPrevParameterHandler}
+ */
+@Deprecated
 public abstract class NextPrevParameterAction extends CodeInsightAction implements DumbAware {
-  private static final LanguageExtension<TemplateParameterTraversalPolicy> EP = new LanguageExtension<>("com.intellij.templateParameterTraversalPolicy");
   private final boolean myNext;
 
   protected NextPrevParameterAction(boolean next) {
@@ -35,36 +33,17 @@ public abstract class NextPrevParameterAction extends CodeInsightAction implemen
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return hasSuitablePolicy(editor, file);
+    return NextPrevParameterHandler.hasSuitablePolicy(editor, file);
   }
 
   public static boolean hasSuitablePolicy(Editor editor, PsiFile file) {
-    return findSuitableTraversalPolicy(editor, file) != null;
-  }
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-    if (file != null && findPolicyForFile(file) != null) {
-      CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    }
-    update(e);
-  }
-
-  @Nullable
-  private static TemplateParameterTraversalPolicy findSuitableTraversalPolicy(Editor editor, PsiFile file) {
-    TemplateParameterTraversalPolicy policy = findPolicyForFile(file);
-    return policy != null && policy.isValidForFile(editor, file) ? policy : null;
-  }
-
-  private static TemplateParameterTraversalPolicy findPolicyForFile(PsiFile file) {
-    return EP.forLanguage(file.getLanguage());
+    return NextPrevParameterHandler.hasSuitablePolicy(editor, file);
   }
 
   private class Handler implements CodeInsightActionHandler {
     @Override
     public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-      TemplateParameterTraversalPolicy policy = findSuitableTraversalPolicy(editor, file);
+      TemplateParameterTraversalPolicy policy = NextPrevParameterHandler.findSuitableTraversalPolicy(editor, file);
       if (policy != null) {
         policy.invoke(editor, file, myNext);
       }

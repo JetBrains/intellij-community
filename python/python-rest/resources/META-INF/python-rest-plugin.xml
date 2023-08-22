@@ -26,7 +26,12 @@
 
   </actions>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="restructured.text.html.preview.output.handler" interface="com.jetbrains.rest.RestOutputHandler" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="restructured.text">
     <html.preview.provider implementation="com.jetbrains.rest.RestPythonPreviewProvider"/>
+    <html.preview.output.handler implementation="com.jetbrains.rest.sphinx.SphinxDirectivesHandler"/>
   </extensions>
 </idea-plugin>

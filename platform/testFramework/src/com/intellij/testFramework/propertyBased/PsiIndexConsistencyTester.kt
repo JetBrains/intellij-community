@@ -1,48 +1,36 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased
 
 import com.intellij.lang.Language
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ref.GCUtil
 import org.junit.Assert.fail
 
-/**
- * @author peter
- */
 object PsiIndexConsistencyTester {
-
   val commonRefs: List<RefKind> = listOf(RefKind.PsiFileRef, RefKind.DocumentRef, RefKind.DirRef,
                                          RefKind.AstRef(null),
                                          RefKind.StubRef(null), RefKind.GreenStubRef(null))
-  
+
   val commonActions: List<Action> = listOf(Action.Commit,
+                                           Action.FlushIndexes,
                                            Action.Gc,
                                            Action.ReparseFile,
                                            Action.FilePropertiesChanged,
@@ -74,12 +62,12 @@ object PsiIndexConsistencyTester {
 
 
   open class Model(val vFile: VirtualFile, val fixture: CodeInsightTestFixture) {
-    val refs = hashMapOf<RefKind, Any?>()
-    val project = fixture.project!!
+    val refs: HashMap<RefKind, Any?> = hashMapOf()
+    val project: Project = fixture.project!!
 
-    fun findPsiFile(language: Language? = null) = findViewProvider().let { vp -> vp.getPsi(language ?: vp.baseLanguage) }!!
+    fun findPsiFile(language: Language? = null): PsiFile = findViewProvider().let { vp -> vp.getPsi(language ?: vp.baseLanguage) }!!
     private fun findViewProvider() = PsiManager.getInstance(project).findViewProvider(vFile)!!
-    fun getDocument() = FileDocumentManager.getInstance().getDocument(vFile)!!
+    fun getDocument(): Document = FileDocumentManager.getInstance().getDocument(vFile)!!
     fun isCommitted(): Boolean {
       val document = FileDocumentManager.getInstance().getCachedDocument(vFile)
       return document == null || PsiDocumentManager.getInstance(project).isCommitted(document)
@@ -98,8 +86,14 @@ object PsiIndexConsistencyTester {
       override fun toString(): String = javaClass.simpleName
     }
 
+    object FlushIndexes: SimpleAction() {
+      override fun performAction(model: Model) {
+        (FileBasedIndex.getInstance() as FileBasedIndexImpl).flushIndexes()
+      }
+    }
+
     object Gc: SimpleAction() {
-      override fun performAction(model: Model) = GCUtil.tryGcSoftlyReachableObjects()
+      override fun performAction(model: Model): Unit = GCUtil.tryGcSoftlyReachableObjects()
     }
     object Commit: SimpleAction() {
       override fun performAction(model: Model) {
@@ -115,7 +109,7 @@ object PsiIndexConsistencyTester {
       }
     }
     object PostponedFormatting: SimpleAction() {
-      override fun performAction(model: Model) =
+      override fun performAction(model: Model): Unit =
         PostprocessReformattingAspect.getInstance(model.project).doPostponedFormatting()
     }
     object ReparseFile : SimpleAction() {
@@ -193,7 +187,7 @@ object PsiIndexConsistencyTester {
   abstract class RefKind {
 
     abstract fun loadRef(model: Model): Any?
-    
+
     open fun checkDuplicates(oldValue: Any, newValue: Any) {
       if (oldValue is PsiElement && oldValue.isValid && newValue is PsiElement) {
         fail("Duplicate PSI elements: $oldValue and $newValue")
@@ -201,10 +195,10 @@ object PsiIndexConsistencyTester {
     }
 
     object PsiFileRef : RefKind() {
-      override fun loadRef(model: Model): Any? = model.findPsiFile()
+      override fun loadRef(model: Model): Any = model.findPsiFile()
     }
     object DocumentRef : RefKind() {
-      override fun loadRef(model: Model): Any? = model.getDocument()
+      override fun loadRef(model: Model): Any = model.getDocument()
     }
     object DirRef : RefKind() {
       override fun loadRef(model: Model): Any? = model.findPsiFile().containingDirectory

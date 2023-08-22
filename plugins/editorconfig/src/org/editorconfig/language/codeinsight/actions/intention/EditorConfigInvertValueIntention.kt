@@ -16,8 +16,8 @@ import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 import org.editorconfig.language.util.EditorConfigTextMatchingUtil
 
 class EditorConfigInvertValueIntention : IntentionAction {
-  override fun getText() = EditorConfigBundle["intention.invert-option-value"]
-  override fun getFamilyName(): String = EditorConfigBundle["intention.invert-option-value"]
+  override fun getText() = EditorConfigBundle.get("intention.invert-option-value")
+  override fun getFamilyName(): String = EditorConfigBundle.get("intention.invert-option-value")
   override fun startInWriteAction() = true
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
@@ -53,12 +53,12 @@ class EditorConfigInvertValueIntention : IntentionAction {
     EditorConfigPsiTreeUtil.findIdentifierUnderCaret(editor, file)?.getParentOfType()
 
   private fun getText(descriptor: EditorConfigDescriptor): String? {
-    descriptor as? EditorConfigConstantDescriptor ?: return null
+    if (descriptor !is EditorConfigConstantDescriptor) return null
     return descriptor.text
   }
 
   private fun constantMatches(descriptor: EditorConfigDescriptor, value: String): Boolean {
-    descriptor as? EditorConfigConstantDescriptor ?: return false
+    if (descriptor !is EditorConfigConstantDescriptor) return false
     return EditorConfigTextMatchingUtil.textMatchesToIgnoreCase(descriptor.text, value)
   }
 

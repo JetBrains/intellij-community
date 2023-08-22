@@ -69,7 +69,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
                                                                    @NotNull SearchScope useScope, @NotNull Project project) {
     return ReadAction.compute(() -> {
       if (useScope instanceof GlobalSearchScope) {
-        return JavaAnnotationIndex.getInstance().get(annClass.getName(), project, (GlobalSearchScope)useScope);
+        return JavaAnnotationIndex.getInstance().getAnnotations(annClass.getName(), project, (GlobalSearchScope)useScope);
       }
 
       List<PsiAnnotation> result = new ArrayList<>();

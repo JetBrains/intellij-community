@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -29,6 +15,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -39,12 +26,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.BitSet;
 import java.util.List;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
  * @author Max Medvedev
@@ -93,7 +83,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
     GrExpression initializer = null;
     Instruction writeInstr = null;
-    Instruction[] flow = null;
+    GroovyControlFlow flow = null;
 
     //search for initializer to inline
     if (invokedOnReference) {
@@ -109,16 +99,16 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
           controlFlowOwner = ControlFlowUtils.findControlFlowOwner(cur);
           if (controlFlowOwner == null) break;
 
-          flow = controlFlowOwner.getControlFlow();
+          flow = ControlFlowUtils.getGroovyControlFlow(controlFlowOwner);
 
           final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, variable);
           final PsiElement finalCur = cur;
-          Instruction instruction = ControlFlowUtils.findInstruction(finalCur, flow);
+          Instruction instruction = ControlFlowUtils.findInstruction(finalCur, flow.getFlow());
 
           LOG.assertTrue(instruction != null);
           final BitSet prev = writes.get(instruction.num());
           if (prev.cardinality() == 1) {
-            writeInstr = flow[prev.nextSetBit(0)];
+            writeInstr = flow.getFlow()[prev.nextSetBit(0)];
             final PsiElement element = writeInstr.getElement();
             if (element instanceof GrVariable) {
               initializer = ((GrVariable)element).getInitializerGroovy();
@@ -142,9 +132,9 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
       }
     }
     else {
-      flow = ControlFlowUtils.findControlFlowOwner(variable).getControlFlow();
+      flow = ControlFlowUtils.getGroovyControlFlow(ControlFlowUtils.findControlFlowOwner(variable));
       initializer = variable.getInitializerGroovy();
-      writeInstr = ContainerUtil.find(flow, instruction -> instruction.getElement() == variable);
+      writeInstr = ContainerUtil.find(flow.getFlow(), instruction -> instruction.getElement() == variable);
     }
 
     if (initializer == null || writeInstr == null) {
@@ -174,7 +164,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     return getInlineVariable();
   }
 
-  public static String getInlineVariable() {
+  public static @Nls(capitalization = Title) String getInlineVariable() {
     return RefactoringBundle.message("inline.variable.title");
   }
 }

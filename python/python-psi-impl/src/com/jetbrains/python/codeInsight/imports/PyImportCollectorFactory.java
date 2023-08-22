@@ -10,5 +10,5 @@ public interface PyImportCollectorFactory {
     return ApplicationManager.getApplication().getService(PyImportCollectorFactory.class);
   }
 
-  PyImportCollector create(PyElement node, PsiReference reference, String refText, String asName);
+  PyImportCollector create(PyElement node, PsiReference reference, String refText);
 }

@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -67,6 +52,13 @@ public class ExtractEnumTest extends LightMultiFileTestCase {
 
   public void testUsageInVariableInitializer() {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
+  }
+
+  public void testNestedClass() {
+    doTest(null, true,
+           new RefactoringTestUtil.MemberDescriptor("ONE", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("TWO", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("THREE", PsiField.class, true));
   }
 
   public void testForwardReferenceConflict() {
@@ -141,13 +133,13 @@ public class ExtractEnumTest extends LightMultiFileTestCase {
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
-  private void doTest(final RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
+  private void doTest(RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
     doTest(null, false, memberDescriptors);
   }
 
-  private void doTest(final String conflicts,
-                      final boolean generateAccessors,
-                      final RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
+  private void doTest(String conflicts,
+                      boolean extractInnerClass,
+                      RefactoringTestUtil.MemberDescriptor... memberDescriptors) {
     doTest(() -> {
       final PsiClass aClass = myFixture.findClass("Test");
       assertNotNull("Class Test not found", aClass);
@@ -173,7 +165,7 @@ public class ExtractEnumTest extends LightMultiFileTestCase {
       try {
         final ExtractClassProcessor processor =
           new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "EEnum",
-                                    null, generateAccessors, enumConstants, false);
+                                    null, false, enumConstants, extractInnerClass);
 
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
@@ -181,8 +173,8 @@ public class ExtractEnumTest extends LightMultiFileTestCase {
       }
       catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
         if (conflicts != null) {
-          TreeSet expectedConflictsSet = new TreeSet(Arrays.asList(conflicts.split("\n")));
-          TreeSet actualConflictsSet = new TreeSet(Arrays.asList(e.getMessage().split("\n")));
+          TreeSet<String> expectedConflictsSet = new TreeSet<>(Arrays.asList(conflicts.split("\n")));
+          TreeSet<String> actualConflictsSet = new TreeSet<>(Arrays.asList(e.getMessage().split("\n")));
           Assert.assertEquals(expectedConflictsSet, actualConflictsSet);
           return;
         }

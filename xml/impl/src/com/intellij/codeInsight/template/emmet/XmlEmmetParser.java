@@ -1,23 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
-import com.google.common.base.Strings;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -27,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
 public class XmlEmmetParser extends EmmetParser {
   public static final String DEFAULT_ATTRIBUTE_NAME = "%default";
@@ -45,22 +40,22 @@ public class XmlEmmetParser extends EmmetParser {
   private boolean hasTagContext = false;
   private final Stack<String> tagLevel = new Stack<>();
 
-  private static final Map<String, String> parentChildTagMapping = ContainerUtil.newHashMap(
-    pair("p", "span"),
-    pair("ul", "li"),
-    pair("ol", "li"),
-    pair("table", "tr"),
-    pair("tr", "td"),
-    pair("tbody", "tr"),
-    pair("thead", "tr"),
-    pair("tfoot", "tr"),
-    pair("colgroup", "col"),
-    pair("select", "option"),
-    pair("optgroup", "option"),
-    pair("audio", "source"),
-    pair("video", "source"),
-    pair("object", "param"),
-    pair("map", "area"));
+  private static final Map<String, String> parentChildTagMapping = Map.ofEntries(
+    Map.entry("p", "span"),
+    Map.entry("ul", "li"),
+    Map.entry("ol", "li"),
+    Map.entry("table", "tr"),
+    Map.entry("tr", "td"),
+    Map.entry("tbody", "tr"),
+    Map.entry("thead", "tr"),
+    Map.entry("tfoot", "tr"),
+    Map.entry("colgroup", "col"),
+    Map.entry("select", "option"),
+    Map.entry("optgroup", "option"),
+    Map.entry("audio", "source"),
+    Map.entry("video", "source"),
+    Map.entry("object", "param"),
+    Map.entry("map", "area"));
 
   private final boolean isHtml;
 
@@ -150,7 +145,7 @@ public class XmlEmmetParser extends EmmetParser {
     if (token instanceof IdentifierToken) {
       templateKey = ((IdentifierToken)token).getText();
       advance();
-      if (startsWithIgnoreCase(templateKey, LOREM_KEYWORD) || startsWithIgnoreCase(templateKey, LIPSUM_KEYWORD)) {
+      if (StringUtil.startsWithIgnoreCase(templateKey, LOREM_KEYWORD) || StringUtil.startsWithIgnoreCase(templateKey, LIPSUM_KEYWORD)) {
         return parseLorem(templateKey);
       }
       mustHaveSelector = false;
@@ -198,7 +193,7 @@ public class XmlEmmetParser extends EmmetParser {
   protected ZenCodingNode parseMoreOperation(@Nullable ZenCodingNode leftPart) {
     String parentTag = getParentTag(leftPart);
     boolean hasParent = false;
-    if (!Strings.isNullOrEmpty(parentTag)) {
+    if (!Strings.isEmpty(parentTag)) {
       hasParent = true;
       tagLevel.push(parentTag);
     }

@@ -1,64 +1,62 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
+import com.intellij.build.*;
+import com.intellij.build.events.*;
+import com.intellij.build.events.impl.ProgressBuildEventImpl;
+import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
-import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestEventsProcessor;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestsExecutionConsoleOutputProcessor;
+import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
+import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import java.io.File;
-
-import static org.jetbrains.plugins.gradle.util.GradleConstants.RUN_TASK_AS_TEST;
 
 /**
  * @author Vladislav.Soroka
@@ -85,24 +83,27 @@ public class GradleTestsExecutionConsoleManager
     if (settings == null) {
       RunProfile runProfile = env.getRunProfile();
       if (runProfile instanceof AbstractImportTestsAction.ImportRunProfile) {
-        consoleProperties = ((AbstractImportTestsAction.ImportRunProfile)runProfile).getProperties();
         configuration = ((AbstractImportTestsAction.ImportRunProfile)runProfile).getInitialConfiguration();
+        if (configuration instanceof SMRunnerConsolePropertiesProvider) {
+          consoleProperties = ((SMRunnerConsolePropertiesProvider)configuration).createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance());
+        }
       }
       else {
         return null;
       }
-    } else {
+    }
+    else {
       configuration = settings.getConfiguration();
     }
-    if (!(configuration instanceof ExternalSystemRunConfiguration)) return null;
-    ExternalSystemRunConfiguration externalSystemRunConfiguration = (ExternalSystemRunConfiguration)configuration;
+    if (!(configuration instanceof ExternalSystemRunConfiguration externalSystemRunConfiguration)) return null;
 
-    if(consoleProperties == null) {
+    if (consoleProperties == null) {
       consoleProperties = new GradleConsoleProperties(externalSystemRunConfiguration, env.getExecutor());
     }
     String testFrameworkName = externalSystemRunConfiguration.getSettings().getExternalSystemId().getReadableName();
     String splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
-    final GradleTestsExecutionConsole consoleView = new GradleTestsExecutionConsole(consoleProperties, splitterPropertyName);
+    GradleTestsExecutionConsole consoleView =
+      new GradleTestsExecutionConsole(project, task.getId(), consoleProperties, splitterPropertyName);
     SMTestRunnerConnectionUtil.initConsoleView(consoleView, testFrameworkName);
 
     SMTestRunnerResultsForm resultsViewer = consoleView.getResultsViewer();
@@ -125,7 +126,9 @@ public class GradleTestsExecutionConsoleManager
       }
     }
     SMTestProxy.SMRootTestProxy testsRootNode = resultsViewer.getTestsRootNode();
+    testsRootNode.setExecutionId(env.getExecutionId());
     testsRootNode.setSuiteStarted();
+    consoleView.getEventPublisher().onTestingStarted(testsRootNode);
     if (processHandler != null) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
@@ -147,14 +150,79 @@ public class GradleTestsExecutionConsoleManager
     }
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
-      final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
-      if (executeTask.getArguments() == null || !StringUtil.contains(executeTask.getArguments(), GradleConstants.TESTS_ARG_NAME)) {
-        executeTask.appendArguments("--tests *");
-      }
       consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
     }
 
+    Disposable disposable = Disposer.newDisposable(consoleView, "Gradle test runner build event listener disposable");
+    BuildViewManager buildViewManager = project.getService(BuildViewManager.class);
+    project.getService(ExternalSystemRunConfigurationViewManager.class).addListener(new BuildProgressListener() {
+      @Override
+      public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+        if (buildId != task.getId()) return;
+
+        if (event instanceof FinishBuildEvent) {
+          Disposer.dispose(disposable);
+        }
+        else if (event instanceof StartBuildEvent) {
+          // override start build event to use different execution console, toolbar actions etc.
+          BuildDescriptor buildDescriptor = ((StartBuildEvent)event).getBuildDescriptor();
+          DefaultBuildDescriptor defaultBuildDescriptor =
+            new DefaultBuildDescriptor(buildDescriptor.getId(), buildDescriptor.getTitle(),
+                                       buildDescriptor.getWorkingDir(), buildDescriptor.getStartTime());
+
+          // do not open Build tw for any error messages as it can be tests failure events
+          defaultBuildDescriptor.setActivateToolWindowWhenFailed(false);
+          event = new StartBuildEventImpl(defaultBuildDescriptor, event.getMessage());
+        }
+        buildViewManager.onEvent(buildId, event);
+
+        if (event instanceof StartEvent) {
+          ProgressBuildEventImpl progressBuildEvent =
+            new ProgressBuildEventImpl(event.getId(), event.getParentId(), event.getEventTime(), event.getMessage(), -1, -1, "");
+          progressBuildEvent.setHint("- " + GradleBundle.message("gradle.test.runner.build.tw.link.title"));
+          buildViewManager.onEvent(buildId, progressBuildEvent);
+        }
+
+        maybeOpenBuildToolWindow(event, project, testsRootNode);
+      }
+    }, disposable);
     return consoleView;
+  }
+
+  private static void maybeOpenBuildToolWindow(@NotNull BuildEvent event,
+                                               @NotNull Project project,
+                                               @NotNull SMTestProxy.SMRootTestProxy testsRootNode) {
+    // open Build tw for file error, as it usually comes from compilation
+    if ((event instanceof FileMessageEvent) && ((FileMessageEvent)event).getKind() == MessageEvent.Kind.ERROR) {
+      openBuildToolWindow(project);
+      return;
+    }
+
+    // open Build tw for recognized build failures like startup errors
+    if (event instanceof FinishBuildEvent) {
+      EventResult buildResult = ((FinishBuildEvent)event).getResult();
+      if (buildResult instanceof FailureResult) {
+        if (!((FailureResult)buildResult).getFailures().isEmpty()) {
+          openBuildToolWindow(project);
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!testsRootNode.isInProgress() && testsRootNode.isEmptySuite()) {
+              openBuildToolWindow(project);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  private static void openBuildToolWindow(@NotNull Project project) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ToolWindow toolWindow = BuildContentManager.getInstance(project).getOrCreateToolWindow();
+      if (toolWindow.isAvailable() && !toolWindow.isVisible()) {
+        toolWindow.show(null);
+      }
+    }, ModalityState.nonModal(), project.getDisposed());
   }
 
   @Override
@@ -166,38 +234,55 @@ public class GradleTestsExecutionConsoleManager
   }
 
   @Override
-  public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
-    if (task instanceof ExternalSystemExecuteTaskTask) {
-      final ExternalSystemExecuteTaskTask taskTask = (ExternalSystemExecuteTaskTask)task;
-      if (!StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) return false;
-
-      boolean isApplicable;
-
-      final String arguments = taskTask.getArguments();
-      isApplicable = arguments != null && StringUtil.contains(arguments, GradleConstants.TESTS_ARG_NAME);
-
-      isApplicable = isApplicable || ContainerUtil.find(taskTask.getTasksToExecute(), taskToExecute -> {
-        String projectPath = taskTask.getExternalProjectPath();
-        File file = new File(projectPath);
-        if (file.isFile()) {
-          projectPath = StringUtil.trimEnd(projectPath, "/" + file.getName());
-        }
-        final ExternalProjectInfo externalProjectInfo =
-          ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), projectPath);
-        if (externalProjectInfo == null) return false;
-
-        final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
-          externalProjectInfo.getExternalProjectStructure(), projectPath, taskToExecute);
-        return taskDataNode != null &&
-               (taskDataNode.getData().isTest() ||
-                "check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup()));
-      }) != null;
-
-      if (isApplicable) {
-        taskTask.putUserData(RUN_TASK_AS_TEST, true);
+  public void onStatusChange(@NotNull GradleTestsExecutionConsole executionConsole, @NotNull ExternalSystemTaskNotificationEvent event) {
+    if (event instanceof ExternalSystemTaskExecutionEvent) {
+      ExternalSystemProgressEvent progressEvent = ((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
+      OperationDescriptor descriptor = progressEvent.getDescriptor();
+      if (descriptor instanceof TestOperationDescriptor) {
+        //noinspection unchecked
+        GradleTestEventsProcessor.onStatusChange(executionConsole, progressEvent);
       }
+    }
+  }
 
-      return isApplicable;
+  @Override
+  public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
+    if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
+      if (StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) {
+        var isRunAsTest = taskTask.getUserData(GradleRunConfiguration.RUN_AS_TEST_KEY);
+        if (ObjectUtils.chooseNotNull(isRunAsTest, false)) {
+          return true;
+        }
+        if (hasTestTasks(taskTask)) {
+          taskTask.putUserData(GradleRunConfiguration.RUN_AS_TEST_KEY, true);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks that ES task has a tasks which can produce test events.
+   * <p>
+   * Note: This function has specific heuristics for recognition which task can produce test events.
+   * Therefore, this function cannot be reused in the other place.
+   */
+  private static boolean hasTestTasks(@NotNull ExternalSystemExecuteTaskTask taskTask) {
+    var project = taskTask.getIdeProject();
+    var modulePath = taskTask.getExternalProjectPath();
+    var commandLine = GradleCommandLineUtil.parseCommandLine(taskTask.getTasksToExecute(), taskTask.getArguments());
+    var indices = GradleTasksIndices.getInstance(project);
+    for (var task : commandLine.getTasks()) {
+      if (!GradleCommandLineUtil.getTestPatterns(task).isEmpty()) {
+        return true;
+      }
+      var taskData = indices.findTasks(modulePath, task.getName());
+      for (var taskDatum : taskData) {
+        if (taskDatum.isTest()) {
+          return true;
+        }
+      }
     }
     return false;
   }
@@ -207,6 +292,6 @@ public class GradleTestsExecutionConsoleManager
     JavaRerunFailedTestsAction rerunFailedTestsAction =
       new GradleRerunFailedTestsAction(consoleView);
     rerunFailedTestsAction.setModelProvider(() -> consoleView.getResultsViewer());
-    return new AnAction[]{rerunFailedTestsAction};
+    return new AnAction[]{rerunFailedTestsAction, new JvmToggleAutoTestAction()};
   }
 }

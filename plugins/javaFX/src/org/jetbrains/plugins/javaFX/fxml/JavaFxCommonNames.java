@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class JavaFxCommonNames {
+public final class JavaFxCommonNames {
   @NonNls public static final String JAVAFX_BEANS_PROPERTY = "javafx.beans.property.Property";
   @NonNls public static final String JAVAFX_COLLECTIONS_OBSERVABLE_LIST = "javafx.collections.ObservableList";
   @NonNls public static final String JAVAFX_COLLECTIONS_OBSERVABLE_SET = "javafx.collections.ObservableSet";
@@ -55,20 +42,20 @@ public class JavaFxCommonNames {
 
   public static final Map<String, PsiType> ourWritableMap = new HashMap<>();
   static {
-    ourWritableMap.put("javafx.beans.value.WritableBooleanValue", PsiType.BOOLEAN);
-    ourWritableMap.put("javafx.beans.value.WritableIntegerValue", PsiType.INT);
-    ourWritableMap.put("javafx.beans.value.WritableFloatValue", PsiType.FLOAT);
-    ourWritableMap.put("javafx.beans.value.WritableLongValue", PsiType.LONG);
-    ourWritableMap.put("javafx.beans.value.WritableDoubleValue", PsiType.DOUBLE);
+    ourWritableMap.put("javafx.beans.value.WritableBooleanValue", PsiTypes.booleanType());
+    ourWritableMap.put("javafx.beans.value.WritableIntegerValue", PsiTypes.intType());
+    ourWritableMap.put("javafx.beans.value.WritableFloatValue", PsiTypes.floatType());
+    ourWritableMap.put("javafx.beans.value.WritableLongValue", PsiTypes.longType());
+    ourWritableMap.put("javafx.beans.value.WritableDoubleValue", PsiTypes.doubleType());
   }
 
   public static final Map<String, PsiType> ourReadOnlyMap = new HashMap<>();
   static {
-    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyBooleanProperty", PsiType.BOOLEAN);
-    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyIntegerProperty", PsiType.INT);
-    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyFloatProperty", PsiType.FLOAT);
-    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyLongProperty", PsiType.LONG);
-    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyDoubleProperty", PsiType.DOUBLE);
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyBooleanProperty", PsiTypes.booleanType());
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyIntegerProperty", PsiTypes.intType());
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyFloatProperty", PsiTypes.floatType());
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyLongProperty", PsiTypes.longType());
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyDoubleProperty", PsiTypes.doubleType());
   }
 
   @NonNls public static final String JAVA_FX_PARENT = "javafx.scene.Parent";
@@ -77,10 +64,10 @@ public class JavaFxCommonNames {
 
   public static final Map<PsiPrimitiveType, String> ourObservablePrimitiveWrappers = new HashMap<>();
   static {
-    ourObservablePrimitiveWrappers.put(PsiType.INT, "javafx.beans.property.SimpleIntegerProperty");
-    ourObservablePrimitiveWrappers.put(PsiType.LONG, "javafx.beans.property.SimpleLongProperty");
-    ourObservablePrimitiveWrappers.put(PsiType.FLOAT, "javafx.beans.property.SimpleFloatProperty");
-    ourObservablePrimitiveWrappers.put(PsiType.DOUBLE, "javafx.beans.property.SimpleDoubleProperty");
-    ourObservablePrimitiveWrappers.put(PsiType.BOOLEAN, "javafx.beans.property.SimpleBooleanProperty");
+    ourObservablePrimitiveWrappers.put(PsiTypes.intType(), "javafx.beans.property.SimpleIntegerProperty");
+    ourObservablePrimitiveWrappers.put(PsiTypes.longType(), "javafx.beans.property.SimpleLongProperty");
+    ourObservablePrimitiveWrappers.put(PsiTypes.floatType(), "javafx.beans.property.SimpleFloatProperty");
+    ourObservablePrimitiveWrappers.put(PsiTypes.doubleType(), "javafx.beans.property.SimpleDoubleProperty");
+    ourObservablePrimitiveWrappers.put(PsiTypes.booleanType(), "javafx.beans.property.SimpleBooleanProperty");
   }
 }

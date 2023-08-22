@@ -20,14 +20,13 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Stands for emacs 'reverse-kill-line' action, i.e.
  * <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Killing-by-Lines.html">'kill-line' action</a>
  * with negative argument.
- * 
- * @author Denis Zhdanov
  */
 public class CutLineBackwardAction extends TextComponentEditorAction {
 
@@ -38,7 +37,7 @@ public class CutLineBackwardAction extends TextComponentEditorAction {
   static class Handler extends EditorWriteActionHandler {
     
     @Override
-    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final Document document = editor.getDocument();
       int caretOffset = editor.getCaretModel().getOffset();
       if (caretOffset <= 0) {

@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.Semaphore;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -39,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TransferToEDTQueue<T> {
   /**
    * This is a default threshold used to join units of work.
-   * It allows to generate more that 30 frames per second.
+   * It allows us to generate more than 30 frames per second.
    * It is not recommended to block EDT longer,
    * because people feel that UI is laggy.
    *
@@ -53,7 +40,7 @@ public class TransferToEDTQueue<T> {
   private final Condition<?> myShutUpCondition;
   private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
 
-  private final Queue<T> myQueue = new Queue<>(10); // guarded by myQueue
+  private final Deque<T> myQueue = new ArrayDeque<>(10); // guarded by myQueue
   private final AtomicBoolean invokeLaterScheduled = new AtomicBoolean();
   private final Runnable myUpdateRunnable = new Runnable() {
     @Override
@@ -80,10 +67,6 @@ public class TransferToEDTQueue<T> {
     }
   };
 
-  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<? super T> processor, @NotNull Condition<?> shutUpCondition) {
-    this(name, processor, shutUpCondition, DEFAULT_THRESHOLD);
-  }
-
   public TransferToEDTQueue(@NotNull @NonNls String name,
                             @NotNull Processor<? super T> processor,
                             @NotNull Condition<?> shutUpCondition,
@@ -94,11 +77,11 @@ public class TransferToEDTQueue<T> {
     myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
   }
 
-  public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name) {
+  public static @NotNull TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name) {
     return createRunnableMerger(name, DEFAULT_THRESHOLD);
   }
 
-  public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
+  public static @NotNull TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
     return new TransferToEDTQueue<>(name, runnable -> {
       runnable.run();
       return true;
@@ -113,7 +96,7 @@ public class TransferToEDTQueue<T> {
 
   // return true if element was pulled from the queue and processed successfully
   private boolean processNext() {
-    T thing = pullFirst();
+    T thing = pollFirst();
     if (thing == null) return false;
     if (!myProcessor.process(thing)) {
       stop();
@@ -122,9 +105,9 @@ public class TransferToEDTQueue<T> {
     return true;
   }
 
-  private T pullFirst() {
+  private T pollFirst() {
     synchronized (myQueue) {
-      return myQueue.isEmpty() ? null : myQueue.pullFirst();
+      return myQueue.pollFirst();
     }
   }
 
@@ -137,12 +120,8 @@ public class TransferToEDTQueue<T> {
   }
 
   public boolean offerIfAbsent(@NotNull T thing) {
-    return offerIfAbsent(thing, ContainerUtil.canonicalStrategy());
-  }
-
-  public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<? super T> equality) {
     synchronized (myQueue) {
-      boolean absent = myQueue.process(t -> !equality.equals(t, thing));
+      boolean absent = !myQueue.contains(thing);
       if (absent) {
         myQueue.addLast(thing);
         scheduleUpdate();
@@ -158,7 +137,6 @@ public class TransferToEDTQueue<T> {
   }
 
   protected void schedule(@NotNull Runnable updateRunnable) {
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(updateRunnable);
   }
 
@@ -176,10 +154,9 @@ public class TransferToEDTQueue<T> {
   }
 
   @TestOnly
-  @NotNull
-  public Collection<T> dump() {
+  public @NotNull Collection<T> dump() {
     synchronized (myQueue) {
-      return myQueue.toList();
+      return new ArrayList<>(myQueue);
     }
   }
 
@@ -189,13 +166,5 @@ public class TransferToEDTQueue<T> {
     while (processNext()) {
       processed++;
     }
-  }
-
-  // blocks until all elements in the queue are processed
-  public void waitFor() {
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    schedule(semaphore::up);
-    semaphore.waitFor();
   }
 }

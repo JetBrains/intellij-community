@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +38,11 @@ import java.util.Set;
 public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends FacetConfiguration> extends FrameworkDetector {
   private static final Logger LOG = Logger.getInstance(FacetBasedFrameworkDetector.class);
 
-  protected FacetBasedFrameworkDetector(String detectorId) {
+  protected FacetBasedFrameworkDetector(@NonNls String detectorId) {
     super(detectorId);
   }
 
-  protected FacetBasedFrameworkDetector(@NotNull String detectorId, int detectorVersion) {
+  protected FacetBasedFrameworkDetector(@NonNls @NotNull String detectorId, int detectorVersion) {
     super(detectorId, detectorVersion);
   }
 
@@ -55,11 +56,11 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
    * @return configurations with corresponding files
    */
   @NotNull
-  public List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
-                                                                    @NotNull Collection<C> existentFacetConfigurations) {
+  public List<Pair<C,Collection<VirtualFile>>> createConfigurations(@NotNull Collection<? extends VirtualFile> files,
+                                                                    @NotNull Collection<? extends C> existentFacetConfigurations) {
     final C configuration = createConfiguration(files);
     if (configuration != null) {
-      return Collections.singletonList(Pair.create(configuration, files));
+      return Collections.singletonList(Pair.create(configuration, (Collection<VirtualFile>)files));
     }
     return Collections.emptyList();
   }
@@ -70,7 +71,7 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
    * @return configuration for detected facet
    */
   @Nullable
-  protected C createConfiguration(Collection<VirtualFile> files) {
+  protected C createConfiguration(Collection<? extends VirtualFile> files) {
     return getFacetType().createDefaultConfiguration();
   }
 
@@ -78,7 +79,7 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
   }
 
   @Override
-  public List<? extends DetectedFrameworkDescription> detect(@NotNull Collection<VirtualFile> newFiles,
+  public List<? extends DetectedFrameworkDescription> detect(@NotNull Collection<? extends VirtualFile> newFiles,
                                                              @NotNull FrameworkDetectionContext context) {
     return context.createDetectedFacetDescriptions(this, newFiles);
   }
@@ -101,19 +102,16 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     return underlyingTypeId != null ? createFrameworkType(FacetTypeRegistry.getInstance().findFacetType(underlyingTypeId)) : null;
   }
 
-  public boolean isSuitableUnderlyingFacetConfiguration(FacetConfiguration underlying, C configuration, Set<VirtualFile> files) {
+  public boolean isSuitableUnderlyingFacetConfiguration(FacetConfiguration underlying, C configuration, Set<? extends VirtualFile> files) {
     return true;
   }
 
   private static class FacetBasedFrameworkType extends FrameworkType {
     private final FacetType<?, ?> myFacetType;
-    private final Icon myIcon;
 
     FacetBasedFrameworkType(@NotNull FacetType<?, ?> facetType) {
       super(facetType.getStringId());
       myFacetType = facetType;
-      final Icon icon = myFacetType.getIcon();
-      myIcon = icon != null ? icon : EmptyIcon.ICON_16;
     }
 
     @NotNull
@@ -125,7 +123,8 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     @NotNull
     @Override
     public Icon getIcon() {
-      return myIcon;
+      Icon icon = myFacetType.getIcon();
+      return icon != null ? icon : EmptyIcon.ICON_16;
     }
   }
 }

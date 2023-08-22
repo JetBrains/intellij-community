@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.parsing.console;
 
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.SyntaxTreeBuilder;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -9,19 +9,20 @@ import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.Nullable;
+
+import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.MAGIC_COMMAND_LINE;
+import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.SHELL_COMMAND;
 
 public class PyConsoleParsingContext extends ParsingContext {
   private final StatementParsing stmtParser;
   private final ExpressionParsing expressionParser;
 
-  public PyConsoleParsingContext(final PsiBuilder builder,
+  public PyConsoleParsingContext(final SyntaxTreeBuilder builder,
                                  LanguageLevel languageLevel,
-                                 StatementParsing.FUTURE futureFlag,
                                  PythonConsoleData pythonConsoleData,
                                  boolean startsWithIPythonSymbol) {
-    super(builder, languageLevel, futureFlag);
-    stmtParser = new ConsoleStatementParsing(this, futureFlag, startsWithIPythonSymbol, pythonConsoleData);
+    super(builder, languageLevel);
+    stmtParser = new ConsoleStatementParsing(this, startsWithIPythonSymbol, pythonConsoleData);
     if (pythonConsoleData.isIPythonEnabled()) {
       expressionParser = new ConsoleExpressionParsing(this);
     }
@@ -46,10 +47,9 @@ public class PyConsoleParsingContext extends ParsingContext {
     private final PythonConsoleData myPythonConsoleData;
 
     protected ConsoleStatementParsing(ParsingContext context,
-                                      @Nullable FUTURE futureFlag,
                                       boolean startsWithIPythonSymbol,
                                       PythonConsoleData pythonConsoleData) {
-      super(context, futureFlag);
+      super(context);
       myStartsWithIPythonSymbol = startsWithIPythonSymbol;
       myPythonConsoleData = pythonConsoleData;
     }
@@ -89,7 +89,7 @@ public class PyConsoleParsingContext extends ParsingContext {
      * Parse statements consisting of the single question mark.
      */
     private boolean parseIPythonGlobalHelp() {
-      PsiBuilder.Marker ipythonHelp = myBuilder.mark();
+      SyntaxTreeBuilder.Marker ipythonHelp = myBuilder.mark();
       if (myBuilder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
         myBuilder.advanceLexer();
         if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK || myBuilder.eof()) {
@@ -106,7 +106,7 @@ public class PyConsoleParsingContext extends ParsingContext {
      * Parse statements ending with a question mark.
      */
     private boolean parseIPythonSuffixHelp() {
-      PsiBuilder.Marker ipythonHelp = myBuilder.mark();
+      SyntaxTreeBuilder.Marker ipythonHelp = myBuilder.mark();
       while (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK &&
              myBuilder.getTokenType() != PyTokenTypes.LINE_BREAK &&
              !myBuilder.eof()
@@ -143,13 +143,12 @@ public class PyConsoleParsingContext extends ParsingContext {
     }
 
     private void parseIPythonCommand() {
-      PsiBuilder.Marker ipythonCommand = myBuilder.mark();
+      SyntaxTreeBuilder.Marker ipythonCommand = myBuilder.mark();
       while (continueParseIPythonCommand()) {
         myBuilder.advanceLexer();
       }
       ipythonCommand.done(PyElementTypes.EMPTY_EXPRESSION);
     }
-
   }
 
   public static class ConsoleExpressionParsing extends ExpressionParsing {
@@ -162,8 +161,8 @@ public class PyConsoleParsingContext extends ParsingContext {
       if (myBuilder.getTokenType() == PyTokenTypes.PERC ||
           myBuilder.getTokenType() == PyConsoleTokenTypes.PLING ||
           myBuilder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
-        PsiBuilder.Marker expr = myBuilder.mark();
-        PsiBuilder.Marker command = myBuilder.mark();
+        SyntaxTreeBuilder.Marker expr = myBuilder.mark();
+        SyntaxTreeBuilder.Marker command = myBuilder.mark();
 
         myBuilder.advanceLexer();
 
@@ -178,7 +177,7 @@ public class PyConsoleParsingContext extends ParsingContext {
         else {
           expr.drop();
           command.drop();
-          myBuilder.error(PyPsiBundle.message("PARSE.console.identifier.expected"));
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.identifier"));
           return false;
         }
         while (myBuilder.getTokenType() != null) {
@@ -203,7 +202,7 @@ public class PyConsoleParsingContext extends ParsingContext {
     }
 
     private boolean parseIPythonCaptureExpression() {
-      if (myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
+      if (myBuilder.getTokenType() == SHELL_COMMAND || myBuilder.getTokenType() == MAGIC_COMMAND_LINE) {
         captureIPythonExpression();
         return true;
       }
@@ -218,7 +217,7 @@ public class PyConsoleParsingContext extends ParsingContext {
     }
 
     private void captureIPythonExpression() {
-      PsiBuilder.Marker mark = myBuilder.mark();
+      SyntaxTreeBuilder.Marker mark = myBuilder.mark();
       while (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
         myBuilder.advanceLexer();
       }

@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
-/**
- * @author peter
- */
 @CompileStatic
 class GroovyAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
@@ -222,7 +219,7 @@ void foo(File... files) { }
 foo(new <caret>)
 '''
     type 'File'
-    myFixture.assertPreferredCompletionItems 0, 'File', 'File', 'FileInputStream'
+    myFixture.assertPreferredCompletionItems 0, 'File', 'File'
     type '('
     assert myFixture.editor.document.text.contains('new File()')
   }

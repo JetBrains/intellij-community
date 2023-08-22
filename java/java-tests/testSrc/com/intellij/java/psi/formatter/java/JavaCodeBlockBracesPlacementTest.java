@@ -22,68 +22,80 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   public void testSimpleTryBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
 
-    String before = "try {} catch (Exception e) {\n" +
-                    "      System.out.println(\"AA!\");\n" +
-                    "}";
+    String before = """
+      try {} catch (Exception e) {
+            System.out.println("AA!");
+      }""";
 
-    String endOfLine = "try {} catch (Exception e) {\n" +
-                       "    System.out.println(\"AA!\");\n" +
-                       "}";
+    String endOfLine = """
+      try {} catch (Exception e) {
+          System.out.println("AA!");
+      }""";
 
-    String nextLine = "try {} catch (Exception e)\n" +
-                      "{\n" +
-                      "    System.out.println(\"AA!\");\n" +
-                      "}";
+    String nextLine = """
+      try {} catch (Exception e)
+      {
+          System.out.println("AA!");
+      }""";
 
-    String nextLineShifted = "try {} catch (Exception e)\n" +
-                             "    {\n" +
-                             "    System.out.println(\"AA!\");\n" +
-                             "    }";
+    String nextLineShifted = """
+      try {} catch (Exception e)
+          {
+          System.out.println("AA!");
+          }""";
 
-    String nextLineShiftedEach = "try {} catch (Exception e)\n" +
-                                 "    {\n" +
-                                 "        System.out.println(\"AA!\");\n" +
-                                 "    }";
+    String nextLineShiftedEach = """
+      try {} catch (Exception e)
+          {
+              System.out.println("AA!");
+          }""";
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
   public void testSimpleCatchBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
 
-    String before = "try {\n" +
-                    "        System.out.println(\"AA!\");\n" +
-                    "} catch (Exception e) { System.out.println(\"AA!\"); }";
+    String before = """
+      try {
+              System.out.println("AA!");
+      } catch (Exception e) { System.out.println("AA!"); }""";
 
-    String endOfLine = "try {\n" +
-                   "    System.out.println(\"AA!\");\n" +
-                   "} catch (Exception e) { System.out.println(\"AA!\"); }";
+    String endOfLine = """
+      try {
+          System.out.println("AA!");
+      } catch (Exception e) { System.out.println("AA!"); }""";
 
-    String nextLine = "try\n" +
-                             "{\n" +
-                             "    System.out.println(\"AA!\");\n" +
-                             "} catch (Exception e) { System.out.println(\"AA!\"); }";
+    String nextLine = """
+      try
+      {
+          System.out.println("AA!");
+      } catch (Exception e) { System.out.println("AA!"); }""";
 
-    String nextLineShifted = "try\n" +
-                                    "    {\n" +
-                                    "    System.out.println(\"AA!\");\n" +
-                                    "    } catch (Exception e) { System.out.println(\"AA!\"); }";
+    String nextLineShifted = """
+      try
+          {
+          System.out.println("AA!");
+          } catch (Exception e) { System.out.println("AA!"); }""";
 
-    String nextLineShiftedEach = "try\n" +
-                                        "    {\n" +
-                                        "        System.out.println(\"AA!\");\n" +
-                                        "    } catch (Exception e) { System.out.println(\"AA!\"); }";
+    String nextLineShiftedEach = """
+      try
+          {
+              System.out.println("AA!");
+          } catch (Exception e) { System.out.println("AA!"); }""";
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
   }
 
   public void testSimpleCatchAndTryBlock() {
     String before = "try {} catch (Exception e) {      System.out.println(\"AA!\"); }";
-    String after = "try {} catch (Exception e) { System.out.println(\"AA!\"); }";
-    String afterExpanded = "try {\n" +
-                           "} catch (Exception e) {\n" +
-                           "    System.out.println(\"AA!\");\n" +
-                           "}";
+    String after = "try {} catch (Exception e) {System.out.println(\"AA!\");}";
+    String afterExpanded = """
+      try {
+      } catch (Exception e) {
+          System.out.println("AA!");
+      }""";
 
     doMethodTest(before, afterExpanded);
 
@@ -93,28 +105,33 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
 
   public void testDoWhileStatement() {
-    String before = "do {\n" +
-                    "        System.out.println(\"AAA!\");\n" +
-                    "} while (1 == 1);";
+    String before = """
+      do {
+              System.out.println("AAA!");
+      } while (1 == 1);""";
 
-    String endOfLine = "do {\n" +
-                       "    System.out.println(\"AAA!\");\n" +
-                       "} while (1 == 1);";
+    String endOfLine = """
+      do {
+          System.out.println("AAA!");
+      } while (1 == 1);""";
 
-    String nextLine = "do\n" +
-                      "{\n" +
-                      "    System.out.println(\"AAA!\");\n" +
-                      "} while (1 == 1);";
+    String nextLine = """
+      do
+      {
+          System.out.println("AAA!");
+      } while (1 == 1);""";
 
-    String nextLineShifted = "do\n" +
-                             "    {\n" +
-                             "    System.out.println(\"AAA!\");\n" +
-                             "    } while (1 == 1);";
+    String nextLineShifted = """
+      do
+          {
+          System.out.println("AAA!");
+          } while (1 == 1);""";
 
-    String nextLineShiftedEach = "do\n" +
-                                 "    {\n" +
-                                 "        System.out.println(\"AAA!\");\n" +
-                                 "    } while (1 == 1);";
+    String nextLineShiftedEach = """
+      do
+          {
+              System.out.println("AAA!");
+          } while (1 == 1);""";
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
@@ -123,6 +140,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testSimpleDoWhileStatement() {
+    getSettings().SPACE_WITHIN_BRACES = true;
     String before = "do {     System.out.println(\"AAA!\"); } while (1 == 1);";
     String after = "do { System.out.println(\"AAA!\"); } while (1 == 1);";
 
@@ -131,28 +149,33 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testForEachStatement() {
-    String before = "for (String arg : args) {\n" +
-                    "        System.out.println(\"AAA!\");\n" +
-                    "}";
+    String before = """
+      for (String arg : args) {
+              System.out.println("AAA!");
+      }""";
 
-    String endOfLine = "for (String arg : args) {\n" +
-                       "    System.out.println(\"AAA!\");\n" +
-                       "}";
+    String endOfLine = """
+      for (String arg : args) {
+          System.out.println("AAA!");
+      }""";
 
-    String nextLine = "for (String arg : args)\n" +
-                      "{\n" +
-                      "    System.out.println(\"AAA!\");\n" +
-                      "}";
+    String nextLine = """
+      for (String arg : args)
+      {
+          System.out.println("AAA!");
+      }""";
 
-    String nextLineShifted = "for (String arg : args)\n" +
-                             "    {\n" +
-                             "    System.out.println(\"AAA!\");\n" +
-                             "    }";
+    String nextLineShifted = """
+      for (String arg : args)
+          {
+          System.out.println("AAA!");
+          }""";
 
-    String nextLineShiftedEach = "for (String arg : args)\n" +
-                                 "    {\n" +
-                                 "        System.out.println(\"AAA!\");\n" +
-                                 "    }";
+    String nextLineShiftedEach = """
+      for (String arg : args)
+          {
+              System.out.println("AAA!");
+          }""";
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
@@ -162,6 +185,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
   public void testSimpleForEachStatement() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = "for (String arg : args) {     System.out.println(\"AAA!\"); }";
     String after = "for (String arg : args) { System.out.println(\"AAA!\"); }";
@@ -170,28 +194,38 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testForStatement() {
-    String before = "for (int i = 0; i < 10; i = i + 3) {\n" +
-                    "        System.out.println(\"AAA!\");\n" +
-                    "}\n";
+    String before = """
+      for (int i = 0; i < 10; i = i + 3) {
+              System.out.println("AAA!");
+      }
+      """;
 
-    String endOfLine = "for (int i = 0; i < 10; i = i + 3) {\n" +
-                       "    System.out.println(\"AAA!\");\n" +
-                       "}\n";
+    String endOfLine = """
+      for (int i = 0; i < 10; i = i + 3) {
+          System.out.println("AAA!");
+      }
+      """;
 
-    String nextLine = "for (int i = 0; i < 10; i = i + 3)\n" +
-                      "{\n" +
-                      "    System.out.println(\"AAA!\");\n" +
-                      "}\n";
+    String nextLine = """
+      for (int i = 0; i < 10; i = i + 3)
+      {
+          System.out.println("AAA!");
+      }
+      """;
 
-    String nextLineShifted = "for (int i = 0; i < 10; i = i + 3)\n" +
-                             "    {\n" +
-                             "    System.out.println(\"AAA!\");\n" +
-                             "    }\n";
+    String nextLineShifted = """
+      for (int i = 0; i < 10; i = i + 3)
+          {
+          System.out.println("AAA!");
+          }
+      """;
 
-    String nextLineShiftedEach = "for (int i = 0; i < 10; i = i + 3)\n" +
-                                 "    {\n" +
-                                 "        System.out.println(\"AAA!\");\n" +
-                                 "    }\n";
+    String nextLineShiftedEach = """
+      for (int i = 0; i < 10; i = i + 3)
+          {
+              System.out.println("AAA!");
+          }
+      """;
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
@@ -201,6 +235,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
   public void testSimpleForStatement() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = "for (int i = 0; i < 10; i = i + 3) {    System.out.println(\"AAA!\"); }";
     String after = "for (int i = 0; i < 10; i = i + 3) { System.out.println(\"AAA!\"); }";
@@ -213,43 +248,48 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
 
-    String before = "switch (timeUnit) {\n" +
-                    "        case DAYS:\n" +
-                    "           break;\n" +
-                    "   default:\n" +
-                    "     break;\n" +
-                    "}";
+    String before = """
+      switch (timeUnit) {
+              case DAYS:
+                 break;
+         default:
+           break;
+      }""";
 
-    String endOfLine = "switch (timeUnit) {\n" +
-                       "    case DAYS:\n" +
-                       "        break;\n" +
-                       "    default:\n" +
-                       "        break;\n" +
-                       "}";
+    String endOfLine = """
+      switch (timeUnit) {
+          case DAYS:
+              break;
+          default:
+              break;
+      }""";
 
-    String nextLine = "switch (timeUnit)\n" +
-                      "{\n" +
-                      "    case DAYS:\n" +
-                      "        break;\n" +
-                      "    default:\n" +
-                      "        break;\n" +
-                      "}";
+    String nextLine = """
+      switch (timeUnit)
+      {
+          case DAYS:
+              break;
+          default:
+              break;
+      }""";
 
-    String nextLineShifted = "switch (timeUnit)\n" +
-                             "    {\n" +
-                             "    case DAYS:\n" +
-                             "        break;\n" +
-                             "    default:\n" +
-                             "        break;\n" +
-                             "    }";
+    String nextLineShifted = """
+      switch (timeUnit)
+          {
+          case DAYS:
+              break;
+          default:
+              break;
+          }""";
 
-    String nextLineShiftedEach = "switch (timeUnit)\n" +
-                                 "    {\n" +
-                                 "        case DAYS:\n" +
-                                 "            break;\n" +
-                                 "        default:\n" +
-                                 "            break;\n" +
-                                 "    }";
+    String nextLineShiftedEach = """
+      switch (timeUnit)
+          {
+              case DAYS:
+                  break;
+              default:
+                  break;
+          }""";
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
@@ -258,28 +298,33 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testSynchronizedStatement() {
-    String before = "synchronized (this) {\n" +
-                    "       System.out.println(\"AAA!\");\n" +
-                    "}";
+    String before = """
+      synchronized (this) {
+             System.out.println("AAA!");
+      }""";
 
-    String endOfLine = "synchronized (this) {\n" +
-                       "    System.out.println(\"AAA!\");\n" +
-                       "}";
+    String endOfLine = """
+      synchronized (this) {
+          System.out.println("AAA!");
+      }""";
 
-    String nextLine = "synchronized (this)\n" +
-                      "{\n" +
-                      "    System.out.println(\"AAA!\");\n" +
-                      "}";
+    String nextLine = """
+      synchronized (this)
+      {
+          System.out.println("AAA!");
+      }""";
 
-    String nextLineShifted = "synchronized (this)\n" +
-                             "    {\n" +
-                             "    System.out.println(\"AAA!\");\n" +
-                             "    }";
+    String nextLineShifted = """
+      synchronized (this)
+          {
+          System.out.println("AAA!");
+          }""";
 
-    String nextLineShiftedEach = "synchronized (this)\n" +
-                                 "    {\n" +
-                                 "        System.out.println(\"AAA!\");\n" +
-                                 "    }";
+    String nextLineShiftedEach = """
+      synchronized (this)
+          {
+              System.out.println("AAA!");
+          }""";
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
@@ -288,6 +333,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testSimpleSynchronizedStatement() {
+    getSettings().SPACE_WITHIN_BRACES = true;
     String before = "synchronized (this) {     System.out.println(\"AAA!\"); }";
     String after = "synchronized (this) { System.out.println(\"AAA!\"); }";
 
@@ -296,28 +342,33 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testWhileStatement() {
-    String before = "while (true) {\n" +
-                    "        System.out.println(\"AAA\");\n" +
-                    "}";
+    String before = """
+      while (true) {
+              System.out.println("AAA");
+      }""";
 
-    String endOfLine = "while (true) {\n" +
-                       "    System.out.println(\"AAA\");\n" +
-                       "}";
+    String endOfLine = """
+      while (true) {
+          System.out.println("AAA");
+      }""";
 
-    String nextLine = "while (true)\n" +
-                      "{\n" +
-                      "    System.out.println(\"AAA\");\n" +
-                      "}";
+    String nextLine = """
+      while (true)
+      {
+          System.out.println("AAA");
+      }""";
 
-    String nextLineShifted = "while (true)\n" +
-                             "    {\n" +
-                             "    System.out.println(\"AAA\");\n" +
-                             "    }";
+    String nextLineShifted = """
+      while (true)
+          {
+          System.out.println("AAA");
+          }""";
 
-    String nextLineShiftedEach = "while (true)\n" +
-                                 "    {\n" +
-                                 "        System.out.println(\"AAA\");\n" +
-                                 "    }";
+    String nextLineShiftedEach = """
+      while (true)
+          {
+              System.out.println("AAA");
+          }""";
 
     checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted, nextLineShiftedEach);
 
@@ -326,6 +377,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testSimpleWhileStatement() {
+    getSettings().SPACE_WITHIN_BRACES = true;
     String before = "while (true) {    System.out.println(\"AAA\"); }";
     String after = "while (true) { System.out.println(\"AAA\"); }";
 
@@ -347,5 +399,57 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   private void formatAndCheck(int braceStyle, String before, String after) {
     getSettings().BRACE_STYLE = braceStyle;
     doMethodTest(before, after);
+  }
+
+  public void testSwitchExpression() {
+    String before = """
+      var x = switch (foo) {
+      		case "bar" ->
+      			{
+      				yield "2000";
+      			}
+      		default -> "n/a";
+      	};""";
+
+    String endOfLine = """
+      var x = switch (foo) {
+          case "bar" -> {
+              yield "2000";
+          }
+          default -> "n/a";
+      };""";
+
+    String nextLine = """
+      var x = switch (foo)
+      {
+          case "bar" ->
+          {
+              yield "2000";
+          }
+          default -> "n/a";
+      };""";
+
+    String nextLineShifted = """
+      var x = switch (foo)
+          {
+          case "bar" ->
+              {
+              yield "2000";
+              }
+          default -> "n/a";
+          };""";
+
+    String nextLineShiftedEach = """
+      var x = switch (foo)
+          {
+              case "bar" ->
+                  {
+                      yield "2000";
+                  }
+              default -> "n/a";
+          };""";
+
+    checkFormatterWithDifferentBraceStyles(before, endOfLine, nextLine, nextLineShifted,
+                                           nextLineShiftedEach);
   }
 }

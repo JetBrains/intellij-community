@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.folding
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
@@ -47,7 +47,7 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
 
   private val pattern = Regex("""<fold placeholder="(.*)">(.*)</fold>""")
 
-  fun testAllHints(text: String) {
+  fun doTestAllHints(text: String) {
     val textWithoutMarks = text.replace(pattern) {
       it.groupValues[2]
     }
@@ -58,7 +58,7 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
   /**
    * Tests single hint range. Range should be in form of <fold placeholder="(.*)">(.*)</fold>
    */
-  fun testHint(text: String) {
+  fun doTestHint(text: String) {
     var range : IntRange? = null
     var replacementCount = 0
     val textWithoutMarks = text.replace(pattern) {
@@ -81,7 +81,7 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
 
   fun testLocalVariable() {
     JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType = true
-    testHint("""
+    doTestHint("""
       class A {
         void test() {
           <fold placeholder="String">var</fold> x = "FOO";
@@ -91,7 +91,7 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
 
   fun testVariableParameter() {
     JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType = true
-    testHint("""
+    doTestHint("""
 
       class A {
         void test(Iterable<String> i) {
@@ -103,7 +103,7 @@ class JavaFoldingTypeInferenceFoldingTest : JavaFoldingTestCase() {
 
   fun testLambdaParameter() {
     JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType = true
-    testHint("""
+    doTestHint("""
       interface Consumer<T> {
         void accept(T t)
       }

@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -11,15 +14,15 @@ import java.util.Set;
  */
 public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierOwner, PsiModifierListOwner, PsiJavaDocumentedElement {
   String MODULE_INFO_CLASS = "module-info";
-  String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
+  @NlsSafe String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
   String MODULE_INFO_CLS_FILE = MODULE_INFO_CLASS + ".class";
   String JAVA_BASE = "java.base";
   String AUTO_MODULE_NAME = "Automatic-Module-Name";
 
-  /* See http://openjdk.java.net/jeps/261#Class-loaders, "Class loaders" */
-  Set<String> UPGRADEABLE = ContainerUtil.immutableSet(
+  /* See http://openjdk.org/jeps/261#Class-loaders, "Class loaders" */
+  Set<String> UPGRADEABLE = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     "java.activation", "java.compiler", "java.corba", "java.transaction", "java.xml.bind", "java.xml.ws", "java.xml.ws.annotation",
-    "jdk.internal.vm.compiler", "jdk.xml.bind", "jdk.xml.ws");
+    "jdk.internal.vm.compiler", "jdk.xml.bind", "jdk.xml.ws")));
 
   @Override @NotNull PsiJavaModuleReferenceElement getNameIdentifier();
   @Override @NotNull String getName();

@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_ABORT_ERROR;
+
 public class HgAbortRebaseAction extends HgProcessStateAction {
 
   public HgAbortRebaseAction() {
@@ -39,7 +42,8 @@ public class HgAbortRebaseAction extends HgProcessStateAction {
   @Override
   protected void execute(@NotNull final Project project,
                          @NotNull Collection<HgRepository> repositories,
-                         @Nullable final HgRepository selectedRepo) {
+                         @Nullable final HgRepository selectedRepo,
+                         @NotNull DataContext dataContext) {
 
     new Task.Backgroundable(project, HgBundle.message("action.hg4idea.Rebase.Abort.progress")) {
       @Override
@@ -48,7 +52,10 @@ public class HgAbortRebaseAction extends HgProcessStateAction {
           HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo);
           HgCommandResult result = rebaseCommand.abortRebase();
           if (HgErrorUtil.isAbort(result)) {
-            new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"), HgBundle.message("action.hg4idea.Rebase.Abort.error"));
+            new HgCommandResultNotifier(project).notifyError(REBASE_ABORT_ERROR,
+                                                             result,
+                                                             HgBundle.message("hg4idea.hg.error"),
+                                                             HgBundle.message("action.hg4idea.Rebase.Abort.error"));
           }
           HgUtil.markDirectoryDirty(project, selectedRepo.getRoot());
         }

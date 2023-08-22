@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -30,7 +31,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
+@InternalIgnoreDependencyViolation
+public final class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   private static final String INTELLIJ_TEST_DISCOVERY_HOST = "https://intellij-test-discovery.labs.intellij.net";
 
   private static final NotNullLazyValue<ObjectReader> JSON_READER = NotNullLazyValue.createValue(() -> new ObjectMapper().readerFor(TestsSearchResult.class));
@@ -119,7 +121,8 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
         r.write("[\"" + testClassName +  "\"]");
-        Map<String, List<String>> map = new ObjectMapper().readValue(r.getInputStream(), new TypeReference<Map<String, List<String>>>() {});
+        Map<String, List<String>> map = new ObjectMapper().readValue(r.getInputStream(), new TypeReference<>() {
+        });
         return ObjectUtils.notNull(ContainerUtil.getFirstItem(map.values()), Collections.emptyList());
       }), project);
   }
@@ -132,7 +135,8 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     LOG.debug(url);
     return HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(r -> {
       r.write(paths.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",", "[", "]")));
-      return new ObjectMapper().readValue(r.getInputStream(), new TypeReference<List<String>>(){});
+      return new ObjectMapper().readValue(r.getInputStream(), new TypeReference<>() {
+      });
     });
   }
 
@@ -281,7 +285,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return query.compute();
     }
     catch (IOException e) {
-      LOG.error("Can't execute remote query", e);
+      LOG.warn("Can't execute remote query", e);
       return Collections.emptyList();
     }
   }

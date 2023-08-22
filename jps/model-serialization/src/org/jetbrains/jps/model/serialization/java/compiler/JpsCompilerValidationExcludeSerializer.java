@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
-/**
- * @author peter
- */
 public class JpsCompilerValidationExcludeSerializer extends JpsProjectExtensionSerializer {
   public static final String COMPONENT_NAME = "ExcludeFromValidation";
   public static final String CONFIG_FILE_NAME = "excludeFromValidation.xml";
@@ -38,7 +35,4 @@ public class JpsCompilerValidationExcludeSerializer extends JpsProjectExtensionS
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     JpsJavaCompilerConfigurationSerializer.readExcludes(componentTag, configuration.getValidationExcludes());
   }
-
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {}
 }

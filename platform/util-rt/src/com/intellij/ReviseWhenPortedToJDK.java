@@ -5,12 +5,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Use for marking places in code, which are supposed to be updated after migration of a containing module to newer JDK.
+ * Use for marking places in code which are supposed to be updated after migration of the containing module to a newer JDK.
  */
 @Retention(RetentionPolicy.SOURCE)
 public @interface ReviseWhenPortedToJDK {
   /**
-   * A JDK version required for revising a marked code.
+   * A JDK version required for revising the marked code.
    */
   String value();
+
+  /**
+   * An additional description of what actually has to be done (i.e. a particular method to use).
+   */
+  String description() default "";
 }

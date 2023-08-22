@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.eclipse.EclipseBundle;
 
 public final class EclipseProjectImportProvider extends ProjectImportProvider {
   private final EclipseProjectOpenProcessor myProcessor = new EclipseProjectOpenProcessor();
@@ -33,6 +34,6 @@ public final class EclipseProjectImportProvider extends ProjectImportProvider {
   @NotNull
   @Override
   public String getFileSample() {
-    return "<b>Eclipse</b> project (.project) or classpath (.classpath) file";
+    return EclipseBundle.message("eclipse.file.to.import.description");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.Disposable;
@@ -9,8 +9,10 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +32,7 @@ public final class DiscoveredTestDataHolder {
   private final PersistentStringEnumerator myClassEnumerator;
   private final PersistentStringEnumerator myMethodEnumerator;
   private final PersistentStringEnumerator myPathEnumerator;
-  private final PersistentEnumeratorDelegate<TestId> myTestEnumerator;
+  private final PersistentEnumerator<TestId> myTestEnumerator;
   private final PersistentObjectSeq myConstructedDataFiles = new PersistentObjectSeq();
 
   private boolean myDisposed;
@@ -65,7 +67,7 @@ public final class DiscoveredTestDataHolder {
       PersistentStringEnumerator classNameEnumerator;
       PersistentStringEnumerator methodEnumerator;
       PersistentStringEnumerator pathEnumerator;
-      PersistentEnumeratorDelegate<TestId> testEnumerator;
+      PersistentEnumerator<TestId> testEnumerator;
 
       int iterations = 0;
 
@@ -90,7 +92,7 @@ public final class DiscoveredTestDataHolder {
           pathEnumerator = new PersistentStringEnumerator(pathEnumeratorFile, true);
           myConstructedDataFiles.add(pathEnumerator);
 
-          testEnumerator = new PersistentEnumeratorDelegate<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
+          testEnumerator = new PersistentEnumerator<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
           myConstructedDataFiles.add(testEnumerator);
 
           break;
@@ -168,8 +170,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
-  @NotNull
-  public Collection<String> getTestModulesByMethodName(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
+  public @NotNull Collection<String> getTestModulesByMethodName(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
     int testId = myTestEnumerator.tryEnumerate(createTestId(testClassName, testMethodName, frameworkId));
     if (testId != 0) {
       return myTestModuleIndex.getTestRunModules(testId);
@@ -184,16 +185,16 @@ public final class DiscoveredTestDataHolder {
                              @Nullable String moduleName,
                              byte frameworkId) throws IOException {
     final int testNameId = myTestEnumerator.enumerate(createTestId(testClassName, testMethodName, frameworkId));
-    Int2ObjectOpenHashMap<IntArrayList> result = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<IntList> result = new Int2ObjectOpenHashMap<>();
     for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
-      IntArrayList methodIds = new IntArrayList(e.getValue().size());
+      IntList methodIds = new IntArrayList(e.getValue().size());
       result.put(myClassEnumerator.enumerate(e.getKey()), methodIds);
       for (String methodName : e.getValue()) {
         methodIds.add(myMethodEnumerator.enumerate(methodName));
       }
     }
 
-    Map<Integer, Void> usedVirtualFileIds = new HashMap<>();
+    Int2ObjectMap<Void> usedVirtualFileIds = new Int2ObjectOpenHashMap<>();
     for (String file : usedFiles) {
       if (file.contains("testData") || file.contains("test-data") || file.contains("test_data")) {
         int fileId = myPathEnumerator.enumerate(file);
@@ -207,8 +208,7 @@ public final class DiscoveredTestDataHolder {
     myTestModuleIndex.appendModuleData(testNameId, moduleName);
   }
 
-  @NotNull
-  public MultiMap<String, String> getTestsByFile(@NotNull String relativePath, byte frameworkId) throws IOException {
+  public @NotNull MultiMap<String, String> getTestsByFile(@NotNull String relativePath, byte frameworkId) throws IOException {
     int fileId = myPathEnumerator.tryEnumerate(relativePath);
     if (fileId == 0) return MultiMap.empty();
     try {
@@ -223,8 +223,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
-  @NotNull
-  public MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) throws IOException {
+  public @NotNull MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) throws IOException {
     int classId = myClassEnumerator.tryEnumerate(classFQName);
     if (classId == 0) return MultiMap.empty();
     try {
@@ -239,8 +238,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
-  @NotNull
-  public MultiMap<String, String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) throws IOException {
+  public @NotNull MultiMap<String, String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) throws IOException {
     int methodId = myMethodEnumerator.tryEnumerate(methodName);
     if (methodId == 0) return MultiMap.empty();
     int classId = myClassEnumerator.tryEnumerate(classFQName);
@@ -258,8 +256,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
-  @NotNull
-  public Collection<String> getAffectedFiles(@NotNull Couple<String> testQName, byte frameworkId) throws IOException {
+  public @NotNull Collection<String> getAffectedFiles(@NotNull Couple<String> testQName, byte frameworkId) throws IOException {
     int testId = myTestEnumerator.tryEnumerate(createTestId(testQName.getFirst(), testQName.getSecond(), frameworkId));
     if (testId == 0) return Collections.emptySet();
     Collection<Integer> affectedFiles = myTestFilesIndex.getTestDataFor(testId);
@@ -280,13 +277,11 @@ public final class DiscoveredTestDataHolder {
     return myDisposed;
   }
 
-  @NotNull
-  static Path getVersionFile(Path path) {
+  static @NotNull Path getVersionFile(Path path) {
     return path.resolve("index.version");
   }
 
-  @NotNull
-  private TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
+  private @NotNull TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
     return new TestId(myClassEnumerator.enumerate(className), myMethodEnumerator.enumerate(methodName), frameworkPrefix);
   }
 

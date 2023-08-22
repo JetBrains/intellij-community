@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,21 +14,21 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.LimitHistoryCheck.VcsFileHistoryLimitReachedException;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
 
-public class VcsCachingHistory {
+public final class VcsCachingHistory {
   @NotNull private final Project myProject;
   @NotNull private final VcsHistoryCache myVcsHistoryCache;
   @NotNull private final VcsHistoryProvider myHistoryProvider;
@@ -165,14 +165,25 @@ public class VcsCachingHistory {
     return null;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
+  public static void collect(@NotNull AbstractVcs vcs,
+                             @NotNull FilePath filePath,
+                             @Nullable VcsRevisionNumber revision,
+                             @NotNull Consumer<VcsFileRevision> revisionConsumer) throws VcsException {
+    VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
+    LightweightVcsHistorySessionConsumer partner = new LightweightVcsHistorySessionConsumer(revisionConsumer);
+    history.reportHistory(filePath, revision, vcs.getKeyInstanceMethod(), partner, true);
+    partner.throwIfError();
+  }
+
+  @RequiresBackgroundThread
   public static List<VcsFileRevision> collect(@NotNull AbstractVcs vcs,
                                               @NotNull FilePath filePath,
                                               @Nullable VcsRevisionNumber revision) throws VcsException {
     return collectSession(vcs, filePath, revision).getRevisionList();
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static VcsHistorySession collectSession(@NotNull AbstractVcs vcs,
                                                  @NotNull FilePath filePath,
                                                  @Nullable VcsRevisionNumber revision) throws VcsException {
@@ -183,18 +194,18 @@ public class VcsCachingHistory {
     return partner.getSession();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsBackgroundableActions actionKey,
-                                         @NotNull Consumer<? super VcsHistorySession> consumer) {
+                                         @NotNull com.intellij.util.Consumer<? super VcsHistorySession> consumer) {
     VcsCachingHistory history = new VcsCachingHistory(vcs, Objects.requireNonNull(vcs.getVcsHistoryProvider()), vcs.getDiffProvider());
-    CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer);
+    CollectingHistoryPartner partner = new CollectingHistoryPartner(vcs.getProject(), filePath, consumer::consume);
     BackgroundableActionLock lock = getHistoryLock(vcs, actionKey, filePath, null);
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, true);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsHistorySessionConsumer partner,
@@ -204,7 +215,7 @@ public class VcsCachingHistory {
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, canUseCache);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath, @NotNull VcsRevisionNumber startRevisionNumber,
                                          @NotNull VcsHistorySessionConsumer partner) {
@@ -216,7 +227,7 @@ public class VcsCachingHistory {
     history.reportHistoryInBackground(filePath, startRevisionNumber, vcs.getKeyInstanceMethod(), lock, partner, false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean collectFromCache(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsHistorySessionConsumer partner) {
@@ -259,7 +270,7 @@ public class VcsCachingHistory {
     return getLock(vcs.getProject(), actionKey, filePath.getPath());
   }
 
-  private static class CollectingHistoryPartner implements VcsHistorySessionConsumer {
+  private static final class CollectingHistoryPartner implements VcsHistorySessionConsumer {
     @NotNull private final Project myProject;
     @NotNull private final Consumer<? super VcsHistorySession> myContinuation;
     @NotNull private final LimitHistoryCheck myCheck;
@@ -295,12 +306,12 @@ public class VcsCachingHistory {
     @Override
     public void finished() {
       if (mySession != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myContinuation.consume(mySession), ModalityState.defaultModalityState());
+        ApplicationManager.getApplication().invokeLater(() -> myContinuation.accept(mySession), ModalityState.defaultModalityState());
       }
     }
   }
 
-  private static class HistoryPartnerProxy implements VcsHistorySessionConsumer {
+  private static final class HistoryPartnerProxy implements VcsHistorySessionConsumer {
     @NotNull private final VcsHistorySessionConsumer myPartner;
     @NotNull private final Consumer<? super VcsAbstractHistorySession> myFinish;
     private VcsAbstractHistorySession myCopy;
@@ -330,7 +341,7 @@ public class VcsCachingHistory {
     @Override
     public void finished() {
       myPartner.finished();
-      myFinish.consume(myCopy);
+      myFinish.accept(myCopy);
     }
   }
 }

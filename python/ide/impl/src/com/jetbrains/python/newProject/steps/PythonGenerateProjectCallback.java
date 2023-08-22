@@ -36,14 +36,13 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
 
   @Override
   public void consume(@Nullable ProjectSettingsStepBase<T> step, @NotNull ProjectGeneratorPeer<T> projectGeneratorPeer) {
-    if (!(step instanceof ProjectSpecificSettingsStep)) return;
+    if (!(step instanceof ProjectSpecificSettingsStep settingsStep)) return;
 
-    final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;
     final DirectoryProjectGenerator generator = settingsStep.getProjectGenerator();
     Sdk sdk = settingsStep.getSdk();
 
     if (generator instanceof PythonProjectGenerator) {
-      final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator)generator).beforeProjectGenerated(sdk);
+      final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator<?>)generator).beforeProjectGenerated(sdk);
       if (beforeProjectGenerated != null) {
         final boolean result = beforeProjectGenerated.fun((PythonProjectGenerator)generator);
         if (!result) {
@@ -60,14 +59,14 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
     }
 
     if (generator instanceof PythonProjectGenerator && sdk == null && newProject != null) {
-      final PyNewProjectSettings newSettings = (PyNewProjectSettings)((PythonProjectGenerator)generator).getProjectSettings();
-      ((PythonProjectGenerator)generator).createAndAddVirtualEnv(newProject, newSettings);
+      final PyNewProjectSettings newSettings = (PyNewProjectSettings)((PythonProjectGenerator<?>)generator).getProjectSettings();
+      ((PythonProjectGenerator<?>)generator).createAndAddVirtualEnv(newProject, newSettings);
       sdk = newSettings.getSdk();
     }
 
     if (newProject != null && generator instanceof PythonProjectGenerator) {
       SdkConfigurationUtil.setDirectoryProjectSdk(newProject, sdk);
-      ((PythonProjectGenerator)generator).afterProjectGenerated(newProject);
+      ((PythonProjectGenerator<?>)generator).afterProjectGenerated(newProject);
     }
   }
 
@@ -84,16 +83,15 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
                                               final ProjectSpecificSettingsStep settingsStep,
                                               @NotNull final ProjectGeneratorPeer projectGeneratorPeer) {
     Object projectSettings = null;
-    if (generator instanceof PythonProjectGenerator) {
-      final PythonProjectGenerator<?> projectGenerator = (PythonProjectGenerator<?>)generator;
+    if (generator instanceof PythonProjectGenerator<?> projectGenerator) {
       projectSettings = projectGenerator.getProjectSettings();
     }
     else if (generator instanceof WebProjectTemplate) {
       projectSettings = projectGeneratorPeer.getSettings();
     }
-    if (projectSettings instanceof PyNewProjectSettings) {
-      final PyNewProjectSettings newProjectSettings = (PyNewProjectSettings)projectSettings;
+    if (projectSettings instanceof PyNewProjectSettings newProjectSettings) {
       newProjectSettings.setSdk(settingsStep.getSdk());
+      newProjectSettings.setInterpreterInfoForStatistics(settingsStep.getInterpreterInfoForStatistics());
       newProjectSettings.setInstallFramework(settingsStep.installFramework());
       newProjectSettings.setRemotePath(settingsStep.getRemotePath());
     }

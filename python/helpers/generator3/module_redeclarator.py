@@ -1,6 +1,6 @@
 from generator3.core import OriginType
 from generator3.util_methods import *
-from generator3.util_methods import get_relative_path_by_qname
+from generator3.util_methods import get_portable_test_module_path
 from generator3.docstring_parsing import *
 
 
@@ -808,7 +808,7 @@ class ModuleRedeclarator(object):
                 origin = origin_type = OriginType.BUILTIN
 
         if self.test_mode and origin_type == OriginType.FILE:
-            origin = get_relative_path_by_qname(origin, self.qname)
+            origin = get_portable_test_module_path(origin, self.qname)
 
 
         out(0, "# from %s" % origin)  # line 3
@@ -873,6 +873,9 @@ class ModuleRedeclarator(object):
             module_dict = dir(self.module)
         for item_name in module_dict:
             note("looking at %s", item_name)
+            # Python/C API can declare a symbol with an arbitrary name
+            if not is_identifier(item_name):  # noqa
+                continue
             if item_name in (
                 "__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
                 continue # handled otherwise

@@ -16,24 +16,28 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.RightMarginForm;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JTextField myKeepBlankLines;
-  private JComboBox myWrapAttributes;
+  private JComboBox<CodeStyleSettings.WrapStyle> myWrapAttributes;
   private JCheckBox myAlignAttributes;
   private JCheckBox myKeepWhiteSpaces;
 
@@ -46,7 +50,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox myInEmptyTag;
   private JCheckBox myWrapText;
   private JCheckBox myKeepLineBreaksInText;
-  private JComboBox myWhiteSpaceAroundCDATA;
+  private JComboBox<String> myWhiteSpaceAroundCDATA;
   private JCheckBox myKeepWhitespaceInsideCDATACheckBox;
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
@@ -55,14 +59,16 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
     installPreviewPanel(myPreviewPanel);
-
     fillWrappingCombo(myWrapAttributes);
-
     addPanelToWatch(myPanel);
+    myWhiteSpaceAroundCDATA.setModel(new CollectionComboBoxModel<@Nls String>(
+      Arrays.asList(XmlBundle.message("preserve"),
+                    XmlBundle.message("remove.keep.with.tags"),
+                    XmlBundle.message("add.new.lines"))));
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
     return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
 
@@ -72,12 +78,12 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     xmlSettings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
     xmlSettings.XML_KEEP_LINE_BREAKS_IN_TEXT = myKeepLineBreaksInText.isSelected();
-    xmlSettings.XML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
+    xmlSettings.XML_ATTRIBUTE_WRAP = CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem());
     xmlSettings.XML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
     xmlSettings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     xmlSettings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
@@ -99,10 +105,10 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     myKeepBlankLines.setText(String.valueOf(xmlSettings.XML_KEEP_BLANK_LINES));
-    myWrapAttributes.setSelectedIndex(getIndexForWrapping(xmlSettings.XML_ATTRIBUTE_WRAP));
+    myWrapAttributes.setSelectedItem(CodeStyleSettings.WrapStyle.forWrapping(xmlSettings.XML_ATTRIBUTE_WRAP));
     myAlignAttributes.setSelected(xmlSettings.XML_ALIGN_ATTRIBUTES);
     myKeepWhiteSpaces.setSelected(xmlSettings.XML_KEEP_WHITESPACES);
     mySpacesAfterTagName.setSelected(xmlSettings.XML_SPACE_AFTER_TAG_NAME);
@@ -125,7 +131,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     if (xmlSettings.XML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
     }
-    if (xmlSettings.XML_ATTRIBUTE_WRAP != ourWrappings[myWrapAttributes.getSelectedIndex()]) {
+    if (xmlSettings.XML_ATTRIBUTE_WRAP !=
+        CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem())) {
       return true;
     }
     if (xmlSettings.XML_ALIGN_ATTRIBUTES != myAlignAttributes.isSelected()) {
@@ -182,7 +189,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   @Override
   @NotNull
   protected FileType getFileType() {
-    return StdFileTypes.XML;
+    return XmlFileType.INSTANCE;
   }
 
   private void createUIComponents() {
@@ -193,7 +200,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
         return new Dimension(prefSize.width + 15, prefSize.height);
       }
     };
-    myRightMarginForm = new RightMarginForm(StdFileTypes.XML.getLanguage(), getSettings());
+    myRightMarginForm = new RightMarginForm(XmlFileType.INSTANCE.getLanguage(), getSettings());
     myRightMarginPanel = myRightMarginForm.getTopPanel();
   }
 }

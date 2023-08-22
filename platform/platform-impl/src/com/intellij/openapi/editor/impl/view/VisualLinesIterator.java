@@ -1,10 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
@@ -12,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
 
 /**
  * If one needs to perform some actions for a continuous range of visual lines, using this class would be most surely faster than
@@ -30,8 +29,7 @@ public final class VisualLinesIterator {
   private final List<Inlay<?>> myInlaysBelow = new ArrayList<>();
   private boolean myInlaysSet;
 
-  @NotNull
-  private Location myLocation;
+  private @NotNull Location myLocation;
   private Location myNextLocation;
   private int y = UNSET; // y coordinate of visual line's top
 
@@ -54,7 +52,7 @@ public final class VisualLinesIterator {
     checkEnd();
     if (y != UNSET) {
       y += EditorUtil.getTotalInlaysHeight(getBlockInlaysBelow());
-      y += myLineHeight;
+      y += getLineHeight();
     }
     if (myNextLocation == null) {
       myLocation.advance();
@@ -152,6 +150,27 @@ public final class VisualLinesIterator {
     return myInlaysBelow;
   }
 
+  public CustomFoldRegion getCustomFoldRegion() {
+    checkEnd();
+    int foldIndex = myLocation.foldRegion;
+    if (foldIndex < myFoldRegions.length) {
+      FoldRegion foldRegion = myFoldRegions[foldIndex];
+      if (foldRegion instanceof CustomFoldRegion && foldRegion.getStartOffset() == myLocation.offset) {
+        return (CustomFoldRegion)foldRegion;
+      }
+    }
+    return null;
+  }
+
+  public boolean isCustomFoldRegionLine() {
+    return getCustomFoldRegion() != null;
+  }
+
+  public int getLineHeight() {
+    CustomFoldRegion region = getCustomFoldRegion();
+    return region == null ? myLineHeight : region.getHeightInPixels();
+  }
+
   private void checkEnd() {
     if (atEnd()) throw new IllegalStateException("Iteration finished");
   }
@@ -175,7 +194,7 @@ public final class VisualLinesIterator {
       int inlayOffset = inlay.getOffset() - (inlay.isRelatedToPrecedingText() ? 0 : 1);
       int foldIndex = myLocation.foldRegion;
       while (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getEndOffset() <= inlayOffset) foldIndex++;
-      if (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getStartOffset() <= inlayOffset) continue;
+      if (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getStartOffset() <= inlayOffset && !showWhenFolded(inlay)) continue;
       (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE ? myInlaysAbove : myInlaysBelow).add(inlay);
     }
   }

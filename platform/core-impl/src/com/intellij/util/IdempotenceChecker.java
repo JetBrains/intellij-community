@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -12,25 +14,26 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
-public class IdempotenceChecker {
+public final class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
-  private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new THashSet<>());
+  private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new HashSet<>());
   private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
   @SuppressWarnings("SSBasedInspection") private static final ThreadLocal<List<String>> ourLog = new ThreadLocal<>();
-  private static final RegistryValue ourRateCheckProperty = Registry.get("platform.random.idempotence.check.rate");
+
+  private static final Supplier<RegistryValue> rateCheckProperty = new SynchronizedClearableLazy<>(() -> {
+    return Registry.get("platform.random.idempotence.check.rate");
+  });
 
   /**
    * Perform some basic checks whether the two given objects are equivalent and interchangeable,
@@ -84,19 +87,44 @@ public class IdempotenceChecker {
                                         @Nullable T fresh,
                                         @NotNull Class<?> providerClass,
                                         @Nullable Computable<? extends T> recomputeValue, String msg) {
-    boolean shouldReport = ApplicationManager.getApplication().isUnitTestMode() || ourReportedValueClasses.add(providerClass);
+    boolean shouldReport = (ApplicationManager.getApplication().isUnitTestMode()
+                           || ourReportedValueClasses.add(providerClass))
+                           &&  !("true".equals(System.getProperty("idea.disable.idempotence.checker", "false")));
     if (shouldReport) {
       if (recomputeValue != null) {
         msg += recomputeWithLogging(existing, fresh, recomputeValue);
       }
-      LOG.error(msg);
+      LOG.error(PluginException.createByClass(msg, null, providerClass));
     }
   }
 
-  @NotNull
-  private static <T> String recomputeWithLogging(@Nullable T existing,
-                                                 @Nullable T fresh,
-                                                 @NotNull Computable<? extends T> recomputeValue) {
+  private static @NotNull <T> String recomputeWithLogging(@Nullable T existing,
+                                                          @Nullable T fresh,
+                                                          @NotNull Computable<? extends T> recomputeValue) {
+    ResultWithLog<T> rwl = computeWithLogging(recomputeValue);
+    T freshest = rwl.result;
+    @NonNls String msg = "\n\nRecomputation gives " + objAndClass(freshest);
+    if (checkValueEquivalence(existing, freshest) == null) {
+      msg += " which is equivalent to 'existing'";
+    }
+    else if (checkValueEquivalence(fresh, freshest) == null) {
+      msg += " which is equivalent to 'fresh'";
+    }
+    else {
+      msg += " which is different from both values";
+    }
+    if (!rwl.log.isEmpty() && !(freshest instanceof ResultWithLog)) {
+      msg += "\nRecomputation log:\n" + rwl.printLog();
+    }
+    return msg;
+  }
+
+  /**
+   * Run the given computation with internal logging enabled to help debug {@link #checkEquivalence} failures.
+   * @return Both the computation result and the log
+   * @see #logTrace(String)
+   */
+  public static @NotNull <T> ResultWithLog<T> computeWithLogging(@NotNull Computable<? extends T> recomputeValue) {
     List<String> threadLog = ourLog.get();
     boolean outermost = threadLog == null;
     if (outermost) {
@@ -104,22 +132,8 @@ public class IdempotenceChecker {
     }
     try {
       int start = threadLog.size();
-      T freshest = recomputeValue.compute();
-      String msg = "\n\nRecomputation gives " + objAndClass(freshest);
-      if (checkValueEquivalence(existing, freshest) == null) {
-        msg += " which is equivalent to 'existing'";
-      }
-      else if (checkValueEquivalence(fresh, freshest) == null) {
-        msg += " which is equivalent to 'fresh'";
-      }
-      else {
-        msg += " which is different from both values";
-      }
-      List<String> log = threadLog.subList(start, threadLog.size());
-      if (!log.isEmpty()) {
-        msg += "\nRecomputation log:\n" + StringUtil.join(log, s -> "  " + s, "\n");
-      }
-      return msg;
+      T result = recomputeValue.compute();
+      return new ResultWithLog<>(result, new ArrayList<>(threadLog.subList(start, threadLog.size())));
     }
     finally {
       if (outermost) {
@@ -128,7 +142,7 @@ public class IdempotenceChecker {
     }
   }
 
-  private static String objAndClass(Object o) {
+  private static @NonNls String objAndClass(Object o) {
     if (o == null) return "null";
 
     String s = o.toString();
@@ -148,23 +162,31 @@ public class IdempotenceChecker {
       return checkArrayEquivalence(eArray, Objects.requireNonNull(asArray(fresh)), existing);
     }
 
+    if (existing instanceof ResultWithLog) {
+      return whichIsField("result", existing, fresh,
+                          checkValueEquivalence(((ResultWithLog<?>)existing).getResult(), ((ResultWithLog<?>)fresh).getResult()));
+    }
+
     if (existing instanceof CachedValueBase.Data) {
-      return checkCachedValueData((CachedValueBase.Data)existing, (CachedValueBase.Data)fresh);
+      return checkCachedValueData((CachedValueBase.Data<?>)existing, (CachedValueBase.Data<?>)fresh);
     }
     if (existing instanceof List || isOrderedSet(existing)) {
-      return checkCollectionElements((Collection)existing, (Collection)fresh);
+      return checkCollectionElements((Collection<?>)existing, (Collection<?>)fresh);
     }
     if (isOrderedMap(existing)) {
-      return checkCollectionElements(((Map)existing).entrySet(), ((Map)fresh).entrySet());
+      return checkCollectionElements(((Map<?,?>)existing).entrySet(), ((Map<?,?>)fresh).entrySet());
     }
     if (existing instanceof Set) {
-      return whichIsField("size", existing, fresh, checkCollectionSizes(((Set)existing).size(), ((Set)fresh).size()));
+      return whichIsField("size", existing, fresh, checkCollectionSizes(((Set<?>)existing).size(), ((Set<?>)fresh).size()));
     }
     if (existing instanceof Map) {
       if (existing instanceof ConcurrentMap) {
         return null; // likely to be filled lazily
       }
-      return whichIsField("size", existing, fresh, checkCollectionSizes(((Map)existing).size(), ((Map)fresh).size()));
+      return whichIsField("size", existing, fresh, checkCollectionSizes(((Map<?,?>)existing).size(), ((Map<?,?>)fresh).size()));
+    }
+    if (isExpectedToHaveSaneEquals(existing) && !existing.equals(fresh)) {
+      return reportProblem(existing, fresh);
     }
     if (existing instanceof PsiNamedElement) {
       return checkPsiEquivalence((PsiElement)existing, (PsiElement)fresh);
@@ -179,33 +201,30 @@ public class IdempotenceChecker {
       }
       return null;
     }
-    if (isExpectedToHaveSaneEquals(existing) && !existing.equals(fresh)) {
-      return reportProblem(existing, fresh);
-    }
     return null;
   }
 
-  private static boolean isOrderedMap(Object o) {
+  private static boolean isOrderedMap(@NotNull Object o) {
     return o instanceof LinkedHashMap || o instanceof SortedMap;
   }
 
-  private static boolean isOrderedSet(Object o) {
+  private static boolean isOrderedSet(@NotNull Object o) {
     return o instanceof LinkedHashSet || o instanceof SortedSet;
   }
 
-  private static String whichIsField(@NotNull String field, @NotNull Object existing, @NotNull Object fresh, @Nullable String msg) {
+  private static String whichIsField(@NotNull @NonNls String field, @NotNull Object existing, @NotNull Object fresh, @Nullable String msg) {
     return msg == null ? null : appendDetail(msg, "which is " + field + " of " + existing + " and " + fresh);
   }
 
-  private static Object @Nullable [] asArray(Object o) {
+  private static Object @Nullable [] asArray(@NotNull Object o) {
     if (o instanceof Object[]) return (Object[])o;
-    if (o instanceof Map.Entry) return new Object[]{((Map.Entry)o).getKey(), ((Map.Entry)o).getValue()};
-    if (o instanceof Pair) return new Object[]{((Pair)o).first, ((Pair)o).second};
-    if (o instanceof Trinity) return new Object[]{((Trinity)o).first, ((Trinity)o).second, ((Trinity)o).third};
+    if (o instanceof Map.Entry) return new Object[]{((Map.Entry<?,?>)o).getKey(), ((Map.Entry<?,?>)o).getValue()};
+    if (o instanceof Pair) return new Object[]{((Pair<?,?>)o).first, ((Pair<?,?>)o).second};
+    if (o instanceof Trinity) return new Object[]{((Trinity<?,?,?>)o).first, ((Trinity<?,?,?>)o).second, ((Trinity<?,?,?>)o).third};
     return null;
   }
 
-  private static String checkCachedValueData(@NotNull CachedValueBase.Data existing, @NotNull CachedValueBase.Data fresh) {
+  private static String checkCachedValueData(@NotNull CachedValueBase.Data<?> existing, @NotNull CachedValueBase.Data<?> fresh) {
     Object[] deps1 = existing.getDependencies();
     Object[] deps2 = fresh.getDependencies();
     Object eValue = existing.get();
@@ -221,7 +240,8 @@ public class IdempotenceChecker {
   }
 
   private static boolean isExpectedToHaveSaneEquals(@NotNull Object existing) {
-    return existing instanceof Comparable;
+    return existing instanceof Comparable
+           || existing instanceof Symbol;
   }
 
   @Contract("null,_->!null;_,null->!null")
@@ -241,9 +261,11 @@ public class IdempotenceChecker {
     if (existing instanceof Map && fresh instanceof Map && isOrderedMap(existing) == isOrderedMap(fresh)) return true;
     if (existing instanceof Set && fresh instanceof Set && isOrderedSet(existing) == isOrderedSet(fresh)) return true;
     if (existing instanceof List && fresh instanceof List) return true;
+    if (existing instanceof PsiNamedElement && fresh instanceof PsiNamedElement) return true; // ClsClassImpl might be equal to PsiClass
     return ContainerUtil.intersects(allSupersWithEquals.get(existing.getClass()), allSupersWithEquals.get(fresh.getClass()));
   }
 
+  @SuppressWarnings("rawtypes")
   private static final Map<Class, Set<Class>> allSupersWithEquals = ConcurrentFactoryMap.createMap(
     clazz -> JBIterable
       .generate(clazz, Class::getSuperclass)
@@ -265,7 +287,7 @@ public class IdempotenceChecker {
     return nav != null && nav.isPhysical();
   }
 
-  private static String checkCollectionElements(@NotNull Collection existing, @NotNull Collection fresh) {
+  private static String checkCollectionElements(@NotNull Collection<?> existing, @NotNull Collection<?> fresh) {
     if (fresh.isEmpty()) {
       return null; // for cases when an empty collection is cached and then filled lazily on request
     }
@@ -282,7 +304,7 @@ public class IdempotenceChecker {
     return null;
   }
 
-  private static String checkArrayEquivalence(Object[] a1, Object[] a2, Object original1) {
+  private static String checkArrayEquivalence(Object @NotNull [] a1, Object @NotNull [] a2, @NotNull Object original1) {
     int len1 = a1.length;
     int len2 = a2.length;
     if (len1 != len2) {
@@ -298,12 +320,13 @@ public class IdempotenceChecker {
     return null;
   }
 
-  private static String reportProblem(Object o1, Object o2) {
+  private static @NotNull String reportProblem(@Nullable Object o1, @Nullable Object o2) {
     return appendDetail("Non-idempotent computation: it returns different results when invoked multiple times or on different threads:",
                         objAndClass(o1) + " != " + objAndClass(o2));
   }
 
-  private static String appendDetail(String message, String detail) {
+  @Contract(pure = true)
+  private static @NotNull String appendDetail(@NotNull @NonNls String message, @NotNull @NonNls String detail) {
     return message + "\n  " + StringUtil.trimLog(detail, 10_000);
   }
 
@@ -311,15 +334,15 @@ public class IdempotenceChecker {
    * @return whether random checks are enabled and it makes sense to call a potentially expensive {@link #applyForRandomCheck} at all.
    */
   public static boolean areRandomChecksEnabled() {
-    return ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest();
+    return ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest();
   }
 
   /**
    * Useful when your test checks how many times a specific code was called, and random checks make that test flaky.
    */
   @TestOnly
-  public static void disableRandomChecksUntil(Disposable parentDisposable) {
-    ourRateCheckProperty.setValue(0, parentDisposable);
+  public static void disableRandomChecksUntil(@NotNull Disposable parentDisposable) {
+    rateCheckProperty.get().setValue(0, parentDisposable);
   }
 
   /**
@@ -327,7 +350,7 @@ public class IdempotenceChecker {
    * (depending on "platform.random.idempotence.check.rate" registry value)
    * the computation is re-run and checked for consistency with that cached value.
    */
-  public static <T> void applyForRandomCheck(T data, Object provider, Computable<? extends T> recomputeValue) {
+  public static <T> void applyForRandomCheck(@NotNull T data, @NotNull Object provider, @NotNull Computable<? extends T> recomputeValue) {
     if (areRandomChecksEnabled() && shouldPerformRandomCheck()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       Integer prevNesting = ourRandomCheckNesting.get();
@@ -345,7 +368,7 @@ public class IdempotenceChecker {
   }
 
   private static boolean shouldPerformRandomCheck() {
-    int rate = ourRateCheckProperty.asInteger();
+    int rate = rateCheckProperty.get().asInteger();
     return rate > 0 && ThreadLocalRandom.current().nextInt(rate) == 0;
   }
 
@@ -365,10 +388,46 @@ public class IdempotenceChecker {
    * Log a message to help debug {@link #checkEquivalence} failures. When such a failure occurs, the computation can be re-run again
    * with this logging enabled, and the collected log will be included into exception message.
    */
-  public static void logTrace(@NotNull String message) {
+  public static void logTrace(@NotNull @NonNls String message) {
     List<String> log = ourLog.get();
     if (log != null) {
       log.add(message);
+    }
+  }
+
+  public static final class ResultWithLog<T> {
+    private final T result;
+    private final List<String> log;
+
+    private ResultWithLog(T result, List<String> log) {
+      this.result = result;
+      this.log = log;
+    }
+
+    public T getResult() {
+      return result;
+    }
+
+    String printLog() {
+      return StringUtil.join(log, s -> "  " + s, "\n");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ResultWithLog)) return false;
+      ResultWithLog<?> log = (ResultWithLog<?>)o;
+      return Arrays.deepEquals(new Object[]{result}, new Object[]{log.result});
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(result);
+    }
+
+    @Override
+    public String toString() {
+      return "ResultWithLog{" + result + (log.isEmpty() ? "" : ", log='\n" + printLog() + '\'') + '}';
     }
   }
 

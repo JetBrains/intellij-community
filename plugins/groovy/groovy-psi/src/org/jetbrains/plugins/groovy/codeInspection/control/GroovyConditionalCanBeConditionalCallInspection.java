@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
@@ -39,7 +40,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Conditional expression can be call #loc";
+    return GroovyBundle.message("inspection.message.conditional.expression.can.be.call");
   }
 
   @Override
@@ -51,7 +52,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Replace with conditional call";
+      return GroovyBundle.message("intention.family.name.replace.with.conditional.call");
     }
 
     @Override
@@ -67,10 +68,9 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       } else {
         branch = expression.getElseBranch();
       }
-      if (!(branch instanceof GrMethodCallExpression)) {
+      if (!(branch instanceof GrMethodCallExpression call)) {
         return;
       }
-      final GrMethodCallExpression call = (GrMethodCallExpression)branch;
       final GrReferenceExpression methodExpression = (GrReferenceExpression) call.getInvokedExpression();
       final GrExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
@@ -103,10 +103,9 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
         return;
       }
       condition = (GrExpression)PsiUtil.skipParentheses(condition, false);
-      if (!(condition instanceof GrBinaryExpression)) {
+      if (!(condition instanceof GrBinaryExpression binaryCondition)) {
         return;
       }
-      final GrBinaryExpression binaryCondition = (GrBinaryExpression) condition;
       final GrExpression lhs = binaryCondition.getLeftOperand();
       final GrExpression rhs = binaryCondition.getRightOperand();
       if (rhs == null) {
@@ -128,15 +127,13 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     }
 
     private static boolean isCallTargeting(GrExpression call, GrExpression expression) {
-      if (!(call instanceof GrMethodCallExpression)) {
+      if (!(call instanceof GrMethodCallExpression callExpression)) {
         return false;
       }
-      final GrMethodCallExpression callExpression = (GrMethodCallExpression) call;
       final GrExpression methodExpression = callExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression referenceExpression)) {
         return false;
       }
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression) methodExpression;
       if (!GroovyTokenTypes.mDOT.equals(referenceExpression.getDotTokenType())) {
         return false;
       }

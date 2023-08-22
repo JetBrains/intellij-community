@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -16,9 +17,20 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
+
 public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
   public SvnEditCommitMessageFromFileHistoryAction() {
-    super("Edit Revision Comment", "Edit revision comment. Previous message is rewritten.", AllIcons.Actions.Edit);
+    super(
+      messagePointer("action.EditCommitMessage.text"),
+      messagePointer("action.EditCommitMessage.description"),
+      AllIcons.Actions.Edit
+    );
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -26,11 +38,11 @@ public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     final VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
-    if (vcsKey == null || ! SvnVcs.getKey().equals(vcsKey)) return;
+    if (vcsKey == null || !SvnVcs.getKey().equals(vcsKey)) return;
     final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
     if (revision == null || revisionVirtualFile == null) return;
-    final SvnFileRevision svnFileRevision = (SvnFileRevision) revision;
+    final SvnFileRevision svnFileRevision = (SvnFileRevision)revision;
     final Consumer<String> listener = e.getData(VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER);
     SvnEditCommitMessageAction.askAndEditRevision(svnFileRevision.getRevision().getNumber(), svnFileRevision.getCommitMessage(),
                                                   svnFileRevision.getChangedRepositoryPath(), project,

@@ -10,4 +10,4 @@ class TheTest(TestCase):
         assert 'a' + 'a' == 'A'
 
     def test_ok(self):
-        print 1
+        import sys; assert sys.version_info[:2] == (3,7)

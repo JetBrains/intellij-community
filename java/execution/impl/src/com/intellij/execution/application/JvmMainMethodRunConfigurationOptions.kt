@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application
 
 import com.intellij.configurationStore.Property
@@ -6,6 +6,7 @@ import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.JvmConfigurationOptions
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
 
 open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
@@ -16,10 +17,7 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   open var workingDirectory by string()
 
   @get:OptionTag("INCLUDE_PROVIDED_SCOPE")
-  var isIncludeProvidedScope by property(false)
-
-  @get:OptionTag("ENABLE_SWING_INSPECTOR")
-  var isSwingInspectorEnabled by property(false)
+  open var isIncludeProvidedScope by property(false)
 
   @get:OptionTag("PASS_PARENT_ENVS")
   var isPassParentEnv by property(true)
@@ -27,6 +25,9 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   @Property(description = "Environment variables")
   @get:XMap(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name")
   var env by linkedMap<String, String>()
+
+  @get:XCollection
+  var envFilePaths by list<String>()
 
   // see ConfigurationWithCommandLineShortener - "null if option was not selected explicitly, legacy user-local options to be used"
   // so, we cannot use NONE as default value

@@ -21,10 +21,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class Painter {
   /**
    * This color is used to paint decoration of non selected components
@@ -128,8 +124,7 @@ public final class Painter {
 
     boolean highlightBoundaries = (getDesignTimeInsets(component) > 2);
 
-    if (component instanceof RadContainer && !component.isDragBorder()) {
-      RadContainer container = (RadContainer)component;
+    if (component instanceof RadContainer container && !component.isDragBorder()) {
       if (!highlightBoundaries && (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE)) {
         return;
       }
@@ -185,10 +180,9 @@ public final class Painter {
     if (!editor.isShowGrid()) {
       return;
     }
-    if (!(component instanceof RadContainer)) {
+    if (!(component instanceof RadContainer container)) {
       return;
     }
-    final RadContainer container = (RadContainer)component;
     if (!container.getLayoutManager().isGrid()) {
       return;
     }

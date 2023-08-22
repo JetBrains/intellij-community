@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.keyGestures;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -41,8 +41,7 @@ abstract class KeyGestureState {
         || event.getKeyCode() == KeyEvent.VK_META;
   }
 
-  @NotNull
-  public AnActionEvent createActionEvent() {
+  public @NotNull AnActionEvent createActionEvent() {
     throw new IllegalStateException(getClass().getName());
   }
 

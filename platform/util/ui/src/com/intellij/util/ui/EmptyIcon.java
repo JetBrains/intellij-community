@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -13,9 +12,9 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
-
 /**
+ * A transparent icon.
+ *
  * @author max
  * @author Konstantin Bulenkov
  * @author tav
@@ -23,14 +22,13 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
  * @see ColorIcon
  */
  public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
-//public class EmptyIcon extends JBUI.CachingScalableJBIcon<JBUI.CachingScalableJBIcon> { // backward compatible version
   private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<>();
 
-  public static final Icon ICON_18 = JBUI.scale(create(18));
-  public static final Icon ICON_16 = JBUI.scale(create(16));
-  public static final Icon ICON_13 = JBUI.scale(create(13));
-  public static final Icon ICON_8 = JBUI.scale(create(8));
-  public static final Icon ICON_0 = JBUI.scale(create(0));
+  public static final Icon ICON_18 = JBUIScale.scaleIcon(create(18));
+  public static final Icon ICON_16 = JBUIScale.scaleIcon(create(16));
+  public static final Icon ICON_13 = JBUIScale.scaleIcon(create(13));
+  public static final Icon ICON_8 = JBUIScale.scaleIcon(create(8));
+  public static final Icon ICON_0 = JBUIScale.scaleIcon(create(0));
 
   protected final int width;
   protected final int height;
@@ -42,38 +40,27 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 
   /**
    * Creates an icon of the provided size.
-   *
-   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} (JBScalableIcon)} to meet HiDPI.
+   * <p>
+   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} to meet HiDPI.
    */
-  @NotNull
-  public static EmptyIcon create(int size) {
+  public static @NotNull EmptyIcon create(int size) {
     return create(size, size);
   }
 
   /**
    * Creates an icon of the provided size.
-   *
-   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} (JBScalableIcon)} to meet HiDPI.
+   * <p>
+   * Use {@link JBUIScale#scaleIcon(JBScalableIcon)} to meet HiDPI.
    */
-  @NotNull
-  public static EmptyIcon create(int width, int height) {
+  public static @NotNull EmptyIcon create(int width, int height) {
     return create(width, height, true);
   }
 
   /**
-   * Creates an icon of the size of the provided icon base.
+   * Creates an icon of the size of the provided base icon.
    */
-  @NotNull
-  public static EmptyIcon create(@NotNull Icon base) {
+  public static @NotNull EmptyIcon create(@NotNull Icon base) {
     return create(base.getIconWidth(), base.getIconHeight());
-  }
-
-  /**
-   * @deprecated use {@linkplain #create(int)} for caching.
-   */
-  @Deprecated
-  public EmptyIcon(int size) {
-    this(size, size);
   }
 
   /**
@@ -97,42 +84,31 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
     myUseCache = icon.myUseCache;
   }
 
-  //@NotNull
-  //@Override
-  //public /*EmptyIcon*/ JBUI.CachingScalableJBIcon scale(float scale) { // backward compatible version
-  //  return super.scale(scale);
-  //}
-
-  @NotNull
   @Override
-  public EmptyIcon copy() {
+  public @NotNull EmptyIcon copy() {
     return new EmptyIcon(this);
   }
 
-  @NotNull
   @Override
-  public EmptyIcon withIconPreScaled(boolean preScaled) {
+  public @NotNull EmptyIcon withIconPreScaled(boolean preScaled) {
     if (myUseCache && isIconPreScaled() != preScaled) {
       return create(width, height, preScaled);
     }
     return (EmptyIcon)super.withIconPreScaled(preScaled);
   }
 
-  @NotNull
-  private static EmptyIcon create(int width, int height, boolean preScaled) {
-    Pair<Integer, Boolean> key = key(width, height, preScaled);
-    EmptyIcon icon = key != null ? cache.get(key) : null;
-    if (icon == null) {
-      icon = new EmptyIcon(width, height, true);
+  private static @NotNull EmptyIcon create(int width, int height, boolean preScaled) {
+    if (width != height || width >= 129) {
+      EmptyIcon icon = new EmptyIcon(width, height, true);
       icon.setIconPreScaled(preScaled);
-      if (key != null) cache.put(key, icon);
+      return icon;
     }
-    return icon;
-  }
 
-  @Nullable
-  private static Pair<Integer, Boolean> key(int width, int height, boolean preScaled) {
-    return width == height && width < 129 ? Pair.create(width, preScaled) : null;
+    return cache.computeIfAbsent(new Pair<>(width, preScaled), __ -> {
+      EmptyIcon icon = new EmptyIcon(width, height, true);
+      icon.setIconPreScaled(preScaled);
+      return icon;
+    });
   }
 
   @Override
@@ -152,36 +128,32 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EmptyIcon)) return false;
+    if (!(o instanceof EmptyIcon icon)) return false;
 
-    final EmptyIcon icon = (EmptyIcon)o;
-
-    if (scaleVal(height, PIX_SCALE) != icon.scaleVal(icon.height, PIX_SCALE)) return false;
-    if (scaleVal(width, PIX_SCALE) != icon.scaleVal(icon.width, PIX_SCALE)) return false;
+    if (scaleVal(height, DerivedScaleType.PIX_SCALE) != icon.scaleVal(icon.height, DerivedScaleType.PIX_SCALE)) return false;
+    if (scaleVal(width, DerivedScaleType.PIX_SCALE) != icon.scaleVal(icon.width, DerivedScaleType.PIX_SCALE)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    double result = scaleVal(width, PIX_SCALE);
-    result = 31 * result + scaleVal(height, PIX_SCALE);
+    double result = scaleVal(width, DerivedScaleType.PIX_SCALE);
+    result = 31 * result + scaleVal(height, DerivedScaleType.PIX_SCALE);
     return (int)result;
   }
 
-  @NotNull
-  public EmptyIconUIResource asUIResource() {
+  public @NotNull EmptyIconUIResource asUIResource() {
     return new EmptyIconUIResource(this);
   }
 
-  public static class EmptyIconUIResource extends EmptyIcon implements UIResource {
+  public static final class EmptyIconUIResource extends EmptyIcon implements UIResource {
     EmptyIconUIResource(@NotNull EmptyIcon icon) {
       super(icon);
     }
 
-    @NotNull
     @Override
-    public EmptyIconUIResource copy() {
+    public @NotNull EmptyIconUIResource copy() {
       return new EmptyIconUIResource(this);
     }
   }

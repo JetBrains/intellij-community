@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
@@ -30,21 +16,19 @@ public class TreeBackedLighterAST extends LighterAST {
     myRoot = root;
   }
 
-  @NotNull
   @Override
-  public LighterASTNode getRoot() {
+  public @NotNull LighterASTNode getRoot() {
     return wrap(myRoot);
   }
 
   @Override
-  public LighterASTNode getParent(@NotNull final LighterASTNode node) {
+  public LighterASTNode getParent(final @NotNull LighterASTNode node) {
     ASTNode parent = ((NodeWrapper)node).myNode.getTreeParent();
     return parent == null ? null : wrap(parent);
   }
 
-  @NotNull
   @Override
-  public List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent) {
+  public @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent) {
     final ASTNode[] children = ((NodeWrapper)parent).myNode.getChildren(null);
     if (children.length == 0) return ContainerUtil.emptyList();
 
@@ -55,13 +39,11 @@ public class TreeBackedLighterAST extends LighterAST {
     return result;
   }
 
-  @NotNull
-  public static LighterASTNode wrap(@NotNull ASTNode node) {
+  public static @NotNull LighterASTNode wrap(@NotNull ASTNode node) {
     return node.getFirstChildNode() == null && node.getTextLength() > 0 ? new TokenNodeWrapper(node) : new NodeWrapper(node);
   }
 
-  @NotNull
-  public ASTNode unwrap(@NotNull LighterASTNode node) {
+  public @NotNull ASTNode unwrap(@NotNull LighterASTNode node) {
     return ((NodeWrapper)node).myNode;
   }
 
@@ -72,9 +54,8 @@ public class TreeBackedLighterAST extends LighterAST {
       myNode = node;
     }
 
-    @NotNull
     @Override
-    public IElementType getTokenType() {
+    public @NotNull IElementType getTokenType() {
       return myNode.getElementType();
     }
 

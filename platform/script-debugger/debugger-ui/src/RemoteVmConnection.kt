@@ -1,24 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.connection
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.io.connectRetrying
 import com.intellij.util.io.socketConnection.ConnectionStatus
+import com.intellij.xdebugger.XDebuggerBundle
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
 import org.jetbrains.rpc.LOG
 import java.net.ConnectException
-import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JList
@@ -105,7 +105,7 @@ abstract class RemoteVmConnection<VmT : Vm> : VmConnection<VmT>() {
     }
   }
 
-  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = "${address.hostName}:${address.port}"
+  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = "${address.hostString}:${address.port}"
 
   override fun detachAndClose(): Promise<*> {
     try {
@@ -130,6 +130,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
   val result = AsyncPromise<T>()
   ApplicationManager.getApplication().invokeLater {
     val model = targets.toMutableList()
+    val selected: AtomicReference<T?> = AtomicReference()
     val builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
       .setRenderer(
@@ -138,11 +139,24 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
             renderer(value, this)
           }
         })
-      .setTitle("Choose Page to Debug")
-      .setCancelOnWindowDeactivation(false)
-      .setItemChosenCallback { value ->
-        result.setResult(value)
+      .setTitle(XDebuggerBundle.message("script.debugger.popup.title.choose.page"))
+      .setCancelOnWindowDeactivation(true)
+      .setCancelOnClickOutside(true)
+      .setRequestFocus(true)
+      .setItemSelectedCallback { value ->
+        selected.set(value)
       }
+      .addListener(object : JBPopupListener {
+        override fun onClosed(event: LightweightWindowEvent) {
+          val value = selected.get()
+          if (event.isOk && value != null) {
+            result.setResult(value)
+          }
+          else {
+            result.setError(XDebuggerBundle.message("script.debugger.popup.canceled"))
+          }
+        }
+      })
     if (selectedIndex != -1) {
       builder.setSelectedValue(model[selectedIndex], false)
     }
@@ -151,20 +165,4 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
       .showInFocusCenter()
   }
   return result
-}
-
-@Deprecated("Use NodeCommandLineUtil.initRemoteVmConnectionSync instead")
-@Throws(ExecutionException::class)
-fun initRemoteVmConnectionSync(connection: RemoteVmConnection<*>, debugPort: Int): Vm {
-  val address = InetSocketAddress(InetAddress.getLoopbackAddress(), debugPort)
-  val vmPromise = connection.open(address)
-  val vm: Vm
-  try {
-    vm = vmPromise.blockingGet(30, TimeUnit.SECONDS)!!
-  }
-  catch (e: Exception) {
-    throw ExecutionException("Cannot connect to VM ($address)", e)
-  }
-
-  return vm
 }

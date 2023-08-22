@@ -74,19 +74,19 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     return baseLine
   }
 
-  override fun getComponent() = c
+  override fun getComponent(): JComponent = c
 
   override fun getPixelUnitFactor(isHor: Boolean): Float {
     throw RuntimeException("Do not use LPX/LPY")
   }
 
-  override fun getX() = c.x
+  override fun getX(): Int = c.x
 
-  override fun getY() = c.y
+  override fun getY(): Int = c.y
 
-  override fun getHeight() = c.height
+  override fun getHeight(): Int = c.height
 
-  override fun getWidth() = c.width
+  override fun getWidth(): Int = c.width
 
   override fun getScreenLocationX(): Int {
     val p = Point()
@@ -132,9 +132,9 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     return c.preferredSize.width
   }
 
-  override fun getMaximumHeight(sz: Int) = if (c.isMaximumSizeSet) c.maximumSize.height else Integer.MAX_VALUE
+  override fun getMaximumHeight(sz: Int): Int = if (c.isMaximumSizeSet) c.maximumSize.height else Integer.MAX_VALUE
 
-  override fun getMaximumWidth(sz: Int) = if (c.isMaximumSizeSet) c.maximumSize.width else Integer.MAX_VALUE
+  override fun getMaximumWidth(sz: Int): Int = if (c.isMaximumSizeSet) c.maximumSize.width else Integer.MAX_VALUE
 
   override fun getParent(): ContainerWrapper? {
     val p = c.parent as? JComponent ?: return null
@@ -198,7 +198,7 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     c.setBounds(x, y, width, height)
   }
 
-  override fun isVisible() = c.isVisible
+  override fun isVisible(): Boolean = c.isVisible
 
   override fun getVisualPadding(): IntArray? {
     visualPaddings?.let {
@@ -272,9 +272,9 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     return hash
   }
 
-  override fun hashCode() = component.hashCode()
+  override fun hashCode(): Int = component.hashCode()
 
-  override fun equals(other: Any?) = other is ComponentWrapper && c == other.component
+  override fun equals(other: Any?): Boolean = other is ComponentWrapper && c == other.component
 
   override fun getContentBias(): Int {
     return when {

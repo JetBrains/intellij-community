@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.properties.IProperty;
@@ -24,6 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +40,8 @@ import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenDistribution;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -63,7 +52,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MavenDomUtil {
+public final class MavenDomUtil {
 
   private static final Key<Pair<Long, Set<VirtualFile>>> FILTERED_RESOURCES_ROOTS_KEY = Key.create("MavenDomUtil.FILTERED_RESOURCES_ROOTS");
 
@@ -72,6 +61,7 @@ public class MavenDomUtil {
                                                                                        "usePluginRegistry", "offline", "pluginGroups",
                                                                                        "servers", "mirrors", "proxies", "profiles",
                                                                                        "activeProfiles");
+  private static final Pattern XML_TAG_NAME_PATTERN = Pattern.compile("(\\S*)\\[(\\d*)\\]\\z");
 
   public static boolean isMavenFile(PsiFile file) {
     return isProjectFile(file) || isProfilesFile(file) || isSettingsFile(file);
@@ -95,6 +85,15 @@ public class MavenDomUtil {
     if (!(file instanceof XmlFile)) return false;
 
     return MavenConstants.PROFILES_XML.equals(file.getName());
+  }
+
+  public static @Nullable @NlsSafe String getXmlSettingsNameSpace(PsiFile file) {
+    if (!(file instanceof XmlFile)) return null;
+
+    XmlTag rootTag = ((XmlFile)file).getRootTag();
+    if (rootTag == null || !"settings".equals(rootTag.getName())) return null;
+
+    return rootTag.getAttributeValue("xmlns");
   }
 
   public static boolean isSettingsFile(PsiFile file) {
@@ -287,8 +286,6 @@ public class MavenDomUtil {
     return result;
   }
 
-  private static final Pattern XML_TAG_NAME_PATTERN = Pattern.compile("(\\S*)\\[(\\d*)\\]\\z");
-
   private static Pair<String, Integer> translateTagName(String text) {
     String tagName = text.trim();
     Integer index = null;
@@ -345,9 +342,6 @@ public class MavenDomUtil {
         if (!resource.isFiltered()) continue;
 
         String resourceDirectory = resource.getDirectory();
-        if (resourceDirectory == null) {
-          continue;
-        }
         VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resourceDirectory);
         if (resourceDir == null) continue;
 
@@ -422,21 +416,10 @@ public class MavenDomUtil {
   public static MavenDomDependency createDomDependency(MavenDomProjectModel model,
                                                        @Nullable Editor editor,
                                                        @NotNull final MavenId id) {
+
     return createDomDependency(model.getDependencies(), editor, id);
   }
 
-
-  /**
-   * @deprecated left for binary compatibility
-   */
-  @Deprecated
-  @NotNull
-  public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
-                                                       @Nullable Editor editor,
-                                                       @NotNull final MavenId id) {
-
-    return createDomDependency(dependencies, editor, (MavenCoordinate)id);
-  }
 
   @NotNull
   public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
@@ -505,5 +488,18 @@ public class MavenDomUtil {
         return "pom.xml"; // ?
       }
     }
+  }
+
+  @Nullable
+  public static String getMavenVersion(@Nullable VirtualFile file, @NotNull Project project) {
+    VirtualFile directory = file == null ? null : file.getParent();
+    MavenDistribution distribution;
+    if (directory == null) {
+      distribution = MavenDistributionsCache.getInstance(project).getSettingsDistribution();
+    }
+    else {
+      distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(directory.getPath());
+    }
+    return distribution.getVersion();
   }
 }

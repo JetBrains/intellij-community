@@ -1,0 +1,155 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    COMMAND_SUBSTITUTION_COMMAND
+      PsiElement(OPEN_BACKQUOTE)('`')
+      COMPOUND_LIST
+        TEST_COMMAND
+          PsiElement(test)('test')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(word)('DGIF')
+              PsiElement(})('}')
+            PsiElement(CLOSE_QUOTE)('"')
+        PsiWhiteSpace(' ')
+        PsiElement(&&)('&&')
+        PsiWhiteSpace(' ')
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('DGIF')
+      PsiElement(CLOSE_BACKQUOTE)('`')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    COMMAND_SUBSTITUTION_COMMAND
+      PsiElement(OPEN_BACKQUOTE)('`')
+      COMPOUND_LIST
+        TEST_COMMAND
+          PsiElement(test)('test')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            PsiElement($)('$')
+            SHELL_PARAMETER_EXPANSION
+              PsiElement({)('{')
+              PsiElement(word)('DGIF')
+              PsiElement(})('}')
+            PsiElement(CLOSE_QUOTE)('"')
+      PsiElement(CLOSE_BACKQUOTE)('`')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    TEST_COMMAND
+      PsiElement(test)('test')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('-z')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        COMMAND_SUBSTITUTION_COMMAND
+          PsiElement(OPEN_BACKQUOTE)('`')
+          COMPOUND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement($)('$')
+                SHELL_PARAMETER_EXPANSION
+                  PsiElement({)('{')
+                  PsiElement(word)('DGIF')
+                  PsiElement(})('}')
+                PsiElement(CLOSE_QUOTE)('"')
+          PsiElement(CLOSE_BACKQUOTE)('`')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    TEST_COMMAND
+      PsiElement(test)('test')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('-s')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        PsiElement($)('$')
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('abc')
+          PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement(||)('||')
+    PsiWhiteSpace(' ')
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('CONCURRENCY')
+      PsiElement(=)('=')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        PsiElement(STRING_CONTENT)('none')
+        PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# IDEA-244312')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        PsiElement($)('$')
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            TEST_COMMAND
+              PsiElement(test)('test')
+          PsiElement())(')')
+        PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        PsiElement($)('$')
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('echo')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('test')
+          PsiElement())(')')
+        PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('hello')

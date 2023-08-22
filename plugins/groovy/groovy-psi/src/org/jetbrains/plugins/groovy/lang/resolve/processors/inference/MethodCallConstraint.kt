@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
@@ -10,8 +10,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 class MethodCallConstraint(
   private val expectedType: ExpectedType?,
-  private val result: GroovyMethodResult,
-  private val context: PsiElement
+  val result: GroovyMethodResult,
+  val context: PsiElement
 ) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
@@ -24,7 +24,7 @@ class MethodCallConstraint(
 
       if (expectedType != null) {
         val rt = SpreadState.apply(PsiUtil.getSmartReturnType(method), result.spreadState, context.project)
-        if (rt != null && rt != PsiType.VOID) {
+        if (rt != null && rt != PsiTypes.voidType()) {
           nested.registerReturnTypeConstraints(expectedType, rt, context)
           nested.repeatInferencePhases()
         }

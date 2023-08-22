@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
+import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -31,6 +32,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.impl.XmlElementDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -41,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.xml.util.XmlUtil.isNotInjectedOrCustomHtmlFile;
 
 public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   public static final Key<HtmlUnknownElementInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
@@ -72,17 +76,6 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   }
 
   @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.checkbox.title");
-  }
-
-  @Override
-  @NotNull
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.title");
-  }
-
-  @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag)) {
       return;
@@ -97,21 +90,33 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
                                          ? tag.getDescriptor()
                                          : descriptorFromContext;
 
+    if (ownDescriptor instanceof XmlElementDescriptorEx) {
+      ((XmlElementDescriptorEx)ownDescriptor).validateTagName(tag, holder, isOnTheFly);
+      return;
+    }
+    if (descriptorFromContext instanceof XmlElementDescriptorEx) {
+      ((XmlElementDescriptorEx)descriptorFromContext).validateTagName(tag, holder, isOnTheFly);
+      return;
+    }
+
     if (isAbstractDescriptor(ownDescriptor) ||
-        (parentDescriptor instanceof HtmlElementDescriptorImpl &&
+        ((parentDescriptor instanceof HtmlElementDescriptorImpl
+          || parentDescriptor instanceof WebSymbolElementDescriptor webSymbolElementDescriptor
+             && !webSymbolElementDescriptor.isCustomElement()) &&
          ownDescriptor instanceof HtmlElementDescriptorImpl &&
          isAbstractDescriptor(descriptorFromContext))) {
 
       final String name = tag.getName();
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
-        final AddCustomHtmlElementIntentionAction action = new AddCustomHtmlElementIntentionAction(TAG_KEY, name, XmlAnalysisBundle.message("add.custom.html.tag", name));
+        final AddCustomHtmlElementIntentionAction action = new AddCustomHtmlElementIntentionAction(TAG_KEY, name, XmlAnalysisBundle.message(
+          "html.quickfix.add.custom.html.tag", name));
 
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)
         final String message = isAbstractDescriptor(ownDescriptor)
-                               ? XmlAnalysisBundle.message("unknown.html.tag", name)
-                               : XmlAnalysisBundle.message("element.is.not.allowed.here", name);
+                               ? XmlAnalysisBundle.message("xml.inspections.unknown.html.tag", name)
+                               : XmlAnalysisBundle.message("xml.inspections.element.is.not.allowed.here", name);
 
         final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
         assert startTagName != null;
@@ -133,15 +138,17 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
           quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
         }
-        ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ?
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
-                                             ProblemHighlightType.INFORMATION;
-        if (startTagName.getTextLength() > 0) {
-          holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-        }
+        ProblemHighlightType highlightType = isNotInjectedOrCustomHtmlFile(tag.getContainingFile())
+                                             ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                             : ProblemHighlightType.INFORMATION;
+        if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
+          if (startTagName.getTextLength() > 0) {
+            holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
 
-        if (endTagName != null) {
-          holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          if (endTagName != null) {
+            holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
         }
       }
     }

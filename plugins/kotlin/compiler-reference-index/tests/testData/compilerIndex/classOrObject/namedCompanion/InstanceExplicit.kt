@@ -1,0 +1,3 @@
+fun InstanceExplicit() {
+    MainClass.Name
+}

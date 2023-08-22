@@ -1,4 +1,4 @@
-// "Make 'i' final" "true"
+// "Make 'i' final" "true-preview"
 import java.io.*;
 
 class a {

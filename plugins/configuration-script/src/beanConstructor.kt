@@ -7,12 +7,14 @@ import com.intellij.serialization.stateProperties.CollectionStoredProperty
 import com.intellij.serialization.stateProperties.MapStoredProperty
 import com.intellij.serialization.stateProperties.ObjectStateStoredPropertyBase
 import com.intellij.util.ReflectionUtil
+import org.jetbrains.annotations.ApiStatus
 import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.NodeTuple
 import org.snakeyaml.engine.v2.nodes.ScalarNode
 import org.snakeyaml.engine.v2.nodes.SequenceNode
 
-internal fun <T : BaseState> readIntoObject(instance: T, nodes: List<NodeTuple>, affectedPropertyConsumer: ((StoredProperty<Any>) -> Unit)? = null): T {
+@ApiStatus.Internal
+fun <T : BaseState> readIntoObject(instance: T, nodes: List<NodeTuple>, affectedPropertyConsumer: ((StoredProperty<Any>) -> Unit)? = null): T {
   val properties = instance.__getProperties()
   val itemTypeInfoProvider = ItemTypeInfoProvider(instance.javaClass)
   for (tuple in nodes) {

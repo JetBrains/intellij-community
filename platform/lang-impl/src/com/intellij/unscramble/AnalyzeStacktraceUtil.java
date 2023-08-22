@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.unscramble;
 
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +32,7 @@ import java.awt.*;
 
 import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboard;
 
-/**
- * @author yole
- */
+
 public final class AnalyzeStacktraceUtil {
   public static final ProjectExtensionPointName<Filter> EP_NAME = new ProjectExtensionPointName<>("com.intellij.analyzeStacktraceFilter");
 
@@ -42,26 +41,22 @@ public final class AnalyzeStacktraceUtil {
 
   public static void printStacktrace(@NotNull ConsoleView consoleView, @NotNull String unscrambledTrace) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    String text = unscrambledTrace + "\n";
-    String consoleText = ((ConsoleViewImpl)consoleView).getText();
-    if (!text.equals(consoleText)) {
-      consoleView.clear();
-      consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
-      consoleView.scrollTo(0);
-    }
+    consoleView.clear();
+    consoleView.print(unscrambledTrace + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+    consoleView.scrollTo(0);
   }
 
   public interface ConsoleFactory {
     JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions);
   }
 
-  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final String tabTitle, String text) {
+  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final @NlsContexts.TabTitle String tabTitle, String text) {
     addConsole(project, consoleFactory, tabTitle, text, null);
   }
 
   public static RunContentDescriptor addConsole(Project project,
                                                 @Nullable ConsoleFactory consoleFactory,
-                                                final String tabTitle,
+                                                final @NlsContexts.TabTitle String tabTitle,
                                                 String text,
                                                 @Nullable Icon icon) {
     final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
@@ -149,7 +144,7 @@ public final class AnalyzeStacktraceUtil {
       return myEditor;
     }
 
-    public final void setText(final @NotNull String text) {
+    public void setText(final @NotNull String text) {
       Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(() -> {
         final Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));

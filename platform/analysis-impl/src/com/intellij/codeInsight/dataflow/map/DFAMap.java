@@ -1,13 +1,13 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.dataflow.map;
 
 import com.intellij.codeInsight.dataflow.SetUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class DFAMap<V> {
 
   // invariant:
@@ -185,7 +185,7 @@ public class DFAMap<V> {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     if (this == ourEmptyMap){
       return "Empty Map";
     }

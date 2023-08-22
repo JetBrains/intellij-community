@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.psi.*;
@@ -8,19 +8,19 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiMethod[] myMethods;
   protected final PsiClass myContainingClass;
   private final boolean myStrictSignatureSearch;
 
-  public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass, final boolean strictSignatureSearch, PsiMethod @NotNull ... methods) {
+  public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass,
+                                       final boolean strictSignatureSearch,
+                                       PsiMethod @NotNull ... methods) {
     super(strictSignatureSearch, Arrays.asList(methods));
     myMethods = methods;
     myContainingClass = aClass;
@@ -28,7 +28,9 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   }
 
   @Override
-  public final boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull final Processor<? super PsiReference> consumer) {
+  public final boolean processTextOccurrence(@NotNull PsiElement element,
+                                             int offsetInElement,
+                                             @NotNull final Processor<? super PsiReference> consumer) {
     for (PsiReference ref : ourReferenceService.getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement))) {
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && !processReference(consumer, ref)) {
         return false;
@@ -37,7 +39,7 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
     return true;
   }
 
-  private boolean processReference(Processor<? super PsiReference> consumer, PsiReference ref) {
+  private boolean processReference(@NotNull Processor<? super PsiReference> consumer, @NotNull PsiReference ref) {
     for (PsiMethod method : myMethods) {
       if (!method.isValid()) {
         continue;
@@ -58,9 +60,11 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
     return true;
   }
 
-  protected boolean processInexactReference(PsiReference ref, PsiElement refElement, PsiMethod method, Processor<? super PsiReference> consumer) {
-    if (refElement instanceof PsiMethod) {
-      PsiMethod refMethod = (PsiMethod)refElement;
+  protected boolean processInexactReference(@NotNull PsiReference ref,
+                                            @Nullable PsiElement refElement,
+                                            @NotNull PsiMethod method,
+                                            @NotNull Processor<? super PsiReference> consumer) {
+    if (refElement instanceof PsiMethod refMethod) {
       PsiClass refMethodClass = refMethod.getContainingClass();
       if (refMethodClass == null) return true;
 
@@ -86,5 +90,4 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
 
     return true;
   }
-
 }

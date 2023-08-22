@@ -15,8 +15,11 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.ide.SmartSelectProvider;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +27,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class SmartSelect extends DumbAwareAction {
+public class SmartSelect extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     SmartSelectProvider provider = getProvider(e.getDataContext());
@@ -35,7 +43,22 @@ public class SmartSelect extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(getProvider(e.getDataContext()) != null);
+    boolean hasSpeedSearch = e.getData(PlatformDataKeys.SPEED_SEARCH_TEXT) != null;
+    SmartSelectProvider provider = hasSpeedSearch ? null : getProvider(e.getDataContext());
+    if (provider != null) {
+      Object source = provider.getSource(e.getDataContext());
+      //noinspection unchecked
+      if ( (isIncreasing() && provider.canIncreaseSelection(source))
+      || (!isIncreasing() && provider.canDecreaseSelection(source))) {
+        e.getPresentation().setEnabled(true);
+        return;
+      }
+    }
+    e.getPresentation().setEnabled(false);
+  }
+
+  protected boolean isIncreasing() {
+    return true;
   }
 
   public SmartSelectProvider getProvider(DataContext context) {

@@ -19,27 +19,31 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyClassHasNoInitInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 
 public class PyAddMethodQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddInit() {
-    doQuickFixTest(PyClassHasNoInitInspection.class, PyPsiBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "__init__", "A"));
+    doQuickFixTest(PyClassHasNoInitInspection.class,
+                   PyPsiBundle.message("QFIX.add.method.to.class", "__init__", "A"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testAddInitAfterDocstring() {
-    doQuickFixTest(PyClassHasNoInitInspection.class, PyPsiBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "__init__", "A"));
+    doQuickFixTest(PyClassHasNoInitInspection.class,
+                   PyPsiBundle.message("QFIX.add.method.to.class", "__init__", "A"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testAddMethodReplacePass() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.method.to.class", "y", "A"));
   }
 
   public void testAddMethodFromInstance() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.method.to.class", "y", "A"));
   }
 
   public void testAddMethodFromMethod() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.method.to.class", "y", "A"));
   }
-
 }

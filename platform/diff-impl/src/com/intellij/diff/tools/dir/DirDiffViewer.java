@@ -30,7 +30,7 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
@@ -84,7 +84,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(myDirDiffPanel.getPanel(), BorderLayout.CENTER);
     DataManager.registerDataProvider(myPanel, dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return myHelpID;
       }
       return myDirDiffPanel.getData(dataId);
@@ -94,8 +94,6 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
   @NotNull
   @Override
   public FrameDiffTool.ToolbarComponents init() {
-    myDirDiffPanel.setupSplitter();
-
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = Arrays.asList(myDirDiffPanel.getActions());
     components.statusPanel = myDirDiffPanel.extractFilterPanel();

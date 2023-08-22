@@ -1,10 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
 
 import java.util.Collections;
@@ -15,14 +13,11 @@ import java.util.Set;
 class HardCodedPurity {
   static final boolean AGGRESSIVE_HARDCODED_PURITY = Registry.is("java.annotations.inference.aggressive.hardcoded.purity", true);
 
-  private static final Set<Couple<String>> ownedFields = Collections.singleton(
-    new Couple<>("java/lang/AbstractStringBuilder", "value")
-  );
-  private static final Set<Member> thisChangingMethods = ContainerUtil.set(
+  private static final Set<Member> thisChangingMethods = Set.of(
     new Member("java/lang/Throwable", "fillInStackTrace", "()Ljava/lang/Throwable;")
   );
   // Assumed that all these methods are not only pure, but return object which could be safely modified
-  private static final Set<Member> pureMethods = ContainerUtil.set(
+  private static final Set<Member> pureMethods = Set.of(
     // Maybe overloaded and be not pure, but this would be definitely bad code style
     // Used in Throwable(Throwable) ctor, so this helps to infer purity of many exception constructors
     new Member("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
@@ -46,13 +41,13 @@ class HardCodedPurity {
     new Member("java/lang/Double", "longBitsToDouble", "(J)D")
   );
   private static final Map<Member, Set<EffectQuantum>> solutions = new HashMap<>();
-  private static final Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
+  private static final Set<EffectQuantum> thisChange = Set.of(EffectQuantum.ThisChangeQuantum);
 
   static {
     // Native
     solutions.put(new Member("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V"),
-                  Collections.singleton(new EffectQuantum.ParamChangeQuantum(2)));
-    solutions.put(new Member("java/lang/Object", "hashCode", "()I"), Collections.emptySet());
+                  Set.of(new EffectQuantum.ParamChangeQuantum(2)));
+    solutions.put(new Member("java/lang/Object", "hashCode", "()I"), Set.of());
   }
 
   static HardCodedPurity getInstance() {
@@ -104,11 +99,11 @@ class HardCodedPurity {
   }
 
   boolean isOwnedField(FieldInsnNode fieldInsn) {
-    return ownedFields.contains(new Couple<>(fieldInsn.owner, fieldInsn.name));
+    return fieldInsn.owner.equals("java/lang/AbstractStringBuilder") && fieldInsn.name.equals("value");
   }
 
   static class AggressiveHardCodedPurity extends HardCodedPurity {
-    static final Set<String> ITERABLES = ContainerUtil.set("java/lang/Iterable", "java/util/Collection",
+    static final Set<String> ITERABLES = Set.of("java/lang/Iterable", "java/util/Collection",
                                                            "java/util/List", "java/util/Set", "java/util/ArrayList",
                                                            "java/util/HashSet", "java/util/AbstractList",
                                                            "java/util/AbstractSet", "java/util/TreeSet");
@@ -116,6 +111,11 @@ class HardCodedPurity {
     @Override
     boolean isThisChangingMethod(Member method) {
       if (method.methodName.equals("next") && method.methodDesc.startsWith("()") && method.internalClassName.equals("java/util/Iterator")) {
+        return true;
+      }
+      if (method.methodName.equals("initCause") && method.methodDesc.equals("(Ljava/lang/Throwable;)Ljava/lang/Throwable;") &&
+          method.internalClassName.startsWith("java/")) {
+        // Throwable.initCause is overridable. For Java classes, we assume that its contract is fixed 
         return true;
       }
       return super.isThisChangingMethod(method);
@@ -134,8 +134,8 @@ class HardCodedPurity {
       return super.isPureMethod(method);
     }
   }
-  
-  private static class Holder {
+
+  private static final class Holder {
     static final HardCodedPurity INSTANCE = AGGRESSIVE_HARDCODED_PURITY ? new AggressiveHardCodedPurity() : new HardCodedPurity();
   }
 }

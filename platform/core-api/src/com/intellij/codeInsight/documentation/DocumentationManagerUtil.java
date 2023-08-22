@@ -1,36 +1,37 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 
 public class DocumentationManagerUtil {
   public static DocumentationManagerUtil getInstance() {
-    return ServiceManager.getService(DocumentationManagerUtil.class);
+    return ApplicationManager.getApplication().getService(DocumentationManagerUtil.class);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral", "UnusedParameters"})
-  protected void createHyperlinkImpl(StringBuilder buffer, PsiElement refElement, String refText, String label, boolean plainLink) {
+  protected void createHyperlinkImpl(
+    StringBuilder buffer,
+    PsiElement refElement,
+    String refText,
+    String label,
+    boolean plainLink,
+    boolean isRendered
+  ) {
     buffer.append("<a href=\"");
     buffer.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL); // :-)
     buffer.append(refText);
     buffer.append("\">");
     if (!plainLink) {
-      buffer.append("<code>");
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        buffer.append(isRendered ? "<code style='font-size:96%;'>" : "<code>");
+      }
+      else {
+        buffer.append("<code style='font-size:");
+        buffer.append(getMonospaceFontSizeCorrection(isRendered));
+        buffer.append("%;'>");
+      }
     }
     buffer.append(label);
     if (!plainLink) {
@@ -39,8 +40,31 @@ public class DocumentationManagerUtil {
     buffer.append("</a>");
   }
 
+  private static int getMonospaceFontSizeCorrection(boolean isRendered) {
+    if (isRendered) {
+      return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;
+    }
+    else {
+      return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 100;
+    }
+  }
+
   public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
-    getInstance().createHyperlinkImpl(buffer, null, refText, label, plainLink);
+    getInstance().createHyperlinkImpl(buffer, null, refText, label, plainLink, false);
+  }
+
+  public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink, boolean isRendered) {
+    getInstance().createHyperlinkImpl(buffer, null, refText, label, plainLink, isRendered);
+  }
+
+  public static void createHyperlink(
+    StringBuilder buffer,
+    PsiElement refElement,
+    String refText,
+    String label,
+    boolean plainLink
+  ) {
+    getInstance().createHyperlinkImpl(buffer, refElement, refText, label, plainLink, false);
   }
 
   /**
@@ -52,7 +76,14 @@ public class DocumentationManagerUtil {
    * @param label      the label for the hyperlink
    * @param plainLink  if false, the label of the link is wrapped in the &lt;code&gt; tag.
    */
-  public static void createHyperlink(StringBuilder buffer, PsiElement refElement, String refText, String label, boolean plainLink) {
-    getInstance().createHyperlinkImpl(buffer, refElement, refText, label, plainLink);
+  public static void createHyperlink(
+    StringBuilder buffer,
+    PsiElement refElement,
+    String refText,
+    String label,
+    boolean plainLink,
+    boolean isRendered
+  ) {
+    getInstance().createHyperlinkImpl(buffer, refElement, refText, label, plainLink, isRendered);
   }
 }

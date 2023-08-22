@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,12 +21,18 @@ public class XMoveWatchUp extends XWatchesTreeActionBase {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
     List<? extends WatchNodeImpl> nodes = getSelectedNodes(tree, WatchNodeImpl.class);
     if (nodes.size() == 1) {
       XDebuggerTreeNode root = tree.getRoot();
       if (root instanceof WatchesRootNode) {
-        return root.getIndex(nodes.get(0)) > 0;
+        int firstWatchIndex = ((WatchesRootNode)root).headerNodesCount();
+        return root.getIndex(nodes.get(0)) > firstWatchIndex;
       }
     }
     return false;

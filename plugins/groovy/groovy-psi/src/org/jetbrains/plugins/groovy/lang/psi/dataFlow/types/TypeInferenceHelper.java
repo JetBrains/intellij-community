@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiUtil;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,45 +23,46 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil.isFlatDFAAllowed;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.checkNestedContext;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCompileStatic;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
+import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentType;
 
-/**
- * @author ven
- */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
-public class TypeInferenceHelper {
+public final class TypeInferenceHelper {
   private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);
 
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
 
-  static <T> T doInference(@NotNull Map<VariableDescriptor, DFAType> bindings, @NotNull Computable<? extends T> computation) {
+  static <T> T doInference(@NotNull Map<VariableDescriptor, DFAType> bindings, @NotNull Supplier<? extends T> computation) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       checkNestedContext();
     }
     return withContext(new PartialContext(bindings), computation);
   }
 
-  private static <T> T withContext(@NotNull InferenceContext context, @NotNull Computable<? extends T> computation) {
+  private static <T> T withContext(@NotNull InferenceContext context, @NotNull Supplier<? extends T> computation) {
     InferenceContext previous = ourInferenceContext.get();
     ourInferenceContext.set(context);
     try {
-      return computation.compute();
+      return computation.get();
     }
     finally {
       ourInferenceContext.set(previous);
@@ -77,7 +76,7 @@ public class TypeInferenceHelper {
     return context != null ? context : getTopContext();
   }
 
-  public static <T> T inTopContext(@NotNull Computable<? extends T> computation) {
+  public static <T> T inTopContext(@NotNull Supplier<? extends T> computation) {
     return withContext(getTopContext(), computation);
   }
 
@@ -89,7 +88,7 @@ public class TypeInferenceHelper {
 
   @Nullable
   public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
-    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(refExpr);
+    final GrControlFlowOwner scope = isFlatDFAAllowed() ? ControlFlowUtils.getTopmostOwner(refExpr) : ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
     final GroovyReference rValueReference = refExpr.getRValueReference();
@@ -99,15 +98,19 @@ public class TypeInferenceHelper {
     final VariableDescriptor descriptor = createDescriptor(refExpr);
     if (descriptor == null) return null;
 
-    final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, scope.getControlFlow());
+    final ReadWriteVariableInstruction rwInstruction = ControlFlowUtils.findRWInstruction(refExpr, getFlatControlFlow(scope).getFlow());
     if (rwInstruction == null) return null;
 
     final InferenceCache cache = getInferenceCache(scope);
-    return cache.getInferredType(descriptor, rwInstruction, mixinOnly);
+
+    int descriptorIndex = cache.getGroovyFlow().getIndex(descriptor);
+    if (descriptorIndex == 0) return null;
+
+    return cache.getInferredType(descriptorIndex, rwInstruction, mixinOnly);
   }
 
   @Nullable
-  public static PsiType getInferredType(VariableDescriptor descriptor, Instruction instruction, GrControlFlowOwner scope) {
+  public static PsiType getInferredType(int descriptor, Instruction instruction, GrControlFlowOwner scope) {
     InferenceCache cache = getInferenceCache(scope);
     return cache.getInferredType(descriptor, instruction, false);
   }
@@ -115,7 +118,8 @@ public class TypeInferenceHelper {
   @Nullable
   public static PsiType getVariableTypeInContext(@Nullable PsiElement context, @NotNull GrVariable variable) {
     if (context == null) return variable.getType();
-    final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(context);
+    final GrControlFlowOwner scope = isFlatDFAAllowed() ? ControlFlowUtils.getTopmostOwner(ControlFlowUtils.findControlFlowOwner(context))
+                                                        : ControlFlowUtils.findControlFlowOwner(context);
     if (scope == null) return null;
 
     final Instruction nearest = ControlFlowUtils.findNearestInstruction(context, scope.getControlFlow());
@@ -123,7 +127,19 @@ public class TypeInferenceHelper {
     boolean mixinOnly = variable instanceof GrField && isCompileStatic(scope);
 
     final InferenceCache cache = getInferenceCache(scope);
-    final PsiType inferredType = cache.getInferredType(createDescriptor(variable), nearest, mixinOnly);
+    final VariableDescriptor descriptor = createDescriptor(variable);
+    int descriptorIndex = cache.getGroovyFlow().getIndex(descriptor);
+    if (descriptorIndex == 0) {
+      if (variable instanceof GrField) {
+        // variable is not used anywhere in the scope, therefore it is enough to return its declared type
+        return variable.getDeclaredType();
+      } else {
+        return null;
+      }
+    }
+
+
+    final PsiType inferredType = cache.getInferredType(descriptorIndex, nearest, mixinOnly);
     return inferredType != null ? inferredType : variable.getType();
   }
 
@@ -132,16 +148,31 @@ public class TypeInferenceHelper {
   }
 
   @NotNull
-  private static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
+  static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
+    if (isFlatDFAAllowed() && ControlFlowUtils.getTopmostOwner(scope) != scope) {
+      LOG.error("Flat DFA inconsistency: scope is " + scope + ", but topmost owner is " + ControlFlowUtils.getTopmostOwner(scope));
+    }
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
   }
 
+  public static GroovyControlFlow getFlatControlFlow(@NotNull final GrControlFlowOwner scope) {
+    if (isFlatDFAAllowed()) {
+      return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildFlatControlFlow(scope), MODIFICATION_COUNT));
+    } else {
+      return ControlFlowUtils.getGroovyControlFlow(scope);
+    }
+  }
+
   @Nullable
-  static List<DefinitionMap> getDefUseMaps(Instruction @NotNull [] flow, @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
-    final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow, varIndexes);
+  static List<DefinitionMap> getDefUseMaps(@NotNull GroovyControlFlow flow) {
+    final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance();
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
-    final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
-    return engine.performDFAWithTimeout();
+    final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow.getFlow(), dfaInstance, lattice);
+    List<@Nullable DefinitionMap> maps = engine.performDFAWithTimeout();
+    if (maps == null) {
+      return null;
+    }
+    return ContainerUtil.map(maps, it -> it == null ? DefinitionMap.NEUTRAL : it);
   }
 
   @Nullable
@@ -170,25 +201,19 @@ public class TypeInferenceHelper {
       return ((GrAssignmentExpression)parent).getType();
     }
 
-    if (parent instanceof GrTuple) {
-      GrTuple list = (GrTuple)parent;
+    if (parent instanceof GrTuple list) {
       GrTupleAssignmentExpression assignment = list.getParent();
       if (assignment != null) {
         final GrExpression rValue = assignment.getRValue();
-        int idx = list.indexOf(element);
-        if (idx >= 0 && rValue != null) {
-          PsiType rType = rValue.getType();
-          if (rType instanceof GrTupleType) {
-            List<PsiType> componentTypes = ((GrTupleType)rType).getComponentTypes();
-            if (idx < componentTypes.size()) return componentTypes.get(idx);
-            return null;
+        if (rValue != null) {
+          int idx = list.indexOf(element);
+          if (idx >= 0) {
+            return getMultiAssignmentType(rValue, idx);
           }
-          return PsiUtil.extractIterableTypeParameter(rType, false);
         }
       }
     }
-    if (parent instanceof GrUnaryExpression) {
-      GrUnaryExpression unary = (GrUnaryExpression)parent;
+    if (parent instanceof GrUnaryExpression unary) {
       if (TokenSets.POSTFIX_UNARY_OP_SET.contains(unary.getOperationTokenType())) {
         return unary.getOperationType();
       }
@@ -214,5 +239,11 @@ public class TypeInferenceHelper {
     }
 
     return null;
+  }
+
+  public static boolean isSimpleEnoughForAugmenting(Instruction @NotNull [] flow) {
+    // in large flows there are a lot of variables, so minor inability to infer type for a parameter should not be noticeable.
+    // on the other side, people may omit types of parameters in short methods, so augmenting may be useful there
+    return flow.length < 20;
   }
 }

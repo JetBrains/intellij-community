@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import icons.TerminalIcons;
+import org.jetbrains.plugins.terminal.TerminalIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,6 +11,9 @@ import javax.swing.*;
 public class TerminalSessionFileType extends FakeFileType {
 
   public final static TerminalSessionFileType INSTANCE = new TerminalSessionFileType();
+
+  private TerminalSessionFileType() {
+  }
 
   @Override
   @NotNull
@@ -21,7 +24,7 @@ public class TerminalSessionFileType extends FakeFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return getName() + " Fake File Type";
+    return getName() + " Fake File Type"; //NON-NLS
   }
 
   @Override

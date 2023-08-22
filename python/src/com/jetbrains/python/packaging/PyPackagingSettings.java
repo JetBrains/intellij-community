@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,12 +14,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @State(name = "PyPackaging")
-public class PyPackagingSettings implements PersistentStateComponent<PyPackagingSettings> {
+public class PyPackagingSettings implements PersistentStateComponent<PyPackagingSettings>, Disposable {
 
   public volatile boolean earlyReleasesAsUpgrades = false;
 
   public static PyPackagingSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, PyPackagingSettings.class);
+    return project.getService(PyPackagingSettings.class);
   }
 
   @Nullable
@@ -54,5 +54,9 @@ public class PyPackagingSettings implements PersistentStateComponent<PyPackaging
     }
 
     return ContainerUtil.getFirstItem(versions);
+  }
+
+  @Override
+  public void dispose() {
   }
 }

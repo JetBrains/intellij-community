@@ -1,0 +1,7 @@
+>
+  Template(ul)
+  *
+    >
+      Template(li)
+      Template(a)
+    5

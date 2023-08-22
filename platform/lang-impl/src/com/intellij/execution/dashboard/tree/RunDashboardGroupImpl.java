@@ -58,7 +58,7 @@ public class RunDashboardGroupImpl<T> implements RunDashboardGroup {
       return true;
     }
     if (obj instanceof RunDashboardGroupImpl) {
-      return myValue.equals(((RunDashboardGroupImpl)obj).myValue);
+      return myValue.equals(((RunDashboardGroupImpl<?>)obj).myValue);
     }
     return false;
   }

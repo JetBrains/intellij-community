@@ -1,27 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author peter
- */
 public enum RebuildStatus {
   OK,
   REQUIRES_REBUILD,
   DOING_REBUILD;
 
-  private static final Map<ID<?, ?>, AtomicReference<RebuildStatus>> ourRebuildStatus = new THashMap<>();
-  private static volatile boolean ourRebuildAfterInitialization;
+  private static final Map<ID<?, ?>, AtomicReference<RebuildStatus>> ourRebuildStatus = new HashMap<>();
 
   public static void registerIndex(ID<?, ?> indexId) {
-    ourRebuildStatus.put(indexId, new AtomicReference<>(ourRebuildAfterInitialization ? REQUIRES_REBUILD : OK));
+    ourRebuildStatus.put(indexId, new AtomicReference<>(OK));
   }
 
   static boolean isOk(ID<?, ?> indexId) {
@@ -33,7 +30,7 @@ public enum RebuildStatus {
     return ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
   }
 
-  static void clearIndexIfNecessary(ID<?, ?> indexId, ThrowableRunnable<? extends StorageException> clearAction) throws StorageException {
+  static void clearIndexIfNecessary(ID<?, ?> indexId, ThrowableRunnable<StorageException> clearAction) throws StorageException {
     AtomicReference<RebuildStatus> rebuildStatus = ourRebuildStatus.get(indexId);
     if (rebuildStatus == null) {
       throw new StorageException("Problem updating " + indexId);
@@ -59,12 +56,16 @@ public enum RebuildStatus {
     }
   }
 
+  static boolean isOk() {
+    return ourRebuildStatus.values().stream().map(ref -> ref.get()).noneMatch(status -> status != OK);
+  }
+
   static void reset() {
-    ourRebuildAfterInitialization = false;
     ourRebuildStatus.clear();
   }
 
-  static void rebuildAfterInitialization() {
-    ourRebuildAfterInitialization = true;
+  public static @Nullable RebuildStatus getStatus(ID<?, ?> indexId) {
+    AtomicReference<RebuildStatus> reference = ourRebuildStatus.get(indexId);
+    return reference == null ? null : reference.get();
   }
 }

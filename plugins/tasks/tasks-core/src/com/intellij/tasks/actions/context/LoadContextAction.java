@@ -2,7 +2,10 @@
 
 package com.intellij.tasks.actions.context;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
@@ -17,7 +20,6 @@ import com.intellij.tasks.context.LoadContextUndoableAction;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -47,11 +49,11 @@ public class LoadContextAction extends BaseTaskAction {
     final WorkingContextManager manager = WorkingContextManager.getInstance(project);
     List<ContextInfo> history = manager.getContextHistory();
     List<ContextHolder> infos =
-      new ArrayList<>(ContainerUtil.map2List(history, (Function<ContextInfo, ContextHolder>)info -> new ContextHolder() {
+      new ArrayList<>(ContainerUtil.map(history, info -> new ContextHolder() {
         @Override
         void load(final boolean clear) {
           LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
-          UndoableCommand.execute(project, undoableAction, "Load context " + info.comment, "Context");
+          UndoableCommand.execute(project, undoableAction, TaskBundle.message("command.name.load.context", info.comment), "Context");
         }
 
         @Override
@@ -84,7 +86,8 @@ public class LoadContextAction extends BaseTaskAction {
         @Override
         void load(boolean clear) {
           LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, task);
-          UndoableCommand.execute(project, undoableAction, "Load context " + TaskUtil.getTrimmedSummary(task), "Context");
+          UndoableCommand.execute(project, undoableAction,
+                                  TaskBundle.message("command.name.load.context", TaskUtil.getTrimmedSummary(task)), "Context");
         }
 
         @Override
@@ -127,20 +130,20 @@ public class LoadContextAction extends BaseTaskAction {
     }
 
     final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance()
-      .createActionGroupPopup("Load Context", group, e.getDataContext(), false, null, MAX_ROW_COUNT);
-    popup.setAdText("Press SHIFT to merge with current context");
+      .createActionGroupPopup(TaskBundle.message("popup.title.load.context"), group, e.getDataContext(), false, null, MAX_ROW_COUNT);
+    popup.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"));
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
-        popup.setCaption("Merge with Current Context");
+        popup.setCaption(TaskBundle.message("popup.title.merge.with.current.context"));
       }
     });
     popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
-        popup.setCaption("Load Context");
+        popup.setCaption(TaskBundle.message("popup.title.load.context"));
       }
     });
     popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
@@ -189,14 +192,9 @@ public class LoadContextAction extends BaseTaskAction {
             }
           }};
       }
-
-      @Override
-      public boolean canBePerformed(@NotNull DataContext context) {
-        return true;
-      }
-
     };
     contextGroup.setPopup(true);
+    contextGroup.getTemplatePresentation().setPerformGroup(true);
     return contextGroup;
   }
 }

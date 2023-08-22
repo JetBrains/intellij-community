@@ -1,10 +1,21 @@
 import foo.*;
 
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.*;
 import java.util.function.Function;
 
 class MapUpdateInlining {
+  void testArrayListCtor(Map<Integer, List<String>> map) {
+    map.computeIfAbsent(-1, <warning descr="The call to 'ArrayList::new' always fails as an argument is out of bounds">ArrayList::new</warning>);
+    map.computeIfAbsent(-1, x -> new <warning descr="The call to 'ArrayList' always fails as an argument is out of bounds">ArrayList</warning><>(x));
+    Arrays.asList(-1, -2, -3).forEach(x -> map.computeIfAbsent(x, a -> new <warning descr="The call to 'ArrayList' always fails as an argument is out of bounds">ArrayList</warning><>(a)));
+    Arrays.asList(-1, -2, -3).stream().forEach(x -> map.computeIfAbsent(x, a -> new <warning descr="The call to 'ArrayList' always fails as an argument is out of bounds">ArrayList</warning><>(a)));
+    Stream.of(-1, -2, -3).forEach(x -> map.computeIfAbsent(x, a -> new <warning descr="The call to 'ArrayList' always fails as an argument is out of bounds">ArrayList</warning><>(a)));
+    for (Integer x : Arrays.asList(-1, 0, 1)) {
+      map.computeIfAbsent(x, a -> new ArrayList<>(a));
+    }
+  }
+  
   void testKey(Map<String, String> map) {
     System.out.println(map.computeIfAbsent("foo",
                                            k -> <warning descr="Condition 'k.equals(\"blahblah\")' is always 'false'">k.equals("blahblah")</warning> ? "bar" : "baz").trim());

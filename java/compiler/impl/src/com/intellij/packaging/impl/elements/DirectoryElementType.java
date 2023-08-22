@@ -32,7 +32,7 @@ import javax.swing.*;
 class DirectoryElementType extends CompositePackagingElementType<DirectoryPackagingElement> {
 
   DirectoryElementType() {
-    super("directory", JavaCompilerBundle.message("element.type.name.directory"));
+    super("directory", JavaCompilerBundle.messagePointer("element.type.name.directory"));
   }
 
   @Override

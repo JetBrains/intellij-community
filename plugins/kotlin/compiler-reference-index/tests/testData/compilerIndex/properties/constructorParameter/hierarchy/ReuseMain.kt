@@ -1,0 +1,1 @@
+class ReuseMain : Main(4)

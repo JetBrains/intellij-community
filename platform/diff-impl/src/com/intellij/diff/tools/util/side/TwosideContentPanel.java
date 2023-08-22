@@ -21,8 +21,8 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +39,7 @@ public class TwosideContentPanel extends JPanel {
     assert contents.size() == 2;
 
     myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
+    DiffContentLayoutPanel.syncTitleHeights(myPanels);
 
     mySplitter = new DiffSplitter();
     mySplitter.setFirstComponent(Side.LEFT.select(myPanels));
@@ -47,7 +48,7 @@ public class TwosideContentPanel extends JPanel {
     add(mySplitter, BorderLayout.CENTER);
   }
 
-  public void setTitles(@NotNull List<JComponent> titleComponents) {
+  public void setTitles(@NotNull List<? extends JComponent> titleComponents) {
     for (Side side : Side.values()) {
       DiffContentPanel panel = side.select(myPanels);
       JComponent title = side.select(titleComponents);
@@ -78,7 +79,7 @@ public class TwosideContentPanel extends JPanel {
     mySplitter.setTopAction(value);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setPainter(@Nullable DiffSplitter.Painter painter) {
     mySplitter.setPainter(painter);
   }

@@ -26,7 +26,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   @NotNull
   @Override
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
-    return new StandardVersionFilterComponent<ChangeBrowserSettings>(showDateFilter) {
+    return new StandardVersionFilterComponent<>(showDateFilter) {
       @NotNull
       @Override
       public JComponent getComponent() {
@@ -138,16 +138,11 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
       int changeType = stream.readByte();
       String path = stream.readUTF();
       int revision = stream.readInt();
-      switch (changeType) {
-        case 0:
-          changes[i] = createMockDeleteChange(path, revision);
-          break;
-        case 2:
-          changes[i] = createMockCreateChange(path, revision);
-          break;
-        default:
-          changes[i] = createMockChange(path, revision);
-      }
+      changes[i] = switch (changeType) {
+        case 0 -> createMockDeleteChange(path, revision);
+        case 2 -> createMockCreateChange(path, revision);
+        default -> createMockChange(path, revision);
+      };
     }
     return createList(name, author, comment, date, number, changes);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -10,9 +10,10 @@ import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -79,6 +80,11 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final ResourceBundleEditor editor = getEditor(e);
     e.getPresentation().setEnabledAndVisible(editor != null &&
@@ -86,11 +92,11 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   }
 
   private static ResourceBundleEditor getEditor(@NotNull AnActionEvent e) {
-    final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
+    final FileEditor editor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
     return editor instanceof ResourceBundleEditor ? (ResourceBundleEditor)editor : null;
   }
 
-  private static class RBEQuickFixWrapper implements IntentionAction {
+  private static final class RBEQuickFixWrapper implements IntentionAction {
     private final ResourceBundleEditorProblemDescriptor myDescriptor;
     private final int myIndex;
 
@@ -140,4 +146,3 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
   }
 
 }
-

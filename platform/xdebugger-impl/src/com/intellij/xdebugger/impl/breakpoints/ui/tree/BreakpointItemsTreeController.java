@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -20,7 +21,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 /**
- * @author nik, zajac
+ * @author zajac
  */
 public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.Delegate {
   private static final TreeNodeComparator COMPARATOR = new TreeNodeComparator();
@@ -127,7 +128,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     while (children.hasMoreElements()) {
       Object element = children.nextElement();
       if (element instanceof BreakpointsGroupNode) {
-        nodes.add(((BreakpointsGroupNode)element).getGroup());
+        nodes.add(((BreakpointsGroupNode<?>)element).getGroup());
       }
     }
     return nodes;
@@ -139,7 +140,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     while (children.hasMoreElements()) {
       Object element = children.nextElement();
       if (element instanceof BreakpointsGroupNode) {
-        XBreakpointGroup groupFound = ((BreakpointsGroupNode)element).getGroup();
+        XBreakpointGroup groupFound = ((BreakpointsGroupNode<?>)element).getGroup();
         if (groupFound.equals(group)) {
           return (BreakpointsGroupNode)element;
         }
@@ -175,7 +176,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     for (TreePath selectionPath : selectionPaths) {
       TreeNode startNode = (TreeNode)selectionPath.getLastPathComponent();
       if (traverse) {
-        TreeUtil.traverseDepth(startNode, node -> {
+        TreeUtil.treeNodeTraverser(startNode).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
           if (node instanceof BreakpointItemNode) {
             list.add(((BreakpointItemNode)node).getBreakpointItem());
           }
@@ -241,9 +242,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
         if (!default1 && default2) return 1;
         return b1.compareTo(b2);
       }
-      if (o1 instanceof BreakpointsGroupNode && o2 instanceof BreakpointsGroupNode) {
-        final BreakpointsGroupNode group1 = (BreakpointsGroupNode)o1;
-        final BreakpointsGroupNode group2 = (BreakpointsGroupNode)o2;
+      if (o1 instanceof BreakpointsGroupNode group1 && o2 instanceof BreakpointsGroupNode group2) {
         if (group1.getLevel() != group2.getLevel()) {
           return group1.getLevel() - group2.getLevel();
         }

@@ -1,24 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi;
 
-import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
+import com.intellij.psi.PsiElement;
 import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement;
 import org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.NavigatablePsiElement;
+import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
 
 public class EditorConfigVisitor extends PsiElementVisitor {
 
   public void visitAsteriskPattern(@NotNull EditorConfigAsteriskPattern o) {
-    visitHeaderElement(o);
-  }
-
-  public void visitCharClass(@NotNull EditorConfigCharClass o) {
-    visitHeaderElement(o);
+    visitPattern(o);
   }
 
   public void visitCharClassExclamation(@NotNull EditorConfigCharClassExclamation o) {
@@ -29,8 +23,20 @@ public class EditorConfigVisitor extends PsiElementVisitor {
     visitHeaderElement(o);
   }
 
+  public void visitCharClassPattern(@NotNull EditorConfigCharClassPattern o) {
+    visitPattern(o);
+  }
+
+  public void visitConcatenatedPattern(@NotNull EditorConfigConcatenatedPattern o) {
+    visitPattern(o);
+  }
+
   public void visitDoubleAsteriskPattern(@NotNull EditorConfigDoubleAsteriskPattern o) {
-    visitHeaderElement(o);
+    visitPattern(o);
+  }
+
+  public void visitEnumerationPattern(@NotNull EditorConfigEnumerationPattern o) {
+    visitPattern(o);
   }
 
   public void visitFlatOptionKey(@NotNull EditorConfigFlatOptionKey o) {
@@ -38,7 +44,7 @@ public class EditorConfigVisitor extends PsiElementVisitor {
   }
 
   public void visitFlatPattern(@NotNull EditorConfigFlatPattern o) {
-    visitHeaderElement(o);
+    visitPattern(o);
   }
 
   public void visitHeader(@NotNull EditorConfigHeader o) {
@@ -65,10 +71,6 @@ public class EditorConfigVisitor extends PsiElementVisitor {
     visitHeaderElement(o);
   }
 
-  public void visitPatternEnumeration(@NotNull EditorConfigPatternEnumeration o) {
-    visitHeaderElement(o);
-  }
-
   public void visitQualifiedKeyPart(@NotNull EditorConfigQualifiedKeyPart o) {
     visitIdentifierElement(o);
   }
@@ -78,7 +80,11 @@ public class EditorConfigVisitor extends PsiElementVisitor {
   }
 
   public void visitQuestionPattern(@NotNull EditorConfigQuestionPattern o) {
-    visitHeaderElement(o);
+    visitPattern(o);
+  }
+
+  public void visitRawOptionValue(@NotNull EditorConfigRawOptionValue o) {
+    visitPsiElement(o);
   }
 
   public void visitRootDeclaration(@NotNull EditorConfigRootDeclaration o) {
@@ -97,6 +103,10 @@ public class EditorConfigVisitor extends PsiElementVisitor {
     visitNavigatablePsiElement(o);
   }
 
+  public void visitNavigatablePsiElement(@NotNull NavigatablePsiElement o) {
+    visitElement(o);
+  }
+
   public void visitDescribableElement(@NotNull EditorConfigDescribableElement o) {
     visitPsiElement(o);
   }
@@ -109,11 +119,8 @@ public class EditorConfigVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitNavigatablePsiElement(@NotNull NavigatablePsiElement o) {
-    visitElement(o);
-  }
-
   public void visitPsiElement(@NotNull PsiElement o) {
     visitElement(o);
   }
+
 }

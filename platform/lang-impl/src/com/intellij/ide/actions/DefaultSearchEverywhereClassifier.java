@@ -33,8 +33,7 @@ public class DefaultSearchEverywhereClassifier implements SearchEverywhereClassi
 
   @Override
   public boolean isSymbol(@Nullable Object o) {
-    if (o instanceof PsiElement) {
-      final PsiElement e = (PsiElement)o;
+    if (o instanceof PsiElement e) {
       return !e.getLanguage().is(Language.findLanguageByID("JAVA")) || !(e.getParent() instanceof PsiFile);
     }
     return false;
@@ -43,8 +42,7 @@ public class DefaultSearchEverywhereClassifier implements SearchEverywhereClassi
   @Nullable
   @Override
   public VirtualFile getVirtualFile(@NotNull Object o) {
-    if (o instanceof PsiElement) {
-      final PsiElement element = (PsiElement)o;
+    if (o instanceof PsiElement element) {
       final PsiFile file = element.getContainingFile();
       return file != null ? file.getVirtualFile() : null;
     }

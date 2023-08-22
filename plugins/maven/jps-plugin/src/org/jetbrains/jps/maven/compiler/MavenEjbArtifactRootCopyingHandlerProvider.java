@@ -57,7 +57,7 @@ public class MavenEjbArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
 
   private static JpsArtifact findParentArtifact(JpsElement element) {
     if (element instanceof JpsElementBase) {
-      JpsElementBase parent = ((JpsElementBase)element).getParent();
+      JpsElementBase parent = ((JpsElementBase<?>)element).getParent();
       if (parent instanceof JpsArtifact) {
         return (JpsArtifact)parent;
       }

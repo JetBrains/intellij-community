@@ -1,29 +1,36 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.PathUtilRt;
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
+public final class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    Project project = event.getProject();
     if (!isConvertableProject(project) || Messages.showOkCancelDialog(project,
                                                                       IdeBundle.message(
                                                                         "message.project.will.be.saved.and.reopened.in.new.directory.based.format"),
@@ -34,37 +41,58 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
     }
 
     IProjectStore store = ProjectKt.getStateStore(project);
-    String baseDir = PathUtilRt.getParentPath(store.getProjectFilePath());
-    File ideaDir = new File(baseDir, Project.DIRECTORY_STORE_FOLDER);
-    if ((ideaDir.exists() && ideaDir.isDirectory()) || createDir(ideaDir)) {
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaDir);
-
-      store.clearStorages();
-      store.setPath(baseDir);
+    Path baseDir = store.getProjectFilePath().getParent();
+    Path ideaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
+    try {
+      convertToDirectoryBasedFormat(project, store, baseDir, ideaDir);
       // closeAndDispose will also force save project
-      ProjectManagerEx.getInstanceEx().closeAndDispose(project);
-      ProjectUtil.openProject(baseDir, null, false);
+      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+      projectManager.closeAndDispose(project);
+      projectManager.openProject(ideaDir.getParent(), OpenProjectTask.build());
     }
-    else {
-      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir),
+    catch (IOException e) {
+      Messages.showErrorDialog(project, String.format(IdeBundle.message("dialog.message.unable.to.create.idea.directory", e.getMessage()), ideaDir),
                                IdeBundle.message("dialog.title.error.saving.project"));
     }
   }
 
-  private static boolean createDir(File ideaDir) {
-    try {
-      VfsUtil.createDirectories(ideaDir.getPath());
-      return true;
+  private static void convertToDirectoryBasedFormat(Project project, IProjectStore store, Path baseDir, Path ideaDir) throws IOException {
+    if (Files.isDirectory(ideaDir)) {
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ideaDir);
     }
-    catch (IOException e) {
-      return false;
+    else {
+      createDir(ideaDir);
     }
+
+    store.clearStorages();
+    store.setPath(baseDir);
+    WriteAction.run(() -> JpsProjectModelSynchronizer.Companion.getInstance(project).convertToDirectoryBasedFormat());
+  }
+
+  @TestOnly
+  public static void convertToDirectoryBasedFormat(@NotNull Project project) throws IOException {
+    IProjectStore store = ProjectKt.getStateStore(project);
+    Path baseDir = store.getProjectFilePath().getParent();
+    Path ideaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER);
+    convertToDirectoryBasedFormat(project, store, baseDir, ideaDir);
+  }
+
+  @SuppressWarnings("UnusedReturnValue")
+  private static VirtualFile createDir(@NotNull Path ideaDir) throws IOException {
+    return ApplicationManager.getApplication().runWriteAction((ThrowableComputable<VirtualFile, IOException>)() -> {
+      return VfsUtil.createDirectoryIfMissing(ideaDir.toString());
+    });
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setVisible(isConvertableProject(project));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static boolean isConvertableProject(@Nullable Project project) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -20,7 +21,7 @@ public final class CommandLineUtil {
 
   private static final Pattern WIN_BACKSLASHES_PRECEDING_QUOTE = Pattern.compile("(\\\\+)(?=\"|$)");
   private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|!%]");
-  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
+  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
@@ -32,17 +33,21 @@ public final class CommandLineUtil {
     return quote(parameter, INESCAPABLE_QUOTE);
   }
 
-  public static @NotNull List<String> toCommandLine(@NotNull List<String> command) {
+  public static @NotNull List<String> toCommandLine(@NotNull List<@NotNull String> command) {
     assert !command.isEmpty();
     return toCommandLine(command.get(0), command.subList(1, command.size()));
   }
 
-  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters) {
+  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<@NotNull String> parameters) {
     return toCommandLine(command, parameters, Platform.current());
   }
 
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
-  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
+  public static @NotNull List<String> toCommandLine(
+    @NotNull String command,
+    @NotNull List<@NotNull String> parameters,
+    @NotNull Platform platform
+  ) {
     List<String> commandLine = new ArrayList<>(parameters.size() + 1);
 
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
@@ -202,7 +207,11 @@ public final class CommandLineUtil {
    *   http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
    *   https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
-  private static void addToWindowsCommandLine(String command, List<String> parameters, List<? super String> commandLine) {
+  private static void addToWindowsCommandLine(
+    @NotNull String command,
+    @NotNull List<@NotNull String> parameters,
+    @NotNull List<? super @NotNull String> commandLine
+  ) {
     boolean isCmdParam = isWinShell(command);
     int cmdInvocationDepth = isWinShellScript(command) ? 2 : isCmdParam ? 1 : 0;
 
@@ -414,11 +423,11 @@ public final class CommandLineUtil {
     return "cmd.exe";
   }
 
-  private static boolean isWinShell(String command) {
+  private static boolean isWinShell(@NonNls String command) {
     return "cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command);
   }
 
-  private static boolean isWinShellScript(String command) {
+  private static boolean isWinShellScript(@NonNls String command) {
     return endsWithIgnoreCase(command, ".cmd") || endsWithIgnoreCase(command, ".bat");
   }
 
@@ -437,7 +446,7 @@ public final class CommandLineUtil {
   /**
    * Counts quote parity needed to ^-escape special chars on Windows properly.
    */
-  private static class QuoteFlag {
+  private static final class QuoteFlag {
     private boolean enabled;
 
     private QuoteFlag(boolean value) {

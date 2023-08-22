@@ -17,10 +17,6 @@ package com.intellij.uiDesigner.core;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class AbstractLayout implements LayoutManager2 {
   /**
    * Default value of HGAP property
@@ -93,7 +89,7 @@ public abstract class AbstractLayout implements LayoutManager2 {
    * @param hGap new horizontal gap. If <code>hGap</code> is <code>-1</code>
    * then own gap is not defined and it should be inherited from parent container.
    *
-   * @exception java.lang.IllegalArgumentException if <code>hGap</code> is less
+   * @exception IllegalArgumentException if <code>hGap</code> is less
    * then <code>-1</code>
    */
   public final void setHGap(final int hGap){
@@ -138,7 +134,7 @@ public abstract class AbstractLayout implements LayoutManager2 {
    * @param vGap new vertical gap. If <code>vGap</code> is <code>-1</code>
    * then own gap is not defined and it should be inherited from parent container.
    *
-   * @exception java.lang.IllegalArgumentException if <code>vGap</code> is less
+   * @exception IllegalArgumentException if <code>vGap</code> is less
    * then <code>-1</code>
    */
   public final void setVGap(final int vGap){

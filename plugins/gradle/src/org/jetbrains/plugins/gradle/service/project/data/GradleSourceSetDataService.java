@@ -40,7 +40,7 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
 
   @NotNull
   @Override
-  public Computable<Collection<Module>> computeOrphanData(@NotNull final Collection<DataNode<GradleSourceSetData>> toImport,
+  public Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<GradleSourceSetData>> toImport,
                                                           @NotNull final ProjectData projectData,
                                                           @NotNull final Project project,
                                                           @NotNull final IdeModifiableModelsProvider modelsProvider) {
@@ -74,12 +74,13 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
     assert parentModule != null;
 
     String projectPath = sourceSetModuleNode.getData().getLinkedExternalProjectPath();
+    String actualModuleName = modelsProvider.getModifiableModuleModel().getActualName(parentModule);
     ExternalProjectSettings settings = getSettings(parentModule.getProject(), SYSTEM_ID).getLinkedProjectSettings(projectPath);
     if (settings != null && settings.isUseQualifiedModuleNames()) {
       String sourceSetModuleInternalName = sourceSetModuleNode.getData().getInternalName();
-      if (!sourceSetModuleInternalName.startsWith(parentModule.getName())) {
+      if (!sourceSetModuleInternalName.startsWith(actualModuleName)) {
         String sourceSetName = sourceSetModuleNode.getData().getModuleName();
-        String adjustedInternalName = findDeduplicatedModuleName(parentModule.getName() + "." + sourceSetName, modelsProvider);
+        String adjustedInternalName = findDeduplicatedModuleName(actualModuleName + "." + sourceSetName, modelsProvider);
         sourceSetModuleNode.getData().setInternalName(adjustedInternalName);
       }
     }

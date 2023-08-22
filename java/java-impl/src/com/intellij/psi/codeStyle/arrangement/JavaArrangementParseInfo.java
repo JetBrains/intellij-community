@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavaArrangementParseInfo {
 
   private final List<JavaElementArrangementEntry> myEntries = new ArrayList<>();
@@ -210,13 +207,6 @@ public class JavaArrangementParseInfo {
     return myFields.values();
   }
 
-  private static class OverriddenMethodPair {
-    final @NotNull PsiMethod overridden;
-    final @NotNull PsiMethod overriding;
-
-    private OverriddenMethodPair(@NotNull PsiMethod overridden, @NotNull PsiMethod overriding) {
-      this.overridden = overridden;
-      this.overriding = overriding;
-    }
+  private record OverriddenMethodPair(@NotNull PsiMethod overridden, @NotNull PsiMethod overriding) {
   }
 }

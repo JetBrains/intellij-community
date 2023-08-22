@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
@@ -10,16 +10,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
-public class SuperTypesGrouper implements Grouper{
+public final class SuperTypesGrouper implements Grouper{
   public static final Key<WeakReference<PsiMethod>> SUPER_METHOD_KEY = Key.create("StructureTreeBuilder.SUPER_METHOD_KEY");
   @NonNls public static final String ID = "SHOW_INTERFACES";
 
@@ -27,13 +27,11 @@ public class SuperTypesGrouper implements Grouper{
   @NotNull
   public Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     if (isParentGrouped(parent)) return Collections.emptyList();
-    Map<Group, SuperTypeGroup> groups = new THashMap<>();
+    Map<Group, SuperTypeGroup> groups = new HashMap<>();
 
     for (TreeElement child : children) {
-      if (child instanceof PsiMethodTreeElement) {
-        final PsiMethodTreeElement element = (PsiMethodTreeElement)child;
-
-        PsiMethod method = ((PsiMethodTreeElement)child).getMethod();
+      if (child instanceof PsiMethodTreeElement element) {
+        PsiMethod method = element.getMethod();
         if (element.isInherited()) {
           PsiClass groupClass = method.getContainingClass();
           final SuperTypeGroup group = getOrCreateGroup(groupClass, SuperTypeGroup.OwnershipType.INHERITS, groups);
@@ -79,7 +77,7 @@ public class SuperTypesGrouper implements Grouper{
     return existing;
   }
 
-  private static boolean isParentGrouped(AbstractTreeNode parent) {
+  private static boolean isParentGrouped(AbstractTreeNode<?> parent) {
     while (parent != null) {
       if (parent.getValue() instanceof SuperTypeGroup) return true;
       parent = parent.getParent();

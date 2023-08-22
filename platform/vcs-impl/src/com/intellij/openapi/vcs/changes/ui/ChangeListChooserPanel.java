@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,15 +8,17 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.NullableConsumer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,23 +28,23 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Consumer;
 
-public class ChangeListChooserPanel extends JPanel {
-
+public final class ChangeListChooserPanel extends JPanel {
   private final MyEditorComboBox myExistingListsCombo;
   private final NewEditChangelistPanel myListPanel;
-  private final NullableConsumer<? super String> myOkEnabledListener;
+  private final Consumer<? super String> myOkEnabledListener;
   private final Project myProject;
   private String myLastTypedDescription;
   private boolean myNewNameSuggested = false;
   @Nullable private ChangeListData myData;
 
-  public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<? super String> okEnabledListener) {
+  public ChangeListChooserPanel(final Project project, @NotNull Consumer<? super @Nullable String> okEnabledListener) {
     super(new BorderLayout());
     myProject = project;
     myExistingListsCombo = new MyEditorComboBox();
     myExistingListsCombo.setEditable(true);
-    myExistingListsCombo.setRenderer(new ColoredListCellRenderer<ChangeList>() {
+    myExistingListsCombo.setRenderer(new ColoredListCellRenderer<>() {
 
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ChangeList> list,
@@ -71,17 +73,17 @@ public class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      @CalledInAwt
+      @RequiresEdt
       protected void nameChanged(String errorMessage) {
         //invoke later because of undo manager problem: when you try to undo changelist after description was already changed manually
         ApplicationManager.getApplication().invokeLater(() -> updateDescription(), ModalityState.current());
-        myOkEnabledListener.consume(errorMessage);
+        myOkEnabledListener.accept(errorMessage);
       }
 
       @Override
-      public void init(LocalChangeList initial) {
+      public void init(@Nullable LocalChangeList initial) {
         super.init(initial);
-        myDescriptionTextArea.addFocusListener(new FocusAdapter() {
+        descriptionTextArea.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
             super.focusLost(e);
@@ -93,33 +95,41 @@ public class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      protected void nameChangedImpl(Project project, LocalChangeList initial) {
+      protected void nameChangedImpl(@Nullable LocalChangeList initial) {
         nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? VcsBundle.message("new.changelist.empty.name.error") : null);
       }
     };
     myOkEnabledListener = okEnabledListener;
     add(myListPanel, BorderLayout.CENTER);
+
+    setChangeLists(null);
+    setDefaultSelection(null);
   }
 
   public void init() {
     myListPanel.init(null);
   }
 
-  public void setChangeLists(Collection<? extends ChangeList> changeLists) {
+  public void setChangeLists(@Nullable Collection<? extends ChangeList> changeLists) {
+    if (changeLists == null) changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
     myExistingListsCombo.setModel(new DefaultComboBoxModel<>(changeLists.toArray(new ChangeList[0])));
   }
 
-  public void setSuggestedName(@NotNull String name) {
-    setSuggestedName(name, null);
+  public void setSuggestedName(@NlsSafe @NotNull String name) {
+    setSuggestedName(name, false);
   }
 
-  public void setSuggestedName(@NotNull String name, @Nullable String comment) {
+  public void setSuggestedName(@NlsSafe @NotNull String name, boolean forceCreate) {
+    setSuggestedName(name, null, forceCreate);
+  }
+
+  public void setSuggestedName(@NlsSafe @NotNull String name, @Nls @Nullable String comment, boolean forceCreate) {
     if (StringUtil.isEmptyOrSpaces(name)) return;
     LocalChangeList changelistByName = getExistingChangelistByName(name);
     if (changelistByName != null) {
       myExistingListsCombo.setSelectedItem(changelistByName);
     }
-    else {
+    else if (forceCreate || VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) {
       myNewNameSuggested = true;
       myExistingListsCombo.insertItemAt(LocalChangeList.createEmptyChangeList(myProject, name), 0);
       if (StringUtil.isEmptyOrSpaces(myLastTypedDescription)) {
@@ -145,7 +155,7 @@ public class ChangeListChooserPanel extends JPanel {
 
   public void updateEnabled() {
     if (myProject != null) {
-      myListPanel.nameChangedImpl(myProject, null);
+      myListPanel.nameChangedImpl(null);
     }
   }
 
@@ -154,12 +164,12 @@ public class ChangeListChooserPanel extends JPanel {
    */
   @Nullable
   public LocalChangeList getSelectedList(Project project) {
-    ChangeListManager manager = ChangeListManager.getInstance(project);
+    ChangeListManagerEx manager = ChangeListManagerEx.getInstanceEx(project);
     String changeListName = myListPanel.getChangeListName();
     LocalChangeList localChangeList = manager.findChangeList(changeListName);
 
     if (localChangeList == null) {
-      localChangeList = ((ChangeListManagerEx)manager).addChangeList(changeListName, myListPanel.getDescription(), myData);
+      localChangeList = manager.addChangeList(changeListName, myListPanel.getDescription(), myData);
       myListPanel.changelistCreatedOrChanged(localChangeList);
     }
     else {

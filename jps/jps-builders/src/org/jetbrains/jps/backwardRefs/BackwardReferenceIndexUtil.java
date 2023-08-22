@@ -1,12 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
@@ -17,11 +13,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BackwardReferenceIndexUtil {
+public final class BackwardReferenceIndexUtil {
   private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexUtil.class);
 
   static void registerFile(String filePath,
-                           TObjectIntHashMap<? extends JavacRef> refs,
+                           Iterable<Map.Entry<? extends JavacRef, Integer>> refs,
                            Collection<? extends JavacDef> defs,
                            Collection<? extends JavacTypeCast> casts,
                            Collection<? extends JavacRef> implicitToString,
@@ -33,9 +29,9 @@ public class BackwardReferenceIndexUtil {
 
       Map<CompilerRef, Void> definitions = new HashMap<>(defs.size());
       Map<CompilerRef, Collection<CompilerRef>> backwardHierarchyMap = new HashMap<>();
-      Map<SignatureData, Collection<CompilerRef>> signatureData = new THashMap<>();
-      Map<CompilerRef, Collection<CompilerRef>> castMap = new THashMap<>();
-      Map<CompilerRef, Void> implicitToStringMap = new THashMap<>();
+      Map<SignatureData, Collection<CompilerRef>> signatureData = new HashMap<>();
+      Map<CompilerRef, Collection<CompilerRef>> castMap = new HashMap<>();
+      Map<CompilerRef, Void> implicitToStringMap = new HashMap<>();
 
       final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
 
@@ -71,39 +67,27 @@ public class BackwardReferenceIndexUtil {
           CompilerRef.JavaCompilerFunExprDef result = new CompilerRef.JavaCompilerFunExprDef(id);
           definitions.put(result, null);
 
-          ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType,
-                                    (Factory<Collection<CompilerRef>>)() -> new SmartList<>()).add(result);
+          backwardHierarchyMap.computeIfAbsent(functionalType, __ -> new SmartList<>()).add(result);
         }
         else if (def instanceof JavacDef.JavacMemberDef) {
           final CompilerRef
             ref = writer.enumerateNames(def.getDefinedElement(), name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
           final CompilerRef.JavaCompilerClassRef returnType = writer.asClassUsage(((JavacDef.JavacMemberDef)def).getReturnType());
-          if (ref != null && returnType != null) {
+          if (ref != null) {
             final SignatureData data = new SignatureData(returnType.getName(), ((JavacDef.JavacMemberDef)def).getIteratorKind(), ((JavacDef.JavacMemberDef)def).isStatic());
             signatureData.computeIfAbsent(data, element -> new SmartList<>()).add(ref);
           }
         }
       }
 
-      Map<CompilerRef, Integer> convertedRefs = new THashMap<>();
-      IOException[] exception = new IOException[]{null};
-      refs.forEachEntry((ref, count) -> {
-        final CompilerRef compilerRef;
-        try {
-          compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
-          if (compilerRef != null) {
-            Integer old = convertedRefs.get(compilerRef);
-            convertedRefs.put(compilerRef, old == null ? count : (old + count));
-          }
+      Map<CompilerRef, Integer> convertedRefs = new HashMap<>();
+      for (Map.Entry<? extends JavacRef, Integer> entry : refs) {
+        JavacRef ref = entry.getKey();
+        int count = entry.getValue();
+        CompilerRef compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
+        if (compilerRef != null) {
+          convertedRefs.merge(compilerRef, count, (oldValue, value) -> oldValue + value);
         }
-        catch (IOException e) {
-          exception[0] = e;
-          return false;
-        }
-        return true;
-      });
-      if (exception[0] != null) {
-        throw exception[0];
       }
 
       for (JavacTypeCast cast : casts) {
@@ -125,13 +109,13 @@ public class BackwardReferenceIndexUtil {
     }
   }
 
-  private static class AnonymousClassEnumerator {
-    private THashMap<String, CompilerRef.CompilerClassHierarchyElementDef> myAnonymousName2Id = null;
+  private static final class AnonymousClassEnumerator {
+    private Map<String, CompilerRef.CompilerClassHierarchyElementDef> myAnonymousName2Id = null;
 
     private CompilerRef.JavaCompilerAnonymousClassRef addAnonymous(String internalName,
                                                                    CompilerRef.JavaCompilerClassRef base) {
       if (myAnonymousName2Id == null) {
-        myAnonymousName2Id = new THashMap<>();
+        myAnonymousName2Id = new HashMap<>();
       }
       final int anonymousIdx = myAnonymousName2Id.size();
       myAnonymousName2Id.put(internalName, base);

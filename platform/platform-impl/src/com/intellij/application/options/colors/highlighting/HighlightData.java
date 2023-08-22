@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors.highlighting;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ public class HighlightData {
     if (highlighted) list.add(new HighlightData(getStartOffset(), getEndOffset(), BLINKING_HIGHLIGHTS_ATTRIBUTES, getAdditionalColorKey()));
   }
 
-  public void addHighlToView(final Editor view, EditorColorsScheme scheme, final Map<TextAttributesKey,String> displayText) {
+  public void addHighlToView(final Editor view, EditorColorsScheme scheme, final Map<TextAttributesKey,@NlsContexts.Tooltip String> displayText) {
 
     // XXX: Hack
     if (HighlighterColors.BAD_CHARACTER.equals(myHighlightType)) {
@@ -59,13 +60,18 @@ public class HighlightData {
 
     final TextAttributes attr = scheme.getAttributes(myHighlightType);
     if (attr != null) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
           // IDEA-53203: add ERASE_MARKER for manually defined attributes
-          view.getMarkupModel().addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                    TextAttributes.ERASE_MARKER, HighlighterTargetArea.EXACT_RANGE);
+          RangeHighlighter erasedHighlighter = view.getMarkupModel()
+            .addRangeHighlighter(myHighlightType, myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
+                                 HighlighterTargetArea.EXACT_RANGE);
+          if (erasedHighlighter instanceof RangeHighlighterEx) {
+            ((RangeHighlighterEx)erasedHighlighter).setTextAttributes(TextAttributes.ERASE_MARKER);
+          }
+
           RangeHighlighter highlighter = view.getMarkupModel()
-            .addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attr,
+            .addRangeHighlighter(myHighlightType, myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
                                  HighlighterTargetArea.EXACT_RANGE);
           final Color errorStripeColor = attr.getErrorStripeColor();
           highlighter.setErrorStripeMarkColor(errorStripeColor);

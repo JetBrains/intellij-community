@@ -25,7 +25,6 @@ import com.jetbrains.python.psi.PyFunction;
 
 /**
  * Decorator-specific tests.
- * User: dcheryasov
  */
 public class PyDecoratorTest extends PyTestCase {
   private PsiElement find() {
@@ -45,7 +44,7 @@ public class PyDecoratorTest extends PyTestCase {
   }
 
   public void testDecoParamCall() {
-    PsiElement targetElement = find().getParent();
+    PsiElement targetElement = find().getParent().getParent(); //first parent is PyCallExpression
     assertTrue(targetElement instanceof PyDecorator);
     PyDecorator deco = (PyDecorator)targetElement;
     PyFunction decofun = deco.getTarget();

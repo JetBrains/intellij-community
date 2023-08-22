@@ -1,11 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.ui.OptionAccessor;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -14,35 +13,24 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
+public final class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
 
-  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders =
-    new NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]>() {
-    @Override
-    protected InconsistentResourceBundleInspectionProvider @NotNull [] compute() {
-      return new InconsistentResourceBundleInspectionProvider[] {
-        new PropertiesKeysConsistencyInspectionProvider(),
-        new DuplicatedPropertiesInspectionProvider(),
-        new MissingTranslationsInspectionProvider(),
-        new PropertiesPlaceholdersInspectionProvider(),
-        new InconsistentPropertiesEndsInspectionProvider(),
-      };
-    }
-  };
+  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders = NotNullLazyValue.lazy(() -> {
+    return new InconsistentResourceBundleInspectionProvider[]{
+      new PropertiesKeysConsistencyInspectionProvider(),
+      new DuplicatedPropertiesInspectionProvider(),
+      new MissingTranslationsInspectionProvider(),
+      new PropertiesPlaceholdersInspectionProvider(),
+      new InconsistentPropertiesEndsInspectionProvider(),
+    };
+  });
   private final Map<String, Boolean> mySettings = new LinkedHashMap<>();
 
 
@@ -53,28 +41,23 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(new OptionAccessor() {
-      @Override
-      public boolean getOption(String optionName) {
-        return isProviderEnabled(optionName);
-      }
+  public @NotNull OptPane getOptionsPane() {
+    return new OptPane(ContainerUtil.map(
+      myInspectionProviders.getValue(),
+      provider -> OptPane.checkbox(provider.getName(), provider.getPresentableName())));
+  }
 
-      @Override
-      public void setOption(String optionName, boolean optionValue) {
-        if (optionValue) {
-          mySettings.remove(optionName);
-        }
-        else {
-          mySettings.put(optionName, false);
-        }
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return OptionController.of(this::isProviderEnabled, (bindId, value) -> {
+      boolean boolValue = (Boolean)value;
+      if (boolValue) {
+        mySettings.remove(bindId);
+      }
+      else {
+        mySettings.put(bindId, false);
       }
     });
-    for (final InconsistentResourceBundleInspectionProvider provider : myInspectionProviders.getValue()) {
-      panel.addCheckbox(provider.getPresentableName(), provider.getName());
-    }
-    return panel;
   }
 
   @Override
@@ -87,13 +70,10 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   @Override
   public void readSettings(final @NotNull Element node) throws InvalidDataException {
     mySettings.clear();
-    for (final Object o : node.getChildren()) {
-      if (o instanceof Element) {
-        final Element e = (Element) o;
-        final String name = e.getAttributeValue("name");
-        final boolean value = Boolean.parseBoolean(e.getAttributeValue("value"));
-        mySettings.put(name, value);
-      }
+    for (final Element e : node.getChildren()) {
+      final String name = e.getAttributeValue("name");
+      final boolean value = Boolean.parseBoolean(e.getAttributeValue("value"));
+      mySettings.put(name, value);
     }
   }
 
@@ -101,7 +81,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   public void inspectionStarted(@NotNull InspectionManager manager,
                                 @NotNull GlobalInspectionContext globalContext,
                                 @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.putUserData(VISITED_BUNDLES_KEY, ContainerUtil.newConcurrentSet());
+    globalContext.putUserData(VISITED_BUNDLES_KEY, ConcurrentCollectionFactory.createConcurrentSet());
   }
 
   @Override
@@ -111,8 +91,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     Set<ResourceBundle> visitedBundles = globalContext.getUserData(VISITED_BUNDLES_KEY);
-    if (!(file instanceof PropertiesFile)) return;
-    final PropertiesFile propertiesFile = (PropertiesFile)file;
+    if (!(file instanceof PropertiesFile propertiesFile)) return;
     ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
     assert visitedBundles != null;
     if (!visitedBundles.add(resourceBundle)) return;
@@ -126,9 +105,9 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
       }
     }
     final Map<PropertiesFile, Map<String, String>> propertiesFilesNamesMaps = FactoryMap.create(key -> key.getNamesMap());
-    Map<PropertiesFile, Set<String>> keysUpToParent = new THashMap<>();
+    Map<PropertiesFile, Set<String>> keysUpToParent = new HashMap<>();
     for (PropertiesFile f : files) {
-      Set<String> keys = new THashSet<>(propertiesFilesNamesMaps.get(f).keySet());
+      Set<String> keys = new HashSet<>(propertiesFilesNamesMaps.get(f).keySet());
       PropertiesFile parent = parents.get(f);
       while (parent != null) {
         keys.addAll(propertiesFilesNamesMaps.get(parent).keySet());
@@ -145,7 +124,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   }
 
   private boolean isProviderEnabled(final String providerName) {
-    return ContainerUtil.getOrElse(mySettings, providerName, true);
+    return mySettings.getOrDefault(providerName, true);
   }
 
   @SafeVarargs

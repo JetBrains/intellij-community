@@ -1,30 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.visible.VisiblePack
-import gnu.trove.THashSet
 
 object FileHistoryPaths {
+  private val FILE_HISTORY = Key.create<FileHistory>("FILE_HISTORY")
+
   val VcsLogDataPack.fileHistory: FileHistory
     get() {
-      if (this !is VisiblePack) return EMPTY_HISTORY
-      return this.getAdditionalData<Any>() as? FileHistory ?: EMPTY_HISTORY
+      if (this !is VisiblePack) return FileHistory.EMPTY
+      return FILE_HISTORY.get(this) ?: FileHistory.EMPTY
     }
 
   private val VcsLogDataPack.commitsToPathsMap: Map<Int, MaybeDeletedFilePath>
@@ -33,7 +22,12 @@ object FileHistoryPaths {
   @JvmStatic
   fun VcsLogDataPack.hasPathsInformation(): Boolean {
     if (this !is VisiblePack) return false
-    return this.getAdditionalData<Any>() is FileHistory
+    return FILE_HISTORY.isIn(this)
+  }
+
+  fun VisiblePack.withFileHistory(fileHistory: FileHistory): VisiblePack {
+    putUserData(FILE_HISTORY, fileHistory)
+    return this
   }
 
   @JvmStatic
@@ -49,7 +43,7 @@ object FileHistoryPaths {
 
   @JvmStatic
   fun VcsLogDataPack.filePaths(): Set<FilePath> {
-    return commitsToPathsMap.values.mapTo(THashSet(FILE_PATH_HASHING_STRATEGY)) { it.filePath }
+    return commitsToPathsMap.values.mapTo(CollectionFactory.createCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY)) { it.filePath }
   }
 }
 

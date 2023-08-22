@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.icons.AllIcons;
@@ -14,15 +14,13 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author anna
- */
+@Service
 @State(name = "DependenciesAnalyzeManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class DependenciesAnalyzeManager implements PersistentStateComponent<DependenciesAnalyzeManager.State> {
+public final class DependenciesAnalyzeManager implements PersistentStateComponent<DependenciesAnalyzeManager.State> {
   private final Project myProject;
   private ContentManager myContentManager;
 
-  public static class State {
+  public static final class State {
     public boolean forwardDirection = true;
     public boolean includeTests = false;
   }
@@ -41,7 +39,7 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
   }
 
   public static DependenciesAnalyzeManager getInstance(Project project) {
-    return ServiceManager.getService(project, DependenciesAnalyzeManager.class);
+    return project.getService(DependenciesAnalyzeManager.class);
   }
 
   public void addContent(Content content) {
@@ -62,6 +60,6 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
 
   @Override
   public void loadState(@NotNull State state) {
-    myState = state != null ? state : new State();
+    myState = state;
   }
 }

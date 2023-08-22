@@ -1,0 +1,6 @@
+from typing import Optional
+
+version: int
+
+def b85encode(text: bytes, pad: Optional[int]) -> bytes: ...
+def b85decode(text: bytes) -> bytes: ...

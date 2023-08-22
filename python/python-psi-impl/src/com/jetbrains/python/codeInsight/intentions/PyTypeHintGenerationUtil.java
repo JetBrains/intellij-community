@@ -35,11 +35,11 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyTypeHintGenerationUtil {
+public final class PyTypeHintGenerationUtil {
 
   public static final String TYPE_COMMENT_PREFIX = "# type: ";
 
-  private PyTypeHintGenerationUtil() {}
+  private PyTypeHintGenerationUtil() { }
 
   public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
                                                           @NotNull TypeEvalContext context,
@@ -55,7 +55,7 @@ public class PyTypeHintGenerationUtil {
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
-    final String assignedValue = langLevel.isAtLeast(LanguageLevel.PYTHON30) ? "..." : "None";
+    final String assignedValue = langLevel.isPython2() ? "None" : "...";
     final String declarationText = target.getName() + " = " + assignedValue + " " + TYPE_COMMENT_PREFIX + info.getAnnotationText();
     final PyAssignmentStatement declaration = generator.createFromText(langLevel, PyAssignmentStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
@@ -172,16 +172,19 @@ public class PyTypeHintGenerationUtil {
     final Project project = annotated.getProject();
     final int initialCaretOffset = annotated.getTextRange().getStartOffset();
     final VirtualFile updatedVirtualFile = annotated.getContainingFile().getVirtualFile();
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
+    final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotated);
+    final String annotation = annotated.getAnnotationValue();
+    final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
+    //noinspection ConstantConditions
+    templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
 
+    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
     if (editor != null) {
       editor.getCaretModel().moveToOffset(initialCaretOffset);
-      final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotated);
-      final String annotation = annotated.getAnnotationValue();
-      final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
-      //noinspection ConstantConditions
-      templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
       templateBuilder.run(editor, true);
+    }
+    else {
+      templateBuilder.runNonInteractively(true);
     }
   }
 
@@ -245,7 +248,6 @@ public class PyTypeHintGenerationUtil {
         openEditorAndAddTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges());
       }
     });
-
   }
 
   private static void openEditorAndAddTemplateForTypeComment(@NotNull PsiComment insertedComment,
@@ -254,26 +256,29 @@ public class PyTypeHintGenerationUtil {
     final int initialCaretOffset = insertedComment.getTextRange().getStartOffset();
     final VirtualFile updatedVirtualFile = insertedComment.getContainingFile().getVirtualFile();
     final Project project = insertedComment.getProject();
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
+    final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
+    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+    for (TextRange range : typeRanges) {
+      final String individualType = range.substring(annotation);
+      final String replacementText = testMode ? "[" + individualType + "]" : individualType;
+      templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
+    }
 
+    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
     if (editor != null) {
-      final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
       editor.getCaretModel().moveToOffset(initialCaretOffset);
-      final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
-      for (TextRange range : typeRanges) {
-        final String individualType = range.substring(annotation);
-        final String replacementText = testMode ? "[" + individualType + "]" : individualType;
-        templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
-      }
       templateBuilder.run(editor, true);
+    }
+    else {
+      templateBuilder.runNonInteractively(true);
     }
   }
 
-  private static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
-                                                   @NotNull TypeEvalContext context,
-                                                   @NotNull PsiFile file) {
-    final Set<PsiNamedElement> symbols = new HashSet<>();
-    final Set<String> namesFromTyping = new HashSet<>();
+  public static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
+                                                  @NotNull TypeEvalContext context,
+                                                  @NotNull PsiFile file) {
+    final Set<PsiNamedElement> symbols = new LinkedHashSet<>();
+    final Set<String> namesFromTyping = new LinkedHashSet<>();
 
     for (PyType type : types) {
       collectImportTargetsFromType(type, context, symbols, namesFromTyping);
@@ -300,7 +305,9 @@ public class PyTypeHintGenerationUtil {
     else if (type instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)type).getMembers();
       final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
-      typingTypes.add(isOptional ? "Optional" : "Union");
+      if (!PyTypingTypeProvider.isBitwiseOrUnionAvailable(context)) {
+        typingTypes.add(isOptional ? "Optional" : "Union");
+      }
       for (PyType pyType : members) {
         collectImportTargetsFromType(pyType, context, symbols, typingTypes);
       }
@@ -310,6 +317,9 @@ public class PyTypeHintGenerationUtil {
       if (element instanceof PsiNamedElement) {
         symbols.add((PsiNamedElement)element);
       }
+    }
+    else if (type instanceof PyLiteralStringType) {
+      typingTypes.add("LiteralString");
     }
     else if (type instanceof PyCollectionType) {
       if (type instanceof PyCollectionTypeImpl) {
@@ -325,6 +335,9 @@ public class PyTypeHintGenerationUtil {
       else if (type instanceof PyTupleType) {
         typingTypes.add("Tuple");
       }
+      else if (type instanceof PyTypedDictType) {
+        typingTypes.add("Dict");
+      }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
         collectImportTargetsFromType(pyType, context, symbols, typingTypes);
       }
@@ -332,9 +345,8 @@ public class PyTypeHintGenerationUtil {
     else if (type instanceof PyClassType) {
       symbols.add(((PyClassType)type).getPyClass());
     }
-    else if (type instanceof PyCallableType) {
+    else if (type instanceof PyCallableType callableType) {
       typingTypes.add("Callable");
-      final PyCallableType callableType = (PyCallableType)type;
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
         collectImportTargetsFromType(parameter.getType(context), context, symbols, typingTypes);
       }
@@ -346,7 +358,7 @@ public class PyTypeHintGenerationUtil {
         symbols.add(target);
       }
     }
-    if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+    if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
       typingTypes.add("Type");
     }
   }
@@ -370,8 +382,7 @@ public class PyTypeHintGenerationUtil {
     else if (type instanceof PyClassType) {
       // In this order since PyCollectionTypeImpl implements PyClassType
     }
-    else if (type instanceof PyCallableType) {
-      final PyCallableType callableType = (PyCallableType)type;
+    else if (type instanceof PyCallableType callableType) {
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
         checkPep484Compatibility(parameter.getType(context), context);
       }
@@ -381,6 +392,10 @@ public class PyTypeHintGenerationUtil {
       throw new Pep484IncompatibleTypeException(
         PyPsiBundle.message("INTN.add.type.hint.for.variable.PEP484.incompatible.type", type.getName()));
     }
+  }
+
+  public static boolean isTypeHintComment(PsiElement element) {
+    return element instanceof PsiComment && element.getText().startsWith(TYPE_COMMENT_PREFIX);
   }
 
   public static final class Pep484IncompatibleTypeException extends RuntimeException {

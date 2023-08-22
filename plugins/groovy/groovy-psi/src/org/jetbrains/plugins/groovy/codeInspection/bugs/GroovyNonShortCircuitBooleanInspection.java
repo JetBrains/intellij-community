@@ -18,11 +18,12 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -35,7 +36,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Non short-circuit boolean expression #loc";
+    return GroovyBundle.message("inspection.message.non.short.circuit.boolean.expression");
 
   }
 
@@ -50,7 +51,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Replace with short-circuit expression";
+      return GroovyBundle.message("intention.family.name.replace.with.short.circuit.expression");
     }
 
     @Override
@@ -96,7 +97,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
           !GroovyTokenTypes.mBOR.equals(sign)) {
         return;
       }
-      if (!PsiType.BOOLEAN.equals(rhs.getType())) {
+      if (!PsiTypes.booleanType().equals(rhs.getType())) {
         return;
       }
       registerError(expression);

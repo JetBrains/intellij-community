@@ -1,23 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.picocontainer.PicoContainer;
 
 public class MockProjectEx extends MockProject implements ProjectEx {
   public MockProjectEx(@NotNull Disposable parentDisposable) {
-    super(ApplicationManager.getApplication() != null ? ApplicationManager.getApplication().getPicoContainer() : null, parentDisposable);
+    super(getParentContainer(), parentDisposable);
+  }
+
+  private static @Nullable PicoContainer getParentContainer() {
+    Application app = ApplicationManager.getApplication();
+    return app instanceof MockApplication ? ((MockApplication)app).getPicoContainer() : null;
   }
 
   @Override
   public void setProjectName(@NotNull String name) {
   }
 
-  @NotNull
   @Override
-  public final Disposable getEarlyDisposable() {
+  public final @NotNull Disposable getEarlyDisposable() {
     return this;
   }
 }

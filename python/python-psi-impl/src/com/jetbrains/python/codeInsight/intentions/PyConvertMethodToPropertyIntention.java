@@ -50,13 +50,13 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
     final boolean[] available = {false};
     function.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyReturnStatement(PyReturnStatement node) {
+      public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
         if (node.getExpression() != null)
           available[0] = true;
       }
 
       @Override
-      public void visitPyYieldExpression(PyYieldExpression node) {
+      public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
         available[0] = true;
       }
     });
@@ -87,8 +87,7 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
   }
 
   private static boolean prepareForWrite(PsiFile file, List<UsageInfo> usages) {
-    List<PsiElement> toWrite = ContainerUtil.newArrayList(file);
-    toWrite.addAll(ContainerUtil.mapNotNull(usages, UsageInfo::getElement));
+    List<PsiElement> toWrite = ContainerUtil.prepend(ContainerUtil.mapNotNull(usages, UsageInfo::getElement), file);
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(toWrite)) return false;
     return true;
   }

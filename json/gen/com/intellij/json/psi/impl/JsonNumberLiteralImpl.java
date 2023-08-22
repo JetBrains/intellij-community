@@ -16,6 +16,7 @@ public class JsonNumberLiteralImpl extends JsonLiteralImpl implements JsonNumber
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitNumberLiteral(this);
   }
@@ -26,6 +27,7 @@ public class JsonNumberLiteralImpl extends JsonLiteralImpl implements JsonNumber
     else super.accept(visitor);
   }
 
+  @Override
   public double getValue() {
     return JsonPsiImplUtils.getValue(this);
   }

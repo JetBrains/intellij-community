@@ -57,11 +57,12 @@ public class FieldAccessedNotGuardedInspectionTest extends LightJavaCodeInsightF
 
   @NotNull
   private static String getGuardedByAnnotationText() {
-    return "@java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})\n" +
-           "@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)\n" +
-           "public @interface GuardedBy {\n" +
-           "    java.lang.String value();\n" +
-           "}";
+    return """
+      @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD})
+      @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+      public @interface GuardedBy {
+          java.lang.String value();
+      }""";
   }
 
 

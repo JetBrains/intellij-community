@@ -5,8 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrCodeReferenceElement extends GrReferenceElement<GrCodeReferenceElement>, GrTypeAnnotationOwner {
 

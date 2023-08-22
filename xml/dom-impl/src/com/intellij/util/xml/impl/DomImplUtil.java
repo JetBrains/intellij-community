@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,19 +14,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class DomImplUtil {
   private static final Logger LOG = Logger.getInstance(DomImplUtil.class);
 
@@ -128,7 +125,7 @@ public final class DomImplUtil {
 
 
   public static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
-    return findSubTags(tag, name, file, true);
+    return findSubTags(tag, name, file, false);
   }
 
   static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file, boolean processIncludes) {
@@ -210,8 +207,7 @@ public final class DomImplUtil {
         }
       }
     }
-    if (type instanceof WildcardType) {
-      final WildcardType wildcardType = (WildcardType)type;
+    if (type instanceof WildcardType wildcardType) {
       for (final Type bound : wildcardType.getUpperBounds()) {
         final Class<?> aClass = getErasure(bound);
         if (aClass != null) {
@@ -239,7 +235,7 @@ public final class DomImplUtil {
     }
 
     final DomGenericInfoEx info = handler.getGenericInfo();
-    final Set<XmlName> usedNames = new THashSet<>();
+    final Set<XmlName> usedNames = new HashSet<>();
     List<? extends DomCollectionChildDescription> collectionChildrenDescriptions = info.getCollectionChildrenDescriptions();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = collectionChildrenDescriptions.size(); i < size; i++) {

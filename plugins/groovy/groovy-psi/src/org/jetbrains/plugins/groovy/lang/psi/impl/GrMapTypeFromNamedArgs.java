@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -18,31 +18,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.*;
 
-public class GrMapTypeFromNamedArgs extends GrMapType {
-
+public final class GrMapTypeFromNamedArgs extends GrMapType {
   private final @NotNull LinkedHashMap<String, GrExpression> myStringEntries;
   private final @NotNull List<Couple<GrExpression>> myOtherEntries;
 
-  private final VolatileNotNullLazyValue<List<Couple<PsiType>>> myTypesOfOtherEntries = new VolatileNotNullLazyValue<List<Couple<PsiType>>>() {
-    @NotNull
-    @Override
-    protected List<Couple<PsiType>> compute() {
-      return ContainerUtil.map(myOtherEntries, pair -> Couple.of(inferTypePreventingRecursion(pair.first), inferTypePreventingRecursion(pair.second)));
-    }
-  };
-
-  private final VolatileNotNullLazyValue<LinkedHashMap<String, PsiType>> myTypesOfStringEntries = new VolatileNotNullLazyValue<LinkedHashMap<String,PsiType>>() {
-    @NotNull
-    @Override
-    protected LinkedHashMap<String, PsiType> compute() {
-      LinkedHashMap<String, PsiType> result = new LinkedHashMap<>();
-      for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
-        result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
-      }
-      return result;
-    }
-
-  };
+  private final NotNullLazyValue<List<Couple<PsiType>>> myTypesOfOtherEntries;
+  private final NotNullLazyValue<LinkedHashMap<String, PsiType>> myTypesOfStringEntries;
 
   public GrMapTypeFromNamedArgs(@NotNull PsiElement context, GrNamedArgument @NotNull [] namedArgs) {
     this(JavaPsiFacade.getInstance(context.getProject()), context.getResolveScope(), namedArgs);
@@ -71,6 +52,17 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
         }
       }
     }
+    myTypesOfOtherEntries = NotNullLazyValue.volatileLazy(() -> {
+      return ContainerUtil
+        .map(myOtherEntries, pair -> Couple.of(inferTypePreventingRecursion(pair.first), inferTypePreventingRecursion(pair.second)));
+    });
+    myTypesOfStringEntries = NotNullLazyValue.volatileLazy(() -> {
+      LinkedHashMap<String, PsiType> result = new LinkedHashMap<>();
+      for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
+        result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
+      }
+      return result;
+    });
   }
 
   @Nullable

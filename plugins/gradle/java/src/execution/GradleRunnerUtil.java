@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -23,13 +25,11 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
  */
-public class GradleRunnerUtil {
+public final class GradleRunnerUtil {
 
   public static boolean isGradleModule(@NotNull Module module) {
     return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
@@ -94,32 +94,33 @@ public class GradleRunnerUtil {
     return GradleConstants.EXTENSION.equals(virtualFile.getExtension());
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  public static Couple<String> parseComparisonMessage(String exceptionMsg) {
-    Couple<String> comparisonPair = parseComparisonMessage(exceptionMsg, "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n");
-    if (comparisonPair == null) {
-      comparisonPair = parseComparisonMessage(exceptionMsg, "\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"");
+  /**
+   * For a given IDEA module, adds settings.gradle(.kts) file from the root Gradle project as explicit commandline flag.
+   * <p>
+   * Workaround for IDEA-316566 and IDEA-317008
+   * @param module module of a Gradle-based project
+   * @param taskSettings execution settings of a task inside this module.
+   */
+  public static void addExplicitSettingsFileParameter(@NotNull Module module, @NotNull ExternalSystemTaskExecutionSettings taskSettings) {
+    if (!isGradleModule(module)) {
+      return;
     }
-    if (comparisonPair == null) {
-      comparisonPair = parseComparisonMessage(exceptionMsg, "\nExpected: (.*)\n\\s*got: (.*)");
-    }
-    if (comparisonPair == null) {
-      comparisonPair = parseComparisonMessage(exceptionMsg, ".*\\s*expected same:\\s?<(.*)> was not:\\s?<(.*)>");
-    }
-    if (comparisonPair == null) {
-      comparisonPair = parseComparisonMessage(exceptionMsg, ".*\\s*expected:\\s?<(.*)> but was:\\s?<(.*)>");
-    }
-    if (comparisonPair == null) {
-      comparisonPair = parseComparisonMessage(exceptionMsg, "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");
-    }
-    return comparisonPair;
-  }
 
-  private static Couple<String> parseComparisonMessage(String message, final String regex) {
-    final Matcher matcher = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(message);
-    if (matcher.matches()) {
-      return Couple.of(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+    String path = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+    String settingsPath = null;
+
+    String groovySettingsPath = path + "/" + GradleConstants.SETTINGS_FILE_NAME;
+    if (FileUtil.exists(groovySettingsPath)) {
+      settingsPath = groovySettingsPath;
     }
-    return null;
+    String ktsSettingsPath = path + "/" + GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME;
+    if (FileUtil.exists(ktsSettingsPath)) {
+      settingsPath = ktsSettingsPath;
+    }
+
+    if (settingsPath != null) {
+      taskSettings.setScriptParameters(
+        StringUtil.notNullize(taskSettings.getScriptParameters()) + " --settings-file \"" + settingsPath + "\"");
+    }
   }
 }

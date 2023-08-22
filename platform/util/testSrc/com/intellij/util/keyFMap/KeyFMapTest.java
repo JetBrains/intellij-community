@@ -13,7 +13,7 @@ public class KeyFMapTest extends TestCase {
   private static final List<Key<Object>> KEYS =
     IntStream.range(0, 20).mapToObj(i -> Key.create("Key#"+i)).collect(Collectors.toList());
 
-  private static KeyFMap createKeyFMap(List<Key<Object>> keys, List<Object> values) {
+  private static KeyFMap createKeyFMap(List<? extends Key<Object>> keys, List<Object> values) {
     KeyFMap map = KeyFMap.EMPTY_MAP;
 
     for (int i = 0; i < keys.size(); i++) {

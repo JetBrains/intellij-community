@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -17,10 +16,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
-* @author peter
-*/
-public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
+public final class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
   private final LookupImpl myLookup;
   private final LookupElement myLookupElement;
   private final Icon myEmptyIcon;
@@ -43,13 +39,13 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
 
   @Override
   public PopupStep onChosen(LookupElementAction selectedValue, boolean finalChoice) {
-    UIEventLogger.logUIEvent(UIEventId.LookupExecuteElementAction);
+    UIEventLogger.LookupExecuteElementAction.log(myLookup.getProject());
 
     final LookupElementAction.Result result = selectedValue.performLookupAction();
     if (result == LookupElementAction.Result.HIDE_LOOKUP) {
       myLookup.hideLookup(true);
     } else if (result == LookupElementAction.Result.REFRESH_ITEM) {
-      myLookup.updateLookupWidth(myLookupElement);
+      myLookup.updateLookupWidth();
       myLookup.requestResize();
       myLookup.refreshUi(false, true);
     } else if (result instanceof LookupElementAction.Result.ChooseItem) {

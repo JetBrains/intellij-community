@@ -117,11 +117,6 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
     }
 
     @Override
-    public Class<?> getColumnClass() {
-      return String.class;
-    }
-
-    @Override
     public void setValue(PySteppingFilter filter, String value) {
       filter.setFilter(value);
     }
@@ -140,7 +135,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
     }
 
     @Override
-    public void edit(@NotNull PySteppingFilter item, @NotNull Function<PySteppingFilter, PySteppingFilter> mutator, boolean isAdd) {
+    public void edit(@NotNull PySteppingFilter item, @NotNull Function<? super PySteppingFilter, ? extends PySteppingFilter> mutator, boolean isAdd) {
       String pattern = Messages.showInputDialog(myPanel,
                                                 PyBundle.message("debugger.stepping.filter.specify.pattern"),
                                                 PyBundle.message("debugger.stepping.filter"), null, item.getFilter(),

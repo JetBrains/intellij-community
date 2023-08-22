@@ -1,4 +1,4 @@
-// "Create local variable 'field'" "true"
+// "Create local variable 'field'" "true-preview"
 import java.util.*;
 class A {
   void foo(Map<String, String> s){}

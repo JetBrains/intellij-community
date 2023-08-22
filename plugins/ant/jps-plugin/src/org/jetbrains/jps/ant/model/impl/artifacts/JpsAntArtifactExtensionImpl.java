@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JpsAntArtifactExtensionImpl extends JpsCompositeElementBase<JpsAntArtifactExtensionImpl> implements JpsAntArtifactExtension {
+public final class JpsAntArtifactExtensionImpl extends JpsCompositeElementBase<JpsAntArtifactExtensionImpl> implements JpsAntArtifactExtension {
   public static final JpsElementChildRole<JpsAntArtifactExtension> PREPROCESSING_ROLE = JpsElementChildRoleBase.create("ant preprocessing");
   public static final JpsElementChildRole<JpsAntArtifactExtension> POSTPROCESSING_ROLE = JpsElementChildRoleBase.create("ant postprocessing");
   @NonNls public static final String ARTIFACT_OUTPUT_PATH_PROPERTY = "artifact.output.path";

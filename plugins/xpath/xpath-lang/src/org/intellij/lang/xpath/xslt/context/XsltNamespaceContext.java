@@ -104,8 +104,7 @@ public class XsltNamespaceContext implements NamespaceContext {
               return new SchemaPrefix(attribute, textRange, prefix) {
                 @Override
                 public boolean equals(Object obj) {
-                  if (obj instanceof SchemaPrefix) {
-                    final SchemaPrefix p = (SchemaPrefix)obj;
+                  if (obj instanceof SchemaPrefix p) {
                     return prefix.equals(p.getName()) && p.getParent() == attribute;
                   }
                   return super.equals(obj);

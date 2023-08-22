@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -8,11 +8,9 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.JavaClassFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
@@ -35,12 +33,8 @@ public class PropertiesFindUsagesTest extends JavaCodeInsightTestCase {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/";
   }
 
-  private void initProperties() {
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
-  }
   public void testFindUsages() throws Exception {
     configureByFile(BASE_PATH+"xx.properties", BASE_PATH);
-    initProperties();
 
     PsiReference[] references = findReferences();
     assertEquals(1, references.length);
@@ -48,7 +42,6 @@ public class PropertiesFindUsagesTest extends JavaCodeInsightTestCase {
   }
   public void testFindUsagesInPropValue() throws Exception {
     configureByFile(BASE_PATH+"Y.java", BASE_PATH);
-    initProperties();
 
     UsageInfo[] usages = findUsages();
     assertEquals(1, usages.length);
@@ -58,7 +51,6 @@ public class PropertiesFindUsagesTest extends JavaCodeInsightTestCase {
 
   public void testFindUsagesInConditionalExpression() {
     configureByFiles(BASE_PATH, BASE_PATH + "conditional.properties", BASE_PATH + "Conditional.java");
-    initProperties();
 
     PsiElement element = myFile.findElementAt(myEditor.getCaretModel().getOffset());
     Property prop = PsiTreeUtil.getNonStrictParentOfType(element, Property.class);

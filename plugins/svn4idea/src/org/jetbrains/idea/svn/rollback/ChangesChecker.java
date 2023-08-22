@@ -28,9 +28,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import java.io.File;
 import java.util.*;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class ChangesChecker {
 
   @NotNull private final SuperfluousRemover myForAdds;
@@ -51,7 +48,7 @@ public class ChangesChecker {
     myExceptions = new ArrayList<>();
   }
 
-  public void gather(final List<Change> changes) {
+  public void gather(final List<? extends Change> changes) {
     final TreeMap<String, File> renames = new TreeMap<>();
     final Set<String> alsoReverted = new HashSet<>();
     final Map<String, FilePath> files = new HashMap<>();

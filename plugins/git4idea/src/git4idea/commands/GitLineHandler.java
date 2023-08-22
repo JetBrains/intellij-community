@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -6,26 +6,28 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
+import git4idea.config.GitExecutable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
-
-import static java.util.Collections.singletonList;
 
 /**
  * The handler that is based on per-line processing of the text.
@@ -40,20 +42,22 @@ public class GitLineHandler extends GitTextHandler {
    * Remote url which require authentication
    */
   @NotNull private Collection<String> myUrls = Collections.emptyList();
-  @NotNull private GitAuthenticationMode myIgnoreAuthenticationRequest = GitAuthenticationMode.FULL;
-  @Nullable private GitAuthenticationGate myAuthenticationGate;
+  @NotNull private AuthenticationMode myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
+  @Nullable private AuthenticationGate myAuthenticationGate;
 
-  public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
+  public GitLineHandler(@Nullable Project project,
+                        @NotNull File directory,
+                        @NotNull GitCommand command) {
     super(project, directory, command);
   }
 
-  public GitLineHandler(@NotNull Project project,
+  public GitLineHandler(@Nullable Project project,
                         @NotNull VirtualFile vcsRoot,
                         @NotNull GitCommand command) {
     super(project, vcsRoot, command);
   }
 
-  public GitLineHandler(@NotNull Project project,
+  public GitLineHandler(@Nullable Project project,
                         @NotNull VirtualFile vcsRoot,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
@@ -62,14 +66,14 @@ public class GitLineHandler extends GitTextHandler {
 
   public GitLineHandler(@Nullable Project project,
                         @NotNull File directory,
-                        @NotNull String pathToExecutable,
+                        @NotNull GitExecutable executable,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
-    super(project, directory, pathToExecutable, command, configParameters);
+    super(project, directory, executable, command, configParameters);
   }
 
-  public void setUrl(@NotNull String url) {
-    setUrls(singletonList(url));
+  public void setUrl(@NotNull @NonNls String url) {
+    setUrls(Collections.singletonList(url));
   }
 
   public void setUrls(@NotNull Collection<String> urls) {
@@ -86,20 +90,20 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   @NotNull
-  public GitAuthenticationMode getIgnoreAuthenticationMode() {
+  public AuthenticationMode getIgnoreAuthenticationMode() {
     return myIgnoreAuthenticationRequest;
   }
 
-  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
+  public void setIgnoreAuthenticationMode(@NotNull AuthenticationMode authenticationMode) {
     myIgnoreAuthenticationRequest = authenticationMode;
   }
 
   @Nullable
-  public GitAuthenticationGate getAuthenticationGate() {
+  public AuthenticationGate getAuthenticationGate() {
     return myAuthenticationGate;
   }
 
-  public void setAuthenticationGate(@NotNull GitAuthenticationGate authenticationGate) {
+  public void setAuthenticationGate(@NotNull AuthenticationGate authenticationGate) {
     myAuthenticationGate = authenticationGate;
   }
 
@@ -111,47 +115,41 @@ public class GitLineHandler extends GitTextHandler {
     myLineListeners.addListener(listener);
   }
 
-  @Override
-  protected void onTextAvailable(String text, Key outputType) {
-    notifyLine(text, outputType);
-  }
-
   /**
-   * Notify single line
-   *
-   * @param line       a line to notify
-   * @param outputType output type
+   * @param line line content without separators
+   * @param isCr whether this line is CR-only separated (typically, a progress message)
    */
-  private void notifyLine(@NotNull String line, @NotNull Key outputType) {
-    String lineWithoutSeparator = LineHandlerHelper.trimLineSeparator(line);
-    // do not log git remote progress (progress lines are separated with CR by convention)
-    if (!line.endsWith("\r")) logOutput(lineWithoutSeparator, outputType);
+  private void onLineAvailable(@NotNull String line, boolean isCr, @NotNull Key outputType) {
     if (outputType == ProcessOutputTypes.SYSTEM) return;
-    myLineListeners.getMulticaster().onLineAvailable(lineWithoutSeparator, outputType);
+
+    // do not log git remote progress
+    if (!isCr) logOutput(line, outputType);
+
+    if (OUTPUT_LOG.isDebugEnabled()) {
+      OUTPUT_LOG.debug(String.format("%s %% %s (%s):'%s'", getCommand(), this.hashCode(), outputType, line));
+    }
+
+    myLineListeners.getMulticaster().onLineAvailable(line, outputType);
   }
 
   private void logOutput(@NotNull String line, @NotNull Key outputType) {
-    String trimmedLine = line.trim();
-    if (!StringUtil.isEmptyOrSpaces(trimmedLine) &&
-        !mySilent &&
-        ((outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) ||
-         outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed())) {
-      LOG.info(trimmedLine);
-    }
-    else {
-      OUTPUT_LOG.debug(trimmedLine);
-    }
+    if (mySilent) return;
+    boolean shouldLogOutput = outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed() ||
+                              outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed();
+    if (!shouldLogOutput) return;
+    if (StringUtil.isEmptyOrSpaces(line)) return;
+    LOG.info(line.trim());
   }
 
   @Override
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator")) {
+    return new MyOSProcessHandler(commandLine, myWithMediator && myExecutable.isLocal() && Registry.is("git.execute.with.mediator")) {
       @NotNull
       @Override
       protected BaseDataReader createOutputDataReader() {
         return new LineReader(createProcessOutReader(),
                               readerOptions().policy(),
-                              new BufferingTextSplitter((line) -> this.notifyTextAvailable(line, ProcessOutputTypes.STDOUT)),
+                              new BufferingTextSplitter((line, isCr) -> onLineAvailable(line, isCr, ProcessOutputTypes.STDOUT)),
                               myPresentableName);
       }
 
@@ -160,13 +158,17 @@ public class GitLineHandler extends GitTextHandler {
       protected BaseDataReader createErrorDataReader() {
         return new LineReader(createProcessErrReader(),
                               readerOptions().policy(),
-                              new BufferingTextSplitter((line) -> this.notifyTextAvailable(line, ProcessOutputTypes.STDERR)),
+                              new BufferingTextSplitter((line, isCr) -> onLineAvailable(line, isCr, ProcessOutputTypes.STDERR)),
                               myPresentableName);
       }
     };
   }
 
-  public void overwriteConfig(String ... params) {
+  public void overwriteConfig(@NonNls String ... params) {
+    overwriteConfig(Arrays.asList(params));
+  }
+
+  public void overwriteConfig(@NonNls List<String> params) {
     for (String param : params) {
       myCommandLine.getParametersList().prependAll("-c", param);
     }

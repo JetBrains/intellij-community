@@ -6,6 +6,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.tasks.TaskBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +24,7 @@ public class JqlParser implements PsiParser {
     if (!builder.eof()) {
       parseQuery(builder);
       while (!builder.eof()) {
-        builder.error("Illegal query part");
+        builder.error(TaskBundle.message("parsing.error.illegal.query.part"));
         builder.advanceLexer();
       }
     }
@@ -49,7 +50,7 @@ public class JqlParser implements PsiParser {
     }
     while (advanceIfMatches(builder, JqlTokenTypes.OR_OPERATORS)) {
       if (!parseANDClause(builder)) {
-        builder.error("Expecting clause");
+        builder.error(TaskBundle.message("parsing.error.expecting.clause"));
       }
       marker.done(JqlElementTypes.OR_CLAUSE);
       marker = marker.precede();
@@ -66,7 +67,7 @@ public class JqlParser implements PsiParser {
     }
     while (advanceIfMatches(builder, JqlTokenTypes.AND_OPERATORS)) {
       if (!parseNOTClause(builder)) {
-        builder.error("Expecting clause");
+        builder.error(TaskBundle.message("parsing.error.expecting.clause"));
       }
       marker.done(JqlElementTypes.AND_CLAUSE);
       marker = marker.precede();
@@ -80,7 +81,7 @@ public class JqlParser implements PsiParser {
       PsiBuilder.Marker marker = builder.mark();
       builder.advanceLexer();
       if (!parseNOTClause(builder)) {
-        builder.error("Expecting clause");
+        builder.error(TaskBundle.message("parsing.error.expecting.clause"));
       }
       marker.done(JqlElementTypes.NOT_CLAUSE);
       return true;
@@ -100,7 +101,7 @@ public class JqlParser implements PsiParser {
     }
     parseORClause(builder);
     if (!advanceIfMatches(builder, JqlTokenTypes.RPAR)) {
-      builder.error("Expecting ')'");
+      builder.error(TaskBundle.message("parsing.error.expecting"));
     }
     marker.done(JqlElementTypes.SUB_CLAUSE);
     return true;
@@ -121,7 +122,7 @@ public class JqlParser implements PsiParser {
     }
     else if (advanceIfMatches(builder, JqlTokenTypes.NOT_KEYWORD)) {
       if (!advanceIfMatches(builder, JqlTokenTypes.IN_KEYWORD)) {
-        builder.error("Expecting 'in'");
+        builder.error(TaskBundle.message("parsing.error.expecting.in"));
       }
       parseOperand(builder);
     }
@@ -136,7 +137,7 @@ public class JqlParser implements PsiParser {
       return true;
     }
     else {
-      builder.error("Expecting operator");
+      builder.error(TaskBundle.message("parsing.error.expecting.operator"));
     }
     marker.done(JqlElementTypes.SIMPLE_CLAUSE);
     return true;
@@ -202,7 +203,7 @@ public class JqlParser implements PsiParser {
       parsed = false;
     }
     if (!parsed) {
-      builder.error("Expecting either literal, list or function call");
+      builder.error(TaskBundle.message("parsing.error.expecting.either.literal.list.or.function.call"));
     }
     return parsed;
   }
@@ -222,7 +223,7 @@ public class JqlParser implements PsiParser {
       }
     }
     if (!advanceIfMatches(builder, JqlTokenTypes.RPAR)) {
-      builder.error("Expecting ')'");
+      builder.error(TaskBundle.message("parsing.error.expecting"));
     }
     marker.done(JqlElementTypes.LIST);
     return true;
@@ -231,7 +232,7 @@ public class JqlParser implements PsiParser {
   private boolean parseFieldName(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     if (!advanceIfMatches(builder, JqlTokenTypes.VALID_FIELD_NAMES)) {
-      builder.error("Expecting field name");
+      builder.error(TaskBundle.message("parsing.error.expecting.field.name"));
       marker.drop();
       return false;
     }
@@ -253,7 +254,7 @@ public class JqlParser implements PsiParser {
     }
     PsiBuilder.Marker argument = builder.mark();
     if (!advanceIfMatches(builder, JqlTokenTypes.VALID_ARGUMENTS)) {
-      builder.error("Expecting argument");
+      builder.error(TaskBundle.message("parsing.error.expecting.argument"));
       argument.drop();
     }
     else {
@@ -263,14 +264,14 @@ public class JqlParser implements PsiParser {
         argument = builder.mark();
         if (!advanceIfMatches(builder, JqlTokenTypes.VALID_ARGUMENTS)) {
           marker.drop();
-          builder.error("Expecting argument");
+          builder.error(TaskBundle.message("parsing.error.expecting.argument"));
           break;
         }
         argument.done(JqlElementTypes.LITERAL);
       }
     }
     if (!advanceIfMatches(builder, JqlTokenTypes.RPAR)) {
-      builder.error("Expecting ')'");
+      builder.error(TaskBundle.message("parsing.error.expecting"));
     }
     marker.done(JqlElementTypes.ARGUMENT_LIST);
   }
@@ -282,7 +283,7 @@ public class JqlParser implements PsiParser {
       return;
     }
     if (!advanceIfMatches(builder, JqlTokenTypes.BY_KEYWORD)) {
-      builder.error("Expecting 'by'");
+      builder.error(TaskBundle.message("parsing.error.expecting.by"));
       marker.done(JqlElementTypes.ORDER_BY);
       return;
     }

@@ -22,10 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public class LightParameterListBuilder extends LightElement implements PsiParameterList {
   private final List<PsiParameter> myParameters = new ArrayList<>();
   private PsiParameter[] myCachedParameters;
@@ -83,6 +82,16 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitParameterList(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
+  @Override
+  public String getText() {
+    return myParameters.stream()
+      .map(parameter -> parameter.getText())
+      .filter(Objects::nonNull)
+      .collect(Collectors.joining(",", "(", ")"));
+  }
 }

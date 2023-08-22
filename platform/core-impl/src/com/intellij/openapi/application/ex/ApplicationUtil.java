@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -13,33 +13,28 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ApplicationUtil {
-
+public final class ApplicationUtil {
   // throws exception if can't grab read action right now
-  public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
+  public static <T> T tryRunReadAction(final @NotNull Computable<T> computable) throws CannotRunReadActionException {
     final Ref<T> result = new Ref<>();
-    tryRunReadAction(() -> result.set(computable.compute()));
-    return result.get();
-  }
-
-  public static void tryRunReadAction(@NotNull final Runnable computable) throws CannotRunReadActionException {
-    if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(computable)) {
+    if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(() -> result.set(computable.compute()))) {
       throw CannotRunReadActionException.create();
     }
+    return result.get();
   }
 
   /**
    * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
-  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
+  public static <T> T runWithCheckCanceled(final @NotNull Callable<? extends T> callable, final @NotNull ProgressIndicator indicator) throws Exception {
     final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
@@ -69,7 +64,7 @@ public class ApplicationUtil {
    * See also {@link com.intellij.openapi.progress.util.ProgressIndicatorUtils#awaitWithCheckCanceled(Future)} which throws no checked exceptions.
    */
   public static <T> T runWithCheckCanceled(@NotNull Future<T> future,
-                                           @NotNull final ProgressIndicator indicator) throws ExecutionException {
+                                           final @NotNull ProgressIndicator indicator) throws ExecutionException {
     while (true) {
       indicator.checkCanceled();
 
@@ -93,11 +88,7 @@ public class ApplicationUtil {
     }
   }
 
-  public static void invokeLaterSomewhere(@NotNull Runnable r, @NotNull EdtReplacementThread thread) {
-    invokeLaterSomewhere(r, thread, ApplicationManager.getApplication().getDefaultModalityState());
-  }
-
-  public static void invokeLaterSomewhere(@NotNull Runnable r, @NotNull EdtReplacementThread thread, @NotNull ModalityState modalityState) {
+  public static void invokeLaterSomewhere(@NotNull EdtReplacementThread thread, @NotNull ModalityState modalityState, @NotNull Runnable r) {
     switch (thread) {
       case EDT:
         SwingUtilities.invokeLater(r);
@@ -111,22 +102,16 @@ public class ApplicationUtil {
     }
   }
 
-  public static void invokeAndWaitSomewhere(Runnable runnable, EdtReplacementThread thread) {
-    invokeAndWaitSomewhere(runnable, thread, ApplicationManager.getApplication().getDefaultModalityState());
-  }
-
-  public static void invokeAndWaitSomewhere(@NotNull Runnable r,
-                                            @NotNull EdtReplacementThread thread,
-                                            @NotNull ModalityState modalityState) {
+  public static void invokeAndWaitSomewhere(@NotNull EdtReplacementThread thread, @NotNull ModalityState modalityState, @NotNull Runnable r) {
     switch (thread) {
       case EDT:
-        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteThread()) {
+        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
           Logger.getInstance(ApplicationUtil.class).error("Can't invokeAndWait from WT to EDT: probably leads to deadlock");
         }
-        UIUtil.invokeAndWaitIfNeeded(r);
+        EdtInvocationManager.invokeAndWaitIfNeeded(r);
         break;
       case WT:
-        if (ApplicationManager.getApplication().isWriteThread()) {
+        if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
           r.run();
         }
         else if (SwingUtilities.isEventDispatchThread()) {
@@ -154,7 +139,7 @@ public class ApplicationUtil {
         }
         break;
       case EDT_WITH_IW:
-        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteThread()) {
+        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
           Logger.getInstance(ApplicationUtil.class).error("Can't invokeAndWait from WT to EDT: probably leads to deadlock");
         }
         ApplicationManager.getApplication().invokeAndWait(r, modalityState);
@@ -162,7 +147,7 @@ public class ApplicationUtil {
     }
   }
 
-  public static class CannotRunReadActionException extends ProcessCanceledException {
+  public static final class CannotRunReadActionException extends ProcessCanceledException {
     // When ForkJoinTask joins task which was exceptionally completed from the other thread
     // it tries to re-create that exception (by reflection) and sets its cause to the original exception.
     // That horrible hack causes all sorts of confusion when we try to analyze the exception cause, e.g. in GlobalInspectionContextImpl.inspectFile().

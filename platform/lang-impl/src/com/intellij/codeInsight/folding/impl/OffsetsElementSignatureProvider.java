@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.Language;
@@ -30,13 +16,11 @@ import java.util.StringTokenizer;
  * Performs {@code 'PSI element <-> signature'} mappings on the basis of the target PSI element's offsets.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class OffsetsElementSignatureProvider extends AbstractElementSignatureProvider {
 
   private static final String TYPE_MARKER = "e";
-  
+
   @Override
   protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                 @NotNull PsiElement parent,
@@ -198,7 +182,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     buffer.append(range.getStartOffset());
     buffer.append(ELEMENT_TOKENS_SEPARATOR);
     buffer.append(range.getEndOffset());
-    
+
     // There is a possible case that given PSI element has a parent or child that targets the same range. So, we remember
     // not only target range offsets but 'hierarchy index' as well.
     int index = getElementHierarchyIndex(element);

@@ -1,7 +1,7 @@
 package com.intellij.configurationScript.schemaGenerators
 
 import com.intellij.configurationScript.SchemaGenerator
-import com.intellij.configurationScript.providers.PluginsConfiguration
+import com.intellij.openapi.updateSettings.impl.PluginsConfiguration
 import org.jetbrains.io.JsonObjectBuilder
 
 internal class PluginJsonSchemaGenerator : SchemaGenerator {

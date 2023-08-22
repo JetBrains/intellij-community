@@ -2,7 +2,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.NlsActions.ActionDescription;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(() -> text);
   }
 
-  public ToggleAction(@NotNull Supplier<String> text) {
+  public ToggleAction(@NotNull Supplier<@ActionText String> text) {
     super(text);
   }
 
@@ -33,18 +32,18 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text, description, icon);
   }
 
-  public ToggleAction(@NotNull Supplier<String> text,
-                      @NotNull Supplier<String> description,
+  public ToggleAction(@NotNull Supplier<@ActionText String> text,
+                      @NotNull Supplier<@ActionDescription String> description,
                       @Nullable final Icon icon) {
     super(text, description, icon);
   }
 
-  public ToggleAction(@NotNull Supplier<String> text, @Nullable final Icon icon) {
+  public ToggleAction(@NotNull Supplier<@ActionText String> text, @Nullable final Icon icon) {
     super(text, Presentation.NULL_STRING, icon);
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final boolean state = !isSelected(e);
     setSelected(e, state);
     final Presentation presentation = e.getPresentation();
@@ -73,7 +72,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     final Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, selected);
     if (e.isFromContextMenu()) {
-      //force to show check marks instead of toggled icons in context menu
+      //force showing check marks instead of toggle icons in the context menu
       presentation.setIcon(null);
     }
   }

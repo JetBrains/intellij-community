@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import groovy.transform.CompileDynamic
@@ -20,6 +6,7 @@ import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileVisitDetails
+import org.gradle.api.file.RegularFile
 import org.gradle.api.java.archives.Manifest
 import org.gradle.api.java.archives.internal.ManifestInternal
 import org.gradle.plugins.ear.Ear
@@ -35,8 +22,12 @@ import org.jetbrains.plugins.gradle.tooling.internal.ear.EarConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
+
+import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 
 /**
  * @author Vladislav.Soroka
@@ -49,6 +40,8 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
   // Manifest.writeTo(Writer) was deprecated since 2.14.1 version
   // https://github.com/gradle/gradle/commit/b435112d1baba787fbe4a9a6833401e837df9246
   private static boolean is2_14_1_OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("2.14.1")
+  private static is6OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("6.0")
+  private static is82OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("8.2")
 
   @Override
   boolean canBuild(String modelName) {
@@ -58,14 +51,13 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
   @Nullable
   @Override
   Object buildAll(String modelName, Project project, @NotNull ModelBuilderContext context) {
-    final EarPlugin earPlugin = project.plugins.findPlugin(EarPlugin)
+    // https://issues.apache.org/jira/browse/GROOVY-9555
+    final earPlugin = project.plugins.findPlugin(EarPlugin)
     if (earPlugin == null) return null
 
     if (mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(context)
 
-    final String appDirName = !project.hasProperty(APP_DIR_PROPERTY) ?
-                              "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
-    def earModels = []
+    List<? extends EarConfiguration.EarModel> earModels = []
 
     def deployConfiguration = project.configurations.findByName(EarPlugin.DEPLOY_CONFIGURATION_NAME)
     def earlibConfiguration = project.configurations.findByName(EarPlugin.EARLIB_CONFIGURATION_NAME)
@@ -78,7 +70,19 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
 
     for (task in project.tasks) {
       if (task instanceof Ear) {
-        final EarModelImpl earModel = new EarModelImpl(task.archiveName, appDirName, task.getLibDirName())
+
+        String appDirName;
+        if (is82OrBetter) {
+          def appDirectoryLocation = reflectiveGetProperty(task, "getAppDirectory", Object)
+          appDirName = reflectiveCall(appDirectoryLocation, "getAsFile", File).absolutePath
+        } else {
+          appDirName = !project.hasProperty(APP_DIR_PROPERTY) ?
+                       "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
+        }
+
+        final EarModelImpl earModel =
+          is6OrBetter ? new EarModelImpl(reflectiveGetProperty(task, "getArchiveFileName", String), appDirName, task.getLibDirName()) :
+          new EarModelImpl(reflectiveCall(task, "getArchiveName", String), appDirName, task.getLibDirName())
 
         final List<EarConfiguration.EarResource> earResources = []
         final Ear earTask = task as Ear
@@ -106,8 +110,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
           })
         }
         catch (Exception e) {
-          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, e)
-          project.getLogger().error(builderError.build())
+          reportModelBuilderFailure(project, this, context, e)
         }
 
         earModel.resources = earResources
@@ -119,7 +122,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
           earModel.deploymentDescriptor = writer.toString()
         }
 
-        earModel.archivePath = earTask.archivePath
+        earModel.archivePath = is6OrBetter ? reflectiveGetProperty(earTask, "getArchiveFile", RegularFile).asFile : earTask.archivePath
 
         Manifest manifest = earTask.manifest
         if (manifest != null) {
@@ -163,7 +166,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
     return manifest.writeTo((Writer)writer)
   }
 
-  private static boolean addPath(String buildDirPath,
+  private static void addPath(String buildDirPath,
                                  List<EarConfiguration.EarResource> earResources,
                                  String earRelativePath,
                                  String fileRelativePath,

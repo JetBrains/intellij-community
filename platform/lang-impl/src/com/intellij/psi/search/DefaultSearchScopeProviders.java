@@ -1,86 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
-import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.util.treeView.WeighedItem;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ColoredItem;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.FileColorManager;
-import com.intellij.util.TreeItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author gregsh
  */
-public class DefaultSearchScopeProviders {
+public final class DefaultSearchScopeProviders {
   private DefaultSearchScopeProviders() {}
 
-  public static class Favorites implements SearchScopeProvider {
+  public static final class CustomNamed implements SearchScopeProvider {
     @Override
     public String getDisplayName() {
-      return "Favorites";
+      return LangBundle.message("default.search.scope.custom.named.display.name");
     }
 
-    @NotNull
     @Override
-    public List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
-      FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-      if (favoritesManager == null) return Collections.emptyList();
-      List<SearchScope> result = new ArrayList<>();
-      for (String favorite : favoritesManager.getAvailableFavoritesListNames()) {
-        Collection<TreeItem<Pair<AbstractUrl, String>>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
-        if (rootUrls.isEmpty()) continue;  // ignore unused root
-        result.add(new GlobalSearchScope(project) {
-          @NotNull
-          @Override
-          public String getDisplayName() {
-            return "Favorite \'" + favorite + "\'";
-          }
-
-          @Override
-          public boolean contains(@NotNull VirtualFile file) {
-            return ReadAction.compute(() -> favoritesManager.contains(favorite, file));
-          }
-
-          @Override
-          public boolean isSearchInModuleContent(@NotNull Module aModule) {
-            return true;
-          }
-
-          @Override
-          public boolean isSearchInLibraries() {
-            return true;
-          }
-        });
-      }
-      return result;
-    }
-  }
-
-  public static class CustomNamed implements SearchScopeProvider {
-    @Override
-    public String getDisplayName() {
-      return "Other";
-    }
-
-    @NotNull
-    @Override
-    public List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
+    public @NotNull List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
       List<SearchScope> result = new ArrayList<>();
       NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(project);
       for (NamedScopesHolder holder : holders) {
@@ -93,18 +42,17 @@ public class DefaultSearchScopeProviders {
     }
   }
 
-  @NotNull
-  public static GlobalSearchScope wrapNamedScope(@NotNull Project project, @NotNull NamedScope namedScope, boolean colored) {
+  public static @NotNull GlobalSearchScope wrapNamedScope(@NotNull Project project, @NotNull NamedScope namedScope, boolean colored) {
     GlobalSearchScope scope = GlobalSearchScopesCore.filterScope(project, namedScope);
     if (!colored && !(namedScope instanceof WeighedItem)) return scope;
     int weight = namedScope instanceof WeighedItem ? ((WeighedItem)namedScope).getWeight() : -1;
     Color color = !colored ? null :
                   //namedScope instanceof ColoredItem ? ((ColoredItem)namedScope).getColor() :
-                  FileColorManager.getInstance(project).getScopeColor(namedScope.getName());
+                  FileColorManager.getInstance(project).getScopeColor(namedScope.getScopeId());
     return new MyWeightedScope(scope, weight, color);
   }
 
-  private static class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem, ColoredItem {
+  private static final class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem, ColoredItem {
     final int weight;
     final Color color;
 
@@ -119,9 +67,8 @@ public class DefaultSearchScopeProviders {
       return weight;
     }
 
-    @Nullable
     @Override
-    public Color getColor() {
+    public @Nullable Color getColor() {
       return color;
     }
   }

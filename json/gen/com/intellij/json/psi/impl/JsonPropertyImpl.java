@@ -27,23 +27,23 @@ public class JsonPropertyImpl extends JsonPropertyMixin implements JsonProperty 
     else super.accept(visitor);
   }
 
-  @NotNull
-  public String getName() {
+  @Override
+  public @NotNull String getName() {
     return JsonPsiImplUtils.getName(this);
   }
 
-  @NotNull
-  public JsonValue getNameElement() {
+  @Override
+  public @NotNull JsonValue getNameElement() {
     return JsonPsiImplUtils.getNameElement(this);
   }
 
-  @Nullable
-  public JsonValue getValue() {
+  @Override
+  public @Nullable JsonValue getValue() {
     return JsonPsiImplUtils.getValue(this);
   }
 
-  @Nullable
-  public ItemPresentation getPresentation() {
+  @Override
+  public @Nullable ItemPresentation getPresentation() {
     return JsonPsiImplUtils.getPresentation(this);
   }
 

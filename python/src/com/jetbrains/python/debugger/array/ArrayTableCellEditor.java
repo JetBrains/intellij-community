@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.EditorTextField;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -51,6 +52,7 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
 
   @Override
   @Nullable
+  @NlsSafe
   public Object getCellEditorValue() {
     if (myEditor.getEditor() != null) {
       return myEditor.getEditor().getDocument().getText();
@@ -106,7 +108,7 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
       myExpression = XExpressionImpl.changeMode(text, getMode());
       myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
         @Override
-        protected EditorEx createEditor() {
+        protected @NotNull EditorEx createEditor() {
           final EditorEx editor = super.createEditor();
           editor.setVerticalScrollbarVisible(false);
           editor.setOneLineMode(true);

@@ -1,21 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.testFramework.RunAll
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
-import com.intellij.util.ThrowableRunnable
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTest
@@ -24,19 +26,15 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitHandler
-import git4idea.config.GitExecutableManager
-import git4idea.config.GitVcsApplicationSettings
-import git4idea.config.GitVcsSettings
-import git4idea.config.GitSaveChangesPolicy
+import git4idea.config.*
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.test.GitPlatformTest.ConfigScope.GLOBAL
 import git4idea.test.GitPlatformTest.ConfigScope.SYSTEM
-import java.io.File
+import java.nio.file.Path
 
 abstract class GitPlatformTest : VcsPlatformTest() {
-
   protected lateinit var repositoryManager: GitRepositoryManager
   protected lateinit var settings: GitVcsSettings
   protected lateinit var appSettings: GitVcsApplicationSettings
@@ -81,16 +79,15 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     globalSslVerify = if (hasRemoteGitOperation()) readAndDisableSslVerifyGlobally() else null
   }
 
-  @Throws(Exception::class)
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { restoreCredentialHelpers() })
-      .append(ThrowableRunnable { restoreGlobalSslVerify() })
-      .append(ThrowableRunnable { if (::dialogManager.isInitialized) dialogManager.cleanup() })
-      .append(ThrowableRunnable { if (::git.isInitialized) git.reset() })
-      .append(ThrowableRunnable { if (::settings.isInitialized) settings.appSettings.setPathToGit(null) })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    runAll(
+      { restoreCredentialHelpers() },
+      { restoreGlobalSslVerify() },
+      { if (::dialogManager.isInitialized) dialogManager.cleanup() },
+      { if (::git.isInitialized) git.reset() },
+      { if (::settings.isInitialized) settings.appSettings.setPathToGit(null) },
+      { super.tearDown() }
+    )
   }
 
   override fun getDebugLogCategories(): Collection<String> {
@@ -114,11 +111,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(testRoot, "parent.git"), remoteName: String = "origin"): File {
-    cd(testRoot)
-    git("clone --bare '${source.root.path}' ${target.path}")
+  protected fun prepareRemoteRepo(source: GitRepository, target: Path = testNioRoot.resolve("parent.git"), remoteName: String = "origin"): Path {
+    cd(testNioRoot)
+    git("clone --bare '${source.root.path}' $target")
     cd(source)
-    git("remote add ${remoteName} '${target.path}'")
+    git("remote add $remoteName '$target'")
     return target
   }
 
@@ -137,27 +134,27 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
     val repository = createRepository(project, repoRoot)
     cd(repository)
-    git("remote add origin " + parentRepo.path)
+    git("remote add origin $parentRepo")
     git("push --set-upstream origin master:master")
 
-    cd(broRepo.path)
+    cd(broRepo)
     git("pull")
 
     return ReposTrinity(repository, parentRepo, broRepo)
   }
 
-  private fun createParentRepo(parentName: String): File {
-    cd(testRoot)
+  private fun createParentRepo(parentName: String): Path {
+    cd(testNioRoot)
     git("init --bare $parentName.git")
-    return File(testRoot, "$parentName.git")
+    return testNioRoot.resolve("$parentName.git")
   }
 
-  protected fun createBroRepo(broName: String, parentRepo: File): File {
-    cd(testRoot)
-    git("clone " + parentRepo.name + " " + broName)
+  protected fun createBroRepo(broName: String, parentRepo: Path): Path {
+    cd(testNioRoot)
+    git("clone ${parentRepo.fileName} $broName")
     cd(broName)
     setupDefaultUsername(project)
-    return File(testRoot, broName)
+    return testNioRoot.resolve(broName)
   }
 
   private fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
@@ -172,8 +169,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE)
   }
 
-  protected fun installHook(gitDir: File, hookName: String, hookContent: String) {
-    val hookFile = File(gitDir, "hooks/$hookName")
+  protected fun installHook(gitDir: Path, hookName: String, hookContent: String) {
+    val hookFile = gitDir.resolve("hooks/$hookName").toFile()
     FileUtil.writeToFile(hookFile, hookContent)
     hookFile.setExecutable(true, false)
   }
@@ -219,9 +216,14 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
 
   protected fun commit(changes: Collection<Change>) {
-    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment", commitContext, mutableSetOf())
+    val exceptions = tryCommit(changes)
     exceptions?.forEach { fail("Exception during executing the commit: " + it.message) }
+  }
+
+  protected fun tryCommit(changes: Collection<Change>): List<VcsException>? {
+    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment", commitContext, mutableSetOf())
     updateChangeListManager()
+    return exceptions
   }
 
   protected fun `do nothing on merge`() {
@@ -240,6 +242,13 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
   }
 
+  /**
+   * There are small differences between 'recursive' (old) and 'ort' (new) merge algorithms.
+   */
+  protected fun gitUsingOrtMergeAlg(): Boolean {
+    return vcs.version.isLaterOrEqual(GitVersion(2, 34, 0, 0))
+  }
+
   protected fun assertNoChanges() {
     changeListManager.assertNoChanges()
   }
@@ -254,13 +263,45 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     return changeListManager.assertChanges(changes)
   }
 
-  protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)
+  protected fun updateUntrackedFiles(repo: GitRepository) {
+    repo.untrackedFilesHolder.invalidate()
+    repo.untrackedFilesHolder.createWaiter().waitFor()
+  }
 
+  protected data class ReposTrinity(val projectRepo: GitRepository, val parent: Path, val bro: Path)
 
   private enum class ConfigScope {
     SYSTEM,
     GLOBAL;
 
     fun param() = "--${name.toLowerCase()}"
+  }
+
+  protected fun withPartialTracker(file: VirtualFile, newContent: String? = null, task: (Document, PartialLocalLineStatusTracker) -> Unit) {
+    invokeAndWaitIfNeeded {
+      val lstm = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
+
+      val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
+
+      if (newContent != null) {
+        runWriteAction {
+          FileDocumentManager.getInstance().getDocument(file)!!.setText(newContent)
+        }
+
+        changeListManager.waitUntilRefreshed()
+        UIUtil.dispatchAllInvocationEvents() // ensure `fileStatusesChanged` events are fired
+      }
+
+      lstm.requestTrackerFor(document, this)
+      try {
+        val tracker = lstm.getLineStatusTracker(file) as PartialLocalLineStatusTracker
+        lstm.waitUntilBaseContentsLoaded()
+
+        task(document, tracker)
+      }
+      finally {
+        lstm.releaseTrackerFor(document, this)
+      }
+    }
   }
 }

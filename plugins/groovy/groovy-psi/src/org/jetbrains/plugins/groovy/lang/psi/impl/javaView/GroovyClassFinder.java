@@ -32,9 +32,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class GroovyClassFinder extends PsiElementFinder {
   private final GroovyShortNamesCache myCache;
 

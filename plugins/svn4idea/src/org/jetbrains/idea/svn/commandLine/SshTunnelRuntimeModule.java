@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -21,7 +24,8 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
 
-  public static final String DEFAULT_SSH_TUNNEL_VALUE = "$SVN_SSH ssh -q";
+  public static final @NlsSafe String DEFAULT_SSH_TUNNEL_VALUE = "$SVN_SSH ssh -q";
+  private static final @NonNls String PUTTY_LINK_CLIENT_NAME = "plink";
 
   public SshTunnelRuntimeModule(@NotNull CommandRuntime runtime) {
     super(runtime);
@@ -58,7 +62,7 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
   @NotNull
   private GeneralCommandLine buildTunnelCommandLine(@NotNull String sshPath) {
     GeneralCommandLine result = new GeneralCommandLine(sshPath);
-    boolean isPuttyLinkClient = endsWithIgnoreCase(FileUtilRt.getNameWithoutExtension(sshPath), "plink");
+    boolean isPuttyLinkClient = endsWithIgnoreCase(FileUtilRt.getNameWithoutExtension(sshPath), PUTTY_LINK_CLIENT_NAME);
     SvnConfigurationState state = getState();
 
     // quiet mode
@@ -90,13 +94,12 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
            : !isEmpty(svnSshVariableName) ? tunnelSetting.substring(1 + svnSshVariableName.length()) : tunnelSetting;
   }
 
-  @NotNull
-  public static String getSvnSshVariableName(@Nullable String tunnel) {
+  @Contract(pure = true)
+  public static @NotNull String getSvnSshVariableName(@Nullable String tunnel) {
     return tunnel != null && tunnel.startsWith("$") ? notNull(substringBefore(tunnel, " "), tunnel).substring(1) : "";
   }
 
-  @NotNull
-  public static String getExecutablePath(@Nullable String tunnelSetting) {
+  public static @NlsSafe @NotNull String getExecutablePath(@Nullable String tunnelSetting) {
     // TODO: Add additional platform specific checks
     return notNullize(getFirstItem(ParametersListUtil.parse(getSshTunnelValue(tunnelSetting)))).trim();
   }

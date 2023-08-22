@@ -3,21 +3,21 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public abstract class AbstractTestNGPatternConfigurationProducer extends AbstractPatternBasedConfigurationProducer<TestNGConfiguration> {
-  protected AbstractTestNGPatternConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
+  protected AbstractTestNGPatternConfigurationProducer() {
   }
 
   @Override
@@ -27,6 +27,10 @@ public abstract class AbstractTestNGPatternConfigurationProducer extends Abstrac
     final LinkedHashSet<String> classes = new LinkedHashSet<>();
     final PsiElement element = checkPatterns(context, classes);
     if (element == null) {
+      return false;
+    }
+    if (JavaPsiFacade.getInstance(context.getProject())
+          .findClass(TestNGUtil.TEST_ANNOTATION_FQN, element.getResolveScope()) == null) {
       return false;
     }
     sourceElement.set(element);

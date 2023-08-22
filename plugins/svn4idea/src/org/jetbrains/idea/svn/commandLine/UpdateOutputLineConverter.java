@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -16,16 +16,15 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class UpdateOutputLineConverter {
+public final class UpdateOutputLineConverter {
+  private final static @NonNls String MERGING = "--- Merging";
+  private final static @NonNls String RECORDING_MERGE_INFO = "--- Recording mergeinfo";
 
-  private final static String MERGING = "--- Merging";
-  private final static String RECORDING_MERGE_INFO = "--- Recording mergeinfo";
+  private final static @NonNls String UPDATING = "Updating";
+  private final static @NonNls String SKIPPED = "Skipped";
+  private final static @NonNls String RESTORED = "Restored";
 
-  private final static String UPDATING = "Updating";
-  private final static String SKIPPED = "Skipped";
-  private final static String RESTORED = "Restored";
-
-  private final static String FETCHING_EXTERNAL = "Fetching external";
+  private final static @NonNls String FETCHING_EXTERNAL = "Fetching external";
 
   private final static Pattern ourAtRevision = Pattern.compile("At revision (\\d+)\\.");
   private final static Pattern ourUpdatedToRevision = Pattern.compile("Updated to revision (\\d+)\\.");
@@ -97,7 +96,7 @@ public class UpdateOutputLineConverter {
     return new ProgressEvent(file, revision, null, null, action, error, null);
   }
 
-  private final static Set<Character> ourActions = ContainerUtil.set('A', 'D', 'U', 'C', 'G', 'E', 'R');
+  private final static Set<Character> ourActions = Set.of('A', 'D', 'U', 'C', 'G', 'E', 'R');
 
   @Nullable
   private ProgressEvent parseNormalString(final String line) {

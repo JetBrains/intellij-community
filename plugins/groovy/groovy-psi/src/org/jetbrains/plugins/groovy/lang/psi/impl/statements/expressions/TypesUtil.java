@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -12,9 +13,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,28 +38,25 @@ import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-/**
- * @author ven
- */
-public class TypesUtil implements TypeConstants {
+public final class TypesUtil implements TypeConstants {
 
   public static final PsiPrimitiveType[] PRIMITIVES = {
-    PsiType.BYTE,
-    PsiType.CHAR,
-    PsiType.DOUBLE,
-    PsiType.FLOAT,
-    PsiType.INT,
-    PsiType.SHORT,
-    PsiType.LONG,
-    PsiType.BOOLEAN,
-    PsiType.VOID
+    PsiTypes.byteType(),
+    PsiTypes.charType(),
+    PsiTypes.doubleType(),
+    PsiTypes.floatType(),
+    PsiTypes.intType(),
+    PsiTypes.shortType(),
+    PsiTypes.longType(),
+    PsiTypes.booleanType(),
+    PsiTypes.voidType()
   };
 
   private TypesUtil() {
   }
 
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<>();
-  private static final String NULL = "null";
+  private static final @NlsSafe String NULL = "null";
 
   static {
     ourPrimitiveTypesToClassNames.put(STRING_SQ, CommonClassNames.JAVA_LANG_STRING);
@@ -85,7 +84,7 @@ public class TypesUtil implements TypeConstants {
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
   }
 
-  static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<>();
+  static final Object2IntMap<String> TYPE_TO_RANK = new Object2IntOpenHashMap<>();
 
   static {
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_BYTE, BYTE_RANK);
@@ -100,23 +99,21 @@ public class TypesUtil implements TypeConstants {
     TYPE_TO_RANK.put(CommonClassNames.JAVA_LANG_NUMBER, 10);
   }
 
-  static final TIntObjectHashMap<String> RANK_TO_TYPE = new TIntObjectHashMap<>();
+  static final Int2ObjectMap<String> RANK_TO_TYPE;
 
   static {
-    TYPE_TO_RANK.forEachEntry((fqn, rank) -> {
-      RANK_TO_TYPE.put(rank, fqn);
-      return true;
-    });
+    RANK_TO_TYPE = new Int2ObjectOpenHashMap<>(TYPE_TO_RANK.size());
+    for (Object2IntMap.Entry<String> entry : TYPE_TO_RANK.object2IntEntrySet()) {
+      RANK_TO_TYPE.put(entry.getIntValue(), entry.getKey());
+    }
   }
 
-  private static final List<PsiType> LUB_NUMERIC_TYPES = ContainerUtil.newArrayList(
-    PsiType.BYTE,
-    PsiType.SHORT,
-    PsiType.INT,
-    PsiType.LONG,
-    PsiType.FLOAT,
-    PsiType.DOUBLE
-  );
+  private static final List<PsiType> LUB_NUMERIC_TYPES = List.of(PsiTypes.byteType(),
+                                                                 PsiTypes.shortType(),
+                                                                 PsiTypes.intType(),
+                                                                 PsiTypes.longType(),
+                                                                 PsiTypes.floatType(),
+                                                                 PsiTypes.doubleType());
 
   /**
    * @deprecated see {@link #canAssign}
@@ -147,7 +144,7 @@ public class TypesUtil implements TypeConstants {
       }
       return min;
     }
-    
+
     if (targetType instanceof PsiIntersectionType) {
       ConversionResult max = ConversionResult.OK;
       for (PsiType child : ((PsiIntersectionType)targetType).getConjuncts()) {
@@ -190,8 +187,8 @@ public class TypesUtil implements TypeConstants {
   }
 
   public static boolean isAssignableByParameter(@Nullable PsiType targetType,
-                                               @Nullable PsiType actualType,
-                                               @NotNull PsiElement context) {
+                                                @Nullable PsiType actualType,
+                                                @NotNull PsiElement context) {
 
     if (targetType == null || actualType == null) return false;
     return canAssign(targetType, actualType, context, Position.GENERIC_PARAMETER) == ConversionResult.OK;
@@ -207,7 +204,9 @@ public class TypesUtil implements TypeConstants {
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
       if (!converter.isApplicableTo(position)) continue;
       final ConversionResult result = converter.isConvertible(targetType, actualType, position, (GroovyPsiElement)context);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
@@ -215,7 +214,7 @@ public class TypesUtil implements TypeConstants {
   public static boolean isAssignableWithoutConversions(@Nullable PsiType lType, @Nullable PsiType rType) {
     if (lType == null || rType == null) return false;
 
-    if (rType == PsiType.NULL) {
+    if (rType == PsiTypes.nullType()) {
       return !(lType instanceof PsiPrimitiveType);
     }
 
@@ -250,7 +249,7 @@ public class TypesUtil implements TypeConstants {
 
   public static boolean isNumericType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
-      return TYPE_TO_RANK.contains(getQualifiedName(type));
+      return TYPE_TO_RANK.containsKey(getQualifiedName(type));
     }
 
     return type instanceof PsiPrimitiveType && TypeConversionUtil.isNumericType(type);
@@ -258,7 +257,7 @@ public class TypesUtil implements TypeConstants {
 
   public static boolean isIntegralNumberType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
-      int rank = TYPE_TO_RANK.get(getQualifiedName(type));
+      int rank = TYPE_TO_RANK.getInt(getQualifiedName(type));
       return rank > 0 && rank <= BIG_INTEGER_RANK;
     }
 
@@ -286,8 +285,7 @@ public class TypesUtil implements TypeConstants {
                                          @NotNull PsiManager manager,
                                          @NotNull GlobalSearchScope resolveScope,
                                          boolean boxVoid) {
-    if (result instanceof PsiPrimitiveType && (boxVoid || !PsiType.VOID.equals(result))) {
-      PsiPrimitiveType primitive = (PsiPrimitiveType)result;
+    if (result instanceof PsiPrimitiveType primitive && (boxVoid || !PsiTypes.voidType().equals(result))) {
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
         return GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(boxedTypeName, resolveScope);
@@ -342,13 +340,13 @@ public class TypesUtil implements TypeConstants {
 
   @Nullable
   public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, @NotNull PsiManager manager) {
+    if (type1 == PsiTypes.nullType()) return type2;
+    if (type2 == PsiTypes.nullType()) return type1;
     {
       PsiType numericLUB = getNumericLUB(type1, type2);
       if (numericLUB != null) return numericLUB;
     }
-    if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
-      GrTupleType tuple1 = (GrTupleType)type1;
-      GrTupleType tuple2 = (GrTupleType)type2;
+    if (type1 instanceof GrTupleType tuple1 && type2 instanceof GrTupleType tuple2) {
       List<PsiType> components1 = tuple1.getComponentTypes();
       List<PsiType> components2 = tuple2.getComponentTypes();
 
@@ -384,9 +382,7 @@ public class TypesUtil implements TypeConstants {
     else if (checkEmptyMapAndMap(type2, type1)) {
       return genNewMapBy(type1, manager);
     }
-    else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
-      GrClosureType clType1 = (GrClosureType)type1;
-      GrClosureType clType2 = (GrClosureType)type2;
+    else if (type1 instanceof GrClosureType clType1 && type2 instanceof GrClosureType clType2) {
       List<GrSignature> signatures1 = clType1.getSignatures();
       List<GrSignature> signatures2 = clType2.getSignatures();
 
@@ -398,7 +394,8 @@ public class TypesUtil implements TypeConstants {
           if (signature != null) {
             GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
             final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-            return GrClosureType.create(Collections.singletonList(signature), scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
+            return GrClosureType.create(Collections.singletonList(signature), scope, JavaPsiFacade.getInstance(manager.getProject()),
+                                        languageLevel, true);
           }
         }
       }
@@ -438,7 +435,8 @@ public class TypesUtil implements TypeConstants {
   }
 
   private static PsiType genNewListBy(PsiType genericOwner, @NotNull PsiManager manager) {
-    PsiClass list = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
+    PsiClass list =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (list == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null);
     return factory.createType(list, PsiUtil.extractIterableTypeParameter(genericOwner, false));
@@ -453,7 +451,8 @@ public class TypesUtil implements TypeConstants {
   }
 
   private static PsiType genNewMapBy(PsiType genericOwner, PsiManager manager) {
-    PsiClass map = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, genericOwner.getResolveScope());
+    PsiClass map =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (map == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_MAP, null);
 
@@ -465,7 +464,7 @@ public class TypesUtil implements TypeConstants {
   @Nullable
   public static PsiType getPsiType(PsiElement context, IElementType elemType) {
     if (elemType == GroovyTokenTypes.kNULL) {
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
     final String typeName = getBoxedTypeName(elemType);
     if (typeName != null) {
@@ -511,7 +510,7 @@ public class TypesUtil implements TypeConstants {
 
   public static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {
     final Map<PsiTypeParameter, PsiType> map = s1.getSubstitutionMap();
-    Map<PsiTypeParameter, PsiType> result = new THashMap<>(map.size());
+    Map<PsiTypeParameter, PsiType> result = new HashMap<>(map.size());
     for (PsiTypeParameter parameter : map.keySet()) {
       result.put(parameter, s2.substitute(map.get(parameter)));
     }
@@ -533,7 +532,7 @@ public class TypesUtil implements TypeConstants {
   public static PsiType createJavaLangClassType(@Nullable PsiType type, @NotNull PsiElement context) {
     return createJavaLangClassType(type, context.getProject(), context.getResolveScope());
   }
-  
+
   @Nullable
   public static PsiType createJavaLangClassType(@Nullable PsiType type,
                                                 Project project,
@@ -555,7 +554,7 @@ public class TypesUtil implements TypeConstants {
   @NotNull
   public static PsiPrimitiveType getPrimitiveTypeByText(String typeText) {
     for (final PsiPrimitiveType primitive : PRIMITIVES) {
-      if (PsiType.VOID.equals(primitive)) {
+      if (PsiTypes.voidType().equals(primitive)) {
         return primitive;
       }
       if (primitive.getCanonicalText().equals(typeText)) {
@@ -698,11 +697,11 @@ public class TypesUtil implements TypeConstants {
       if (parameter == null) continue;
 
       final Ref<PsiType> newParam = new Ref<>();
-      parameter.accept(new PsiTypeVisitorEx<Object>() {
+      parameter.accept(new PsiTypeVisitorEx<>() {
         @Nullable
         @Override
         public Object visitClassType(@NotNull PsiClassType classType) {
-            newParam.set(classType.rawType());
+          newParam.set(classType.rawType());
           return null;
         }
 
@@ -743,11 +742,9 @@ public class TypesUtil implements TypeConstants {
       public PsiType visitWildcardType(@NotNull PsiWildcardType capturedWildcardType) {
         return getJavaLangObject(context);
       }
-
     };
 
     return type.accept(visitor);
-
   }
 
   public static boolean isPsiClassTypeToClosure(PsiType type) {
@@ -760,6 +757,7 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Nullable
+  @NlsSafe
   public static String getQualifiedName(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClass resolved = ((PsiClassType)type).resolve();

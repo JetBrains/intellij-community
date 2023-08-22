@@ -6,19 +6,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Supplier;
 
+/**
+ * Describes an element's type in an artifact's output layout.
+ *
+ * @see Artifact
+ * @see PackagingElementFactory
+ * @param <E>
+ */
 public abstract class PackagingElementType<E extends PackagingElement<?>> {
   public static final ExtensionPointName<PackagingElementType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.elementType");
   private final String myId;
-  private final String myPresentableName;
+  private final Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> myPresentableName;
 
-  protected PackagingElementType(@NotNull @NonNls String id, @NotNull String presentableName) {
+  protected PackagingElementType(@NotNull @NonNls String id, @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     myId = id;
     myPresentableName = presentableName;
   }
@@ -27,8 +36,8 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
     return myId;
   }
 
-  public String getPresentableName() {
-    return myPresentableName;
+  public @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
+    return myPresentableName.get();
   }
 
   @Nullable

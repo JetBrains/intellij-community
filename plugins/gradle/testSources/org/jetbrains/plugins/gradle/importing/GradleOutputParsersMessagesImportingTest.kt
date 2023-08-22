@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.Test
@@ -55,12 +56,12 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
       currentGradleVersion < GradleVersion.version("2.14") -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
-        "  -impl/build.gradle\n" +
+        "  -build.gradle\n" +
         "   Could not find method ghostConf() for arguments [project ':api'] on project ':impl'"
       else -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
-        "  -impl/build.gradle\n" +
+        "  -build.gradle\n" +
         "   Could not find method ghostConf() for arguments [project ':api'] on object of type org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler"
     }
     assertSyncViewTreeEquals(expectedExecutionTree)
@@ -69,26 +70,28 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
   @Test
   fun `test build script plugins errors on Sync`() {
     createProjectSubFile("buildSrc/src/main/java/example/SomePlugin.java",
-                         "package example;\n" +
-                         "\n" +
-                         "import org.gradle.api.Plugin;\n" +
-                         "import org.gradle.api.Project;\n" +
-                         "\n" +
-                         "public class SomePlugin implements Plugin<Project> {\n" +
-                         "    public void apply(Project project) {\n" +
-                         "        throw new IllegalArgumentException(\"Something's wrong!\");\n" +
-                         "    }\n" +
-                         "}\n")
+                         """
+                           package example;
+                           
+                           import org.gradle.api.Plugin;
+                           import org.gradle.api.Project;
+                           
+                           public class SomePlugin implements Plugin<Project> {
+                               public void apply(Project project) {
+                                   throw new IllegalArgumentException("Something's wrong!");
+                               }
+                           }
+                         """.trimIndent())
     importProject("apply plugin: example.SomePlugin")
 
     var expectedExecutionTree: String = "-\n" +
                                         " -failed\n"
-    if (currentGradleVersion >= GradleVersion.version("3.3") &&
-        currentGradleVersion < GradleVersion.version("4.5")) {
+    if (isGradleNewerOrSameAs("3.3") &&
+        isGradleOlderThan("4.5")) {
       expectedExecutionTree += "  :buildSrc:clean\n"
     }
 
-    if (currentGradleVersion >= GradleVersion.version("3.3")) {
+    if (isGradleNewerOrSameAs("3.3") && isGradleOlderThan("8.0")) {
       expectedExecutionTree += "  :buildSrc:compileJava\n" +
                                "  :buildSrc:compileGroovy\n" +
                                "  :buildSrc:processResources\n" +
@@ -104,22 +107,53 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                "  :buildSrc:build\n"
     }
 
+    if (isGradleNewerOrSameAs("8.0")) {
+      expectedExecutionTree += "  :buildSrc:compileJava\n" +
+                               "  :buildSrc:compileGroovy\n" +
+                               "  :buildSrc:processResources\n" +
+                               "  :buildSrc:classes\n" +
+                               "  :buildSrc:jar\n"
+    }
+
     expectedExecutionTree += "  -build.gradle\n" +
                              "   Something's wrong!"
     assertSyncViewTreeEquals(expectedExecutionTree)
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
+    val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
+    val className = if (isGradleNewerOrSameAs("6.8")) "class 'example.SomePlugin'." else "[class 'example.SomePlugin']"
+
+    val tryText = if (isGradleNewerOrSameAs("8.2")) {
+                              """|> Run with --stacktrace option to get the stack trace.
+                                 |> Run with --debug option to get more log output.
+                                 |> Run with --scan to get full insights.
+                                 |> Get more help at https://help.gradle.org."""
+
+    } else if (isGradleNewerOrSameAs("7.4")) {
+                              """|> Run with --stacktrace option to get the stack trace.
+                                 |> Run with --debug option to get more log output.
+                                 |> Run with --scan to get full insights."""
+    } else {
+      """|Run with --stacktrace option to get the stack trace. Run with --debug option to get more log output.$tryScanSuggestion"""
+    }
     assertSyncViewSelectedNode("Something's wrong!",
-                               "Build file '$filePath' line: 1\n\n" +
-                               "A problem occurred evaluating root project 'project'.\n" +
-                               "> Failed to apply plugin [class 'example.SomePlugin']\n" +
-                               "   > Something's wrong!\n")
+                               """
+                                 |Build file '$filePath' line: 1
+                                 |
+                                 |A problem occurred evaluating root project 'project'.
+                                 |> Failed to apply plugin $className
+                                 |   > Something's wrong!
+                                 |
+                                 |* Try:
+                                 $tryText
+                                 |
+                               """.trimMargin())
 
   }
 
   @Test
   fun `test unresolved dependencies errors on Sync`() {
-    val buildScript = GradleBuildScriptBuilderEx().withJavaPlugin()
+    val buildScript = createBuildScriptBuilder().withJavaPlugin()
 
     // check sunny case
     importProject(buildScript.generate())
@@ -127,13 +161,13 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                              " finished")
 
     // check unresolved dependency w/o repositories
-    buildScript.addDependency("testCompile 'junit:junit:4.12'")
+    buildScript.addTestImplementationDependency("junit:junit:4.12")
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
-                             "  Could not resolve junit:junit:4.12")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:4.12",
-                               "Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
+                             "  Could not resolve junit:junit:4.12 for project:test")
+    assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 for project:test",
+                               "project:test: Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
                                when {
                                  isNewDependencyResolutionApplicable -> "Required by:\n" +
                                                                         "    project :\n"
@@ -145,22 +179,22 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                "\n")
 
     // successful import when repository is added
-    buildScript.withMavenCentral(isGradleNewerOrSameThen("6.0"))
+    buildScript.withMavenCentral(isGradleNewerOrSameAs("6.0"))
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " finished")
 
     // check unresolved dependency for offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = true
-    buildScript.addDependency("testCompile 'junit:junit:99.99'")
+    buildScript.addTestImplementationDependency("junit:junit:99.99")
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
-                             "  Could not resolve junit:junit:99.99")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
+                             "  Could not resolve junit:junit:99.99 for project:test")
+    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project:test",
                                when {
-                                 isNewDependencyResolutionApplicable -> "No cached version of junit:junit:99.99 available for offline mode.\n"
-                                 else -> "Could not resolve junit:junit:99.99.\n"
+                                 isNewDependencyResolutionApplicable -> "project:test: No cached version of junit:junit:99.99 available for offline mode.\n"
+                                 else -> "project:test: Could not resolve junit:junit:99.99.\n"
                                } +
                                "\n" +
                                "Possible solution:\n" +
@@ -173,9 +207,9 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
-                             "  Could not resolve junit:junit:99.99")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
-                               "Could not resolve junit:junit:99.99.\n" +
+                             "  Could not resolve junit:junit:99.99 for project")
+    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project",
+                               "project: Could not resolve junit:junit:99.99.\n" +
                                "\n" +
                                "Possible solution:\n" +
                                " - Disable offline mode and reload the project\n" +
@@ -187,9 +221,9 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " -finished\n" +
-                             "  Could not resolve junit:junit:99.99")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
-                               "Could not find junit:junit:99.99.\n" +
+                             "  Could not resolve junit:junit:99.99 for project:test")
+    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project:test",
+                               "project:test: Could not find junit:junit:99.99.\n" +
                                "Searched in the following locations:\n" +
                                "  $itemLinePrefix https://repo.labs.intellij.net/repo1/junit/junit/99.99/junit-99.99.pom\n" +
                                "  $itemLinePrefix https://repo.labs.intellij.net/repo1/junit/junit/99.99/junit-99.99.jar\n" +
@@ -206,11 +240,11 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test unresolved build script dependencies errors on Sync`() {
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = createBuildScriptBuilder()
     val requiredByProject = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
     val artifacts = when {
       currentGradleVersion < GradleVersion.version("4.0") -> "dependencies"
-      currentGradleVersion < GradleVersion.version("4.6") -> "files"
+      currentGradleVersion < GradleVersion.version("4.6") || currentGradleVersion >= GradleVersion.version("7.4") -> "files"
       else -> "artifacts"
     }
 
@@ -232,7 +266,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                "\n")
 
     // successful import when repository is added
-    buildScript.withBuildScriptMavenCentral(isGradleNewerOrSameThen("6.0"))
+    buildScript.withBuildScriptMavenCentral(isGradleNewerOrSameAs("6.0"))
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " finished")
@@ -290,15 +324,33 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test startup build script errors with column info`() {
-    importProject("apply plugin: 'java'\n" +
-                  "dependencies { \n" +
-                  "  testCompile group: 'junit', name: 'junit', version: '4.12\n" +
-                  "}")
+    val builder = createBuildScriptBuilder()
+    importProject(
+      builder
+        .withJavaPlugin()
+        .addTestImplementationDependency(builder.code("group: 'junit', name: 'junit', version: '4.12"))
+        .generate())
 
-    assertSyncViewTreeEquals("-\n" +
-                             " -failed\n" +
-                             "  -build.gradle\n" +
-                             "   expecting ''', found '\\n'")
+    when {
+      isGradleOlderThan("7.0") -> {
+        assertSyncViewTreeEquals("-\n" +
+                                 " -failed\n" +
+                                 "  -build.gradle\n" +
+                                 "   expecting ''', found '\\n'")
+      }
+      isGradleOlderThan("7.4") -> {
+        assertSyncViewTreeEquals("-\n" +
+                                 " -failed\n" +
+                                 "  -build.gradle\n" +
+                                 "   Unexpected input: '{'")
+      }
+      else -> {
+        assertSyncViewTreeEquals("-\n" +
+                                 " -failed\n" +
+                                 "  -build.gradle\n" +
+                                 "   Unexpected character: '\\''")
+      }
+    }
   }
 
   @Test
@@ -309,7 +361,10 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     assertSyncViewTreeEquals("-\n" +
                              " -failed\n" +
                              "  -build.gradle\n" +
-                             "   only buildscript {} and other plugins {} script blocks are allowed before plugins {} blocks, no other statements are allowed")
+                             "   only buildscript {}" +
+                             (if (isGradleNewerOrSameAs("7.4")) {", pluginManagement {}"} else {""}) +
+                             " and other plugins {} script blocks are allowed before plugins {} blocks, no other statements are allowed")
+
   }
 
   @Test
@@ -323,10 +378,34 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                              "   Cannot get property 'foo' on null object")
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
-    assertSyncViewSelectedNode("Cannot get property 'foo' on null object",
-                               "Build file '$filePath' line: 1\n\n" +
-                               "A problem occurred evaluating root project 'project'.\n" +
-                               "> Cannot get property 'foo' on null object\n")
+    assertSyncViewSelectedNode("Cannot get property 'foo' on null object", true) {
+      val trySuggestion = when {
+        isGradleNewerOrSameAs("8.2") ->
+          """|> Run with --debug option to get more log output.
+             |> Run with --scan to get full insights.
+             |> Get more help at https://help.gradle.org."""
+
+        isGradleNewerOrSameAs("7.4") ->
+          """|> Run with --debug option to get more log output.
+             |> Run with --scan to get full insights."""
+
+        isGradleNewerOrSameAs("4.10") ->
+          "|Run with --debug option to get more log output. Run with --scan to get full insights."
+
+        else ->
+          "|Run with --debug option to get more log output."
+      }
+      assertThat(it).startsWith("""|Build file '$filePath' line: 1
+                                   |
+                                   |A problem occurred evaluating root project 'project'.
+                                   |> Cannot get property 'foo' on null object
+                                   |
+                                   |* Try:
+                                   $trySuggestion
+                                   |
+                                   |* Exception is:
+                                   |org.gradle.api.GradleScriptException: A problem occurred evaluating root project 'project'.""".trimMargin())
+    }
   }
 
   @Test
@@ -350,6 +429,30 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
         .joinToString(separator = "\n")
 
       assertEquals( scriptOutputText + scriptOutputTextWOEol, text)
+    }
+  }
+
+  @Test
+  fun `test log level settings in gradle_dot_properties applied`() {
+    createProjectSubFile("gradle.properties", "org.gradle.logging.level=debug")
+    importProject("""
+      println("=================")
+      LogLevel.values().each {
+          project.logger.log(it, "Message with level ${'$'}it")
+      }
+      println("=================")
+    """.trimIndent())
+
+    assertSyncViewTreeEquals("-\n" +
+                             " finished")
+
+    assertSyncViewSelectedNode("finished", false) {
+      assertThat(it)
+        .contains("Message with level DEBUG",
+                  "Message with level INFO",
+                  "Message with level LIFECYCLE",
+                  "Message with level WARN",
+                  "Message with level QUIET")
     }
   }
 }

@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -40,6 +39,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -135,10 +135,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
       File dir = createTempDirectory();
       final File tempFile = FileUtil.createTempFile(dir, "tempFile", "." + extension, true);
-      final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-      if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-        WriteCommandAction.writeCommandAction(getProject()).run(() -> fileTypeManager.associateExtension(fileType, extension));
-      }
+      CodeInsightTestFixtureImpl.associateExtensionTemporarily(fileType, extension, getTestRootDisposable());
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
       WriteAction.runAndWait(() -> {
@@ -192,18 +189,21 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  public VirtualFile doConfigureByFiles(final @Nullable File rawProjectRoot, final VirtualFile @NotNull ... vFiles) throws IOException {
+  /**
+   * @deprecated use {@link #configureByFiles(File, VirtualFile...)} instead
+   */
+  @Deprecated
+  public VirtualFile doConfigureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     return configureByFiles(rawProjectRoot, vFiles);
   }
 
-  protected VirtualFile configureByFiles(final @Nullable File rawProjectRoot, final VirtualFile @NotNull ... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 
-    final File toDirIO = createTempDirectory();
-    final VirtualFile toDir = getVirtualFile(toDirIO);
+    VirtualFile toDir = createVirtualDirectoryForContentFile();
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    Map<VirtualFile, EditorInfo> editorInfos = WriteAction.compute(() -> {
       try {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
@@ -213,22 +213,23 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
         // auxiliary files should be copied first
         VirtualFile[] reversed = ArrayUtil.reverseArray(vFiles);
-        Map<VirtualFile, EditorInfo> editorInfos;
+        Map<VirtualFile, EditorInfo> editorInfos1;
         if (rawProjectRoot != null) {
-          final File projectRoot = rawProjectRoot.getCanonicalFile();
-          FileUtil.copyDir(projectRoot, toDirIO);
-          VirtualFile fromDir = getVirtualFile(projectRoot);
-          editorInfos =
-            copyFilesFillingEditorInfos(fromDir, toDir, ContainerUtil.map2Array(reversed, String.class, s -> s.getPath().substring(projectRoot.getPath().length())));
+          FileUtil.copyDir(rawProjectRoot, toDir.toNioPath().toFile());
+          File projectRoot = rawProjectRoot.getCanonicalFile();
+          VirtualFile aNull = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectRoot));
+          editorInfos1 = copyFilesFillingEditorInfos(aNull, toDir, ContainerUtil.map2Array(reversed, String.class, s -> {
+            return s.getPath().substring(projectRoot.getPath().length());
+          }));
 
           toDir.refresh(false, true);
         }
         else {
-          editorInfos = new LinkedHashMap<>();
-          for (final VirtualFile vFile : reversed) {
+          editorInfos1 = new LinkedHashMap<>();
+          for (VirtualFile vFile : reversed) {
             VirtualFile parent = vFile.getParent();
             assert parent.isDirectory() : parent;
-            editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
+            editorInfos1.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
           }
         }
 
@@ -245,15 +246,24 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
           sourceRootAdded(toDir);
         }
 
-        openEditorsAndActivateLast(editorInfos);
+        return editorInfos1;
       }
       catch (IOException e) {
         LOG.error(e);
+        return null;
       }
     });
 
+    if (editorInfos != null) {
+      List<Editor> list = openEditors(editorInfos);
+      setActiveEditor(ContainerUtil.getLastItem(list));
+    }
 
     return toDir;
+  }
+
+  protected @NotNull VirtualFile createVirtualDirectoryForContentFile() {
+    return getTempDir().createVirtualDir();
   }
 
   protected boolean isAddDirToTests() {
@@ -317,6 +327,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
+  /**
+   * @deprecated usages must be inlined
+   */
+  @Deprecated
   protected @NotNull List<Editor> openEditorsAndActivateLast(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     final List<Editor> list = openEditors(editorInfos);
     setActiveEditor(list.get(list.size() - 1));
@@ -369,6 +383,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     return false;
   }
 
+  /**
+   * @deprecated cursor and selection is automatically configured in {@code configureByFile*} methods 
+   */
+  @Deprecated
   protected void setupCursorAndSelection(final @NotNull Editor editor) {
     Document document = editor.getDocument();
     EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
@@ -376,6 +394,10 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  /**
+   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers} 
+   */
+  @Deprecated
   @Override
   protected void configure(@NotNull String path, String dataName) throws Exception {
     super.configure(path, dataName);
@@ -391,7 +413,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     int selectionStart = selectionEnd = myEditor.getCaretModel().getOffset();
 
     if (data.getSelectionStartColumnNumber() >= 0) {
-      selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
+      selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionStartLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
       selectionEnd = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionEndColumnNumber() - 1));
     }
 
@@ -440,7 +462,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
       myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
 
       String actualText = StringUtil.convertLineSeparators(myFile.getText());
-
       if (!Objects.equals(expectedText, actualText)) {
         throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
       }
@@ -449,7 +470,11 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     });
   }
 
+  /**
+   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers}
+   */
   @Override
+  @Deprecated
   protected void checkResult(String dataName) throws Exception {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     super.checkResult(dataName);
@@ -480,10 +505,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     if (data.getSelectionEndLineNumber() >= 0) {
       assertEquals(dataName + ":selectionEndLine", data.getSelectionEndLineNumber(), endPosition.line + 1);
     }
-  }
-
-  protected @NotNull VirtualFile getVirtualFile(@NotNull String filePath) {
-    return findVirtualFile(filePath);
   }
 
   protected @NotNull VirtualFile findVirtualFile(@NotNull String filePath) {
@@ -527,7 +548,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   }
 
   protected void deleteLine() {
-    LightPlatformCodeInsightTestCase.deleteLine(myEditor,getProject());
+    LightPlatformCodeInsightTestCase.deleteLine(myEditor, getProject());
   }
 
   protected void type(@NotNull String s) {

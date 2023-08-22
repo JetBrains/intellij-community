@@ -5,14 +5,12 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-/**
-* @author peter
-*/
 class CollectionsUtilityMethodsProvider {
   private final PsiElement myElement;
   private final PsiType myExpectedType;
@@ -32,9 +30,22 @@ class CollectionsUtilityMethodsProvider {
     final PsiElement parent = myElement.getParent();
     if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifierExpression() != null) return;
 
+    PsiJavaFile file = ObjectUtils.tryCast(parent.getContainingFile(), PsiJavaFile.class);
+    if (file == null) return;
     final PsiClass collectionsClass =
-        JavaPsiFacade.getInstance(myElement.getProject()).findClass(JAVA_UTIL_COLLECTIONS, myElement.getResolveScope());
+        JavaPsiFacade.getInstance(file.getProject()).findClass(JAVA_UTIL_COLLECTIONS, file.getResolveScope());
     if (collectionsClass == null) return;
+    PsiImportList importList = file.getImportList();
+    if (importList != null) {
+      for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+        PsiClass aClass = statement.resolveTargetClass();
+        if (aClass != null && file.getManager().areElementsEquivalent(aClass, collectionsClass)) {
+          // The Collections class is already statically imported;
+          // should be suggested anyway in JavaStaticMemberProcessor
+          return;
+        }
+      }
+    }
 
     final PsiElement pparent = parent.getParent();
     if (showAll ||

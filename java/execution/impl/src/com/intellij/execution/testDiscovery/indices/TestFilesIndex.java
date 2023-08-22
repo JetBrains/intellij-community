@@ -5,7 +5,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.MapIndexStorage;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
@@ -13,7 +14,6 @@ import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -47,14 +47,9 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
     protected MyIndexStorage(@NotNull Path storageFile) throws IOException {
       super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, VoidDataExternalizer.INSTANCE, 4 * 1024, false);
     }
-
-    @Override
-    protected void checkCanceled() {
-      ProgressManager.checkCanceled();
-    }
   }
 
-  private static final IndexExtension<Integer, Void, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, Void, UsedSources>() {
+  private static final IndexExtension<Integer, Void, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {
     @NotNull
     @Override
     public IndexId<Integer, Void> getName() {
@@ -63,7 +58,9 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
 
     @NotNull
     @Override
-    public DataIndexer<Integer, Void, UsedSources> getIndexer() {return inputData -> inputData.myUsedFiles;}
+    public DataIndexer<Integer, Void, UsedSources> getIndexer() {
+      return inputData -> inputData.myUsedFiles;
+    }
 
     @NotNull
     @Override

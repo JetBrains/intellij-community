@@ -1,16 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
-public abstract class ExpandableActions extends DumbAwareAction {
+public abstract class ExpandableActions extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   private final Consumer<? super Expandable> consumer;
 
   private ExpandableActions(Consumer<? super Expandable> consumer) {
@@ -18,11 +20,15 @@ public abstract class ExpandableActions extends DumbAwareAction {
     this.consumer = consumer;
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   private static Expandable getExpandable(AnActionEvent event) {
     Object component = event.getData(CONTEXT_COMPONENT);
     if (component instanceof Expandable) return (Expandable)component;
-    if (component instanceof JComponent) {
-      JComponent container = (JComponent)component;
+    if (component instanceof JComponent container) {
       Object property = container.getClientProperty(Expandable.class);
       if (property instanceof Expandable) return (Expandable)property;
     }

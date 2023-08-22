@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.actions.BaseTaskAction;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -49,7 +50,8 @@ public class SaveContextAction extends BaseTaskAction {
         initial = file.getName();
       }
     }
-    String comment = Messages.showInputDialog(project, "Enter comment (optional):", "Save Context", null, initial, null);
+    String comment = Messages.showInputDialog(project, TaskBundle.message("task.save.context.action.message"),
+                                              TaskBundle.message("task.save.context.action.name"), null, initial, null);
     if (comment != null) {
       WorkingContextManager.getInstance(project).saveContext(null, StringUtil.isEmpty(comment) ? null : comment);
     }

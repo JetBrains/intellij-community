@@ -1,28 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 
-/**
- * @author yole
- */
-public class ColorDescriptor {
+public final class ColorDescriptor {
   private final Color myColor;
   private String mySwingColor;
   private String mySystemColor;
@@ -32,19 +15,19 @@ public class ColorDescriptor {
     myColor = color;
   }
 
-  public static ColorDescriptor fromSwingColor(final String swingColor) {
+  static ColorDescriptor fromSwingColor(final String swingColor) {
     ColorDescriptor result = new ColorDescriptor(null);
     result.mySwingColor = swingColor;
     return result;
   }
 
-  public static ColorDescriptor fromSystemColor(final String systemColor) {
+  static ColorDescriptor fromSystemColor(final String systemColor) {
     ColorDescriptor result = new ColorDescriptor(null);
     result.mySystemColor = systemColor;
     return result;
   }
 
-  public static ColorDescriptor fromAWTColor(final String awtColor) {
+  static ColorDescriptor fromAWTColor(final String awtColor) {
     ColorDescriptor result = new ColorDescriptor(null);
     result.myAWTColor = awtColor;
     return result;
@@ -55,10 +38,7 @@ public class ColorDescriptor {
       final Field field = aClass.getDeclaredField(fieldName);
       return (Color)field.get(null);
     }
-    catch (NoSuchFieldException e) {
-      return Color.black;
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       return Color.black;
     }
   }

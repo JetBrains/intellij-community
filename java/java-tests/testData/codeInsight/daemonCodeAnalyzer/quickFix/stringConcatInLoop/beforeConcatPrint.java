@@ -1,4 +1,4 @@
-// "Convert variable 'res' from String to StringBuilder" "true"
+// "Convert variable 'res' from String to StringBuilder" "true-preview"
 
 public class Main {
     void test(String[] strings) {

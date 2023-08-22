@@ -1,0 +1,11 @@
+// "Simplify comparison" "true"
+fun foo(x: String?) {
+    if (x == null) {
+
+    }
+    else {
+    }
+}
+
+fun bar() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SimplifyComparisonFix

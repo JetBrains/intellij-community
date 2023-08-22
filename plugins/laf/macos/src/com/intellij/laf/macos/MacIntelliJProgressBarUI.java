@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
+public final class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
   public static final Gray GRAPHITE_START_COLOR = Gray.xD4;
   @SuppressWarnings("UseJBColor") public static final Color GRAPHITE_END_COLOR = new Color(0x989a9e);
 
@@ -36,17 +36,17 @@ public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
   }
 
   @Override
-  protected Color getFinishedColor() {
-    return UIUtil.isGraphite() ? GRAPHITE_END_COLOR : super.getFinishedColor();
+  protected Color getFinishedColor(JComponent c) {
+    return UIUtil.isGraphite() ? GRAPHITE_END_COLOR : super.getFinishedColor(c);
   }
 
   @Override
-  protected Color getStartColor() {
-    return UIUtil.isGraphite() ? GRAPHITE_START_COLOR : super.getStartColor();
+  protected Color getStartColor(JComponent c) {
+    return UIUtil.isGraphite() ? GRAPHITE_START_COLOR : super.getStartColor(c);
   }
 
   @Override
-  protected Color getEndColor() {
-    return UIUtil.isGraphite() ? getFinishedColor() : super.getEndColor();
+  protected Color getEndColor(JComponent c) {
+    return UIUtil.isGraphite() ? getFinishedColor(c) : super.getEndColor(c);
   }
 }

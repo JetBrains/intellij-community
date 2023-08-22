@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.facet;
 
 import com.intellij.facet.FacetConfiguration;
@@ -12,9 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 
-/**
- * @author yole
- */
+
 public class PythonFacetConfiguration extends PythonFacetSettings implements FacetConfiguration {
   private static final String SDK_NAME = "sdkName";
 

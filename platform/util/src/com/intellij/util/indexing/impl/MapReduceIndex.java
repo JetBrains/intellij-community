@@ -1,106 +1,117 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.MeasurableIndexStore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input> {
-  private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
-  @NotNull protected final IndexId<Key, Value> myIndexId;
-  @NotNull protected final IndexStorage<Key, Value> myStorage;
+import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
-  protected final DataExternalizer<Value> myValueExternalizer;
-  protected final IndexExtension<Key, Value, Input> myExtension;
+public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input>,
+                                                                  MeasurableIndexStore {
+  private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
+
+  protected final IndexId<Key, Value> myIndexId;
+  protected final IndexStorage<Key, Value> myStorage;
   protected final AtomicLong myModificationStamp = new AtomicLong();
   protected final DataIndexer<Key, Value, Input> myIndexer;
 
-  private final ForwardIndex myForwardIndex;
+  private final @Nullable ValueSerializationChecker<Value, Input> myValueSerializationChecker;
+  private final IndexExtension<Key, Value, Input> myExtension;
+  private final @Nullable ForwardIndex myForwardIndex;
   private final ForwardIndexAccessor<Key, Value> myForwardIndexAccessor;
-
-  @NotNull
   private final ReadWriteLock myLock;
   private final boolean myUseIntForwardIndex;
   private volatile boolean myDisposed;
+  private final LowMemoryWatcher myLowMemoryFlusher;
 
-  private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      try {
-        myLock.readLock().lock();
-        try {
-          myStorage.clearCaches();
-        }
-        finally {
-          myLock.readLock().unlock();
-        }
-
-        flush();
-      }
-      catch (Throwable e) {
-        requestRebuild(e);
-      }
-    }
-  });
+  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull IndexStorageLayout<Key, Value> indexStorageLayout) throws IOException {
+    this(extension,
+         indexStorageLayout.openIndexStorage(),
+         indexStorageLayout.openForwardIndex(),
+         indexStorageLayout.getForwardIndexAccessor());
+  }
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
                            @Nullable ForwardIndex forwardIndex,
-                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                           @Nullable ReadWriteLock lock) {
+                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
+    this(extension, () -> storage, () -> forwardIndex, forwardIndexAccessor);
+  }
+
+  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
+                           @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
+                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
-    myStorage = storage;
-    myValueExternalizer = extension.getValueExternalizer();
-    myForwardIndex = forwardIndex;
+    myStorage = storage.compute();
+    try {
+      myForwardIndex = forwardIndex == null ? null : forwardIndex.compute();
+    }
+    catch (IOException e) {
+      tryDispose();
+      throw e;
+    }
     myForwardIndexAccessor = forwardIndexAccessor;
-    myUseIntForwardIndex = forwardIndex instanceof IntForwardIndex && forwardIndexAccessor instanceof IntForwardIndexAccessor;
-    LOG.assertTrue(forwardIndex instanceof IntForwardIndex == forwardIndexAccessor instanceof IntForwardIndexAccessor, "Invalid index configuration");
-    myLock = lock == null ? new ReentrantReadWriteLock() : lock;
+    myUseIntForwardIndex = myForwardIndex instanceof IntForwardIndex && myForwardIndexAccessor instanceof IntForwardIndexAccessor;
+    LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
+                   "Invalid index configuration for " + myIndexId);
+    myLock = new ReentrantReadWriteLock();
+    myValueSerializationChecker = new ValueSerializationChecker<>(extension, getSerializationProblemReporter());
+    myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
 
-  protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                           @NotNull IndexStorage<Key, Value> storage,
-                           @Nullable ForwardIndex forwardIndex,
-                           @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) {
-    this(extension, storage, forwardIndex, forwardIndexAccessor,  null);
+  private void clearCaches() {
+    try {
+      myLock.readLock().lock();
+      try {
+        myStorage.clearCaches();
+      }
+      finally {
+        myLock.readLock().unlock();
+      }
+
+      flush();
+    }
+    catch (Throwable e) {
+      requestRebuild(e);
+    }
   }
 
-  public ForwardIndex getForwardIndex() {
+  protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
+    return ValueSerializationChecker.DEFAULT_SERIALIZATION_PROBLEM_REPORTER;
+  }
+
+  protected void tryDispose() {
+    try {
+      dispose();
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
+  }
+
+  public @Nullable ForwardIndex getForwardIndex() {
     return myForwardIndex;
   }
 
@@ -108,18 +119,15 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return myForwardIndexAccessor;
   }
 
-  @NotNull
-  public IndexExtension<Key, Value, Input> getExtension() {
+  public @NotNull IndexExtension<Key, Value, Input> getExtension() {
     return myExtension;
   }
 
-  @NotNull
-  public IndexStorage<Key, Value> getStorage() {
+  public @NotNull IndexStorage<Key, Value> getStorage() {
     return myStorage;
   }
 
-  @NotNull
-  public final ReadWriteLock getLock() {
+  public final @NotNull ReadWriteLock getLock() {
     return myLock;
   }
 
@@ -127,11 +135,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public void clear() {
     myLock.writeLock().lock();
     try {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       doClear();
     }
     catch (StorageException | IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
     finally {
       myLock.writeLock().unlock();
@@ -166,6 +174,13 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
+  public boolean isDirty() {
+    if (myForwardIndex != null && myForwardIndex.isDirty()) {
+      return true;
+    }
+    return myStorage.isDirty();
+  }
+
   protected void doFlush() throws IOException, StorageException {
     if (myForwardIndex != null) myForwardIndex.force();
     myStorage.flush();
@@ -176,15 +191,24 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myLowMemoryFlusher.stop();
     myLock.writeLock().lock();
     try {
+      myDisposed = true;
       doDispose();
     }
     catch (StorageException e) {
       LOG.error(e);
     }
     finally {
-      myDisposed = true;
       myLock.writeLock().unlock();
     }
+  }
+
+  @Override
+  public int keysCountApproximately() {
+    return keysCountApproximatelyIfPossible(myStorage);
+  }
+
+  protected boolean isDisposed() {
+    return myDisposed;
   }
 
   protected void doDispose() throws StorageException {
@@ -202,26 +226,40 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @Override
-  @NotNull
-  public ValueContainer<Value> getData(@NotNull final Key key) throws StorageException {
+  public @NotNull ValueContainer<Value> getData(final @NotNull Key key) throws StorageException {
     myLock.readLock().lock();
     try {
-      if (myDisposed) {
+      if (isDisposed()) {
         return new ValueContainerImpl<>();
       }
-      IndexDebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
+      IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
       return myStorage.read(key);
     }
     finally {
-      IndexDebugAssertions.DEBUG_INDEX_ID.set(null);
+      IndexDebugProperties.DEBUG_INDEX_ID.set(null);
       myLock.readLock().unlock();
     }
   }
 
   @Override
-  public final @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
-    InputData<Key, Value> data = mapInput(inputId, content);
+  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content)
+    throws MapReduceIndexMappingException, ProcessCanceledException {
+    InputData<Key, Value> data;
+    try {
+      data = mapInput(inputId, content);
+    }
+    catch (ProcessCanceledException | MapReduceIndexMappingException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new MapReduceIndexMappingException(e, myExtension.getClass());
+    }
 
+    return prepareUpdate(inputId, data);
+  }
+
+  @Override
+  public @NotNull IndexUpdateComputable prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
     UpdateData<Key, Value> updateData = new UpdateData<>(
       inputId,
       data.getKeyValues(),
@@ -230,75 +268,49 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       () -> updateForwardIndex(inputId, data)
     );
 
-    return () -> {
-      try {
-        updateWithMap(updateData);
-      }
-      catch (StorageException | ProcessCanceledException ex) {
-        String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
-        //noinspection InstanceofCatchParameter
-        if (ex instanceof ProcessCanceledException) {
-          LOG.error(message, ex);
-        } else {
-          LOG.info(message, ex);
-        }
-        requestRebuild(ex);
-        return false;
-      }
-      return true;
-    };
+    return new IndexUpdateComputable(updateData, data);
   }
 
-  public static final class MapInputException extends RuntimeException {
-    public MapInputException(String message, Throwable cause) {
-      super(message, cause);
-    }
-  }
+  @ApiStatus.Internal
+  protected void checkNonCancellableSection() { }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
     if (myForwardIndex != null) {
       if (myUseIntForwardIndex) {
         ((IntForwardIndex)myForwardIndex).putInt(inputId, ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).serializeIndexedDataToInt(data));
-      } else {
+      }
+      else {
         myForwardIndex.put(inputId, myForwardIndexAccessor.serializeIndexedData(data));
       }
     }
   }
 
-  @NotNull
-  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
+  protected @NotNull InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
     if (myForwardIndex != null) {
       if (myUseIntForwardIndex) {
         return ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).getDiffBuilderFromInt(inputId, ((IntForwardIndex)myForwardIndex).getInt(inputId));
-      } else {
+      }
+      else {
         return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.get(inputId));
       }
     }
     return new EmptyInputDataDiffBuilder<>(inputId);
   }
 
-  @NotNull
-  protected InputData<Key, Value> mapInput(int inputId, @Nullable Input content) {
+  protected @NotNull InputData<Key, Value> mapInput(int inputId, @Nullable Input content) {
     if (content == null) {
       return InputData.empty();
     }
     Map<Key, Value> data = mapByIndexer(inputId,  content);
-    checkValuesHaveProperEqualsAndHashCode(data, myIndexId, myValueExternalizer);
+    if (myValueSerializationChecker != null) {
+      myValueSerializationChecker.checkValueSerialization(data, content);
+    }
     checkCanceled();
     return new InputData<>(data);
   }
 
-  @NotNull
-  protected Map<Key, Value> mapByIndexer(int inputId, @NotNull Input content) {
-    try {
-      return myIndexer.map(content);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new MapInputException("Failed to map data for input " + inputId, e);
-    }
+  protected @NotNull Map<Key, Value> mapByIndexer(int inputId, @NotNull Input content) {
+    return myIndexer.map(content);
   }
 
   public abstract void checkCanceled();
@@ -309,11 +321,10 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return myModificationStamp.get();
   }
 
-  private final RemovedKeyProcessor<Key>
-    myRemovedKeyProcessor = new RemovedKeyProcessor<Key>() {
+  private final RemovedKeyProcessor<Key> myRemovedKeyProcessor = new RemovedKeyProcessor<Key>() {
     @Override
     public void process(Key key, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       myStorage.removeAllValues(key, inputId);
     }
   };
@@ -321,7 +332,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final KeyValueUpdateProcessor<Key, Value> myAddedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
       myStorage.addValue(key, inputId, value);
     }
   };
@@ -329,29 +340,33 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   private final KeyValueUpdateProcessor<Key, Value> myUpdatedKeyProcessor = new KeyValueUpdateProcessor<Key, Value>() {
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
-      myModificationStamp.incrementAndGet();
-      myStorage.removeAllValues(key, inputId);
-      myStorage.addValue(key, inputId, value);
+      incrementModificationStamp();
+      myStorage.updateValue(key, inputId, value);
     }
   };
+
+  protected void incrementModificationStamp() {
+    myModificationStamp.incrementAndGet();
+  }
 
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
     myLock.writeLock().lock();
     try {
-      IndexId<?, ?> oldIndexId = IndexDebugAssertions.DEBUG_INDEX_ID.get();
+      IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
-        IndexDebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
+        IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
         boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
         if (hasDifference) updateData.updateForwardIndex();
       }
       catch (ProcessCanceledException e) {
+        LOG.error("ProcessCanceledException is not expected here!", e);
         throw e;
       }
       catch (Throwable e) { // e.g. IOException, AssertionError
         throw new StorageException(e);
       }
       finally {
-        IndexDebugAssertions.DEBUG_INDEX_ID.set(oldIndexId);
+        IndexDebugProperties.DEBUG_INDEX_ID.set(oldIndexId);
       }
     }
     finally {
@@ -359,33 +374,44 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
-  public static <Key, Value> void checkValuesHaveProperEqualsAndHashCode(@NotNull Map<Key, Value> data,
-                                                                         @NotNull IndexId<Key, Value> indexId,
-                                                                         @NotNull DataExternalizer<Value> valueExternalizer) {
-    if (IndexDebugAssertions.DEBUG) {
-      for (Map.Entry<Key, Value> e : data.entrySet()) {
-        final Value value = e.getValue();
-        if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
-          LOG.error("Index " + indexId + " violates equals / hashCode contract for Value parameter");
+  @ApiStatus.Internal
+  public final class IndexUpdateComputable implements Computable<Boolean> {
+    private final UpdateData<Key, Value> myUpdateData;
+    private final InputData<Key, Value> myInputData;
+
+    private IndexUpdateComputable(@NotNull UpdateData<Key, Value> updateData, @NotNull InputData<Key, Value> inputData) {
+      myUpdateData = updateData;
+      myInputData = inputData;
+    }
+
+    public @NotNull InputData<Key, Value> getInputData() {
+      return myInputData;
+    }
+
+    @Override
+    public Boolean compute() {
+      checkNonCancellableSection();
+      try {
+        MapReduceIndex.this.updateWithMap(myUpdateData);
+      }
+      catch (StorageException | ProcessCanceledException ex) {
+        String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
+        //noinspection InstanceofCatchParameter
+        if (ex instanceof ProcessCanceledException) {
+          LOG.error(message, ex);
         }
-
-        try {
-          final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-          DataOutputStream outputStream = new DataOutputStream(out);
-          valueExternalizer.save(outputStream, value);
-          outputStream.close();
-          final Value deserializedValue =
-            valueExternalizer.read(new DataInputStream(out.toInputStream()));
-
-          if (!(Comparing.equal(value, deserializedValue) && (value == null || value.hashCode() == deserializedValue.hashCode()))) {
-            LOG.error("Index " + indexId + " deserialization violates equals / hashCode contract for Value parameter");
+        else {
+          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+            LOG.error(message, ex);
+          }
+          else {
+            LOG.info(message, ex);
           }
         }
-        catch (IOException ex) {
-          LOG.error(ex);
-        }
+        MapReduceIndex.this.requestRebuild(ex);
+        return false;
       }
+      return true;
     }
   }
 }
-

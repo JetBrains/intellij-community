@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ReadAction;
@@ -7,8 +7,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -21,7 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class FileRecursiveIterator {
+final class FileRecursiveIterator {
   @NotNull private final Project myProject;
   @NotNull private final Collection<? extends VirtualFile> myRoots;
 
@@ -58,7 +59,7 @@ class FileRecursiveIterator {
   }
 
   boolean processAll(@NotNull Processor<? super PsiFile> processor) {
-    CompactVirtualFileSet visited = new CompactVirtualFileSet();
+    VirtualFileSet visited = VfsUtilCore.createCompactVirtualFileSet();
     for (VirtualFile root : myRoots) {
       if (!ProjectRootManager.getInstance(myProject).getFileIndex().iterateContentUnderDirectory(root, fileOrDir -> {
         if (fileOrDir.isDirectory() || !visited.add(fileOrDir)) {

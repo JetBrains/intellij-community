@@ -1,30 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PlatformIcons;
-import gnu.trove.THashMap;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
-public class PropertiesGrouper implements Grouper{
-  @NonNls public static final String ID = "SHOW_PROPERTIES";
+public final class PropertiesGrouper implements Grouper {
+  public static final @NonNls String ID = "SHOW_PROPERTIES";
 
   @Override
-  @NotNull
-  public Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
+  public @NotNull Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     if (parent.getValue() instanceof PropertyGroup) return Collections.emptyList();
-    Map<Group,Group> result = new THashMap<>();
+    Map<Group,Group> result = new HashMap<>();
     for (TreeElement o : children) {
       if (o instanceof JavaClassTreeElementBase) {
-        PsiElement element = ((JavaClassTreeElementBase)o).getElement();
+        PsiElement element = ((JavaClassTreeElementBase<?>)o).getElement();
         PropertyGroup group = PropertyGroup.createOn(element, o);
         if (group != null) {
           PropertyGroup existing = (PropertyGroup)result.get(group);
@@ -47,14 +43,12 @@ public class PropertiesGrouper implements Grouper{
   }
 
   @Override
-  @NotNull
-  public ActionPresentation getPresentation() {
-    return new ActionPresentationData(JavaStructureViewBundle.message("action.structureview.show.properties"), null, PlatformIcons.PROPERTY_ICON);
+  public @NotNull ActionPresentation getPresentation() {
+    return new ActionPresentationData(JavaStructureViewBundle.message("action.structureview.show.properties"), null, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property));
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 }

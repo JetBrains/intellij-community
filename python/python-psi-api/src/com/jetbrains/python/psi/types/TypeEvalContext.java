@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
-public class TypeEvalContext {
 
-  public static class Key {
+public final class TypeEvalContext {
+
+  public static final class Key {
     private static final Key INSTANCE = new Key();
 
     private Key() {
@@ -50,6 +35,8 @@ public class TypeEvalContext {
 
   private List<String> myTrace;
   private String myTraceIndent = "";
+
+  private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<>();
   private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<>();
@@ -142,7 +129,7 @@ public class TypeEvalContext {
    */
   @NotNull
   private static TypeEvalContext getContextFromCache(@NotNull final Project project, @NotNull final TypeEvalContext context) {
-    return ServiceManager.getService(project, TypeEvalContextCache.class).getContext(context);
+    return project.getService(TypeEvalContextCache.class).getContext(context);
   }
 
   public TypeEvalContext withTracing() {
@@ -224,6 +211,20 @@ public class TypeEvalContext {
     );
   }
 
+  /**
+   * Normally, each {@link PyTypeProvider} is supposed to perform all the necessary analysis independently
+   * and hence should completely isolate its state. However, on rare occasions when several type providers have to
+   * recursively call each other, it might be necessary to preserve some state for subsequent calls to the same provider with
+   * the same instance of {@link TypeEvalContext}. Each {@link TypeEvalContext} instance contains an associated thread-local
+   * {@link ProcessingContext} that can be used for such caching. Should be used with discretion.
+   *
+   * @return a thread-local instance of {@link ProcessingContext} bound to this {@link TypeEvalContext} instance
+   */
+  @ApiStatus.Experimental
+  public @NotNull ProcessingContext getProcessingContext() {
+    return myProcessingContext.get();
+  }
+
   private static void assertValid(@Nullable PyType result, @NotNull PyTypedElement element) {
     if (result != null) {
       result.assertValid(element.toString());
@@ -263,6 +264,18 @@ public class TypeEvalContext {
   }
 
   private boolean inOrigin(@NotNull PsiElement element) {
-    return myConstraints.myOrigin == element.getContainingFile() || myConstraints.myOrigin == FileContextUtil.getContextFile(element);
+    return myConstraints.myOrigin == element.getContainingFile() || myConstraints.myOrigin == getContextFile(element);
+  }
+
+  private static PsiFile getContextFile(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    PsiElement context = file.getContext();
+    if (context == null) {
+      return file;
+    }
+    else {
+      return getContextFile(context);
+    }
   }
 }

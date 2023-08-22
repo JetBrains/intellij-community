@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -25,33 +25,40 @@ import java.util.regex.Pattern;
 public class FilePatternPackageSet extends PatternBasedPackageSet {
   private static final Logger LOG = Logger.getInstance(FilePatternPackageSet.class);
 
-  @NonNls public static final String SCOPE_FILE = "file";
+  public static final @NonNls String SCOPE_FILE = "file";
+  public static final @NonNls String SCOPE_EXT = "ext";
   private final String myPathPattern;
   private final Pattern myFilePattern;
+  private final boolean myProjectFiles;
 
   public FilePatternPackageSet(@NonNls String modulePattern,
                                @NonNls String filePattern) {
+    this(modulePattern, filePattern, true);
+  }
+
+  public FilePatternPackageSet(@NonNls String modulePattern,
+                               @NonNls String filePattern,
+                               boolean projectFiles) {
     super(modulePattern);
     myPathPattern = filePattern;
     myFilePattern = filePattern != null ? Pattern.compile(convertToRegexp(filePattern, '/')) : null;
-  }
-
-  @Override
-  public boolean contains(@NotNull VirtualFile file, @NotNull NamedScopesHolder holder) {
-    return contains(file, holder.getProject(), holder);
+    myProjectFiles = projectFiles;
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return fileMatcher(file, fileIndex, holder != null ? holder.getProjectBaseDir() : project.getBaseDir()) &&
-           matchesModule(file, fileIndex);
+           (myProjectFiles ? matchesModule(file, fileIndex) : matchesLibrary(myModulePattern, file, fileIndex));
   }
 
   private boolean fileMatcher(@NotNull VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
     if (virtualFile instanceof VirtualFileWindow) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
+    
+    if (fileIndex.isInContent(virtualFile) != myProjectFiles) return false;
+    
     String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
     if (relativePath == null) {
       LOG.error("vFile: " + virtualFile + "; projectBaseDir: " + projectBaseDir + "; content File: "+fileIndex.getContentRootForFile(virtualFile));
@@ -63,7 +70,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return myFilePattern.matcher(relativePath).matches();
   }
 
-  static String convertToRegexp(String aspectsntx, char separator) {
+  public static String convertToRegexp(String aspectsntx, char separator) {
     StringBuilder buf = new StringBuilder(aspectsntx.length());
     int cur = 0;
     boolean isAfterSeparator = false;
@@ -113,8 +120,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  @NotNull
-  public PackageSet createCopy() {
+  public @NotNull PackageSet createCopy() {
     return new FilePatternPackageSet(myModulePatternText, myPathPattern);
   }
 
@@ -124,9 +130,8 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    @NonNls StringBuilder buf = new StringBuilder("file");
+  public @NotNull String getText() {
+    @NonNls StringBuilder buf = new StringBuilder(myProjectFiles ? SCOPE_FILE : SCOPE_EXT);
 
     if (myModulePattern != null || myModuleGroupPattern != null) {
       buf.append("[").append(myModulePatternText).append("]");
@@ -152,26 +157,35 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
            Comparing.strEqual(oldQName + "/*", myPathPattern);
   }
 
-  @NotNull
   @Override
-  public PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
-    return new FilePatternPackageSet(myModulePatternText, myPathPattern.replace(oldName, newName));
+  public @NotNull PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
+    return new FilePatternPackageSet(myModulePatternText, myPathPattern.replace(oldName, newName), myProjectFiles);
   }
 
-  @NotNull
   @Override
-  public PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
-    return new FilePatternPackageSet(myModulePatternText.replace(oldName, newName), myPathPattern);
+  public @NotNull PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
+    return new FilePatternPackageSet(myModulePatternText.replace(oldName, newName), myPathPattern, myProjectFiles);
   }
 
-  @Nullable
-  public static String getRelativePath(@NotNull VirtualFile virtualFile,
-                                       @NotNull ProjectFileIndex index,
-                                       final boolean useFQName,
-                                       VirtualFile projectBaseDir) {
+  public static @Nullable String getRelativePath(@NotNull VirtualFile virtualFile,
+                                                 @NotNull ProjectFileIndex index,
+                                                 final boolean useFQName,
+                                                 VirtualFile projectBaseDir) {
     final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);
     if (contentRootForFile != null) {
-      return VfsUtilCore.getRelativePath(virtualFile, contentRootForFile, '/');
+      String relativePath = VfsUtilCore.getRelativePath(virtualFile, contentRootForFile, '/');
+      if (relativePath != null) {
+        return relativePath;
+      }
+
+      if (!virtualFile.getFileSystem().equals(contentRootForFile.getFileSystem())) {
+        VirtualFile parent = virtualFile.getParent();
+        String relativeToParent = parent != null ? VfsUtilCore.getRelativePath(parent, contentRootForFile, '/') : null;
+        if (relativeToParent != null) {
+          return relativeToParent + '/' + virtualFile.getName();
+        }
+      }
+      return null;
     }
     final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {

@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Painter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
@@ -19,7 +20,7 @@ import java.awt.image.BufferedImage;
  * such that if you can't find a painter that does what you need,
  * you can write one with minimal effort.
  *
- * @see com.sun.java.swing.Painter
+ * @see Painter
  */
 public interface RegionPainter<T> {
   /**

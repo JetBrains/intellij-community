@@ -20,9 +20,15 @@ public interface ChildInfo {
 
   int getNameId();
 
-  String getSymLinkTarget();
+  String getSymlinkTarget();
 
   ChildInfo @Nullable("null means children are unknown") [] getChildren();
 
   FileAttributes getFileAttributes();
+
+  /**
+   * @return flags from {@link #getFileAttributes()} ORed into an int, or -1 if getFileAttributes() is null
+   * @see com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Attributes
+   */
+  int getFileAttributeFlags();
 }

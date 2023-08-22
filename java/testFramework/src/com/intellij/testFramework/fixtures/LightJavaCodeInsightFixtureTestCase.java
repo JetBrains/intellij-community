@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
@@ -21,9 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
- * @author peter
+ * @see LightJavaCodeInsightFixtureTestCase4
+ * @see LightJavaCodeInsightFixtureTestCase5
  */
-public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase {
+@TestDataPath("$CONTENT_ROOT/testData")
+public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
   protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
     protected final LanguageLevel myLanguageLevel;
     private final boolean myWithAnnotations;
@@ -68,11 +70,18 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
   public static final @NotNull LightProjectDescriptor JAVA_9 = new ProjectDescriptor(LanguageLevel.JDK_1_9);
   public static final @NotNull LightProjectDescriptor JAVA_9_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_9, true);
   public static final @NotNull LightProjectDescriptor JAVA_10 = new ProjectDescriptor(LanguageLevel.JDK_10);
-  public static final @NotNull LightProjectDescriptor JAVA_10_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_10, true);
   public static final @NotNull LightProjectDescriptor JAVA_11 = new ProjectDescriptor(LanguageLevel.JDK_11);
+  public static final @NotNull LightProjectDescriptor JAVA_11_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_11, true);
   public static final @NotNull LightProjectDescriptor JAVA_12 = new ProjectDescriptor(LanguageLevel.JDK_12);
-  public static final @NotNull LightProjectDescriptor JAVA_13 = new ProjectDescriptor(LanguageLevel.JDK_13_PREVIEW);
-  public static final @NotNull LightProjectDescriptor JAVA_14 = new ProjectDescriptor(LanguageLevel.JDK_14_PREVIEW);
+  public static final @NotNull LightProjectDescriptor JAVA_13 = new ProjectDescriptor(LanguageLevel.JDK_13);
+  public static final @NotNull LightProjectDescriptor JAVA_14 = new ProjectDescriptor(LanguageLevel.JDK_14);
+  public static final @NotNull LightProjectDescriptor JAVA_15 = new ProjectDescriptor(LanguageLevel.JDK_15);
+  public static final @NotNull LightProjectDescriptor JAVA_16 = new ProjectDescriptor(LanguageLevel.JDK_16);
+  public static final @NotNull LightProjectDescriptor JAVA_17 = new ProjectDescriptor(LanguageLevel.JDK_17);
+  public static final @NotNull LightProjectDescriptor JAVA_18 = new ProjectDescriptor(LanguageLevel.JDK_18);
+  public static final @NotNull LightProjectDescriptor JAVA_19 = new ProjectDescriptor(LanguageLevel.JDK_19);
+  public static final @NotNull LightProjectDescriptor JAVA_20 = new ProjectDescriptor(LanguageLevel.JDK_20_PREVIEW);
+  public static final @NotNull LightProjectDescriptor JAVA_21 = new ProjectDescriptor(LanguageLevel.JDK_21_PREVIEW);
   public static final @NotNull LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
 
   public static final @NotNull LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {
@@ -81,17 +90,22 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
       return IdeaTestUtil.getMockJdk17();
     }
   };
+  
+  public static final @NotNull LightProjectDescriptor JAVA_LATEST_WITH_LATEST_JDK = new ProjectDescriptor(LanguageLevel.HIGHEST);
 
   protected JavaCodeInsightTestFixture myFixture;
+
+  private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, getTempDirFixture());
+    myFixture = JavaIndexingModeCodeInsightTestFixture.Companion.wrapFixture(myFixture, getIndexingMode());
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
@@ -170,5 +184,15 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
 
   public PsiFile createLightFile(String fileName, Language language, String text) {
     return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, language, text, false, true);
+  }
+
+  @Override
+  public void setIndexingMode(@NotNull IndexingMode mode) {
+    myIndexingMode = mode;
+  }
+
+  @Override
+  public @NotNull IndexingMode getIndexingMode() {
+    return myIndexingMode;
   }
 }

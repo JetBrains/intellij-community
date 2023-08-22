@@ -16,12 +16,18 @@
 package com.intellij.spellchecker.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.EditorTextFieldProvider;
+
+import java.util.Set;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class SpellCheckingEditorCustomizationTest extends BasePlatformTestCase {
@@ -53,5 +59,22 @@ public class SpellCheckingEditorCustomizationTest extends BasePlatformTestCase {
     finally {
       InspectionProfileImpl.INIT_INSPECTIONS = false;
     }
+  }
+
+  public void testHighlightingWorksInEditorTextFieldWithCustomization() {
+    myFixture.enableInspections(new SpellCheckingInspection());
+
+    var customization = SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
+    assertNotNull(customization);
+
+    var field = EditorTextFieldProvider.getInstance().getEditorField(PlainTextLanguage.INSTANCE, getProject(), Set.of(customization));
+    field.addNotify();
+    disposeOnTearDown(() -> field.removeNotify());
+
+    var document = field.getEditor().getDocument();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("A <TYPO descr=\"Typo: In word 'misake'\">misake</TYPO>"));
+
+    myFixture.configureFromExistingVirtualFile(FileDocumentManager.getInstance().getFile(document));
+    myFixture.checkHighlighting();
   }
 }

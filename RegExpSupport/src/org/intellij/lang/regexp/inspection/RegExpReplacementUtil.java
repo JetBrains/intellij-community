@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
@@ -14,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class RegExpReplacementUtil {
+public final class RegExpReplacementUtil {
 
   /**
    * Dummy text that never needs escaping
@@ -24,12 +27,22 @@ public class RegExpReplacementUtil {
   private RegExpReplacementUtil() {}
 
   public static void replaceInContext(@NotNull PsiElement element, @NotNull String text) {
+    replaceInContext(element, text, null);
+  }
+
+  public static void replaceInContext(@NotNull PsiElement element, @NotNull String text, TextRange range) {
     final PsiFile file = element.getContainingFile();
     text = escapeForContext(text, file);
-    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+    final Document document = file.getViewProvider().getDocument();
     assert document != null;
     final TextRange replaceRange = element.getTextRange();
-    document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), text);
+    final int startOffset = replaceRange.getStartOffset();
+    if (range != null) {
+      document.replaceString(startOffset + range.getStartOffset(), startOffset + range.getEndOffset(), text);
+    }
+    else {
+      document.replaceString(startOffset, replaceRange.getEndOffset(), text);
+    }
   }
 
   private static String escapeForContext(String text, PsiFile file) {

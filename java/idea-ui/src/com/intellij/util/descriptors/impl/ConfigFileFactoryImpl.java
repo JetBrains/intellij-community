@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-public class ConfigFileFactoryImpl extends ConfigFileFactory {
+public final class ConfigFileFactoryImpl extends ConfigFileFactory {
   private static final Logger LOG = Logger.getInstance(ConfigFileFactoryImpl.class);
 
   @Override
@@ -56,26 +56,21 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   @Override
   public ConfigFileContainer createConfigFileContainer(final Project project, final ConfigFileMetaDataProvider metaDataProvider,
                                                        final ConfigFileInfoSet configuration) {
-    return new ConfigFileContainerImpl(project, metaDataProvider, (ConfigFileInfoSetImpl)configuration);
+    return new ConfigFileContainerImpl(project, metaDataProvider, configuration);
   }
 
   private static String getText(final String templateName, @Nullable Project project) throws IOException {
     final FileTemplateManager templateManager = project == null ? FileTemplateManager.getDefaultInstance() : FileTemplateManager.getInstance(project);
     final FileTemplate template = templateManager.getJ2eeTemplate(templateName);
-    if (template == null) {
-      return "";
-    }
     return template.getText(templateManager.getDefaultProperties());
   }
 
   @Override
-  @Nullable
-  public VirtualFile createFile(@Nullable Project project, String url, ConfigFileVersion version, final boolean forceNew) {
+  public @Nullable VirtualFile createFile(@Nullable Project project, String url, ConfigFileVersion version, final boolean forceNew) {
     return createFileFromTemplate(project, url, version.getTemplateName(), forceNew);
   }
 
-  @Nullable
-  private VirtualFile createFileFromTemplate(@Nullable final Project project, String url, final String templateName, final boolean forceNew) {
+  private @Nullable VirtualFile createFileFromTemplate(final @Nullable Project project, String url, final String templateName, final boolean forceNew) {
     final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     final File file = new File(VfsUtilCore.urlToPath(url));
     VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);

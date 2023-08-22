@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows recording the latency of executing editor actions.
- *
- * @author yole
  */
 public interface LatencyRecorder {
   /**
@@ -21,6 +19,6 @@ public interface LatencyRecorder {
   void recordLatencyAwareAction(@NotNull Editor editor, @NotNull String actionId, long timestampMs);
 
   static LatencyRecorder getInstance() {
-    return ServiceManager.getService(LatencyRecorder.class);
+    return ApplicationManager.getApplication().getService(LatencyRecorder.class);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javascript.debugger
 
 import com.google.common.base.CharMatcher
@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SyntaxTraverser
-import gnu.trove.THashMap
 import org.jetbrains.debugger.sourcemap.MappingEntry
 import org.jetbrains.debugger.sourcemap.Mappings
 import org.jetbrains.debugger.sourcemap.MappingsProcessorInLine
@@ -36,7 +35,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   protected fun doMap(identifierOrNamedElement: PsiElement, mapBySourceCode: Boolean, saveMapping: Boolean = true): String? {
     val mappings = getMappingsForElement(identifierOrNamedElement)
-    if (mappings == null || mappings.isEmpty()) return null
+    if (mappings.isNullOrEmpty()) return null
     val sourceEntry = mappings[0]
     val generatedName: String?
     try {
@@ -46,7 +45,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       LOG.warn("Cannot get generated name: source entry (${sourceEntry.generatedLine},  ${sourceEntry.generatedColumn}). Transpiled File: " + transpiledFile?.path)
       return null
     }
-    if (generatedName == null || generatedName.isEmpty()) {
+    if (generatedName.isNullOrEmpty()) {
       return null
     }
 
@@ -123,7 +122,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   fun addMapping(generatedName: String, sourceName: String) {
     if (rawNameToSource == null) {
-      rawNameToSource = THashMap<String, String>()
+      rawNameToSource = HashMap()
     }
     rawNameToSource!!.put(generatedName, sourceName)
   }
@@ -149,7 +148,6 @@ open class NameMapper(private val document: Document, private val transpiledDocu
     }
     return document.immutableCharSequence.subSequence(lineStartOffset + sourceEntry.generatedColumn, endOffset)
   }
-
 }
 
 fun warnSeveralMapping(element: PsiElement) {

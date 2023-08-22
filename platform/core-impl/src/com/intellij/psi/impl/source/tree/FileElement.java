@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.psi.PsiElement;
@@ -36,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileElement extends LazyParseableElement implements FileASTNode, Getter<FileElement> {
+public class FileElement extends LazyParseableElement implements FileASTNode {
   public static final FileElement[] EMPTY_ARRAY = new FileElement[0];
   private volatile CharTable myCharTable = new CharTableImpl();
   private volatile boolean myDetached;
@@ -53,14 +38,12 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
   }
 
   @Override
-  @NotNull
-  public CharTable getCharTable() {
+  public @NotNull CharTable getCharTable() {
     return myCharTable;
   }
 
-  @NotNull
   @Override
-  public LighterAST getLighterAST() {
+  public @NotNull LighterAST getLighterAST() {
     IElementType contentType = getElementType();
     if (!isParsed() && contentType instanceof ILightStubFileElementType) {
       return new FCTSBackedLighterAST(getCharTable(), ((ILightStubFileElementType<?>)contentType).parseContentsLight(this));
@@ -93,18 +76,12 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
   }
 
   @Override
-  public FileElement get() {
-    return this;
-  }
-
-  @Override
   public void clearCaches() {
     super.clearCaches();
     myStubbedSpine = null;
   }
 
-  @NotNull
-  public final AstSpine getStubbedSpine() {
+  public final @NotNull AstSpine getStubbedSpine() {
     AstSpine result = myStubbedSpine;
     if (result == null) {
       PsiFileImpl file = (PsiFileImpl)getPsi();
@@ -133,7 +110,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
         }
 
         IElementType type = node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+        if (type instanceof IStubElementType && ((IStubElementType<?, ?>)type).shouldCreateStub(node)) {
           result.add(node);
         }
 

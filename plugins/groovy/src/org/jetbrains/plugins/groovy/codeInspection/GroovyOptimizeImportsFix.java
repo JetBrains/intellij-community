@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -22,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -38,17 +25,20 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyPostHighlightingPass;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
-public class GroovyOptimizeImportsFix implements IntentionAction {
+public final class GroovyOptimizeImportsFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(GroovyPostHighlightingPass.class);
   private final boolean onTheFly;
 
-  public GroovyOptimizeImportsFix(boolean onTheFly) {
+  GroovyOptimizeImportsFix(boolean onTheFly) {
     this.onTheFly = onTheFly;
   }
 
@@ -59,15 +49,24 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    String originalText = file.getText();
+    final Runnable optimize = new GroovyImportOptimizer().processFile(file);
+    optimize.run();
+    String newText = file.getText();
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, originalText, newText);
+  }
+
+  @Override
   @NotNull
   public String getText() {
-    return GroovyInspectionBundle.message("optimize.all.imports");
+    return GroovyBundle.message("optimize.all.imports");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return GroovyInspectionBundle.message("optimize.imports");
+    return GroovyBundle.message("optimize.imports");
   }
 
   @Override
@@ -81,7 +80,9 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
   }
 
   private boolean timeToOptimizeImports(GroovyFile myFile, Editor editor) {
-    if (!CodeInsightWorkspaceSettings.getInstance(myFile.getProject()).optimizeImportsOnTheFly) return false;
+    if (!CodeInsightWorkspaceSettings.getInstance(myFile.getProject()).isOptimizeImportsOnTheFly()) {
+      return false;
+    }
     if (onTheFly && editor != null) {
       // if we stand inside import statements, do not optimize
       final VirtualFile vfile = myFile.getVirtualFile();
@@ -103,7 +104,9 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
     Document myDocument = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
     boolean errors = containsErrorsPreventingOptimize(myFile, myDocument);
 
-    return !errors && DaemonListeners.canChangeFileSilently(myFile);
+    // computed in GroovyPostHighlightingPass.doCollectInformation()
+    boolean isInContent = true;
+    return !errors && DaemonListeners.canChangeFileSilently(myFile, isInContent, ThreeState.UNSURE);
   }
 
   private static boolean containsErrorsPreventingOptimize(GroovyFile myFile, Document myDocument) {

@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.wrapper.impl;
 import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,9 +35,8 @@ public abstract class StreamCallImpl implements StreamCall {
     return myTextRange;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return myName;
   }
 

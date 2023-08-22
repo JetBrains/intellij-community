@@ -3,19 +3,24 @@ package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.TextUI;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -37,11 +42,11 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
     this(null, columns);
   }
 
-  public ExtendableTextField(String text) {
+  public ExtendableTextField(@Nls String text) {
     this(text, 20);
   }
 
-  public ExtendableTextField(String text, int columns) {
+  public ExtendableTextField(@Nls String text, int columns) {
     super(text, columns);
   }
 
@@ -129,5 +134,28 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
     addExtension(browseExtension);
 
     return this;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleContextDelegateWithContextMenu(getOriginalAccessibleContext()) {
+        @Override
+        protected void doShowContextMenu() {
+          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
+
+        }
+
+        @Override
+        protected Container getDelegateParent() {
+          return getParent();
+        }
+      };
+    }
+    return accessibleContext;
+  }
+
+  protected AccessibleContext getOriginalAccessibleContext() {
+    return super.getAccessibleContext();
   }
 }

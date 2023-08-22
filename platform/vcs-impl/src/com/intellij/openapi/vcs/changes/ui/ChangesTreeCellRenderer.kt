@@ -1,25 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.ui.CellRendererPanel
 import com.intellij.util.ui.ThreeStateCheckBox
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate
-import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.Component
-import java.awt.Container
+import com.intellij.util.ui.UpdateScaleHelper
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
+import java.awt.*
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
-private class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeRenderer) :
-  BorderLayoutPanel(), TreeCellRenderer {
+open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
+  private val updateScaleHelper: UpdateScaleHelper = UpdateScaleHelper()
 
   private val checkBox = ThreeStateCheckBox()
 
   init {
-    addToLeft(checkBox)
-    addToCenter(textRenderer)
-    isOpaque = false
+    buildLayout()
+  }
+
+  private fun buildLayout() {
+    layout = BorderLayout()
+
+    add(checkBox, BorderLayout.WEST)
+    add(textRenderer, BorderLayout.CENTER)
   }
 
   override fun getTreeCellRendererComponent(
@@ -32,7 +38,10 @@ private class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNo
     hasFocus: Boolean
   ): Component {
     tree as ChangesTree
+    value as ChangesBrowserNode<*>
+
     background = null
+    isSelected = selected
 
     textRenderer.apply {
       isOpaque = false
@@ -44,23 +53,31 @@ private class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNo
       background = null
       isOpaque = false
 
-      val node = value as ChangesBrowserNode<*>
-      isVisible = tree.run { isShowCheckboxes && isInclusionVisible(node) }
+      isVisible = tree.isShowCheckboxes &&
+                  (value is FixedHeightSampleChangesBrowserNode || // assume checkbox is visible for the sample node
+                   tree.isInclusionVisible(value))
       if (isVisible) {
-        state = tree.getNodeStatus(node)
-        isEnabled = tree.run { isEnabled && isInclusionEnabled(node) }
+        state = tree.getNodeStatus(value)
+        isEnabled = tree.run { isEnabled && isInclusionEnabled(value) }
+      }
+      else {
+        state = ThreeStateCheckBox.State.NOT_SELECTED
+        isEnabled = false
       }
     }
-    revalidate()
+
+    updateScaleHelper.saveScaleAndUpdateUIIfChanged(checkBox)
 
     return this
   }
 
-  override fun getToolTipText(): String? = textRenderer.toolTipText
-
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {
-      accessibleContext = object : AccessibleContextDelegate(checkBox.accessibleContext) {
+      accessibleContext = object : AccessibleContextDelegateWithContextMenu(checkBox.accessibleContext) {
+        override fun doShowContextMenu() {
+          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
+        }
+
         override fun getDelegateParent(): Container? = parent
 
         override fun getAccessibleName(): String? {
@@ -77,4 +94,27 @@ private class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNo
     }
     return accessibleContext
   }
+
+  /**
+   * In case of New UI background selection painting performs by [com.intellij.ui.tree.ui.DefaultTreeUI.paint],
+   * but in case of expansion popup painting it is necessary to fill the background in renderer.
+   *
+   * [setOpaque] for renderer is set in the tree UI and in [com.intellij.ui.TreeExpandableItemsHandler]
+   *
+   * @see [com.intellij.ui.tree.ui.DefaultTreeUI.setBackground] and its private overloading
+   * @see [com.intellij.ui.TreeExpandableItemsHandler.doPaintTooltipImage]
+   */
+  final override fun paintComponent(g: Graphics?) {
+    if (isOpaque) {
+      super.paintComponent(g)
+    }
+  }
+
+  /**
+   * Otherwise incorrect node sizes are cached - see [com.intellij.ui.tree.ui.DefaultTreeUI.createNodeDimensions].
+   * And [com.intellij.ui.ExpandableItemsHandler] does not work correctly.
+   */
+  override fun getPreferredSize(): Dimension = layout.preferredLayoutSize(this)
+
+  override fun getToolTipText(): String? = textRenderer.toolTipText
 }

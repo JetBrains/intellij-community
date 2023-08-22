@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
-                        serviceImplementation="org.jetbrains.plugins.terminal.cloud.CloudTerminalProviderImpl"/>
-  </extensions>
-</idea-plugin>

@@ -5,14 +5,17 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateFileType;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 public class TextMateTypedHandler extends TypedHandlerDelegate {
   @NotNull
@@ -33,7 +36,7 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
       }
 
       final int offset = editor.getCaretModel().getOffset();
-      CharSequence scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
+      @Nullable TextMateScope scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
 
       final Document document = editor.getDocument();
       final TextMateBracePair pairForRightChar = TextMateEditorUtils.getSmartTypingPairForRightChar(c, scopeSelector);
@@ -52,7 +55,7 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
           final char nextChar = offset < document.getTextLength() ? document.getCharsSequence().charAt(offset) : ' ';
           if (!Character.isLetterOrDigit(prevChar) && prevChar != pairForLeftChar.leftChar &&
               !Character.isLetterOrDigit(nextChar) && nextChar != pairForLeftChar.rightChar) {
-            EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(pairForLeftChar.leftChar, 2), true, 1);
+            EditorModificationUtilEx.insertStringAtCaret(editor, StringUtil.repeatSymbol(pairForLeftChar.leftChar, 2), true, 1);
             return Result.STOP;
           }
         }
@@ -60,9 +63,9 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
           return Result.CONTINUE;
         }
         else {
-          EditorModificationUtil.insertStringAtCaret(editor,
-                                                     String.valueOf(new char[]{pairForLeftChar.leftChar, pairForLeftChar.rightChar}),
-                                                     true, 1);
+          EditorModificationUtilEx.insertStringAtCaret(editor,
+                                                       String.valueOf(new char[]{pairForLeftChar.leftChar, pairForLeftChar.rightChar}),
+                                                       true, 1);
           return Result.STOP;
         }
       }

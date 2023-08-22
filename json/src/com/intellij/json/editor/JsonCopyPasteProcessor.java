@@ -2,6 +2,7 @@
 package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
+import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
@@ -22,7 +23,7 @@ public class JsonCopyPasteProcessor implements CopyPastePreProcessor {
     if (!JsonEditorOptions.getInstance().ESCAPE_PASTED_TEXT) {
       return null;
     }
-    if (!file.isPhysical() || startOffsets.length > 1 || endOffsets.length > 1) {
+    if (!isSupportedFile(file) || startOffsets.length > 1 || endOffsets.length > 1) {
       return null;
     }
     final int selectionStart = startOffsets[0];
@@ -54,7 +55,7 @@ public class JsonCopyPasteProcessor implements CopyPastePreProcessor {
     if (!JsonEditorOptions.getInstance().ESCAPE_PASTED_TEXT) {
       return text;
     }
-    if (!file.isPhysical()) {
+    if (!isSupportedFile(file)) {
       return text;
     }
 
@@ -68,5 +69,14 @@ public class JsonCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     return StringUtil.escapeStringCharacters(text);
+  }
+
+  protected boolean isSupportedFile(PsiFile file) {
+    return file instanceof JsonFile && file.isPhysical();
+  }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
   }
 }

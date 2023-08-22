@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,11 +13,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class QualifiedName implements Comparable<QualifiedName> {
-  @NotNull private final List<String> myComponents;
+
+public final class QualifiedName implements Comparable<QualifiedName> {
+  private final @NotNull List<String> myComponents;
 
   private QualifiedName(int count) {
     myComponents = new ArrayList<>(count);
@@ -46,8 +30,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
     return qName;
   }
 
-  @NotNull
-  public static QualifiedName fromComponents(String... components) {
+  public static @NotNull QualifiedName fromComponents(String... components) {
     for (String component : components) {
       assertNoDots(component);
     }
@@ -70,13 +53,11 @@ public class QualifiedName implements Comparable<QualifiedName> {
     return result;
   }
 
-  @NotNull
-  public QualifiedName removeLastComponent() {
+  public @NotNull QualifiedName removeLastComponent() {
     return removeTail(1);
   }
 
-  @NotNull
-  public QualifiedName removeTail(int count) {
+  public @NotNull QualifiedName removeTail(int count) {
     int size = myComponents.size();
     QualifiedName result = new QualifiedName(size);
     result.myComponents.addAll(myComponents);
@@ -86,8 +67,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
     return result;
   }
 
-  @NotNull
-  public QualifiedName removeHead(int count) {
+  public @NotNull QualifiedName removeHead(int count) {
     int size = myComponents.size();
     QualifiedName result = new QualifiedName(size);
     result.myComponents.addAll(myComponents);
@@ -97,9 +77,8 @@ public class QualifiedName implements Comparable<QualifiedName> {
     return result;
   }
 
-  @NotNull
-  public List<String> getComponents() {
-    return myComponents;
+  public @NotNull List<String> getComponents() {
+    return Collections.unmodifiableList(myComponents);
   }
 
   public int getComponentCount() {
@@ -118,7 +97,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
     return true;
   }
 
-  public boolean matchesPrefix(QualifiedName prefix) {
+  public boolean matchesPrefix(@NotNull QualifiedName prefix) {
     if (getComponentCount() < prefix.getComponentCount()) {
       return false;
     }
@@ -147,8 +126,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
     }
   }
 
-  @Nullable
-  public static QualifiedName deserialize(StubInputStream dataStream) throws IOException {
+  public static @Nullable QualifiedName deserialize(StubInputStream dataStream) throws IOException {
     QualifiedName qName;
     int size = dataStream.readVarInt();
     if (size == 0) {
@@ -163,16 +141,14 @@ public class QualifiedName implements Comparable<QualifiedName> {
     return qName;
   }
 
-  @Nullable
-  public String getFirstComponent() {
+  public @Nullable String getFirstComponent() {
     if (myComponents.isEmpty()) {
       return null;
     }
     return myComponents.get(0);
   }
 
-  @Nullable
-  public String getLastComponent() {
+  public @Nullable String getLastComponent() {
     if (myComponents.isEmpty()) {
       return null;
     }
@@ -188,8 +164,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
     return StringUtil.join(myComponents, separator);
   }
 
-  @NotNull
-  public static QualifiedName fromDottedString(@NotNull String refName) {
+  public static @NotNull QualifiedName fromDottedString(@NotNull String refName) {
     return fromComponents(refName.split("\\."));
   }
 

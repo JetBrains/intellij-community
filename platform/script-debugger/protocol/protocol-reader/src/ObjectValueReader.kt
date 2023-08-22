@@ -1,7 +1,7 @@
 package org.jetbrains.protocolReader
 
-internal class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, primitiveValueName: String?) : ValueReader() {
-  val primitiveValueName = if (primitiveValueName == null || primitiveValueName.isEmpty()) null else primitiveValueName
+internal class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, primitiveValueName: String?, private val nullable: Boolean = false) : ValueReader() {
+  val primitiveValueName = if (primitiveValueName.isNullOrEmpty()) null else primitiveValueName
 
   override fun asJsonTypeParser() = this
 
@@ -16,6 +16,9 @@ internal class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: 
   }
 
   override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+    if(nullable) {
+      out.append("if (readsNull($READER_NAME)) null else ")
+    }
     type.type!!.writeInstantiateCode(scope.getRootClassScope(), subtyping, out)
     out.append('(')
     addReaderParameter(subtyping, out)

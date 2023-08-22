@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
@@ -6,42 +6,50 @@ import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.EditorTextComponent;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.LabelUI;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Supplier;
 
+import static com.intellij.util.ui.UIUtil.getDeprecatedBackground;
+
+/**
+ * @deprecated Provides incorrect spacing between components and out-dated. The functionality is covered by Kotlin UI DSL,
+ * which should be used instead. ComponentPanelBuilder will be removed after moving Kotlin UI DSL into platform API package
+ */
+@Deprecated
 public class ComponentPanelBuilder implements GridBagPanelBuilder {
+
+  public static final int MAX_COMMENT_WIDTH = 70;
 
   private final JComponent myComponent;
 
-  private String myLabelText;
+  private @NlsContexts.Label String myLabelText;
   private boolean myLabelOnTop;
-  private String myCommentText;
+  private @NlsContexts.DetailedDescription String myCommentText;
+  private Icon myCommentIcon;
   private HyperlinkListener myHyperlinkListener = BrowserHyperlinkListener.INSTANCE;
   private boolean myCommentBelow = true;
-  private String myHTDescription;
-  private String myHTLinkText;
+  private boolean myCommentAllowAutoWrapping = true;
+  private @NlsContexts.Tooltip String myHTDescription;
+  private @NlsContexts.LinkLabel String myHTLinkText;
   private Runnable myHTAction;
   private JComponent myTopRightComponent;
   private UI.Anchor myAnchor = UI.Anchor.Center;
@@ -109,8 +117,18 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @return <code>this</code>
    */
   public ComponentPanelBuilder withComment(@NotNull @NlsContexts.DetailedDescription String comment) {
+    return withComment(comment, true);
+  }
+
+  public ComponentPanelBuilder withComment(@NotNull @NlsContexts.DetailedDescription String comment, boolean allowAutoWrapping) {
     myCommentText = comment;
+    myCommentAllowAutoWrapping = allowAutoWrapping;
     valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
+    return this;
+  }
+
+  public ComponentPanelBuilder withCommentIcon(@NotNull Icon icon) {
+    myCommentIcon = icon;
     return this;
   }
 
@@ -130,7 +148,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   /**
    * Adds a custom (one line) component to the top right location of the main component.
    * Useful for adding control like {@link com.intellij.ui.components.labels.LinkLabel} or
-   * {@link com.intellij.ui.components.labels.DropDownLink}
+   * {@link com.intellij.ui.components.DropDownLink}
    *
    * @param topRightComponent the component to be added
    * @return <code>this</code>
@@ -181,7 +199,15 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   @Override
   @NotNull
   public JPanel createPanel() {
-    JPanel panel = new NonOpaquePanel(new GridBagLayout());
+    JPanel panel;
+    if (getDeprecatedBackground() == null) {
+      panel = new NonOpaquePanel(new GridBagLayout());
+    }
+    else {
+      panel = new JPanel(new GridBagLayout());
+      UIUtil.applyDeprecatedBackground(panel);
+      UIUtil.applyDeprecatedBackground(myComponent);
+    }
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
     addToPanel(panel, gc, false);
@@ -222,13 +248,12 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       int top = 8, left = 2, bottom = 0;
 
       if (component instanceof JRadioButton || component instanceof JCheckBox) {
-        top = 0;
         bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
         if (component instanceof JCheckBox) {
           left = UIUtil.getCheckBoxTextHorizontalOffset((JCheckBox)component); // the value returned from this method is already scaled
 
           //noinspection UseDPIAwareInsets
-          return new Insets(top, left, JBUIScale.scale(bottom), 0);
+          return new Insets(0, left, JBUIScale.scale(bottom), 0);
         }
         else {
           left = isMacDefault ? 26 : isWin10 ? 17 : 23;
@@ -261,28 +286,35 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
   }
 
-  @NotNull
-  public static JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText, boolean isCommentBelow) {
-    return createCommentComponent(commentText, isCommentBelow, 70);
+  public static @NotNull JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
+                                                       boolean isCommentBelow) {
+    return createCommentComponent(commentText, isCommentBelow, MAX_COMMENT_WIDTH, true);
   }
 
-  @NotNull
-  public static JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText, boolean isCommentBelow, int maxLineLength) {
-    return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength);
+  public static @NotNull JLabel  createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
+                                                       boolean isCommentBelow,
+                                                       int maxLineLength) {
+    return createCommentComponent(commentText, isCommentBelow, maxLineLength, true);
+  }
+
+  public static @NotNull JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
+                                                       boolean isCommentBelow,
+                                                       int maxLineLength,
+                                                       boolean allowAutoWrapping) {
+    return createCommentComponent(() -> new CommentLabel(""), commentText, isCommentBelow, maxLineLength, allowAutoWrapping);
   }
 
   private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier,
                                                @Nullable @NlsContexts.DetailedDescription String commentText,
                                                boolean isCommentBelow,
-                                               int maxLineLength) {
+                                               int maxLineLength,
+                                               boolean allowAutoWrapping) {
     // todo why our JBLabel cannot render html if render panel without frame (test only)
     boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
-    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(true);
+    JLabel component = labelSupplier.get().setCopyable(isCopyable).setAllowAutoWrapping(allowAutoWrapping);
 
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
-    component.setForeground(UIUtil.getContextHelpForeground());
-    setCommentFont(component);
 
     if (isCopyable) {
       setCommentText(component, commentText, isCommentBelow, maxLineLength);
@@ -294,10 +326,15 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   public static JLabel createNonWrappingCommentComponent(@NotNull @NlsContexts.DetailedDescription String commentText) {
-    JBLabel component = new JBLabel(commentText);
-    component.setForeground(UIUtil.getContextHelpForeground());
-    setCommentFont(component);
-    return component;
+    return new CommentLabel(commentText);
+  }
+
+  public static Font getCommentFont(Font font) {
+    if (ExperimentalUI.isNewUI()) {
+      return JBFont.medium();
+    } else {
+      return RelativeFont.NORMAL.fromResource("ContextHelp.fontSizeOffset", -2).derive(font);
+    }
   }
 
   private static void setCommentText(@NotNull JLabel component,
@@ -305,33 +342,43 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                                      boolean isCommentBelow,
                                      int maxLineLength) {
     if (commentText != null) {
-      String css = "<head><style type=\"text/css\">\n" +
-                         "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}\n" +
-                         "a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}\n" +
-                         "a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}\n" +
-                         "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}\n" +
-                         //"body {background-color:#" + ColorUtil.toHex(JBColor.YELLOW) + ";}\n" + // Left for visual debugging
-                         "</style>\n</head>";
+      @NonNls String css = "<head><style type=\"text/css\">\n" +
+                           "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED) + ";}\n" +
+                           "a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.VISITED) + ";}\n" +
+                           "a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.HOVERED) + ";}\n" +
+                           "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED) + ";}\n" +
+                           //"body {background-color:#" + ColorUtil.toHex(JBColor.YELLOW) + ";}\n" + // Left for visual debugging
+                           "</style>\n</head>";
+      HtmlChunk text = HtmlChunk.raw(commentText);
       if (maxLineLength > 0 && commentText.length() > maxLineLength && isCommentBelow) {
         int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, maxLineLength));
-        component.setText(String.format("<html>" + css + "<body><div width=%d>%s</div></body></html>", width, commentText));
+        text = text.wrapWith(HtmlChunk.div().attr("width", width));
       }
       else {
-        component.setText(String.format("<html>" + css + "<body><div>%s</div></body></html>", commentText));
+        text = text.wrapWith(HtmlChunk.div());
       }
+      component.setText(new HtmlBuilder()
+        .append(HtmlChunk.raw(css))
+        .append(text.wrapWith("body"))
+        .wrapWith("html")
+        .toString());
     }
   }
 
-  private static void setCommentFont(@NotNull JLabel component) {
-    if (SystemInfo.isMac) {
-      Font font = component.getFont();
-      float size = font.getSize2D();
-      Font smallFont = font.deriveFont(size - 2.0f);
-      component.setFont(smallFont);
+  private static class CommentLabel extends JBLabel {
+    private CommentLabel(@NotNull @NlsContexts.Label String text) {
+      super(text);
+      setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
+    }
+
+    @Override
+    public void setUI(LabelUI ui) {
+      super.setUI(ui);
+      setFont(getCommentFont(getFont()));
     }
   }
 
-  private class ComponentPanelImpl extends ComponentPanel {
+  private final class ComponentPanelImpl extends ComponentPanel {
     private final JLabel label;
     private final JLabel comment;
     private final boolean splitColumns;
@@ -347,13 +394,18 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         label = new JLabel("");
       }
 
-      comment = createCommentComponent(() -> new JBLabel("") {
+      comment = createCommentComponent(() -> new CommentLabel("") {
         @Override
         @NotNull
         protected HyperlinkListener createHyperlinkListener() {
           return myHyperlinkListener;
         }
-      }, myCommentText, myCommentBelow, 70);
+      }, myCommentText, myCommentBelow, MAX_COMMENT_WIDTH, myCommentAllowAutoWrapping);
+
+      if (myCommentIcon != null) {
+        comment.setIcon(myCommentIcon);
+      }
+
       comment.setBorder(getCommentBorder());
     }
 
@@ -371,7 +423,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
 
     private void setCommentTextImpl(String commentText) {
-      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow, 70);
+      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow, MAX_COMMENT_WIDTH);
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {
@@ -405,18 +457,18 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         if (!myLabelOnTop) {
           gc.gridx = 0;
           switch (myAnchor) {
-            case Top:
+            case Top -> {
               gc.anchor = GridBagConstraints.PAGE_START;
               gc.insets = JBUI.insets(4, 0, 0, 8);
-              break;
-            case Center:
+            }
+            case Center -> {
               gc.anchor = GridBagConstraints.LINE_START;
               gc.insets = JBUI.insetsRight(8);
-              break;
-            case Bottom:
+            }
+            case Bottom -> {
               gc.anchor = GridBagConstraints.PAGE_END;
               gc.insets = JBUI.insets(0, 0, 4, 8);
-              break;
+            }
           }
           panel.add(label, gc);
         }
@@ -424,7 +476,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
       gc.gridx += myLabelOnTop ? 0 : 1;
       gc.weightx = 1.0;
-      gc.insets = JBUI.emptyInsets();
+      gc.insets = JBInsets.emptyInsets();
       gc.fill = myResizeY ? GridBagConstraints.BOTH : myResizeX ? GridBagConstraints.HORIZONTAL: GridBagConstraints.NONE;
       gc.weighty = myResizeY ? 1.0 : 0.0;
 
@@ -520,7 +572,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         gc.gridy++;
         gc.weightx = 0.0;
         gc.anchor = GridBagConstraints.NORTHWEST;
-        gc.insets = JBUI.emptyInsets();
+        gc.insets = JBInsets.emptyInsets();
 
         comment.setBorder(getCommentBorder());
         panel.add(comment, gc);

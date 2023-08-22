@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -15,15 +15,18 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
+import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.PsiSubstitutorFactoryImpl;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
+import com.intellij.psi.impl.compiled.ClsDecompilerImpl;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.search.MethodSuperSearcher;
 import com.intellij.psi.impl.source.tree.JavaASTFactory;
@@ -34,9 +37,7 @@ import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 @SuppressWarnings("UnusedDeclaration") // Upsource and Kotlin
 public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
   public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
@@ -54,7 +55,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(LanguageASTFactory.INSTANCE, PlainTextLanguage.INSTANCE, new PlainTextASTFactory());
     registerParserDefinition(new PlainTextParserDefinition());
 
-    addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
+    addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
 
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());
@@ -64,11 +65,11 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerApplicationExtensionPoint(ContainerProvider.EP_NAME, ContainerProvider.class);
     addExtension(ContainerProvider.EP_NAME, new JavaContainerProvider());
 
-    myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
+    application.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
 
-    myApplication.registerService(PsiSubstitutorFactory.class, new PsiSubstitutorFactoryImpl());
-    myApplication.registerService(JavaDirectoryService.class, createJavaDirectoryService());
-    myApplication.registerService(JavaVersionService.class, new JavaVersionService());
+    application.registerService(PsiSubstitutorFactory.class, new PsiSubstitutorFactoryImpl());
+    application.registerService(JavaDirectoryService.class, createJavaDirectoryService());
+    application.registerService(JavaVersionService.class, new JavaVersionService());
 
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiPackage.class, new PackagePresentationProvider());
     addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiClass.class, new ClassPresentationProvider());
@@ -92,6 +93,10 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
 
     registerApplicationExtensionPoint(SuperMethodsSearch.EP_NAME, QueryExecutor.class);
     addExtension(SuperMethodsSearch.EP_NAME, new MethodSuperSearcher());
+
+    registerApplicationDynamicExtensionPoint("com.intellij.filetype.decompiler", BinaryFileTypeDecompilers.class);
+    registerApplicationDynamicExtensionPoint("com.intellij.psi.classFileDecompiler", ClassFileDecompilers.Decompiler.class);
+    addExtension(ClassFileDecompilers.getInstance().EP_NAME, new ClsDecompilerImpl());
   }
 
   // overridden in upsource

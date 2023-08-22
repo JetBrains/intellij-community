@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.util.Couple;
@@ -13,7 +13,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
-public class JavaFxAntGenerator {
+public final class JavaFxAntGenerator {
   public static List<SimpleTag> createJarAndDeployTasks(AbstractJavaFxPackager packager,
                                                         String artifactFileName,
                                                         String artifactName,
@@ -268,29 +268,22 @@ public class JavaFxAntGenerator {
                                                      final boolean allowNoNamed) {
     if (!StringUtil.isEmptyOrSpaces(paramFile)) {
       final Properties properties = new Properties();
-      try {
-        final FileInputStream paramsInputStream = new FileInputStream(new File(paramFile));
-        try {
-          properties.load(paramsInputStream);
-          for (Object o : properties.keySet()) {
-            final String propName = (String)o;
-            final String propValue = properties.getProperty(propName);
-            if (!StringUtil.isEmptyOrSpaces(propValue)) {
-              applicationTag
-                .add(new SimpleTag(paramTagName, Couple.of("name", propName), Couple.of("value", propValue)));
-            }
-            else if (allowNoNamed) {
-              applicationTag.add(new SimpleTag("fx:argument", propName) {
-                @Override
-                public void generate(StringBuilder buf) {
-                  buf.append("<").append(getName()).append(">").append(propName).append("</").append(getName()).append(">");
-                }
-              });
-            }
+      try (FileInputStream paramsInputStream = new FileInputStream(paramFile)) {
+        properties.load(paramsInputStream);
+        for (Object o : properties.keySet()) {
+          final String propName = (String)o;
+          final String propValue = properties.getProperty(propName);
+          if (!StringUtil.isEmptyOrSpaces(propValue)) {
+            applicationTag.add(new SimpleTag(paramTagName, Couple.of("name", propName), Couple.of("value", propValue)));
           }
-        }
-        finally {
-          paramsInputStream.close();
+          else if (allowNoNamed) {
+            applicationTag.add(new SimpleTag("fx:argument", propName) {
+              @Override
+              public void generate(StringBuilder buf) {
+                buf.append("<").append(getName()).append(">").append(propName).append("</").append(getName()).append(">");
+              }
+            });
+          }
         }
       }
       catch (IOException ignore) {

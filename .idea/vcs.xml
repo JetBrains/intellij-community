@@ -28,11 +28,11 @@
       <list>
         <IssueNavigationLink>
           <option name="issueRegexp" value="[A-Z]+\-\d+" />
-          <option name="linkRegexp" value="http://youtrack.jetbrains.com/issue/$0" />
+          <option name="linkRegexp" value="https://youtrack.jetbrains.com/issue/$0" />
         </IssueNavigationLink>
         <IssueNavigationLink>
           <option name="issueRegexp" value="EA\-(\d+)" />
-          <option name="linkRegexp" value="http://ea.jetbrains.com/browser/ea_problems/$1" />
+          <option name="linkRegexp" value="https://ea.jetbrains.com/browser/ea_problems/$1" />
         </IssueNavigationLink>
         <IssueNavigationLink>
           <option name="issueRegexp" value="ZD\-(\d+)" />
@@ -44,7 +44,7 @@
         </IssueNavigationLink>
         <IssueNavigationLink>
           <option name="issueRegexp" value="JDK\-\d+" />
-          <option name="linkRegexp" value="https://bugs.openjdk.java.net/browse/$0" />
+          <option name="linkRegexp" value="https://bugs.openjdk.org/browse/$0" />
         </IssueNavigationLink>
       </list>
     </option>

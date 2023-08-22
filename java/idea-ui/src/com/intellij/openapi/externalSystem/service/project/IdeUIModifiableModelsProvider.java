@@ -32,7 +32,7 @@ public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsPr
     myModulesConfigurator = modulesConfigurator;
     myModifiableArtifactModel = modifiableArtifactModel;
 
-    ProjectLibrariesConfigurable configurable = ProjectLibrariesConfigurable.getInstance(project);
+    ProjectLibrariesConfigurable configurable = modulesConfigurator.getProjectStructureConfigurable().getProjectLibrariesConfigurable();
     myLibrariesModel = configurable.getModelProvider().getModifiableModel();
   }
 

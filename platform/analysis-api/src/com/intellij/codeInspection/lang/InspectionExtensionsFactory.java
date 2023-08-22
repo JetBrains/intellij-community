@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lang;
 
 import com.intellij.codeInspection.HTMLComposer;
@@ -24,28 +9,20 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * An extension point to extend the framework under global inspections.
+ */
 public abstract class InspectionExtensionsFactory {
 
   public static final ExtensionPointName<InspectionExtensionsFactory> EP_NAME = ExtensionPointName.create("com.intellij.codeInspection.InspectionExtension");
 
   public abstract GlobalInspectionContextExtension createGlobalInspectionContextExtension();
-  @Nullable
-  public abstract RefManagerExtension createRefManagerExtension(RefManager refManager);
-  @Nullable
-  public abstract HTMLComposerExtension createHTMLComposerExtension(final HTMLComposer composer);
+  public abstract @Nullable RefManagerExtension createRefManagerExtension(RefManager refManager);
+  public abstract @Nullable HTMLComposerExtension createHTMLComposerExtension(final HTMLComposer composer);
 
   public abstract boolean isToCheckMember(@NotNull PsiElement element, @NotNull String id);
 
-  @Nullable
-  public abstract String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
-
-  /**
-   * @deprecated use {@link #isProjectConfiguredToRunInspections(Project, boolean, Runnable)}
-   */
-  @Deprecated
-  public boolean isProjectConfiguredToRunInspections(@NotNull Project project, boolean online) {
-    return true;
-  }
+  public abstract @Nullable String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
 
   /**
    * @return true to allow inspections run locally or false to stop it. The {@param rerunAction}
@@ -54,6 +31,6 @@ public abstract class InspectionExtensionsFactory {
   public boolean isProjectConfiguredToRunInspections(@NotNull Project project,
                                                      boolean online,
                                                      @NotNull Runnable rerunAction) {
-    return isProjectConfiguredToRunInspections(project, online);
+    return true;
   }
 }

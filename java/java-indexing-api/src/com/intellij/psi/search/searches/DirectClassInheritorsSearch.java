@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.lang.Language;
@@ -11,8 +11,24 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+/**
+ * Search for <em>direct</em> inheritors of given class.
+ * <p/>
+ * For given hierarchy
+ * <pre>
+ *   class A {}
+ *   class B extends A {}
+ *   class C extends B {}
+ * </pre>
+ * searching for inheritors of {@code A} returns {@code B}.
+ * <p/>
+ * See {@link ClassInheritorsSearch} to search for all inheritors.
+ *
+ * @see com.intellij.psi.util.InheritanceUtil
+ */
+public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.directClassInheritorsSearch");
   public static final DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
 
@@ -55,6 +71,11 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
       return myIncludeAnonymous;
     }
 
+    @Nullable
+    public ClassInheritorsSearch.SearchParameters getOriginalParameters() {
+      return null;
+    }
+
     @ApiStatus.Experimental
     public boolean shouldSearchInLanguage(@NotNull Language language) {
       return true;
@@ -83,17 +104,5 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
   @NotNull
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     return INSTANCE.createUniqueResultsQuery(parameters);
-  }
-
-  /**
-   * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
-   */
-  @NotNull
-  @Deprecated
-  public static Query<PsiClass> search(@NotNull PsiClass aClass,
-                                       @NotNull SearchScope scope,
-                                       boolean includeAnonymous,
-                                       final boolean checkInheritance) {
-    return search(aClass, scope, includeAnonymous);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.TabbedPaneImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,7 @@ public class CompareBranchesDialog {
 
   @NotNull private final JPanel myLogPanel;
   @NotNull private final TabbedPaneImpl myTabbedPane;
-  @NotNull private final String myTitle;
+  @NotNull private final @NlsContexts.DialogTitle String myTitle;
 
   @NotNull private final WindowWrapper.Mode myMode;
 
@@ -35,24 +36,23 @@ public class CompareBranchesDialog {
                                boolean dialog) {
     myProject = helper.getProject();
 
-    String rootString;
     if (compareInfo.getRepositories().size() == 1 && helper.getRepositoryManager().moreThanOneRoot()) {
-      rootString = " in root " + DvcsUtil.getShortRepositoryName(initialRepo);
+      myTitle = DvcsBundle.message("compare.branches.dialog.title.branch.with.branch.in.root",
+                                   currentBranchName, branchName, DvcsUtil.getShortRepositoryName(initialRepo));
     }
     else {
-      rootString = "";
+      myTitle = DvcsBundle.message("compare.branches.dialog.title.branch.with.branch", currentBranchName, branchName);
     }
-    myTitle = String.format("Comparing %s with %s%s", currentBranchName, branchName, rootString);
     myMode = dialog ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
 
     CompareBranchesDiffPanel diffPanel = new CompareBranchesDiffPanel(helper.getProject(), helper.getDvcsCompareSettings(),
-                                                    branchName, currentBranchName);
+                                                                      branchName, currentBranchName);
     diffPanel.setCompareInfo(compareInfo);
     myLogPanel = new CompareBranchesLogPanel(helper, branchName, currentBranchName, compareInfo, initialRepo);
 
     myTabbedPane = new TabbedPaneImpl(SwingConstants.TOP);
-    myTabbedPane.addTab("Log", AllIcons.Vcs.Branch, myLogPanel);
-    myTabbedPane.addTab("Files", AllIcons.Actions.ListChanges, diffPanel);
+    myTabbedPane.addTab(DvcsBundle.message("compare.branches.tab.name.log"), AllIcons.Vcs.Branch, myLogPanel);
+    myTabbedPane.addTab(DvcsBundle.message("compare.branches.tab.name.files"), AllIcons.Actions.ListChanges, diffPanel);
     myTabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
   }
 

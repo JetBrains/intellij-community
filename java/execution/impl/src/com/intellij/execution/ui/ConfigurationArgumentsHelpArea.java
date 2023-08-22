@@ -16,10 +16,14 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
@@ -44,14 +48,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new MyCopyAction());
-    myHelpArea.addMouseListener(
-      new PopupHandler(){
-        @Override
-        public void invokePopup(final Component comp,final int x,final int y){
-          ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
-        }
-      }
-    );
+    PopupHandler.installPopupMenu(myHelpArea, group, "ConfigurationHelpAreaPopup");
 
     FixedSizeButton copyButton = new FixedSizeButton(22);
     copyButton.setIcon(PlatformIcons.COPY_ICON);
@@ -74,7 +71,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
     myHelpArea.setText(text);
   }
 
-  public void setLabelText(final String text) {
+  public void setLabelText(final @NlsContexts.Label String text) {
     myLabel.setText(text);
   }
 

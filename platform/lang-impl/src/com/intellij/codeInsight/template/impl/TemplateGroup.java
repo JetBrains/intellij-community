@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.options.CompoundScheme;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TemplateGroup extends CompoundScheme<TemplateImpl> {
+public final class TemplateGroup extends CompoundScheme<TemplateImpl> {
   private final String myReplace;
 
   private boolean isModified = true;
@@ -33,20 +21,20 @@ public class TemplateGroup extends CompoundScheme<TemplateImpl> {
     isModified = modified;
   }
 
-  public TemplateGroup(final String name) {
+  public TemplateGroup(final @NlsSafe String name) {
     this(name, null);
   }
 
-  public TemplateGroup(String name, @Nullable String replace) {
+  public TemplateGroup(@NlsSafe String name, @NlsSafe @Nullable String replace) {
     super(name);
     myReplace = replace;
   }
 
-  public String getReplace() {
+  public @NlsSafe String getReplace() {
     return myReplace;
   }
 
-  public boolean containsTemplate(@NotNull final String key, @Nullable final String id) {
+  public boolean containsTemplate(@NotNull @NlsSafe final String key, @Nullable @NonNls final String id) {
     return ContainerUtil.or(getElements(), template -> key.equals(template.getKey()) || id != null && id.equals(template.getId()));
   }
 

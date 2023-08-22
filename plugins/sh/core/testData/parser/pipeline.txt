@@ -1,0 +1,117 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('ipseckey')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('-n')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('monitor')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>)('>')
+          PsiWhiteSpace(' ')
+          VARIABLE
+            PsiElement(var)('$MONITOR_LOG')
+    PsiWhiteSpace(' ')
+    PsiElement(;)(';')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('IPSECKEY_PID')
+      PsiElement(=)('=')
+      VARIABLE
+        PsiElement(var)('$!')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('ipseckey')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('-n')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('monitor')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>)('>')
+          PsiWhiteSpace(' ')
+          VARIABLE
+            PsiElement(var)('$MONITOR_LOG')
+    PsiWhiteSpace(' ')
+    PsiElement(&)('&')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('IPSECKEY_PID')
+      PsiElement(=)('=')
+      VARIABLE
+        PsiElement(var)('$!')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# Now try some telnets to trigger port and unique policy.')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# port-only for DST3')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('telnet')
+      PsiWhiteSpace(' ')
+      VARIABLE
+        PsiElement(var)('$TEST_REMOTE_DST3')
+    PsiWhiteSpace(' ')
+    PsiElement(&)('&')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('tpid')
+      PsiElement(=)('=')
+      VARIABLE
+        PsiElement(var)('$!')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    FUNCTION_DEFINITION
+      PsiElement(word)('foo')
+      PsiElement(()('(')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      BLOCK
+        PsiElement({)('{')
+        COMPOUND_LIST
+          PsiElement(\n)('\n')
+          PsiWhiteSpace('  ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(OPEN_QUOTE)('"')
+              PsiElement(STRING_CONTENT)('test')
+              PsiElement(CLOSE_QUOTE)('"')
+          PsiWhiteSpace(' ')
+          PsiElement(|&)('|&')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('tee')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$Log')
+          PsiElement(\n)('\n')
+        PsiElement(})('}')

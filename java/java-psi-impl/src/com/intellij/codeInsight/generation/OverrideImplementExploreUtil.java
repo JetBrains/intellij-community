@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.MemberImplementorExplorer;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -13,6 +12,8 @@ import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
 public class OverrideImplementExploreUtil {
   @NotNull
@@ -79,7 +80,7 @@ public class OverrideImplementExploreUtil {
 
       Map<MethodSignature, PsiMethod> map = hisClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ? abstracts : concretes;
       fillMap(signature, method, map);
-      if (isDefaultMethod(aClass, method)) {
+      if (shouldAppearInOverrideList(aClass, method)) {
         fillMap(signature, method, concretes);
       }
     }
@@ -125,12 +126,8 @@ public class OverrideImplementExploreUtil {
     List<? extends MemberImplementorExplorer> getExplorers();
   }
 
-  private static final NullableLazyValue<MemberImplementorExplorersProvider> ourExplorersProvider = new VolatileNullableLazyValue<MemberImplementorExplorersProvider>() {
-    @Override
-    protected MemberImplementorExplorersProvider compute() {
-      return ServiceManager.getService(MemberImplementorExplorersProvider.class);
-    }
-  };
+  private static final NullableLazyValue<MemberImplementorExplorersProvider> ourExplorerProvider =
+    volatileLazyNullable(() -> ApplicationManager.getApplication().getService(MemberImplementorExplorersProvider.class));
 
   private static void collectMethodsToImplement(@NotNull PsiClass aClass,
                                                 @NotNull Map<MethodSignature, PsiMethod> abstracts,
@@ -144,7 +141,7 @@ public class OverrideImplementExploreUtil {
       if (concrete == null
           || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList())
           || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)
-          || isDefaultMethod(aClass, abstractOne)) {
+          || shouldAppearInOverrideList(aClass, abstractOne)) {
         if (finals.get(signature) == null) {
           PsiSubstitutor subst = correctSubstitutor(abstractOne, signature.getSubstitutor());
           CandidateInfo info = new CandidateInfo(abstractOne, subst);
@@ -153,7 +150,7 @@ public class OverrideImplementExploreUtil {
       }
     }
 
-    MemberImplementorExplorersProvider explorersProvider = ourExplorersProvider.getValue();
+    MemberImplementorExplorersProvider explorersProvider = ourExplorerProvider.getValue();
     if (explorersProvider != null) {
       for (final MemberImplementorExplorer implementor : explorersProvider.getExplorers()) {
         for (final PsiMethod method : implementor.getMethodsToImplement(aClass)) {
@@ -163,6 +160,17 @@ public class OverrideImplementExploreUtil {
         }
       }
     }
+  }
+
+  private static boolean shouldAppearInOverrideList(@NotNull PsiClass aClass, PsiMethod abstractOne) {
+    return isDefaultMethod(aClass, abstractOne) ||
+           // abstract methods from java.lang.Record (equals/hashCode/toString) are implicitly implemented in subclasses
+           // so it could be reasonable to expect them in 'override' method dialog
+           belongsToRecord(abstractOne);
+  }
+
+  static boolean belongsToRecord(@NotNull PsiMethod method) {
+    return CommonClassNames.JAVA_LANG_RECORD.equals(Objects.requireNonNull(method.getContainingClass()).getQualifiedName());
   }
 
   private static boolean preferLeftForImplement(@NotNull PsiMethod left, @NotNull PsiMethod right) {

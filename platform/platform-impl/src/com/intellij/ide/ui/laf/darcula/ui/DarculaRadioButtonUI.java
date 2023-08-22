@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.LafIconLookup;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.metal.MetalRadioButtonUI;
-import javax.swing.text.View;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 
@@ -19,7 +19,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isMultiLineHTML;
  * @author Konstantin Bulenkov
  */
 public class DarculaRadioButtonUI extends MetalRadioButtonUI {
-  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(19)).asUIResource();
+  private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(19)).asUIResource();
 
   private final PropertyChangeListener textChangedListener = e -> updateTextPosition((AbstractButton)e.getSource());
 
@@ -67,60 +67,34 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
-    Dimension size = c.getSize();
+    AbstractButton button = (AbstractButton)c;
+    AbstractButtonLayout layout = createLayout(button, button.getSize());
 
-    AbstractButton b = (AbstractButton)c;
-    Rectangle viewRect = updateViewRect(b, new Rectangle(size));
-    Rectangle iconRect = new Rectangle();
-    Rectangle textRect = new Rectangle();
-
-    Font f = c.getFont();
-    g.setFont(f);
-    FontMetrics fm = UIUtilities.getFontMetrics(c, g, f);
-
-    String text = SwingUtilities.layoutCompoundLabel(
-      c, fm, b.getText(), getDefaultIcon(),
-      b.getVerticalAlignment(), b.getHorizontalAlignment(),
-      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-      viewRect, iconRect, textRect, b.getIconTextGap());
-
-    if (c.isOpaque()) {
-      g.setColor(c.getBackground());
-      g.fillRect(0, 0, size.width, size.height);
-    }
-
-    paintIcon(c, g, viewRect, iconRect);
-    drawText(b, g, text, textRect, fm);
+    layout.paint(g, getDisabledTextColor(), getMnemonicIndex(button));
+    paintFocus(button, g, layout.textRect);
+    paintIcon(c, g, layout.iconRect);
   }
 
-  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
-    if (!(b.getBorder() instanceof DarculaRadioButtonBorder)) {
-      JBInsets.removeFrom(viewRect, b.getInsets());
-    }
-    return viewRect;
+  protected boolean removeInsetsBeforeLayout(AbstractButton b) {
+    return !(b.getBorder() instanceof DarculaRadioButtonBorder);
   }
 
-  protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
+  protected void paintIcon(JComponent c, Graphics2D g, Rectangle iconRect) {
     Icon icon = LafIconLookup.getIcon("radio", ((AbstractButton)c).isSelected(), c.hasFocus(), c.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
-  protected void drawText(AbstractButton b, Graphics2D g, String text, Rectangle textRect, FontMetrics fm) {
-    if (text != null) {
-      View v = (View)b.getClientProperty(BasicHTML.propertyKey);
-      if (v != null) {
-        v.paint(g, textRect);
-      }
-      else {
-        g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        UIUtilities.drawStringUnderlineCharAt(b, g, text, getMnemonicIndex(b), textRect.x, textRect.y + fm.getAscent());
-      }
-    }
-
+  private void paintFocus(AbstractButton b, Graphics2D g, Rectangle textRect) {
     if (b.hasFocus() && b.isFocusPainted() &&
         textRect.width > 0 && textRect.height > 0) {
       paintFocus(g, textRect, b.getSize());
     }
+  }
+
+  @Override
+  public int getBaseline(JComponent c, int width, int height) {
+    AbstractButtonLayout layout = createLayout(c, new Dimension(width, height));
+    return layout.getBaseline();
   }
 
   protected int getMnemonicIndex(AbstractButton b) {
@@ -129,17 +103,13 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension dimension = computeOurPreferredSize(c);
-    return dimension != null ? dimension : super.getPreferredSize(c);
+    AbstractButtonLayout layout = createLayout(c, new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
+    return layout.getPreferredSize();
   }
 
   @Override
   public Dimension getMaximumSize(JComponent c) {
     return getPreferredSize(c);
-  }
-
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return DarculaCheckBoxUI.computeCheckboxPreferredSize(c, getDefaultIcon());
   }
 
   @Override
@@ -148,5 +118,10 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
+  }
+
+  private @NotNull AbstractButtonLayout createLayout(JComponent c, Dimension size) {
+    AbstractButton button = (AbstractButton)c;
+    return new AbstractButtonLayout(button, size, removeInsetsBeforeLayout(button), getDefaultIcon());
   }
 }

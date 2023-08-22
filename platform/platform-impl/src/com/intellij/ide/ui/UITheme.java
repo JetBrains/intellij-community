@@ -1,111 +1,236 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.gson.Gson;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.fasterxml.jackson.jr.ob.JSON;
+import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
-import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.icons.ImageDataByPathLoader;
+import com.intellij.ui.icons.ImageDataByPathLoaderKt;
+import com.intellij.ui.svg.SvgAttributePatcher;
+import com.intellij.ui.svg.SvgKt;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.InsecureHashBuilder;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.IconUIResource;
 import java.awt.*;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.lang.reflect.Constructor;
+import java.util.*;
 import java.util.function.Function;
-
-import static com.intellij.util.ui.JBUI.Borders.customLine;
-import static com.intellij.util.ui.JBUI.asUIResource;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UITheme {
+public final class UITheme {
   public static final String FILE_EXT_ENDING = ".theme.json";
 
   private static final Logger LOG = Logger.getInstance(UITheme.class);
 
-  private String name;
-  private boolean dark;
-  private String author;
-  private String id;
-  private String editorScheme;
-  private Map<String, Object> ui;
-  private Map<String, Object> icons;
-  private IconPathPatcher patcher;
-  private Map<String, Object> background;
-  private Map<String, Object> colors;
-  private ClassLoader providerClassLoader = getClass().getClassLoader();
-  private String editorSchemeName;
-  private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
+  private final UIThemeBean bean;
 
-  private UITheme() { }
+  private static final String OS_MACOS_KEY = "os.mac";
+  private static final String OS_WINDOWS_KEY = "os.windows";
+  private static final String OS_LINUX_KEY = "os.linux";
+  private static final String OS_DEFAULT_KEY = "os.default";
+
+  private UITheme(@NotNull UIThemeBean bean) {
+    this.bean = bean;
+  }
 
   public String getName() {
-    return name;
+    return bean.name;
+  }
+
+  public String getDisplayName() {
+    if (bean.resourceBundle != null && bean.nameKey != null && bean.providerClassLoader != null) {
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(bean.providerClassLoader, bean.resourceBundle);
+      return AbstractBundle.message(bundle, bean.nameKey);
+    }
+    return getName();
   }
 
   public boolean isDark() {
-    return dark;
+    return bean.dark;
   }
 
   public String getAuthor() {
-    return author;
+    return bean.author;
   }
 
-  @NotNull
-  public static UITheme loadFromJson(@NotNull InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
-    return loadFromJson(stream, themeId, provider, s -> s);
-  }
+  // it caches classes - must be not extracted to util class
+  // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important,
+  // for example, button label font color for light theme is not white, but black
+  private static final JSON JSON_READER = JSON.builder()
+    .enable(JSON.Feature.READ_ONLY)
+    .disable(JSON.Feature.USE_DEFERRED_MAPS)
+    .disable(JSON.Feature.HANDLE_JAVA_BEANS)
+    .build();
 
-  @NotNull
-  public static UITheme loadFromJson(@NotNull InputStream stream,
-                                     @NotNull String themeId,
-                                     @Nullable ClassLoader provider,
-                                     @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
-    UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
+  @ApiStatus.Internal
+  public static @NotNull UITheme loadFromJson(@NotNull InputStream stream, @NotNull @NonNls String themeId) throws IOException {
+    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, stream);
     theme.id = themeId;
+    return postProcessTheme(theme, findParentTheme(theme), null, Function.identity());
+  }
 
+  public static @NotNull UITheme loadFromJson(byte[] data,
+                                              @NotNull @NonNls String themeId,
+                                              @Nullable ClassLoader provider,
+                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
+    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, data);
+    theme.id = themeId;
+    return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
+  }
+
+  public static @NotNull UITheme loadFromJson(@Nullable UITheme parentTheme,
+                                              byte[] data,
+                                              @NotNull @NonNls String themeId,
+                                              @Nullable ClassLoader provider,
+                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
+    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, data);
+    theme.id = themeId;
+    return postProcessTheme(theme, parentTheme, provider, iconsMapper);
+  }
+
+  private static @NotNull UITheme postProcessTheme(@NotNull UIThemeBean theme,
+                                                   @Nullable UITheme parentTheme,
+                                                   @Nullable ClassLoader provider,
+                                                   @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
+    normalizeKeyPaths(theme);
+    if (parentTheme != null) {
+      UIThemeBean.Companion.importFromParentTheme(theme, parentTheme.bean);
+    }
+    UIThemeBean.Companion.putDefaultsIfAbsent(theme);
+    return new UITheme(loadFromJson(theme, provider, iconsMapper));
+  }
+
+  private static @Nullable UITheme findParentTheme(@NotNull UIThemeBean theme) {
+    String parentTheme = theme.parentTheme;
+    if (parentTheme != null) {
+      for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
+        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+          UITheme uiTheme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
+          if (uiTheme.getName().equals(parentTheme)) {
+            return uiTheme;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Flatten
+   * <pre>{@code "Editor": { "SearchField" : { "borderInsets" : "7,10,7,8" } }}</pre>
+   * to
+   * <pre>{@code "Editor.SearchField.borderInsets" : "7,10,7,8"}</pre>
+   * in internal representation.
+   * <p>
+   * We also resolve per-OS keys here:
+   * <pre> {@code
+   *  "Menu.borderColor": {
+   *      "os.default": "Grey12",
+   *      "os.windows": "Blue12"
+   *  }
+   * }</pre>
+   * <p>
+   * This is helpful when we need to check if some key was already set in {@link UIThemeBean.Companion#putDefaultsIfAbsent},
+   * and to make overriding parentTheme keys independent of used form.
+   * <p>
+   * NB: we intentionally do not expand "*" patterns here.
+   */
+  private static void normalizeKeyPaths(@NotNull UIThemeBean theme) {
+    if (theme.ui == null) {
+      return;
+    }
+
+    Map<String, Object> result = new LinkedHashMap<>();
+    for (Map.Entry<String, ?> entry : theme.ui.entrySet()) {
+      normalizeKeyValue(entry.getKey(), entry.getValue(), result);
+    }
+    theme.ui = result;
+  }
+
+  private static void normalizeKeyValue(@NotNull String keyPrefix,
+                                        @NotNull Object value,
+                                        @NotNull Map<String, Object> result) {
+    if (value instanceof Map) {
+      @SuppressWarnings("unchecked") Map<String, Object> valueMap = (Map<String, Object>)value;
+
+      Object osValue = getOSCustomization(valueMap);
+      if (osValue == null) {
+        for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+          String uiKey = createUIKey(keyPrefix, entry.getKey());
+          normalizeKeyValue(uiKey, entry.getValue(), result);
+        }
+      }
+      else {
+        normalizeKeyValue(keyPrefix, osValue, result);
+      }
+    }
+    else {
+      result.put(keyPrefix, value);
+    }
+  }
+
+  private static @NotNull UIThemeBean loadFromJson(@NotNull UIThemeBean theme,
+                                                   @Nullable ClassLoader provider,
+                                                   @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     if (provider != null) {
       theme.providerClassLoader = provider;
     }
 
+    initializeNamedColors(theme);
+    PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
+
+    Map<String, ?> colorsOnSelection = theme.iconColorsOnSelection;
+    if (colorsOnSelection != null && !colorsOnSelection.isEmpty()) {
+      Map<String, String> colors = new HashMap<>(colorsOnSelection.size());
+      Set<String> alphaColors = new HashSet<>(colorsOnSelection.size());
+      for (Map.Entry<String, ?> entry : colorsOnSelection.entrySet()) {
+        String value = entry.getValue().toString();
+        colors.put(entry.getKey(), value);
+        alphaColors.add(value);
+      }
+
+      theme.selectionColorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
+        @Override
+        public @Nullable SvgAttributePatcher attributeForPath(@Nullable String path) {
+          PaletteScope scope = paletteScopeManager.getScopeByPath(path);
+          InsecureHashBuilder hash = new InsecureHashBuilder()
+            .stringMap(colors)
+            .update(scope == null ? ArrayUtilRt.EMPTY_LONG_ARRAY : scope.digest());
+          return SvgKt.newSvgPatcher(hash.build(), colors, color -> alphaColors.contains(color) ? 255 : null);
+        }
+      };
+    }
+
     if (theme.icons != null && !theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
-        @Nullable
         @Override
-        public String patchPath(@NotNull String path, ClassLoader classLoader) {
-          if (classLoader instanceof PluginClassLoader) {
-            String pluginId = ((PluginClassLoader)classLoader).getPluginId().getIdString();
+        public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+          if (classLoader instanceof PluginAwareClassLoader) {
+            String pluginId = ((PluginAwareClassLoader)classLoader).getPluginId().getIdString();
             Object icons = theme.icons.get(pluginId);
             if (icons instanceof Map) {
-              Object pluginIconPath = ((Map)icons).get(path);
+              @SuppressWarnings("unchecked")
+              Object pluginIconPath = ((Map<String, Object>)icons).get(path);
               if (pluginIconPath instanceof String) {
                 return iconsMapper.apply((String)pluginIconPath);
               }
@@ -113,41 +238,48 @@ public class UITheme {
           }
 
           Object value = theme.icons.get(path);
+          if (value == null && path.charAt(0) != '/') {
+            value = theme.icons.get('/' + path);
+          }
           return value instanceof String ? iconsMapper.apply((String)value) : null;
         }
 
-        @Nullable
         @Override
-        public ClassLoader getContextClassLoader(@NotNull String path, ClassLoader originalClassLoader) {
+        public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
           return theme.providerClassLoader;
         }
       };
 
       Object palette = theme.icons.get("ColorPalette");
-      if (palette instanceof Map) {
-        Map colors = (Map)palette;
-        PaletteScopeManager paletteScopeManager = new PaletteScopeManager();
+      if (palette instanceof @SuppressWarnings("rawtypes")Map colors) {
         for (Object o : colors.keySet()) {
           String colorKey = o.toString();
           PaletteScope scope = paletteScopeManager.getScope(colorKey);
-          if (scope == null) continue;
-          String key = toColorString(colorKey, theme.isDark());
+          if (scope == null) {
+            continue;
+          }
+
+          String key = toColorString(colorKey, theme.dark);
           Object v = colors.get(colorKey);
-          if (v instanceof String) {
-            String value = (String)v;
+          if (v instanceof String value) {
+            Object namedColor = theme.colors != null ? theme.colors.get(value) : null;
+            if (namedColor instanceof String) {
+              value = (String)namedColor;
+            }
             String alpha = null;
             if (value.length() == 9) {
               alpha = value.substring(7);
               value = value.substring(0, 7);
             }
-            if (ColorUtil.fromHex(key, null) != null && ColorUtil.fromHex(value, null) != null) {
+            if (ColorHexUtil.fromHex(key, null) != null && ColorHexUtil.fromHex(value, null) != null) {
               scope.newPalette.put(key, value);
               int fillTransparency = -1;
               if (alpha != null) {
                 try {
                   fillTransparency = Integer.parseInt(alpha, 16);
                 }
-                catch (Exception ignore) { }
+                catch (Exception ignore) {
+                }
               }
               if (fillTransparency != -1) {
                 scope.alphas.put(value, fillTransparency);
@@ -157,56 +289,10 @@ public class UITheme {
         }
 
         theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
-          @Nullable
           @Override
-          public SVGLoader.SvgElementColorPatcher forURL(@Nullable URL url) {
-            PaletteScope scope = paletteScopeManager.getScopeByURL(url);
-            if (scope == null) {
-              return null;
-            }
-
-            byte[] digest = scope.digest();
-            Map<String, String> newPalette = scope.newPalette;
-            Map<String, Integer> alphas = scope.alphas;
-            return newPatcher(digest, newPalette, alphas);
-          }
-
-          @Nullable
-          private SVGLoader.SvgElementColorPatcher newPatcher(byte @Nullable [] digest,
-                                                              @NotNull Map<String, String> newPalette,
-                                                              @NotNull Map<String, Integer> alphas) {
-            if (newPalette.isEmpty()) {
-              return null;
-            }
-
-            return new SVGLoader.SvgElementColorPatcher() {
-              @Override
-              public byte[] digest() {
-                return digest;
-              }
-
-              @Override
-              public void patchColors(@NotNull Element svg) {
-                String fill = svg.getAttribute("fill");
-                if (fill != null) {
-                  String newFill = newPalette.get(StringUtil.toLowerCase(fill));
-                  if (newFill != null) {
-                    svg.setAttribute("fill", newFill);
-                    if (alphas.get(newFill) != null) {
-                      svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(alphas.get(newFill)) / 255f)));
-                    }
-                  }
-                }
-                NodeList nodes = svg.getChildNodes();
-                int length = nodes.getLength();
-                for (int i = 0; i < length; i++) {
-                  Node item = nodes.item(i);
-                  if (item instanceof Element) {
-                    patchColors((Element)item);
-                  }
-                }
-              }
-            };
+          public @Nullable SvgAttributePatcher attributeForPath(@Nullable String path) {
+            PaletteScope scope = paletteScopeManager.getScopeByPath(path);
+            return scope == null ? null : SvgKt.newSvgPatcher(scope.digest(), scope.newPalette, scope.alphas::get);
           }
         };
       }
@@ -215,89 +301,146 @@ public class UITheme {
     return theme;
   }
 
-  private static String toColorString(String fillValue, boolean darkTheme) {
-    if (darkTheme && fillValue.startsWith("Actions.") && !fillValue.endsWith(".Dark")) {
-      fillValue += ".Dark";
+  private static void initializeNamedColors(UIThemeBean theme) {
+    Map<String, Object> map = theme.colors;
+    if (map == null) {
+      return;
     }
-    String color = colorPalette.get(fillValue);
-    return color != null ? StringUtil.toLowerCase(color) : StringUtil.toLowerCase(fillValue);
+
+    Set<String> namedColors = map.keySet();
+    for (String key : namedColors) {
+      Object value = map.get(key);
+      if (value instanceof String && !((String)value).startsWith("#")) {
+        Object delegateColor = map.get(value);
+        if (delegateColor != null) {
+          map.put(key, delegateColor);
+        }
+        else {
+          LOG.warn("Can't parse '" + value + "' for key '" + key + "'");
+          map.put(key, Gray.TRANSPARENT);
+        }
+      }
+    }
+
+    if (theme.iconColorsOnSelection != null) {
+      HashSet<Map.Entry<String, Object>> entries = new HashSet<>(theme.iconColorsOnSelection.entrySet());
+      theme.iconColorsOnSelection.clear();
+      for (Map.Entry<String, Object> entry : entries) {
+        Object key = entry.getKey();
+        Object value = entry.getValue();
+
+        if (!key.toString().startsWith("#")) key = map.get(key);
+        if (!value.toString().startsWith("#")) value = map.get(value);
+
+        if (key.toString().startsWith("#") & value.toString().startsWith("#")) {
+          theme.iconColorsOnSelection.put(key.toString(), value);
+        }
+      }
+    }
   }
 
-  private static final @NonNls Map<String, String> colorPalette = new HashMap<>();
+  private static String toColorString(@NotNull String key, boolean darkTheme) {
+    if (darkTheme && colorPalette.get(key + ".Dark") != null) {
+      key += ".Dark";
+    }
+    String color = colorPalette.get(key);
+    return color == null ? key.toLowerCase(Locale.ENGLISH) : color.toLowerCase(Locale.ENGLISH);
+  }
+
+  @TestOnly
+  public static Map<String, String> getColorPalette() {
+    return colorPalette;
+  }
+
+  private static final @NonNls Map<String, String> colorPalette;
+
   static {
-    colorPalette.put("Actions.Red", "#DB5860");
-    colorPalette.put("Actions.Red.Dark", "#C75450");
-    colorPalette.put("Actions.Yellow", "#EDA200");
-    colorPalette.put("Actions.Yellow.Dark", "#F0A732");
-    colorPalette.put("Actions.Green", "#59A869");
-    colorPalette.put("Actions.Green.Dark", "#499C54");
-    colorPalette.put("Actions.Blue", "#389FD6");
-    colorPalette.put("Actions.Blue.Dark", "#3592C4");
-    colorPalette.put("Actions.Grey", "#6E6E6E");
-    colorPalette.put("Actions.Grey.Dark", "#AFB1B3");
-    colorPalette.put("Actions.GreyInline", "#7F8B91");
-    colorPalette.put("Actions.GreyInline.Dark", "#7F8B91");
-    colorPalette.put("Objects.Grey", "#9AA7B0");
-    colorPalette.put("Objects.Blue", "#40B6E0");
-    colorPalette.put("Objects.Green", "#62B543");
-    colorPalette.put("Objects.Yellow", "#F4AF3D");
-    colorPalette.put("Objects.YellowDark", "#D9A343");
-    colorPalette.put("Objects.Purple", "#B99BF8");
-    colorPalette.put("Objects.Pink", "#F98B9E");
-    colorPalette.put("Objects.Red", "#F26522");
-    colorPalette.put("Objects.RedStatus", "#E05555");
-    colorPalette.put("Objects.GreenAndroid", "#A4C639");
-    colorPalette.put("Objects.BlackText", "#231F20");
-    colorPalette.put("Checkbox.Background.Default", "#FFFFFF");
-    colorPalette.put("Checkbox.Background.Default.Dark", "#43494A");
-    colorPalette.put("Checkbox.Background.Disabled", "#F2F2F2");
-    colorPalette.put("Checkbox.Background.Disabled.Dark", "#3C3F41");
-    colorPalette.put("Checkbox.Border.Default", "#878787");
-    colorPalette.put("Checkbox.Border.Default.Dark", "#6B6B6B");
-    colorPalette.put("Checkbox.Border.Disabled", "#BDBDBD");
-    colorPalette.put("Checkbox.Border.Disabled.Dark", "#545556");
-    colorPalette.put("Checkbox.Focus.Thin.Default", "#7B9FC7");
-    colorPalette.put("Checkbox.Focus.Thin.Default.Dark", "#466D94");
-    colorPalette.put("Checkbox.Focus.Wide", "#97C3F3");
-    colorPalette.put("Checkbox.Focus.Wide.Dark", "#3D6185");
-    colorPalette.put("Checkbox.Foreground.Disabled", "#ABABAB");
-    colorPalette.put("Checkbox.Foreground.Disabled.Dark", "#606060");
-    colorPalette.put("Checkbox.Background.Selected", "#4D89C9");
-    colorPalette.put("Checkbox.Background.Selected.Dark", "#43494A");
-    colorPalette.put("Checkbox.Border.Selected", "#4982CC");
-    colorPalette.put("Checkbox.Border.Selected.Dark", "#6B6B6B");
-    colorPalette.put("Checkbox.Foreground.Selected", "#FFFFFF");
-    colorPalette.put("Checkbox.Foreground.Selected.Dark", "#A7A7A7");
-    colorPalette.put("Checkbox.Focus.Thin.Selected", "#ACCFF7");
-    colorPalette.put("Checkbox.Focus.Thin.Selected.Dark", "#466D94");
+    colorPalette = Map.ofEntries(
+      Map.entry("Actions.Red", "#DB5860"),
+      Map.entry("Actions.Red.Dark", "#C75450"),
+      Map.entry("Actions.Yellow", "#EDA200"),
+      Map.entry("Actions.Yellow.Dark", "#F0A732"),
+      Map.entry("Actions.Green", "#59A869"),
+      Map.entry("Actions.Green.Dark", "#499C54"),
+      Map.entry("Actions.Blue", "#389FD6"),
+      Map.entry("Actions.Blue.Dark", "#3592C4"),
+      Map.entry("Actions.Grey", "#6E6E6E"),
+      Map.entry("Actions.Grey.Dark", "#AFB1B3"),
+      Map.entry("Actions.GreyInline", "#7F8B91"),
+      Map.entry("Actions.GreyInline.Dark", "#7F8B91"),
+      Map.entry("Objects.Grey", "#9AA7B0"),
+      Map.entry("Objects.Blue", "#40B6E0"),
+      Map.entry("Objects.Green", "#62B543"),
+      Map.entry("Objects.Yellow", "#F4AF3D"),
+      Map.entry("Objects.YellowDark", "#D9A343"),
+      Map.entry("Objects.Purple", "#B99BF8"),
+      Map.entry("Objects.Pink", "#F98B9E"),
+      Map.entry("Objects.Red", "#F26522"),
+      Map.entry("Objects.RedStatus", "#E05555"),
+      Map.entry("Objects.GreenAndroid", "#3DDC84"),
+      Map.entry("Objects.BlackText", "#231F20"),
+      Map.entry("Checkbox.Background.Default", "#FFFFFF"),
+      Map.entry("Checkbox.Background.Default.Dark", "#43494A"),
+      Map.entry("Checkbox.Background.Disabled", "#F2F2F2"),
+      Map.entry("Checkbox.Background.Disabled.Dark", "#3C3F41"),
+      Map.entry("Checkbox.Border.Default", "#b0b0b0"),
+      Map.entry("Checkbox.Border.Default.Dark", "#6B6B6B"),
+      Map.entry("Checkbox.Border.Disabled", "#BDBDBD"),
+      Map.entry("Checkbox.Border.Disabled.Dark", "#545556"),
+      Map.entry("Checkbox.Focus.Thin.Default", "#7B9FC7"),
+      Map.entry("Checkbox.Focus.Thin.Default.Dark", "#466D94"),
+      Map.entry("Checkbox.Focus.Wide", "#97C3F3"),
+      Map.entry("Checkbox.Focus.Wide.Dark", "#3D6185"),
+      Map.entry("Checkbox.Foreground.Disabled", "#ABABAB"),
+      Map.entry("Checkbox.Foreground.Disabled.Dark", "#606060"),
+      Map.entry("Checkbox.Background.Selected", "#4F9EE3"),
+      Map.entry("Checkbox.Background.Selected.Dark", "#43494A"),
+      Map.entry("Checkbox.Border.Selected", "#4B97D9"),
+      Map.entry("Checkbox.Border.Selected.Dark", "#6B6B6B"),
+      Map.entry("Checkbox.Foreground.Selected", "#FEFEFE"),
+      Map.entry("Checkbox.Foreground.Selected.Dark", "#A7A7A7"),
+      Map.entry("Checkbox.Focus.Thin.Selected", "#ACCFF7"),
+      Map.entry("Checkbox.Focus.Thin.Selected.Dark", "#466D94"),
+      Map.entry("Tree.iconColor", "#808080"),
+      Map.entry("Tree.iconColor.Dark", "#AFB1B3")
+    );
   }
 
-  public String getId() {
-    return id;
+  public @NonNls String getId() {
+    return bean.id;
   }
 
-  @Nullable
-  public String getEditorScheme() {
-    return editorScheme;
+  public @Nullable String getEditorScheme() {
+    return bean.editorScheme;
+  }
+
+  public String @Nullable [] getAdditionalEditorSchemes() {
+    return bean.additionalEditorSchemes;
   }
 
   public Map<String, Object> getBackground() {
-    return background;
+    return bean.background;
   }
 
-  public void applyProperties(UIDefaults defaults) {
-    if (ui == null) return;
+  public Map<String, Object> getEmptyFrameBackground() {
+    return bean.emptyFrameBackground;
+  }
+
+  public void applyProperties(@NotNull UIDefaults defaults) {
+    if (bean.ui == null) {
+      return;
+    }
 
     loadColorPalette(defaults);
 
-    for (Map.Entry<String, Object> entry : ui.entrySet()) {
+    for (Map.Entry<String, Object> entry : bean.ui.entrySet()) {
       apply(this, entry.getKey(), entry.getValue(), defaults);
     }
   }
 
-  private void loadColorPalette(UIDefaults defaults) {
-    if (colors != null) {
-      for (Map.Entry<String, Object> entry : colors.entrySet()) {
+  private void loadColorPalette(@NotNull UIDefaults defaults) {
+    if (bean.colors != null) {
+      for (Map.Entry<String, Object> entry : bean.colors.entrySet()) {
         Object value = entry.getValue();
         if (value instanceof String) {
           Color color = parseColor((String)value);
@@ -309,50 +452,85 @@ public class UITheme {
     }
   }
 
-  public IconPathPatcher getPatcher() {
-    return patcher;
+  @ApiStatus.Internal
+  public @Nullable IconPathPatcher getPatcher() {
+    return bean.patcher;
+  }
+
+  @ApiStatus.Internal
+  public void setPatcher(@Nullable IconPathPatcher patcher) {
+    bean.patcher = patcher;
   }
 
   public SVGLoader.SvgElementColorPatcherProvider getColorPatcher() {
-    return colorPatcher;
+    return bean.colorPatcher;
   }
 
-  @NotNull
-  public ClassLoader getProviderClassLoader() {
-    return providerClassLoader;
+  public SVGLoader.SvgElementColorPatcherProvider getSelectionColorPatcher() {
+    return bean.selectionColorPatcher;
   }
 
-  private static void apply(UITheme theme, String key, Object value, UIDefaults defaults) {
-    if (value instanceof Map) {
-      @SuppressWarnings("unchecked") Map<String, Object> map = (Map<String, Object>)value;
-      for (Map.Entry<String, Object> o : map.entrySet()) {
-        apply(theme, key + "." + o.getKey(), o.getValue(), defaults);
-      }
+  @ApiStatus.Internal
+  public @NotNull ClassLoader getProviderClassLoader() {
+    if (bean.providerClassLoader == null) {
+      throw new RuntimeException("The theme classloader has already been detached");
     }
-    else {
-      String valueStr = value.toString();
-      Color color = null;
-      if (theme.colors != null && theme.colors.containsKey(valueStr)) {
-        color = parseColor(String.valueOf(theme.colors.get(valueStr)));
+
+    return bean.providerClassLoader;
+  }
+
+  @ApiStatus.Internal
+  public void setProviderClassLoader(@Nullable ClassLoader providerClassLoader) {
+    bean.providerClassLoader = providerClassLoader;
+  }
+
+  private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {
+    String valueStr = value.toString();
+    Color color = null;
+    if (theme.bean.colors != null) {
+      Object obj = theme.bean.colors.get(valueStr);
+      if (obj != null) {
+        color = parseColor(obj.toString());
         if (color != null && !key.startsWith("*")) {
           defaults.put(key, color);
           return;
         }
       }
-      value = color == null ? parseValue(key, valueStr) : color;
-      if (key.startsWith("*.")) {
-        String tail = key.substring(1);
-        Object finalValue = value;
-        addPattern(key, value, defaults);
+    }
+    value = color == null ? parseValue(key, valueStr) : color;
+    if (key.startsWith("*.")) {
+      String tail = key.substring(1);
+      addPattern(key, value, defaults);
 
-        //please DO NOT stream on UIDefaults directly
-        ((UIDefaults)defaults.clone()).keySet().stream()
-          .filter(k -> k instanceof String && ((String)k).endsWith(tail))
-          .forEach(k -> defaults.put(k, finalValue));
+      for (Object k : defaults.keySet().toArray()) {
+        if (k instanceof String && ((String)k).endsWith(tail)) {
+          defaults.put(k, value);
+        }
       }
-      else {
-        defaults.put(key, value);
-      }
+    }
+    else {
+      defaults.put(key, value);
+    }
+  }
+
+  private static @NotNull String createUIKey(String key, String propertyName) {
+    if ("UI".equals(propertyName)) {
+      return key + propertyName;
+    }
+    else {
+      return key + "." + propertyName;
+    }
+  }
+
+  private static @Nullable Object getOSCustomization(@NotNull Map<String, Object> map) {
+    String osKey = SystemInfoRt.isWindows ? OS_WINDOWS_KEY :
+                   SystemInfoRt.isMac ? OS_MACOS_KEY :
+                   SystemInfoRt.isLinux ? OS_LINUX_KEY : null;
+    if (osKey != null && map.containsKey(osKey)) {
+      return map.get(osKey);
+    }
+    else {
+      return map.get(OS_DEFAULT_KEY);
     }
   }
 
@@ -363,102 +541,135 @@ public class UITheme {
       o = new HashMap<String, Object>();
       defaults.put("*", o);
     }
-    Map map = (Map)o;
+    @SuppressWarnings("rawtypes")
+    Map map = (Map<?, ?>)o;
     if (key != null && key.startsWith("*.")) {
       map.put(key.substring(2), value);
     }
   }
 
-  public static Object parseValue(String key, @NotNull String value, @NotNull ClassLoader cl) {
-    if ("null".equals(value)) return null;
-    if ("true".equals(value)) return Boolean.TRUE;
-    if ("false".equals(value)) return Boolean.FALSE;
+  public static Object parseValue(String key, @NotNull String value, @NotNull ClassLoader classLoader) {
+    try {
+      switch (value) {
+        case "null" -> {
+          return null;
+        }
+        case "true" -> {
+          return Boolean.TRUE;
+        }
+        case "false" -> {
+          return Boolean.FALSE;
+        }
+      }
 
-    if (key.endsWith("Insets") || key.endsWith("padding")) {
-      return parseInsets(value);
-    }
-    else if (key.endsWith("Border") || key.endsWith("border")) {
-      try {
-        List<String> ints = StringUtil.split(value, ",");
-        if (ints.size() == 4) {
-          return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+      if (value.endsWith(".png") || value.endsWith(".svg")) {
+        return (UIDefaults.LazyValue)table -> {
+          return ImageDataByPathLoader.Companion.findIconByPath(value, classLoader, null, null);
+        };
+      }
+
+      if (key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding")) {
+        return parseInsets(value);
+      }
+      else if (key.endsWith("Border") || key.endsWith("border")) {
+        try {
+          String[] ints = value.split(",");
+          if (ints.length == 4) {
+            return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
+          }
+          else if (ints.length == 5) {
+            return JBUI.asUIResource(JBUI.Borders.customLine(ColorHexUtil.fromHex(ints[4]),
+                                                             Integer.parseInt(ints[0]),
+                                                             Integer.parseInt(ints[1]),
+                                                             Integer.parseInt(ints[2]),
+                                                             Integer.parseInt(ints[3])));
+          }
+          Color color = ColorHexUtil.fromHexOrNull(value);
+          if (color == null) {
+            Class<?> aClass = classLoader.loadClass(value);
+            Constructor<?> constructor = aClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+          }
+          else {
+            return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
+          }
         }
-        else if (ints.size() == 5) {
-          return asUIResource(customLine(ColorUtil.fromHex(ints.get(4)),
-                                         Integer.parseInt(ints.get(0)),
-                                         Integer.parseInt(ints.get(1)),
-                                         Integer.parseInt(ints.get(2)),
-                                         Integer.parseInt(ints.get(3))));
+        catch (Exception e) {
+          LOG.warn(e);
         }
-        Color color = ColorHexUtil.fromHexOrNull(value);
+      }
+      else if (key.endsWith("Size")) {
+        return parseSize(value);
+      }
+      else if (key.endsWith("Width") || key.endsWith("Height")) {
+        return getIntegerOrFloat(value, key);
+      }
+      else if (key.endsWith("grayFilter")) {
+        return parseGrayFilter(value);
+      }
+      else if (value.startsWith("AllIcons.")) {
+        return (UIDefaults.LazyValue)table -> {
+          return ImageDataByPathLoaderKt.getReflectiveIcon(value, classLoader);
+        };
+      }
+      else if (!value.startsWith("#") && getIntegerOrFloat(value, null) != null) {
+        return getIntegerOrFloat(value, key);
+      }
+      else {
+        Color color = parseColor(value);
         if (color != null) {
-          return asUIResource(customLine(color, 1));
+          return new ColorUIResource(color);
         }
-        else {
-          return Class.forName(value, true, cl).newInstance();
+        Integer intVal = getInteger(value, null);
+        if (intVal != null) {
+          return intVal;
         }
       }
-      catch (Exception e) {
-        LOG.warn(e);
-      }
     }
-    else if (key.endsWith("Size")) {
-      return parseSize(value);
-    }
-    else if (key.endsWith("Width") || key.endsWith("Height")) {
-      return getInteger(value, key);
-    }
-    else if (key.endsWith("grayFilter")) {
-      return parseGrayFilter(value);
-    }
-    else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;      if (icon != null) {
-        return new IconUIResource(icon);
-      }
-      Color color = parseColor(value);
-      if (color != null) {
-        return new ColorUIResource(color);
-      }
-      Integer intVal = getInteger(value, null);
-      if (intVal != null) {
-        return intVal;
-      }
+    catch (Exception e) {
+      LOG.warn("Can't parse '" + value + "' for key '" + key + "'");
     }
 
     return value;
   }
 
   public static Object parseValue(String key, @NotNull String value) {
-    ClassLoader cl = UIManager.getLookAndFeel().getClass().getClassLoader();
-    return parseValue(key, value, cl);
+    return parseValue(key, value, UIManager.getLookAndFeel().getClass().getClassLoader());
   }
 
-  private static Insets parseInsets(String value) {
-    final java.util.List<String> numbers = StringUtil.split(value, ",");
-    return new JBInsets(Integer.parseInt(numbers.get(0)),
-                        Integer.parseInt(numbers.get(1)),
-                        Integer.parseInt(numbers.get(2)),
-                        Integer.parseInt(numbers.get(3))).asUIResource();
+  private static Insets parseInsets(@NotNull String value) {
+    String[] numbers = value.split(",");
+    return new JBInsets(Integer.parseInt(numbers[0]),
+                        Integer.parseInt(numbers[1]),
+                        Integer.parseInt(numbers[2]),
+                        Integer.parseInt(numbers[3]))
+      .asUIResource();
   }
 
   private static UIUtil.GrayFilter parseGrayFilter(String value) {
-    java.util.List<String> numbers = StringUtil.split(value, ",");
-    return new UIUtil.GrayFilter(Integer.parseInt(numbers.get(0)),
-                                 Integer.parseInt(numbers.get(1)),
-                                 Integer.parseInt(numbers.get(2))).asUIResource();
+    String[] numbers = value.split(",");
+    return new UIUtil.GrayFilter(Integer.parseInt(numbers[0]),
+                                 Integer.parseInt(numbers[1]),
+                                 Integer.parseInt(numbers[2]))
+      .asUIResource();
   }
 
   @SuppressWarnings("UseJBColor")
-  private static Color parseColor(String value) {
+  private static @Nullable Color parseColor(String value) {
     if (value != null) {
-      value = StringUtil.trimStart(value, "#");
+      //noinspection SSBasedInspection
+      if (value.startsWith("#")) {
+        value = value.substring(1);
+      }
       if (value.length() == 8) {
-        final Color color = ColorUtil.fromHex(value.substring(0, 6));
+        Color color = ColorHexUtil.fromHex(value.substring(0, 6));
         try {
           int alpha = Integer.parseInt(value.substring(6, 8), 16);
           return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
         }
-        catch (Exception ignore) { }
+        catch (Exception ignore) {
+        }
         return null;
       }
     }
@@ -468,73 +679,78 @@ public class UITheme {
 
   private static Integer getInteger(String value, @Nullable String key) {
     try {
-      return Integer.parseInt(StringUtil.trimEnd(value, ".0"));
+      //noinspection SSBasedInspection
+      if (value.endsWith(".0")) {
+        value = value.substring(0, value.length() - ".0".length());
+      }
+      return Integer.parseInt(value);
     }
     catch (NumberFormatException e) {
       if (key != null) {
-        LOG.warn(key + " = " + value);
+        LOG.warn("Can't parse: " + key + " = " + value);
       }
       return null;
     }
   }
 
-  private static Dimension parseSize(String value) {
-    final List<String> numbers = StringUtil.split(value, ",");
-    return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
+  private static Number getIntegerOrFloat(String value, @Nullable String key) {
+    if (value.contains(".")) {
+      try {
+        return Float.parseFloat(value);
+      }
+      catch (NumberFormatException e) {
+        if (key != null) {
+          LOG.warn("Can't parse: " + key + " = " + value);
+        }
+        return null;
+      }
+    }
+    return getInteger(value, key);
+  }
+
+  private static Dimension parseSize(@NotNull String value) {
+    String[] numbers = value.split(",");
+    return new JBDimension(Integer.parseInt(numbers[0]), Integer.parseInt(numbers[1])).asUIResource();
   }
 
   public String getEditorSchemeName() {
-    return editorSchemeName;
+    return bean.editorSchemeName;
   }
 
   public void setEditorSchemeName(String editorSchemeName) {
-    this.editorSchemeName = editorSchemeName;
+    bean.editorSchemeName = editorSchemeName;
   }
 
-  @Contract("null -> false")
-  public static boolean isThemeFile(@Nullable VirtualFile file) {
-    return file != null && StringUtil.endsWithIgnoreCase(file.getName(), FILE_EXT_ENDING);
-  }
-
-  static class PaletteScope {
+  static final class PaletteScope {
     final Map<String, String> newPalette = new HashMap<>();
     final Map<String, Integer> alphas = new HashMap<>();
 
-    private byte[] hash = null;
+    private long[] hash;
 
-    byte @NotNull [] digest() {
-      if (hash != null) return hash;
+    long @NotNull [] digest() {
+      if (hash != null) {
+        return hash;
+      }
 
-      final Hasher hasher = Hashing.sha256().newHasher();
-      //order is significant
-      for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {
-        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
-        hasher.putString(e.getValue(), StandardCharsets.UTF_8);
-      }
-      //order is significant
-      for (Map.Entry<String, Integer> e : new TreeMap<>(alphas).entrySet()) {
-        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
-        final Integer value = e.getValue();
-        if (value != null) {
-          hasher.putInt(value);
-        }
-      }
-      hash = hasher.hash().asBytes();
+      // order is significant - use TreeMap
+      hash = new InsecureHashBuilder()
+        .stringMap(newPalette)
+        .stringIntMap(alphas)
+        .build();
       return hash;
     }
   }
 
-  static class PaletteScopeManager {
+  static final class PaletteScopeManager {
     final PaletteScope ui = new PaletteScope();
     final PaletteScope checkBoxes = new PaletteScope();
     final PaletteScope radioButtons = new PaletteScope();
-
-    PaletteScopeManager() {
-    }
+    final PaletteScope trees = new PaletteScope();
 
     PaletteScope getScope(String colorKey) {
       if (colorKey.startsWith("Checkbox.")) return checkBoxes;
       if (colorKey.startsWith("Radio.")) return radioButtons;
+      if (colorKey.startsWith("Tree.iconColor")) return trees;
       if (colorKey.startsWith("Objects.")) return ui;
       if (colorKey.startsWith("Actions.")) return ui;
       if (colorKey.startsWith("#")) return ui;
@@ -543,65 +759,23 @@ public class UITheme {
       return null;
     }
 
-    @Nullable
-    PaletteScope getScopeByURL(@Nullable URL url) {
-      if (url != null) {
-        String path = url.toString();
+    @Nullable PaletteScope getScopeByPath(@Nullable String path) {
+      if (path != null && (path.contains("com/intellij/ide/ui/laf/icons/") || path.contains("/com/intellij/ide/ui/laf/icons/"))) {
         String file = path.substring(path.lastIndexOf('/') + 1);
-
-        if (path.contains("/com/intellij/ide/ui/laf/icons/")) {
-          if (file.startsWith("check")) return checkBoxes;
-          if (file.startsWith("radio")) return checkBoxes; //same set of colors as for checkboxes
-          return null;
-        }
+        if (file.equals("treeCollapsed.svg") || file.equals("treeExpanded.svg")) return trees;
+        if (file.startsWith("check")) return checkBoxes;
+        if (file.startsWith("radio")) return checkBoxes; //same set of colors as for checkboxes
+        return null;
       }
       return ui;
     }
   }
 
-  //
-  //json deserialization methods
-  //
-
-  @SuppressWarnings("unused")
-  private void setName(String name) {
-    this.name = name;
-  }
-
-  @SuppressWarnings("unused")
-  private void setDark(boolean dark) {
-    this.dark = dark;
-  }
-
-  @SuppressWarnings("unused")
-  private void setAuthor(String author) {
-    this.author = author;
-  }
-
-  @SuppressWarnings("unused")
-  private void setUi(Map<String, Object> ui) {
-    this.ui = ui;
-  }
-
-  @SuppressWarnings("unused")
-  private void setIcons(Map<String, Object> icons) {
-    this.icons = icons;
-  }
-
-  @SuppressWarnings("unused")
-  public void setEditorScheme(String editorScheme) {
-    this.editorScheme = editorScheme;
-  }
-
-  public void setBackground(Map<String, Object> background) {
-    this.background = background;
-  }
-
-  public Map<String, Object> getColors() {
-    return colors;
-  }
-
-  public void setColors(Map<String, Object> colors) {
-    this.colors = colors;
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
+  public void setColors(@Nullable Map<String, Object> colors) {
+    bean.colors = colors;
   }
 }

@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
@@ -12,13 +14,13 @@ public final class ContentManagerWatcher {
   /**
    * @deprecated Use {@link #watchContentManager}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ContentManagerWatcher(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
     watchContentManager(toolWindow, contentManager);
   }
 
   public static void watchContentManager(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
-    toolWindow.setAvailable(contentManager.getContentCount() > 0);
+    toolWindow.setAvailable(!contentManager.isEmpty());
 
     contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
@@ -28,7 +30,12 @@ public final class ContentManagerWatcher {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent e) {
-        toolWindow.setAvailable(contentManager.getContentCount() > 0);
+        if ((!(toolWindow instanceof ToolWindowEx)
+             || ApplicationManager.getApplication().isHeadlessEnvironment()
+             || !((ToolWindowEx)toolWindow).getDecorator().isSplitUnsplitInProgress())
+            && contentManager.isEmpty()) {
+          toolWindow.setAvailable(false);
+        }
       }
     });
   }

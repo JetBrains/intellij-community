@@ -1,0 +1,159 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'scripts/**'
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  file-consistency:
+    name: Check file consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - run: pip install -r requirements-tests.txt
+      - run: ./tests/check_consistent.py
+
+  new-syntax:
+    name: Ensure new syntax usage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - run: ./tests/check_new_syntax.py
+
+  flake8:
+    name: Lint with flake8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - run: pip install -r requirements-tests.txt
+      - run: flake8
+
+  pytype:
+    name: Run pytype against the stubs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: pip install -r requirements-tests.txt
+      - run: ./tests/pytype_test.py --print-stderr
+
+  mypy:
+    name: Run mypy against the stubs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ["linux", "win32", "darwin"]
+        python-version: ["2.7", "3.7", "3.8", "3.9", "3.10", "3.11"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - run: pip install -r requirements-tests.txt
+      - run: ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
+
+  regression-tests:
+    name: Run mypy on the test cases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: pip install -r requirements-tests.txt
+      - run: python ./tests/regr_test.py --all
+
+  pyright:
+    name: Test the stubs with pyright
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-platform: ["Linux", "Windows", "Darwin"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+      fail-fast: false
+    env:
+      PYRIGHT_VERSION: 1.1.266 # Must match pyright_test.py.
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jakebailey/pyright-action@v1
+        with:
+          version: ${{ env.PYRIGHT_VERSION }}
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          no-comments: ${{ matrix.python-version != '3.10' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+          project: ./pyrightconfig.stricter.json
+      - uses: jakebailey/pyright-action@v1
+        with:
+          version: ${{ env.PYRIGHT_VERSION }}
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          no-comments: ${{ matrix.python-version != '3.10' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+          project: ./pyrightconfig.testcases.json
+      - uses: jakebailey/pyright-action@v1
+        with:
+          version: ${{ env.PYRIGHT_VERSION }}
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          no-comments: ${{ matrix.python-version != '3.10' || matrix.python-platform != 'Linux' }}  # Having each job create the same comment is too noisy.
+
+  stubtest-third-party:
+    name: Check third party stubs with stubtest
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        run: pip install $(grep tomli== requirements-tests.txt) termcolor
+      - name: Run stubtest
+        run: |
+          STUBS=$(
+            git diff --name-only origin/${{ github.base_ref }} HEAD |
+            # Uncomment the following to (very slowly) run on all third party stubs:
+            # git ls-files |
+            egrep ^stubs/ | cut -d "/" -f 2 | sort -u | (while read stub; do [ -d stubs/$stub ] && echo $stub || true; done)
+          )
+          if test -n "$STUBS"; then
+            echo "Testing $STUBS..."
+            APT_PACKAGES=$(python tests/get_apt_packages.py $STUBS)
+            if test -n "$APT_PACKAGES"; then
+              echo "Installing apt packages: $APT_PACKAGES"
+              sudo apt update && sudo apt install -y $APT_PACKAGES
+            fi
+            xvfb-run python tests/stubtest_third_party.py $STUBS
+          else
+            echo "Nothing to test"
+          fi

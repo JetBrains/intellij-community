@@ -1,41 +1,32 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
-class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements VirtualFilePointer, Disposable {
+import java.util.Map;
+
+final class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements VirtualFilePointer, Disposable {
+  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity;
+  private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private final VirtualFile myFile;
   private final String myUrl;
-  private volatile int useCount;
 
-  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url) {
+  IdentityVirtualFilePointer(VirtualFile file, @NotNull String url, Map<String, IdentityVirtualFilePointer> urlToIdentity,
+                             @NotNull VirtualFilePointerManagerImpl virtualFilePointerManager,
+                             VirtualFilePointerListener listener) {
+    super(listener);
+    myVirtualFilePointerManager = virtualFilePointerManager;
+    myUrlToIdentity = urlToIdentity;
     myFile = file;
     myUrl = url;
   }
 
   @Override
-  @NotNull
-  public String getFileName() {
+  public @NotNull String getFileName() {
     return getUrl();
   }
 
@@ -45,14 +36,12 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
   }
 
   @Override
-  @NotNull
-  public String getUrl() {
+  public @NotNull String getUrl() {
     return myUrl;
   }
 
   @Override
-  @NotNull
-  public String getPresentableUrl() {
+  public @NotNull String getPresentableUrl() {
     return getUrl();
   }
 
@@ -62,12 +51,15 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
   }
 
   @Override
-  int incrementUsageCount(int delta) {
-    return useCount += delta;
+  public void dispose() {
+    synchronized (myVirtualFilePointerManager) {
+      incrementUsageCount(-1);
+      myUrlToIdentity.remove(myUrl);
+    }
   }
 
   @Override
-  public void dispose() {
-    incrementUsageCount(-1);
+  public String toString() {
+    return "identity: url='" + myUrl + "'; file=" + myFile;
   }
 }

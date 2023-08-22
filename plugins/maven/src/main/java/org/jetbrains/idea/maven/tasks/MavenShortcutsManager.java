@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -13,10 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,21 +38,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class MavenShortcutsManager implements Disposable {
   private final Project myProject;
 
-  private static final String ACTION_ID_PREFIX = "Maven_";
+  static final String ACTION_ID_PREFIX = "Maven_";
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
-  @NotNull
-  public static MavenShortcutsManager getInstance(Project project) {
+  public static @NotNull MavenShortcutsManager getInstance(Project project) {
     return project.getService(MavenShortcutsManager.class);
+  }
+
+  public static @Nullable MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(MavenShortcutsManager.class);
   }
 
   public MavenShortcutsManager(@NotNull Project project) {
     myProject = project;
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (MavenUtil.isMavenUnitTestModeEnabled() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return;
     }
 
@@ -64,8 +68,8 @@ public final class MavenShortcutsManager implements Disposable {
 
     MyProjectsTreeListener listener = new MyProjectsTreeListener();
     MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);
-    mavenProjectManager.addManagerListener(listener);
-    mavenProjectManager.addProjectsTreeListener(listener);
+    mavenProjectManager.addManagerListener(listener, this);
+    mavenProjectManager.addProjectsTreeListener(listener, this);
 
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
     busConnection.subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
@@ -88,10 +92,10 @@ public final class MavenShortcutsManager implements Disposable {
     }
 
     MavenKeymapExtension.clearActions(myProject);
+    myListeners.clear();
   }
 
-  @NotNull
-  public String getActionId(@Nullable String projectPath, @Nullable String goal) {
+  public @NotNull String getActionId(@Nullable String projectPath, @Nullable String goal) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
 
@@ -113,6 +117,11 @@ public final class MavenShortcutsManager implements Disposable {
     return KeymapUtil.getShortcutsText(shortcuts);
   }
 
+  boolean hasShortcuts() {
+    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
+    return ContainerUtil.exists(activeKeymap.getActionIds(), id -> id.startsWith(ACTION_ID_PREFIX));
+  }
+
   boolean hasShortcuts(MavenProject project, String goal) {
     return getShortcuts(project, goal).length > 0;
   }
@@ -129,8 +138,8 @@ public final class MavenShortcutsManager implements Disposable {
     }
   }
 
-  public void addListener(Listener listener) {
-    myListeners.add(listener);
+  public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
+    myListeners.add(l, disposable);
   }
 
   @FunctionalInterface
@@ -139,9 +148,9 @@ public final class MavenShortcutsManager implements Disposable {
   }
 
   private class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
-    private final Map<MavenProject, Boolean> mySheduledProjects = new THashMap<>();
+    private final Map<MavenProject, Boolean> mySheduledProjects = new HashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue("MavenShortcutsManager: Keymap Update",
-                                                                                 500, true, myProject).usePassThroughInUnitTestMode();
+                                                                                 500, true, MavenShortcutsManager.this).usePassThroughInUnitTestMode();
 
     @Override
     public void activated() {

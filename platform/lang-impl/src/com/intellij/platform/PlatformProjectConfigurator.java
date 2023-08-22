@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -14,17 +14,16 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 final class PlatformProjectConfigurator implements DirectoryProjectConfigurator {
   private static final Logger LOG = Logger.getInstance(PlatformProjectConfigurator.class);
 
   @Override
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean newProject) {
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean isProjectCreatedWithWizard) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     if (modules.length != 0) {
+      moduleRef.set(modules[0]);
       LOG.info("PlatformProjectConfigurator is not applicable because modules are already configured (module count: " + modules.length + ")");
       return;
     }

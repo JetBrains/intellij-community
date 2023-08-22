@@ -1,3 +1,4 @@
+// Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.console.pydev;
 
 import org.apache.xmlrpc.XmlRpcException;
@@ -13,10 +14,8 @@ public interface IPydevXmlRpcClient {
     /**
      * @param command the command to be executed in the server
      * @param args the arguments passed to the command
-     * @param
      * @return the result from executing the command
      *
-     * @throws XmlRpcException
      */
     Object execute(String command, Object[] args) throws XmlRpcException;
 

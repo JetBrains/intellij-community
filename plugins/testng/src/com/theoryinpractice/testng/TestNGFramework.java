@@ -222,7 +222,7 @@ public class TestNGFramework extends JavaTestFramework {
 
   @Override
   public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    return element instanceof PsiMethod && TestNGUtil.hasTest((PsiModifierListOwner)element);
+    return element instanceof PsiMethod && isFrameworkAvailable(element) && TestNGUtil.hasTest((PsiModifierListOwner)element);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.frontend;
 
 import com.intellij.execution.jshell.protocol.*;
@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  * @author Eugene Zhuravlev
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class Main {
+public final class Main {
   private static final String ARG_CLASSPATH = "--class-path";
   private static final String ARG_CLASSPATH_FILE = "--@class-path";
   private static final Consumer<String> NULL_CONSUMER = s -> {};

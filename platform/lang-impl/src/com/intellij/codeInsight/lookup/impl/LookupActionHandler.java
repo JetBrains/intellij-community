@@ -1,17 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
@@ -23,9 +22,7 @@ import com.intellij.ui.ScrollingUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class LookupActionHandler extends EditorActionHandler {
   protected final EditorActionHandler myOriginalHandler;
 
@@ -46,7 +43,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       if (project != null && lookup != null) {
         LookupManager.getInstance(project).hideActiveLookup();
       }
-      myOriginalHandler.execute(editor, caret, dataContext);
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
       return;
     }
 
@@ -59,7 +58,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   @Override
   public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    return lookup != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
+    return lookup != null || (myOriginalHandler != null && myOriginalHandler.isEnabled(editor, caret, dataContext));
   }
 
   private static void executeUpOrDown(LookupImpl lookup, boolean up) {
@@ -80,7 +79,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class DownHandler extends LookupActionHandler {
+  public static final class DownHandler extends LookupActionHandler {
 
     public DownHandler(EditorActionHandler originalHandler){
       super(originalHandler);
@@ -93,19 +92,31 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class UpAction extends EditorAction {
+  public static final class UpAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public UpAction() {
       super(new UpDownInEditorHandler(true));
     }
   }
 
-  public static class DownAction extends EditorAction {
+  public static final class DownAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public DownAction() {
       super(new UpDownInEditorHandler(false));
     }
   }
 
-  private static class UpDownInEditorHandler extends EditorActionHandler {
+  public static final class UpInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+    public UpInLookupAction() {
+      super(new UpHandler(null));
+    }
+  }
+
+  public static final class DownInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+    public DownInLookupAction() {
+      super(new DownHandler(null));
+    }
+  }
+
+  private static final class UpDownInEditorHandler extends EditorActionHandler {
     private final boolean myUp;
 
     private UpDownInEditorHandler(boolean up) {
@@ -124,17 +135,16 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      assert lookup != null : LookupImpl.getLastLookupDisposeTrace();
+      assert lookup != null;
       lookup.hideLookup(true);
-      EditorActionManager.getInstance().getActionHandler(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP 
+      EditorActionManager.getInstance().getActionHandler(myUp ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP
                                                               : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
-        .execute(editor, caret, dataContext);      
+        .execute(editor, caret, dataContext);
     }
   }
 
-  public static class UpHandler extends LookupActionHandler {
+  public static final class UpHandler extends LookupActionHandler {
     public UpHandler(EditorActionHandler originalHandler){
       super(originalHandler);
     }
@@ -142,7 +152,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
       if (!UISettings.getInstance().getCycleScrolling() && !lookup.isFocused() && lookup.getList().getSelectedIndex() == 0) {
-        myOriginalHandler.execute(lookup.getEditor(), caret, context);
+        if (myOriginalHandler != null) {
+          myOriginalHandler.execute(lookup.getEditor(), caret, context);
+        }
         return;
       }
       executeUpOrDown(lookup, true);
@@ -150,7 +162,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class PageDownHandler extends LookupActionHandler {
+  public static final class PageDownHandler extends LookupActionHandler {
     public PageDownHandler(final EditorActionHandler originalHandler) {
       super(originalHandler);
     }
@@ -162,7 +174,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
-  public static class PageUpHandler extends LookupActionHandler {
+  public static final class PageUpHandler extends LookupActionHandler {
     public PageUpHandler(EditorActionHandler originalHandler){
       super(originalHandler);
     }

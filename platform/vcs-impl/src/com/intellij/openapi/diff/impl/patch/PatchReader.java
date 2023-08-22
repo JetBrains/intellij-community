@@ -1,18 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.google.common.collect.Iterables;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.PathKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,7 +22,7 @@ import java.util.regex.Pattern;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.findAll;
 
-public class PatchReader {
+public final class PatchReader {
   @NonNls public static final String NO_NEWLINE_SIGNATURE = UnifiedDiffWriter.NO_NEWLINE_SIGNATURE;
   private final List<String> myLines;
   private final PatchReader.PatchContentParser myPatchContentParser;
@@ -48,19 +50,14 @@ public class PatchReader {
     this(patchContent, true);
   }
 
+  public PatchReader(@NotNull Path file) {
+    this(PathKt.readChars(file), true);
+  }
+
   public PatchReader(CharSequence patchContent, boolean saveHunks) {
     myLines = LineTokenizer.tokenizeIntoList(patchContent, false);
     myAdditionalInfoParser = new AdditionalInfoParser(!saveHunks);
     myPatchContentParser = new PatchContentParser(saveHunks);
-  }
-
-  /**
-   * @deprecated use {@link PatchReader#readTextPatches()} instead
-   */
-  @Deprecated
-  @NotNull
-  public List<TextFilePatch> readAllPatches() throws PatchSyntaxException {
-    return readTextPatches();
   }
 
   @NotNull
@@ -69,26 +66,16 @@ public class PatchReader {
     return getTextPatches();
   }
 
-  @Nullable
-  public CharSequence getBaseRevision(final Project project, final String relativeFilePath) {
+  public @Nullable CharSequence getBaseRevision(@NotNull String relativeFilePath) {
     final Map<String, Map<String, CharSequence>> map = myAdditionalInfoParser.getResultMap();
     if (!map.isEmpty()) {
       final Map<String, CharSequence> inner = map.get(relativeFilePath);
       if (inner != null) {
-        BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class, project);
+        BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class);
         return inner.get(baseRevisionTextPatchEP.getName());
       }
     }
     return null;
-  }
-
-  /**
-   * @deprecated use {@link PatchReader#getTextPatches()} or {@link PatchReader#getAllPatches()} instead
-   */
-  @Deprecated
-  @NotNull
-  public List<TextFilePatch> getPatches() {
-    return getTextPatches();
   }
 
   @NotNull
@@ -102,8 +89,8 @@ public class PatchReader {
   }
 
   public void parseAllPatches() throws PatchSyntaxException {
-    final ListIterator<String> iterator = myLines.listIterator();
-    if (! iterator.hasNext()) {
+    ListIterator<String> iterator = myLines.listIterator();
+    if (!iterator.hasNext()) {
       myPatches = Collections.emptyList();
       return;
     }
@@ -116,14 +103,16 @@ public class PatchReader {
       next = iterator.next();
       final boolean containsAdditionalNow = myAdditionalInfoParser.testIsStart(next);
       if (containsAdditionalNow && containsAdditional) {
-        myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
+        myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), VcsBundle
+          .message("patch.contains.additional.information.without.patch.itself")));
       }
       if (containsAdditionalNow) {
         isHeaderLine = false;
         containsAdditional = true;
         myAdditionalInfoParser.parse(next, iterator);
         if (! iterator.hasNext()) {
-          myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
+          myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), VcsBundle
+            .message("patch.contains.additional.information.without.patch.itself")));
           break;
         }
         next = iterator.next();
@@ -136,8 +125,10 @@ public class PatchReader {
         if (containsAdditional) {
           final String lastName = myPatchContentParser.getLastName();
           if (lastName == null) {
-            myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), "Contains additional information without patch itself"));
-          } else {
+            myAdditionalInfoParser.acceptError(new PatchSyntaxException(iterator.previousIndex(), VcsBundle
+              .message("patch.contains.additional.information.without.patch.itself")));
+          }
+          else {
             myAdditionalInfoParser.copyToResult(lastName);
           }
         }
@@ -151,8 +142,7 @@ public class PatchReader {
     myPatchFileInfo = PatchFileHeaderParser.parseHeader(Iterables.limit(myLines, headerLineNum).iterator());
   }
 
-  @NotNull
-  public ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(@Nullable Set<String> paths) {
+  public @NotNull ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(@Nullable Set<String> paths) {
     PatchSyntaxException e = myAdditionalInfoParser.getSyntaxException();
     if (e != null) {
       return () -> {
@@ -166,7 +156,7 @@ public class PatchReader {
     return myPatchFileInfo;
   }
 
-  private static class AdditionalInfoParser implements Parser {
+  private static final class AdditionalInfoParser implements Parser {
     // first is path!
     private final Map<String,Map<String, CharSequence>> myResultMap;
     private final boolean myIgnoreMode;
@@ -207,7 +197,7 @@ public class PatchReader {
       }
 
       if (! iterator.hasNext()) {
-        mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(), "Empty additional info header");
+        mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.empty.additional.info.header"));
         return;
       }
       while (true) {
@@ -215,7 +205,7 @@ public class PatchReader {
         final int idxHead = header.indexOf(UnifiedDiffWriter.ADD_INFO_HEADER);
         if (idxHead == -1) {
           if (myAddMap.isEmpty()) {
-            mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(), "Empty additional info header");
+            mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.empty.additional.info.header"));
           }
           iterator.previous();
           return;
@@ -223,7 +213,8 @@ public class PatchReader {
 
         final String subsystem = header.substring(idxHead + UnifiedDiffWriter.ADD_INFO_HEADER.length()).trim();
         if (! iterator.hasNext()) {
-          mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(), "Empty '" + subsystem + "' data section");
+          mySyntaxException =  new PatchSyntaxException(iterator.previousIndex(),
+                                                        VcsBundle.message("patch.empty.0.data.section", subsystem));
           return;
         }
 
@@ -249,7 +240,7 @@ public class PatchReader {
   }
 
 
-  static class PatchContentParser implements Parser {
+  final static class PatchContentParser implements Parser {
     private final boolean mySaveHunks;
     private DiffFormat myDiffFormat = null;
     private final List<FilePatch> myPatches;
@@ -283,7 +274,7 @@ public class PatchReader {
         addPatchAndResetSettings(GitPatchParser.parse(start, iterator, mySaveHunks));
       }
       else {
-        addPatchAndResetSettings(readTextPatch(start, iterator, false));
+        addPatchAndResetSettings(readTextPatch(start, iterator));
       }
     }
 
@@ -298,17 +289,18 @@ public class PatchReader {
       return myPatches;
     }
 
-    TextFilePatch readTextPatch(String curLine, ListIterator<String> iterator, boolean isGitStylePatch) throws PatchSyntaxException {
+    TextFilePatch readTextPatch(String curLine, ListIterator<String> iterator) throws PatchSyntaxException {
       final TextFilePatch curPatch = mySaveHunks ? new TextFilePatch(null) : new EmptyTextFilePatch();
-      extractFileName(curLine, curPatch, true, isGitStylePatch);
+      extractFileName(curLine, curPatch, true);
 
-      if (!iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
+      if (!iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(),
+                                                              VcsBundle.message("patch.second.file.name.expected"));
       curLine = iterator.next();
       String secondNamePrefix = myDiffFormat == DiffFormat.UNIFIED ? "+++ " : "--- ";
       if (! curLine.startsWith(secondNamePrefix)) {
-        throw new PatchSyntaxException(iterator.previousIndex(), "Second file name expected");
+        throw new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.second.file.name.expected"));
       }
-      extractFileName(curLine, curPatch, false, isGitStylePatch);
+      extractFileName(curLine, curPatch, false);
 
       while (iterator.hasNext()) {
         PatchHunk hunk;
@@ -351,7 +343,7 @@ public class PatchReader {
 
       Matcher m = ourUnifiedHunkStartPattern.matcher(curLine);
       if (!m.matches()) {
-        throw new PatchSyntaxException(iterator.previousIndex(), "Unknown hunk start syntax");
+        throw new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.unknown.hunk.start.syntax"));
       }
       int startLineBefore = Integer.parseInt(m.group(1));
       final String linesBeforeText = m.group(3);
@@ -376,16 +368,12 @@ public class PatchReader {
           break;
         }
         switch (lastLine.getType()) {
-          case CONTEXT:
+          case CONTEXT -> {
             before++;
             after++;
-            break;
-          case ADD:
-            after++;
-            break;
-          case REMOVE:
-            before++;
-            break;
+          }
+          case ADD -> after++;
+          case REMOVE -> before++;
         }
         hunk.addLine(lastLine);
       }
@@ -450,15 +438,15 @@ public class PatchReader {
       }
       Matcher beforeMatcher = ourContextBeforeHunkStartPattern.matcher(iterator.next());
       if (! beforeMatcher.matches()) {
-        throw new PatchSyntaxException(iterator.previousIndex(), "Unknown before hunk start syntax");
+        throw new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.unknown.before.hunk.start.syntax"));
       }
       List<String> beforeLines = readContextDiffLines(iterator);
       if (! iterator.hasNext()) {
-        throw new PatchSyntaxException(iterator.previousIndex(), "Missing after hunk");
+        throw new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.missing.after.hunk"));
       }
       Matcher afterMatcher = ourContextAfterHunkStartPattern.matcher(iterator.next());
       if (! afterMatcher.matches()) {
-        throw new PatchSyntaxException(iterator.previousIndex(), "Unknown after hunk start syntax");
+        throw new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.unknown.after.hunk.start.syntax"));
       }
       //if (! iterator.hasNext()) {
         //throw new PatchSyntaxException(iterator.previousIndex(), "Unexpected patch end");
@@ -522,7 +510,7 @@ public class PatchReader {
             }
           }
           else {
-            throw new PatchSyntaxException(-1, "Unknown line prefix");
+            throw new PatchSyntaxException(-1, VcsBundle.message("patch.unknown.line.prefix"));
           }
         }
       }
@@ -553,14 +541,14 @@ public class PatchReader {
       return result;
     }
 
-    private static void extractFileName(final String curLine, final FilePatch patch, final boolean before, final boolean gitPatch) {
+    private static void extractFileName(final String curLine, final FilePatch patch, final boolean before) {
       String fileName = curLine.substring(4);
       int pos = fileName.indexOf('\t');
       if (pos < 0) {
         pos = fileName.indexOf(' ');
       }
       if (pos >= 0) {
-        String versionId = fileName.substring(pos).trim();
+        @NlsSafe String versionId = fileName.substring(pos).trim();
         fileName = fileName.substring(0, pos);
         if (versionId.length() > 0 && !ourEmptyRevisionInfoPattern.matcher(versionId).matches()) {
           if (before) {
@@ -571,8 +559,8 @@ public class PatchReader {
           }
         }
       }
-      if (gitPatch) fileName = VcsFileUtil.unescapeGitPath(fileName);
-      String newFileName = stripPatchNameIfNeeded(fileName, gitPatch, before);
+      fileName = VcsFileUtil.unescapeGitPath(fileName);
+      String newFileName = stripPatchNameIfNeeded(fileName, before);
       if (newFileName == null) return;
       if (before) {
         patch.setBeforeName(newFileName);
@@ -583,11 +571,10 @@ public class PatchReader {
     }
 
     @Nullable
-    static String stripPatchNameIfNeeded(@NotNull String fileName, boolean p1Patch, boolean before) {
-      if ("/dev/null".equals(fileName)) return null; //NON-NLS
-      String prefix = before ? "a/" : "b/"; //NON-NLS
-      if (p1Patch && fileName.startsWith(prefix)) return fileName.substring(prefix.length());
-      return fileName;
+    static String stripPatchNameIfNeeded(@NotNull String fileName, boolean before) {
+      if (UnifiedDiffWriter.DEV_NULL.equals(fileName)) return null;
+      String prefix = before ? UnifiedDiffWriter.A_PREFIX : UnifiedDiffWriter.B_PREFIX;
+      return StringUtil.trimStart(fileName, prefix);
     }
   }
 

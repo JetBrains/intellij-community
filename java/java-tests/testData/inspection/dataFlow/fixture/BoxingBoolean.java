@@ -29,7 +29,7 @@ class S {
 
   public void te3(boolean b){
     Boolean c = Boolean.FALSE;
-    boolean o = <warning descr="Condition '!c' is always 'true'">!<weak_warning descr="Value 'c' is always 'false'">c</weak_warning></warning>;
+    boolean o = <warning descr="Condition '!c' is always 'true'">!c</warning>;
     if (<warning descr="Condition 'o' is always 'true'">o</warning>) {
     }
   }
@@ -47,7 +47,7 @@ class S {
   }
   public void te6(boolean b){
     Boolean c = Boolean.TRUE;
-    boolean o = <warning descr="Condition '!c' is always 'false'">!<weak_warning descr="Value 'c' is always 'true'">c</weak_warning></warning>;
+    boolean o = <warning descr="Condition '!c' is always 'false'">!c</warning>;
     <warning descr="Condition 'o' at the left side of assignment expression is always 'false'. Can be simplified">o</warning> |= <warning descr="Condition 'c' is always 'true'">c</warning>&b;
     if (o) {
     }
@@ -57,7 +57,7 @@ class S {
     boolean o;
     {
       Boolean c = Boolean.FALSE;
-      o = <warning descr="Condition '!c' is always 'true'">!<weak_warning descr="Value 'c' is always 'false'">c</weak_warning></warning>;
+      o = <warning descr="Condition '!c' is always 'true'">!c</warning>;
     }
     if (<warning descr="Condition 'o' is always 'true'">o</warning>) {
     }

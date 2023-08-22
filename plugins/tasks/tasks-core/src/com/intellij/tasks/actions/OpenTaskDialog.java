@@ -11,10 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.tasks.*;
-import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.tasks.impl.TaskStateCombo;
-import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.tasks.impl.*;
 import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.tasks.ui.TaskDialogPanelProvider;
 import com.intellij.ui.DocumentAdapter;
@@ -57,7 +54,7 @@ public class OpenTaskDialog extends DialogWrapper {
     myTaskStateCombo.setProject(myProject);
     myTaskStateCombo.setTask(myTask);
 
-    setTitle("Open Task");
+    setTitle(TaskBundle.message("dialog.title.open.task"));
     myNameField.setText(TaskUtil.getTrimmedSummary(task));
     myNameField.setEnabled(!task.isIssue());
 
@@ -132,7 +129,7 @@ public class OpenTaskDialog extends DialogWrapper {
           repository.setPreferredOpenTaskState(taskState);
         }
         catch (Exception ex) {
-          Messages.showErrorDialog(myProject, ex.getMessage(), "Cannot Set State For Issue");
+          Messages.showErrorDialog(myProject, ex.getMessage(), TaskBundle.message("dialog.title.cannot.set.state.for.issue"));
           LOG.warn(ex);
         }
       }
@@ -140,6 +137,12 @@ public class OpenTaskDialog extends DialogWrapper {
 
     for (TaskDialogPanel panel : myPanels) {
       panel.commit();
+    }
+    if (myTask.getRepository() != null) {
+      TaskManagementUsageCollector.logOpenRemoteTask(myProject, myTask);
+    }
+    else {
+      TaskManagementUsageCollector.logCreateLocalTaskManually(myProject);
     }
     taskManager.activateTask(myTask, isClearContext(), true);
     if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
@@ -179,7 +182,7 @@ public class OpenTaskDialog extends DialogWrapper {
   protected ValidationInfo doValidate() {
     String taskName = myNameField.getText().trim();
     if (taskName.isEmpty()) {
-      return new ValidationInfo("Task name should not be empty", myNameField);
+      return new ValidationInfo(TaskBundle.message("dialog.message.task.name.should.not.be.empty"), myNameField);
     }
     for (TaskDialogPanel panel : myPanels) {
       ValidationInfo validate = panel.validate();

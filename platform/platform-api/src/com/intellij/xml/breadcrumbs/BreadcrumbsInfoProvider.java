@@ -21,6 +21,6 @@ import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 /**
  * @deprecated use {@link BreadcrumbsProvider}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class BreadcrumbsInfoProvider implements BreadcrumbsProvider {
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
@@ -6,7 +6,10 @@ import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 
 internal class MethodSignature(
   private val method: PsiMethod,
@@ -35,7 +38,9 @@ internal class MethodSignature(
       }
     }
 
-  override fun applyTo(arguments: Arguments, context: PsiElement): ArgumentMapping<PsiCallParameter>? {
+  override fun applyTo(arguments: Arguments, context: PsiElement): ArgumentMapping<PsiCallParameter> {
     return argumentMapping(this, arguments, context)
   }
+
+  fun originalMethod() : PsiMethod = method
 }

@@ -15,9 +15,10 @@
  */
 package com.intellij.diagnostic.hprof.visitors
 
+import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.parser.*
 import com.intellij.diagnostic.hprof.util.FileBackedHashMap
-import gnu.trove.TLongIntHashMap
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.util.function.LongUnaryOperator
@@ -35,7 +36,7 @@ abstract class RemapIDsVisitor : HProfVisitor() {
     currentID = 1
   }
 
-  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type) {
+  override fun visitPrimitiveArrayDump(arrayObjectId: Long, stackTraceSerialNumber: Long, numberOfElements: Long, elementType: Type, primitiveArrayData: ByteBuffer) {
     addMapping(arrayObjectId, currentID++)
   }
 
@@ -64,7 +65,7 @@ abstract class RemapIDsVisitor : HProfVisitor() {
 
   companion object {
     fun createMemoryBased(): RemapIDsVisitor {
-      val map = TLongIntHashMap()
+      val map = Long2IntOpenHashMap()
       map.put(0, 0)
       return object : RemapIDsVisitor() {
         override fun addMapping(oldId: Long, newId: Int) {
@@ -72,7 +73,7 @@ abstract class RemapIDsVisitor : HProfVisitor() {
         }
 
         override fun getRemappingFunction(): LongUnaryOperator {
-          return LongUnaryOperator { map[it].toLong() }
+          return LongUnaryOperator { map.get(it).toLong() }
         }
       }
     }
@@ -88,7 +89,13 @@ abstract class RemapIDsVisitor : HProfVisitor() {
 
         override fun getRemappingFunction(): LongUnaryOperator {
           return LongUnaryOperator { operand ->
-            if (operand == 0L) 0L else remapIDsMap[operand]!!.int.toLong()
+            if (operand == 0L) 0L else
+            {
+              if (remapIDsMap.containsKey(operand))
+                remapIDsMap[operand]!!.int.toLong()
+              else
+                throw HProfMetadata.RemapException()
+            }
           }
         }
       }

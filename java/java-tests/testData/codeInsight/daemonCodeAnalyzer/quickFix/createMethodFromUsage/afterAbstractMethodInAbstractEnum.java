@@ -1,4 +1,4 @@
-// "Create abstract method 'foo'" "true"
+// "Create abstract method 'foo'" "true-preview"
 class Usage {
     void usage(Target t) {
         t.foo();

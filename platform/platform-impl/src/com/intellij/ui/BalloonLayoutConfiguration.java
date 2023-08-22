@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -7,15 +7,17 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public class BalloonLayoutConfiguration {
+public final class BalloonLayoutConfiguration {
   public final int iconPanelWidth;
   public final Dimension iconOffset;
 
@@ -37,8 +39,7 @@ public class BalloonLayoutConfiguration {
     return JBUIScale.scale(350);
   }
 
-  @NotNull
-  public static String MaxFullContentWidthStyle() {
+  public static @NotNull String MaxFullContentWidthStyle() {
     return "width:" + MaxFullContentWidth() + "px;";
   }
 
@@ -83,10 +84,9 @@ public class BalloonLayoutConfiguration {
     return "width:" + JBUIScale.scale(RawStyleWidth) + "px;";
   }
 
-  @NotNull
-  public static BalloonLayoutConfiguration create(@NotNull Notification notification,
-                                                  @NotNull BalloonLayoutData layoutData,
-                                                  boolean actions) {
+  public static @NotNull BalloonLayoutConfiguration create(@NotNull Notification notification,
+                                                           @NotNull BalloonLayoutData layoutData,
+                                                           boolean actions) {
     boolean hasTitle = notification.hasTitle();
     boolean hasContent = notification.hasContent();
     if (hasTitle && hasContent && actions) {
@@ -98,21 +98,18 @@ public class BalloonLayoutConfiguration {
     return twoLines();
   }
 
-  @NotNull
-  public BalloonLayoutConfiguration replace(int topSpaceHeight, int bottomSpaceHeight) {
+  public @NotNull BalloonLayoutConfiguration replace(int topSpaceHeight, int bottomSpaceHeight) {
     return new BalloonLayoutConfiguration(iconPanelWidth, iconOffset, topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight,
                                           titleActionsSpaceHeight, bottomSpaceHeight, actionGap, null, 0, 0, 0);
   }
 
-  @NotNull
-  private static BalloonLayoutConfiguration twoLines() {
+  private static @NotNull BalloonLayoutConfiguration twoLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 11),
                                           JBUIScale.scale(11), JBUIScale.scale(5), JBUIScale.scale(5), JBUIScale.scale(5),
                                           JBUIScale.scale(14));
   }
 
-  @NotNull
-  private static BalloonLayoutConfiguration treeLines() {
+  private static @NotNull BalloonLayoutConfiguration treeLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 7),
                                           JBUIScale.scale(7), JBUIScale.scale(3), JBUIScale.scale(7), 0, JBUIScale.scale(8));
   }
@@ -141,12 +138,18 @@ public class BalloonLayoutConfiguration {
                                      int afterGearSpace,
                                      int beforeCloseSpace,
                                      int beforeGearSpace) {
-    this.iconPanelWidth = iconPanelWidth;
+    Dimension iconOffsets = UIManager.getDimension("Notification.iconOffsetSize");
+    this.iconPanelWidth = iconOffsets == null ? iconPanelWidth : iconOffsets.width;
     this.iconOffset = iconOffset;
+    if (iconOffsets != null) {
+      //noinspection SuspiciousNameCombination
+      this.iconOffset.width = iconOffsets.height;
+    }
+
     this.topSpaceHeight = topSpaceHeight;
-    this.titleContentSpaceHeight = titleContentSpaceHeight;
-    this.contentActionsSpaceHeight = contentActionsSpaceHeight;
-    this.titleActionsSpaceHeight = titleActionsSpaceHeight;
+    this.titleContentSpaceHeight = JBUI.getInt("Notification.titleContentInset", titleContentSpaceHeight);
+    this.contentActionsSpaceHeight = JBUI.getInt("Notification.contentActionsInset", contentActionsSpaceHeight);
+    this.titleActionsSpaceHeight = JBUI.getInt("Notification.titleActionsInset", titleActionsSpaceHeight);
     this.bottomSpaceHeight = bottomSpaceHeight;
     this.actionGap = actionGap;
 

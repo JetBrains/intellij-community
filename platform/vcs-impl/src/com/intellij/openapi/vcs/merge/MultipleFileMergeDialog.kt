@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.CommonBundle
@@ -25,6 +25,8 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ColumnName
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.vcs.VcsBundle
@@ -36,52 +38,44 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
-import com.intellij.ui.components.Label
-import com.intellij.ui.layout.*
+import com.intellij.ui.UIBundle
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.io.IOException
-import java.util.*
-import javax.swing.AbstractAction
-import javax.swing.Action
-import javax.swing.JButton
-import javax.swing.JComponent
+import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 
-/**
- * @author yole
- */
 open class MultipleFileMergeDialog(
   private val project: Project?,
   files: List<VirtualFile>,
   private val mergeProvider: MergeProvider,
   private val mergeDialogCustomizer: MergeDialogCustomizer
 ) : DialogWrapper(project) {
-
   private var unresolvedFiles = files.toMutableList()
   private val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
   val processedFiles: MutableList<VirtualFile> = mutableListOf()
-  private lateinit var table: TreeTable
+  private val table: TreeTable
   private lateinit var acceptYoursButton: JButton
   private lateinit var acceptTheirsButton: JButton
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
 
-  private val descriptionLabel = Label("Loading merge details...")
+  private lateinit var descriptionLabel: JLabel
 
   private var groupByDirectory: Boolean = false
     get() = when {
@@ -94,13 +88,19 @@ open class MultipleFileMergeDialog(
     }
 
   private val virtualFileRenderer = object : ChangesBrowserNodeRenderer(project, { !groupByDirectory }, false) {
-    override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog.peer.window, IdeFocusManager.getInstance(project).focusOwner)
+    override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog.peer.window,
+                                                        IdeFocusManager.getInstance(project).focusOwner)
   }
 
   init {
-    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges()
+    project?.let { StoreReloadManager.getInstance(project).blockReloadingProjectOnExternalChanges() }
     title = mergeDialogCustomizer.getMultipleFileDialogTitle()
     virtualFileRenderer.font = UIUtil.getListFont()
+
+    table = MergeConflictsTreeTable(tableModel)
+    table.setTreeCellRenderer(virtualFileRenderer)
+    table.rowHeight = virtualFileRenderer.preferredSize.height
+    table.preferredScrollableViewportSize = JBUI.size(600, 300)
 
     @Suppress("LeakingThis")
     init()
@@ -117,7 +117,7 @@ open class MultipleFileMergeDialog(
       }
     }.installOn(table.tree)
 
-    TableSpeedSearch(table, Convertor { (it as? VirtualFile)?.name })
+    TableSpeedSearch.installOn(table, Convertor { (it as? VirtualFile)?.name })
 
     val modalityState = ModalityState.stateForComponent(descriptionLabel)
     BackgroundTaskUtil.executeOnPooledThread(disposable, Runnable {
@@ -140,46 +140,53 @@ open class MultipleFileMergeDialog(
   override fun createCenterPanel(): JComponent {
     return panel {
       row {
-        descriptionLabel()
+        descriptionLabel = label(VcsBundle.message("merge.loading.merge.details")).component
       }
 
       row {
-        scrollPane(MergeConflictsTreeTable(tableModel).also {
-          table = it
-          it.setTreeCellRenderer(virtualFileRenderer)
-          it.rowHeight = virtualFileRenderer.preferredSize.height
-          it.preferredScrollableViewportSize = JBUI.size(600, 300)
-        }).constraints(growX, growY, pushX, pushY)
+        scrollCell(table)
+          .align(Align.FILL)
+          .resizableColumn()
 
-        cell(isVerticalFlow = true) {
-          JButton(VcsBundle.message("multiple.file.merge.accept.yours")).also {
-            it.addActionListener { acceptRevision(MergeSession.Resolution.AcceptedYours) }
-            acceptYoursButton = it
-          }(growX)
-          JButton(VcsBundle.message("multiple.file.merge.accept.theirs")).also {
-            it.addActionListener { acceptRevision(MergeSession.Resolution.AcceptedTheirs) }
-            acceptTheirsButton = it
-          }(growX)
-          val mergeAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent) {
-              showMergeDialog()
-            }
+        panel {
+          row {
+            acceptYoursButton = button(VcsBundle.message("multiple.file.merge.accept.yours")) {
+              acceptRevision(MergeSession.Resolution.AcceptedYours)
+            }.align(AlignX.FILL)
+              .component
           }
-          mergeAction.putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
-          createJButtonForAction(mergeAction).also {
-            it.text = VcsBundle.message("multiple.file.merge.merge")
-            mergeButton = it
-          }(growX)
-        }
-      }
+          row {
+            acceptTheirsButton = button(VcsBundle.message("multiple.file.merge.accept.theirs")) {
+              acceptRevision(MergeSession.Resolution.AcceptedTheirs)
+            }.align(AlignX.FILL)
+              .component
+          }
+          row {
+            val mergeAction = object : AbstractAction(VcsBundle.message("multiple.file.merge.merge")) {
+              override fun actionPerformed(e: ActionEvent) {
+                showMergeDialog()
+              }
+            }
+            mergeAction.putValue(DEFAULT_ACTION, true)
+            mergeButton = createJButtonForAction(mergeAction)
+            cell(mergeButton)
+              .align(AlignX.FILL)
+          }
+        }.align(AlignY.TOP)
+      }.resizableRow()
 
       if (project != null) {
         row {
-          checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"), groupByDirectory) { _, component ->
-            toggleGroupByDirectory(component.isSelected)
-          }
+          checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"))
+            .selected(groupByDirectory)
+            .applyToComponent {
+              addChangeListener { toggleGroupByDirectory(isSelected) }
+            }
         }
       }
+    }.also {
+      // Temporary workaround for IDEA-302779
+      it.minimumSize = JBUI.size(200, 150)
     }
   }
 
@@ -198,13 +205,14 @@ open class MultipleFileMergeDialog(
         customColumnNames = null
       }
       mergeInfoColumns.mapIndexedTo(columns) { index, columnInfo ->
-        ColumnInfoAdapter(columnInfo, customColumnNames?.get(index) ?: columnInfo.name) }
+        ColumnInfoAdapter(columnInfo, customColumnNames?.get(index) ?: columnInfo.name)
+      }
     }
     return columns.toTypedArray()
   }
 
   private class ColumnInfoAdapter(private val base: ColumnInfo<Any, Any>,
-                                  private val columnName: String) : ColumnInfo<DefaultMutableTreeNode, Any>(columnName) {
+                                  private val columnName: @ColumnName String) : ColumnInfo<DefaultMutableTreeNode, Any>(columnName) {
     override fun valueOf(node: DefaultMutableTreeNode) = (node.userObject as? VirtualFile)?.let { base.valueOf(it) }
     override fun getMaxStringValue() = base.maxStringValue
     override fun getAdditionalWidth() = base.additionalWidth
@@ -212,6 +220,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun toggleGroupByDirectory(state: Boolean) {
+    if (groupByDirectory == state) return
     groupByDirectory = state
     val firstSelectedFile = getSelectedFiles().firstOrNull()
     updateTree()
@@ -236,7 +245,7 @@ open class MultipleFileMergeDialog(
     val selectedFiles = getSelectedFiles()
     val haveSelection = selectedFiles.any()
     val haveUnmergeableFiles = selectedFiles.any { mergeSession?.canMerge(it) == false }
-    val haveUnacceptableFiles = selectedFiles.any { mergeSession != null && mergeSession !is MergeSessionEx && !mergeSession.canMerge(it)}
+    val haveUnacceptableFiles = selectedFiles.any { mergeSession != null && mergeSession !is MergeSessionEx && !mergeSession.canMerge(it) }
 
     acceptYoursButton.isEnabled = haveSelection && !haveUnacceptableFiles
     acceptTheirsButton.isEnabled = haveSelection && !haveUnacceptableFiles
@@ -253,7 +262,7 @@ open class MultipleFileMergeDialog(
   }
 
   override fun dispose() {
-    StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges()
+    project?.let { StoreReloadManager.getInstance(project).unblockReloadingProjectOnExternalChanges() }
     super.dispose()
   }
 
@@ -271,7 +280,9 @@ open class MultipleFileMergeDialog(
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()
 
-    ProgressManager.getInstance().run(object : Task.Modal(project, "Resolving Conflicts...", false) {
+    ProgressManager.getInstance().run(object : Task.Modal(project,
+                                                          VcsBundle.message(
+                                                            "multiple.file.merge.dialog.progress.title.resolving.conflicts"), false) {
       override fun run(indicator: ProgressIndicator) {
         if (!beforeResolve(files)) {
           return
@@ -291,8 +302,8 @@ open class MultipleFileMergeDialog(
             for (file in files) {
               val data = mergeProvider.loadRevisions(file)
               ApplicationManager.getApplication().invokeAndWait({
-                  resolveFileViaContent(file, resolution, data)
-              }, indicator.modalityState)
+                                                                  resolveFileViaContent(file, resolution, data)
+                                                                }, indicator.modalityState)
               checkMarkModifiedProject(file)
               markFileProcessed(file, resolution)
             }
@@ -301,8 +312,11 @@ open class MultipleFileMergeDialog(
         catch (e: Exception) {
           LOG.warn(e)
           ApplicationManager.getApplication().invokeAndWait({
-            Messages.showErrorDialog(contentPanel, "Error saving merged data: " + e.message)
-          }, indicator.modalityState)
+                                                              Messages.showErrorDialog(contentPanel,
+                                                                                       VcsBundle.message(
+                                                                                         "multiple.file.merge.dialog.message.error.saving.merged.data",
+                                                                                         e.message))
+                                                            }, indicator.modalityState)
         }
       }
     })
@@ -310,14 +324,17 @@ open class MultipleFileMergeDialog(
     updateModelFromFiles()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution, data: MergeData) {
     if (!DiffUtil.makeWritable(project, file)) {
-      throw IOException("File is read-only: " + file.presentableName)
+      throw IOException(UIBundle.message("file.is.read.only.message.text", file.presentableUrl))
     }
 
     val isCurrent = resolution == MergeSession.Resolution.AcceptedYours
-    writeCommandAction(project).withName("Accept " + if (isCurrent) "Yours" else "Theirs").run<Exception> {
+    val message = if (isCurrent) VcsBundle.message("multiple.file.merge.dialog.command.name.accept.yours")
+    else VcsBundle.message("multiple.file.merge.dialog.command.name.accept.theirs")
+
+    writeCommandAction(project).withName(message).run<Exception> {
       if (isCurrent) {
         file.setBinaryContent(data.CURRENT)
       }
@@ -394,10 +411,10 @@ open class MultipleFileMergeDialog(
                                 ?: MergeDialogCustomizer.DEFAULT_CUSTOMIZER_LIST
 
           ConflictData(mergeData, title, conflictTitles, titleCustomizer)
-        }, "Loading Revisions...", true, project)
+        }, VcsBundle.message("multiple.file.merge.dialog.progress.title.loading.revisions"), true, project)
       }
       catch (ex: VcsException) {
-        Messages.showErrorDialog(contentPanel, "Error loading revisions to merge: " + ex.message)
+        Messages.showErrorDialog(contentPanel, VcsBundle.message("multiple.file.merge.dialog.error.loading.revisions.to.merge", ex.message))
         break
       }
 
@@ -412,9 +429,10 @@ open class MultipleFileMergeDialog(
         checkMarkModifiedProject(file)
 
         if (result != MergeResult.CANCEL) {
-          ProgressManager.getInstance().runProcessWithProgressSynchronously({
-            markFileProcessed(file, getSessionResolution(result))
-          }, "Resolving Conflicts...", true, project, contentPanel)
+          ProgressManager.getInstance()
+            .runProcessWithProgressSynchronously({ markFileProcessed(file, getSessionResolution(result)) },
+                                                 VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts"), true,
+                                                 project, contentPanel)
         }
       }
 
@@ -431,11 +449,13 @@ open class MultipleFileMergeDialog(
       }
       catch (e: InvalidDiffRequestException) {
         if (e.cause is FileTooBigException) {
-          Messages.showErrorDialog(contentPanel, "File is too big to be loaded.", "Can't Show Merge Dialog")
+          Messages.showErrorDialog(contentPanel,
+                                   VcsBundle.message("multiple.file.merge.dialog.message.file.too.big.to.be.loaded"),
+                                   VcsBundle.message("multiple.file.merge.dialog.title.can.t.show.merge.dialog"))
         }
         else {
           LOG.error(e)
-          Messages.showErrorDialog(contentPanel, e.message, "Can't Show Merge Dialog")
+          Messages.showErrorDialog(contentPanel, e.message, VcsBundle.message("multiple.file.merge.dialog.title.can.t.show.merge.dialog"))
         }
         break
       }
@@ -482,8 +502,8 @@ open class MultipleFileMergeDialog(
 
   private data class ConflictData(
     val mergeData: MergeData,
-    val title: String?,
-    val contentTitles: List<String?>,
+    val title: @NlsContexts.DialogTitle String?,
+    val contentTitles: List<@NlsContexts.Label String?>,
     val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList
   )
 }

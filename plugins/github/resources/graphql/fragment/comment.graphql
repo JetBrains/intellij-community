@@ -3,6 +3,6 @@ fragment comment on Comment {
     author {
         ...actorInfo
     }
-    bodyHTML
+    body
     createdAt
 }

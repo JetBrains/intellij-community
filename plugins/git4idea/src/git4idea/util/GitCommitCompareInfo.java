@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GitCommitCompareInfo extends CommitCompareInfo {
   public GitCommitCompareInfo() {
   }

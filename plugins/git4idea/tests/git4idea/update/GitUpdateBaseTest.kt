@@ -19,6 +19,9 @@ abstract class GitUpdateBaseTest : GitPlatformTest() {
     try {
       settings.saveChangesPolicy = originalPreservingPolicy
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

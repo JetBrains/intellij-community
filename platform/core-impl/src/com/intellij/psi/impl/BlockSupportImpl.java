@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -33,30 +33,33 @@ import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Function;
 
 public class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance(BlockSupportImpl.class);
 
   @Override
-  public void reparseRange(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull CharSequence newText) throws IncorrectOperationException {
+  public void reparseRange(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull CharSequence newText)
+    throws IncorrectOperationException {
     LOG.assertTrue(file.isValid());
-    final PsiFileImpl psiFile = (PsiFileImpl)file;
-    final Document document = psiFile.getViewProvider().getDocument();
+    PsiFileImpl psiFile = (PsiFileImpl)file;
+    Document document = psiFile.getViewProvider().getDocument();
     assert document != null;
     document.replaceString(startOffset, endOffset, newText);
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
   }
 
   @Override
-  @NotNull
-  public DiffLog reparseRange(@NotNull final PsiFile file,
-                              @NotNull FileASTNode oldFileNode,
-                              @NotNull TextRange changedPsiRange,
-                              @NotNull final CharSequence newFileText,
-                              @NotNull final ProgressIndicator indicator,
-                              @NotNull CharSequence lastCommittedText) {
+  public @NotNull DiffLog reparseRange(@NotNull PsiFile file,
+                                       @NotNull FileASTNode oldFileNode,
+                                       @NotNull TextRange changedPsiRange,
+                                       @NotNull CharSequence newFileText,
+                                       @NotNull ProgressIndicator indicator,
+                                       @NotNull CharSequence lastCommittedText) {
     return reparse(file, oldFileNode, changedPsiRange, newFileText, indicator, lastCommittedText).log;
   }
 
@@ -74,16 +77,15 @@ public class BlockSupportImpl extends BlockSupport {
   }
   // return diff log, old node to replace, new node (in dummy file)
   // MUST call .close() on the returned result
-  @NotNull
-  static ReparseResult reparse(@NotNull final PsiFile file,
+  static @NotNull ReparseResult reparse(@NotNull PsiFile file,
                                @NotNull FileASTNode oldFileNode,
                                @NotNull TextRange changedPsiRange,
-                               @NotNull final CharSequence newFileText,
-                               @NotNull final ProgressIndicator indicator,
+                               @NotNull CharSequence newFileText,
+                               @NotNull ProgressIndicator indicator,
                                @NotNull CharSequence lastCommittedText) {
     PsiFileImpl fileImpl = (PsiFileImpl)file;
 
-    final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, oldFileNode, changedPsiRange, newFileText);
+    Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, oldFileNode, changedPsiRange, newFileText);
     if (reparseableRoots == null) {
       return makeFullParse(fileImpl, oldFileNode, newFileText, indicator, lastCommittedText);
     }
@@ -99,47 +101,48 @@ public class BlockSupportImpl extends BlockSupport {
    * @return Pair (target reparseable node, new replacement node)
    *         or {@code null} if can't parse incrementally.
    */
-  @Nullable
-  public static Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
+  public static @Nullable Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
                                                      @NotNull FileASTNode oldFileNode,
                                                      @NotNull TextRange changedPsiRange,
                                                      @NotNull CharSequence newFileText) {
-    final FileElement fileElement = (FileElement)oldFileNode;
-    final CharTable charTable = fileElement.getCharTable();
-    int lengthShift = newFileText.length() - fileElement.getTextLength();
+    CharTable charTable = oldFileNode.getCharTable();
+    int lengthShift = newFileText.length() - oldFileNode.getTextLength();
 
-    if (fileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
-      // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
+    if (isTooDeep(file)) {
       return null;
     }
 
-    final ASTNode leafAtStart = fileElement.findLeafElementAt(Math.max(0, changedPsiRange.getStartOffset() - 1));
-    final ASTNode leafAtEnd = fileElement.findLeafElementAt(Math.min(changedPsiRange.getEndOffset(), fileElement.getTextLength() - 1));
-    ASTNode node = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : fileElement;
+    boolean isTemplateFile = oldFileNode.getElementType() instanceof ITemplateDataElementType;
+
+    ASTNode leafAtStart = oldFileNode.findLeafElementAt(Math.max(0, changedPsiRange.getStartOffset() - 1));
+    ASTNode leafAtEnd = oldFileNode.findLeafElementAt(Math.min(changedPsiRange.getEndOffset(), oldFileNode.getTextLength() - 1));
+    ASTNode node = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : oldFileNode;
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
-    while (node != null && !(node instanceof FileElement)) {
-      IElementType elementType = node.getElementType();
+    Function<ASTNode, Couple<ASTNode>> reparseNodeFunction = astNode -> {
+      IElementType elementType = astNode.getElementType();
       if (elementType instanceof IReparseableElementTypeBase || elementType instanceof IReparseableLeafElementType) {
-        final TextRange textRange = node.getTextRange();
+        TextRange textRange = astNode.getTextRange();
 
         if (textRange.getLength() + lengthShift > 0 &&
-            (baseLanguage.isKindOf(elementType.getLanguage()) || !TreeUtil.containsOuterLanguageElements(node))) {
-          final int start = textRange.getStartOffset();
-          final int end = start + textRange.getLength() + lengthShift;
+            (baseLanguage.isKindOf(elementType.getLanguage()) || elementType instanceof IReparseableLeafElementType ||
+             !TreeUtil.containsOuterLanguageElements(astNode))) {
+          int start = textRange.getStartOffset();
+          int end = start + textRange.getLength() + lengthShift;
           if (end > newFileText.length()) {
-            reportInconsistentLength(file, newFileText, node, start, end);
-            break;
+            reportInconsistentLength(file, newFileText, astNode, start, end);
+            return Couple.of(null, null);
           }
 
           CharSequence newTextStr = newFileText.subSequence(start, end);
 
           ASTNode newNode;
           if (elementType instanceof IReparseableElementTypeBase) {
-            newNode = tryReparseNode((IReparseableElementTypeBase)elementType, node, newTextStr, file.getManager(), baseLanguage, charTable);
+            newNode =
+              tryReparseNode((IReparseableElementTypeBase)elementType, astNode, newTextStr, file.getManager(), baseLanguage, charTable);
           }
           else {
-            newNode = tryReparseLeaf((IReparseableLeafElementType)elementType, node, newTextStr);
+            newNode = tryReparseLeaf((IReparseableLeafElementType)elementType, astNode, newTextStr);
           }
 
           if (newNode != null) {
@@ -150,19 +153,54 @@ public class BlockSupportImpl extends BlockSupport {
               LOG.error("Inconsistent reparse: " + details + " type=" + elementType);
             }
 
-            return Couple.of(node, newNode);
+            return Couple.of(astNode, newNode);
           }
         }
+      }
+      return null;
+    };
+
+    TextRange startLeafRange = leafAtStart == null ? null : leafAtStart.getTextRange();
+    TextRange endLeafRange = leafAtEnd == null ? null : leafAtEnd.getTextRange();
+
+    IElementType startLeafType = PsiUtilCore.getElementType(leafAtStart);
+    if (startLeafType instanceof IReparseableLeafElementType &&
+        startLeafRange.getEndOffset() == changedPsiRange.getEndOffset() &&
+        (!isTemplateFile || startLeafType instanceof OuterLanguageElementType)) {
+      Couple<ASTNode> reparseResult = reparseNodeFunction.apply(leafAtStart);
+      if (reparseResult != null && reparseResult.first != null) {
+        return reparseResult;
+      }
+    }
+    IElementType endLeafType = PsiUtilCore.getElementType(leafAtEnd);
+    if (endLeafType instanceof IReparseableLeafElementType &&
+        endLeafRange.getStartOffset() == changedPsiRange.getStartOffset() &&
+        (!isTemplateFile || endLeafType instanceof OuterLanguageElementType)) {
+      Couple<ASTNode> reparseResult = reparseNodeFunction.apply(leafAtEnd);
+      if (reparseResult != null && reparseResult.first != null) {
+        return reparseResult;
+      }
+    }
+
+    while (node != null && !(node instanceof FileElement)) {
+      if (isTemplateFile && !(PsiUtilCore.getElementType(node) instanceof OuterLanguageElementType)) {
+        break;
+      }
+      Couple<ASTNode> couple = reparseNodeFunction.apply(node);
+      if (couple != null) {
+        if (couple.first == null) {
+          break;
+        }
+        return couple;
       }
       node = node.getTreeParent();
     }
     return null;
   }
 
-  @Nullable
-  protected static ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
-                                          @NotNull PsiManager manager, @NotNull Language baseLanguage, @NotNull CharTable charTable) {
-    if (!reparseable.isParsable(node.getTreeParent(), newTextStr, baseLanguage, manager.getProject())) {
+  protected static @Nullable ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
+                                                    @NotNull PsiManager manager, @NotNull Language baseLanguage, @NotNull CharTable charTable) {
+    if (!reparseable.isReparseable(node, newTextStr, baseLanguage, manager.getProject())) {
       return null;
     }
     ASTNode chameleon;
@@ -186,19 +224,18 @@ public class BlockSupportImpl extends BlockSupport {
     return chameleon;
   }
 
-  @Nullable
   @SuppressWarnings("unchecked")
-  protected static ASTNode tryReparseLeaf(@NotNull IReparseableLeafElementType reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr) {
+  protected static @Nullable ASTNode tryReparseLeaf(@NotNull IReparseableLeafElementType reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr) {
     return reparseable.reparseLeaf(node, newTextStr);
   }
 
   private static void reportInconsistentLength(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
-    String message = "Index out of bounds: type=" + node.getElementType() +
-                     "; file=" + file +
-                     "; file.class=" + file.getClass() +
-                     "; start=" + start +
-                     "; end=" + end +
-                     "; length=" + node.getTextLength();
+    @NonNls String message = "Index out of bounds: type=" + node.getElementType() +
+                             "; file=" + file +
+                             "; file.class=" + file.getClass() +
+                             "; start=" + start +
+                             "; end=" + end +
+                             "; length=" + node.getTextLength();
     String newTextBefore = newFileText.subSequence(0, start).toString();
     String oldTextBefore = file.getText().subSequence(0, start).toString();
     if (oldTextBefore.equals(newTextBefore)) {
@@ -212,8 +249,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   // returns diff log, new file element
-  @NotNull
-  static ReparseResult makeFullParse(@NotNull PsiFileImpl fileImpl,
+  static @NotNull ReparseResult makeFullParse(@NotNull PsiFileImpl fileImpl,
                                      @NotNull FileASTNode oldFileNode,
                                      @NotNull CharSequence newFileText,
                                      @NotNull ProgressIndicator indicator,
@@ -248,18 +284,16 @@ public class BlockSupportImpl extends BlockSupport {
 
     newFile.setOriginalFile(fileImpl);
 
-    final FileElement newFileElement = (FileElement)newFile.getNode();
-    final FileElement oldFileElement = (FileElement)oldFileNode;
-    if (lastCommittedText.length() != oldFileElement.getTextLength()) {
+    ASTNode newFileElement = newFile.getNode();
+    if (lastCommittedText.length() != oldFileNode.getTextLength()) {
       throw new IncorrectOperationException(viewProvider.toString());
     }
-    DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, lastCommittedText);
+    DiffLog diffLog = mergeTrees(fileImpl, oldFileNode, newFileElement, indicator, lastCommittedText);
 
-    return new ReparseResult(diffLog, oldFileElement, newFileElement);
+    return new ReparseResult(diffLog, oldFileNode, newFileElement);
   }
 
-  @NotNull
-  public static PsiFileImpl getFileCopy(@NotNull PsiFileImpl originalFile, @NotNull FileViewProvider providerCopy) {
+  public static @NotNull PsiFileImpl getFileCopy(@NotNull PsiFileImpl originalFile, @NotNull FileViewProvider providerCopy) {
     FileViewProvider viewProvider = originalFile.getViewProvider();
     Language language = originalFile.getLanguage();
 
@@ -281,7 +315,7 @@ public class BlockSupportImpl extends BlockSupport {
     return newFile;
   }
 
-  private static String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
+  private static @NonNls String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
     return "; languages: " + viewProvider.getLanguages() +
            "; base: " + viewProvider.getBaseLanguage() +
            "; copy: " + providerCopy +
@@ -293,8 +327,7 @@ public class BlockSupportImpl extends BlockSupport {
            (providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null);
   }
 
-  @NotNull
-  private static DiffLog replaceElementWithEvents(@NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
+  private static @NotNull DiffLog replaceElementWithEvents(@NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
     DiffLog diffLog = new DiffLog();
     if (oldRoot instanceof CompositeElement) {
       diffLog.appendReplaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
@@ -305,12 +338,11 @@ public class BlockSupportImpl extends BlockSupport {
     return diffLog;
   }
 
-  @NotNull
-  public static DiffLog mergeTrees(@NotNull final PsiFileImpl fileImpl,
-                                   @NotNull final ASTNode oldRoot,
-                                   @NotNull final ASTNode newRoot,
-                                   @NotNull ProgressIndicator indicator,
-                                   @NotNull CharSequence lastCommittedText) {
+  public static @NotNull DiffLog mergeTrees(@NotNull PsiFileImpl fileImpl,
+                                            @NotNull ASTNode oldRoot,
+                                            @NotNull ASTNode newRoot,
+                                            @NotNull ProgressIndicator indicator,
+                                            @NotNull CharSequence lastCommittedText) {
     PsiUtilCore.ensureValid(fileImpl);
     if (newRoot instanceof FileElement) {
       FileElement fileImplElement = fileImpl.getTreeElement();
@@ -337,24 +369,24 @@ public class BlockSupportImpl extends BlockSupport {
       newRoot.putUserData(TREE_TO_BE_REPARSED, null);
     }
 
-    final ASTShallowComparator comparator = new ASTShallowComparator(indicator);
-    final ASTStructure treeStructure = createInterruptibleASTStructure(newRoot, indicator);
+    ASTShallowComparator comparator = new ASTShallowComparator(indicator);
+    ASTStructure treeStructure = createInterruptibleASTStructure(newRoot, indicator);
 
     DiffLog diffLog = new DiffLog();
     diffTrees(oldRoot, diffLog, comparator, treeStructure, indicator, lastCommittedText);
     return diffLog;
   }
 
-  public static <T> void diffTrees(@NotNull final ASTNode oldRoot,
-                                   @NotNull final DiffTreeChangeBuilder<ASTNode, T> builder,
-                                   @NotNull final ShallowNodeComparator<ASTNode, T> comparator,
-                                   @NotNull final FlyweightCapableTreeStructure<T> newTreeStructure,
+  public static <T> void diffTrees(@NotNull ASTNode oldRoot,
+                                   @NotNull DiffTreeChangeBuilder<ASTNode, T> builder,
+                                   @NotNull ShallowNodeComparator<ASTNode, T> comparator,
+                                   @NotNull FlyweightCapableTreeStructure<T> newTreeStructure,
                                    @NotNull ProgressIndicator indicator,
                                    @NotNull CharSequence lastCommittedText) {
     DiffTree.diff(createInterruptibleASTStructure(oldRoot, indicator), newTreeStructure, comparator, builder, lastCommittedText);
   }
 
-  private static ASTStructure createInterruptibleASTStructure(@NotNull final ASTNode oldRoot, @NotNull final ProgressIndicator indicator) {
+  private static ASTStructure createInterruptibleASTStructure(@NotNull ASTNode oldRoot, @NotNull ProgressIndicator indicator) {
     return new ASTStructure(oldRoot) {
       @Override
       public int getChildren(@NotNull ASTNode astNode, @NotNull Ref<ASTNode[]> into) {
@@ -365,7 +397,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   private static boolean isReplaceWholeNode(@NotNull PsiFileImpl fileImpl, @NotNull ASTNode newRoot) throws ReparsedSuccessfullyException {
-    final Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
+    Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
     if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
 
     boolean explicitlyMarkedDeep = Boolean.TRUE.equals(data);
@@ -374,45 +406,12 @@ public class BlockSupportImpl extends BlockSupport {
       return true;
     }
 
-    final ASTNode childNode = newRoot.getFirstChildNode();  // maybe reparsed in PsiBuilderImpl and have thrown exception here
+    ASTNode childNode = newRoot.getFirstChildNode();  // maybe reparsed in PsiBuilderImpl and have thrown exception here
     boolean childTooDeep = isTooDeep(childNode);
     if (childTooDeep) {
       childNode.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, null);
       fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
     }
     return childTooDeep;
-  }
-
-  public static void sendBeforeChildrenChangeEvent(@NotNull PsiManagerImpl manager, @NotNull PsiElement scope, boolean isGenericChange) {
-    if (!scope.isPhysical()) {
-      manager.beforeChange(false);
-      return;
-    }
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    event.setParent(scope);
-    event.setFile(scope.getContainingFile());
-    TextRange range = scope.getTextRange();
-    event.setOffset(range == null ? 0 : range.getStartOffset());
-    event.setOldLength(scope.getTextLength());
-    // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
-    event.setGenericChange(isGenericChange);
-    manager.beforeChildrenChange(event);
-  }
-
-  public static void sendAfterChildrenChangedEvent(@NotNull PsiManagerImpl manager,
-                                                   @NotNull PsiFile scope,
-                                                   int oldLength,
-                                                   boolean isGenericChange) {
-    if (!scope.isPhysical()) {
-      manager.afterChange(false);
-      return;
-    }
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    event.setParent(scope);
-    event.setFile(scope);
-    event.setOffset(0);
-    event.setOldLength(oldLength);
-    event.setGenericChange(isGenericChange);
-    manager.childrenChanged(event);
   }
 }

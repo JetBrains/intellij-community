@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
 
-public class ExpectedTypeUtil {
+public final class ExpectedTypeUtil {
   private ExpectedTypeUtil() {
   }
 
@@ -121,11 +121,10 @@ public class ExpectedTypeUtil {
   public static boolean isExplicitConversion(XPathExpression expression) {
     expression = unparenthesize(expression);
 
-    if (!(expression instanceof XPathFunctionCall)) {
+    if (!(expression instanceof XPathFunctionCall call)) {
       return false;
     }
 
-    final XPathFunctionCall call = ((XPathFunctionCall)expression);
     if (call.getArgumentList().length != 1) {
       return false;
     } else if (call.getQName().getPrefix() != null) {

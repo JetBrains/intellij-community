@@ -3,25 +3,24 @@ package org.intellij.plugins.intelliLang;
 
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class IntelliLangBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.IntelliLangBundle";
-  private static final IntelliLangBundle INSTANCE = new IntelliLangBundle();
+public final class IntelliLangBundle {
+  private static final @NonNls String BUNDLE = "messages.IntelliLangBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(IntelliLangBundle.class, BUNDLE);
 
-  private IntelliLangBundle() { super(BUNDLE); }
+  private IntelliLangBundle() {}
 
-  @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

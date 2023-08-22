@@ -1,0 +1,13 @@
+// HIGHLIGHT: INFORMATION
+
+fun doSomething() {}
+
+fun test(): String {
+    <caret>return try {
+        doSomething()
+        "success"
+    } catch (e: Exception) {
+        doSomething()
+        "failure"
+    }
+}

@@ -6,12 +6,12 @@ import com.intellij.largeFilesEditor.search.LfeSearchManager;
 import com.intellij.largeFilesEditor.search.SearchResult;
 import com.intellij.largeFilesEditor.search.searchTask.FileDataProviderForSearch;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface LargeFileEditor extends FileEditor {
   Key<Object> LARGE_FILE_EDITOR_MARK_KEY = new Key<>("lfe.editorMark");
@@ -30,11 +30,8 @@ public interface LargeFileEditor extends FileEditor {
   Editor getEditor();
 
   @Override
-  @Nullable
-  VirtualFile getFile();
-
   @NotNull
-  VirtualFile getVirtualFile();
+  VirtualFile getFile();
 
   LargeFileEditorAccess createAccessForEncodingWidget();
 
@@ -44,4 +41,6 @@ public interface LargeFileEditor extends FileEditor {
   EditorModel getEditorModel();
 
   int getPageSize();
+
+  void trySetHighlighter(@NotNull EditorHighlighter editorHighlighter);
 }

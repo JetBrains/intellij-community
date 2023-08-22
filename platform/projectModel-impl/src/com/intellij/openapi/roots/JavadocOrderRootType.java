@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.util.ArrayUtilRt;
@@ -8,9 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class JavadocOrderRootType extends PersistentOrderRootType {
   public JavadocOrderRootType() {
     super("JAVADOC", "javadocPath", "javadoc-paths", "javadocPathEntry");
@@ -27,7 +25,7 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
 
   private String @NotNull [] doGetUrls(@NotNull OrderEntry entry) {
     List<String> result = new ArrayList<>();
-    RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
+    RootPolicy<List<String>> policy = new RootPolicy<>() {
       @Override
       public List<String> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<String> value) {
         Collections.addAll(value, orderEntry.getRootUrls(JavadocOrderRootType.this));

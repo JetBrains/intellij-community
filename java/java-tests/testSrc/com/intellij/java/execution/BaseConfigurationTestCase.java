@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.execution.Location;
@@ -11,8 +11,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -34,8 +35,11 @@ import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
   private final List<Module> myModulesToDispose = new ArrayList<>();
@@ -63,6 +67,12 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
   }
 
   protected void createModule(VirtualFile module1Content, boolean addSource) {
+    createModule(module1Content, addSource, "JUnit4");
+  }
+
+  protected void createModule(VirtualFile module1Content,
+                              boolean addSource,
+                              String junitLibName) {
     Module module = createEmptyModule();
     if (addSource) {
       PsiTestUtil.addSourceRoot(module, module1Content, true);
@@ -71,30 +81,32 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
       PsiTestUtil.addContentRoot(module, module1Content);
     }
 
-    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
-    ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary(junitLibName);
+    ModuleRootModificationUtil.addModuleLibrary(module, junitLibName, junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
     ModuleRootModificationUtil.setModuleSdk(module, ModuleRootManager.getInstance(myModule).getSdk());
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass(JUnitUtil.TEST_CASE_CLASS, scope));
+    if ("JUnit4".equals(junitLibName)) {
+      assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass(JUnitUtil.TEST_CASE_CLASS, scope));
+    }
     Module missingModule = createTempModule();
     addDependency(module, missingModule);
     ModuleManager.getInstance(myProject).disposeModule(missingModule);
   }
 
-  protected Module createEmptyModule() {
+  protected @NotNull Module createEmptyModule() {
     Module module = createTempModule();
     myModulesToDispose.add(module);
     return module;
   }
 
-  private Module createTempModule() {
+  private @NotNull Module createTempModule() {
     return createTempModule(getTempDir(), myProject);
   }
 
-  @NotNull
-  public static Module createTempModule(TempFiles tempFiles, final Project project) {
-    final String tempPath = tempFiles.createTempFile("xxx", ".iml").getAbsolutePath();
-    Module result = WriteAction.compute(() -> ModuleManager.getInstance(project).newModule(tempPath, StdModuleTypes.JAVA.getId()));
+  public static @NotNull Module createTempModule(@NotNull TemporaryDirectory tempDir, Project project) {
+    Path tempPath = tempDir.newPath(".iml");
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    Module result = WriteAction.compute(() -> moduleManager.newModule(tempPath, StdModuleTypes.JAVA.getId()));
     PlatformTestUtil.saveProject(project);
     return result;
   }
@@ -130,32 +142,31 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
     return getModule(2);
   }
 
-  protected PsiClass findClass(Module module, String qualifiedName) {
+  protected PsiClass findClass(@NotNull Module module, String qualifiedName) {
     return findClass(qualifiedName, GlobalSearchScope.moduleScope(module));
   }
 
-  protected PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
+  protected PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, scope);
   }
 
   protected JUnitConfiguration createJUnitConfiguration(@NotNull PsiElement psiElement,
-                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
+                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer<?>> producerClass,
                                                         @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
-    RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);
-    assert producer != null;
+    RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(producerClass);
     ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
     assertNotNull(fromContext);
     return (JUnitConfiguration)fromContext.getConfiguration();
   }
 
   protected TestNGConfiguration createTestNGConfiguration(@NotNull PsiElement psiElement,
-                                                          @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
+                                                          @NotNull Class<? extends AbstractJavaTestConfigurationProducer<?>> producerClass,
                                                           @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
-    RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);
+    RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(producerClass);
     ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
-    assertNotNull(fromContext);
+    assertThat(fromContext).isNotNull();
     return (TestNGConfiguration)fromContext.getConfiguration();
   }
 
@@ -177,11 +188,11 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
 
   public ConfigurationContext createContext(@NotNull PsiElement psiClass, @NotNull MapDataContext dataContext) {
     dataContext.put(CommonDataKeys.PROJECT, myProject);
-    if (LangDataKeys.MODULE.getData(dataContext) == null) {
-      dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(psiClass));
+    if (PlatformCoreDataKeys.MODULE.getData(dataContext) == null) {
+      dataContext.put(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(psiClass));
     }
     dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
-    return ConfigurationContext.getFromContext(dataContext);
+    return ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
   }
 
   protected void addDependency(Module module, Module dependency) {

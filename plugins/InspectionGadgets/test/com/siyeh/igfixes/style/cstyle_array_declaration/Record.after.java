@@ -1,2 +1,0 @@
-record Record(int[]x) {
-}

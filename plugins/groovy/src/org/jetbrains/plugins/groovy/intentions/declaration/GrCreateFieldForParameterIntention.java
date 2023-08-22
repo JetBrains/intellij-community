@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
 import com.intellij.codeInsight.intention.impl.CreateFieldFromParameterActionBase;
@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -30,7 +31,7 @@ import java.util.List;
 public class GrCreateFieldForParameterIntention extends CreateFieldFromParameterActionBase {
 
   @Override
-  protected boolean isAvailable(PsiParameter parameter) {
+  protected boolean isAvailable(@NotNull PsiParameter parameter) {
     PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof GrMethod)) return false;
     if (((GrMethod)scope).getContainingClass() == null) return false;
@@ -41,7 +42,7 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
   }
 
   @Override
-  protected PsiType getSubstitutedType(PsiParameter parameter) {
+  protected PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
     return GroovyRefactoringUtil.getSubstitutedType((GrParameter)parameter);
   }
 
@@ -49,9 +50,8 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
     for (PsiReference reference : ReferencesSearch.search(parameter).findAll()) {
       PsiElement element = reference.getElement();
       if (element instanceof GrReferenceExpression &&
-          element.getParent() instanceof GrAssignmentExpression &&
+          element.getParent() instanceof GrAssignmentExpression parent &&
           ((GrAssignmentExpression)element.getParent()).getRValue() == element) {
-        GrAssignmentExpression parent = ((GrAssignmentExpression)element.getParent());
         GrExpression value = parent.getLValue();
         if (value instanceof GrReferenceExpression && ((GrReferenceExpression)value).resolve() instanceof PsiField) return true;
       }
@@ -60,31 +60,32 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
   }
 
   @Override
-  protected void performRefactoring(Project project,
-                                    PsiClass targetClass,
-                                    PsiMethod method,
-                                    PsiParameter myParameter,
+  protected PsiVariable createField(@NotNull Project project,
+                                    @NotNull PsiClass targetClass,
+                                    @NotNull PsiMethod method,
+                                    @NotNull PsiParameter myParameter,
                                     PsiType type,
-                                    String fieldName,
+                                    @NotNull String fieldName,
                                     boolean methodStatic,
                                     boolean isFinal) {
+    GrOpenBlock block = ((GrMethod)method).getBlock();
+    if (block == null) return null;
+
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    GrAssignmentExpression assignment = createAssignment(targetClass, myParameter, fieldName, methodStatic, factory);
+    GrStatement anchor = getAnchor(block);
+
+    GrStatement statement = block.addStatementBefore(assignment, anchor);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(statement);
 
     if (targetClass.findFieldByName(fieldName, false) == null) {
       String[] modifiers = getModifiers(methodStatic, isFinal);
       GrVariableDeclaration fieldDeclaration = factory.createFieldDeclaration(modifiers, fieldName, null, type);
       GrVariableDeclaration inserted = (GrVariableDeclaration)targetClass.add(fieldDeclaration);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+      return inserted.getVariables()[0];
     }
-
-    GrOpenBlock block = ((GrMethod)method).getBlock();
-    if (block == null) return;
-
-    GrAssignmentExpression assignment = createAssignment(targetClass, myParameter, fieldName, methodStatic, factory);
-    GrStatement anchor = getAnchor(block);
-
-    GrStatement statement = block.addStatementBefore(assignment, anchor);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(statement);
+    return null;
   }
 
   private static GrAssignmentExpression createAssignment(PsiClass targetClass,

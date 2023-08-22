@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class PythonDocTestUtil {
+public final class PythonDocTestUtil {
 
   private PythonDocTestUtil() {
   }

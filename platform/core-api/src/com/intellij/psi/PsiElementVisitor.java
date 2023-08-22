@@ -27,23 +27,31 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PsiElementVisitor {
   public static final PsiElementVisitor EMPTY_VISITOR = new PsiElementVisitor() { };
 
+  public void visitBinaryFile(@NotNull PsiBinaryFile file){
+    visitFile(file);
+  }
+
+  public void visitComment(@NotNull PsiComment comment) {
+    visitElement(comment);
+  }
+
+  public void visitDirectory(@NotNull PsiDirectory dir) {
+    visitElement(dir);
+  }
+
   public void visitElement(@NotNull PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
+  }
+
+  public void visitErrorElement(@NotNull PsiErrorElement element) {
+    visitElement(element);
   }
 
   public void visitFile(@NotNull PsiFile file) {
     visitElement(file);
   }
 
-  public void visitBinaryFile(@NotNull PsiBinaryFile file){
-    visitFile(file);
-  }
-
-  public void visitPlainTextFile(@NotNull PsiPlainTextFile file){
-    visitFile(file);
-  }
-
-  public void visitErrorElement(@NotNull PsiErrorElement element) {
+  public void visitOuterLanguageElement(@NotNull OuterLanguageElement element) {
     visitElement(element);
   }
 
@@ -51,19 +59,11 @@ public abstract class PsiElementVisitor {
     visitElement(content);
   }
 
-  public void visitDirectory(@NotNull PsiDirectory dir) {
-    visitElement(dir);
-  }
-
-  public void visitComment(@NotNull PsiComment comment) {
-    visitElement(comment);
+  public void visitPlainTextFile(@NotNull PsiPlainTextFile file){
+    visitFile(file);
   }
 
   public void visitWhiteSpace(@NotNull PsiWhiteSpace space) {
     visitElement(space);
-  }
-
-  public void visitOuterLanguageElement(@NotNull OuterLanguageElement element) {
-    visitElement(element);
   }
 }

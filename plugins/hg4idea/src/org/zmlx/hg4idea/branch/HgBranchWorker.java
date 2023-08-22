@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.COMPARE_WITH_BRANCH_ERROR;
+
 public class HgBranchWorker {
   private final static String CURRENT_REVISION = ".";
   private static final Logger LOG = Logger.getInstance(HgBranchWorker.class);
@@ -47,7 +49,9 @@ public class HgBranchWorker {
       ApplicationManager.getApplication().invokeLater(() -> displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
     }
     catch (VcsException e) {
-      VcsNotifier.getInstance(myProject).notifyError(HgBundle.message("hg4idea.branch.compare.error"), e.getMessage());
+      VcsNotifier.getInstance(myProject).notifyError(COMPARE_WITH_BRANCH_ERROR,
+                                                     HgBundle.message("hg4idea.branch.compare.error"),
+                                                     e.getMessage());
     }
   }
 

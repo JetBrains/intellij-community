@@ -73,7 +73,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         final Sdk newProjectJdk = AbstractProjectWizard.getProjectSdkByDefault(wizardContext);
         if (newProjectJdk == null) return true;
         final ProjectBuilder projectBuilder = wizardContext.getProjectBuilder();
-        return projectBuilder != null && !projectBuilder.isSuitableSdk(newProjectJdk);
+        return projectBuilder != null && !projectBuilder.isSuitableSdkType(newProjectJdk.getSdkType());
       }
     };
     wizardContext.putUserData(PROJECT_JDK_STEP_KEY, projectSdkStep);
@@ -81,7 +81,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+  public ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<? super SdkTypeId> sdkFilter) {
    return new JavaSettingsStep(settingsStep, moduleBuilder, sdkFilter);
   }
 }

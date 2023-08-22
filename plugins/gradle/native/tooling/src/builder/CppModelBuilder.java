@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.project.DefaultProject;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
 import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
@@ -38,10 +39,10 @@ import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -92,7 +93,7 @@ public class CppModelBuilder implements ModelBuilderService {
         String cppComponentName = cppComponent.getName();
         String cppComponentBaseName = cppComponent.getBaseName().get();
 
-        Set<File> headerDirs = new LinkedHashSet<File>(cppComponent.getPrivateHeaderDirs().getFiles());
+        Set<File> headerDirs = new LinkedHashSet<>(cppComponent.getPrivateHeaderDirs().getFiles());
 
         CppComponentImpl ideCppComponent;
         if (cppComponent instanceof ProductionCppComponent) {
@@ -141,8 +142,8 @@ public class CppModelBuilder implements ModelBuilderService {
             compileTask.setQName(compileTaskName);
             compilationDetails.setCompileTask(compileTask);
 
-            Set<File> compileIncludePath = new LinkedHashSet<File>(cppBinary.getCompileIncludePath().getFiles());
-            Set<File> systemIncludes = new LinkedHashSet<File>();
+            Set<File> compileIncludePath = new LinkedHashSet<>(cppBinary.getCompileIncludePath().getFiles());
+            Set<File> systemIncludes = new LinkedHashSet<>();
             //Since Gradle 4.8, system header include directories should be accessed separately via the systemIncludes property
             //see https://github.com/gradle/gradle-native/blob/master/docs/RELEASE-NOTES.md#better-control-over-system-include-path-for-native-compilation---583
             if (IS_48_OR_BETTER) {
@@ -152,8 +153,8 @@ public class CppModelBuilder implements ModelBuilderService {
             else {
               systemIncludes.addAll(cppCompile.getIncludes().getFiles());
             }
-            compilationDetails.setSystemHeaderSearchPaths(new ArrayList<File>(systemIncludes));
-            compilationDetails.setUserHeaderSearchPaths(new ArrayList<File>(compileIncludePath));
+            compilationDetails.setSystemHeaderSearchPaths(new ArrayList<>(systemIncludes));
+            compilationDetails.setUserHeaderSearchPaths(new ArrayList<>(compileIncludePath));
             compilationDetails.setHeaderDirs(headerDirs);
 
             Set<SourceFile> sources = getSources(project, cppBinary, cppCompile);
@@ -164,7 +165,7 @@ public class CppModelBuilder implements ModelBuilderService {
             File cppCompilerExecutable = findCppCompilerExecutable(project, cppBinary);
             compilationDetails.setCompilerExecutable(cppCompilerExecutable);
 
-            List<String> compilerArgs = new ArrayList<String>(cppCompile.getCompilerArgs().getOrElse(Collections.<String>emptyList()));
+            List<String> compilerArgs = new ArrayList<>(cppCompile.getCompilerArgs().getOrElse(Collections.emptyList()));
             compilationDetails.setAdditionalArgs(compilerArgs);
           }
 
@@ -192,7 +193,7 @@ public class CppModelBuilder implements ModelBuilderService {
   }
 
   private static Set<SourceFile> getSources(Project project, CppBinary cppBinary, CppCompile cppCompile) {
-    Set<SourceFile> sources = new LinkedHashSet<SourceFile>();
+    Set<SourceFile> sources = new LinkedHashSet<>();
     for (File file : cppBinary.getCppSource().getFiles()) {
       sources.add(new SourceFileImpl(file, null));
     }
@@ -219,11 +220,11 @@ public class CppModelBuilder implements ModelBuilderService {
   }
 
   private static boolean isWindowsOld(CppPlatform platform) {
-    Object operatingSystem = ReflectionUtil.callByReflection(platform, "getOperatingSystem");
+    Object operatingSystem = callByReflection(platform, "getOperatingSystem");
     if (operatingSystem == null) {
       return false;
     }
-    Object isWindowsNullable = ReflectionUtil.callByReflection(operatingSystem, "isWindows");
+    Object isWindowsNullable = callByReflection(operatingSystem, "isWindows");
     return Boolean.TRUE.equals(isWindowsNullable);
   }
 
@@ -326,5 +327,23 @@ public class CppModelBuilder implements ModelBuilderService {
     return ErrorMessageBuilder.create(
       project, e, "C++ project import errors"
     ).withDescription("Unable to import C++ project");
+  }
+
+  @Nullable
+  private static Object callByReflection(@NotNull Object receiver, @NotNull String methodName) {
+    Object result = null;
+    try {
+      Method getMethod = receiver.getClass().getMethod(methodName);
+      result = getMethod.invoke(receiver);
+    }
+    catch (NoSuchMethodException e) {
+      Logging.getLogger(CppModelBuilder.class)
+        .warn("Can not find `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current() , e);
+    }
+    catch (IllegalAccessException | InvocationTargetException e) {
+      Logging.getLogger(CppModelBuilder.class)
+        .warn("Can not call `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current(), e);
+    }
+    return result;
   }
 }

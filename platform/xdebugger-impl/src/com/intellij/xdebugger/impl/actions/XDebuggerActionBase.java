@@ -1,31 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
-public abstract class XDebuggerActionBase extends AnAction implements AnAction.TransparentUpdate {
+public abstract class XDebuggerActionBase extends AnAction {
   private final boolean myHideDisabledInPopup;
 
   protected XDebuggerActionBase() {
@@ -58,7 +40,7 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   protected boolean isEnabled(final AnActionEvent e) {
     Project project = e.getProject();
     if (project != null && !project.isDisposed()) {
-      return Arrays.stream(DebuggerSupport.getDebuggerSupports()).anyMatch(support -> isEnabled(project, e, support));
+      return ContainerUtil.exists(DebuggerSupport.getDebuggerSupports(), support -> isEnabled(project, e, support));
     }
     return false;
   }
@@ -97,9 +79,14 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   protected boolean isHidden(AnActionEvent event) {
     Project project = event.getProject();
     if (project != null && !project.isDisposed()) {
-      return Arrays.stream(DebuggerSupport.getDebuggerSupports()).allMatch(support -> getHandler(support).isHidden(project, event));
+      return ContainerUtil.and(DebuggerSupport.getDebuggerSupports(), support -> getHandler(support).isHidden(project, event));
     }
     return true;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

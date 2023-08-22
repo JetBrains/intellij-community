@@ -5,7 +5,7 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-public class LexerUtil {
+public final class LexerUtil {
   private LexerUtil() {}
 
   public static CharSequence getTokenText(Lexer lexer) {

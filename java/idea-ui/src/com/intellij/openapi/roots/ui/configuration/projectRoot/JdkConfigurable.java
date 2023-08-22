@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.util.ActionCallback;
@@ -35,7 +36,7 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
     super(true, updateTree);
     myProjectJdk = projectJdk;
     mySdkEditor = createSdkEditor(project, sdksModel, history, myProjectJdk);
-    final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(project).getContext();
     myProjectStructureElement = new SdkProjectStructureElement(context, myProjectJdk);
   }
 

@@ -1,4 +1,4 @@
-// "Replace with toArray" "true"
+// "Collapse loop with stream 'toArray()'" "true-preview"
 package com.google.common.collect;
 
 import java.util.*;

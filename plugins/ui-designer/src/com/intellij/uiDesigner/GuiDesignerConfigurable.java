@@ -27,10 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class GuiDesignerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(GuiDesignerConfigurable.class);
   private final Project myProject;

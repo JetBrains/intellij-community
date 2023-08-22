@@ -1,25 +1,14 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -145,8 +134,12 @@ public class HintHint {
     return getTooltipManager().isOwnBorderAllowed(myAwtTooltip);
   }
 
-  public Color getBorderColor() {
-    return myBorderColor != null ? myBorderColor : getTooltipManager().getBorderColor(myAwtTooltip);
+  public @NotNull Color getBorderColor() {
+    return myBorderColor != null ? myBorderColor : JBUI.CurrentTheme.Tooltip.borderColor();
+  }
+
+  public boolean isBorderColorSet() {
+    return myBorderColor != null;
   }
 
   public Insets getBorderInsets() {
@@ -206,8 +199,7 @@ public class HintHint {
     c.setForeground(getTextForeground());
     c.setBackground(getTextBackground());
     c.setFont(getTextFont());
-    if (c instanceof JComponent) {
-      JComponent jc = (JComponent)c;
+    if (c instanceof JComponent jc) {
       jc.setOpaque(isOpaqueAllowed());
       jc.setBorder(isOwnBorderAllowed() ? BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)) : null);
     }
@@ -218,6 +210,12 @@ public class HintHint {
     myTextFg = component.getForeground();
     myTextBg = component.getBackground();
     myFont = component.getFont();
+    if (component instanceof HintUtil.HintLabel) {
+      HintHint componentHintLabel = ((HintUtil.HintLabel)component).getHintHint();
+      if (componentHintLabel != null) {
+        setBorderColor(componentHintLabel.getBorderColor());
+      }
+    }
   }
 
   public HintHint setTextFg(Color textFg) {

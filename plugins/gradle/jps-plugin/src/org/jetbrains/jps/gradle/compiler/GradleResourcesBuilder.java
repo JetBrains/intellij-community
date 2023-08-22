@@ -1,23 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.compiler;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.JpsGradleExtensionService;
 import org.jetbrains.jps.gradle.model.impl.*;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -25,7 +29,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDescriptor, GradleResourcesTarget> {
-  public static final String BUILDER_NAME = "Gradle Resources Compiler";
+  private static final Logger LOG = Logger.getInstance(GradleResourcesBuilder.class);
 
   public GradleResourcesBuilder() {
     super(Arrays.asList(GradleResourcesTargetType.PRODUCTION, GradleResourcesTargetType.TEST));
@@ -50,7 +54,7 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
     holder.processDirtyFiles(new FileProcessor<GradleResourceRootDescriptor, GradleResourcesTarget>() {
 
       @Override
-      public boolean apply(GradleResourcesTarget t, File file, GradleResourceRootDescriptor rd) throws IOException {
+      public boolean apply(@NotNull GradleResourcesTarget t, @NotNull File file, @NotNull GradleResourceRootDescriptor rd) throws IOException {
         assert target == t;
 
         List<File> fileList = files.get(rd);
@@ -82,7 +86,23 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
       return res;
     });
 
-    GradleResourceFileProcessor fileProcessor = new GradleResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
+    ResourceFileProcessor fileProcessor;
+    try {
+      fileProcessor = new GradleResourceFileProcessor(projectConfig, target.getModule().getProject(), config);
+    }
+    catch (Throwable t) {
+      LOG.warn("Can not create resource file processor", t);
+      fileProcessor = new ResourceFileProcessor() {
+        @Override
+        public void copyFile(File file,
+                             Ref<File> targetFileRef,
+                             ResourceRootConfiguration rootConfiguration,
+                             CompileContext context,
+                             FileFilter filteringFilter) throws IOException {
+          FSOperations.copy(file, targetFileRef.get());
+        }
+      };
+    }
 
     for (GradleResourceRootDescriptor rd : roots) {
       for (File file : files.get(rd)) {
@@ -94,10 +114,10 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
           GradleResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration(), config.outputDirectory);
         if (outputDir == null) continue;
 
-        context.processMessage(new ProgressMessage("Copying resources... [" + target.getModule().getName() + "]"));
+        context.processMessage(new ProgressMessage(GradleJpsBundle.message("copying.resources.0", target.getModule().getName())));
 
         final Ref<File> fileRef = Ref.create(new File(outputDir, relPath));
-        fileProcessor.copyFile(file, fileRef, rd.getConfiguration(), context, FileUtilRt.ALL_FILES);
+        fileProcessor.copyFile(file, fileRef, rd.getConfiguration(), context, FileFilters.EVERYTHING);
         outputConsumer.registerOutputFile(fileRef.get(), Collections.singleton(file.getPath()));
 
         if (context.getCancelStatus().isCanceled()) return;
@@ -111,6 +131,6 @@ public class GradleResourcesBuilder extends TargetBuilder<GradleResourceRootDesc
   @Override
   @NotNull
   public String getPresentableName() {
-    return BUILDER_NAME;
+    return GradleJpsBundle.message("gradle.resources.compiler");
   }
 }

@@ -63,7 +63,6 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   }
 
   // deserialization, data decoded on demand
-  @SuppressWarnings("unused")
   private DataNode() {
   }
 
@@ -116,7 +115,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
    * Allows to retrieve data stored for the given key at the current node or any of its parents.
    *
    * @param key  target data's key
-   * @param <D>  target data type
+   * @param <T>  target data type
    * @return data stored for the current key and available via the current node (if any)
    */
   @SuppressWarnings("unchecked")

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
@@ -30,7 +31,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.IntentionWrapper.wrapToQuickFixes;
 
-public class QuickfixUtil {
+public final class QuickfixUtil {
   @Nullable
   public static PsiClass findTargetClass(GrReferenceExpression refExpr) {
     if (refExpr.getQualifier() == null) {
@@ -55,9 +56,8 @@ public class QuickfixUtil {
     //todo: look more carefully
     GrExpression qualifierExpression = refExpr.getQualifierExpression();
 
-    if (!(qualifierExpression instanceof GrReferenceExpression)) return false;
+    if (!(qualifierExpression instanceof GrReferenceExpression referenceExpression)) return false;
 
-    GrReferenceExpression referenceExpression = (GrReferenceExpression)qualifierExpression;
     GroovyPsiElement resolvedElement = ResolveUtil.resolveProperty(referenceExpression, referenceExpression.getReferenceName());
 
     if (resolvedElement == null) return false;
@@ -103,7 +103,7 @@ public class QuickfixUtil {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  public static String shortenType(String typeText) {
+  public static @NlsSafe String shortenType(@NlsSafe String typeText) {
     if (typeText == null) return "";
     final int i = typeText.lastIndexOf(".");
     if (i != -1) {
@@ -167,7 +167,7 @@ public class QuickfixUtil {
     return ContainerUtil.map(fixes, it -> new LocalQuickFixAsIntentionAdapter(it, descriptor));
   }
 
-  public static LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
+  public static @NotNull LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {
     return wrapToQuickFixes(actions, highlightElement.getContainingFile()).toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }

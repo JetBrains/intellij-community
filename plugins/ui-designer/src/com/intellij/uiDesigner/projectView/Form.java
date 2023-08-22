@@ -5,15 +5,18 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uiDesigner.binding.FormClassIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 
-public class Form implements Navigatable {
+public class Form implements Navigatable, Iterable<PsiElement> {
   public static final DataKey<Form[]> DATA_KEY = DataKey.create("form.array");
 
   private final Collection<PsiFile> myFormFiles;
@@ -31,8 +34,7 @@ public class Form implements Navigatable {
   }
 
   public boolean equals(Object object) {
-    if (object instanceof Form){
-      Form form = (Form)object;
+    if (object instanceof Form form){
       return myFormFiles.equals(form.myFormFiles) && myClassToBind.equals(form.myClassToBind);
     } else {
       return false;
@@ -107,5 +109,13 @@ public class Form implements Navigatable {
       }
     }
     return false;
+  }
+
+  @NotNull
+  @Override
+  public Iterator<PsiElement> iterator() {
+    ArrayList<PsiElement> list = new ArrayList<>(myFormFiles);
+    list.add(0, myClassToBind);
+    return list.iterator();
   }
 }

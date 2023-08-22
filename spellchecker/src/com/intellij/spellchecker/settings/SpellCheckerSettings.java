@@ -1,9 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.util.SPFileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -11,12 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.openapi.util.text.StringUtil.parseInt;
-
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class SpellCheckerSettings implements PersistentStateComponent<Element> {
+@Service(Service.Level.PROJECT)
+public final class SpellCheckerSettings implements PersistentStateComponent<Element> {
   // For xml serialization
   private static final String SPELLCHECKER_MANAGER_SETTINGS_TAG = "SpellCheckerSettings";
 
@@ -26,42 +27,27 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String CUSTOM_DICTIONARIES_ATTR_NAME = "CustomDictionaries";
   private static final String CUSTOM_DICTIONARY_ATTR_NAME = "CustomDictionary";
 
-  private static final String DICTIONARIES_ATTR_NAME = "Dictionaries";
-  private static final String DICTIONARY_ATTR_NAME = "Dictionary";
-
   private static final String RUNTIME_DICTIONARIES_ATTR_NAME = "RuntimeDictionaries";
   private static final String RUNTIME_DICTIONARY_ATTR_NAME = "RuntimeDictionary";
 
-  private static final String BUNDLED_DICTIONARIES_ATTR_NAME = "BundledDictionaries";
-  private static final String BUNDLED_DICTIONARY_ATTR_NAME = "BundledDictionary";
-
-  private static final String CORRECTIONS_MAX_LIMIT = "CorrectionsLimit";
-  private static final int DEFAULT_MAX_VALUE = 5;
   private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
-  private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
+  private static final String DEFAULT_DICTIONARY_TO_SAVE = DictionaryLevel.PROJECT.getName();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
   private static final boolean DEFAULT_USE_SINGLE_DICT = true;
+  private static final String SETTINGS_TRANSFERRED = "transferred";
 
   // Paths
   private final List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
   private List<String> myCustomDictionariesPaths = new ArrayList<>();
-  private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
-  private Set<String> myBundledDisabledDictionariesPaths = new HashSet<>();
   private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
-  private int myCorrectionsLimit = DEFAULT_MAX_VALUE;
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
+  private boolean mySettingsTransferred;
 
-  public int getCorrectionsLimit() {
-    return myCorrectionsLimit;
-  }
-
-  public void setCorrectionsLimit(int correctionsLimit) {
-    myCorrectionsLimit = correctionsLimit;
-  }
-
+  @NlsSafe
   public String getDictionaryToSave() {
+    //This is NLS safe since dictionary names are NLS
     return myDictionaryToSave;
   }
 
@@ -77,8 +63,16 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     this.myUseSingleDictionaryToSave = useSingleDictionaryToSave;
   }
 
-  public static SpellCheckerSettings getInstance(Project project) {
-    return ServiceManager.getService(project, SpellCheckerSettings.class);
+  public boolean isSettingsTransferred() {
+    return mySettingsTransferred;
+  }
+
+  public void setSettingsTransferred(boolean settingsTransferred) {
+    mySettingsTransferred = settingsTransferred;
+  }
+
+  public static @NotNull SpellCheckerSettings getInstance(Project project) {
+    return project.getService(SpellCheckerSettings.class);
   }
 
   public List<String> getCustomDictionariesPaths() {
@@ -87,24 +81,9 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   public void setCustomDictionariesPaths(List<String> customDictionariesPaths) {
     myCustomDictionariesPaths = customDictionariesPaths;
-  }
-
-  public Set<String> getDisabledDictionariesPaths() {
-    return myDisabledDictionariesPaths;
-  }
-
-
-  public void setDisabledDictionariesPaths(Set<String> disabledDictionariesPaths) {
-    myDisabledDictionariesPaths = disabledDictionariesPaths;
-  }
-
-
-  public Set<String> getBundledDisabledDictionariesPaths() {
-    return myBundledDisabledDictionariesPaths;
-  }
-
-  public void setBundledDisabledDictionariesPaths(Set<String> bundledDisabledDictionariesPaths) {
-    myBundledDisabledDictionariesPaths = bundledDisabledDictionariesPaths;
+    ApplicationManager.getApplication().getMessageBus()
+      .syncPublisher(CustomDictionaryPathListener.Companion.getTOPIC())
+      .dictionariesChanged(customDictionariesPaths);
   }
 
   public Set<String> getRuntimeDisabledDictionariesNames() {
@@ -115,38 +94,21 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myRuntimeDisabledDictionariesNames = runtimeDisabledDictionariesNames;
   }
 
-  public boolean isDefaultAdvancedSettings(){
-    return myCorrectionsLimit == DEFAULT_MAX_VALUE &&
-           myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
-           myDictionaryToSave == DEFAULT_DICTIONARY_TO_SAVE;
-  }
-
   @Override
   public Element getState() {
-    if (myBundledDisabledDictionariesPaths.isEmpty() &&
-        myRuntimeDisabledDictionariesNames.isEmpty() &&
+    if (myRuntimeDisabledDictionariesNames.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
-        myDisabledDictionariesPaths.isEmpty() &&
-        myCorrectionsLimit == DEFAULT_MAX_VALUE &&
         myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
-        myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE)) {
+        myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE) && !mySettingsTransferred) {
       return null;
     }
 
     final Element element = new Element(SPELLCHECKER_MANAGER_SETTINGS_TAG);
-    // bundled
-    element.setAttribute(BUNDLED_DICTIONARIES_ATTR_NAME, String.valueOf(myBundledDisabledDictionariesPaths.size()));
-    Iterator<String> iterator = myBundledDisabledDictionariesPaths.iterator();
-    int i = 0;
-    while (iterator.hasNext()) {
-      element.setAttribute(BUNDLED_DICTIONARY_ATTR_NAME + i, iterator.next());
-      i++;
-    }
     // runtime
     element.setAttribute(RUNTIME_DICTIONARIES_ATTR_NAME, String.valueOf(myRuntimeDisabledDictionariesNames.size()));
-    iterator = myRuntimeDisabledDictionariesNames.iterator();
-    i = 0;
+    Iterator<String> iterator  = myRuntimeDisabledDictionariesNames.iterator();
+    int i = 0;
     while (iterator.hasNext()) {
       element.setAttribute(RUNTIME_DICTIONARY_ATTR_NAME + i, iterator.next());
       i++;
@@ -162,64 +124,47 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     for (int j = 0; j < myCustomDictionariesPaths.size(); j++) {
       element.setAttribute(CUSTOM_DICTIONARY_ATTR_NAME + j, myCustomDictionariesPaths.get(j));
     }
-    element.setAttribute(DICTIONARIES_ATTR_NAME, String.valueOf(myDisabledDictionariesPaths.size()));
-    iterator = myDisabledDictionariesPaths.iterator();
-    i = 0;
-    while (iterator.hasNext()) {
-      element.setAttribute(DICTIONARY_ATTR_NAME + i, iterator.next());
-      i++;
-    }
-    element.setAttribute(CORRECTIONS_MAX_LIMIT, String.valueOf(myCorrectionsLimit));
     element.setAttribute(DICTIONARY_TO_SAVE_ATTR_NAME, myDictionaryToSave);
     element.setAttribute(USE_SINGLE_DICT_ATTR_NAME, String.valueOf(myUseSingleDictionaryToSave));
+    element.setAttribute(SETTINGS_TRANSFERRED, String.valueOf(mySettingsTransferred));
     return element;
   }
 
 
   @Override
   public void loadState(@NotNull final Element element) {
-    myBundledDisabledDictionariesPaths.clear();
     myRuntimeDisabledDictionariesNames.clear();
     myCustomDictionariesPaths.clear();
     myOldDictionaryFoldersPaths.clear();
-    myDisabledDictionariesPaths.clear();
     try {
-      // bundled
-      final int bundledDictionariesSize = parseInt(element.getAttributeValue(BUNDLED_DICTIONARIES_ATTR_NAME), 0);
-      for (int i = 0; i < bundledDictionariesSize; i++) {
-        myBundledDisabledDictionariesPaths.add(element.getAttributeValue(BUNDLED_DICTIONARY_ATTR_NAME + i));
-      }
       // runtime
-      final int runtimeDictionariesSize = parseInt(element.getAttributeValue(RUNTIME_DICTIONARIES_ATTR_NAME), 0);
+      final int runtimeDictionariesSize = StringUtil.parseInt(element.getAttributeValue(RUNTIME_DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < runtimeDictionariesSize; i++) {
         myRuntimeDisabledDictionariesNames.add(element.getAttributeValue(RUNTIME_DICTIONARY_ATTR_NAME + i));
       }
       // user
       // cover old dictionary folders settings (if no new settings available)
       if (element.getAttributeValue(CUSTOM_DICTIONARIES_ATTR_NAME) == null) {
-        final int foldersSize = parseInt(element.getAttributeValue(FOLDERS_ATTR_NAME), 0);
+        final int foldersSize = StringUtil.parseInt(element.getAttributeValue(FOLDERS_ATTR_NAME), 0);
         for (int i = 0; i < foldersSize; i++) {
           myOldDictionaryFoldersPaths.add(element.getAttributeValue(FOLDER_ATTR_NAME + i));
         }
         myOldDictionaryFoldersPaths.forEach(folder -> SPFileUtil.processFilesRecursively(folder, file -> {
-          if (extensionEquals(file, "dic")) {
+          if (FileUtilRt.extensionEquals(file, "dic")) {
             myCustomDictionariesPaths.add(file);
           }
         }));
       }
       // cover new dictionaries settings
-      final int customDictSize = parseInt(element.getAttributeValue(CUSTOM_DICTIONARIES_ATTR_NAME), 0);
+      final int customDictSize = StringUtil.parseInt(element.getAttributeValue(CUSTOM_DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < customDictSize; i++) {
         myCustomDictionariesPaths.add(element.getAttributeValue(CUSTOM_DICTIONARY_ATTR_NAME + i));
       }
-      final int scriptsSize = parseInt(element.getAttributeValue(DICTIONARIES_ATTR_NAME), 0);
-      for (int i = 0; i < scriptsSize; i++) {
-        myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
-      }
-      myCorrectionsLimit = parseInt(element.getAttributeValue(CORRECTIONS_MAX_LIMIT), DEFAULT_MAX_VALUE);
-      myDictionaryToSave = notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
+      myDictionaryToSave = StringUtil.notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
       myUseSingleDictionaryToSave =
-        Boolean.parseBoolean(notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)));
+        Boolean.parseBoolean(
+          StringUtil.notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)));
+      mySettingsTransferred = Boolean.parseBoolean(StringUtil.notNullize(element.getAttributeValue(SETTINGS_TRANSFERRED), "false"));
     }
     catch (Exception ignored) {
     }

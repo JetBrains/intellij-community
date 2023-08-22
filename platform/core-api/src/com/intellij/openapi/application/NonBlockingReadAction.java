@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -18,7 +19,7 @@ import java.util.function.Consumer;
 /**
  * A utility for running non-blocking read actions in background thread.
  * "Non-blocking" means that to prevent UI freezes, when a write action is about to occur, a read action can be interrupted by a
- * {@link com.intellij.openapi.progress.ProcessCanceledException} and then restarted.
+ * {@link ProcessCanceledException} and then restarted.
  * Code blocks running inside should be prepared to get this exception at any moment,
  * and they should call {@link ProgressManager#checkCanceled()} or {@link ProgressIndicator#checkCanceled()} frequently enough.
  * They should also be side-effect-free or at least idempotent, to avoid consistency issues when interrupted in the middle and restarted.
@@ -27,6 +28,8 @@ import java.util.function.Consumer;
  * It's the only way that allows to access the computation result safely. The alternatives
  * (e.g. {@link #executeSynchronously()}, {@link org.jetbrains.concurrency.Promise} methods) mean that you might get the computation result
  * in a background thread after a read action is finished, so a write action can then occur at any time and make the result outdated.
+ * <p/>
+ * In a coroutine, use {@link CoroutinesKt#readAction} instead.
  *
  * @see ReadAction#nonBlocking
  */
@@ -37,8 +40,11 @@ public interface NonBlockingReadAction<T> {
    * The operation is canceled if the project is closed before either the background computation or {@link #finishOnUiThread} runnable
    * are completed.
    * @see com.intellij.openapi.project.DumbService
+   * @see CoroutinesKt#smartReadAction
+   * @see ReadConstraint.Companion#inSmartMode
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> inSmartMode(@NotNull Project project);
 
   /**
@@ -46,8 +52,11 @@ public interface NonBlockingReadAction<T> {
    * The operation is canceled if the project is closed before either the background computation or {@link #finishOnUiThread} runnable
    * are completed.
    * @see com.intellij.psi.PsiDocumentManager
+   * @see CoroutinesKt#constrainedReadAction
+   * @see ReadConstraint.Companion#withDocumentsCommitted
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project);
 
   /**
@@ -63,16 +72,8 @@ public interface NonBlockingReadAction<T> {
    * (e.g. by putting {@link CancellablePromise#cancel()} inside some listener).
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition);
-
-  /**
-   * @deprecated use {@link #wrapProgress}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  default NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator) {
-    return wrapProgress(progressIndicator);
-  }
 
   /**
    * @return a copy of this builder that synchronizes the specified progress indicator with the inner one created by {@link NonBlockingReadAction}.
@@ -80,6 +81,7 @@ public interface NonBlockingReadAction<T> {
    * and the visual changes (e.g. {@link ProgressIndicator#setText}) are propagated from the inner to the outer indicator.
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> wrapProgress(@NotNull ProgressIndicator progressIndicator);
 
   /**
@@ -89,6 +91,7 @@ public interface NonBlockingReadAction<T> {
    * and if computations or {@link #finishOnUiThread} handlers are scheduled, they won't be executed.
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable);
 
   /**
@@ -97,18 +100,22 @@ public interface NonBlockingReadAction<T> {
    * are invoked on UI thread, and no write action is allowed to interfere before that and possibly invalidate the result.
    */
   @Contract(pure = true)
-  NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<T> uiThreadAction);
+  @NotNull
+  NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<? super T> uiThreadAction);
 
   /**
    * Merges together similar computations by cancelling the previous ones when a new one is submitted.
    * This can be useful when the results of the previous computation won't make sense anyway in the changed environment.
+   * NOTE: current implementation prohibit from using same .coalesceBy key for computations of different origins (see
+   * {@link com.intellij.openapi.application.impl.NonBlockingReadActionImpl.Submission#getComputationOrigin()} for details).
    * @param equality objects that together identify the computation: if they're all equal in two submissions,
    *                 then the computations are merged. Callers should take care to pass something unique there
-   *                 (e.g. some {@link com.intellij.openapi.util.Key} or {@code this} {@code getClass()}),
+   *                 (e.g. some {@link com.intellij.openapi.util.Key} or {@code this}.{@code getClass()}),
    *                 so that computations from different places won't interfere.
    * @return a copy of this builder which, when submitted, cancels previously submitted running computations with equal equality objects
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality);
 
   /**
@@ -120,6 +127,8 @@ public interface NonBlockingReadAction<T> {
    *                                 {@link AppExecutorUtil#getAppExecutorService()} or
    *                                 {@link com.intellij.util.concurrency.BoundedTaskExecutor} on top of that.
    */
+  @RequiresBlockingContext
+  @NotNull
   CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor);
 
   /**
@@ -142,5 +151,6 @@ public interface NonBlockingReadAction<T> {
    * @throws IllegalStateException if current thread already has read access and the constraints (e.g. {@link #inSmartMode} are not satisfied)
    * @throws RuntimeException when the computation throws an exception. If it's a checked one, it's wrapped into a {@link RuntimeException}.
    */
+  @RequiresBlockingContext
   T executeSynchronously() throws ProcessCanceledException;
 }

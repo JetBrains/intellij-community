@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,10 +9,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
@@ -29,32 +29,34 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author ilyas
- */
 public abstract class AbstractConfigUtils {
 
   private static final Logger LOG = Logger.getInstance(AbstractConfigUtils.class);
 
+  @NlsSafe
   protected static final String VERSION_GROUP_NAME = "version";
 
   private final Condition<Library> LIB_SEARCH_CONDITION = library -> isSDKLibrary(library);
 
   // Common entities
-  @NonNls public static final String UNDEFINED_VERSION = "undefined";
-  @NonNls public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
+  @NlsSafe public static final String UNDEFINED_VERSION = "undefined";
+  @NlsSafe public static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
 
 
   /**
    * Define, whether  given home is appropriate SDK home
    *
-   * @param file
-   * @return
    */
   public abstract boolean isSDKHome(final VirtualFile file);
 
   @NotNull
-  public abstract String getSDKVersion(@NotNull String path);
+  @NlsSafe
+  public String getSDKVersion(@NlsSafe @NotNull String path) {
+    String version = getSDKVersionOrNull(path);
+    return version == null ? UNDEFINED_VERSION : version;
+  }
+
+  public abstract @NlsSafe @Nullable String getSDKVersionOrNull(@NlsSafe @NotNull String path);
 
   /**
    * Return value of Implementation-Version attribute in jar manifest

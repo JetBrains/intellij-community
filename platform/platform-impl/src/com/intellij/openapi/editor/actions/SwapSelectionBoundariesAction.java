@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Provides functionality similar to the emacs
  * <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Setting-Mark.html">exchange-point-and-mark</a>.
- * 
- * @author Denis Zhdanov
  */
 public class SwapSelectionBoundariesAction extends EditorAction {
 
@@ -35,15 +33,9 @@ public class SwapSelectionBoundariesAction extends EditorAction {
     super(new Handler());
   }
   
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
-      assert caret != null;
-      
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (!caret.hasSelection()) {
         return;
       }
@@ -51,8 +43,7 @@ public class SwapSelectionBoundariesAction extends EditorAction {
       final int end = caret.getSelectionEnd();
       boolean moveToEnd = caret.getOffset() == start;
       
-      if (editor instanceof EditorEx) {
-        EditorEx editorEx = (EditorEx)editor;
+      if (editor instanceof EditorEx editorEx) {
         if (editorEx.isStickySelection()) {
           editorEx.setStickySelection(false);
           editorEx.setStickySelection(true);

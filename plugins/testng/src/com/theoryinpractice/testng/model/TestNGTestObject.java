@@ -12,11 +12,13 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.ArrayUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,8 +73,8 @@ public abstract class TestNGTestObject {
   }
 
   public abstract void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException;
-  public abstract String getGeneratedName();
-  public abstract String getActionName();
+  public abstract @NlsActions.ActionText String getGeneratedName();
+  public abstract @NlsActions.ActionText String getActionName();
   public abstract void checkConfiguration() throws RuntimeConfigurationException;
 
   public boolean isConfiguredByElement(PsiElement element) {
@@ -289,7 +291,7 @@ public abstract class TestNGTestObject {
 
     @Override
     public String getActionName() {
-      return "Unknown";
+      return TestngBundle.message("action.text.unknown.test.object");
     }
 
     @Override

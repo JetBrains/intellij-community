@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.revert;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.*;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
 public class CmdRevertClient extends BaseSvnClient implements RevertClient {
 
   private static final String STATUS = "\\s*(.+?)\\s*";
-  private static final String PATH = "\\s*\'(.*?)\'\\s*";
+  private static final String PATH = "\\s*'(.*?)'\\s*";
   private static final String OPTIONAL_COMMENT = "(.*)";
   private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH + OPTIONAL_COMMENT);
 
@@ -45,6 +46,10 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
 
   private static class RevertStatusConvertor implements Convertor<Matcher, ProgressEvent> {
 
+    private static final @NonNls String REVERTED_CODE = "Reverted";
+    private static final @NonNls String FAILED_TO_REVERT_CODE = "Failed to revert";
+    private static final @NonNls String SKIPPED_CODE = "Skipped";
+
     @Override
     public ProgressEvent convert(@NotNull Matcher matcher) {
       String statusMessage = matcher.group(1);
@@ -55,19 +60,12 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
 
     @Nullable
     public static EventAction createAction(@NotNull String code) {
-      EventAction result = null;
-
-      if ("Reverted".equals(code)) {
-        result = EventAction.REVERT;
-      }
-      else if ("Failed to revert".equals(code)) {
-        result = EventAction.FAILED_REVERT;
-      }
-      else if ("Skipped".equals(code)) {
-        result = EventAction.SKIP;
-      }
-
-      return result;
+      return switch (code) {
+        case REVERTED_CODE -> EventAction.REVERT;
+        case FAILED_TO_REVERT_CODE -> EventAction.FAILED_REVERT;
+        case SKIPPED_CODE -> EventAction.SKIP;
+        default -> null;
+      };
     }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.openapi.diff.DiffBundle;
@@ -25,16 +11,15 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class TextDiffTypeFactory {
+public final class TextDiffTypeFactory {
   @NotNull public static final TextDiffTypeImpl INSERTED =
     new TextDiffTypeImpl(DiffColors.DIFF_INSERTED, DiffBundle.message("diff.type.inserted.name"));
   @NotNull public static final TextDiffTypeImpl DELETED =
@@ -44,38 +29,20 @@ public class TextDiffTypeFactory {
   @NotNull public static final TextDiffTypeImpl CONFLICT =
     new TextDiffTypeImpl(DiffColors.DIFF_CONFLICT, DiffBundle.message("diff.type.conflict.name"));
 
-  private static final TextDiffTypeFactory ourInstance = new TextDiffTypeFactory();
-  private final List<TextDiffTypeImpl> myTypes = new ArrayList<>();
-
-  private TextDiffTypeFactory() {
-    ContainerUtil.addAll(myTypes, INSERTED, DELETED, MODIFIED, CONFLICT);
-  }
-
-  @NotNull
-  public synchronized TextDiffType createTextDiffType(@NonNls @NotNull TextAttributesKey key,
-                                                      @NotNull String name) {
-    TextDiffTypeImpl type = new TextDiffTypeImpl(key, name);
-    myTypes.add(type);
-    return type;
-  }
-
-  public synchronized TextDiffTypeImpl[] getAllDiffTypes() {
-    return myTypes.toArray(new TextDiffTypeImpl[0]);
-  }
-
-  public static TextDiffTypeFactory getInstance() {
-    return ourInstance;
+  public static @NotNull List<TextDiffTypeImpl> getAllDiffTypes() {
+    return Arrays.asList(INSERTED, DELETED, MODIFIED, CONFLICT);
   }
 
   public static class TextDiffTypeImpl implements TextDiffType {
     @NotNull private final TextAttributesKey myKey;
-    @NotNull private final String myName;
+    @NotNull private final @Nls String myName;
 
-    public TextDiffTypeImpl(@NotNull TextAttributesKey key, @NotNull String name) {
+    public TextDiffTypeImpl(@NotNull TextAttributesKey key, @NotNull @Nls String name) {
       myKey = key;
       myName = name;
     }
 
+    @Nls
     @NotNull
     @Override
     public String getName() {

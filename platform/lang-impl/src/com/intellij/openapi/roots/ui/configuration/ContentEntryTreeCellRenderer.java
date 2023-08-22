@@ -22,6 +22,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
@@ -61,7 +62,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     if (editor != null) {
       final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       if (userObject instanceof NodeDescriptor) {
-        final Object element = ((NodeDescriptor)userObject).getElement();
+        final Object element = ((NodeDescriptor<?>)userObject).getElement();
         if (element instanceof FileElement) {
           final VirtualFile file = ((FileElement)element).getFile();
           if (file != null && file.isDirectory()) {
@@ -79,7 +80,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     }
   }
 
-  private static String getPresentablePrefix(final ContentEntry entry, final VirtualFile file) {
+  private static @NlsSafe String getPresentablePrefix(final ContentEntry entry, final VirtualFile file) {
     for (final SourceFolder sourceFolder : entry.getSourceFolders()) {
       if (file.equals(sourceFolder.getFile())) {
         JpsModuleSourceRoot element = sourceFolder.getJpsElement();

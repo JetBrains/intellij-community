@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -7,7 +7,7 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class VFileContentChangeEvent extends VFileEvent {
+public final class VFileContentChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
@@ -39,16 +39,15 @@ public class VFileContentChangeEvent extends VFileEvent {
     super(requestor, isFromRefresh);
     myFile = file;
     myOldModificationStamp = oldModificationStamp;
-    myNewModificationStamp = newModificationStamp == -1 ? LocalTimeCounter.currentTime() : newModificationStamp;
+    myNewModificationStamp = newModificationStamp == UNDEFINED_TIMESTAMP_OR_LENGTH ? LocalTimeCounter.currentTime() : newModificationStamp;
     myOldTimestamp = oldTimestamp;
     myNewTimestamp = newTimestamp;
     myOldLength = oldLength;
     myNewLength = newLength;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -81,23 +80,21 @@ public class VFileContentChangeEvent extends VFileEvent {
            myOldLength != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewLength != UNDEFINED_TIMESTAMP_OR_LENGTH;
   }
 
-  @NonNls
-  public String toString() {
-    return "VfsEvent[update: " + myFile.getUrl() +
-           (myOldTimestamp != myNewTimestamp ? ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp : "") +
-           (myOldLength != myNewLength ? ", oldLength:" + myOldLength + ", newLength:" + myNewLength : "") +
+  public @NonNls String toString() {
+    return "VfsEvent[update: " + myFile.getPresentableUrl() +
+           ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp +
+           ", oldModificationStamp:" + myOldModificationStamp + ", newModificationStamp:" + myNewModificationStamp +
+           ", oldLength:" + myOldLength + ", newLength:" + myNewLength +
            "]";
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 

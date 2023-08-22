@@ -2,14 +2,10 @@
 package com.intellij.openapi.project;
 
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-public class DumbUtilImpl implements DumbUtil {
+public final class DumbUtilImpl implements DumbUtil {
   private final Project myProject;
 
   public DumbUtilImpl(@NotNull Project project) {
@@ -17,17 +13,18 @@ public class DumbUtilImpl implements DumbUtil {
   }
 
   @Override
-  @Contract(pure = true)
-  public @NotNull <T> List<T> filterByDumbAwarenessHonoringIgnoring(@NotNull Collection<? extends T> collection) {
-    DumbService service = DumbService.getInstance(myProject);
-    if (!service.isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null) {
-      return service.filterByDumbAwareness(collection);
-    }
+  public boolean mayUseIndices() {
+    return !DumbService.getInstance(myProject).isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null;
+  }
 
-    if (collection instanceof List) {
-      return (List<T>)collection;
+  public static void waitForSmartMode(@Nullable Project project) {
+    if (project != null) {
+      DumbService.getInstance(project).waitForSmartMode();
     }
-
-    return new ArrayList<>(collection);
+    else {
+      for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
+        DumbService.getInstance(openProject).waitForSmartMode();
+      }
+    }
   }
 }

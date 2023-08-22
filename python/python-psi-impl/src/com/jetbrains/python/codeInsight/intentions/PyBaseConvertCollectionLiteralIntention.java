@@ -24,8 +24,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +56,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.convert.collection.literal.family", myTargetCollectionName);
+    return PyPsiBundle.message("INTN.NAME.convert.collection.literal", myTargetCollectionName);
   }
 
   @Override
@@ -67,13 +69,14 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
       return false;
     }
     if (literal instanceof PyTupleExpression) {
-      setText(PyPsiBundle.message("INTN.convert.collection.literal.text", "tuple", myTargetCollectionName));
+      if (PyTypingTypeProvider.isInsideTypeHint(literal, TypeEvalContext.codeAnalysis(literal.getProject(), file))) return false;
+      setText(PyPsiBundle.message("INTN.convert.collection.literal", "tuple", myTargetCollectionName));
     }
     else if (literal instanceof PyListLiteralExpression) {
-      setText(PyPsiBundle.message("INTN.convert.collection.literal.text", "list", myTargetCollectionName));
+      setText(PyPsiBundle.message("INTN.convert.collection.literal", "list", myTargetCollectionName));
     }
     else if (literal instanceof PySetLiteralExpression) {
-      setText(PyPsiBundle.message("INTN.convert.collection.literal.text", "set", myTargetCollectionName));
+      setText(PyPsiBundle.message("INTN.convert.collection.literal", "set", myTargetCollectionName));
     }
     else {
       return false;

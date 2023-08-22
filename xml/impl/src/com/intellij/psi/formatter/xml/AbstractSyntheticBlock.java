@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
@@ -27,18 +13,22 @@ import com.intellij.psi.xml.IXmlAttributeElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-
 public abstract class AbstractSyntheticBlock implements Block {
   protected final Indent myIndent;
-  protected final XmlFormattingPolicy myXmlFormattingPolicy;
+  protected @NotNull XmlFormattingPolicy myXmlFormattingPolicy;
   protected final ASTNode myEndTreeNode;
   protected final ASTNode myStartTreeNode;
   private final XmlTag myTag;
 
-  public AbstractSyntheticBlock(List<Block> subBlocks, Block parent, XmlFormattingPolicy policy, Indent indent) {
+  public AbstractSyntheticBlock(@NotNull List<@NotNull Block> subBlocks,
+                                @NotNull Block parent,
+                                @NotNull XmlFormattingPolicy policy,
+                                @Nullable Indent indent) {
     myEndTreeNode = getLastNode(subBlocks);
     myStartTreeNode = getFirstNode(subBlocks);
     myIndent = indent;
@@ -48,10 +38,10 @@ public abstract class AbstractSyntheticBlock implements Block {
     }
     else if (parent instanceof AbstractSyntheticBlock) {
       myTag = ((AbstractSyntheticBlock)parent).getTag();
-    } else {
+    }
+    else {
       throw new IllegalStateException("Parent should be AbstractXmlBlock or AbstractSyntheticBlock, but it is " + parent.getClass());
     }
-
   }
 
   private static final Logger LOG = Logger.getInstance(AbstractSyntheticBlock.class);
@@ -87,17 +77,17 @@ public abstract class AbstractSyntheticBlock implements Block {
   }
 
   @Override
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return null;
   }
 
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return myIndent;
   }
 
   @Override
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     return null;
   }
 
@@ -110,12 +100,16 @@ public abstract class AbstractSyntheticBlock implements Block {
     return isAttributeElementType(type1) && type2 == XmlTokenType.XML_TAG_END;
   }
 
+  protected boolean isTextNode(IElementType nodeType) {
+    return nodeType == XmlElementType.XML_TEXT ||
+           nodeType == XmlElementType.HTML_RAW_TEXT;
+  }
+
   public boolean endsWithText() {
-    return myEndTreeNode.getElementType() == XmlElementType.XML_TEXT ||
+    return isTextNode(myEndTreeNode.getElementType()) ||
            myEndTreeNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
            myEndTreeNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF ||
            myEndTreeNode.getElementType() == XmlElementType.XML_ENTITY_REF;
-
   }
 
   public boolean isTagDescription() {
@@ -128,7 +122,7 @@ public abstract class AbstractSyntheticBlock implements Block {
   }
 
   public boolean startsWithText() {
-    return myStartTreeNode.getElementType() == XmlElementType.XML_TEXT ||
+    return isTextNode(myStartTreeNode.getElementType()) ||
            myStartTreeNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
            myStartTreeNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF ||
            myStartTreeNode.getElementType() == XmlElementType.XML_ENTITY_REF;
@@ -243,5 +237,4 @@ public abstract class AbstractSyntheticBlock implements Block {
   protected boolean isAttributeElementType(final IElementType elementType) {
     return elementType instanceof IXmlAttributeElementType;
   }
-
 }

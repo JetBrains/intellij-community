@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight;
 
@@ -8,12 +8,12 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -48,7 +48,7 @@ public class TargetElementUtil  {
   public static final int LOOKUP_ITEM_ACCEPTED = 0x08;
 
   public static TargetElementUtil getInstance() {
-    return ServiceManager.getService(TargetElementUtil.class);
+    return ApplicationManager.getApplication().getService(TargetElementUtil.class);
   }
 
   public int getAllAccepted() {
@@ -99,7 +99,7 @@ public class TargetElementUtil  {
 
   public static boolean inVirtualSpace(@NotNull Editor editor, int offset) {
     return offset == editor.getCaretModel().getOffset()
-           && EditorUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
+           && EditorCoreUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
   }
 
   /**
@@ -152,11 +152,18 @@ public class TargetElementUtil  {
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
-      if (item != null && item.isValid()) {
-        final PsiElement psi = CompletionUtil.getTargetElement(item);
-        if (psi != null && psi.isValid()) {
-          return psi;
-        }
+      PsiElement psi = targetElementFromLookupElement(item);
+      if (psi != null) return psi;
+    }
+    return null;
+  }
+
+  @Internal
+  public static @Nullable PsiElement targetElementFromLookupElement(@Nullable LookupElement item) {
+    if (item != null && item.isValid()) {
+      final PsiElement psi = CompletionUtil.getTargetElement(item);
+      if (psi != null && psi.isValid()) {
+        return psi;
       }
     }
     return null;

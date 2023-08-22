@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -12,13 +13,10 @@ public class GrClassConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {
-    switch (position) {
-      case ASSIGNMENT:
-      case RETURN_VALUE:
-        return true;
-      default:
-        return false;
-    }
+    return switch (position) {
+      case ASSIGNMENT, RETURN_VALUE -> true;
+      default -> false;
+    };
   }
 
   @Nullable
@@ -27,15 +25,13 @@ public class GrClassConverter extends GrTypeConverter {
                                         @NotNull PsiType actualType,
                                         @NotNull Position position,
                                         @NotNull GroovyPsiElement context) {
-    if (!(targetType instanceof PsiClassType) ||
-        !((PsiClassType)targetType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+    if (!PsiTypesUtil.classNameEquals(targetType, CommonClassNames.JAVA_LANG_CLASS)) {
       return null;
     }
-    if (actualType instanceof PsiClassType &&
-        ((PsiClassType)actualType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+    if (PsiTypesUtil.classNameEquals(actualType, CommonClassNames.JAVA_LANG_CLASS)) {
       return null;
     }
-    if (actualType == PsiType.NULL) return ConversionResult.OK;
+    if (actualType == PsiTypes.nullType()) return ConversionResult.OK;
     final GrLiteral literal = getLiteral(context);
     final Object value = literal == null ? null : literal.getValue();
     final String fqn = value == null ? null : value.toString();

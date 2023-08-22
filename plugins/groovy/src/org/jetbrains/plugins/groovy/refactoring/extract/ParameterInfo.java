@@ -20,9 +20,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.VariableData;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ilyas
-*/
 public class ParameterInfo extends VariableData {
   private int myPosition;
 

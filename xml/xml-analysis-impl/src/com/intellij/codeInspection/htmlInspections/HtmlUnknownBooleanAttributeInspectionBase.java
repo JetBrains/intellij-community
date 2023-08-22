@@ -42,7 +42,7 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
   public HtmlUnknownBooleanAttributeInspectionBase() {
     this("");
   }
-  
+
   public HtmlUnknownBooleanAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
   }
@@ -52,17 +52,6 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
   @NotNull
   public String getShortName() {
     return BOOLEAN_ATTRIBUTE_SHORT_NAME;
-  }
-
-  @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.checkbox.title");
-  }
-
-  @NotNull
-  @Override
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.boolean.attribute.title");
   }
 
   @Override
@@ -82,13 +71,14 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
           return;
         }
 
-        XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
+        XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
         if (attributeDescriptor != null && !(attributeDescriptor instanceof AnyXmlAttributeDescriptor)) {
           String name = attribute.getName();
           if (!HtmlUtil.isBooleanAttribute(attributeDescriptor, null) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
             final boolean html5 = HtmlUtil.isHtml5Context(tag);
             LocalQuickFix[] quickFixes = !html5 ? new LocalQuickFix[]{
-              new AddCustomHtmlElementIntentionAction(BOOLEAN_ATTRIBUTE_KEY, name, XmlAnalysisBundle.message("add.custom.html.boolean.attribute", name)),
+              new AddCustomHtmlElementIntentionAction(BOOLEAN_ATTRIBUTE_KEY, name, XmlAnalysisBundle.message(
+                "html.quickfix.add.custom.html.boolean.attribute", name)),
               XmlQuickFixFactory.getInstance().addAttributeValueFix(attribute),
               new RemoveAttributeIntentionFix(name),
             } : new LocalQuickFix[] {
@@ -98,12 +88,12 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
 
             String error = null;
             if (html5) {
-              if (attributeDescriptor instanceof XmlEnumerationDescriptor &&
-                  ((XmlEnumerationDescriptor)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
-                error = XmlPsiBundle.message("wrong.value", "attribute");
+              if (attributeDescriptor instanceof XmlEnumerationDescriptor
+                  && ((XmlEnumerationDescriptor<?>)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
+                error = XmlPsiBundle.message("xml.inspections.attribute.requires.value", attribute.getName());
               }
             } else {
-              error = XmlAnalysisBundle.message("attribute.is.not.boolean", attribute.getName());
+              error = XmlAnalysisBundle.message("html.inspections.attribute.is.not.boolean", attribute.getName());
             }
             if (error != null) {
               registerProblemOnAttributeName(attribute, error, holder, quickFixes);

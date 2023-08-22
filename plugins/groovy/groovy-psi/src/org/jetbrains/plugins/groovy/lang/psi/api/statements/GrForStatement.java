@@ -6,9 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 
-/**
- * @autor: ilyas
- */
 public interface GrForStatement extends GrControlStatement, GrLoopStatement {
 
   @Nullable

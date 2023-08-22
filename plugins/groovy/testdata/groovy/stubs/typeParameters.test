@@ -15,6 +15,7 @@
         [Type extends bounds list]
     [Extends clause]
     [Implements clause]
+    [Permits clause]
     [Type definition body]
       [Method : foo]
         [Modifiers]

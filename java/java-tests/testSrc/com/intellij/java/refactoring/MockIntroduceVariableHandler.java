@@ -3,6 +3,7 @@ package com.intellij.java.refactoring;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -14,9 +15,6 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- *  @author dsl
- */
 class MockIntroduceVariableHandler extends IntroduceVariableBase {
   private final String myName;
   private final boolean myReplaceAll;
@@ -55,7 +53,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
     boolean isDeclareVarType = canBeExtractedWithoutExplicitType(expr) && createVarType();
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
       @Override
-      public String getEnteredName() {
+      public @NlsSafe String getEnteredName() {
         return myName;
       }
 

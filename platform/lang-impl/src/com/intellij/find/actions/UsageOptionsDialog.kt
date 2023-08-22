@@ -1,25 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions
 
-import com.intellij.application.options.editor.CheckboxDescriptor
-import com.intellij.application.options.editor.checkBox
 import com.intellij.find.FindBundle.message
 import com.intellij.find.FindSettings
-import com.intellij.find.usages.UsageHandler
-import com.intellij.find.usages.UsageOptions
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
-import com.intellij.openapi.options.OptionEditor
-import com.intellij.openapi.options.OptionEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.UserActivityWatcher
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.event.ItemEvent
@@ -27,11 +25,11 @@ import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class UsageOptionsDialog<O>(
+internal class UsageOptionsDialog(
   private val project: Project,
-  private val presentableText: String?,
-  private val handler: UsageHandler<O>,
-  allOptions: AllSearchOptions<O>,
+  @NlsContexts.Label presentableText: String?,
+  allOptions: AllSearchOptions,
+  private val showScopeChooser: Boolean,
   canReuseTab: Boolean
 ) : DialogWrapper(project) {
 
@@ -39,13 +37,46 @@ internal class UsageOptionsDialog<O>(
   private var myFindUsages: Boolean = allOptions.options.isUsages
   private var myScope: SearchScope = allOptions.options.searchScope
   private var myTextSearch: Boolean? = allOptions.textSearch
-  private val myOptionEditor: OptionEditor<O>? = allOptions.customOptions?.let { OptionEditorProvider.forOptions(it) }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun customResult(): O = myOptionEditor?.result() as O
 
   // ui
-  private val myDialogPanel: DialogPanel = doCreateCenterPanel()
+  private val myDialogPanel: DialogPanel = panel {
+    if (presentableText != null) {
+      row {
+        label(presentableText)
+      }
+    }
+
+    group(message("find.what.group")) {
+      row {
+        checkBox(message("find.what.usages.checkbox"))
+          .bindSelected(::myFindUsages)
+      }
+      myTextSearch?.let {
+        row {
+          checkBox(message("find.options.search.for.text.occurrences.checkbox"))
+            .bindSelected({ it }, { myTextSearch = it })
+        }
+      }
+    }.topGap(TopGap.NONE)
+
+    if (showScopeChooser) {
+      val scopeCombo = ScopeChooserCombo(project, true, true, myScope.displayName)
+      Disposer.register(myDisposable, scopeCombo)
+      scopeCombo.comboBox.addItemListener { event ->
+        if (event.stateChange == ItemEvent.SELECTED) {
+          myScope = scopeCombo.selectedScope ?: return@addItemListener
+        }
+      }
+      group(message("find.scope.label")) {
+        row {
+          cell(scopeCombo)
+            .align(AlignX.FILL)
+            .focused()
+        }
+      }
+    }
+  }
+
   private val myCbOpenInNewTab: JBCheckBox? = if (canReuseTab) {
     JBCheckBox(message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView)
   }
@@ -69,7 +100,7 @@ internal class UsageOptionsDialog<O>(
 
   private fun stateChanged() {
     myDialogPanel.apply() // for some reason DSL UI implementation only updates model from UI only within apply()
-    isOKActionEnabled = myFindUsages || myTextSearch == true || handler.hasAnythingToSearch(customResult())
+    isOKActionEnabled = myFindUsages || myTextSearch == true
   }
 
   override fun createCenterPanel(): JComponent = myDialogPanel
@@ -79,7 +110,9 @@ internal class UsageOptionsDialog<O>(
   override fun doOKAction() {
     super.doOKAction()
     FindSettings.getInstance().apply {
-      defaultScopeName = myScope.displayName
+      if (showScopeChooser) {
+        defaultScopeName = myScope.displayName
+      }
       myCbOpenInNewTab?.let { checkbox ->
         isShowResultsInSeparateView = checkbox.isSelected
       }
@@ -93,57 +126,8 @@ internal class UsageOptionsDialog<O>(
     }
   }
 
-  private fun doCreateCenterPanel(): DialogPanel = panel {
-    if (presentableText != null) {
-      row {
-        label(presentableText)
-      }
-    }
-
-    titledRow(message("find.what.group")) {
-      row {
-        checkBox(CheckboxDescriptor(message("find.what.usages.checkbox"), ::myFindUsages))
-      }
-      row {
-        myOptionEditor?.component?.let { editorComponent ->
-          if (editorComponent is DialogPanel) {
-            onGlobalApply {
-              editorComponent.apply()
-            }
-          }
-          editorComponent.invoke()
-        }
-      }
-      myTextSearch?.let {
-        row {
-          checkBox(
-            text = message("find.options.search.for.text.occurrences.checkbox"),
-            getter = { it },
-            setter = { myTextSearch = it }
-          )
-        }
-      }
-    }
-
-    if (handler.maximalSearchScope is GlobalSearchScope) {
-      val scopeCombo = ScopeChooserCombo(project, true, true, myScope.displayName)
-      Disposer.register(myDisposable, scopeCombo)
-      scopeCombo.comboBox.addItemListener { event ->
-        if (event.stateChange == ItemEvent.SELECTED) {
-          myScope = scopeCombo.selectedScope ?: return@addItemListener
-        }
-      }
-      titledRow(message("find.scope.label")) {
-        row {
-          scopeCombo().focused()
-        }
-      }
-    }
-  }
-
-  fun result(): AllSearchOptions<O> = AllSearchOptions(
+  fun result(): AllSearchOptions = AllSearchOptions(
     options = UsageOptions.createOptions(myFindUsages, myScope),
     textSearch = myTextSearch,
-    customOptions = customResult()
   )
 }

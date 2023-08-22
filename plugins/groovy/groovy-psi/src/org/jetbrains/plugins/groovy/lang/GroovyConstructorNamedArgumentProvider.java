@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.openapi.util.Key;
@@ -29,9 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentProvider {
 
   private static final String METACLASS = "metaClass";
@@ -51,6 +48,7 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
     if (expressionArguments.length > 1 || (expressionArguments.length == 1 && !(expressionArguments[0] instanceof GrReferenceExpression))) {
       return;
     }
+    if (!PsiUtil.isTrustedMapConstructorResult(resolveResult)) return;
 
     for (PsiClass psiClass : getCorrespondingClasses(call, resolveResult)) {
       if (!isClassHasConstructorWithMap(psiClass)) continue;
@@ -151,10 +149,9 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
         String propertyName;
         PsiType type;
 
-        if (element instanceof PsiMethod) {
+        if (element instanceof PsiMethod method) {
           if (!myResolveTargetKinds.contains(DeclarationKind.METHOD)) return true;
 
-          PsiMethod method = (PsiMethod)element;
           if (!GroovyPropertyUtils.isSimplePropertySetter(method)) return true;
 
           propertyName = GroovyPropertyUtils.getPropertyNameBySetter(method);
@@ -170,8 +167,6 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
         }
 
         if (METACLASS.equals(propertyName)) return true;
-
-        if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return true;
 
         PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
         if (substitutor != null) {

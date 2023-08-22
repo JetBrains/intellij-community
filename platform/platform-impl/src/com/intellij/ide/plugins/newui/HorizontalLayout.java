@@ -8,7 +8,9 @@ import java.awt.*;
 
 /**
  * @author Alexander Lobas
+ * @deprecated use {@link com.intellij.ui.components.panels.ListLayout}
  */
+@Deprecated
 public class HorizontalLayout extends AbstractLayoutManager {
   protected final int myOffset;
 

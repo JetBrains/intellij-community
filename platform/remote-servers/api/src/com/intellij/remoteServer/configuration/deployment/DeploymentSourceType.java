@@ -57,4 +57,8 @@ public abstract class DeploymentSourceType<S extends DeploymentSource> {
 
   public void updateBuildBeforeRunOption(@NotNull JComponent runConfigurationEditorComponent, @NotNull Project project, @NotNull S source, boolean select) {
   }
+
+  public boolean isEditableInDumbMode() {
+    return false;
+  }
 }

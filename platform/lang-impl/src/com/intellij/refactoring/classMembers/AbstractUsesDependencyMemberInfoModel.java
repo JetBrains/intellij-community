@@ -30,10 +30,10 @@ public abstract class AbstractUsesDependencyMemberInfoModel<T extends Navigatabl
   public AbstractUsesDependencyMemberInfoModel(C aClass, @Nullable C superClass, boolean recursive) {
     super(new UsesMemberDependencyGraph<>(aClass, superClass, recursive), ERROR);
     myClass = aClass;
-    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<>() {
       @Override
       public String getTooltip(M memberInfo) {
-        return ((UsesMemberDependencyGraph<T, C, M>) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
+        return ((UsesMemberDependencyGraph<T, C, M>)myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
       }
     });
   }

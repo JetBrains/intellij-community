@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -40,7 +40,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
+  public boolean filterElements(@NotNull ChooseByNameViewModel base,
                                 @NotNull String pattern,
                                 boolean everywhere,
                                 @NotNull ProgressIndicator indicator,
@@ -50,7 +50,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
+  public boolean filterElements(@NotNull ChooseByNameViewModel base,
                                 @NotNull FindSymbolParameters parameters,
                                 @NotNull ProgressIndicator indicator,
                                 @NotNull Processor<Object> consumer) {
@@ -58,7 +58,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @Override
-  public boolean filterElementsWithWeights(@NotNull ChooseByNameBase base,
+  public boolean filterElementsWithWeights(@NotNull ChooseByNameViewModel base,
                                            @NotNull String pattern,
                                            boolean everywhere,
                                            @NotNull ProgressIndicator indicator,
@@ -67,13 +67,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @Override
-  public boolean filterElementsWithWeights(@NotNull ChooseByNameBase base,
+  public boolean filterElementsWithWeights(@NotNull ChooseByNameViewModel base,
                                            @NotNull FindSymbolParameters parameters,
                                            @NotNull ProgressIndicator indicator,
                                            @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
     return ProgressManager.getInstance().computePrioritized(
       () -> filterElements(base, indicator, myContext == null ? null : myContext.getElement(),
-                           () -> base.getNames(parameters.isSearchInLibraries()), consumer, parameters));
+                           () -> base.getModel().getNames(parameters.isSearchInLibraries()), consumer, parameters));
   }
 
   /**
@@ -216,12 +216,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   @NotNull
   private static FindSymbolParameters createParameters(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere) {
     ChooseByNameModel model = base.getModel();
-    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? ((ContributorsBasedGotoByModel)model).getIdFilter(everywhere) : null;
+    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? IdFilter.getProjectIdFilter(
+      ((ContributorsBasedGotoByModel)model).getProject(), everywhere) : null;
     GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.getProject(), everywhere);
     return new FindSymbolParameters(pattern, getNamePattern(base, pattern), searchScope, idFilter);
   }
 
-  private static boolean processByNames(@NotNull ChooseByNameViewModel base,
+  protected static boolean processByNames(@NotNull ChooseByNameViewModel base,
                                         boolean everywhere,
                                         @NotNull ProgressIndicator indicator,
                                         @Nullable PsiElement context,
@@ -231,7 +232,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     List<Pair<Object, MatchResult>> sameNameElements = new SmartList<>();
 
     ChooseByNameModel model = base.getModel();
-    Comparator<Pair<Object, MatchResult>> weightComparator = new Comparator<Pair<Object, MatchResult>>() {
+    Comparator<Pair<Object, MatchResult>> weightComparator = new Comparator<>() {
       @SuppressWarnings("unchecked") final
       Comparator<Object> modelComparator = model instanceof Comparator ? (Comparator<Object>)model :
                                            new PathProximityComparator(context);
@@ -332,7 +333,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
 
   @NotNull
   @Override
-  public List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
+  public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     boolean preferStartMatches = pattern.startsWith("*");
     pattern = convertToMatchingPattern(base, pattern);
     if (pattern.isEmpty() && !base.canShowListForEmptyPattern()) return Collections.emptyList();
@@ -417,7 +418,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @NotNull
-  private static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
+  protected static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
     NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(pattern).withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE);
     if (preferStartMatches) {
       builder = builder.preferringStartMatches();
@@ -426,7 +427,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return builder.build();
   }
 
-  protected static class PathProximityComparator implements Comparator<Object> {
+  protected static final class PathProximityComparator implements Comparator<Object> {
     @NotNull private final PsiProximityComparator myProximityComparator;
 
     private PathProximityComparator(@Nullable final PsiElement context) {

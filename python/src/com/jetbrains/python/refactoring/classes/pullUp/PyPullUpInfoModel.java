@@ -55,9 +55,8 @@ class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement,
   @Override
   public boolean isMemberEnabled(final PyMemberInfo<PyElement> member) {
     final PyClass currentSuperClass = myView.getSelectedParent();
-    if (member.getMember() instanceof PyClass) {
+    if (member.getMember() instanceof PyClass memberClass) {
       //TODO: Delegate to Memebers Managers
-      final PyClass memberClass = (PyClass)member.getMember();
       if (memberClass.isSubclass(currentSuperClass, null) || currentSuperClass.isSubclass(memberClass, null)) {
         return false; //Class is already parent of superclass
       }

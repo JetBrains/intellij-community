@@ -1,15 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 import java.io.OutputStream
 import java.io.PrintStream
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 
-internal var logger: Consumer<String> = Consumer { println(it) }
-
-internal fun log(msg: String) = logger.accept(msg)
+internal fun log(msg: String) = println(msg)
 
 internal fun String.splitWithSpace(): List<String> = this.splitNotBlank(" ")
 
@@ -17,16 +15,16 @@ internal fun String.splitNotBlank(delimiter: String): List<String> = this.split(
 
 internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
-internal fun execute(workingDir: File?, vararg command: String, withTimer: Boolean = false): String {
+internal fun execute(workingDir: Path?, vararg command: String, withTimer: Boolean = false): String {
   val errOutputFile = File.createTempFile("errOutput", "txt")
   val processCall = {
     val process = ProcessBuilder(*command.filter { it.isNotBlank() }.toTypedArray())
-      .directory(workingDir)
+      .directory(workingDir?.toFile())
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
       .redirectError(errOutputFile)
       .apply {
         environment()["LANG"] = "en_US.UTF-8"
-        if (environment()["GIT_SSH_COMMAND"].isNullOrEmpty()) {
+        if (environment()["GIT_SSH_COMMAND"].isNullOrEmpty() && environment()["GIT_SSH"].isNullOrEmpty()) {
           environment()["GIT_SSH_COMMAND"] = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         }
       }.start()
@@ -34,7 +32,7 @@ internal fun execute(workingDir: File?, vararg command: String, withTimer: Boole
     process.waitFor(1, TimeUnit.MINUTES)
     val error = errOutputFile.readText().trim()
     if (process.exitValue() != 0) {
-      error("Command ${command.joinToString(" ")} failed in ${workingDir?.absolutePath} with ${process.exitValue()} : $output\n$error")
+      error("Command ${command.joinToString(" ")} failed in ${workingDir?.toAbsolutePath()} with ${process.exitValue()} : $output\n$error")
     }
     output
   }
@@ -140,4 +138,6 @@ internal inline fun <T> muteStdErr(block: () -> T): T = protectStdErr {
   return block()
 }
 
-internal fun File.isAncestorOf(file: File): Boolean = this == file.parentFile || file.parentFile != null && isAncestorOf(file.parentFile)
+internal fun Path.isAncestorOf(file: Path): Boolean {
+  return file.startsWith(this)
+}

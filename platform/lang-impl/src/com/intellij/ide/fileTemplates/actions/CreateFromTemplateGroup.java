@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.actions;
 
@@ -9,11 +9,13 @@ import com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.impl.FileTemplateBase;
 import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
+public final class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e){
@@ -40,6 +42,11 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       }
     }
     presentation.setEnabled(false);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -82,7 +89,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     List<AnAction> result = new ArrayList<>();
 
     for (FileTemplate template : templates) {
-      if (canCreateFromTemplate(e, template)) {
+      if (!FileTemplateBase.isChild(template) && canCreateFromTemplate(e, template)) {
         AnAction action = replaceAction(template);
         if (action == null) {
           action = new CreateFromTemplateAction(template);
@@ -125,9 +132,9 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     return FileTemplateUtil.canCreateFromTemplate(dirs, template);
   }
 
-  private static class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
+  private static final class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
 
-    CreateFromTemplatesAction(String title){
+    CreateFromTemplatesAction(@NlsActions.ActionText String title){
       super(title,null,null);
     }
 

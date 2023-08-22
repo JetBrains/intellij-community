@@ -1,0 +1,9 @@
+decorator.ContextManager.__init__
+decorator.FunctionMaker.args
+decorator.FunctionMaker.kwonlyargs
+decorator.FunctionMaker.kwonlydefaults
+decorator.FunctionMaker.varargs
+decorator.FunctionMaker.varkw
+decorator.decorate
+decorator.decorator
+decorator.get_init

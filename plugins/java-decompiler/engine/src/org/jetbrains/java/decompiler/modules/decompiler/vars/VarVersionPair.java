@@ -28,9 +28,8 @@ public class VarVersionPair {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof VarVersionPair)) return false;
+    if (!(o instanceof VarVersionPair paar)) return false;
 
-    VarVersionPair paar = (VarVersionPair)o;
     return var == paar.var && version == paar.version;
   }
 

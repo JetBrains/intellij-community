@@ -1,11 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public interface CommonClassNames {
   String DEFAULT_PACKAGE = "java.lang";
 
@@ -19,6 +16,7 @@ public interface CommonClassNames {
 
   String JAVA_UTIL_OBJECTS = "java.util.Objects";
 
+  String JAVA_LANG_SYSTEM = "java.lang.System";
   String JAVA_LANG_THROWABLE = "java.lang.Throwable";
   String JAVA_LANG_EXCEPTION = "java.lang.Exception";
   String JAVA_LANG_ERROR = "java.lang.Error";
@@ -47,6 +45,9 @@ public interface CommonClassNames {
   String JAVA_UTIL_MAP = "java.util.Map";
   String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
   String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
+  String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
+  String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
+  String JAVA_UTIL_NAVIGABLE_MAP = "java.util.NavigableMap";
   String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
   String JAVA_UTIL_LIST = "java.util.List";
   String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
@@ -55,6 +56,7 @@ public interface CommonClassNames {
   String JAVA_UTIL_HASH_SET = "java.util.HashSet";
   String JAVA_UTIL_LINKED_HASH_SET = "java.util.LinkedHashSet";
   String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  String JAVA_UTIL_NAVIGABLE_SET = "java.util.NavigableSet";
   String JAVA_UTIL_QUEUE = "java.util.Queue";
   String JAVA_UTIL_STACK = "java.util.Stack";
   String JAVA_UTIL_PROPERTIES = "java.util.Properties";
@@ -66,12 +68,22 @@ public interface CommonClassNames {
 
   String JAVA_UTIL_OPTIONAL = "java.util.Optional";
 
+  String JAVA_UTIL_UUID = "java.util.UUID";
+
+  String JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM = "java.io.ByteArrayOutputStream";
   String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
   String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
+  String JAVA_IO_SERIAL = "java.io.Serial";
   String JAVA_IO_FILE = "java.io.File";
+  String JAVA_IO_FILE_INPUT_STREAM = "java.io.FileInputStream";
+  String JAVA_IO_FILE_OUTPUT_STREAM = "java.io.FileOutputStream";
+  String JAVA_IO_FILE_READER = "java.io.FileReader";
+  String JAVA_IO_FILE_WRITER = "java.io.FileWriter";
+  String JAVA_IO_PRINT_STREAM = "java.io.PrintStream";
+  String JAVA_IO_PRINT_WRITER = "java.io.PrintWriter";
 
   String JAVA_LANG_STRING = "java.lang.String";
-  String JAVA_LANG_STRING_SHORT = "String";
+  @NonNls String JAVA_LANG_STRING_SHORT = "String";
   String JAVA_LANG_NUMBER = "java.lang.Number";
   String JAVA_LANG_BOOLEAN = "java.lang.Boolean";
   String JAVA_LANG_BYTE = "java.lang.Byte";
@@ -85,6 +97,8 @@ public interface CommonClassNames {
   String JAVA_LANG_CHAR_SEQUENCE = "java.lang.CharSequence";
   String JAVA_LANG_STRING_BUFFER = "java.lang.StringBuffer";
   String JAVA_LANG_STRING_BUILDER = "java.lang.StringBuilder";
+  String JAVA_LANG_STRING_TEMPLATE = "java.lang.StringTemplate";
+  String JAVA_LANG_STRING_TEMPLATE_PROCESSOR = "java.lang.StringTemplate.Processor";
   String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";
 
   String JAVA_LANG_MATH = "java.lang.Math";
@@ -98,10 +112,24 @@ public interface CommonClassNames {
 
   String JAVA_LANG_NULL_POINTER_EXCEPTION = "java.lang.NullPointerException";
 
+  String JAVA_NIO_CHARSET_CHARSET = "java.nio.charset.Charset";
+
+  String JAVA_NET_URI = "java.net.URI";
+  String JAVA_NET_URL = "java.net.URL";
+
+  String JAVA_TIME_LOCAL_DATE = "java.time.LocalDate";
+  String JAVA_TIME_LOCAL_TIME = "java.time.LocalTime";
+  String JAVA_TIME_LOCAL_DATE_TIME = "java.time.LocalDateTime";
+  String JAVA_TIME_OFFSET_DATE_TIME = "java.time.OffsetDateTime";
+  String JAVA_TIME_OFFSET_TIME = "java.time.OffsetTime";
+  String JAVA_TIME_ZONED_DATE_TIME = "java.time.ZonedDateTime";
+
   String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
   String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
   String JAVA_UTIL_CONCURRENT_COMPLETABLE_FUTURE = "java.util.concurrent.CompletableFuture";
   String JAVA_UTIL_CONCURRENT_COMPLETION_STAGE = "java.util.concurrent.CompletionStage";
+
+  String JAVA_UTIL_FORMATTER = "java.util.Formatter";
 
   String JAVA_UTIL_STREAM_BASE_STREAM = "java.util.stream.BaseStream";
   String JAVA_UTIL_STREAM_STREAM = "java.util.stream.Stream";

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    thriftpy.thrift
+    _shaded_thriftpy.thrift
     ~~~~~~~~~~~~~~~~~~
 
     Thrift simplified.
@@ -10,13 +10,25 @@
 from __future__ import absolute_import
 
 import functools
+import linecache
+import types
 
-from ._compat import init_func_generator, with_metaclass
+from ._compat import with_metaclass, PY3
+if PY3:
+    from itertools import zip_longest
+else:
+    from itertools import izip_longest as zip_longest
 
 
-def args2kwargs(thrift_spec, *args):
-    arg_names = [item[1][1] for item in sorted(thrift_spec.items())]
-    return dict(zip(arg_names, args))
+def args_to_kwargs(thrift_spec, *args, **kwargs):
+    for item, value in zip_longest(sorted(thrift_spec.items()), args):
+        arg_name = item[1][1]
+        required = item[1][-1]
+        if value is not None:
+            kwargs[item[1][1]] = value
+        if required and arg_name not in kwargs:
+            raise ValueError(arg_name)
+    return kwargs
 
 
 def parse_spec(ttype, spec=None):
@@ -38,6 +50,41 @@ def parse_spec(ttype, spec=None):
         return "MAP<%s, %s>" % (_type(spec[0]), _type(spec[1]))
 
 
+def init_func_generator(cls, spec):
+    """Generate `__init__` function based on TPayload.default_spec
+
+    For example::
+
+        spec = [('name', 'Alice'), ('number', None)]
+
+    will generate a types.FunctionType object representing::
+
+        def __init__(self, name='Alice', number=None):
+            self.name = name
+            self.number = number
+    """
+    if not spec:
+        def __init__(self):
+            pass
+        return __init__
+
+    varnames, defaults = zip(*spec)
+
+    args = ', '.join(map('{0[0]}={0[1]!r}'.format, spec))
+    init = "def __init__(self, {}):\n".format(args)
+    init += "\n".join(map('    self.{0} = {0}'.format, varnames))
+
+    name = '<generated {}.__init__>'.format(cls.__name__)
+    code = compile(init, name, 'exec')
+    func = next(c for c in code.co_consts if isinstance(c, types.CodeType))
+
+    # Add a fake linecache entry so debuggers and the traceback module can
+    # better understand our generated code.
+    linecache.cache[name] = (len(init), None, init.splitlines(True), name)
+
+    return types.FunctionType(func, {}, argdefs=defaults)
+
+
 class TType(object):
     STOP = 0
     VOID = 1
@@ -50,13 +97,13 @@ class TType(object):
     I64 = 10
     STRING = 11
     UTF7 = 11
-    BINARY = 11  # This here just for parsing. For all purposes, it's a string
     STRUCT = 12
     MAP = 13
     SET = 14
     LIST = 15
     UTF8 = 16
     UTF16 = 17
+    BINARY = 18
 
     _VALUES_TO_NAMES = {
         STOP: 'STOP',
@@ -70,13 +117,13 @@ class TType(object):
         I64: 'I64',
         STRING: 'STRING',
         UTF7: 'STRING',
-        BINARY: 'STRING',
         STRUCT: 'STRUCT',
         MAP: 'MAP',
         SET: 'SET',
         LIST: 'LIST',
         UTF8: 'UTF8',
-        UTF16: 'UTF16'
+        UTF16: 'UTF16',
+        BINARY: 'BINARY'
     }
 
 
@@ -91,7 +138,8 @@ class TPayloadMeta(type):
 
     def __new__(cls, name, bases, attrs):
         if "default_spec" in attrs:
-            attrs["__init__"] = init_func_generator(attrs.pop("default_spec"))
+            spec = attrs.pop("default_spec")
+            attrs["__init__"] = init_func_generator(cls, spec)
         return super(TPayloadMeta, cls).__new__(cls, name, bases, attrs)
 
 
@@ -100,7 +148,7 @@ def gen_init(cls, thrift_spec=None, default_spec=None):
         cls.thrift_spec = thrift_spec
 
     if default_spec is not None:
-        cls.__init__ = init_func_generator(default_spec)
+        cls.__init__ = init_func_generator(cls, default_spec)
     return cls
 
 
@@ -142,6 +190,11 @@ class TClient(object):
         if _api in self._service.thrift_services:
             return functools.partial(self._req, _api)
 
+        # close method is a reserved method name defined as below
+        # so we need to handle it alone
+        if _api == 'tclose':
+            return functools.partial(self._req, 'close')
+
         raise AttributeError("{} instance has no attribute '{}'".format(
             self.__class__.__name__, _api))
 
@@ -149,9 +202,15 @@ class TClient(object):
         return self._service.thrift_services
 
     def _req(self, _api, *args, **kwargs):
-        _kw = args2kwargs(getattr(self._service, _api + "_args").thrift_spec,
-                          *args)
-        kwargs.update(_kw)
+        try:
+            kwargs = args_to_kwargs(getattr(self._service, _api + "_args").thrift_spec,
+                          *args, **kwargs)
+        except ValueError as e:
+            raise TApplicationException(
+                    TApplicationException.UNKNOWN_METHOD,
+                    '{arg} is required argument for {service}.{api}'.format(
+                        arg=e.args[0], service=self._service.__name__, api=_api))
+
         result_cls = getattr(self._service, _api + "_result")
 
         self._send(_api, **kwargs)
@@ -202,7 +261,7 @@ class TClient(object):
 
 
 class TProcessor(object):
-    """Base class for procsessor, which works on two streams."""
+    """Base class for processor, which works on two streams."""
 
     def __init__(self, service, handler):
         self._service = service
@@ -249,9 +308,8 @@ class TProcessor(object):
             _, exc_name, exc_cls, _ = result.thrift_spec[k]
             if isinstance(e, exc_cls):
                 setattr(result, exc_name, e)
-                break
-        else:
-            raise e
+                return True
+        return False
 
     def process(self, iprot, oprot):
         api, seqid, result, call = self.process_in(iprot)
@@ -261,9 +319,12 @@ class TProcessor(object):
 
         try:
             result.success = call()
+        except TApplicationException as e:
+            return self.send_exception(oprot, api, e, seqid)
         except Exception as e:
             # raise if api don't have throws
-            self.handle_exception(e, result)
+            if not self.handle_exception(e, result):
+                raise
 
         if not result.oneway:
             self.send_result(oprot, api, result, seqid)
@@ -279,14 +340,14 @@ class TMultiplexedProcessor(TProcessor):
         if service_name in self.processors:
             raise TApplicationException(
                 type=TApplicationException.INTERNAL_ERROR,
-                message='processor for `{0}` already registered'
+                message='processor for `{}` already registered'
                 .format(service_name))
         self.processors[service_name] = processor
 
     def process_in(self, iprot):
         api, type, seqid = iprot.read_message_begin()
         if type not in (TMessageType.CALL, TMessageType.ONEWAY):
-            raise TException("TMultiplex protocol only supports CALL & ONEWAY")
+            raise TException("TMultiplexed protocol only supports CALL & ONEWAY")  # noqa
         if TMultiplexedProcessor.SEPARATOR not in api:
             raise TException("Service name not found in message. "
                              "You should use TMultiplexedProtocol in client.")

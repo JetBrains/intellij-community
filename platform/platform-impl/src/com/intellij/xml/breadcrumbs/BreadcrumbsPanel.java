@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -29,11 +29,14 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -43,10 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,7 +56,6 @@ import java.util.List;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.ui.RelativeFont.SMALL;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
-import static com.intellij.util.ui.UIUtil.getLabelFont;
 
 public abstract class BreadcrumbsPanel extends JComponent implements Disposable {
   private static final Logger LOG = getInstance(BreadcrumbsPanel.class);
@@ -78,7 +77,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
 
     @Override
-    public boolean canEat(final Update update) {
+    public boolean canEat(final @NotNull Update update) {
       return true;
     }
   };
@@ -86,7 +85,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   private static final Key<BreadcrumbsPanel> BREADCRUMBS_COMPONENT_KEY = new Key<>("BREADCRUMBS_KEY");
   private static final Iterable<? extends Crumb> EMPTY_BREADCRUMBS = Collections.emptyList();
 
-  public BreadcrumbsPanel(@NotNull final Editor editor) {
+  public BreadcrumbsPanel(final @NotNull Editor editor) {
     myEditor = editor;
     putBreadcrumbsComponent(myEditor, this);
     if (editor instanceof EditorEx) {
@@ -107,7 +106,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
 
     final CaretListener caretListener = new CaretListener() {
       @Override
-      public void caretPositionChanged(@NotNull final CaretEvent e) {
+      public void caretPositionChanged(final @NotNull CaretEvent e) {
         if (myUserCaretChange) {
           queueUpdate();
         }
@@ -129,20 +128,29 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     add(BorderLayout.CENTER, pane);
 
     EditorGutter gutter = editor.getGutter();
-    if (gutter instanceof EditorGutterComponentEx) {
-      EditorGutterComponentEx gutterComponent = (EditorGutterComponentEx)gutter;
-      MouseEventAdapter mouseListener = new MouseEventAdapter<EditorGutterComponentEx>(gutterComponent) {
-        @NotNull
+    if (gutter instanceof EditorGutterComponentEx gutterComponent) {
+      if (!(gutterComponent instanceof MouseListener)) {
+        LOG.error("Can't delegate mouse events to EditorGutterComponentEx: " + gutterComponent);
+      }
+
+      MouseEventAdapter<EditorGutterComponentEx> mouseListener = new MouseEventAdapter<>(gutterComponent) {
         @Override
-        protected MouseEvent convert(@NotNull MouseEvent event) {
+        protected @NotNull MouseEvent convert(@NotNull MouseEvent event) {
           return convert(event, gutterComponent);
+        }
+
+        @Override
+        protected MouseListener getMouseListener(@NotNull EditorGutterComponentEx adapter) {
+          if (adapter instanceof MouseListener && adapter.isShowing()) {
+            return (MouseListener)adapter;
+          }
+          return null;
         }
       };
       ComponentAdapter resizeListener = new ComponentAdapter() {
         @DirtyUI
         @Override
         public void componentResized(ComponentEvent event) {
-          breadcrumbs.updateBorder(getLeftOffset());
           breadcrumbs.setFont(getNewFont(myEditor));
         }
       };
@@ -155,12 +163,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
         gutterComponent.removeComponentListener(resizeListener);
         breadcrumbs.removeMouseListener(mouseListener);
       });
-      breadcrumbs.updateBorder(getLeftOffset());
     }
-    else {
-      breadcrumbs.updateBorder(0);
-    }
-    Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
+    Disposer.register(this, UiNotifyConnector.installOn(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
     BreadcrumbsProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);
@@ -171,6 +175,10 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
 
     queueUpdate();
+  }
+
+  public Breadcrumbs getBreadcrumbs() {
+    return breadcrumbs;
   }
 
   protected int getLeftOffset() {
@@ -257,19 +265,16 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
   }
 
-  @Nullable
-  protected abstract Iterable<? extends Crumb> computeCrumbs(int offset);
+  protected abstract @Nullable Iterable<? extends Crumb> computeCrumbs(int offset);
 
   protected void navigateToCrumb(Crumb crumb, boolean withSelection) {
-    if (crumb instanceof NavigatableCrumb) {
-      NavigatableCrumb navigatableCrumb = (NavigatableCrumb)crumb;
+    if (crumb instanceof NavigatableCrumb navigatableCrumb) {
       myUserCaretChange = false;
       navigatableCrumb.navigate(myEditor, withSelection);
     }
   }
 
-  @Nullable
-  protected CrumbHighlightInfo getHighlightInfo(Crumb crumb) {
+  protected @Nullable CrumbHighlightInfo getHighlightInfo(Crumb crumb) {
     if (crumb instanceof NavigatableCrumb) {
       final TextRange range = ((NavigatableCrumb)crumb).getHighlightRange();
       if (range == null) return null;
@@ -280,8 +285,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   }
 
   protected static class CrumbHighlightInfo {
-    @NotNull public final TextRange range;
-    @Nullable public final CrumbPresentation presentation;
+    public final @NotNull TextRange range;
+    public final @Nullable CrumbPresentation presentation;
 
     public CrumbHighlightInfo(@NotNull TextRange range, @Nullable CrumbPresentation presentation) {
       this.range = range;
@@ -297,8 +302,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     editor.putUserData(BREADCRUMBS_COMPONENT_KEY, panel);
   }
 
-  @Nullable
-  public static BreadcrumbsPanel getBreadcrumbsComponent(@NotNull Editor editor) {
+  public static @Nullable BreadcrumbsPanel getBreadcrumbsComponent(@NotNull Editor editor) {
     return editor.getUserData(BREADCRUMBS_COMPONENT_KEY);
   }
 
@@ -317,8 +321,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   }
 
   private static Font getNewFont(Editor editor) {
-    Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? getLabelFont() : getEditorFont(editor);
-    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? SMALL.derive(font) : font;
+    Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? StartupUiUtil.getLabelFont() : getEditorFont(editor);
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() && !ExperimentalUI.isNewUI() ? SMALL.derive(font) : font;
   }
 
   private static Font getEditorFont(Editor editor) {
@@ -326,10 +330,9 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
                                                            null).getFont();
   }
 
-  @Nullable
-  protected static FileBreadcrumbsCollector findCollectorFor(@NotNull Project project,
-                                                             @Nullable VirtualFile file,
-                                                             @NotNull BreadcrumbsPanel panel) {
+  protected static @Nullable FileBreadcrumbsCollector findCollectorFor(@NotNull Project project,
+                                                                       @Nullable VirtualFile file,
+                                                                       @NotNull BreadcrumbsPanel panel) {
     if (file == null) return null;
     FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, file);
     collector.watchForChanges(file, panel.myEditor, panel, () -> panel.queueUpdate());

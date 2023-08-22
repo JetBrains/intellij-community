@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupValueWithPriority;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorPickerListener;
 import com.intellij.ui.ColorPickerListenerFactory;
 import com.intellij.ui.ColorUtil;
@@ -38,12 +38,12 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   }
 
   public UserColorLookup(final Function<? super Color, String> colorToStringConverter) {
-    this(colorToStringConverter, LookupValueWithPriority.HIGH);
+    this(colorToStringConverter, ColorSampleLookupValue.HIGH_PRIORITY);
   }
 
   public UserColorLookup(final Function<? super Color, String> colorToStringConverter, int priority) {
     super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(getColorString()).withInsertHandler(
-      new InsertHandler<LookupElement>() {
+      new InsertHandler<>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           handleUserSelection(context, colorToStringConverter);
@@ -63,8 +63,8 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
     context.setLaterRunnable(() -> {
       if (editor.isDisposed() || project.isDisposed()) return;
       List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(element);
-      Color color = ColorChooser.chooseColor(project, WindowManager.getInstance().suggestParentWindow(project),
-                                             XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
+      Color color = ColorChooserService.getInstance().showDialog(project, WindowManager.getInstance().suggestParentWindow(project),
+                                                                 IdeBundle.message("dialog.title.choose.color"), myColorAtCaret, true, listeners, true);
       if (color != null) {
         WriteCommandAction.runWriteCommandAction(project, () -> {
           editor.getCaretModel().moveToOffset(startOffset);
@@ -82,6 +82,6 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   }
 
   private static String getColorString() {
-    return XmlBundle.message("choose.color.in.color.lookup");
+    return XmlBundle.message("xml.lookup.choose.color");
   }
 }

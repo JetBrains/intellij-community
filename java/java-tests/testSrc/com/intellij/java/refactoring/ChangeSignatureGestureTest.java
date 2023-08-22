@@ -15,7 +15,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inplace.InplaceChangeSignature;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -29,7 +29,7 @@ public class ChangeSignatureGestureTest extends LightJavaCodeInsightFixtureTestC
     CommandProcessor.getInstance().executeCommand(
       myFixture.getProject(), () ->
         new InplaceChangeSignature(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile().findElementAt(myFixture.getCaretOffset())),
-      ChangeSignatureHandler.REFACTORING_NAME, null);
+      RefactoringBundle.message("changeSignature.refactoring.name"), null);
     run.run();
 
     IntentionAction action = myFixture.findSingleIntention("Changing signature of ");

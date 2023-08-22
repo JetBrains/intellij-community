@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.application.options.schemes.SchemesModel;
@@ -11,6 +11,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -86,12 +88,18 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
 
   protected abstract void onProfileRemoved(@NotNull SingleInspectionProfilePanel profilePanel);
 
-  void addProfile(@NotNull InspectionProfileModifiableModel profile) {
+  synchronized void addProfile(@NotNull InspectionProfileModifiableModel profile) {
     myProfilePanels.add(createPanel(profile));
   }
 
   private void removeProfile(@NotNull InspectionProfileImpl profile) {
-    myProfilePanels.removeIf(panel -> panel.getProfile().equals(profile));
+    myProfilePanels.removeIf(panel -> {
+      if (panel.getProfile().equals(profile)) {
+        panel.disposeUI();
+        return true;
+      }
+      return false;
+    });
   }
 
   void updatePanel(@NotNull InspectionProfileSchemesPanel panel) {
@@ -118,7 +126,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     disposeUI();
     myDeletedProfiles.clear();
     getSortedProfiles(myApplicationProfileManager, myProjectProfileManager)
-      .stream()
+      .parallelStream()
       .map(source -> {
         try {
           return new InspectionProfileModifiableModel(source);
@@ -129,7 +137,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
         }
       })
       .filter(Objects::nonNull)
-      .forEach(this::addProfile);
+      .forEachOrdered(this::addProfile);
   }
 
   void disposeUI() {
@@ -140,7 +148,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
   }
 
   SingleInspectionProfilePanel getProfilePanel(InspectionProfileImpl profile) {
-    return myProfilePanels.stream().filter(panel -> panel.getProfile().equals(profile)).findFirst().orElse(null);
+    return ContainerUtil.find(myProfilePanels, panel -> panel.getProfile().equals(profile));
   }
 
   @NotNull
@@ -168,7 +176,7 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     return !myDeletedProfiles.isEmpty();
   }
 
-  @NotNull
+  @Nullable
   InspectionProfileModifiableModel getModifiableModelFor(@NotNull InspectionProfileImpl profile) {
     if (profile instanceof InspectionProfileModifiableModel) {
       return (InspectionProfileModifiableModel)profile;
@@ -179,11 +187,11 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
         return modifiableModel;
       }
     }
-    throw new AssertionError("profile " + profile.getName() + " is not present among profile panels" +
-                             Arrays.toString(myProfilePanels.stream().map(p -> p.getProfile().getName()).toArray(String[]::new)));
+    return null;
   }
 
   @NotNull
+  @Unmodifiable
   public static List<InspectionProfileImpl> getSortedProfiles(@NotNull InspectionProfileManager appManager,
                                                               @NotNull InspectionProfileManager projectManager) {
     return ContainerUtil.notNullize(ContainerUtil.concat(ContainerUtil.sorted(appManager.getProfiles()),

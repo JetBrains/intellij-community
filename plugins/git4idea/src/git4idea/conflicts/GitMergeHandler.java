@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts;
 
 import com.intellij.diff.merge.MergeCallback;
@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer.DiffEditorTitleCustomizerList;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -19,9 +21,10 @@ import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.ConflictSide;
 import git4idea.repo.GitConflict.Status;
-import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.status.GitStagingAreaHolder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +46,7 @@ public class GitMergeHandler {
     myDialogCustomizer = mergeDialogCustomizer;
   }
 
+  @Nls
   @NotNull
   public String loadMergeDescription() {
     return myDialogCustomizer.getMultipleFileMergeDescription(emptyList());
@@ -90,8 +94,19 @@ public class GitMergeHandler {
       }
     }
     finally {
-      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ContainerUtil.map(conflicts, GitConflict::getFilePath), null);
+      List<FilePath> filePaths = ContainerUtil.map(conflicts, GitConflict::getFilePath);
+      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(filePaths, null);
+
+      List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(filePaths, GitMergeHandler::getExistingFileOrParent);
+      VfsUtil.markDirtyAndRefresh(true, false, true, VfsUtilCore.toVirtualFileArray(virtualFiles));
     }
+  }
+
+  @Nullable
+  private static VirtualFile getExistingFileOrParent(@NotNull FilePath filePath) {
+    VirtualFile file = filePath.getVirtualFile();
+    if (file != null) return file;
+    return filePath.getVirtualFileParent();
   }
 
   @NotNull
@@ -103,7 +118,7 @@ public class GitMergeHandler {
     return byRoot;
   }
 
-  public static class Resolver {
+  public static final class Resolver {
     @NotNull private final Project myProject;
     @NotNull private final GitConflict myConflict;
     private final boolean myIsReversed;
@@ -163,14 +178,11 @@ public class GitMergeHandler {
 
     @Nullable
     private ConflictSide getResolutionSide(@NotNull MergeResult result) {
-      switch (result) {
-        case LEFT:
-          return !myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
-        case RIGHT:
-          return myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
-        default:
-          return null;
-      }
+      return switch (result) {
+        case LEFT -> !myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
+        case RIGHT -> myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
+        default -> null;
+      };
     }
 
     @NotNull
@@ -192,13 +204,13 @@ public class GitMergeHandler {
       if (myIsValid) {
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(myConflict.getRoot());
         if (repository == null) return true;
-        myIsValid = repository.getConflictsHolder().findConflict(myConflict.getFilePath()) != null;
+        myIsValid = repository.getStagingAreaHolder().findConflict(myConflict.getFilePath()) != null;
       }
       return myIsValid;
     }
 
     public void addListener(@NotNull MergeCallback.Listener listener, @NotNull Disposable disposable) {
-      myProject.getMessageBus().connect(disposable).subscribe(GitConflictsHolder.CONFLICTS_CHANGE, (repo) -> {
+      myProject.getMessageBus().connect(disposable).subscribe(GitStagingAreaHolder.TOPIC, (repo) -> {
         if (myIsValid && myConflict.getRoot().equals(repo.getRoot())) {
           if (!checkIsValid()) {
             listener.fireConflictInvalid();

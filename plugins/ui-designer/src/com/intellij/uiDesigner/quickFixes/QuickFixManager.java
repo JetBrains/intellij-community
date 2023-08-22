@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,10 +28,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class QuickFixManager <T extends JComponent>{
   private static final Logger LOG = Logger.getInstance(QuickFixManager.class);
 
@@ -61,7 +58,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     myComponent.addFocusListener(new FocusListenerImpl(this));
 
     // Alt+Enter
-    new ShowHintAction(this, component);
+    new ShowHintAction(this).registerShortcutSet(component);
 
     viewPort.addChangeListener(new ChangeListener() {
       @Override
@@ -291,7 +288,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   private static class SuppressFix extends QuickFix {
     private final String myInspectionId;
 
-    SuppressFix(final GuiEditor editor, final String name, final String inspectionId, final RadComponent component) {
+    SuppressFix(final GuiEditor editor, final @IntentionName String name, final String inspectionId, final RadComponent component) {
       super(editor, name, component);
       myInspectionId = inspectionId;
     }

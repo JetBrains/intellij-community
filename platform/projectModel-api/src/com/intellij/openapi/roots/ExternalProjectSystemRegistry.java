@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public interface ExternalProjectSystemRegistry {
   static ExternalProjectSystemRegistry getInstance() {
-    return ServiceManager.getService(ExternalProjectSystemRegistry.class);
+    return ApplicationManager.getApplication().getService(ExternalProjectSystemRegistry.class);
   }
 
   @NotNull
@@ -34,9 +20,16 @@ public interface ExternalProjectSystemRegistry {
   ProjectModelExternalSource getExternalSource(@NotNull Module module);
 
   /**
-   * These fields are temporary added to API until we have proper extension points for different external systems.
+   * @deprecated use {@link org.jetbrains.jps.model.serialization.SerializationConstants#MAVEN_EXTERNAL_SOURCE_ID} instead
    */
+  @Deprecated
   String MAVEN_EXTERNAL_SOURCE_ID = "Maven";
+
   String EXTERNAL_SYSTEM_ID_KEY = "external.system.id";
+
+  /**
+   * @deprecated use {@link org.jetbrains.jps.model.serialization.SerializationConstants#IS_MAVEN_MODULE_IML_ATTRIBUTE} instead
+   */
+  @Deprecated
   String IS_MAVEN_MODULE_KEY = "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
 }

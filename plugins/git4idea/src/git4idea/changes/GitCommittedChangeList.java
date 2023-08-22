@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,20 +30,6 @@ public class GitCommittedChangeList extends CommittedChangeListForRevision {
 
   private final boolean myModifiable;
   private final AbstractVcs myVcs;
-
-  @SuppressWarnings("unused") // used externally
-  @Deprecated
-  public GitCommittedChangeList(@NotNull String name,
-                                @NotNull String comment,
-                                @NotNull String committerName,
-                                @NotNull GitRevisionNumber revisionNumber,
-                                @NotNull Date commitDate,
-                                @NotNull Collection<Change> changes,
-                                boolean isModifiable) {
-    super(name, comment, committerName, commitDate, changes, revisionNumber);
-    myVcs = null;
-    myModifiable = isModifiable;
-  }
 
   public GitCommittedChangeList(@NotNull String name,
                                 @NotNull String comment,
@@ -64,7 +51,9 @@ public class GitCommittedChangeList extends CommittedChangeListForRevision {
 
   @Override
   public long getNumber() {
-    return GitChangeUtils.longForSHAHash(getRevisionNumber().asString());
+    @NonNls String revisionNumber = getRevisionNumber().asString();
+    // TODO: wrong braces?
+    return Long.parseLong(revisionNumber.substring(0, 15), 16) << 4 + Integer.parseInt(revisionNumber.substring(15, 16), 16);
   }
 
   @Override

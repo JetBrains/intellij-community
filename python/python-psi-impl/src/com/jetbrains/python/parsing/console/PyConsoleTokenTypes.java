@@ -17,10 +17,13 @@ package com.jetbrains.python.parsing.console;
 
 import com.jetbrains.python.psi.PyElementType;
 
-public class PyConsoleTokenTypes {
+public final class PyConsoleTokenTypes {
   public static final PyElementType QUESTION_MARK = new PyElementType("QUESTION_MARK"); //?
   public static final PyElementType PLING = new PyElementType("PLING"); //!
   public static final PyElementType DOLLAR = new PyElementType("DOLLAR"); //$
+
+  public static final PyElementType SHELL_COMMAND = new PyElementType("SHELL_COMMAND");
+  public static final PyElementType MAGIC_COMMAND_LINE = new PyElementType("MAGIC_COMMAND_LINE");
 
   private PyConsoleTokenTypes() {
   }

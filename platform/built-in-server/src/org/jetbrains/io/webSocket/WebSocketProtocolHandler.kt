@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.webSocket
 
 import io.netty.channel.Channel
@@ -36,6 +37,7 @@ abstract class WebSocketProtocolHandler : ChannelInboundHandlerAdapter() {
 
   protected open fun closeFrameReceived(channel: Channel, message: CloseWebSocketFrame) {
     channel.close()
+    message.release()
   }
 
   @Suppress("OverridingDeprecatedMember")

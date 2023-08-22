@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.customRegions;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -19,20 +19,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Rustam Vishnyakov
- */
-public class CustomRegionStructureUtil {
+public final class CustomRegionStructureUtil {
 
   public static Collection<StructureViewTreeElement> groupByCustomRegions(@NotNull PsiElement rootElement,
                                                                           @NotNull Collection<StructureViewTreeElement> originalElements) {
     if (rootElement instanceof PsiFileEx && !((PsiFileEx)rootElement).isContentsLoaded() ||
-        rootElement instanceof StubBasedPsiElement && ((StubBasedPsiElement)rootElement).getStub() != null) {
+        rootElement instanceof StubBasedPsiElement && ((StubBasedPsiElement<?>)rootElement).getStub() != null) {
       return originalElements;
     }
     List<StructureViewTreeElement> physicalElements = ContainerUtil.filter(originalElements, element -> {
       Object value = element.getValue();
-      return !(value instanceof StubBasedPsiElement) || ((StubBasedPsiElement)value).getStub() == null;
+      return !(value instanceof StubBasedPsiElement) || ((StubBasedPsiElement<?>)value).getStub() == null;
     });
     Set<TextRange> childrenRanges = ContainerUtil.map2SetNotNull(physicalElements, element -> {
       Object value = element.getValue();

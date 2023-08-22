@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
@@ -12,6 +13,8 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +22,25 @@ import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 public class StatementParser {
+  private static final TokenSet YIELD_STMT_INDICATOR_TOKENS = TokenSet.create(
+    JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.EXCL,
+
+    JavaTokenType.SUPER_KEYWORD, JavaTokenType.THIS_KEYWORD,
+
+    JavaTokenType.TRUE_KEYWORD, JavaTokenType.FALSE_KEYWORD, JavaTokenType.NULL_KEYWORD,
+
+    JavaTokenType.STRING_LITERAL, JavaTokenType.INTEGER_LITERAL, JavaTokenType.DOUBLE_LITERAL,
+    JavaTokenType.FLOAT_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.CHARACTER_LITERAL,
+    JavaTokenType.TEXT_BLOCK_LITERAL,
+
+    JavaTokenType.IDENTIFIER, JavaTokenType.SWITCH_KEYWORD, JavaTokenType.NEW_KEYWORD,
+
+    JavaTokenType.LPARENTH,
+
+    // recovery
+    JavaTokenType.RBRACE, JavaTokenType.SEMICOLON, JavaTokenType.CASE_KEYWORD
+  );
+
   private enum BraceMode {
     TILL_FIRST, TILL_LAST
   }
@@ -118,9 +140,7 @@ public class StatementParser {
     else if (tokenType == JavaTokenType.BREAK_KEYWORD) {
       return parseBreakStatement(builder);
     }
-    else if (tokenType == JavaTokenType.IDENTIFIER &&
-             PsiKeyword.YIELD.equals(builder.getTokenText()) &&
-             getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
+    else if (isStmtYieldToken(builder, tokenType)) {
       return parseYieldStatement(builder);
     }
     else if (tokenType == JavaTokenType.CONTINUE_KEYWORD) {
@@ -169,15 +189,19 @@ public class StatementParser {
           return declStatement;
         }
 
-        PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, 0);
-        if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
+        ReferenceParser.TypeInfo type = myParser.getReferenceParser().parseTypeInfo(builder, 0);
+        if (suspectedLT == JavaTokenType.LT && (type == null || !type.isParameterized)) {
+          declStatement.rollbackTo();
+        }
+        else if (type == null || builder.getTokenType() != JavaTokenType.DOUBLE_COLON) {
           error(builder, JavaPsiBundle.message("expected.identifier"));
           if (type == null) builder.advanceLexer();
           done(declStatement, JavaElementType.DECLARATION_STATEMENT);
           return declStatement;
         }
-
-        declStatement.rollbackTo();  // generic type followed by the double colon is a good candidate for being a constructor reference
+        else {
+          declStatement.rollbackTo();  // generic type followed by the double colon is a good candidate for being a constructor reference
+        }
       }
     }
 
@@ -244,6 +268,30 @@ public class StatementParser {
     return null;
   }
 
+  private static boolean isStmtYieldToken(@NotNull PsiBuilder builder, IElementType tokenType) {
+    if (!(tokenType == JavaTokenType.IDENTIFIER &&
+          PsiKeyword.YIELD.equals(builder.getTokenText()) &&
+          getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14))) {
+      return false;
+    }
+    // we prefer to parse it as yield stmt wherever possible (even in incomplete syntax)
+    PsiBuilder.Marker maybeYieldStmt = builder.mark();
+    builder.advanceLexer();
+    IElementType tokenAfterYield = builder.getTokenType();
+    if (tokenAfterYield == null || YIELD_STMT_INDICATOR_TOKENS.contains(tokenAfterYield)) {
+      maybeYieldStmt.rollbackTo();
+      return true;
+    }
+    if (JavaTokenType.PLUSPLUS.equals(tokenAfterYield) || JavaTokenType.MINUSMINUS.equals(tokenAfterYield)) {
+      builder.advanceLexer();
+      boolean isYieldStmt = !builder.getTokenType().equals(JavaTokenType.SEMICOLON);
+      maybeYieldStmt.rollbackTo();
+      return isYieldStmt;
+    }
+    maybeYieldStmt.rollbackTo();
+    return false;
+  }
+
   private static void skipQualifiedName(PsiBuilder builder) {
     if (!expect(builder, JavaTokenType.IDENTIFIER)) return;
     while (builder.getTokenType() == JavaTokenType.DOT && builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
@@ -278,6 +326,44 @@ public class StatementParser {
     return parseExprInParenthWithBlock(builder, JavaElementType.WHILE_STATEMENT, false);
   }
 
+
+  @Contract(pure = true)
+  private  boolean isRecordPatternInForEach(final PsiBuilder builder) {
+    PsiBuilder.Marker patternStart = myParser.getPatternParser().preParsePattern(builder, false);
+    if (patternStart == null) {
+      return false;
+    }
+    if (builder.getTokenType() != JavaTokenType.LPARENTH) {
+      patternStart.rollbackTo();
+      return false;
+    }
+    builder.advanceLexer();
+
+    // we must distinguish a record pattern from method call in for (foo();;)
+    int parenBalance = 1;
+    while (true) {
+      IElementType current = builder.getTokenType();
+      if (current == null) {
+        patternStart.rollbackTo();
+        return false;
+      }
+      if (current == JavaTokenType.LPARENTH) {
+        parenBalance++;
+      }
+      if (current == JavaTokenType.RPARENTH) {
+        parenBalance--;
+        if (parenBalance == 0) {
+          break;
+        }
+      }
+      builder.advanceLexer();
+    }
+    builder.advanceLexer();
+    boolean isRecordPattern = builder.getTokenType() != JavaTokenType.SEMICOLON && builder.getTokenType() != JavaTokenType.DOT;
+    patternStart.rollbackTo();
+    return isRecordPattern;
+  }
+
   @NotNull
   private PsiBuilder.Marker parseForStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
@@ -289,6 +375,26 @@ public class StatementParser {
       return statement;
     }
 
+    if (isRecordPatternInForEach(builder)) {
+      myParser.getPatternParser().parsePattern(builder);
+      if (builder.getTokenType() == JavaTokenType.COLON) {
+        return parseForEachFromColon(builder, statement, JavaElementType.FOREACH_PATTERN_STATEMENT);
+      }
+      error(builder, JavaPsiBundle.message("expected.colon"));
+      // recovery: just skip everything until ')'
+      while (true) {
+        IElementType tokenType = builder.getTokenType();
+        if (tokenType == null) {
+          done(statement, JavaElementType.FOREACH_PATTERN_STATEMENT);
+          return statement;
+        }
+        if (tokenType == JavaTokenType.RPARENTH) {
+          return parserForEachFromRparenth(builder, statement, JavaElementType.FOREACH_PATTERN_STATEMENT);
+        }
+        builder.advanceLexer();
+      }
+    }
+
     PsiBuilder.Marker afterParenth = builder.mark();
     PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, false, true);
     if (param == null || exprType(param) != JavaElementType.PARAMETER || builder.getTokenType() != JavaTokenType.COLON) {
@@ -297,7 +403,7 @@ public class StatementParser {
     }
     else {
       afterParenth.drop();
-      return parseForEachFromColon(builder, statement);
+      return parseForEachFromColon(builder, statement, JavaElementType.FOREACH_STATEMENT);
     }
   }
 
@@ -384,18 +490,22 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement) {
+  private PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement, IElementType foreachStatement) {
     builder.advanceLexer();
 
     if (myParser.getExpressionParser().parse(builder) == null) {
       error(builder, JavaPsiBundle.message("expected.expression"));
     }
 
+    return parserForEachFromRparenth(builder, statement, foreachStatement);
+  }
+
+  private PsiBuilder.Marker parserForEachFromRparenth(PsiBuilder builder, PsiBuilder.Marker statement, IElementType forEachType) {
     if (expectOrError(builder, JavaTokenType.RPARENTH, "expected.rparen") && parseStatement(builder) == null) {
       error(builder, JavaPsiBundle.message("expected.statement"));
     }
 
-    done(statement, JavaElementType.FOREACH_STATEMENT);
+    done(statement, forEachType);
     return statement;
   }
 
@@ -424,21 +534,43 @@ public class StatementParser {
     return parseExprInParenthWithBlock(builder, JavaElementType.SWITCH_STATEMENT, true);
   }
 
+  /**
+   * @return marker and whether it contains expression inside
+   */
+  @NotNull
+  @ApiStatus.Internal
+  public Pair<PsiBuilder.@Nullable Marker, Boolean> parseCaseLabel(PsiBuilder builder) {
+    if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
+      PsiBuilder.Marker defaultElement = builder.mark();
+      builder.advanceLexer();
+      done(defaultElement, JavaElementType.DEFAULT_CASE_LABEL_ELEMENT);
+      return Pair.create(defaultElement, false);
+    }
+    if (myParser.getPatternParser().isPattern(builder)) {
+      PsiBuilder.Marker pattern = myParser.getPatternParser().parsePattern(builder);
+      return Pair.create(pattern, false);
+    }
+    return Pair.create(myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder), true);
+  }
+
   private PsiBuilder.Marker parseSwitchLabelStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
     builder.advanceLexer();
 
     if (isCase) {
-      PsiBuilder.Marker expressionList = builder.mark();
+      boolean patternsAllowed = getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17);
+      PsiBuilder.Marker list = builder.mark();
       do {
-        PsiBuilder.Marker nextExpression = myParser.getExpressionParser().parseCaseLabel(builder);
-        if (nextExpression == null) {
-          error(builder, JavaPsiBundle.message("expected.expression"));
+        Pair<PsiBuilder.Marker, Boolean> markerAndIsExpression = parseCaseLabel(builder);
+        PsiBuilder.Marker caseLabel = markerAndIsExpression.first;
+        if (caseLabel == null) {
+          error(builder, JavaPsiBundle.message(patternsAllowed ? "expected.case.label.element" : "expected.expression"));
         }
       }
       while (expect(builder, JavaTokenType.COMMA));
-      done(expressionList, JavaElementType.EXPRESSION_LIST);
+      done(list, JavaElementType.CASE_LABEL_ELEMENT_LIST);
+      parseGuard(builder);
     }
 
     if (expect(builder, JavaTokenType.ARROW)) {
@@ -468,11 +600,22 @@ public class StatementParser {
       done(statement, JavaElementType.SWITCH_LABELED_RULE);
     }
     else {
-      expectOrError(builder, JavaTokenType.COLON, "expected.colon");
+      expectOrError(builder, JavaTokenType.COLON, "expected.colon.or.arrow");
       done(statement, JavaElementType.SWITCH_LABEL_STATEMENT);
     }
 
     return statement;
+  }
+
+  private void parseGuard(PsiBuilder builder) {
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeyword.WHEN.equals(builder.getTokenText())) {
+      builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
+      builder.advanceLexer();
+      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder);
+      if (guardingExpression == null) {
+        error(builder, JavaPsiBundle.message("expected.expression"));
+      }
+    }
   }
 
   @NotNull

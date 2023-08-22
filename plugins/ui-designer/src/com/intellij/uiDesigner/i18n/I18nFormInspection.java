@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -7,14 +7,13 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.I18nInspection;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.inspections.EditorQuickFixProvider;
@@ -32,9 +31,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class I18nFormInspection extends StringDescriptorInspection {
   public I18nFormInspection() {
     super("I18nForm");
@@ -98,16 +95,13 @@ public class I18nFormInspection extends StringDescriptorInspection {
     }
   }
 
-  private static LocalQuickFix @Nullable [] createBatchFixes() {
-    if (Registry.is("i18n.for.idea.project")) {
-      return new LocalQuickFix[]{new I18nizeFormBatchFix()};
-    }
-    return null;
+  private static @NotNull LocalQuickFix @Nullable [] createBatchFixes() {
+    return new LocalQuickFix[]{new I18nizeFormBatchFix()};
   }
 
   interface FixesProvider extends EditorQuickFixProvider, LocalQuickFixProvider {
     @Override
-    default LocalQuickFix @Nullable [] getQuickFixes() {
+    default @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       return createBatchFixes();
     }
   }
@@ -145,7 +139,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+    if (file.getFileType().equals(GuiFormFileType.INSTANCE)) {
       final PsiDirectory directory = file.getContainingDirectory();
       if (directory != null && I18nInspection.isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory))) {
         return null;

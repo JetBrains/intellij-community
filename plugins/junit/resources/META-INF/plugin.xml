@@ -1,0 +1,92 @@
+<idea-plugin>
+  <name>JUnit</name>
+  <id>JUnit</id>
+  <description>
+      <![CDATA[
+      Supports <a href="https://github.com/junit-team/junit">JUnit tests</a>.
+      The following features are available:
+        <ul>
+        <li>Ability to create JUnit 3.x, JUnit 4.x or JUnit 5.x tests.</li>
+        <li>Navigation between a test and test subject.</li>
+        <li>Running tests.</li>
+        <li>Viewing test results in the dedicated Test Runner tab of the Run tool window.</li>
+        </ul>
+      ]]>
+   </description>
+  <category>Test Tools</category>
+  <depends>com.intellij.java</depends>
+  <depends optional="true" config-file="junit-properties.xml">com.intellij.properties</depends>
+  <vendor>JetBrains</vendor>
+  <resource-bundle>messages.JUnitBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationProducer implementation="com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.TestInClassConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.UniqueIdConfigurationProducer"/>
+    <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitEntryPoint"/>
+    <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
+    <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit3Framework" id="junit3" order="after junit4"/>
+    <testFramework implementation="com.intellij.execution.junit.JUnit5Framework" id="junit5" order="after junit3"/>
+    <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
+    <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
+    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
+
+    <stacktrace.fold substring="at org.junit.internal.runners."/>
+    <stacktrace.fold substring="at org.junit.runners."/>
+    <stacktrace.fold substring="at org.junit.runner.JUnitCore."/>
+    <stacktrace.fold substring="at org.junit.rules."/>
+    <stacktrace.fold substring="at org.junit.Assert.fail("/>
+    <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
+    <stacktrace.fold substring="at org.junit.Assert.failSame("/>
+    <stacktrace.fold substring="at junit.framework.Assert.assert"/>
+    <stacktrace.fold substring="at junit.framework.Assert.fail"/>
+    <stacktrace.fold substring="at junit.framework.TestCase.assert"/>
+    <stacktrace.fold substring="at org.junit.Assert.internalArrayEquals("/>
+    <stacktrace.fold substring="at org.junit.internal.ComparisonCriteria.arrayEquals("/>
+    <stacktrace.fold substring="at org.junit.Assert.assert"/>
+    <stacktrace.fold substring="at com.intellij.junit3."/>
+    <stacktrace.fold substring="at com.intellij.junit4."/>
+    <stacktrace.fold substring="at com.intellij.junit5."/>
+    <stacktrace.fold substring="at com.intellij.rt.junit."/>
+    <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
+    <stacktrace.fold substring="at junit.framework.TestCase.run"/>
+    <stacktrace.fold substring="at junit.framework.TestResult"/>
+    <stacktrace.fold substring="at org.junit.platform."/>
+    <stacktrace.fold substring="at org.junit.jupiter."/>
+    <stacktrace.fold substring="at org.junit.vintage."/>
+    <stacktrace.fold substring="at org.mockito.internal."/>
+    <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
+    <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
+    <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
+    <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.LocalTestDiscoveryProducer"/>
+    <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer"/>
+    <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
+    <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
+
+    <runDashboardCustomizer implementation="com.intellij.execution.junit.JUnitRunDashboardCustomizer"
+                            order="before commonJavaCustomizer"/>
+
+    <dependencySupport kind="java" coordinate="junit:junit" displayName="JUnit"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer" dynamic="true"/>
+  </extensionPoints>
+
+  <actions>
+    <group id="junit.exclude.group">
+      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" id="excludeFromSuite"/>
+      <separator/>
+      <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
+    </group>
+    <group id="junit.add.to.pattern.group">
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite"/>
+      <add-to-group anchor="last" group-id="RunContextGroup"/>
+    </group>
+  </actions>
+</idea-plugin>

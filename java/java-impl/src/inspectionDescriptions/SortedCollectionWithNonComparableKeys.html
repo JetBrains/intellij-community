@@ -1,12 +1,12 @@
 <html>
 <body>
-Reports construction of sorted collections, for example <code>new TreeSet&lt;&gt;()</code>, that rely on natural ordering,
-but their element type doesn't implement the <code>Comparable</code> interface.
-It's unlikely that such a collection will work properly.
+Reports construction of sorted collections, for example <code>TreeSet</code>, that rely on natural ordering,
+whose element type doesn't implement the <code>Comparable</code> interface.
+<p>It's unlikely that such a collection will work properly.</p>
 <p>
-  A false positive is possible if the collection element is a non-comparable super-type,
-  but it's intended to hold only comparable sub-types. This is however error-prone.
-  It's better to narrow the collection element type or declare the super-type as <code>Comparable</code>.
+  A false positive is possible if the collection element type is a non-comparable super-type,
+  but the collection is intended to only hold comparable sub-types. Even if this is the case,
+  it's better to narrow the collection element type or declare the super-type as <code>Comparable</code> because the mentioned approach is error-prone.
 </p>
 <!-- tooltip end -->
 <p>

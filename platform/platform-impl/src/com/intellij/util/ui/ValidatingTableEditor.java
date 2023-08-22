@@ -1,16 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.HoverHyperlinkLabel;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,15 +35,15 @@ import java.util.List;
 public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyText {
 
   private static final Icon WARNING_ICON = UIUtil.getBalloonWarningIcon();
-  private static final Icon EMPTY_ICON = EmptyIcon.create(WARNING_ICON);
-  @NonNls private static final String REMOVE_KEY = "REMOVE_SELECTED";
+  private static final Icon EMPTY_ICON = IconManager.getInstance().createEmptyIcon(WARNING_ICON);
+  private static final @NonNls String REMOVE_KEY = "REMOVE_SELECTED";
 
   public interface RowHeightProvider {
     int getRowHeight();
   }
 
   public interface Fix extends Runnable {
-    String getTitle();
+    @NlsContexts.LinkLabel String getTitle();
   }
 
   private class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
@@ -103,8 +102,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   protected abstract Item cloneOf(Item item);
 
-  @Nullable
-  protected Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
+  protected @Nullable Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
     String error = null;
     for (int i = 0; i < current.size(); i++) {
       Item item = current.get(i);
@@ -117,13 +115,11 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return error != null ? Pair.create(error, (Fix)null) : null;
   }
 
-  @Nullable
-  protected String validate(Item item) {
+  protected @Nullable String validate(Item item) {
     return null;
   }
 
-  @Nullable
-  protected abstract Item createItem();
+  protected abstract @Nullable Item createItem();
 
   private class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
     IconColumn() {
@@ -151,14 +147,17 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     }
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myTable.getEmptyText();
   }
 
+  public void setShowGrid(boolean v) {
+    myTable.setShowGrid(v);
+  }
+
   private void createUIComponents() {
-    myTable = new ChangesTrackingTableView<Item>() {
+    myTable = new ChangesTrackingTableView<>() {
       @Override
       protected void onCellValueChanged(int row, int column, Object value) {
         final Item original = getItems().get(row);
@@ -194,11 +193,15 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeSelected();
       }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     myRemoveButton.setShortcut(CustomShortcutSet.fromString("alt DELETE")); //NON-NLS
     decorator.addExtraAction(myRemoveButton);
 
-    if (extraButtons != null &&  extraButtons.length != 0) {
+    if (extraButtons != null) {
       for (AnActionButton extraButton : extraButtons) {
         decorator.addExtraAction(extraButton);
       }
@@ -236,8 +239,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     this(null);
   }
 
-  @Nullable
-  public List<Item> getSelectedItems() {
+  public @Nullable List<Item> getSelectedItems() {
     return myTable.getSelectedObjects();
   }
 
@@ -313,7 +315,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     List<Item> items = new ArrayList<>(getTableModel().getItems());
     if (myTable.isEditing()) {
       Object value = ChangesTrackingTableView.getValue(myTable.getEditorComponent());
-      ColumnInfo column = ((ListTableModel)myTable.getModel()).getColumnInfos()[myTable.getEditingColumn()];
+      ColumnInfo column = ((ListTableModel<?>)myTable.getModel()).getColumnInfos()[myTable.getEditingColumn()];
       ((ColumnInfoWrapper)column).myDelegate.setValue(items.get(myTable.getEditingRow()), value);
     }
     return items;
@@ -352,7 +354,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myTable.repaint();
   }
 
-  protected void displayMessageAndFix(@Nullable Pair<String, Fix> messageAndFix) {
+  protected void displayMessageAndFix(@Nullable Pair<@NlsContexts.DialogMessage String, Fix> messageAndFix) {
     if (messageAndFix != null) {
       myMessageLabel.setText(messageAndFix.first);
       myMessageLabel.setIcon(WARNING_ICON);
@@ -380,9 +382,9 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
 
   private static class WarningIconCellRenderer extends DefaultTableCellRenderer {
-    private final NullableComputable<String> myWarningProvider;
+    private final NullableComputable<@NlsContexts.HintText String> myWarningProvider;
 
-    WarningIconCellRenderer(NullableComputable<String> warningProvider) {
+    WarningIconCellRenderer(NullableComputable<@NlsContexts.HintText String> warningProvider) {
       myWarningProvider = warningProvider;
     }
 

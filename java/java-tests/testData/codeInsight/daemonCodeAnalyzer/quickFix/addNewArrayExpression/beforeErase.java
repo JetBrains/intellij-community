@@ -1,4 +1,4 @@
-// "Add 'new List[]'" "true"
+// "Add 'new List[]'" "true-preview"
 import java.util.List;
 class c {
  void f(List<String> l) {

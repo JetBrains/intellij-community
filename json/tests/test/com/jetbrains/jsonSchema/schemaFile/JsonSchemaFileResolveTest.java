@@ -13,9 +13,6 @@ import org.junit.Assert;
 
 import java.util.Collections;
 
-/**
- * @author Irina.Chernushina on 4/1/2016.
- */
 public class JsonSchemaFileResolveTest extends JsonSchemaHeavyAbstractTest {
   @Override
   protected String getBasePath() {
@@ -39,10 +36,11 @@ public class JsonSchemaFileResolveTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(position);
         PsiElement resolve = position.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("{\n" +
-                            "      \"type\": \"string\",\n" +
-                            "      \"enum\": [\"one\", \"two\"]\n" +
-                            "    }", resolve.getText());
+        Assert.assertEquals("""
+                              {
+                                    "type": "string",
+                                    "enum": ["one", "two"]
+                                  }""", resolve.getText());
       }
 
       @Override

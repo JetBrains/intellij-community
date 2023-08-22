@@ -1,0 +1,6 @@
+requests.adapters.PoolManager.connection_from_host
+requests.adapters.PoolManager.connection_from_url
+requests.adapters.PoolManager.urlopen
+requests.sessions.SessionRedirectMixin.resolve_redirects
+requests.structures.LookupDict.__getattr__
+requests.structures.LookupDict.get

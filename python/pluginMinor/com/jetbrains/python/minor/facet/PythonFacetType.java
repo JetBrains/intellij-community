@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.minor.facet;
 
 import com.intellij.facet.Facet;
@@ -7,7 +7,6 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
@@ -27,10 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-import static com.jetbrains.python.PyNames.PYTHON_MODULE_ID;
-
-public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.PythonFacetConfiguration> {
-
+public final class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.PythonFacetConfiguration> {
   @NonNls
   private static final String ID = "Python";
 
@@ -62,7 +59,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.Pyth
 
   @Override
   public boolean isSuitableModuleType(ModuleType moduleType) {
-    return !(moduleType.getId().equals(PYTHON_MODULE_ID));
+    return !(moduleType.getId().equals(PyNames.PYTHON_MODULE_ID));
   }
 
   @Override
@@ -82,10 +79,6 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.Pyth
     public void readExternal(Element element) throws InvalidDataException {
       String sdkName = element.getAttributeValue(SDK_NAME);
       mySdk = StringUtil.isEmpty(sdkName) ? null : ProjectJdkTable.getInstance().findJdk(sdkName, PythonSdkType.getInstance().getName());
-
-      if (mySdk != null) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkAdded(mySdk);
-      }
     }
 
     @Override

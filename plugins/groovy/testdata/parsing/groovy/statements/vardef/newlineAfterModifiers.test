@@ -12,4 +12,4 @@ Groovy script
           <empty list>
     PsiElement(new line)('\n')
     Variable
-      PsiElement(identifier)('var')
+      PsiElement(var)('var')

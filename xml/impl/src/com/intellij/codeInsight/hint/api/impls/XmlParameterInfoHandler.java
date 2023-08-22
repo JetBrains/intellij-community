@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,23 +43,10 @@ import java.util.Comparator;
 public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
   private static final Comparator<XmlAttributeDescriptor> COMPARATOR = Comparator.comparing(PsiMetaData::getName);
 
-  @Override
-  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    if (!(item instanceof MutableLookupElement)) return null;
-    final Object lookupItem = item.getObject();
-    if (lookupItem instanceof XmlElementDescriptor) return new Object[]{lookupItem};
-    return null;
-  }
-
   public static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {
     final XmlAttributeDescriptor[] xmlAttributeDescriptors = p.getAttributesDescriptors(null);
     Arrays.sort(xmlAttributeDescriptors, COMPARATOR);
     return xmlAttributeDescriptors;
-  }
-
-  @Override
-  public boolean couldShowInLookup() {
-    return true;
   }
 
   @Override
@@ -104,8 +92,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     element = element.getParent();
 
     while (element != null) {
-      if (element instanceof XmlTag) {
-        XmlTag tag = (XmlTag)element;
+      if (element instanceof XmlTag tag) {
 
         final PsiElement[] children = tag.getChildren();
 
@@ -115,8 +102,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
           final TextRange range = child.getTextRange();
           if (range.getStartOffset() <= offset && range.getEndOffset() > offset) return tag;
 
-          if (child instanceof XmlToken) {
-            XmlToken token = (XmlToken)child;
+          if (child instanceof XmlToken token) {
             if (token.getTokenType() == XmlTokenType.XML_TAG_END) return null;
           }
         }
@@ -132,17 +118,8 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
 
   @Override
   public void updateUI(XmlElementDescriptor o, @NotNull final ParameterInfoUIContext context) {
-    updateElementDescriptor(
-      o,
-      context,
-      new Function<String, Boolean>() {
-        final XmlTag parameterOwner  = (XmlTag)context.getParameterOwner();
-
-        @Override
-        public Boolean fun(String s) {
-          return parameterOwner != null && parameterOwner.getAttributeValue(s) != null;
-        }
-      });
+    XmlTag parameterOwner  = (XmlTag)context.getParameterOwner();
+    updateElementDescriptor(o, context, s -> parameterOwner != null && parameterOwner.getAttributeValue(s) != null);
   }
 
   public static void updateElementDescriptor(XmlElementDescriptor descriptor, ParameterInfoUIContext context,

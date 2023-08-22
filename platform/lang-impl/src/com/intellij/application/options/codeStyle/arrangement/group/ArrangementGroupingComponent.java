@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementUiUtil;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
 import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementRuleIndexControl;
-import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -21,10 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
-public class ArrangementGroupingComponent extends JPanel implements ArrangementRepresentationAware, ArrangementEditorAware {
+public final class ArrangementGroupingComponent extends JPanel implements ArrangementRepresentationAware, ArrangementEditorAware {
 
   @NotNull private final ArrangementUiComponent      myGroupingTypeToken;
   @NotNull private final ArrangementRuleIndexControl myRowIndexControl;
@@ -74,7 +71,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     int diameter = Math.max(maxWidth, height) * 5 / 3;
     myRowIndexControl = new ArrangementRuleIndexControl(diameter, height);
 
-    myGroupingTypeToken = ArrangementUtil.buildUiComponent(
+    myGroupingTypeToken = ArrangementUiUtil.buildUiComponent(
       token.getRole(), Collections.singletonList(token.getToken()), colorsProvider, settingsManager
     );
 
@@ -83,7 +80,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     }
     else {
       assert childRole != null;
-      myOrderTypeToken = ArrangementUtil.buildUiComponent(childRole, children, colorsProvider, settingsManager);
+      myOrderTypeToken = ArrangementUiUtil.buildUiComponent(childRole, children, colorsProvider, settingsManager);
       myGroupingTypeToken.setListener(new ArrangementUiComponent.Listener() {
         @Override
         public void stateChanged() {

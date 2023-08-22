@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -140,6 +141,17 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     assertTrue(event.getPresentation().isEnabledAndVisible());
     action.actionPerformed(event);
     checkResultByFile(getBasePath() + "SiblingInheritance.java");
+  }
+
+  public void testGoToImplementations() {
+    configureByFile(getBasePath() + "GoToImplementations.java");
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_IMPLEMENTATION);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContextFromFocus().getResultSync());
+    action.update(event);
+    assertTrue(event.getPresentation().isEnabledAndVisible());
+    action.actionPerformed(event);
+    UIUtil.dispatchAllInvocationEvents();
+    checkResultByFile(getBasePath() + "GoToImplementations.after.java");
   }
 
   public void testSiblingInheritanceAndGenerics() {

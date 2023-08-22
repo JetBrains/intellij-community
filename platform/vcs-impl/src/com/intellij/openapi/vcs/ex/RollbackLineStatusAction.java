@@ -21,8 +21,13 @@ import java.util.BitSet;
 
 public class RollbackLineStatusAction extends LineStatusActionBase {
   @Override
-  protected void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor) {
-    rollback(tracker, editor);
+  protected void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor, @Nullable Range range) {
+    if (range != null) {
+      rollback(tracker, range, editor);
+    }
+    else {
+      rollback(tracker, editor);
+    }
   }
 
   public static void rollback(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor) {
@@ -30,13 +35,8 @@ public class RollbackLineStatusAction extends LineStatusActionBase {
     tracker.rollbackChanges(selectedLines);
   }
 
-  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Range range, @Nullable Editor editor) {
+  public static void rollback(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range, @Nullable Editor editor) {
     if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
     tracker.rollbackChanges(range);
-  }
-
-  @Deprecated
-  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor) {
-    rollback((LineStatusTrackerI)tracker, editor);
   }
 }

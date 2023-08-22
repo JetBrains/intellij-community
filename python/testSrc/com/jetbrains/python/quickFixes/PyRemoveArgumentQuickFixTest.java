@@ -19,6 +19,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyArgumentListInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyRemoveArgumentQuickFixTest/")
 public class PyRemoveArgumentQuickFixTest extends PyQuickFixTestCase {
@@ -28,15 +29,21 @@ public class PyRemoveArgumentQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testDuplicateArg() {
-    doQuickFixTest(PyArgumentListInspection.class, PyPsiBundle.message("QFIX.NAME.remove.argument"));
+    doQuickFixTest(PyArgumentListInspection.class,
+                   PyPsiBundle.message("QFIX.NAME.remove.argument"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testDuplicateKWArg() {
-    doQuickFixTest(PyArgumentListInspection.class, PyPsiBundle.message("QFIX.NAME.remove.argument"));
+    doQuickFixTest(PyArgumentListInspection.class,
+                   PyPsiBundle.message("QFIX.NAME.remove.argument"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testPostKwArg() {
-    doQuickFixTest(PyArgumentListInspection.class, PyPsiBundle.message("QFIX.NAME.remove.argument"));
+    doQuickFixTest(PyArgumentListInspection.class,
+                   PyPsiBundle.message("QFIX.NAME.remove.argument"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testUnexpected() {

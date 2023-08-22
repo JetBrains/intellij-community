@@ -3,6 +3,7 @@ package com.intellij.execution.update;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -14,6 +15,7 @@ public interface RunningApplicationUpdater {
   @NlsActions.ActionText
   String getDescription();
 
+  @Nls
   String getShortName();
 
   @Nullable

@@ -39,7 +39,7 @@ public final class ConfigurationDataImpl extends AbstractExternalEntityData impl
     Object jsonObject = getJsonObject();
     for (String part : StringUtil.split(query, ".")) {
       if (jsonObject instanceof Map) {
-        jsonObject = ((Map)jsonObject).get(part);
+        jsonObject = ((Map<?, ?>)jsonObject).get(part);
       }
       else {
         return null;

@@ -64,7 +64,7 @@ public class RunWithAntBinding extends UIPropertyBinding {
       }
     });
 
-    myAntsController = new ChooseAndEditComboBoxController<AntReference, AntReference>(myAnts, new ConvertingIterator.IdConvertor<>(), AntReference.COMPARATOR) {
+    myAntsController = new ChooseAndEditComboBoxController<>(myAnts, new ConvertingIterator.IdConvertor<>(), AntReference.COMPARATOR) {
       @Override
       public Iterator<AntReference> getAllListItems() {
         return antConfiguration.getConfiguredAnts().keySet().iterator();

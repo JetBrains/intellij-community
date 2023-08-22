@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
@@ -27,7 +13,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
@@ -35,14 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class FrameworkDetectionProcessor {
-
-  public static final Set<String> SKIPPED_DIRECTORIES = ContainerUtil.newHashSet("node_modules");
+public final class FrameworkDetectionProcessor {
+  public static final Set<String> SKIPPED_DIRECTORIES = Collections.singleton("node_modules");
 
   private static final Logger LOG = Logger.getInstance(FrameworkDetectionProcessor.class);
   private final ProgressIndicator myProgressIndicator;
@@ -51,11 +32,10 @@ public class FrameworkDetectionProcessor {
 
   private final FrameworkDetectionContext myContext;
 
-  public FrameworkDetectionProcessor(ProgressIndicator progressIndicator, final FrameworkDetectionContext context) {
+  public FrameworkDetectionProcessor(ProgressIndicator progressIndicator, FrameworkDetectionContext context) {
     myProgressIndicator = progressIndicator;
-    final FrameworkDetector[] detectors = FrameworkDetector.EP_NAME.getExtensions();
     myDetectorsByFileType = new MultiMap<>();
-    for (FrameworkDetector detector : detectors) {
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
       myDetectorsByFileType.putValue(detector.getFileType(), new FrameworkDetectorData(detector));
     }
     myContext = context;
@@ -92,10 +72,7 @@ public class FrameworkDetectionProcessor {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           myProgressIndicator.checkCanceled();
-          if (file.isDirectory() && SKIPPED_DIRECTORIES.contains(file.getName())) {
-            return false;
-          }
-          if (!myProcessedFiles.add(file)) {
+          if (file.isDirectory() && SKIPPED_DIRECTORIES.contains(file.getName()) || !myProcessedFiles.add(file)) {
             return false;
           }
 
@@ -104,7 +81,7 @@ public class FrameworkDetectionProcessor {
             if (myDetectorsByFileType.containsKey(fileType)) {
               myProgressIndicator.setText2(file.getPresentableUrl());
               try {
-                final FileContent fileContent = new FileContentImpl(file, file.contentsToByteArray(false));
+                final FileContent fileContent = FileContentImpl.createByFile(file, myContext.getProject());
                 for (FrameworkDetectorData detector : myDetectorsByFileType.get(fileType)) {
                   if (detector.myFilePattern.accepts(fileContent)) {
                     detector.mySuitableFiles.add(file);
@@ -125,7 +102,7 @@ public class FrameworkDetectionProcessor {
     }
   }
 
-  private static class FrameworkDetectorData {
+  private static final class FrameworkDetectorData {
     private final FrameworkDetector myDetector;
     private final ElementPattern<FileContent> myFilePattern;
     private final List<VirtualFile> mySuitableFiles = new ArrayList<>();

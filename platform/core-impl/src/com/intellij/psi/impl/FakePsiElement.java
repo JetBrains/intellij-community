@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -41,8 +27,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return Language.ANY;
   }
 
@@ -52,32 +37,27 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  public PsiElement getFirstChild() {
+  public @Nullable PsiElement getFirstChild() {
     return null;
   }
 
   @Override
-  @Nullable
-  public PsiElement getLastChild() {
+  public @Nullable PsiElement getLastChild() {
     return null;
   }
 
   @Override
-  @Nullable
-  public PsiElement getNextSibling() {
+  public @Nullable PsiElement getNextSibling() {
     return null;
   }
 
   @Override
-  @Nullable
-  public PsiElement getPrevSibling() {
+  public @Nullable PsiElement getPrevSibling() {
     return null;
   }
 
   @Override
-  @Nullable
-  public TextRange getTextRange() {
+  public @Nullable TextRange getTextRange() {
     return null;
   }
 
@@ -92,8 +72,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  public PsiElement findElementAt(int offset) {
+  public @Nullable PsiElement findElementAt(int offset) {
     return null;
   }
 
@@ -103,9 +82,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getText() {
+  public @Nullable @NonNls String getText() {
     return null;
   }
 
@@ -120,8 +97,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  public ASTNode getNode() {
+  public @Nullable ASTNode getNode() {
     return null;
   }
 
@@ -131,24 +107,17 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  public String getLocationString() {
-    return null;
-  }
-
-  @Override
-  public final Icon getIcon(final int flags) {
+  public final Icon getIcon(int flags) {
     return super.getIcon(flags);
   }
 
   @Override
-  protected final Icon getElementIcon(final int flags) {
+  protected final Icon getElementIcon(int flags) {
     return super.getElementIcon(flags);
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(boolean open) {
+  public @Nullable Icon getIcon(boolean open) {
     return null;
   }
 
@@ -159,7 +128,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
 
   @Override
   public PsiManager getManager() {
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
     return parent != null ? parent.getManager() : null;
   }
 

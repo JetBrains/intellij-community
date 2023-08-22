@@ -21,9 +21,6 @@ import java.util.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_METHOD_PROPERTY;
 
-/**
- * @author ven
- */
 public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResult> implements GrMethodComparator.Context {
 
   private final PsiType @Nullable [] myArgumentTypes;
@@ -57,7 +54,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place);
     myIsConstructor = isConstructor;
     mySubstitutorComputer = new SubstitutorComputer(thisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
-    myArgumentTypes = argumentTypes == null ? null : Arrays.copyOf(argumentTypes, argumentTypes.length);
+    myArgumentTypes = argumentTypes == null ? null : argumentTypes.clone();
     if (myArgumentTypes != null) {
       for (int i = 0; i < myArgumentTypes.length; i++) {
         myArgumentTypes[i] = TypeConversionUtil.erasure(myArgumentTypes[i]);
@@ -72,8 +69,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     if (myStopExecuting) {
       return false;
     }
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
 
       if (method.isConstructor() != myIsConstructor) return true;
 

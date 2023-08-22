@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.LocatableConfiguration;
@@ -10,7 +11,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConfigurationFromContextWrapper;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.SmartList;
@@ -22,14 +22,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class PreferredProducerFind {
+final class PreferredProducerFind {
   private static final Logger LOG = Logger.getInstance(PreferredProducerFind.class);
 
   private PreferredProducerFind() {}
 
   @Nullable
   public static RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, @NotNull ConfigurationContext context) {
-    final ConfigurationFromContext fromContext = findConfigurationFromContext(location, context);
+    List<ConfigurationFromContext> configsFromContext = getConfigurationsFromContext(location, context, true, true);
+    ConfigurationFromContext fromContext = !ContainerUtil.isEmpty(configsFromContext) ? configsFromContext.get(0) : null;
     return fromContext != null ? fromContext.getConfigurationSettings() : null;
   }
 
@@ -67,7 +68,7 @@ class PreferredProducerFind {
         throw e;
       }
       catch (Throwable e) {
-        LOG.error(new ExtensionException(prototype.getClass(), e));
+        LOG.error(PluginException.createByClass(e, prototype.getClass()));
         continue;
       }
 
@@ -79,10 +80,16 @@ class PreferredProducerFind {
     return producers;
   }
 
-  @Nullable
-  public static List<ConfigurationFromContext> getConfigurationsFromContext(final Location location,
-                                                                            @NotNull ConfigurationContext context,
-                                                                            final boolean strict) {
+  /**
+   * @param strict         <code>true</code>means that this method should return only the best (one or several equally good) run configurations,
+   *                       according to {@link ConfigurationFromContext#COMPARATOR}
+   * @param preferExisting if <code>true</code> then {@link RunConfigurationProducer#findOrCreateConfigurationFromContext(ConfigurationContext)} will be used;
+   *                       if <code>false</code> then {@link RunConfigurationProducer#createConfigurationFromContext(ConfigurationContext)} will be used.
+   */
+  public static @Nullable List<ConfigurationFromContext> getConfigurationsFromContext(Location location,
+                                                                                      @NotNull ConfigurationContext context,
+                                                                                      boolean strict,
+                                                                                      boolean preferExisting) {
     if (location == null) {
       return null;
     }
@@ -90,16 +97,16 @@ class PreferredProducerFind {
     MultipleRunLocationsProvider.AlternativeLocationsInfo
       alternativeLocations = MultipleRunLocationsProvider.findAlternativeLocations(location);
     if (alternativeLocations == null) {
-      return doGetConfigurationsFromContext(location, context, strict);
+      return doGetConfigurationsFromContext(location, context, strict, preferExisting);
     }
 
-    return getConfigurationsFromAlternativeLocations(alternativeLocations, location, strict);
+    return getConfigurationsFromAlternativeLocations(alternativeLocations, location, strict, preferExisting);
   }
 
-  @Nullable
-  private static List<ConfigurationFromContext> doGetConfigurationsFromContext(@NotNull final Location location,
-                                                                               @NotNull final ConfigurationContext context,
-                                                                               final boolean strict) {
+  private static @Nullable List<ConfigurationFromContext> doGetConfigurationsFromContext(@NotNull Location location,
+                                                                                         @NotNull ConfigurationContext context,
+                                                                                         boolean strict,
+                                                                                         boolean preferExisting) {
     final ArrayList<ConfigurationFromContext> configurationsFromContext = new ArrayList<>();
     for (RuntimeConfigurationProducer producer : findAllProducers(location, context)) {
       configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
@@ -107,7 +114,9 @@ class PreferredProducerFind {
 
     for (RunConfigurationProducer producer : RunConfigurationProducer.getProducers(context.getProject())) {
       ProgressManager.checkCanceled();
-      ConfigurationFromContext fromContext = producer.findOrCreateConfigurationFromContext(context);
+      ConfigurationFromContext fromContext = preferExisting
+                                             ? producer.findOrCreateConfigurationFromContext(context)
+                                             : producer.createConfigurationFromContext(context);
       if (fromContext != null) {
         configurationsFromContext.add(fromContext);
       }
@@ -129,27 +138,18 @@ class PreferredProducerFind {
     return configurationsFromContext;
   }
 
-
-  @Nullable
-  private static ConfigurationFromContext findConfigurationFromContext(final Location location, @NotNull ConfigurationContext context) {
-    final List<ConfigurationFromContext> producers = getConfigurationsFromContext(location, context, true);
-    if (producers != null){
-      return producers.get(0);
-    }
-    return null;
-  }
-
   @Nullable
   private static List<ConfigurationFromContext> getConfigurationsFromAlternativeLocations(
     @NotNull MultipleRunLocationsProvider.AlternativeLocationsInfo alternativeLocationsInfo,
     @NotNull Location originalLocation,
-    boolean strict
+    boolean strict,
+    boolean preferExisting
   ) {
     List<ConfigurationFromContext> result = new SmartList<>();
     for (Location alternativeLocation : alternativeLocationsInfo.getAlternativeLocations()) {
       ConfigurationContext fakeContextForAlternativeLocation = ConfigurationContext.createEmptyContextForLocation(alternativeLocation);
       List<ConfigurationFromContext> configurationsForLocation =
-        doGetConfigurationsFromContext(alternativeLocation, fakeContextForAlternativeLocation, strict);
+        doGetConfigurationsFromContext(alternativeLocation, fakeContextForAlternativeLocation, strict, preferExisting);
       if (configurationsForLocation != null) {
         for (ConfigurationFromContext configurationFromContext : configurationsForLocation) {
           configurationFromContext.setFromAlternativeLocation(true);
@@ -158,7 +158,7 @@ class PreferredProducerFind {
           RunConfiguration configuration = configurationFromContext.getConfiguration();
           if (configuration instanceof LocatableConfigurationBase && ((LocatableConfiguration)configuration).isGeneratedName()) {
             configuration.setName(configuration.getName() + " " + locationDisplayName);
-            ((LocatableConfigurationBase)configuration).setNameChangedByUser(true);
+            ((LocatableConfigurationBase<?>)configuration).setNameChangedByUser(true);
           }
         }
 

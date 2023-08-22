@@ -4,20 +4,26 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 public interface AllVcsesI {
+  @TestOnly
   void registerManually(@NotNull AbstractVcs vcs);
 
+  @TestOnly
   void unregisterManually(@NotNull AbstractVcs vcs);
 
-  AbstractVcs getByName(@NotNull String name);
+  AbstractVcs getByName(@NotNull @NonNls String name);
 
   @Nullable
-  VcsDescriptor getDescriptor(String name);
+  VcsDescriptor getDescriptor(@NonNls String name);
 
   VcsDescriptor[] getAll();
+
+  AbstractVcs[] getSupportedVcses();
 
   boolean isEmpty();
 

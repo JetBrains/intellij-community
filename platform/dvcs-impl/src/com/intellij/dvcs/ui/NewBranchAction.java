@@ -18,6 +18,7 @@ package com.intellij.dvcs.ui;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -39,17 +40,14 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
     myProject = project;
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    checkIfAnyRepositoryIsFresh(e, myRepositories);
-  }
-
-  public static <T extends Repository> void checkIfAnyRepositoryIsFresh(@NotNull AnActionEvent e, @NotNull List<T> repositories) {
-    if (DvcsUtil.anyRepositoryIsFresh(repositories)) {
-      e.getPresentation().setEnabled(false);
-      e.getPresentation().setDescription(DvcsBundle.messagePointer("action.presentation.NewBranchAction.description"));
-    }
+    DvcsUtil.disableActionIfAnyRepositoryIsFresh(e, myRepositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"));
   }
 
   @Override

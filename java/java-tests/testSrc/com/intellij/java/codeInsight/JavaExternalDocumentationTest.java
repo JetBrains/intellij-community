@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -89,30 +88,30 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
 
   // We're guessing style of references in javadoc by bytecode version of library class file
   // but displaying quick doc should work even if javadoc was generated using a JDK not corresponding to bytecode version
-  public void testReferenceStyleDoesntMatchBytecodeVersion() throws Exception {
+  public void testReferenceStyleDoesntMatchBytecodeVersion() {
     doTest("@com.jetbrains.TestAnnotation(<caret>param = \"foo\") class Foo {}");
   }
 
-  public void testLinkWithReference() throws Exception {
+  public void testLinkWithReference() {
     doTest("class Foo { com.jetbrains.<caret>ClassWithRefLink field;}");
   }
 
-  public void testLinkToPackageSummaryWithReference() throws Exception {
+  public void testLinkToPackageSummaryWithReference() {
     doTest("class Foo implements com.jetbrains.<caret>SimpleInterface {}");
   }
 
-  public void testLinkBetweenMethods() throws Exception {
+  public void testLinkBetweenMethods() {
     doTest("class Foo {{ new com.jetbrains.LinkBetweenMethods().<caret>m1(); }}");
   }
 
-  public void testEscapingLink() throws Exception {
+  public void testEscapingLink() {
     doTest("class Foo {{ new com.jetbrains.GenericClass().<caret>genericMethod(null); }}");
   }
 
-  private void doTest(String text) throws Exception {
+  private void doTest(String text) {
     String actualText = getDocumentationText(text);
-    String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(getDataFile(getTestName(false) + ".html")));
-    assertEquals(expectedText, replaceLocalHostUrlsWithPlaceholder(actualText));
+    assertSameLinesWithFile(getDataFile(getTestName(false) + ".html").toString(), 
+                            replaceLocalHostUrlsWithPlaceholder(actualText));
   }
 
   private static String replaceLocalHostUrlsWithPlaceholder(String actualText) {

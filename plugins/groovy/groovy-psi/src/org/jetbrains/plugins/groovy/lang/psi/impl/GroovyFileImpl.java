@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -12,6 +13,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,14 +44,12 @@ import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.proc
 
 /**
  * Implements all abstractions related to Groovy file
- *
- * @author ilyas
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, PsiModifiableCodeBlock {
 
   private static final Logger LOG = Logger.getInstance(GroovyFileImpl.class);
 
-  private static final String SYNTHETIC_PARAMETER_NAME = "args";
+  @NlsSafe private static final String SYNTHETIC_PARAMETER_NAME = "args";
 
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;
@@ -225,10 +225,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   }
 
   @Override
-  public void setPackageName(String packageName) {
+  public void setPackageName(@NotNull String packageName) {
     final ASTNode fileNode = getNode();
     final GrPackageDefinition currentPackage = getPackageDefinition();
-    if (packageName == null || packageName.isEmpty()) {
+    if (packageName.isEmpty()) {
       if (currentPackage != null) {
         final ASTNode currNode = currentPackage.getNode();
         fileNode.removeChild(currNode);
@@ -331,10 +331,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     final PsiClass[] declaredDefs = super.getClasses();
     if (!isScript()) return declaredDefs;
     final PsiClass scriptClass = getScriptClass();
-    PsiClass[] result = new PsiClass[declaredDefs.length + 1];
-    result[result.length - 1] = scriptClass;
-    System.arraycopy(declaredDefs, 0, result, 0, declaredDefs.length);
-    return result;
+    return ArrayUtil.append(declaredDefs, scriptClass);
   }
 
   @Override
@@ -342,7 +339,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     final PsiClass scriptClass = getScriptClass();
     if (scriptClass != null) {
       final PsiElement originalElement = scriptClass.getOriginalElement();
-      if (originalElement != scriptClass && originalElement != null) {
+      if (originalElement != scriptClass) {
         return originalElement.getContainingFile();
       }
     }

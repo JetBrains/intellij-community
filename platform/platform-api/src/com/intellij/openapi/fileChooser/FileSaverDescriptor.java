@@ -3,6 +3,7 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
@@ -49,7 +50,7 @@ public class FileSaverDescriptor extends FileChooserDescriptor implements Clonea
    *
    * @return accepted file extensions
    */
-  public String[] getFileExtensions() {
+  public @NlsSafe String[] getFileExtensions() {
     return ArrayUtilRt.toStringArray(extensions);
   }
 }

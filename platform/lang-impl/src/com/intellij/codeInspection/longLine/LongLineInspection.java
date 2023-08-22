@@ -1,74 +1,32 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.longLine;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.ide.DataManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.settingLink;
 
-public class LongLineInspection extends LocalInspectionTool {
-  @Nullable
+public final class LongLineInspection extends LocalInspectionTool {
   @Override
-  public JComponent createOptionsPanel() {
-    final HyperlinkLabel codeStyleHyperlink = new HyperlinkLabel(LangBundle.message("link.label.edit.code.style.settings"));
-    codeStyleHyperlink.addHyperlinkListener(new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
-          if (context != null) {
-            final Settings settings = Settings.KEY.getData(context);
-            if (settings != null) {
-              settings.select(settings.find(CodeStyleSchemesConfigurable.class));
-            }
-            else {
-              ShowSettingsUtil.getInstance()
-                .showSettingsDialog(CommonDataKeys.PROJECT.getData(context), CodeStyleSchemesConfigurable.class);
-            }
-          }
-        });
-      }
-    });
-    final JPanel panel = new JPanel();
-    panel.setLayout(new BorderLayout());
-    panel.add(codeStyleHyperlink, BorderLayout.NORTH);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      settingLink(LangBundle.message("link.label.edit.code.style.settings"),
+                                       CodeStyleSchemesConfigurable.CONFIGURABLE_ID));
   }
 
   @NotNull
@@ -111,7 +69,7 @@ public class LongLineInspection extends LocalInspectionTool {
                 TextRange exceedingRange = new TextRange(highlightingStartOffset, highlightingEndOffset);
                 holder.registerProblem(element,
                                        exceedingRange,
-                                       String.format("Line is longer than allowed by code style (> %s columns)", codeStyleRightMargin));
+                                       LangBundle.message("inspection.message.line.longer.than.allowed.by.code.style.columns", codeStyleRightMargin));
               }
             }
           }

@@ -1,32 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.OrderedSet;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiPredicate;
 
 public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>> implements ElementProducer<T> {
   protected static final Logger LOG = Logger.getInstance(CollectionModelEditor.class);
@@ -51,8 +38,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
   /**
    * Mutable internal list of items (must not be exposed to client)
    */
-  @NotNull
-  protected abstract List<T> getItems();
+  protected abstract @NotNull List<T> getItems();
 
   public void reset(@NotNull List<? extends T> originalItems) {
     helper.reset(originalItems);
@@ -74,18 +60,12 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     return false;
   }
 
-  public void processModifiedItems(@NotNull final PairProcessor<? super T, ? super T> processor) {
+  public void processModifiedItems(@NotNull BiPredicate<? super T, ? super T> processor) {
     // don't want to expose TObjectObjectProcedure - avoid implementation details
-    helper.process(new TObjectObjectProcedure<T, T>() {
-      @Override
-      public boolean execute(T newItem, T oldItem) {
-        return processor.process(newItem, oldItem);
-      }
-    });
+    helper.process(processor);
   }
 
-  @NotNull
-  public final T getMutable(@NotNull T item) {
+  public final @NotNull T getMutable(@NotNull T item) {
     return helper.getMutable(item, -1);
   }
 
@@ -93,11 +73,11 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     return true;
   }
 
-  protected class ModelHelper {
-    final OrderedSet<T> originalItems = new OrderedSet<>(ContainerUtil.identityStrategy());
+  protected final class ModelHelper {
+    final OrderedSet<T> originalItems = new OrderedSet<>(HashingStrategy.identity());
 
-    private final THashMap<T, T> modifiedToOriginal = ContainerUtil.newIdentityTroveMap();
-    private final THashMap<T, T> originalToModified = ContainerUtil.newIdentityTroveMap();
+    private final Map<T, T> modifiedToOriginal = new IdentityHashMap<>();
+    private final Map<T, T> originalToModified = new IdentityHashMap<>();
 
     public void reset(@Nullable List<? extends T> newOriginalItems) {
       if (newOriginalItems != null) {
@@ -119,8 +99,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
       return modifiedToOriginal.containsKey(item) || !originalItems.contains(item);
     }
 
-    @NotNull
-    public T getMutable(@NotNull T item, int index) {
+    public @NotNull T getMutable(@NotNull T item, int index) {
       if (isMutable(item) || !isEditable(item)) {
         return item;
       }
@@ -140,8 +119,14 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
       return !modifiedToOriginal.isEmpty();
     }
 
-    public void process(@NotNull TObjectObjectProcedure<T, T> procedure) {
-      modifiedToOriginal.forEachEntry(procedure);
+    public void process(@NotNull BiPredicate<? super T, ? super T> procedure) {
+      for (Map.Entry<T, T> entry : modifiedToOriginal.entrySet()) {
+        T key = entry.getKey();
+        T value = entry.getValue();
+        if (!procedure.test(key, value)) {
+          break;
+        }
+      }
     }
   }
 

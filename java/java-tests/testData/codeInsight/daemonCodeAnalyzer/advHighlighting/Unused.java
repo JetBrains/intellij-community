@@ -51,6 +51,11 @@ class PrivateClassTest {
        }
     }
 
+    void localVariables() {
+      String <warning descr="Variable 's' is never used">s</warning> = "unused";
+      String ignored = "unused but ignored";
+    }
+
 
   class IncrementedButNeverAccessed {
     private int <warning descr="Private field 'ffff' is assigned but never accessed">ffff</warning>;
@@ -71,10 +76,10 @@ class PrivateClassTest {
   class IncrementedAndRead{
     private int ffff;
 
-    void foo(int p) {
-      if (p == 0) return;
-      p = ffff++;
-      if (p == 0) foo(p);
+    void foo(int <text_attr descr="Reassigned parameter">p</text_attr>) {
+      if (<text_attr descr="Reassigned parameter">p</text_attr> == 0) return;
+      <text_attr descr="Reassigned parameter">p</text_attr> = ffff++;
+      if (<text_attr descr="Reassigned parameter">p</text_attr> == 0) foo(<text_attr descr="Reassigned parameter">p</text_attr>);
     }
   }
 }

@@ -45,22 +45,21 @@ public abstract class VcsDirtyScope {
   public abstract AbstractVcs getVcs();
 
   /**
-   * Get dirty files and directories. Note if the directory is
-   * listed as dirty, all files in it are also considered dirty and
-   * they are returned by this method. Note that this method does not list
-   * files that are returned by {@link #getRecursivelyDirtyDirectories()}.
+   * Get dirty files and directories.
+   * Note, if a directory is listed as dirty, all files in it are also considered dirty, and they are returned by this method.
+   * Note that this method does not list files that are returned by {@link #getRecursivelyDirtyDirectories()}.
    *
-   * @return the set of dirty file or directories with all directory children added.
+   * @return the set of dirty files or directories with all directory children added.
    */
   public abstract Set<FilePath> getDirtyFiles();
 
   /**
    * Get dirty files and directories. This method differs from
-   * {@link #getDirtyFiles()} that it does not adds all children
+   * {@link #getDirtyFiles()} that it does not add all children
    * to the set of the dirty files automatically. The invoker should
    * process the children of valid directories themselves.
    *
-   * @return the set of dirty file or directories without implied directory children.
+   * @return the set of dirty files or directories without implied directory children.
    */
   public abstract Set<FilePath> getDirtyFilesNoExpand();
 
@@ -87,7 +86,6 @@ public abstract class VcsDirtyScope {
    * Check if the path belongs to the dirty scope.
    *
    * @param path a path to check
-   * @return true if path belongs to the dirty scope.
    */
   public abstract boolean belongsTo(final FilePath path);
 

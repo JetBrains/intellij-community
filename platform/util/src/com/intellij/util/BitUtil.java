@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
-public class BitUtil {
+public final class BitUtil {
   @Contract(pure = true)
   public static boolean isSet(byte value, byte mask) {
     assertOneBitMask(mask);
@@ -34,18 +21,27 @@ public class BitUtil {
     return (flags & mask) == mask;
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static byte set(byte value, byte mask, boolean setBit) {
     assertOneBitMask(mask);
     return (byte)(setBit ? value | mask : value & ~mask);
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static int set(int value, int mask, boolean setBit) {
     assertOneBitMask(mask);
     return setBit ? value | mask : value & ~mask;
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static long set(long value, long mask, boolean setBit) {
     assertOneBitMask(mask);
@@ -69,13 +65,14 @@ public class BitUtil {
     assertOneBitMask(mask & 0xFFL);
   }
   public static void assertOneBitMask(int mask) {
-    assertOneBitMask(mask & 0xFFFFFFFFL);
-  }
-  private static void assertOneBitMask(long mask) {
-    assert (mask & mask - 1) == 0 : "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
+    assert (mask & mask - 1) == 0 : invalidMaskError(mask);
   }
 
-  public static boolean isPowerOfTwo(int i) {
-    return (i & (i - 1)) == 0;
+  private static void assertOneBitMask(long mask) {
+    assert (mask & mask - 1) == 0 : invalidMaskError(mask);
+  }
+
+  private static @NotNull String invalidMaskError(long mask) {
+    return "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
 }

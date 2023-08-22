@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.colorpicker
 
+import com.intellij.CommonBundle
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Color
@@ -46,13 +48,13 @@ class OperationPanel(private val model: ColorPickerModel,
     background = PICKER_BACKGROUND_COLOR
 
     if (cancel != null) {
-      val cancelButton = MyButton("Cancel")
+      val cancelButton = MyButton(CommonBundle.getCancelButtonText())
       cancelButton.border = BUTTON_BORDER
       cancelButton.addActionListener { cancel(model.color) }
       add(cancelButton, BorderLayout.WEST)
     }
     if (ok != null) {
-      val okButton = MyButton("OK")
+      val okButton = MyButton(CommonBundle.getOkButtonText())
       okButton.border = BUTTON_BORDER
       okButton.addActionListener { ok(model.color) }
       add(okButton, BorderLayout.EAST)
@@ -63,6 +65,6 @@ class OperationPanel(private val model: ColorPickerModel,
 /**
  * TODO: Remove this after [CommonButton.isFocusable] returns true.
  */
-private class MyButton(text: String) : CommonButton(text) {
+private class MyButton(@NlsContexts.Button text: String) : CommonButton(text) {
   override fun isFocusable(): Boolean = true
 }

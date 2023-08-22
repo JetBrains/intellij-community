@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 // From: http://www.halley.cc/code/?java/CSVReader.java
 
@@ -175,7 +175,7 @@ class CSVReader {
         }
 
         List<String> tokensOnThisLine = new ArrayList<>();
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         boolean inQuotes = false;
         do {
             if (inQuotes) {
@@ -212,7 +212,7 @@ class CSVReader {
                     }
                 } else if (c == separator && !inQuotes) {
                     tokensOnThisLine.add(sb.toString());
-                    sb = new StringBuffer(); // start work on next token
+                    sb = new StringBuilder(); // start work on next token
                 } else {
                     sb.append(c);
                 }

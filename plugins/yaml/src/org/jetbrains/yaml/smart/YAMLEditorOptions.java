@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.smart;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -10,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "YamlEditorOptions",
-  storages = @Storage("editor.xml")
+  storages = @Storage("editor.xml"),
+  category = SettingsCategory.CODE
 )
 public class YAMLEditorOptions implements PersistentStateComponent<YAMLEditorOptions> {
   private boolean myUseSmartPaste = true;
@@ -36,6 +38,6 @@ public class YAMLEditorOptions implements PersistentStateComponent<YAMLEditorOpt
 
   @NotNull
   public static YAMLEditorOptions getInstance() {
-    return ServiceManager.getService(YAMLEditorOptions.class);
+    return ApplicationManager.getApplication().getService(YAMLEditorOptions.class);
   }
 }

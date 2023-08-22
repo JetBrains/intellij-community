@@ -1,17 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 
-public class SearchResult {
+public final class SearchResult {
 
   public static final Key<SearchResult> KEY = new Key<>("lfe.SearchResult");
 
   public final Position startPosition;
   public final Position endPostion;
-  public final String contextPrefix;
-  public final String foundString;
-  public final String contextPostfix;
+  public final @NlsSafe String contextPrefix;
+  public final @NlsSafe String foundString;
+  public final @NlsSafe String contextPostfix;
 
   public SearchResult(long startPageNumber,
                       int startOffsetInPage,
@@ -28,7 +30,7 @@ public class SearchResult {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("p%ds%d-p%ds%d: pref{%s},orig{%s},post{%s}",
                          startPosition.pageNumber, startPosition.symbolOffsetInPage,
                          endPostion.pageNumber, endPostion.symbolOffsetInPage,
@@ -41,8 +43,7 @@ public class SearchResult {
       return true;
     }
 
-    if (target instanceof SearchResult) {
-      SearchResult targetResult = (SearchResult)target;
+    if (target instanceof SearchResult targetResult) {
       if (startPosition.equals(targetResult.startPosition)
           && endPostion.equals(targetResult.endPostion)
           && contextPrefix.equals(targetResult.contextPrefix)

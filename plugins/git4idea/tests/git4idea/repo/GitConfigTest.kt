@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.containers.ContainerUtil.getFirstItem
@@ -26,10 +14,11 @@ import git4idea.GitStandardRemoteBranch
 import git4idea.test.GitPlatformTest
 import git4idea.test.createRepository
 import git4idea.test.git
+import git4idea.test.tac
 import java.io.File
-import java.util.*
 
 class GitConfigTest : GitPlatformTest() {
+  private val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"
 
   fun testRemotes() {
     val objects = loadRemotes()
@@ -52,10 +41,12 @@ class GitConfigTest : GitPlatformTest() {
     git("update-ref refs/remotes/origin/a#branch HEAD")
     git("branch --track a#branch origin/a#branch")
 
-    val gitDir = File(projectPath, ".git")
-    val config = GitConfig.read(File(gitDir, "config"))
-    val dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitDir)
-    val reader = GitRepositoryReader(GitRepositoryFiles.getInstance(dir!!))
+    val rootFile = File(projectPath)
+    val gitFile = File(projectPath, ".git")
+    val config = GitConfig.read(File(gitFile, "config"))
+    val rootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile)
+    val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitFile)
+    val reader = GitRepositoryReader(GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
     val state = reader.readState(config.parseRemotes())
     val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
     assertTrue("Couldn't find correct a#branch tracking information among: [$trackInfos]",
@@ -83,7 +74,7 @@ class GitConfigTest : GitPlatformTest() {
     createRepository()
     addRemote("git@github.com:foo/bar.git")
     val pushUrl = "git@github.com:foo/push.git"
-    git("config remote.origin.pushurl " + pushUrl)
+    git("config remote.origin.pushurl $pushUrl")
 
     val config = readConfig()
     val remote = getFirstItem(config.parseRemotes())
@@ -131,8 +122,126 @@ class GitConfigTest : GitPlatformTest() {
     assertEquals("Remote name is incorrect", expectedName, remote!!.name)
   }
 
+  fun `test relative hook path is extracted from config`() {
+    val repo = createRepository()
+
+    createHook(".githooks/pre-commit")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    tac("file1.txt")
+
+    git("config core.hooksPath .githooks/")
+    repo.update()
+
+    assertTrue(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+
+    git("config core.hooksPath .githooks")
+    repo.update()
+
+    assertTrue(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    assertHookFailure {
+      tac("file3.txt")
+    }
+
+    git("config core.hooksPath .githooks2")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    tac("file4.txt")
+
+    createHook(".githooks2/pre-push")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertTrue(repo.info.hooksInfo.isPrePushHookAvailable)
+  }
+
+  fun `test absolute hook path is extracted from config`() {
+    val repo = createRepository()
+
+    val hookFile = createHook(".githooks/pre-commit")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    tac("file1.txt")
+
+    git("config core.hooksPath " + hookFile.parent)
+    repo.update()
+
+    assertTrue(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+  }
+
+  fun `test last hook path is extracted from config`() {
+    val repo = createRepository()
+
+    createHook(".githooks4/pre-commit")
+    repo.update()
+
+    assertFalse(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    tac("file1.txt")
+
+    Executor.append(".git/config", """
+      [core]
+        hooksPath = .githooks1
+        hooksPath = .githooks2
+      [core]
+        hooksPath = .githooks3
+        hooksPath = .githooks4
+    """.trimIndent())
+    repo.update()
+
+    assertTrue(repo.info.hooksInfo.areCommitHooksAvailable)
+    assertFalse(repo.info.hooksInfo.isPrePushHookAvailable)
+
+    assertHookFailure {
+      tac("file2.txt")
+    }
+  }
+
+  private fun createHook(hookPath: String): File {
+    val hookFile = touch(hookPath,
+                         "#!/bin/sh\n" +
+                         "echo $HOOK_FAILURE_MESSAGE\n" +
+                         "exit 1")
+    hookFile.setExecutable(true)
+    return hookFile
+  }
+
+  private fun assertHookFailure(task: () -> Unit) {
+    try {
+      task()
+      throw AssertionError("Hook failure expected")
+    }
+    catch (e: IllegalStateException) {
+      if (!e.message.orEmpty().contains(HOOK_FAILURE_MESSAGE)) {
+        throw AssertionError("Hook failure expected", e)
+      }
+    }
+  }
+
   private fun createRepository(): GitRepository {
-    return createRepository(myProject, projectPath, true)
+    return createRepository(myProject, projectNioRoot, true)
   }
 
   private fun readConfig(): GitConfig {
@@ -207,7 +316,7 @@ class GitConfigTest : GitPlatformTest() {
           file.name.endsWith("_result.txt") -> resultFile = file
         }
       }
-      val message = " file not found in $testDir among ${Arrays.toString(testDir.list())}"
+      val message = " file not found in $testDir among ${testDir.list().contentToString()}"
       assertNotNull("description $message", descriptionFile)
       assertNotNull("config $message", configFile)
       assertNotNull("result $message", resultFile)

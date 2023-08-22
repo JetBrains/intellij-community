@@ -1,5 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
+
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +9,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class CompositeDataBinding implements DataBinding{
+public class CompositeDataBinding implements DataBinding {
   private final List<DataBinding> myBindings = new ArrayList<>();
 
   void addBinding(DataBinding binding) {
@@ -26,6 +28,6 @@ public class CompositeDataBinding implements DataBinding{
 
   @Override
   public boolean isModified(Object obj) {
-    return myBindings.stream().anyMatch(binding -> binding.isModified(obj));
+    return ContainerUtil.exists(myBindings, binding -> binding.isModified(obj));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchResultsPanel;
 
 import com.intellij.CommonBundle;
@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
@@ -30,11 +31,11 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,12 +48,11 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class RangeSearch implements RangeSearchTask.Callback {
+public final class RangeSearch implements RangeSearchTask.Callback {
 
   public static final Key<RangeSearch> KEY = new Key<>("lfe.searchResultsToolWindow");
 
@@ -145,7 +145,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
         }
       }
     });
-    myShowingResultsList.setCellRenderer(new ColoredListCellRenderer<ListElementWrapper>() {
+    myShowingResultsList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ListElementWrapper> list,
                                            ListElementWrapper value,
@@ -220,7 +220,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     callScheduledUpdate();
   }
 
-  public void setAdditionalStatusText(@Nullable String statusText) {
+  public void setAdditionalStatusText(@Nullable @NlsContexts.StatusText String statusText) {
     lblSearchStatusCenter.clear();
     if (statusText != null) {
       lblSearchStatusCenter.append(statusText);
@@ -228,7 +228,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     callScheduledUpdate();
   }
 
-  public void addSearchResultsIntoBeginning(List<SearchResult> searchResults) {
+  public void addSearchResultsIntoBeginning(List<? extends SearchResult> searchResults) {
     if (searchResults == null || searchResults.isEmpty()) {
       return;
     }
@@ -257,7 +257,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     myShowingResultsList.scrollRectToVisible(visibleRect);
   }
 
-  public void addSearchResultsIntoEnd(List<SearchResult> searchResults) {
+  public void addSearchResultsIntoEnd(List<? extends SearchResult> searchResults) {
     if (searchResults == null || searchResults.isEmpty()) {
       return;
     }
@@ -290,7 +290,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void updateInEdt() {
     try {
       FileDataProviderForSearch fileDataProviderForSearch
@@ -498,7 +498,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
   @Override
   public void tellFrameSearchResultsFound(RangeSearchTask caller,
                                           long curPageNumber,
-                                          ArrayList<SearchResult> allMatchesAtFrame) {
+                                          @NotNull List<? extends SearchResult> allMatchesAtFrame) {
     if (inBackground) {
       ApplicationManager.getApplication().invokeLater(() -> {
         onFrameSearchResultsFound(caller, curPageNumber, allMatchesAtFrame);
@@ -509,7 +509,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  protected void onFrameSearchResultsFound(RangeSearchTask caller, long curPageNumber, ArrayList<SearchResult> allMatchesAtFrame) {
+  protected void onFrameSearchResultsFound(RangeSearchTask caller, long curPageNumber, List<? extends SearchResult> allMatchesAtFrame) {
     if (caller != lastExecutedRangeSearchTask  // means new search task has been already launched
         || caller.isShouldStop()) {
       return;
@@ -610,7 +610,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     void onSelected();
   }
 
-  private class SearchResultWrapper implements ListElementWrapper {
+  private final class SearchResultWrapper implements ListElementWrapper {
     private final SimpleTextAttributes attrForMatchers = new SimpleTextAttributes(
       SimpleTextAttributes.STYLE_SEARCH_MATCH, null);
 
@@ -635,9 +635,9 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  private class SearchFurtherBtnWrapper implements ListElementWrapper {
+  private final class SearchFurtherBtnWrapper implements ListElementWrapper {
     private final SimpleTextAttributes linkText = new SimpleTextAttributes(
-      SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkPressedColor());
+      SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.PRESSED);
     private final boolean isForwardDirection;
     private boolean isEnabled = false;
 
@@ -681,7 +681,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  private class ShowingListModel implements ListModel<ListElementWrapper> {
+  private final class ShowingListModel implements ListModel<ListElementWrapper> {
 
     private final CollectionListModel<SearchResult> mySearchResultsListModel;
     private final SearchFurtherBtnWrapper btnSearchBackwardWrapper = new SearchFurtherBtnWrapper(false);
@@ -742,7 +742,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  private class AnimatedProgressIcon extends AsyncProcessIcon {
+  private final class AnimatedProgressIcon extends AsyncProcessIcon {
 
     AnimatedProgressIcon() {
       super("");
@@ -767,10 +767,10 @@ public class RangeSearch implements RangeSearchTask.Callback {
 
   interface EdtRangeSearchEventsListener {
 
-    @CalledInAwt
+    @RequiresEdt
     void onSearchStopped();
 
-    @CalledInAwt
+    @RequiresEdt
     void onSearchFinished();
   }
 }

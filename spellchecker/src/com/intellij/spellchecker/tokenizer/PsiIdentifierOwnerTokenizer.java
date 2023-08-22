@@ -13,7 +13,7 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
   public static final PsiIdentifierOwnerTokenizer INSTANCE = new PsiIdentifierOwnerTokenizer();
 
   @Override
-  public void tokenize(@NotNull PsiNameIdentifierOwner element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiNameIdentifierOwner element, @NotNull TokenConsumer consumer) {
     PsiElement identifier = element.getNameIdentifier();
     if (identifier == null) {
       return;
@@ -23,7 +23,7 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
     if (range.isEmpty()) return;
 
     int offset = range.getStartOffset() - parent.getTextRange().getStartOffset();
-    if(offset < 0 ) {
+    if (offset < 0) {
       parent = PsiTreeUtil.findCommonParent(identifier, element);
       offset = range.getStartOffset() - parent.getTextRange().getStartOffset();
     }

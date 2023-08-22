@@ -1,59 +1,40 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Collection;
 
-public class VcsFileListenerContextHelper {
-  // to ignore by listeners
-  private final Set<FilePath> myDeletedContext;
-  private final Set<VirtualFile> myAddContext;
+/**
+ * Allows excluding specific files from being processed by {@link VcsVFSListener}.
+ * <p>
+ * NB: processing order is different for Added and Deleted files, {@link VcsVFSListener} implementation depends on it.
+ * <p/>
+ * For DELETED files {@link VFileDeleteEvent} MUST be fired AFTER {@link #ignoreDeleted} method invocation.
+ * For ADDED files {@link VFileCreateEvent} CAN be fired BEFORE {@link #ignoreAdded} method invocation, in the same command.
+ */
+public interface VcsFileListenerContextHelper {
 
-  VcsFileListenerContextHelper(final Project project) {
-    myDeletedContext = new HashSet<>();
-    myAddContext = new HashSet<>();
+  static VcsFileListenerContextHelper getInstance(@NotNull Project project) {
+    return project.getService(VcsFileListenerContextHelper.class);
   }
 
-  public static VcsFileListenerContextHelper getInstance(final Project project) {
-    return ServiceManager.getService(project, VcsFileListenerContextHelper.class);
-  }
-  
-  public void ignoreDeleted(final FilePath filePath) {
-    myDeletedContext.add(filePath);
-  }
+  void ignoreDeleted(@NotNull Collection<? extends FilePath> filePath);
 
-  public boolean isDeletionIgnored(final FilePath filePath) {
-    return myDeletedContext.contains(filePath);
-  }
+  boolean isDeletionIgnored(@NotNull FilePath filePath);
 
-  public void ignoreAdded(final VirtualFile virtualFile) {
-    myAddContext.add(virtualFile);
-  }
+  void ignoreAdded(@NotNull Collection<? extends FilePath> filePaths);
 
-  public boolean isAdditionIgnored(final VirtualFile virtualFile) {
-    return myAddContext.contains(virtualFile);
-  }
+  void ignoreAddedRecursive(@NotNull Collection<? extends FilePath> filePaths);
 
-  public void clearContext() {
-    myAddContext.clear();
-    myDeletedContext.clear();
-  }
+  boolean isAdditionIgnored(@NotNull FilePath filePath);
+
+  void clearContext();
+
+  boolean isAdditionContextEmpty();
+
+  boolean isDeletionContextEmpty();
 }

@@ -28,10 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ErrorAnalyzer {
   private static final Logger LOG = Logger.getInstance(ErrorAnalyzer.class);
 
@@ -93,7 +89,7 @@ public final class ErrorAnalyzer {
     final Set<IButtonGroup> processedGroups = new HashSet<>();
     FormEditingUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<IComponent>() {
+      new FormEditingUtil.ComponentVisitor<>() {
         @Override
         public boolean visit(final IComponent component) {
           if (progress != null && progress.isCanceled()) return false;
@@ -143,7 +139,7 @@ public final class ErrorAnalyzer {
     // Check that there are no panels in XY with children
     FormEditingUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<IComponent>() {
+      new FormEditingUtil.ComponentVisitor<>() {
         @Override
         public boolean visit(final IComponent component) {
           if (progress != null && progress.isCanceled()) return false;
@@ -151,13 +147,11 @@ public final class ErrorAnalyzer {
           // Clear previous error (if any)
           component.putClientProperty(CLIENT_PROP_ERROR_ARRAY, null);
 
-          if (!(component instanceof IContainer)) {
+          if (!(component instanceof IContainer container)) {
             return true;
           }
 
-          final IContainer container = (IContainer)component;
-          if (container instanceof IRootContainer) {
-            final IRootContainer rootContainer = (IRootContainer)container;
+          if (container instanceof IRootContainer rootContainer) {
             if (rootContainer.getComponentCount() > 1) {
               // TODO[vova] implement
               putError(component, new ErrorInfo(
@@ -170,10 +164,10 @@ public final class ErrorAnalyzer {
           else if (container.isXY() && container.getComponentCount() > 0) {
             // TODO[vova] implement
             putError(component, new ErrorInfo(
-              component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
-              HighlightDisplayLevel.ERROR,
-              QuickFix.EMPTY_ARRAY
-            )
+                       component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
+                       HighlightDisplayLevel.ERROR,
+                       QuickFix.EMPTY_ARRAY
+                     )
             );
           }
           return true;

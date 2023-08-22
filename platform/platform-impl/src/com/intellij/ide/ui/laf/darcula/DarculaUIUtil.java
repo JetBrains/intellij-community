@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
@@ -7,6 +7,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.MacUIUtil;
@@ -27,13 +28,22 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UnregisteredNamedColor")
-public class DarculaUIUtil {
+public final class DarculaUIUtil {
+
+  private static final @NotNull JBColor DISABLED_BORDER_BORDER =
+    JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
+  private static final @NotNull JBColor BORDER_COLOR =
+    JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF));
+  private static final @NotNull JBColor FOCUSED_BORDER_COLOR =
+    JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA));
+
   public enum Outline {
     error {
       @Override
@@ -70,21 +80,6 @@ public class DarculaUIUtil {
     public abstract void setGraphicsColor(Graphics2D g, boolean focused);
   }
 
-  /**
-   * @deprecated use {@link #paintFocusBorder(Graphics2D, int, int, float, boolean)}
-   */
-  @Deprecated
-  public static void paintFocusRing(Graphics g, Rectangle r) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
-      g2.translate(r.x, r.y);
-      paintFocusBorder(g2, r.width, r.height, COMPONENT_ARC.getFloat(), true);
-    }
-    finally {
-      g2.dispose();
-    }
-  }
-
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
     Outline.focus.setGraphicsColor(g, true);
 
@@ -95,12 +90,43 @@ public class DarculaUIUtil {
     g.fill(shape);
   }
 
-  /**
-   * @deprecated use {@link #paintOutlineBorder(Graphics2D, int, int, float, boolean, boolean, DarculaUIUtil.Outline)}
-   */
-  @Deprecated
-  public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean symmetric, boolean hasFocus) {
-    paintOutlineBorder(g, width, height, arc, symmetric, hasFocus, Outline.error);
+  public static Outline computeOutlineFor(Component c) {
+    JComponent component = ObjectUtils.tryCast(c, JComponent.class);
+
+    if (component != null) {
+      Outline outline = getOutline(component);
+
+      if (outline != null) {
+        return outline;
+      }
+    }
+
+    return Outline.focus;
+  }
+
+  public static @Nullable Outline getOutline(@NotNull JComponent component) {
+    String outline = ObjectUtils.tryCast(component.getClientProperty("JComponent.outline"), String.class);
+    return outline == null ? null : Outline.valueOf(outline);
+  }
+
+  public static boolean isWarningOrError(@Nullable Outline outline) {
+    return outline == DarculaUIUtil.Outline.error || outline == DarculaUIUtil.Outline.warning;
+  }
+
+  public static void paintTag(Graphics2D g2, float width, float height, boolean hasFocus, Outline type) {
+    if (type == Outline.focus && !hasFocus) {
+      return;
+    }
+    else {
+      type.setGraphicsColor(g2, hasFocus);
+    }
+
+    float bw = BW.getFloat();
+    Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    border.append(new RoundRectangle2D.Float(0, 0, width, height, height, height), false);
+    float inner = height - bw * 2;
+    border.append(new RoundRectangle2D.Float(bw, bw, width - bw * 2, inner, inner, inner), false);
+    g2.fill(border);
   }
 
   public static void paintOutlineBorder(Graphics2D g, int width, int height, float arc, boolean symmetric, boolean hasFocus, Outline type) {
@@ -116,6 +142,11 @@ public class DarculaUIUtil {
   @SuppressWarnings("SuspiciousNameCombination")
   public static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
     float bw = UIUtil.isUnderDefaultMacTheme() ? JBUIScale.scale(3) : BW.getFloat();
+    doPaint(g, width, height, arc, bw, symmetric);
+  }
+
+  @SuppressWarnings("SuspiciousNameCombination")
+  public static void doPaint(Graphics2D g, int width, int height, float arc, float bw, boolean symmetric) {
     float f = UIUtil.isRetina(g) ? 0.5f : 1.0f;
     float lw = UIUtil.isUnderDefaultMacTheme() ? JBUIScale.scale(f) : LW.getFloat();
 
@@ -189,9 +220,9 @@ public class DarculaUIUtil {
       border.append(new Rectangle2D.Float(0, 0, r.width, r.height), false);
       border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
 
-      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      Outline op = getOutline((JComponent)c);
       if (op != null || hasFocus) {
-        Outline outline = op == null ? Outline.focus : Outline.valueOf(op.toString());
+        Outline outline = op == null ? Outline.focus : op;
         outline.setGraphicsColor(g2, true);
         g2.fill(border);
       }
@@ -240,6 +271,10 @@ public class DarculaUIUtil {
            ComponentUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
   }
 
+  public static boolean isBorderless(Component c) {
+    return ((JComponent)c).getClientProperty("JComboBox.isBorderless") == Boolean.TRUE;
+  }
+
   public static final JBValue MINIMUM_WIDTH = new JBValue.Float(49); // 72px total
   public static final JBValue MINIMUM_HEIGHT = new JBValue.Float(24);
   public static final JBValue COMPACT_HEIGHT = new JBValue.Float(20);
@@ -250,63 +285,13 @@ public class DarculaUIUtil {
   public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
 
-  /**
-   * @deprecated use {@link #LW}.get() instead
-   */
-  @Deprecated
-  public static float lw(Graphics2D g2) {
-    return JBUIScale.scale(1.0f);
-  }
-
-  /**
-   * @deprecated use {@link #BW}.get() instead
-   */
-  @Deprecated
-  public static float bw() {
-    return BW.getFloat();
-  }
-
-  /**
-   * @deprecated use {@link #COMPONENT_ARC}.getFloat() instead
-   */
-  @Deprecated
-  public static float arc() {
-    return COMPONENT_ARC.getFloat();
-  }
-
-  /**
-   * @deprecated use {@link #BUTTON_ARC}.get() instead
-   */
-  @Deprecated
-  public static float buttonArc() {
-    return BUTTON_ARC.get();
-  }
-
   public static Insets paddings() {
     return JBUI.insets(1);
   }
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
-    return enabled ?
-           focused ? JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA)) :
-           JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF)) :
-           JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
-  }
-
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Arrow#backgroundColor(boolean, boolean)}
-   */
-  @Deprecated
-  public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
-    return JBUI.CurrentTheme.Arrow.backgroundColor(enabled, editable);
-  }
-
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Arrow#foregroundColor(boolean)}
-   */
-  @Deprecated
-  public static Color getArrowButtonForegroundColor(boolean enabled) {
-    return JBUI.CurrentTheme.Arrow.foregroundColor(enabled);
+    if (enabled) return focused ? FOCUSED_BORDER_COLOR : BORDER_COLOR;
+    return DISABLED_BORDER_BORDER;
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {

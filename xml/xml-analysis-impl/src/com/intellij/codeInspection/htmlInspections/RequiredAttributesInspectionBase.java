@@ -17,13 +17,17 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.html.impl.providers.HtmlAttributeValueProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -44,7 +48,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.
 public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
   @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(REQUIRED_ATTRIBUTES_SHORT_NAME);
   protected static final Logger LOG = Logger.getInstance(RequiredAttributesInspectionBase.class);
-  public String myAdditionalRequiredHtmlAttributes = "";
+  public @NlsSafe String myAdditionalRequiredHtmlAttributes = "";
 
   private static String appendName(String toAppend, String text) {
     if (!toAppend.isEmpty()) {
@@ -73,8 +77,10 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
     myAdditionalRequiredHtmlAttributes = appendName(getAdditionalEntries(), text);
   }
 
+  @NotNull
   public static LocalQuickFix getIntentionAction(String name) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlAnalysisBundle.message("add.optional.html.attribute", name));
+    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlAnalysisBundle.message(
+      "html.quickfix.add.optional.html.attribute", name));
   }
 
   @Override
@@ -109,8 +115,10 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
         if (!hasAttribute(tag, attrName) &&
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
-          LocalQuickFix insertRequiredAttributeIntention = isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
-          final String localizedMessage = XmlAnalysisBundle.message("element.doesnt.have.required.attribute", name, attrName);
+          LocalQuickFix insertRequiredAttributeIntention =
+            isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
+          final String localizedMessage =
+            XmlAnalysisBundle.message("xml.inspections.element.doesnt.have.required.attribute", name, attrName);
           reportOneTagProblem(
             tag,
             attrName,
@@ -126,6 +134,10 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
   }
 
   private static boolean hasAttribute(XmlTag tag, String attrName) {
+    if (JBIterable.from(HtmlAttributeValueProvider.EP_NAME.getExtensionList())
+          .filterMap(it -> it.getCustomAttributeValue(tag, attrName)).first() != null) {
+      return true;
+    }
     final XmlAttribute attribute = tag.getAttribute(attrName);
     if (attribute == null) return false;
     if (attribute.getValueElement() != null) return true;
@@ -136,44 +148,46 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
 
   private void reportOneTagProblem(final XmlTag tag,
                                    final String name,
-                                   @NotNull String localizedMessage,
+                                   @NotNull @InspectionMessage String localizedMessage,
                                    final LocalQuickFix basicIntention,
                                    ProblemsHolder holder,
-                                   final LocalQuickFix addAttributeFix,
+                                   @NotNull LocalQuickFix addAttributeFix,
                                    boolean isOnTheFly) {
     boolean htmlTag = false;
 
     if (tag instanceof HtmlTag) {
       htmlTag = true;
-      if(isAdditionallyDeclared(getAdditionalEntries(), name)) return;
+      if (isAdditionallyDeclared(getAdditionalEntries(), name)) return;
     }
 
     LocalQuickFix[] fixes;
     ProblemHighlightType highlightType;
     if (htmlTag) {
-      fixes = basicIntention == null ? new LocalQuickFix[] {addAttributeFix} : new LocalQuickFix[]{addAttributeFix, basicIntention};
+      fixes = basicIntention == null ? new LocalQuickFix[]{addAttributeFix} : new LocalQuickFix[]{addAttributeFix, basicIntention};
       highlightType = isInjectedWithoutValidation(tag) ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     }
     else {
-      fixes = basicIntention == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {basicIntention};
+      fixes = basicIntention == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{basicIntention};
       highlightType = ProblemHighlightType.ERROR;
     }
-    addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
+    if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
+      addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
+    }
   }
 
   private static void addElementsForTag(XmlTag tag,
-                                        String message,
+                                        @InspectionMessage String message,
                                         ProblemHighlightType error,
                                         ProblemsHolder holder,
                                         boolean isOnTheFly,
-                                        LocalQuickFix... fixes) {
+                                        @NotNull LocalQuickFix @NotNull ... fixes) {
     registerProblem(message, error, holder, XmlTagUtil.getStartTagNameElement(tag), fixes);
     if (isOnTheFly) {
       registerProblem(message, error, holder, XmlTagUtil.getEndTagNameElement(tag), fixes);
     }
   }
 
-  private static void registerProblem(String message,
+  private static void registerProblem(@InspectionMessage String message,
                                       ProblemHighlightType error,
                                       ProblemsHolder holder,
                                       XmlToken start,

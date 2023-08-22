@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -8,13 +8,15 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.JavaApplicationRunConfigurationImporter;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.jar.JarApplicationRunConfigurationImporter;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager;
@@ -23,7 +25,6 @@ import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigu
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Ref;
@@ -33,21 +34,24 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.PathUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.extPluginVersionIsAtLeast;
 
 /**
  * Created by Nikita.Skvortsov
@@ -57,41 +61,19 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testInspectionSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    inspections {\n" +
-        "      myInspection { enabled = false }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              inspections {
+                myInspection { enabled = false }
+              }
+            }
+          }""")
     );
 
     final InspectionProfileImpl profile = InspectionProfileManager.getInstance(myProject).getCurrentProfile();
     assertEquals("Gradle Imported", profile.getName());
-  }
-
-  @Test
-  public void testCodeStyleSettingsImport() throws Exception {
-    importProject(
-      withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    codeStyle {\n" +
-        "      hardWrapAt = 200\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
-    );
-
-    final CodeStyleScheme scheme = CodeStyleSchemes.getInstance().getCurrentScheme();
-    final CodeStyleSettings settings = scheme.getCodeStyleSettings();
-
-    assertEquals("Gradle Imported", scheme.getName());
-    assertFalse(scheme.isDefault());
-
-    assertEquals(200, settings.getDefaultRightMargin());
   }
 
   @Test
@@ -102,22 +84,23 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       app1(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           jvmArgs =   '-Xmx1g'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "       app2(Application) {\n" +
-        "           mainClass = 'my.app.Class2'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 app1(Application) {
+                     mainClass = 'my.app.Class'
+                     jvmArgs =   '-Xmx1g'
+                     moduleName = 'moduleName'
+                 }
+                 app2(Application) {
+                     mainClass = 'my.app.Class2'
+                     moduleName = 'moduleName'
+                 }
+              }
+            }
+          }""")
     );
 
     final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
@@ -133,15 +116,14 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
-  @Ignore
   public void testGradleRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("gradle");
     maskRunImporter(testExtension);
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPluginIfCan("0.5.1")
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPluginIfCan()
         .addPostfix(
           "import org.jetbrains.gradle.ext.*",
           "idea.project.settings {",
@@ -164,9 +146,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     Map<String, Object> gradleSettings = configs.get("gr1");
 
     assertEquals(myProjectRoot.getPath(), ((String)gradleSettings.get("projectPath")).replace('\\', '/'));
-    assertTrue(((List)gradleSettings.get("taskNames")).contains(":cleanTest"));
+    assertTrue(((List<?>)gradleSettings.get("taskNames")).contains(":cleanTest"));
     assertEquals("-DvmKey=vmVal", gradleSettings.get("jvmArgs"));
-    assertTrue(((Map)gradleSettings.get("envs")).containsKey("env_key"));
+    assertTrue(((Map<?, ?>)gradleSettings.get("envs")).containsKey("env_key"));
   }
 
   private void maskRunImporter(@NotNull RunConfigurationImporter testExtension) {
@@ -180,16 +162,17 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       defaults(Application) {\n" +
-        "           jvmArgs = '-DmyKey=myVal'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 defaults(Application) {
+                     jvmArgs = '-DmyKey=myVal'
+                 }
+              }
+            }
+          }""")
     );
 
     final RunManager runManager = RunManager.getInstance(myProject);
@@ -208,20 +191,21 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       defaults(Application) {\n" +
-        "           jvmArgs = '-DmyKey=myVal'\n" +
-        "       }\n" +
-        "       'My Run'(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 defaults(Application) {
+                     jvmArgs = '-DmyKey=myVal'
+                 }
+                 'My Run'(Application) {
+                     mainClass = 'my.app.Class'
+                     moduleName = 'moduleName'
+                 }
+              }
+            }
+          }""")
     );
 
     final RunManager runManager = RunManager.getInstance(myProject);
@@ -247,20 +231,21 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    runConfigurations {\n" +
-        "       'My Run'(Application) {\n" +
-        "           mainClass = 'my.app.Class'\n" +
-        "           moduleName = 'moduleName'\n" +
-        "           beforeRun {\n" +
-        "               gradle(GradleTask) { task = tasks['projects'] }\n" +
-        "           }\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              runConfigurations {
+                 'My Run'(Application) {
+                     mainClass = 'my.app.Class'
+                     moduleName = 'moduleName'
+                     beforeRun {
+                         gradle(GradleTask) { task = tasks['projects'] }
+                     }
+                 }
+              }
+            }
+          }""")
     );
 
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
@@ -277,6 +262,81 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
                  FileUtil.toSystemIndependentName(settings.getExternalProjectPath()));
   }
 
+  @Test
+  public void testJarApplicationRunConfigurationSettingsImport() throws Exception {
+    TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("jarApplication");
+    maskRunImporter(testExtension);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+      .withGradleIdeaExtPluginIfCan()
+      .addPostfix(
+        "import org.jetbrains.gradle.ext.*",
+        "idea.project.settings {",
+        "  runConfigurations {",
+        "    jarApp1(JarApplication) {",
+        "      jarPath =    'my/app.jar'",
+        "      jvmArgs =    '-DvmKey=vmVal'",
+        "      moduleName = 'moduleName'",
+        "    }",
+        "    jarApp2(JarApplication) {",
+        "      jarPath =    'my/app2.jar'",
+        "      moduleName = 'moduleName'",
+        "    }",
+        "  }",
+        "}"
+      ).generate());
+
+    final Map<String, Map<String, Object>> configs = testExtension.getConfigs();
+
+    assertContain(new ArrayList<>(configs.keySet()), "jarApp1", "jarApp2");
+    Map<String, Object> jarApp1Settings = configs.get("jarApp1");
+    Map<String, Object> jarApp2Settings = configs.get("jarApp2");
+
+    assertEquals("my/app.jar", jarApp1Settings.get("jarPath"));
+    assertEquals("my/app2.jar", jarApp2Settings.get("jarPath"));
+    assertEquals("-DvmKey=vmVal", jarApp1Settings.get("jvmArgs"));
+    assertNull(jarApp2Settings.get("jvmArgs"));
+  }
+
+  @Test
+  public void testJarApplicationBeforeRunGradleTaskImport() throws Exception {
+    RunConfigurationImporter jarAppConfigImporter = new JarApplicationRunConfigurationImporter();
+    maskRunImporter(jarAppConfigImporter);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      withGradleIdeaExtPlugin(
+        """
+          import org.jetbrains.gradle.ext.*
+          idea.project.settings {
+            runConfigurations {
+              'jarApp'(JarApplication) {
+                beforeRun {
+                  'gradleTask'(GradleTask) {
+                    task = tasks['projects']
+                  }
+                }
+              }
+            }
+          }"""
+      )
+    );
+
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    RunConfiguration jarApp = runManager.findConfigurationByName("jarApp").getConfiguration();
+    assertNotNull(jarApp);
+
+    List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(jarApp);
+    assertSize(1, tasks);
+    BeforeRunTask gradleBeforeRunTask = tasks.get(0);
+    assertInstanceOf(gradleBeforeRunTask, ExternalSystemBeforeRunTask.class);
+    ExternalSystemTaskExecutionSettings settings = ((ExternalSystemBeforeRunTask)gradleBeforeRunTask).getTaskExecutionSettings();
+    assertContain(settings.getTaskNames(), "projects");
+    assertEquals(FileUtil.toSystemIndependentName(getProjectPath()),
+                 FileUtil.toSystemIndependentName(settings.getExternalProjectPath()));
+  }
 
   @Test
   public void testFacetSettingsImport() throws Exception {
@@ -286,24 +346,24 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
                       getTestRootDisposable());
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  module.settings {\n" +
-        "    facets {\n" +
-        "       spring(SpringFacet) {\n" +
-        "         contexts {\n" +
-        "            myParent {\n" +
-        "              file = 'parent_ctx.xml'\n" +
-        "            }\n" +
-        "            myChild {\n" +
-        "              file = 'child_ctx.xml'\n" +
-        "              parent = 'myParent'" +
-        "            }\n" +
-        "         }\n" +
-        "       }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            module.settings {
+              facets {
+                 spring(SpringFacet) {
+                   contexts {
+                      myParent {
+                        file = 'parent_ctx.xml'
+                      }
+                      myChild {
+                        file = 'child_ctx.xml'
+                        parent = 'myParent'            }
+                   }
+                 }
+              }
+            }
+          }""")
     );
 
     final Map<String, Map<String, Object>> facetConfigs = testExtension.getConfigs();
@@ -331,14 +391,15 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testTaskTriggersImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    taskTriggers {\n" +
-        "      beforeSync tasks.getByName('projects'), tasks.getByName('tasks')\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          idea {
+            project.settings {
+              taskTriggers {
+                beforeSync tasks.getByName('projects'), tasks.getByName('tasks')
+              }
+            }
+          }""")
     );
 
     final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
@@ -360,26 +421,68 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  public void testIdeaPostProcessingHook() throws Exception {
+    File layoutFile = new File(getProjectPath(), "test_output.txt");
+    assertThat(layoutFile).doesNotExist();
+
+    importProject(
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
+        .addPostfix("""
+                      import org.jetbrains.gradle.ext.*
+                      idea {
+                        project.settings {
+                          withIDEADir { File dir ->
+                              def f = file("test_output.txt")
+                              f.createNewFile()
+                              f.text = "Expected file content"
+                          } \s
+                        }
+                      }""")
+        .generate()
+    );
+    final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
+      ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
+
+    assertThat(activations)
+      .extracting("projectPath")
+      .containsExactly(GradleSettings.getInstance(myProject).getLinkedProjectsSettings().iterator().next().getExternalProjectPath());
+
+    final List<String> afterSyncTasks = activations.get(0).state.getTasks(ExternalSystemTaskActivator.Phase.AFTER_SYNC);
+
+    assertThat(afterSyncTasks).containsExactly("processIdeaSettings");
+
+    String ideaDir = PathUtil.toSystemIndependentName(((ProjectStoreOwner)myProject).getComponentStore()
+      .getProjectFilePath().getParent().toAbsolutePath().toString());
+
+    String moduleFile = getModule("project").getModuleFilePath();
+    assertThat(layoutFile)
+      .exists()
+      .hasContent("Expected file content");
+  }
+
+  @Test
   public void testImportEncodingSettings() throws IOException {
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
-          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        createBuildScriptBuilder()
+          .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        encoding = 'IBM-Thai'")
-          .addPostfix("        bomPolicy = BomPolicy.WITH_NO_BOM")
-          .addPostfix("        properties {")
-          .addPostfix("          encoding = 'GB2312'")
-          .addPostfix("          transparentNativeToAsciiConversion = true")
-          .addPostfix("        }")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        encoding = 'IBM-Thai'",
+            "        bomPolicy = BomPolicy.WITH_NO_BOM",
+            "        properties {",
+            "          encoding = 'GB2312'",
+            "          transparentNativeToAsciiConversion = true",
+            "        }",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
       EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
       assertEquals("IBM-Thai", encodingManager.getDefaultCharset().name());
@@ -389,23 +492,24 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
-          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        createBuildScriptBuilder()
+          .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        encoding = 'UTF-8'")
-          .addPostfix("        bomPolicy = BomPolicy.WITH_BOM")
-          .addPostfix("        properties {")
-          .addPostfix("          encoding = 'UTF-8'")
-          .addPostfix("          transparentNativeToAsciiConversion = false")
-          .addPostfix("        }")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        encoding = 'UTF-8'",
+            "        bomPolicy = BomPolicy.WITH_BOM",
+            "        properties {",
+            "          encoding = 'UTF-8'",
+            "          transparentNativeToAsciiConversion = false",
+            "        }",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
       EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
       assertEquals("UTF-8", encodingManager.getDefaultCharset().name());
@@ -426,25 +530,26 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createProjectSubFile("../sub-project/src/main/java/Main.java");
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        createBuildScriptBuilder()
           .withJavaPlugin()
-          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+          .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += '../sub-project/src/main/java'")
-          .addPostfix("}")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        mapping['src/main/java/a'] = 'ISO-8859-9'")
-          .addPostfix("        mapping['src/main/java/b'] = 'x-EUC-TW'")
-          .addPostfix("        mapping['src/main/java/c'] = 'UTF-8'")
-          .addPostfix("        mapping['../sub-project/src/main/java'] = 'KOI8-R'")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += '../sub-project/src/main/java'",
+            "}",
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        mapping['src/main/java/a'] = 'ISO-8859-9'",
+            "        mapping['src/main/java/b'] = 'x-EUC-TW'",
+            "        mapping['src/main/java/c'] = 'UTF-8'",
+            "        mapping['../sub-project/src/main/java'] = 'KOI8-R'",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
       EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
       Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
@@ -456,24 +561,25 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        createBuildScriptBuilder()
           .withJavaPlugin()
-          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+          .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += '../sub-project/src/main/java'")
-          .addPostfix("}")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        mapping['src/main/java/a'] = '<System Default>'")
-          .addPostfix("        mapping['src/main/java/b'] = '<System Default>'")
-          .addPostfix("        mapping['../sub-project/src/main/java'] = '<System Default>'")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += '../sub-project/src/main/java'",
+            "}",
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        mapping['src/main/java/a'] = '<System Default>'",
+            "        mapping['src/main/java/b'] = '<System Default>'",
+            "        mapping['../sub-project/src/main/java'] = '<System Default>'",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
       EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
       Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
@@ -489,16 +595,17 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testActionDelegationImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
-        "import org.jetbrains.gradle.ext.*\n" +
-        "import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*\n" +
-        "idea {\n" +
-        "  project.settings {\n" +
-        "    delegateActions {\n" +
-        "      delegateBuildRunToGradle = true\n" +
-        "      testRunner = CHOOSE_PER_TEST\n" +
-        "    }\n" +
-        "  }\n" +
-        "}")
+        """
+          import org.jetbrains.gradle.ext.*
+          import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*
+          idea {
+            project.settings {
+              delegateActions {
+                delegateBuildRunToGradle = true
+                testRunner = CHOOSE_PER_TEST
+              }
+            }
+          }""")
     );
 
     String projectPath = getCurrentExternalProjectSettings().getExternalProjectPath();
@@ -508,11 +615,11 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
   @Test
   public void testSavePackagePrefixAfterReOpenProject() throws IOException {
-    @Language("Groovy") String buildScript = new GradleBuildScriptBuilderEx().withJavaPlugin().generate();
+    @Language("Groovy") String buildScript = createBuildScriptBuilder().withJavaPlugin().generate();
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(buildScript);
     Application application = ApplicationManager.getApplication();
-    IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
     try {
       Module module = modelsProvider.findIdeModule("project.main");
       ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
@@ -535,18 +642,19 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     String javaSourceUrl = VfsUtilCore.pathToUrl(javaSourcePath);
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        createBuildScriptBuilder()
           .withJavaPlugin()
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += 'java'")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += 'java'",
+            "}")
           .generate());
       Set<String> sourceFolders = sourceFolderManager.getSourceFolders("project.main");
       assertTrue(sourceFolders.contains(javaSourceUrl));
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        createBuildScriptBuilder()
           .withJavaPlugin()
           .generate());
       Set<String> sourceFolders = sourceFolderManager.getSourceFolders("project.main");
@@ -556,10 +664,10 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
   @Test
   public void testSourceFolderIsDisposedAfterProjectDisposing() throws IOException {
-    importProject(new GradleBuildScriptBuilder().generate());
+    importProject(createBuildScriptBuilder().generate());
     Application application = ApplicationManager.getApplication();
     Ref<Project> projectRef = new Ref<>();
-    application.invokeAndWait(() -> projectRef.set(ProjectUtil.openOrImport(myProjectRoot.getPath(), null, false)));
+    application.invokeAndWait(() -> projectRef.set(ProjectUtil.openOrImport(myProjectRoot.toNioPath())));
     Project project = projectRef.get();
     SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(project);
     try {
@@ -567,34 +675,41 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       assertFalse(sourceFolderManager.isDisposed());
     }
     finally {
-      application.invokeAndWait(() -> ProjectManagerEx.getInstanceEx().forceCloseProject(project));
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project);
     }
     assertTrue(project.isDisposed());
     assertTrue(sourceFolderManager.isDisposed());
   }
 
   @Test
-  public void testPostponedImportPackagePrefix() throws IOException {
+  public void testPostponedImportPackagePrefix() throws Exception {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .withKotlinPlugin("1.3.50")
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("      packagePrefix['src/main/kotlin'] = 'prefix.package.other'")
-        .addPostfix("      packagePrefix['src/test/java'] = 'prefix.package.some.test'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .withKotlinJvmPlugin()
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "      packagePrefix['src/main/kotlin'] = 'prefix.package.other'",
+          "      packagePrefix['src/test/java'] = 'prefix.package.some.test'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourceNotExists("project.main", "src/main/kotlin");
     assertSourceNotExists("project.test", "src/test/java");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
+    edt(() -> {
+      ((SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject)).consumeBulkOperationsState(future -> {
+        PlatformTestUtil.waitForFuture(future, 1000);
+        return null;
+      });
+    });
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourcePackagePrefix("project.main", "src/main/kotlin", "prefix.package.other");
     assertSourceNotExists("project.test", "src/test/java");
@@ -605,17 +720,18 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createProjectSubFile("src/main/java/Main.java", "");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .withKotlinPlugin("1.3.50")
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .withKotlinJvmPlugin()
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourcePackagePrefix("project.main", "src/main/kotlin", "");
@@ -626,20 +742,21 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createProjectSubFile("src/test/java/Main.java", "");
     createProjectSubFile("../subproject/src/test/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("sourceSets {")
-        .addPostfix("  test.java.srcDirs += '../subproject/src/test/java'")
-        .addPostfix("}")
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/test/java'] = 'prefix.package.some'")
-        .addPostfix("      packagePrefix['../subproject/src/test/java'] = 'prefix.package.other'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "sourceSets {",
+          "  test.java.srcDirs += '../subproject/src/test/java'",
+          "}",
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/test/java'] = 'prefix.package.some'",
+          "      packagePrefix['../subproject/src/test/java'] = 'prefix.package.other'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     printProjectStructure();
     assertSourcePackagePrefix("project.test", "src/test/java", "prefix.package.some");
@@ -650,16 +767,17 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
   }
@@ -668,30 +786,51 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testChangeImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     importProject(
-      new GradleBuildScriptBuilderEx()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.other'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.other'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.other");
+  }
+
+
+  @Test
+  public void testModuleTypesImport() throws Exception {
+    importProject(
+      createBuildScriptBuilder()
+        .withGradleIdeaExtPluginIfCan()
+        .withJavaPlugin()
+        .addPostfix(
+          "import org.jetbrains.gradle.ext.*",
+          "idea.module.settings {",
+          "    rootModuleType = 'EMPTY_MODULE'",
+          "    moduleType[sourceSets.main] = 'WEB_MODULE'",
+          "    }"
+        ).generate());
+    assertThat(getModule("project").getModuleTypeName()).isEqualTo("EMPTY_MODULE");
+    assertThat(getModule("project.main").getModuleTypeName()).isEqualTo("WEB_MODULE");
+    assertThat(getModule("project.test").getModuleTypeName()).isEqualTo("JAVA_MODULE");
   }
 }

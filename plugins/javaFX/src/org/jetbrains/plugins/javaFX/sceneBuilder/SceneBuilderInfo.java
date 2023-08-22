@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class SceneBuilderInfo {
+public final class SceneBuilderInfo {
   public static final SceneBuilderInfo EMPTY = new SceneBuilderInfo(null, null);
 
   public final String path;
@@ -36,8 +36,7 @@ public class SceneBuilderInfo {
 
   @Override
   public boolean equals(Object object) {
-    if (object instanceof SceneBuilderInfo) {
-      SceneBuilderInfo info = (SceneBuilderInfo)object;
+    if (object instanceof SceneBuilderInfo info) {
       return Objects.equals(path, info.path) && Objects.equals(libPath, info.libPath);
     }
     return false;

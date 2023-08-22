@@ -1,27 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.chains;
 
 import com.intellij.diff.chains.SimpleDiffRequestChain.DiffRequestProducerWrapper;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ListSelection;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.EventListener;
-import java.util.List;
 
-public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
+/**
+ * Allows loading requests asynchronously after showing diff UI, without the need for modal progress
+ *
+ * @see com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Async
+ */
+public abstract class AsyncDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
-  private volatile List<? extends DiffRequestProducer> myRequests = null;
+  private volatile ListSelection<? extends DiffRequestProducer> myRequests = null;
 
   @Nullable private ProgressIndicator myIndicator;
   private int myAssignments = 0;
@@ -30,18 +34,21 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
     myDispatcher.addListener(listener, disposable);
   }
 
-  @NotNull
+  public void removeListener(@NotNull Listener listener) {
+    myDispatcher.removeListener(listener);
+  }
+
   @Override
-  public List<? extends DiffRequestProducer> getRequests() {
-    List<? extends DiffRequestProducer> requests = myRequests;
+  public @NotNull ListSelection<? extends DiffRequestProducer> getListSelection() {
+    ListSelection<? extends DiffRequestProducer> requests = myRequests;
     if (requests == null) {
-      return Collections.singletonList(new DiffRequestProducerWrapper(new LoadingDiffRequest()));
+      return ListSelection.createSingleton(new DiffRequestProducerWrapper(new LoadingDiffRequest()));
     }
     return requests;
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public ListSelection<? extends DiffRequestProducer> loadRequestsInBackground() {
     try {
       return loadRequestProducers();
@@ -51,7 +58,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void onAssigned(boolean isAssigned) {
     if (isAssigned) {
       if (myAssignments == 0 && myIndicator == null) {
@@ -70,7 +77,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   }
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   private ProgressIndicator startLoading() {
     if (myRequests != null) return null;
 
@@ -83,23 +90,22 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
     }, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void applyLoadedChanges(@NotNull ListSelection<? extends DiffRequestProducer> producers) {
     if (myRequests != null) return;
 
-    myRequests = producers.getList();
-    setIndex(producers.getSelectedIndex());
+    myRequests = producers;
     myIndicator = null;
 
     myDispatcher.getMulticaster().onRequestsLoaded();
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected abstract ListSelection<? extends DiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException;
 
   public interface Listener extends EventListener {
-    @CalledInAwt
+    @RequiresEdt
     void onRequestsLoaded();
   }
 }

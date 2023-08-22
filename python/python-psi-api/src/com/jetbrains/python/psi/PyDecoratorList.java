@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A list of function decorators.
- * @author dcheryasov
  */
 public interface PyDecoratorList extends PyElement, StubBasedPsiElement<PyDecoratorListStub> {
   /**

@@ -27,6 +27,7 @@ import com.jetbrains.python.inspections.quickfix.PyMakeMethodStaticQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,18 +45,17 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
-    public void visitPyFunction(PyFunction node) {
-      if (PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(node.getName())) return;
+    public void visitPyFunction(@NotNull PyFunction node) {
+      if (isBuiltin(node)) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
       final PsiElement firstSuper = PySuperMethodsSearch.search(node, myTypeEvalContext).findFirst();
@@ -87,7 +87,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       final boolean[] mayBeStatic = {true};
       PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyRaiseStatement(PyRaiseStatement node) {
+        public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
           super.visitPyRaiseStatement(node);
           final PyExpression[] expressions = node.getExpressions();
           if (expressions.length == 1) {
@@ -104,7 +104,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
         }
 
         @Override
-        public void visitPyReferenceExpression(PyReferenceExpression node) {
+        public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
           if (node.isQualified()) {
             super.visitPyReferenceExpression(node);
           }
@@ -114,7 +114,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
         }
 
         @Override
-        public void visitPyCallExpression(PyCallExpression node) {
+        public void visitPyCallExpression(@NotNull PyCallExpression node) {
           super.visitPyCallExpression(node);
           if (!LanguageLevel.forElement(node).isPython2() && node.isCalleeText(PyNames.SUPER)) {
             mayBeStatic[0] = false;
@@ -128,6 +128,11 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
                         null, new PyMakeMethodStaticQuickFix(), new PyMakeFunctionFromMethodQuickFix());
       }
     }
+  }
+
+  private static boolean isBuiltin(@NotNull PyFunction node) {
+    final var name = node.getName();
+    return name != null && PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(name);
   }
 
   private static boolean isTestElement(@NotNull PyFunction node) {

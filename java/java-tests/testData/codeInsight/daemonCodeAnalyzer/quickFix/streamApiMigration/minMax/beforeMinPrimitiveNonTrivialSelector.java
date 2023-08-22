@@ -1,4 +1,4 @@
-// "Replace with min()" "true"
+// "Collapse loop with stream 'min()'" "true-preview"
 
 public class Main {
   public void work(int[] ints) {

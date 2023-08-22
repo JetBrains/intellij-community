@@ -1,0 +1,9 @@
+LineBreakpoint created at lambdaFun2.kt:7
+Run Java
+Connected to the target VM
+lambdaFun2.kt:7
+Compile bytecode for this
+KotlinStackFrame (lambdaFun2.kt:7)
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FrameInfoHelper;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ public class FrameState {
     int state = Frame.NORMAL;
     if (component instanceof Frame) {
       state = ((Frame)component).getExtendedState();
-      if (SystemInfo.isMacOSLion) {
+      if (SystemInfoRt.isMac) {
         // workaround: frame.state is not updated by jdk so get it directly from peer
         ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(component);
         if (peer instanceof FramePeer) {
@@ -60,17 +60,6 @@ public class FrameState {
       }
     }
     return null;
-  }
-
-  public static FrameState getFrameState(@NotNull Component component) {
-    FrameState state = findFrameState(component);
-    if (state == null) {
-      state = new FrameState();
-    }
-    if (state.myBounds == null) {
-      state.update(component);
-    }
-    return state;
   }
 
   public static void setFrameStateListener(@NotNull Component component) {
@@ -106,7 +95,7 @@ public class FrameState {
   final void update(Component component) {
     Rectangle bounds = component.getBounds();
     myFullScreen = component instanceof IdeFrame
-                   && FrameInfoHelper.isFullScreenSupportedInCurrentOs()
+                   && FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs$intellij_platform_ide_impl()
                    && ((IdeFrame)component).isInFullScreen();
     myMaximized = FrameInfoHelper.isMaximized(getExtendedState(component));
     if (myBounds != null) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.util.containers.SLRUMap;
@@ -33,19 +19,17 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
   public FileAccessorCache(int protectedQueueSize, int probationalQueueSize) {
     myCache = new SLRUMap<K, Handle<T>>(protectedQueueSize, probationalQueueSize, this) {
       @Override
-      protected final void onDropFromCache(K key, @NotNull Handle<T> value) {
+      protected void onDropFromCache(K key, @NotNull Handle<T> value) {
         value.release();
       }
     };
   }
 
-  @NotNull
-  protected abstract T createAccessor(K key) throws IOException;
+  protected abstract @NotNull T createAccessor(K key) throws IOException;
 
   protected abstract void disposeAccessor(@NotNull T fileAccessor) throws IOException;
 
-  @NotNull
-  public final Handle<T> get(K key) {
+  public final @NotNull Handle<T> get(K key) {
     Handle<T> cached = getIfCached(key);
     if (cached != null) return cached;
 
@@ -56,7 +40,6 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
     }
   }
 
-  @NotNull
   private Handle<T> createHandle(K key) {
     try {
       Handle<T> cached = new Handle<>(createAccessor(key), this);
@@ -140,8 +123,7 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
 
   public static final class Handle<T> extends ResourceHandle<T> {
     private final FileAccessorCache<?, ? super T> myOwner;
-    @NotNull
-    private final T myResource;
+    private final @NotNull T myResource;
     private final AtomicInteger myRefCount = new AtomicInteger(1);
 
     public Handle(@NotNull T fileAccessor, @NotNull FileAccessorCache<?, ? super T> owner) {
@@ -153,7 +135,7 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
       myRefCount.incrementAndGet();
     }
 
-    public final void release() {
+    public void release() {
       if (myRefCount.decrementAndGet() == 0) {
         synchronized (myOwner.myCacheLock) {
           myOwner.myElementsToBeDisposed.add(myResource);
@@ -171,8 +153,7 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
     }
 
     @Override
-    @NotNull
-    public T get() {
+    public @NotNull T get() {
       return myResource;
     }
   }

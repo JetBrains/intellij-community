@@ -1,4 +1,4 @@
-// "Add 'return' statement" "true"
+// "Add 'return' statement" "true-preview"
 class C {
     void foo() {
         bar(() -> {

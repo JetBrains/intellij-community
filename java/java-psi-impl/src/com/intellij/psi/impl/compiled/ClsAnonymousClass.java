@@ -9,8 +9,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClsAnonymousClass extends ClsClassImpl implements PsiAnonymousClass {
-  public ClsAnonymousClass(@NotNull PsiClassStub stub) {
+  public ClsAnonymousClass(@NotNull PsiClassStub<?> stub) {
     super(stub);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnonymousClass(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

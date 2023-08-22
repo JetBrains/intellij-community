@@ -20,6 +20,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
@@ -29,8 +30,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 public class GroovySourceRootDetector extends JavaSourceRootDetector {
   @NotNull
   @Override
-  protected String getLanguageName() {
-    return "Groovy";
+  protected @Nls(capitalization = Nls.Capitalization.Sentence) String getLanguageName() {
+    return GroovyBundle.message("file.template.group.title.groovy");
   }
 
   @NotNull

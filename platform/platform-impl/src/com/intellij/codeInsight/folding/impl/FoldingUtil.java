@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -13,17 +13,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class FoldingUtil {
+public final class FoldingUtil {
   private FoldingUtil() {}
 
-  @Nullable
-  public static FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
+  public static @Nullable FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     FoldRegion region = editor.getFoldingModel().getFoldRegion(startOffset, endOffset);
     return region != null && region.isValid() ? region : null;
   }
 
-  @Nullable
-  public static FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
+  public static @Nullable FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
     if (line < 0 || line >= editor.getDocument().getLineCount()) {
       return null;
     }
@@ -80,7 +78,7 @@ public class FoldingUtil {
    */
   public static Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    return new Iterator<FoldRegion>() {
+    return new Iterator<>() {
       private int sectionStart;
       private int current;
       private int sectionEnd;
@@ -94,7 +92,8 @@ public class FoldingUtil {
         //noinspection StatementWithEmptyBody
         for (sectionEnd = sectionStart + 1;
              sectionEnd < allRegions.length && allRegions[sectionEnd].getStartOffset() == allRegions[sectionStart].getStartOffset();
-             sectionEnd++);
+             sectionEnd++) {
+        }
         current = sectionEnd;
       }
 

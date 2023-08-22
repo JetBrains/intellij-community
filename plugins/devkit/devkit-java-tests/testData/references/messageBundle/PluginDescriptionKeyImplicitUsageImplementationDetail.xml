@@ -1,0 +1,3 @@
+<idea-plugin implementation-detail="true">
+  <id>implementation.id</id>
+</idea-plugin>

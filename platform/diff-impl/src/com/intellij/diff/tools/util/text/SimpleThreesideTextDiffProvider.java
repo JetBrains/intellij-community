@@ -7,9 +7,8 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.MergeConflictType;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
+import com.intellij.diff.util.MergeConflictType.Type;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,10 +26,14 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
   private static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES};
   private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD};
 
+  private final DiffUserDataKeys.ThreeSideDiffColors myColorsMode;
+
   public SimpleThreesideTextDiffProvider(@NotNull TextDiffSettings settings,
+                                         @NotNull DiffUserDataKeys.ThreeSideDiffColors colorsMode,
                                          @NotNull Runnable rediff,
                                          @NotNull Disposable disposable) {
     super(settings, rediff, disposable, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
+    myColorsMode = colorsMode;
   }
 
   @NotNull
@@ -52,7 +55,7 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
     indicator.checkCanceled();
     List<FineMergeLineFragment> result = new ArrayList<>(lineFragments.size());
     for (MergeLineFragment fragment : lineFragments) {
-      MergeConflictType conflictType = DiffUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+      MergeConflictType conflictType = getConflictType(comparisonPolicy, sequences, lineOffsets, fragment);
 
       MergeInnerDifferences innerDifferences;
       if (highlightPolicy.isFineFragments()) {
@@ -70,9 +73,24 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
   }
 
   @NotNull
+  private MergeConflictType getConflictType(@NotNull ComparisonPolicy comparisonPolicy,
+                                            @NotNull List<? extends CharSequence> sequences,
+                                            @NotNull List<? extends LineOffsets> lineOffsets,
+                                            @NotNull MergeLineFragment fragment) {
+    return switch (myColorsMode) {
+      case MERGE_CONFLICT -> MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+      case MERGE_RESULT -> {
+        MergeConflictType conflictType = MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+        yield invertConflictType(conflictType);
+      }
+      case LEFT_TO_RIGHT -> MergeRangeUtil.getLineLeftToRightThreeSideDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+    };
+  }
+
+  @NotNull
   private static List<CharSequence> getChunks(@NotNull MergeLineFragment fragment,
-                                              @NotNull List<CharSequence> sequences,
-                                              @NotNull List<LineOffsets> lineOffsets,
+                                              @NotNull List<? extends CharSequence> sequences,
+                                              @NotNull List<? extends LineOffsets> lineOffsets,
                                               @NotNull MergeConflictType conflictType) {
     return ThreeSide.map(side -> {
       if (!conflictType.isChange(side)) return null;
@@ -81,7 +99,20 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
       int endLine = fragment.getEndLine(side);
       if (startLine == endLine) return null;
 
-      return DiffUtil.getLinesContent(side.select(sequences), side.select(lineOffsets), startLine, endLine);
+      return DiffRangeUtil.getLinesContent(side.select(sequences), side.select(lineOffsets), startLine, endLine);
     });
+  }
+
+  @NotNull
+  private static MergeConflictType invertConflictType(@NotNull MergeConflictType oldConflictType) {
+    Type oldDiffType = oldConflictType.getType();
+
+    if (oldDiffType != Type.INSERTED && oldDiffType != Type.DELETED) {
+      return oldConflictType;
+    }
+
+    return new MergeConflictType(oldDiffType == Type.DELETED ? Type.INSERTED : Type.DELETED,
+                                 oldConflictType.isChange(Side.LEFT), oldConflictType.isChange(Side.RIGHT),
+                                 oldConflictType.canBeResolved());
   }
 }

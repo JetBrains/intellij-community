@@ -1,17 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.branch.GitBranchUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public class GitTag extends GitReference {
-  public static final String REFS_TAGS_PREFIX = "refs/tags/";
+public final class GitTag extends GitReference {
+  public static final @NonNls String REFS_TAGS_PREFIX = "refs/tags/";
 
   public GitTag(@NotNull String name) {
     super(name);
@@ -23,12 +19,12 @@ public class GitTag extends GitReference {
     return REFS_TAGS_PREFIX + myName;
   }
 
-  /**
-   * @deprecated Use {@link GitBranchUtil#getAllTags(Project, VirtualFile)}
-   */
-  @Deprecated
-  @NotNull
-  public static List<GitTag> list(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    return ContainerUtil.map(GitBranchUtil.getAllTags(project, root), GitTag::new);
+  @Override
+  public int compareTo(GitReference o) {
+    if (o instanceof GitTag) {
+      // optimization: do not build getFullName
+      return StringUtil.compare(myName, o.myName, SystemInfo.isFileSystemCaseSensitive);
+    }
+    return super.compareTo(o);
   }
 }

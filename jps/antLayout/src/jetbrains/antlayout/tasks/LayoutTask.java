@@ -11,8 +11,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Assembles files and module outputs accordingly to the specified layout. Used by {@link org.jetbrains.intellij.build.impl.LayoutBuilder}. 
+ */
 public class LayoutTask extends Task {
-    private final List<Content> containers = new ArrayList<Content>();
+    private final List<Content> containers = new ArrayList<>();
     private File destDir;
 
     public void addDir(DirContainer container) {

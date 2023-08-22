@@ -1,6 +1,18 @@
 import java.util.*;
 
 public class LongRangeDivShift {
+  private static final long[] UNITS = new long[]{1, 60, 60 * 60};
+
+  public static void processTime(long time) {
+    if (time < 1000 * UNITS[0]) {
+      return;
+    }
+    long divRes = time / 1000;
+    for (int i = UNITS.length - 1; i >= 0; i--) {
+      if (divRes < UNITS[i]) {}
+    }
+  }
+
   void test(int[] arr, int x) {
     if(<warning descr="Condition 'arr.length / 2 < 0' is always 'false'">arr.length / 2 < 0</warning>) {
       System.out.println("Impossible");

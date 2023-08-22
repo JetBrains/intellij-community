@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
@@ -22,11 +22,12 @@ import java.util.Set;
  * more info - {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems here}),
  * which can be tracked for changes, that should trigger folding regions recalculation for an editor (initiating code folding pass).
  *
- * @author max
  * @see FoldingBuilder
  */
 public class FoldingDescriptor {
-  public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
+  public static final FoldingDescriptor[] EMPTY_ARRAY = new FoldingDescriptor[0];
+  @Deprecated
+  public static final FoldingDescriptor[] EMPTY = EMPTY_ARRAY;
 
   private static final byte FLAG_NEVER_EXPANDS = 1;
   private static final byte FLAG_COLLAPSED_BY_DEFAULT_DEFINED = 1 << 1;
@@ -36,7 +37,7 @@ public class FoldingDescriptor {
 
   private final ASTNode myElement;
   private final TextRange myRange;
-  @Nullable private final FoldingGroup myGroup;
+  private final @Nullable FoldingGroup myGroup;
   private final Set<Object> myDependencies;
   private String myPlaceholderText;
   private byte myFlags;
@@ -178,12 +179,19 @@ public class FoldingDescriptor {
                            @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
                            @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault) {
     assert range.getLength() > 0 : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
-    if (neverExpands && group != null) throw new IllegalArgumentException("'Never-expanding' region cannot be part of a group");
+    if (neverExpands && group != null) {
+      throw new IllegalArgumentException("'Never-expanding' region cannot be part of a group");
+    }
     myElement = node;
     myRange = range;
     myGroup = group;
     myDependencies = dependencies;
-    assert !myDependencies.contains(null);
+    try {
+      assert dependencies.isEmpty() || !dependencies.contains(null);
+    }
+    catch (NullPointerException ignored) {
+      // ImmutableCollections doesn't support null elements
+    }
     myPlaceholderText = placeholderText;
     setFlag(FLAG_NEVER_EXPANDS, neverExpands);
     if (collapsedByDefault != null) {
@@ -195,8 +203,7 @@ public class FoldingDescriptor {
   /**
    * @return the node to which the folding region is related.
    */
-  @NotNull
-  public ASTNode getElement() {
+  public @NotNull ASTNode getElement() {
     return myElement;
   }
 
@@ -204,18 +211,15 @@ public class FoldingDescriptor {
    * Returns the folded text range.
    * @return the folded text range.
    */
-  @NotNull
-  public TextRange getRange() {
+  public @NotNull TextRange getRange() {
     return myRange;
   }
 
-  @Nullable
-  public FoldingGroup getGroup() {
+  public @Nullable FoldingGroup getGroup() {
     return myGroup;
   }
 
-  @Nullable
-  public String getPlaceholderText() {
+  public @Nullable String getPlaceholderText() {
     return myPlaceholderText == null ? calcPlaceholderText() : myPlaceholderText;
   }
 
@@ -238,8 +242,7 @@ public class FoldingDescriptor {
            : foldingBuilder.getPlaceholderText(myElement);
   }
 
-  @NotNull
-  public Set<Object> getDependencies() {
+  public @NotNull Set<Object> getDependencies() {
     return myDependencies;
   }
 
@@ -251,8 +254,7 @@ public class FoldingDescriptor {
     return getFlag(FLAG_CAN_BE_REMOVED_WHEN_COLLAPSED);
   }
 
-  @Nullable
-  public Boolean isCollapsedByDefault() {
+  public @Nullable Boolean isCollapsedByDefault() {
     return getFlag(FLAG_COLLAPSED_BY_DEFAULT_DEFINED) ? getFlag(FLAG_COLLAPSED_BY_DEFAULT) : null;
   }
 

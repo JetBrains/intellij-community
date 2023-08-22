@@ -6,16 +6,16 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.BaseOutputReader;
+import git4idea.config.GitExecutable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,15 +37,15 @@ public abstract class GitTextHandler extends GitHandler {
   protected boolean myWithMediator = true;
   private int myTerminationTimeoutMs = TERMINATION_TIMEOUT_MS;
 
-  protected GitTextHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
+  protected GitTextHandler(@Nullable Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
+  protected GitTextHandler(@Nullable Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(@NotNull Project project,
+  protected GitTextHandler(@Nullable Project project,
                            @NotNull VirtualFile vcsRoot,
                            @NotNull GitCommand command,
                            List<String> configParameters) {
@@ -54,10 +54,10 @@ public abstract class GitTextHandler extends GitHandler {
 
   public GitTextHandler(@Nullable Project project,
                         @NotNull File directory,
-                        @NotNull String pathToExecutable,
+                        @NotNull GitExecutable executable,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {
-    super(project, directory, pathToExecutable, command, configParameters);
+    super(project, directory, executable, command, configParameters);
   }
 
   public void setWithMediator(boolean value) {
@@ -82,15 +82,11 @@ public abstract class GitTextHandler extends GitHandler {
 
   @Override
   protected void startHandlingStreams() {
-    myHandler.addProcessListener(new ProcessListener() {
-      @Override
-      public void startNotified(@NotNull final ProcessEvent event) {
-        // do nothing
-      }
-
+    myHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         final int exitCode = event.getExitCode();
+        OUTPUT_LOG.debug(String.format("%s %% %s terminated (%s)", getCommand(), GitTextHandler.this.hashCode(), exitCode));
         try {
           setExitCode(exitCode);
           GitTextHandler.this.processTerminated(exitCode);
@@ -98,16 +94,6 @@ public abstract class GitTextHandler extends GitHandler {
         finally {
           listeners().processTerminated(exitCode);
         }
-      }
-
-      @Override
-      public void processWillTerminate(@NotNull final ProcessEvent event, final boolean willBeDestroyed) {
-        // do nothing
-      }
-
-      @Override
-      public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
-        GitTextHandler.this.onTextAvailable(event.getText(), outputType);
       }
     });
     myHandler.startNotify();
@@ -119,14 +105,6 @@ public abstract class GitTextHandler extends GitHandler {
    * @param exitCode a exit code.
    */
   protected abstract void processTerminated(int exitCode);
-
-  /**
-   * This method is invoked when some text is available
-   *
-   * @param text       an available text
-   * @param outputType output type
-   */
-  protected abstract void onTextAvailable(final String text, final Key outputType);
 
   @Override
   public void destroyProcess() {
@@ -141,17 +119,20 @@ public abstract class GitTextHandler extends GitHandler {
   @Override
   protected void waitForProcess() {
     if (myHandler != null) {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      ProgressManager progressManager = ProgressManager.getInstance();
       while (!myHandler.waitFor(WAIT_TIMEOUT_MS)) {
         try {
+          ProgressIndicator indicator = progressManager.getProgressIndicator();
           if (indicator != null) {
             indicator.checkCanceled();
           }
         }
         catch (ProcessCanceledException pce) {
-          if (!tryKill()) {
-            LOG.error("Could not terminate [" + printableCommandLine() + "].");
-          }
+          progressManager.executeNonCancelableSection(() -> {
+            if (!tryKill()) {
+              LOG.warn("Could not terminate [" + printableCommandLine() + "].");
+            }
+          });
           throw pce;
         }
       }
@@ -173,7 +154,7 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, myWithMediator && Registry.is("git.execute.with.mediator"));
+    return new MyOSProcessHandler(commandLine, myWithMediator && myExecutable.isLocal() && Registry.is("git.execute.with.mediator"));
   }
 
   protected static class MyOSProcessHandler extends KillableProcessHandler {

@@ -89,7 +89,7 @@ private fun getReturnTypeFromSupertype(function: PyFunction, context: TypeEvalCo
   if (overriddenFunction != null) {
     val superFunctionAnnotation = getReturnTypeAnnotation(overriddenFunction, context)
     if (superFunctionAnnotation != null) {
-      val typeRef = PyTypingTypeProvider.getType(superFunctionAnnotation, PyTypingTypeProvider.Context(context))
+      val typeRef = PyTypingTypeProvider.getType(superFunctionAnnotation, context)
       typeRef?.let { return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, it.get())) }
     }
   }

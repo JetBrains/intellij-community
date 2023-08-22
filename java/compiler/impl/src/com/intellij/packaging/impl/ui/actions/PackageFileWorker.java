@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.ui.actions;
 
 import com.intellij.notification.Notification;
@@ -28,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +23,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.zip.JBZipEntry;
@@ -51,7 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class PackageFileWorker {
+public final class PackageFileWorker {
   private static final Logger LOG = Logger.getInstance(PackageFileWorker.class);
   private final File myFile;
   private final String myRelativeOutputPath;
@@ -103,15 +87,15 @@ public class PackageFileWorker {
   public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts,
                                  final boolean packIntoArchives) throws IOException {
     LOG.debug("Start packaging file: " + file.getPath());
-    final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
+    final Collection<ArtifactUtil.ArtifactInfo> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
     File ioFile = VfsUtilCore.virtualToIoFile(file);
-    for (Trinity<Artifact, PackagingElementPath, String> item : items) {
-      final Artifact artifact = item.getFirst();
+    for (ArtifactUtil.ArtifactInfo item : items) {
+      final Artifact artifact = item.artifact();
       final String outputPath = artifact.getOutputPath();
       if (!StringUtil.isEmpty(outputPath)) {
-        PackageFileWorker worker = new PackageFileWorker(ioFile, item.getThird(), packIntoArchives);
+        PackageFileWorker worker = new PackageFileWorker(ioFile, item.relativeOutputPath(), packIntoArchives);
         LOG.debug(" package to " + outputPath);
-        worker.packageFile(outputPath, item.getSecond().getParents());
+        worker.packageFile(outputPath, item.path().getParents());
       }
     }
   }

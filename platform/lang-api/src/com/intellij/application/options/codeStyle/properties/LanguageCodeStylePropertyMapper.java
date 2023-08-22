@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.application.options.IndentOptionsEditor;
-import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.application.options.SmartIndentOptionsEditorBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
@@ -122,7 +122,7 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
         indentOptions.add("TAB_SIZE");
         indentOptions.add("USE_TAB_CHARACTER");
         indentOptions.add("INDENT_SIZE");
-        if (editor instanceof SmartIndentOptionsEditor) {
+        if (editor instanceof SmartIndentOptionsEditorBase) {
           indentOptions.add("CONTINUATION_INDENT_SIZE");
           indentOptions.add("SMART_TABS");
           indentOptions.add("KEEP_INDENTS_ON_EMPTY_LINES");

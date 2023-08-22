@@ -1,69 +1,58 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.toolWindow.ToolWindowEventSource
 
-internal class HideAllToolWindowsAction : AnAction(), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) {
-    performAction(e.project ?: return)
+internal class HideAllToolWindowsAction : DumbAwareAction() {
+  override fun actionPerformed(event: AnActionEvent) {
+    val toolWindowManager = ToolWindowManager.getInstance(event.project ?: return) as? ToolWindowManagerImpl ?: return
+    val idsToHide = getIdsToHide(toolWindowManager)
+    if (idsToHide.none()) {
+      toolWindowManager.layoutToRestoreLater?.let {
+        toolWindowManager.layoutToRestoreLater = null
+        toolWindowManager.setLayout(it)
+      }
+    }
+    else {
+      val layout = toolWindowManager.getLayout().copy()
+      toolWindowManager.clearSideStack()
+      for (id in idsToHide) {
+        toolWindowManager.hideToolWindow(id = id, source = ToolWindowEventSource.HideAllWindowsAction)
+      }
+      toolWindowManager.layoutToRestoreLater = layout
+      toolWindowManager.activateEditorComponent()
+    }
   }
 
   override fun update(event: AnActionEvent) {
     val presentation = event.presentation
-    val project = event.project
-    if (project == null) {
-      presentation.isEnabled = false
-      return
+    presentation.isEnabled = false
+    val toolWindowManager = ToolWindowManager.getInstance(event.project ?: return) as ToolWindowManagerEx
+    if (getIdsToHide(toolWindowManager).any()) {
+      presentation.isEnabled = true
+      presentation.putClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY, false)
+      presentation.text = IdeBundle.message("action.hide.all.windows")
     }
-
-    val toolWindowManager = ToolWindowManager.getInstance(project) as? ToolWindowManagerEx ?: return
-    for (id in toolWindowManager.toolWindowIds) {
-      if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
-        presentation.isEnabled = true
-        presentation.setText(IdeBundle.message("action.hide.all.windows"), true)
-        return
-      }
-    }
-
-    val layout = toolWindowManager.layoutToRestoreLater
-    if (layout != null) {
+    else if (toolWindowManager.layoutToRestoreLater != null) {
       presentation.isEnabled = true
       presentation.text = IdeBundle.message("action.restore.windows")
+      presentation.putClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY, true)
       return
     }
-    presentation.isEnabled = false
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
-private fun performAction(project: Project) {
-  val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project)
-  val layout = toolWindowManager.layout.copy()
-  // to clear windows stack
-  toolWindowManager.clearSideStack()
-  //toolWindowManager.activateEditorComponent();
-  val ids = toolWindowManager.toolWindowIds
-  var hasVisible = false
-  for (id in ids) {
-    if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
-      toolWindowManager.getToolWindow(id)?.hide(null)
-      hasVisible = true
-    }
-  }
-  if (hasVisible) {
-    toolWindowManager.layoutToRestoreLater = layout
-    toolWindowManager.activateEditorComponent()
-  }
-  else {
-    val restoredLayout = toolWindowManager.layoutToRestoreLater
-    if (restoredLayout != null) {
-      toolWindowManager.layoutToRestoreLater = null
-      toolWindowManager.layout = restoredLayout
-    }
-  }
+private fun getIdsToHide(toolWindowManager: ToolWindowManagerEx): Sequence<String> {
+  return toolWindowManager.toolWindows.asSequence()
+    .filter { HideToolWindowAction.shouldBeHiddenByShortCut(it) }
+    .map { it.id }
 }

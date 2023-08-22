@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
+import com.intellij.debugger.engine.DebugProcessEvents
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -12,7 +14,9 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.ThreadTracker
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
 
 import java.util.concurrent.TimeUnit
@@ -20,12 +24,9 @@ import java.util.concurrent.TimeUnit
 import static com.intellij.openapi.application.ActionsKt.runReadAction
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
-/**
- * @author peter
- */
 @CompileStatic
 class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMethods {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")
+  private static final Logger LOG = Logger.getInstance(GroovyDebuggerTest.class)
 
   @Override
   Logger getLogger() { LOG }
@@ -49,10 +50,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   private void enableDebugLogging() {
-    TestLoggerFactory.enableDebugLogging(myFixture.testRootDisposable,
-                                         "#com.intellij.debugger.engine.DebugProcessImpl",
-                                         "#com.intellij.debugger.engine.DebugProcessEvents",
-                                         "#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")
+    TestLoggerFactory.enableDebugLogging(myFixture.testRootDisposable, DebugProcessImpl.class, DebugProcessEvents.class, GroovyDebuggerTest.class)
     LOG.info(getTestStartedLogMessage())
   }
 
@@ -61,9 +59,9 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
-      super.runTest()
+      super.runTestRunnable(testRunnable)
     }
     catch (Throwable e) {
       TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage())

@@ -39,7 +39,7 @@ class JavaModuleDataService : AbstractProjectDataService<JavaModuleData, Project
     val modifiableRootModel = modelsProvider.getModifiableRootModel(module)
     val languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(module.project)
     val languageLevelModuleExtension = modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension::class.java)
-    val languageLevel = javaModuleData.languageLevel
+    val languageLevel = javaModuleData.languageLevel?.let { JavaProjectDataService.adjustLevelAndNotify(module.project, it) }
     val projectLanguageLevel = languageLevelProjectExtension.languageLevel
     languageLevelModuleExtension.languageLevel =
       when (languageLevel) {

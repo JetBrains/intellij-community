@@ -33,6 +33,11 @@ public class JUnitConfigurationType implements ConfigurationType {
       public @NotNull String getId() {
         return "JUnit";
       }
+
+      @Override
+      public boolean isEditableInDumbMode() {
+        return true;
+      }
     };
   }
 
@@ -78,6 +83,10 @@ public class JUnitConfigurationType implements ConfigurationType {
   @Override
   public boolean isDumbAware() {
     return true;
+  }
+
+  public @NotNull ConfigurationFactory getFactory() {
+    return myFactory;
   }
 
   @NotNull

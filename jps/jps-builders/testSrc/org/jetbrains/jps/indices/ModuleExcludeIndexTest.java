@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.indices;
 
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -25,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.Collection;
 
 public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
@@ -155,8 +157,10 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     JpsModule module = addModule();
     addContentRoot(module, root1);
     addContentRoot(module, root2);
+    assertSame(FileFilters.EVERYTHING, createIndex().getModuleFileFilterHonorExclusionPatterns(module));
     module.addExcludePattern(JpsPathUtil.pathToUrl(root1.getAbsolutePath()), "*.txt");
     module.addExcludePattern(JpsPathUtil.pathToUrl(root2.getAbsolutePath()), "out");
+
     assertExcluded(new File(root1, "a.txt"));
     assertExcluded(new File(root1, "dir/a.txt"));
     assertNotExcluded(new File(root1, "A.java"));
@@ -164,6 +168,12 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     assertExcluded(new File(root2, "out"));
     assertExcluded(new File(root2, "out/A.java"));
     assertExcluded(new File(root2, "dir/out/A.java"));
+
+    FileFilter moduleFilter = createIndex().getModuleFileFilterHonorExclusionPatterns(module);
+    assertTrue(moduleFilter.accept(new File(root1, "A.java")));
+    assertTrue(moduleFilter.accept(new File(root2, "a.txt")));
+    assertFalse(moduleFilter.accept(new File(root1, "a.txt")));
+    assertFalse(moduleFilter.accept(new File(root1, "dir/a.txt")));
   }
 
   private static void addSourceRoot(JpsModule module, File src) {

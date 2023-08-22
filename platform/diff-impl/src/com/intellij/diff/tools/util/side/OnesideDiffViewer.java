@@ -29,7 +29,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +50,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
     mySide = Side.fromRight(myRequest.getContents().get(0) instanceof EmptyContent);
     myHolder = createEditorHolder(factory);
 
-    JComponent titlePanels = createTitle();
     myContentPanel = OnesideContentPanel.createFromHolder(myHolder);
-    myContentPanel.setTitle(titlePanels);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
   }
@@ -60,11 +58,12 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
   @Override
   protected void onInit() {
     super.onInit();
-    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
+    myContentPanel.setTitle(createTitle());
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyEditorHolder();
     super.onDispose();
@@ -86,7 +85,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
 
   @Nullable
   protected JComponent createTitle() {
-    List<JComponent> simpleTitles = DiffUtil.createSimpleTitles(myRequest);
+    List<JComponent> simpleTitles = DiffUtil.createSimpleTitles(this, myRequest);
     return mySide.select(simpleTitles);
   }
 

@@ -1,4 +1,4 @@
-// "Avoid mutation using Stream API 'max()' operation" "true"
+// "Avoid mutation using Stream API 'max()' operation" "true-preview"
 
 import java.util.*;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionStatusLine
@@ -6,9 +6,12 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.GridBagLayout
+import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -36,18 +39,18 @@ open class VcsCloneDialogExtensionListItem : JPanel(GridBagLayout()) {
 
     gbc = gbc.next()
       .weightx(1.0)
-      .insets(JBUI.emptyInsets())
+      .insets(JBInsets.emptyInsets())
       .fillCellHorizontally()
     titleLabel.font = JBUI.Fonts.label().asBold()
     add(titleLabel, gbc)
 
     gbc = gbc.nextLine().next().next()
-      .insets(JBUI.emptyInsets())
+      .insets(JBInsets.emptyInsets())
       .fillCellHorizontally()
     add(additionalLinesPanel, gbc)
   }
 
-  fun setTitle(title: String) {
+  fun setTitle(title: @Nls String) {
     titleLabel.text = title
   }
 
@@ -64,7 +67,7 @@ open class VcsCloneDialogExtensionListItem : JPanel(GridBagLayout()) {
 
     for ((index, line) in additionalLines.withIndex()) {
       val component = labelsPool[index]
-      component.ipad = JBUI.emptyInsets()
+      component.ipad = JBInsets.emptyInsets()
       component.clear()
       component.append(line.text, line.attribute, line.actionListener)
       additionalLinesPanel.add(component)
@@ -73,5 +76,9 @@ open class VcsCloneDialogExtensionListItem : JPanel(GridBagLayout()) {
 
   fun setTitleForeground(foreground: Color) {
     titleLabel.foreground = foreground
+  }
+
+  override fun getAccessibleContext(): AccessibleContext {
+    return titleLabel.accessibleContext
   }
 }

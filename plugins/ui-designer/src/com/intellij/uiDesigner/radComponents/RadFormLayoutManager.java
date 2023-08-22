@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -21,9 +21,6 @@ import com.intellij.uiDesigner.propertyInspector.properties.AbstractInsetsProper
 import com.intellij.uiDesigner.propertyInspector.properties.AlignPropertyProvider;
 import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.PlatformColors;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
@@ -31,17 +28,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class RadFormLayoutManager extends RadAbstractGridLayoutManager implements AlignPropertyProvider {
   private FormLayoutColumnProperties myPropertiesPanel;
 
@@ -149,8 +143,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
     super.addComponentToContainer(container, component, index);
     final CellConstraints cc = gridToCellConstraints(component);
-    if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
-      CellConstraints customCellConstraints = (CellConstraints) component.getCustomLayoutConstraints();
+    if (component.getCustomLayoutConstraints() instanceof CellConstraints customCellConstraints) {
       cc.insets = customCellConstraints.insets;
     }
     component.setCustomLayoutConstraints(cc);
@@ -165,8 +158,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     CellConstraints.Alignment vAlign = ((gc.getVSizePolicy() & GridConstraints.SIZEPOLICY_WANT_GROW) != 0)
                                        ? CellConstraints.FILL
                                        : CellConstraints.DEFAULT;
-    if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
-      CellConstraints cc = (CellConstraints) component.getCustomLayoutConstraints();
+    if (component.getCustomLayoutConstraints() instanceof CellConstraints cc) {
       hAlign = cc.hAlign;
       vAlign = cc.vAlign;
     }
@@ -176,8 +168,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   @Override
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     writeGridConstraints(writer, child);
-    if (child.getCustomLayoutConstraints() instanceof CellConstraints) {
-      CellConstraints cc = (CellConstraints) child.getCustomLayoutConstraints();
+    if (child.getCustomLayoutConstraints() instanceof CellConstraints cc) {
       writer.startElement(UIFormXmlConstants.ELEMENT_FORMS);
       try {
         if (!cc.insets.equals(new Insets(0, 0, 0, 0))) {
@@ -214,8 +205,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   @Override public int[] getGridCellCoords(RadContainer container, boolean isRow) {
     final FormLayout.LayoutInfo layoutInfo = getFormLayout(container).getLayoutInfo(container.getDelegee());
     int[] origins = isRow ? layoutInfo.rowOrigins : layoutInfo.columnOrigins;
-    int[] result = new int [origins.length-1];
-    System.arraycopy(origins, 0, result, 0, result.length);
+    int[] result = Arrays.copyOf(origins, origins.length-1);
     return result;
   }
 
@@ -616,12 +606,10 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
             // deleted cell is contained in a group with 1 or 2 cells => delete entire group
             newIndices = new int[groupIndices.length-1][];
             for (int newI = 0; newI < i; newI++) {
-              newIndices [newI] = new int[groupIndices [newI].length];
-              System.arraycopy(groupIndices [newI], 0, newIndices [newI], 0, groupIndices [newI].length);
+              newIndices [newI] = groupIndices [newI].clone();
             }
             for(int newI=i+1; newI<groupIndices.length; newI++) {
-              newIndices [newI-1] = new int[groupIndices [newI].length];
-              System.arraycopy(groupIndices [newI], 0, newIndices [newI-1], 0, groupIndices [newI].length);
+              newIndices [newI-1] = groupIndices [newI].clone();
             }
           }
           else {
@@ -711,8 +699,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   private static ConstantSize scaleSize(final FormSpec rowSpec, final RadContainer container, final int newPx) {
-    if (rowSpec.getSize() instanceof ConstantSize) {
-      ConstantSize oldSize = (ConstantSize) rowSpec.getSize();
+    if (rowSpec.getSize() instanceof ConstantSize oldSize) {
       int oldPx = oldSize.getPixelSize(container.getDelegee());
       double newValue = Math.round(oldSize.getValue() * newPx / oldPx * 10) / 10;
       return new ConstantSize(newValue, oldSize.getUnit());
@@ -842,49 +829,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     return 0;
   }
 
-  @Override
-  public void createSnapshotLayout(final SnapshotContext context,
-                                   final JComponent parent,
-                                   final RadContainer container,
-                                   final LayoutManager layout) {
-    ColumnSpec[] colSpecs;
-    RowSpec[] rowSpecs;
-    int[][] rowGroups;
-    int[][] columnGroups;
-    try {
-      Method method = layout.getClass().getMethod("getRowCount", ArrayUtil.EMPTY_CLASS_ARRAY);
-      int rowCount = ((Integer)method.invoke(layout, ArrayUtilRt.EMPTY_OBJECT_ARRAY)).intValue();
-      method = layout.getClass().getMethod("getColumnCount", ArrayUtil.EMPTY_CLASS_ARRAY);
-      int columnCount = ((Integer)method.invoke(layout, ArrayUtilRt.EMPTY_OBJECT_ARRAY)).intValue();
-
-      rowSpecs = new RowSpec[rowCount];
-      colSpecs = new ColumnSpec[columnCount];
-
-      method = layout.getClass().getMethod("getRowSpec", int.class);
-      for (int i = 0; i < rowCount; i++) {
-        rowSpecs[i] = (RowSpec)createSerializedCopy(method.invoke(layout, i + 1));
-      }
-      method = layout.getClass().getMethod("getColumnSpec", int.class);
-      for (int i = 0; i < columnCount; i++) {
-        colSpecs[i] = (ColumnSpec)createSerializedCopy(method.invoke(layout, i + 1));
-      }
-
-      method = layout.getClass().getMethod("getRowGroups", ArrayUtil.EMPTY_CLASS_ARRAY);
-      rowGroups = (int[][])method.invoke(layout);
-
-      method = layout.getClass().getMethod("getColumnGroups", ArrayUtil.EMPTY_CLASS_ARRAY);
-      columnGroups = (int[][])method.invoke(layout);
-    }
-    catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
-
-    final FormLayout formLayout = new FormLayout(colSpecs, rowSpecs);
-    formLayout.setRowGroups(rowGroups);
-    formLayout.setColumnGroups(columnGroups);
-    container.setLayout(formLayout);
-  }
-
   private static Object createSerializedCopy(final Object original) {
     // FormLayout may have been loaded with a different classloader, so we need to create a copy through serialization
     Object copy;
@@ -904,25 +848,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     return copy;
   }
 
-  @Override
-  public void addSnapshotComponent(final JComponent parent,
-                                   final JComponent child,
-                                   final RadContainer container,
-                                   final RadComponent component) {
-    CellConstraints cc;
-    try {
-      LayoutManager layout = parent.getLayout();
-      Method method = layout.getClass().getMethod("getConstraints", Component.class);
-      cc = (CellConstraints)createSerializedCopy(method.invoke(layout, child));
-    }
-    catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
-    copyCellToGridConstraints(component.getConstraints(), cc);
-    component.setCustomLayoutConstraints(cc);
-    container.addComponent(component);
-  }
-
   private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {
     ComponentInsetsProperty() {
       super(null, "Insets");
@@ -930,8 +855,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
     @Override
     public Insets getValue(final RadComponent component) {
-      if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
-        final CellConstraints cellConstraints = (CellConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof CellConstraints cellConstraints) {
         return cellConstraints.insets;
       }
       return new Insets(0, 0, 0, 0);
@@ -939,8 +863,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
     @Override
     protected void setValueImpl(final RadComponent component, final Insets value) throws Exception {
-      if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
-        final CellConstraints cellConstraints = (CellConstraints)component.getCustomLayoutConstraints();
+      if (component.getCustomLayoutConstraints() instanceof CellConstraints cellConstraints) {
         cellConstraints.insets = value;
 
         FormLayout layout = (FormLayout) component.getParent().getLayout();

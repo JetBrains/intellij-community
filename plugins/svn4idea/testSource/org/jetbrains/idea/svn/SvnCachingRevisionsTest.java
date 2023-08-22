@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.Pair;
@@ -60,7 +60,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     return new SvnChangeList(myVcs, myLocation, entry, ROOT);
   }
 
-  private class MockSvnLogLoader implements SvnLogLoader {
+  private final class MockSvnLogLoader implements SvnLogLoader {
     private final List<Long> myRevisions;
 
     private MockSvnLogLoader(final List<Long> revisions) {
@@ -108,7 +108,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     assert (bounds.second - startRevision) % step == 0;
   }
 
-  private static class MockCachedProvider extends CachedProvider {
+  private static final class MockCachedProvider extends CachedProvider {
     private MockCachedProvider(final Iterator<ChangesBunch> iterator, final Origin origin) {
       super(iterator, origin);
     }
@@ -207,7 +207,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
         assert expected == list.getNumber();
         assert (Origin.INTERNAL.equals(currentOrigin) && (internally.contains(expected))) ||
                (Origin.VISUAL.equals(currentOrigin) && (committed.contains(expected))) ||
-               (Origin.LIVE.equals(currentOrigin) && (! internally.contains(expected)) && (! committed.contains(expected)));                                                                        
+               (Origin.LIVE.equals(currentOrigin) && (! internally.contains(expected)) && (! committed.contains(expected)));
       }
     }
   }
@@ -263,7 +263,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   public void testShortInternal() throws Exception {
     performTest(11, 2, null, singletonList(new Pair<>(11L, 15L)), 15);
   }
-  
+
   public void testShortCommitted() throws Exception {
     performTest(11, 2, new Pair<>(11L, 15L), emptyList(), 15);
   }

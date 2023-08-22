@@ -1,15 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
 public abstract class TestClassesFilter {
   public static final TestClassesFilter ALL_CLASSES = new TestClassesFilter() {
     @Override
@@ -23,29 +19,21 @@ public abstract class TestClassesFilter {
     }
   };
 
+  private static final boolean PATTERNS_ARE_ESCAPED = Boolean.getBoolean("intellij.build.test.patterns.escaped");
+
   public abstract boolean matches(String className, @Nullable String moduleName);
-  
+
   public boolean matches(String className) { return matches(className, null); }
 
-  protected static ArrayList<Pattern> compilePatterns(Collection<String> filterList) {
-    ArrayList<Pattern> patterns = new ArrayList<>();
-    for (String aFilter : filterList) {
-      String filter = aFilter.trim();
-      if (filter.length() == 0) continue;
-      filter = filter.replace("$", "\\$").replace("*", ".*");
-      Pattern pattern = Pattern.compile(filter);
-      patterns.add(pattern);
+  protected static Pattern compilePattern(String filter) {
+    if (!PATTERNS_ARE_ESCAPED) {
+      filter = filter.replace("$", "\\$").replace(".", "\\.").replace("*", ".*");
     }
-    return patterns;
+    return Pattern.compile(filter);
   }
 
   protected static boolean matchesAnyPattern(Collection<Pattern> patterns, String className) {
-    for (Pattern pattern : patterns) {
-      if (pattern.matcher(className).matches()) {
-        return true;
-      }
-    }
-    return false;
+    return patterns.stream().anyMatch(pattern -> pattern.matcher(className).matches());
   }
 
   public static class And extends TestClassesFilter {
@@ -59,15 +47,12 @@ public abstract class TestClassesFilter {
 
     @Override
     public boolean matches(String className, @Nullable String moduleName) {
-      return first.matches(className, moduleName) &&
-             second.matches(className, moduleName);
+      return first.matches(className, moduleName) && second.matches(className, moduleName);
     }
 
     @Override
     public String toString() {
-      return "TestClassesFilter.And{" +
-             "first: " + first.toString() + ", " +
-             "second: " + second.toString() + '}';
+      return "TestClassesFilter.And{" + first + ", " + second + '}';
     }
   }
 }

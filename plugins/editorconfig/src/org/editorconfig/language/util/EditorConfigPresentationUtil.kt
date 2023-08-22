@@ -2,6 +2,7 @@
 package org.editorconfig.language.util
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -13,6 +14,7 @@ object EditorConfigPresentationUtil {
   }
 
   @JvmStatic
+  @NlsSafe
   fun getFileName(file: VirtualFile, withFolder: Boolean): String {
     val settings = UISettings.instanceOrNull
     val settingsAwareFlag = settings?.state?.showDirectoryForNonUniqueFilenames?.and(withFolder) ?: withFolder

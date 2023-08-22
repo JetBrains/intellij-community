@@ -3,6 +3,7 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -15,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -24,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Hani Suleiman
  */
 public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final String DISPLAY_NAME = "Old TestNG annotation @Configuration is used";
-  static final String FIX_NAME = "Convert old @Configuration TestNG annotations";
 
   @Override
   @Nls
@@ -45,10 +45,10 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitAnnotation(final PsiAnnotation annotation) {
+      @Override public void visitAnnotation(final @NotNull PsiAnnotation annotation) {
         final String qualifiedName = annotation.getQualifiedName();
         if (Comparing.strEqual(qualifiedName, "org.testng.annotations.Configuration")) {
-          holder.registerProblem(annotation, DISPLAY_NAME, new ConvertOldAnnotationsQuickfix());
+          holder.registerProblem(annotation, TestngBundle.message("inspection.message.old.testng.annotation.configuration.used"), new ConvertOldAnnotationsQuickfix());
         }
       }
     };
@@ -60,12 +60,19 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
     @Override
     @NotNull
     public String getFamilyName() {
-      return FIX_NAME;
+      return TestngBundle.message("intention.family.name.convert.old.configuration.testng.annotations");
     }
 
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiAnnotation annotation = (PsiAnnotation)previewDescriptor.getPsiElement();
+      doFix(annotation);
+      return IntentionPreviewInfo.DIFF;
     }
 
     @Override

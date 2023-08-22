@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -15,6 +15,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,14 +27,14 @@ import java.util.List;
 /**
 * @author Konstantin Bulenkov
 */
-public class InspectionListCellRenderer extends DefaultListCellRenderer {
+public final class InspectionListCellRenderer extends DefaultListCellRenderer {
   private final SimpleTextAttributes mySelected;
   private final SimpleTextAttributes myPlain;
   private final SimpleTextAttributes myHighlighted;
 
   public InspectionListCellRenderer() {
     mySelected = new SimpleTextAttributes(UIUtil.getListSelectionBackground(true),
-                                          UIUtil.getListSelectionForeground(),
+                                          NamedColorUtil.getListSelectionForeground(true),
                                           JBColor.RED,
                                           SimpleTextAttributes.STYLE_PLAIN);
     myPlain = new SimpleTextAttributes(UIUtil.getListBackground(),
@@ -55,7 +56,8 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
     panel.setOpaque(true);
 
     final Color bg = sel ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground();
-    final Color fg = sel ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
+    final Color fg;
+    fg = sel ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
     panel.setBackground(bg);
     panel.setForeground(fg);
     if (value instanceof InspectionElement) {

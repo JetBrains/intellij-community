@@ -105,6 +105,15 @@ class MyTest {
     Runnable r = () -> <error descr="Target type for switch expression cannot be void">switch</error>(0) {
       default -> throw new IllegalArgumentException();
     };
+
+    var rv = switch (0) {
+      case 0 -> 42;
+      default -> <error descr="Expression type should not be 'void'">System.out.println(42)</error>;
+    };
+    
+    <error descr="Cannot infer type: variable initializer is 'null'">var</error> rv1 = switch (0) {
+      default -> null;
+    };
   }
 
   static void test(boolean b, int i) {
@@ -115,5 +124,31 @@ class MyTest {
                   } : 1).getClass();
 
     System.out.println(c.getCanonicalName());
+  }
+
+  interface I {
+    void m();
+  }
+  interface I1 extends I {}
+  interface I2 extends I {}
+
+  static void n(I1 i1, I2 i2, int s) {
+    var i_ = switch (s) {
+      case 1 -> i1;
+      case 2 -> null;
+      default -> i2;
+    };
+    if (i_ != null) {
+      i_.m();
+    }
+    
+    var i__ = switch (s) {
+      case 2 -> null;
+      case 1 -> i1;
+      default -> i2;
+    };
+    if (i__ != null) {
+      i__.m();
+    }
   }
 }

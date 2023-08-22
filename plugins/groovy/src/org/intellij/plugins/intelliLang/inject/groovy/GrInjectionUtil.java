@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.openapi.util.Pair;
@@ -33,16 +19,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 
 import java.util.Map;
 
-public class GrInjectionUtil {
+public final class GrInjectionUtil {
   static int findParameterIndex(PsiElement arg, GrCall call) {
     final GroovyResolveResult result = call.advancedResolve();
-    if (!(result.getElement() instanceof PsiMethod)) return -1;
+    if (!(result.getElement() instanceof PsiMethod method)) return -1;
 
     final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil
       .mapArgumentsToParameters(result, call, false, false, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments());
     if (map == null) return -1;
 
-    final PsiMethod method = (PsiMethod)result.getElement();
     final PsiParameter parameter = map.get(arg).first;
     if (parameter == null) return -1;
 
@@ -74,8 +59,7 @@ public class GrInjectionUtil {
       return visitor.visitAnnotationParameter((GrAnnotationNameValuePair)element, (PsiAnnotation)parent.getParent());
     }
 
-    if (parent instanceof GrAssignmentExpression) {
-      final GrAssignmentExpression p = (GrAssignmentExpression)parent;
+    if (parent instanceof GrAssignmentExpression p) {
       if (p.getRValue() == element || p.getOperationTokenType() == GroovyTokenTypes.mPLUS_ASSIGN) {
         final GrExpression left = p.getLValue();
         if (left instanceof GrReferenceExpression) {

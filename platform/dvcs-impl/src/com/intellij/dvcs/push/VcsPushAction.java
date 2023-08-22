@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -19,6 +20,10 @@ import java.util.Collections;
 import java.util.HashSet;
 
 public class VcsPushAction extends DumbAwareAction {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -27,9 +32,8 @@ public class VcsPushAction extends DumbAwareAction {
     Collection<Repository> repositories = e.getData(CommonDataKeys.EDITOR) != null
                                           ? ContainerUtil.emptyList()
                                           : collectRepositories(manager, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-    VirtualFile selectedFile = DvcsUtil.getSelectedFile(project);
-    new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories),
-                      selectedFile != null ? manager.getRepositoryForFileQuick(selectedFile) : null).show();
+    Repository selectedRepo = DvcsUtil.guessRepositoryForOperation(project, e.getDataContext());
+    new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories), selectedRepo).show();
   }
 
   @NotNull
@@ -48,7 +52,6 @@ public class VcsPushAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     Project project = e.getProject();
     e.getPresentation()
       .setEnabledAndVisible(project != null && !VcsRepositoryManager.getInstance(project).getRepositories().isEmpty());

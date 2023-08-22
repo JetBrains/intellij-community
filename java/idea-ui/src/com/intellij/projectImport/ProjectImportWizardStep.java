@@ -21,9 +21,6 @@ import com.intellij.openapi.util.io.FileUtil;
 
 import javax.swing.*;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public abstract class ProjectImportWizardStep extends ModuleWizardStep {
   private final WizardContext myContext;
 

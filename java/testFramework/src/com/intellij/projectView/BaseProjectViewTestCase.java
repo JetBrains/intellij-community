@@ -1,26 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
+import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
+import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -35,15 +27,31 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
+  @Override
+  protected boolean isCreateDirectoryBasedProject() {
+    return true;
+  }
+
   protected TestProjectTreeStructure myStructure;
 
   protected Queryable.PrintInfo myPrintInfo;
+
+  protected @NotNull String packageViewPaneId = ProjectViewPane.ID;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    myStructure = new TestProjectTreeStructure(myProject, getTestRootDisposable());
+    myStructure = new TestProjectTreeStructure(myProject, getTestRootDisposable()) {
+      @Override
+      protected AbstractTreeNode<?> createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
+        return switch (packageViewPaneId) {
+          case ProjectViewPane.ID -> super.createRoot(project, settings);
+          case PackageViewPane.ID -> new PackageViewProjectNode(project, settings);
+          default -> throw new IllegalStateException("Unexpected value: " + packageViewPaneId);
+        };
+      }
+    };
   }
 
   @Override
@@ -74,7 +82,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     assertStructureEqual(expected, maxRowCount, rootNode);
   }
 
-  protected void assertStructureEqual(String expected) {
+  protected void assertStructureEqual(@NotNull String expected) {
     assertStructureEqual(expected, -1, myStructure.getRootElement());
   }
 
@@ -82,7 +90,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     ProjectViewTestUtil.assertStructureEqual(myStructure, expected, maxRowCount, PlatformTestUtil.createComparator(myPrintInfo), rootNode, myPrintInfo);
   }
 
-  protected static void assertListsEqual(ListModel model, String expected) {
+  protected static void assertListsEqual(ListModel<?> model, String expected) {
     assertEquals(expected, PlatformTestUtil.print(model));
   }
 

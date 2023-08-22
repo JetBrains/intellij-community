@@ -24,20 +24,16 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class CachingReference implements PsiReference {
   @Override
   public PsiElement resolve(){
     return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
   }
 
-  @Nullable
-  public abstract PsiElement resolveInner();
+  public abstract @Nullable PsiElement resolveInner();
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 
@@ -46,8 +42,7 @@ public abstract class CachingReference implements PsiReference {
     return false;
   }
 
-  @NotNull
-  public static <T extends PsiElement> ElementManipulator<T> getManipulator(T currentElement){
+  public static @NotNull <T extends PsiElement> ElementManipulator<T> getManipulator(T currentElement){
     ElementManipulator<T> manipulator = ElementManipulators.getManipulator(currentElement);
     if (manipulator == null) {
       throw new IncorrectOperationException("Manipulator for this element is not defined: " + currentElement + "; " + currentElement.getClass());
@@ -55,11 +50,10 @@ public abstract class CachingReference implements PsiReference {
     return manipulator;
   }
 
-  private static class MyResolver implements ResolveCache.Resolver {
+  private static final class MyResolver implements ResolveCache.Resolver {
     private static final MyResolver INSTANCE = new MyResolver();
     @Override
-    @Nullable
-    public PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
+    public @Nullable PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
       return ((CachingReference)ref).resolveInner();
     }
   }

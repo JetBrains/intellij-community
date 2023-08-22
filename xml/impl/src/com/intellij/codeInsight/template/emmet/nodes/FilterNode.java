@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class FilterNode extends ZenCodingNode {
   private final ZenCodingNode myNode;
   private final String myFilter;

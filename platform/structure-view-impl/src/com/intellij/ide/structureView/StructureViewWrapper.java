@@ -18,10 +18,11 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author lesya
  */
 public interface StructureViewWrapper {
-  boolean selectCurrentElement(FileEditor fileEditor, VirtualFile file, boolean requestFocus);
+  boolean selectCurrentElement(@Nullable FileEditor fileEditor, @Nullable VirtualFile file, boolean requestFocus);
 }

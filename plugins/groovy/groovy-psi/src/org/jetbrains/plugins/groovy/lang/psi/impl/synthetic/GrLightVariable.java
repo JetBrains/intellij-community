@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.LocalSearchScope;
@@ -8,7 +9,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -18,9 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
-* @author sergey.evdokimov
-*/
 public class GrLightVariable extends GrImplicitVariableImpl implements NavigatablePsiElement {
 
   private final List<PsiElement> myDeclarations;
@@ -28,29 +25,29 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
   private Object myCreatorKey;
 
   public GrLightVariable(PsiManager manager,
-                         @NonNls String name,
-                         @NonNls @NotNull String type,
+                         @NlsSafe String name,
+                         @NlsSafe @NotNull String type,
                          @NotNull PsiElement navigationElement) {
     this(manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
   }
 
   public GrLightVariable(PsiManager manager,
-                         @NonNls String name,
-                         @NonNls @NotNull String type,
+                         @NlsSafe String name,
+                         @NlsSafe @NotNull String type,
                          @NotNull List<PsiElement> declarations,
                          @NotNull PsiElement scope) {
     this(manager, name, JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(type, scope), declarations, scope);
   }
 
   public GrLightVariable(PsiManager manager,
-                         @NonNls String name,
+                         @NlsSafe String name,
                          @NotNull PsiType type,
                          @NotNull PsiElement navigationElement) {
     this(manager, name, type, Collections.singletonList(navigationElement), getDeclarationScope(navigationElement));
   }
 
   public GrLightVariable(PsiManager manager,
-                         @NonNls String name,
+                         @NlsSafe String name,
                          @NotNull PsiType type,
                          @NotNull List<PsiElement> declarations,
                          @NotNull PsiElement scope) {

@@ -19,7 +19,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutm"
-            name="soutm" toReformat="true" toShortenFQNames="true" value=" println &quot;$CLASS_NAME$.$METHOD_NAME$&quot;">
+            name="soutm" toReformat="true" toShortenFQNames="true" value="println &quot;$CLASS_NAME$.$METHOD_NAME$&quot;">
     <variable alwaysStopAt="false" defaultValue="" expression="className()" name="CLASS_NAME" />
     <variable alwaysStopAt="false" defaultValue="" expression="methodName()" name="METHOD_NAME" />
     <context>
@@ -263,15 +263,6 @@
       <option name="GROOVY" value="false" />
       <option name="GROOVY_DECLARATION" value="false" />
       <option name="GROOVY_STATEMENT" value="true" />
-    </context>
-  </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutm"
-            name="soutm" toReformat="true" toShortenFQNames="true" value="println &quot;$CLASS_NAME$.$METHOD_NAME$&quot;">
-    <variable alwaysStopAt="false" defaultValue="" expression="className()" name="CLASS_NAME" />
-    <variable alwaysStopAt="false" defaultValue="" expression="methodName()" name="METHOD_NAME" />
-    <context>
-      <option name="GROOVY" value="false" />
-      <option name="GROOVY_STATEMENT" value="false" />
     </context>
   </template>
 </templateSet>

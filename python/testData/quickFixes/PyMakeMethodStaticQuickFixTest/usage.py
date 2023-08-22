@@ -3,4 +3,4 @@ class A:
         return x
 
 
-print A.m(A(), 1)
+print(A.m(A(), 1))

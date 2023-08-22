@@ -21,9 +21,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.FilterUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class KeywordLookupItem extends LookupElement implements TypedLookupItem {
   private final PsiElement myPosition;
   private final PsiKeyword myKeyword;
@@ -61,7 +58,7 @@ public class KeywordLookupItem extends LookupElement implements TypedLookupItem 
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
     presentation.setItemTextBold(true);
   }

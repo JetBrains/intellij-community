@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.ProjectIdentifier;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
+import java.util.Objects;
 
-public class InternalProjectIdentifier implements ProjectIdentifier {
+@ApiStatus.Internal
+public final class InternalProjectIdentifier implements ProjectIdentifier {
   private final InternalBuildIdentifier build;
   private final String projectPath;
 
@@ -37,8 +40,8 @@ public class InternalProjectIdentifier implements ProjectIdentifier {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     InternalProjectIdentifier that = (InternalProjectIdentifier)o;
-    if (build != null ? !build.equals(that.build) : that.build != null) return false;
-    if (projectPath != null ? !projectPath.equals(that.projectPath) : that.projectPath != null) return false;
+    if (!Objects.equals(build, that.build)) return false;
+    if (!Objects.equals(projectPath, that.projectPath)) return false;
     return true;
   }
 

@@ -3,7 +3,6 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -45,9 +44,8 @@ public class VariableInplaceRenameHandler implements RenameHandler {
                                 @NotNull Editor editor,
                                 @NotNull PsiFile file) {
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
-
-    RefactoringSupportProvider supportProvider =
-      element == null ? null : LanguageRefactoringSupport.INSTANCE.forContext(element);
+    if (element == null || !element.isValid()) return false;
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(element);
     return supportProvider != null &&
            editor.getSettings().isVariableInplaceRenameEnabled() &&
            supportProvider.isInplaceRenameAvailable(element, nameSuggestionContext);
@@ -105,10 +103,12 @@ public class VariableInplaceRenameHandler implements RenameHandler {
       );
       return false;
     }
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
     return true;
   }
 
+  /**
+   * @param dataContext for {@code null} datacontext, modal rename won't replace failed inplace rename 
+   */
   @Nullable
   public InplaceRefactoring doRename(@NotNull PsiElement elementToRename,
                                      @NotNull Editor editor,
@@ -116,13 +116,13 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
     boolean startedRename = renamer != null && renamer.performInplaceRename();
 
-    if (!startedRename) {
+    if (!startedRename && dataContext != null) {
       performDialogRename(elementToRename, editor, dataContext, renamer != null ? renamer.myInitialName : null);
     }
     return renamer;
   }
 
-  protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext, String initialName) {
+  protected static void performDialogRename(PsiElement elementToRename, Editor editor, @NotNull DataContext dataContext, String initialName) {
     try {
       ourPreventInlineRenameFlag.set(initialName == null ? "" : initialName);
       RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);

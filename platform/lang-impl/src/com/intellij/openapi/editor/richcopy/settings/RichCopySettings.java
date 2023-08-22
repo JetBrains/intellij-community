@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -11,11 +12,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
-@State(name = "EditorRichCopySettings", storages = @Storage("editor.rich.copy.xml"))
-public class RichCopySettings implements PersistentStateComponent<RichCopySettings> {
+@State(name = "EditorRichCopySettings", storages = @Storage("editor.rich.copy.xml"), category = SettingsCategory.UI)
+public final class RichCopySettings implements PersistentStateComponent<RichCopySettings> {
 
   @NotNull public static final String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";
 
@@ -24,7 +22,7 @@ public class RichCopySettings implements PersistentStateComponent<RichCopySettin
 
   @NotNull
   public static RichCopySettings getInstance() {
-    return ServiceManager.getService(RichCopySettings.class);
+    return ApplicationManager.getApplication().getService(RichCopySettings.class);
   }
 
   @NotNull

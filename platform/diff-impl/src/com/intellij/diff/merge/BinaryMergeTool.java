@@ -10,7 +10,7 @@ import com.intellij.diff.requests.ProxySimpleDiffRequest;
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +132,7 @@ public class BinaryMergeTool implements MergeTool {
       }
 
       @Override
-      @CalledInAwt
+      @RequiresEdt
       public void rediff(boolean trySync) {
       }
     }

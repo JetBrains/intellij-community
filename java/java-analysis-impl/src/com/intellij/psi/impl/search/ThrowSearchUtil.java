@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -32,7 +19,7 @@ import java.util.Set;
 /**
  * Author: msk
  */
-public class ThrowSearchUtil {
+public final class ThrowSearchUtil {
   private static final Logger LOG = Logger.getInstance(ThrowSearchUtil.class);
 
   private ThrowSearchUtil() {
@@ -90,8 +77,7 @@ public class ThrowSearchUtil {
         }
         return true;
       }
-      if (elem instanceof PsiTryStatement) {
-        final PsiTryStatement aTry = (PsiTryStatement)elem;
+      if (elem instanceof PsiTryStatement aTry) {
         final PsiParameter[] catches = aTry.getCatchBlockParameters();
         for (int i = 0; i != catches.length; ++i) {
           if (!processExn(catches[i], processor, root)) {
@@ -99,8 +85,7 @@ public class ThrowSearchUtil {
           }
         }
       }
-      else if (parent instanceof PsiTryStatement) {
-        final PsiTryStatement tryStmt = (PsiTryStatement)parent;
+      else if (parent instanceof PsiTryStatement tryStmt) {
         if (elem != tryStmt.getTryBlock()) {
           elem = parent.getParent();
           continue;
@@ -125,29 +110,24 @@ public class ThrowSearchUtil {
   }
 
   public static Root @Nullable [] getSearchRoots(final PsiElement element) {
-    if (element instanceof PsiThrowStatement) {
-      final PsiThrowStatement aThrow = (PsiThrowStatement)element;
+    if (element instanceof PsiThrowStatement aThrow) {
       final PsiExpression exn = aThrow.getException();
       PsiType exType = exn == null ? null : exn.getType();
       if (exType == null) return null;
 
       return new Root[]{new Root(aThrow.getParent(), exType, isExactExnType(exn))};
     }
-    if (element instanceof PsiKeyword) {
-      final PsiKeyword kwd = (PsiKeyword)element;
-      if (PsiKeyword.THROWS.equals(kwd.getText())) {
-        final PsiElement parent = kwd.getParent();
-        if (parent != null && parent.getParent() instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)parent.getParent();
-          final PsiReferenceList throwsList = method.getThrowsList();
-          final PsiClassType[] exns = throwsList.getReferencedTypes();
-          final Root[] roots = new Root[exns.length];
-          for (int i = 0; i != roots.length; ++i) {
-            final PsiClassType exn = exns[i];
-            roots[i] = new Root(method, exn, false); // TODO: test for final
-          }
-          return roots;
+    if (element instanceof PsiKeyword kwd && PsiKeyword.THROWS.equals(kwd.getText())) {
+      final PsiElement parent = kwd.getParent();
+      if (parent != null && parent.getParent() instanceof PsiMethod method) {
+        final PsiReferenceList throwsList = method.getThrowsList();
+        final PsiClassType[] exns = throwsList.getReferencedTypes();
+        final Root[] roots = new Root[exns.length];
+        for (int i = 0; i != roots.length; ++i) {
+          final PsiClassType exn = exns[i];
+          roots[i] = new Root(method, exn, false); // TODO: test for final
         }
+        return roots;
       }
     }
     return null;
@@ -157,9 +137,8 @@ public class ThrowSearchUtil {
     return getSearchRoots(element) != null;
   }
 
-  public static String getSearchableTypeName(final PsiElement e) {
-    if (e instanceof PsiThrowStatement) {
-      final PsiThrowStatement aThrow = (PsiThrowStatement)e;
+  public static @NlsSafe String getSearchableTypeName(final PsiElement e) {
+    if (e instanceof PsiThrowStatement aThrow) {
       final PsiType type = aThrow.getException().getType();
       return PsiFormatUtil.formatType(type, PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES, PsiSubstitutor.EMPTY);
     }

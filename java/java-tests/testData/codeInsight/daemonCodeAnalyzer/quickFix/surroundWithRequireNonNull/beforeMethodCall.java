@@ -1,4 +1,4 @@
-// "Replace with 'Objects.requireNonNull(s1)'" "true"
+// "Replace with 'Objects.requireNonNull(s1)'" "true-preview"
 import java.util.List;
 
 class MyClass {

@@ -4,31 +4,44 @@ package org.jetbrains.plugins.terminal.cloud;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
 import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.ShellStartupOptions;
 
 import javax.swing.*;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 
 public class TerminalHandlerImpl extends TerminalHandlerBase {
 
-  private final JBTerminalWidget myTerminalWidget;
+  private final TerminalWidget myTerminalWidget;
 
+  /**
+   * @deprecated use {@link TerminalHandlerImpl#TerminalHandlerImpl(String, Project, InputStream, OutputStream)} instead
+   */
+  @Deprecated(forRemoval = true)
   public TerminalHandlerImpl(@NotNull String presentableName,
                              @NotNull Project project,
                              @NotNull InputStream terminalOutput,
                              @NotNull OutputStream terminalInput,
-                             boolean deferTerminalSessionUntilFirstShown) {
+                             @SuppressWarnings("unused") boolean deferTerminalSessionUntilFirstShown) {
+    this(presentableName, project, terminalOutput, terminalInput);
+  }
+
+  public TerminalHandlerImpl(@NotNull String presentableName,
+                             @NotNull Project project,
+                             @NotNull InputStream terminalOutput,
+                             @NotNull OutputStream terminalInput) {
     super(presentableName);
 
     final CloudTerminalProcess process = new CloudTerminalProcess(terminalInput, terminalOutput);
 
     TtyResizeHandler handlerBoundLater = (w, h) -> getResizeHandler().onTtyResizeRequest(w, h); //right now handler is null
     CloudTerminalRunner terminalRunner =
-      new CloudTerminalRunner(project, presentableName, process, handlerBoundLater, deferTerminalSessionUntilFirstShown);
+      new CloudTerminalRunner(project, presentableName, process, handlerBoundLater);
 
-    myTerminalWidget = terminalRunner.createTerminalWidget(project, null);
+    myTerminalWidget = terminalRunner.startShellTerminalWidget(this, new ShellStartupOptions.Builder().build(), true);
   }
 
   @Override
@@ -43,8 +56,8 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
 
   @Override
   public void close() {
-    myTerminalWidget.getTerminalDisplay().setCursorVisible(false);
-    myTerminalWidget.stop();
+    myTerminalWidget.setCursorVisible(false);
+    Objects.requireNonNull(myTerminalWidget.getTtyConnector()).close();
     super.close();
   }
 }

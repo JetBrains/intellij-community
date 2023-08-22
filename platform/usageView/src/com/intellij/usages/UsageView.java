@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.IntellijInternalApi;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,19 +15,23 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public interface UsageView extends Disposable {
   /**
    * Returns {@link UsageTarget} to look usages for
+   * @see com.intellij.ide.impl.dataRules.UsageTargetsRule
    */
   DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
 
+  AtomicInteger COUNTER = new AtomicInteger();
   /**
    * Returns {@link Usage} which are selected in usage view
    */
   DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
 
   DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create("UsageView.new");
+  DataKey<UsageViewSettings> USAGE_VIEW_SETTINGS_KEY = DataKey.create("UsageViewSettings");
 
   DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
   DataKey<SearchScope> USAGE_SCOPE = DataKey.create("UsageScope");
@@ -43,15 +50,15 @@ public interface UsageView extends Disposable {
   /**
    * @deprecated please specify mnemonic by prefixing the mnemonic character with an ampersand (&& for Mac-specific ampersands)
    */
-  @Deprecated
-  void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
-  void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
+  @Deprecated(forRemoval = true)
+  void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text, char mnemonic);
+  void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text);
   void addButtonToLowerPane(@NotNull Action action);
 
   /**
    * @deprecated see {@link UsageView#setRerunAction(Action)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setReRunActivity(@NotNull Runnable runnable) {}
 
   /**
@@ -61,12 +68,19 @@ public interface UsageView extends Disposable {
 
   void setAdditionalComponent(@Nullable JComponent component);
 
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription);
+  /**
+   * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
+   */
+  void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                 @Nullable @NlsContexts.Command String commandName,
+                                 @NotNull @NlsContexts.DialogMessage String cannotMakeString,
+                                 @NotNull @NlsContexts.Button String shortDescription);
 
   /**
+   * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @Nullable String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
 
   @NotNull
   UsageViewPresentation getPresentation();
@@ -100,7 +114,13 @@ public interface UsageView extends Disposable {
    */
   void removeUsagesBulk(@NotNull Collection<? extends Usage> usages);
 
-  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener){}
+  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener) {}
+
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  default int getId() {
+    return -1;
+  }
 
   @FunctionalInterface
   interface ExcludeListener {

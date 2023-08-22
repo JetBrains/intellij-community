@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +18,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTest {
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceConstant/";
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_REPLACE_ALL = false;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
   public void testReplaceAll() {
     doTest(introducer -> introducer.setReplaceAllOccurrences(true));
@@ -93,6 +106,10 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testCorrectConstantPosition() {
+    doTest(introducer -> type("R"));
+  }
+
+  public void testConstantBeforeUsage() {
     doTest(introducer -> type("R"));
   }
 

@@ -6,15 +6,13 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
 
 object CacheSettingsDialog {
   @JvmStatic
   fun showSettingsDialog(project: Project): Boolean =
     ShowSettingsUtil.getInstance().editConfigurable(project, CacheSettingsPanel(project))
 }
-
-private const val COLUMNS_COUNT = 6
 
 internal class CacheSettingsPanel(project: Project) : BoundConfigurable(message("cache.settings.dialog.title")) {
   private val cache = CommittedChangesCache.getInstance(project)
@@ -29,22 +27,25 @@ internal class CacheSettingsPanel(project: Project) : BoundConfigurable(message(
     panel {
       if (cache.isMaxCountSupportedForProject) countRow() else daysRow()
       row {
-        val refreshCheckBox = checkBox("Refresh changes every", cacheState::isRefreshEnabled).actsAsLabel()
-        cell {
-          intTextField(cacheState::refreshInterval, COLUMNS_COUNT, 1..60 * 24)
-            .enableIf(refreshCheckBox.selected)
-          label("minutes")
-        }
-      }
+        val refreshCheckBox = checkBox(message("changes.refresh.changes.every"))
+          .bindSelected(cacheState::isRefreshEnabled)
+        intTextField(1..60 * 24)
+          .bindIntText(cacheState::refreshInterval)
+          .enabledIf(refreshCheckBox.selected)
+          .gap(RightGap.SMALL)
+        label(message("changes.minutes"))
+      }.layout(RowLayout.PARENT_GRID)
     }
 
-  private fun LayoutBuilder.countRow() =
-    row("Changelists to cache initially:") {
-      intTextField(cacheState::initialCount, COLUMNS_COUNT, 1..100000)
+  private fun Panel.countRow() =
+    row(message("changes.changelists.to.cache.initially")) {
+      intTextField(1..100000)
+        .bindIntText(cacheState::initialCount)
     }
 
-  private fun LayoutBuilder.daysRow() =
-    row("Days of history to cache initially:") {
-      intTextField(cacheState::initialDays, COLUMNS_COUNT, 1..720)
+  private fun Panel.daysRow() =
+    row(message("changes.days.of.history.to.cache.initially")) {
+      intTextField(1..720)
+        .bindIntText(cacheState::initialDays)
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -11,7 +11,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @ApiStatus.Experimental
-public final class WriteThread {
+@ApiStatus.Internal
+final class WriteThread {
   private WriteThread() {
   }
 
@@ -21,12 +22,11 @@ public final class WriteThread {
    * @param runnable the action to run
    * @return a future representing the result of the scheduled computation
    */
-  @NotNull
-  public static Future<Void> submit(@NotNull Runnable runnable) {
+  private static @NotNull Future<Void> submit(@NotNull Runnable runnable, ModalityState modalityState) {
     return submit(() -> {
       runnable.run();
       return null;
-    });
+    }, modalityState);
   }
 
   /**
@@ -36,8 +36,7 @@ public final class WriteThread {
    * @param <T> return type of scheduled computation
    * @return a future representing the result of the scheduled computation
    */
-  @NotNull
-  public static <T> Future<T> submit(@NotNull ThrowableComputable<? extends T, ?> computable) {
+  private static <T> @NotNull Future<T> submit(@NotNull ThrowableComputable<? extends T, ?> computable, ModalityState modalityState) {
     CompletableFuture<T> future = new CompletableFuture<>();
     ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
       try {
@@ -46,7 +45,7 @@ public final class WriteThread {
       catch (Throwable t) {
         future.completeExceptionally(t);
       }
-    });
+    }, modalityState);
     return future;
   }
 
@@ -56,9 +55,13 @@ public final class WriteThread {
    *
    * @param runnable the action to run
    */
-  public static void invokeAndWait(@NotNull Runnable runnable) {
+  static void invokeAndWait(@NotNull Runnable runnable) {
+    invokeAndWait(runnable, ModalityState.defaultModalityState());
+  }
+
+  static void invokeAndWait(@NotNull Runnable runnable, ModalityState modalityState) {
     try {
-      submit(runnable).get();
+      submit(runnable, modalityState).get();
     }
     catch (InterruptedException ignore) {
     }

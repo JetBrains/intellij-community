@@ -22,9 +22,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author irengrig
- */
 public class VcsAnnotation {
   private final FilePath myFilePath;
   private final VcsLineAnnotationData myBasicAnnotation;

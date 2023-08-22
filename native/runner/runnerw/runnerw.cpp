@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-
+// This tool is deprecated. Use WinP to SIGINT process.
 void PrintUsageAndExit() {
 	printf("Usage: runnerw.exe [/C] app [args]\n");
 	printf("app [args]	Specifies executable file, arguments.\n");
@@ -249,7 +249,7 @@ int main(int argc, char * argv[]) {
 		ErrorMessage("CreatePipe");
 		exit(0);
 	}
-	// https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms682499
+	// https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
 	// Ensure the write handle to the pipe for STDIN is not inherited.
 	// Otherwise, CloseHandle(write_stdin) won't close child's stdin.
 	if (!SetHandleInformation(write_stdin, HANDLE_FLAG_INHERIT, 0)) {

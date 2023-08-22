@@ -17,29 +17,28 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author vlan
- */
 public class PyiTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final String name = param.getName();
     if (name != null) {
       final PsiElement pythonStub = PyiUtil.getPythonStub(func);
-      if (pythonStub instanceof PyFunction) {
-        final PyFunction functionStub = (PyFunction)pythonStub;
+      if (pythonStub instanceof PyFunction functionStub) {
         final PyNamedParameter paramSkeleton = functionStub.getParameterList().findParameterByName(name);
         if (paramSkeleton != null) {
           final PyType type = context.getType(paramSkeleton);
@@ -66,79 +65,17 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
-  @Override
-  public PyType getCallableType(@NotNull PyCallable callable, @NotNull final TypeEvalContext context) {
-    final PsiElement pythonStub = PyiUtil.getPythonStub(callable);
-    if (pythonStub instanceof PyFunction) {
-      return new PyFunctionTypeImpl((PyFunction)pythonStub);
-    }
-    else if (callable.getContainingFile() instanceof PyiFile && callable instanceof PyFunction) {
-      final PyFunction functionStub = (PyFunction)callable;
-      return new PyFunctionTypeImpl(functionStub);
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    final PsiElement pythonStub = PyiUtil.getPythonStub(function);
-
-    if (pythonStub instanceof PyFunction) {
-      return getOverloadedCallType((PyFunction)pythonStub, callSite, context);
-    }
-
-    return getOverloadedCallType(function, callSite, context);
-  }
-
-  @Nullable
-  private static Ref<PyType> getOverloadedCallType(@NotNull PyFunction function,
-                                                   @NotNull PyCallSiteExpression callSite,
-                                                   @NotNull TypeEvalContext context) {
-    if (PyiUtil.isOverload(function, context)) {
-      final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
-      final List<PyType> allReturnTypes = new ArrayList<>();
-      final List<PyType> matchedReturnTypes = new ArrayList<>();
-
-      for (PyFunction overload : overloads) {
-        final PyType returnType = PyUtil.getReturnTypeToAnalyzeAsCallType(overload, context);
-        allReturnTypes.add(PyTypeChecker.substitute(returnType, new HashMap<>(), context));
-
-        final PyCallExpression.PyArgumentsMapping fullMapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);
-        if (!fullMapping.getUnmappedArguments().isEmpty() || !fullMapping.getUnmappedParameters().isEmpty()) {
-          continue;
-        }
-
-        final PyExpression receiver = callSite.getReceiver(overload);
-        final Map<PyExpression, PyCallableParameter> mappedExplicitParameters = fullMapping.getMappedParameters();
-
-        final Map<PyExpression, PyCallableParameter> allMappedParameters = new LinkedHashMap<>();
-        final PyCallableParameter firstImplicit = ContainerUtil.getFirstItem(fullMapping.getImplicitParameters());
-        if (receiver != null && firstImplicit != null) {
-          allMappedParameters.put(receiver, firstImplicit);
-        }
-        allMappedParameters.putAll(mappedExplicitParameters);
-
-        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, allMappedParameters, context);
-        if (substitutions == null) {
-          continue;
-        }
-
-        final PyType unifiedType = PyTypeChecker.substitute(returnType, substitutions, context);
-        matchedReturnTypes.add(unifiedType);
-      }
-
-      return Ref.create(PyUnionType.union(matchedReturnTypes.isEmpty() ? allReturnTypes : matchedReturnTypes));
-    }
-
-    return null;
-  }
-
   @Override
   public Ref<PyType> getReferenceType(@NotNull PsiElement target, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (target instanceof PyElement) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)target);
+      if (pythonStub instanceof PyFunction pyFunction) {
+        PyType allSignatures = StreamEx.ofNullable(PyiUtil.getImplementation(pyFunction, context))
+          .prepend(PyiUtil.getOverloads(pyFunction, context))
+          .map(context::getType)
+          .collect(PyTypeUtil.toUnion());
+        return PyTypeUtil.notNullToRef(allSignatures);
+      }
       if (pythonStub instanceof PyTypedElement) {
         return PyTypeUtil.notNullToRef(context.getType((PyTypedElement)pythonStub));
       }

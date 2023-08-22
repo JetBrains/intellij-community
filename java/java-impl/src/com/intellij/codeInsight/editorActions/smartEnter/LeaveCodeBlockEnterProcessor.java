@@ -66,10 +66,8 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
         EditorActionManager actionManager = EditorActionManager.getInstance();
         EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
         final DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
-        if (dataContext != null) {
-          actionHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
-          return true;
-        }
+        actionHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
+        return true;
       }
     }
     
@@ -96,9 +94,7 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
    *     [caret]
    *   }
    * </pre>
-   * 
-   * @param element
-   * @return
+   *
    */
   private static boolean isControlFlowBreak(@Nullable PsiElement element) {
     return element instanceof PsiReturnStatement || element instanceof PsiThrowStatement;

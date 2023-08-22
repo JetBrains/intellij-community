@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.*;
@@ -6,10 +6,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -23,7 +26,6 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -39,13 +41,13 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   @NonNls public static final String ID = "editor.preferences.gutterIcons";
 
   private JPanel myPanel;
   private CheckBoxList<GutterIconDescriptor> myList;
   private JBCheckBox myShowGutterIconsJBCheckBox;
-  private List<GutterIconDescriptor> myDescriptors;
+  private final List<GutterIconDescriptor> myDescriptors = new ArrayList<>();
   private final Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
 
   @Nls
@@ -72,7 +74,6 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
     Map<GutterIconDescriptor, PluginDescriptor> pluginDescriptorMap = new HashMap<>();
     Set<String> ids = new HashSet<>();
-    myDescriptors = new ArrayList<>();
     for (final PluginDescriptor descriptor : map.keySet()) {
       Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
       for (LanguageExtensionPoint<LineMarkerProvider> extensionPoint : points) {
@@ -105,25 +106,29 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     myDescriptors.addAll(options);
     */
     myDescriptors.sort((o1, o2) -> {
-      final PluginDescriptor descriptor1 = pluginDescriptorMap.get(o1);
-      final PluginDescriptor descriptor2 = pluginDescriptorMap.get(o2);
-      final int byPlugin = StringUtil.naturalCompare(getPluginDisplayName(descriptor1),
-                                                     getPluginDisplayName(descriptor2));
-      if (byPlugin != 0) return byPlugin;
-
-      return StringUtil.naturalCompare(o1.getName(), o2.getName());
+      int byPlugin = StringUtil.naturalCompare(getPluginDisplayName(pluginDescriptorMap.get(o1)),
+                                               getPluginDisplayName(pluginDescriptorMap.get(o2)));
+      return byPlugin != 0 ?
+             byPlugin :
+             StringUtil.naturalCompare(o1.getName(), o2.getName());
     });
-    PluginDescriptor current = null;
+    PluginId current = null;
     for (GutterIconDescriptor descriptor : myDescriptors) {
       PluginDescriptor pluginDescriptor = pluginDescriptorMap.get(descriptor);
-      if (pluginDescriptor != current) {
+      PluginId pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId() : null;
+      // You get different plugin descriptors for `GutterIconDescriptor`s from the same plugin
+      // if they are located in different plugin modules.
+      // But there is no reason to put them into separate UI groups especially taking into account
+      // we sort `myDescriptors` only by plugin name, so compare plugin descriptors by their id
+      if (pluginId != null && !pluginId.equals(current)) {
         myFirstDescriptors.put(descriptor, pluginDescriptor);
-        current = pluginDescriptor;
+        current = pluginId;
       }
     }
 
     myList.setItems(myDescriptors, GutterIconDescriptor::getName);
     myShowGutterIconsJBCheckBox.addChangeListener(e -> myList.setEnabled(myShowGutterIconsJBCheckBox.isSelected()));
+    SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
     return myPanel;
   }
 
@@ -170,13 +175,15 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     }
   }
 
-  private static String getPluginDisplayName(PluginDescriptor pluginDescriptor) {
-    if (pluginDescriptor instanceof IdeaPluginDescriptor && pluginDescriptor.getPluginId() == PluginManagerCore.CORE_ID) return IdeBundle.message("title.common");
-    return pluginDescriptor.getName();
+  private static @Nls String getPluginDisplayName(@NotNull PluginDescriptor pluginDescriptor) {
+    return pluginDescriptor instanceof IdeaPluginDescriptor &&
+           PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId()) ?
+           IdeBundle.message("title.common") :
+           pluginDescriptor.getName();
   }
 
   private void createUIComponents() {
-    myList = new CheckBoxList<GutterIconDescriptor>() {
+    myList = new CheckBoxList<>() {
       @Override
       protected JComponent adjustRendering(JComponent rootComponent, JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
         JPanel panel = new JPanel(new BorderLayout());
@@ -215,7 +222,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     };
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myList.setBorder(BorderFactory.createEmptyBorder());
-    new ListSpeedSearch<>(myList, (Function<JCheckBox, String>)JCheckBox::getText);
+    ListSpeedSearch.installOn(myList, JCheckBox::getText);
   }
 
   @NotNull
@@ -233,13 +240,18 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
   @TestOnly
   public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
 
-  public static class ShowSettingsAction extends DumbAwareAction {
+  public static final class ShowSettingsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     public ShowSettingsAction() {
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(e.getProject(), GutterIconsConfigurable.class);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

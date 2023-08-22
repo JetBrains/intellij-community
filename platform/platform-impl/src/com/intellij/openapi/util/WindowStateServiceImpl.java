@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -22,12 +23,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 abstract class WindowStateServiceImpl extends WindowStateService implements ModificationTracker, PersistentStateComponent<Element> {
-  @NonNls private static final String KEY = "key";
-  @NonNls private static final String STATE = "state";
-  @NonNls private static final String MAXIMIZED = "maximized";
-  @NonNls private static final String FULL_SCREEN = "full-screen";
-  @NonNls private static final String TIMESTAMP = "timestamp";
-  @NonNls private static final String SCREEN = "screen";
+  private static final @NonNls String KEY = "key";
+  private static final @NonNls String STATE = "state";
+  private static final @NonNls String MAXIMIZED = "maximized";
+  private static final @NonNls String FULL_SCREEN = "full-screen";
+  private static final @NonNls String TIMESTAMP = "timestamp";
+  private static final @NonNls String SCREEN = "screen";
+  private static final @NonNls String PRESENTATION_MODE_MODE_KEY_SUFFIX = ".inPresentationMode";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
   private final AtomicLong myModificationCount = new AtomicLong();
@@ -173,15 +175,25 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
   private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
     if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return null;
     if (Registry.is("ui.disable.dimension.service.keys")) return null;
-    if (UISettings.getInstance().getPresentationMode()) key += ".inPresentationMode"; // separate key for the presentation mode
+    if (UISettings.getInstance().getPresentationMode()) key += PRESENTATION_MODE_MODE_KEY_SUFFIX; // separate key for the presentation mode
+    String keyWithScale = withAppendedIdeScale(key);
+    boolean tryWithScale = shouldAppendIdeScaleToKey();
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
-      CachedState state = myStateMap.get(getAbsoluteKey(configuration, key));
-      if (isVisible(state)) return state.get(type, null);
-
-      state = myStateMap.get(key);
-      return state == null ? null : state.get(type, state.myScreen == null ? null : getScreenRectangle(configuration));
+      if (tryWithScale) {
+        T result = synchronizedGetFor(configuration, keyWithScale, type);
+        if (result != null) return result;
+      }
+      return synchronizedGetFor(configuration, key, type);
     }
+  }
+
+  private <T> T synchronizedGetFor(GraphicsConfiguration configuration, @NotNull String key, @NotNull Class<T> type) {
+    CachedState state = myStateMap.get(getAbsoluteKey(configuration, key));
+    if (isVisible(state)) return state.get(type, null);
+
+    state = myStateMap.get(key);
+    return state == null ? null : state.get(type, state.myScreen == null ? null : getScreenRectangle(configuration));
   }
 
   private void putFor(Object object, @NotNull String key,
@@ -190,7 +202,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
                       boolean maximized, boolean maximizedSet,
                       boolean fullScreen, boolean fullScreenSet) {
     if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return;
-    if (UISettings.getInstance().getPresentationMode()) key += ".inPresentationMode"; // separate key for the presentation mode
+    if (UISettings.getInstance().getPresentationMode()) key += PRESENTATION_MODE_MODE_KEY_SUFFIX; // separate key for the presentation mode
+    key = withAppendedIdeScale(key);
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
       put(getAbsoluteKey(configuration, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
@@ -201,12 +214,26 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     myModificationCount.getAndIncrement();
   }
 
-  @Nullable
-  private CachedState put(@NotNull String key,
-                          @Nullable Point location, boolean locationSet,
-                          @Nullable Dimension size, boolean sizeSet,
-                          boolean maximized, boolean maximizedSet,
-                          boolean fullScreen, boolean fullScreenSet) {
+  private static String withAppendedIdeScale(String key) {
+    if (!shouldAppendIdeScaleToKey()) return key;
+
+    UISettingsUtils settingsUtils = UISettingsUtils.getInstance();
+    int percentScale = UISettingsUtils.percentValue(settingsUtils.getCurrentIdeScale());
+    int defaultPercentScale = UISettingsUtils.percentValue(settingsUtils.getCurrentDefaultScale());
+
+    if (percentScale == defaultPercentScale) return key;
+    else return key + ".ideScale=" + percentScale;
+  }
+
+  private static boolean shouldAppendIdeScaleToKey() {
+    return Registry.is("ide.window.state.consider.ide.scale");
+  }
+
+  private @Nullable CachedState put(@NotNull String key,
+                                    @Nullable Point location, boolean locationSet,
+                                    @Nullable Dimension size, boolean sizeSet,
+                                    boolean maximized, boolean maximizedSet,
+                                    boolean fullScreen, boolean fullScreenSet) {
     CachedState state = myStateMap.get(key);
     if (state == null) {
       state = new CachedState();
@@ -221,8 +248,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     }
   }
 
-  @NotNull
-  private static String getAbsoluteKey(@Nullable GraphicsConfiguration configuration, @NotNull String key) {
+  private static @NotNull String getAbsoluteKey(@Nullable GraphicsConfiguration configuration, @NotNull String key) {
     StringBuilder sb = new StringBuilder(key);
     for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
       Rectangle bounds = ScreenUtil.getScreenRectangle(device.getDefaultConfiguration());
@@ -241,22 +267,18 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     return sb.toString();
   }
 
-  @Nullable
-  private static GraphicsConfiguration getConfiguration(@Nullable Object object) {
-    if (object instanceof Project) {
-      Project project = (Project)object;
+  private static @Nullable GraphicsConfiguration getConfiguration(@Nullable Object object) {
+    if (object instanceof Project project) {
       object = WindowManager.getInstance().getFrame(project);
       if (object == null) LOG.warn("cannot find a project frame for " + project);
     }
-    if (object instanceof Window) {
-      Window window = (Window)object;
+    if (object instanceof Window window) {
       GraphicsConfiguration configuration = window.getGraphicsConfiguration();
       if (configuration != null) return configuration;
       object = ScreenUtil.getScreenDevice(window.getBounds());
       if (object == null) LOG.warn("cannot find a device for " + window);
     }
-    if (object instanceof GraphicsDevice) {
-      GraphicsDevice device = (GraphicsDevice)object;
+    if (object instanceof GraphicsDevice device) {
       object = device.getDefaultConfiguration();
       if (object == null) LOG.warn("cannot find a configuration for " + device);
     }
@@ -265,8 +287,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     return null;
   }
 
-  @NotNull
-  private static Rectangle getScreenRectangle(@Nullable GraphicsConfiguration configuration) {
+  private static @NotNull Rectangle getScreenRectangle(@Nullable GraphicsConfiguration configuration) {
     return configuration != null
            ? ScreenUtil.getScreenRectangle(configuration)
            : ScreenUtil.getMainScreenBounds();
@@ -285,11 +306,9 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
       Point location = apply(Point::new, myLocation);
       Dimension size = apply(Dimension::new, mySize);
       // convert location and size according to the given screen
-      if (myScreen != null && screen != null && !screen.isEmpty()) {
-        double w = myScreen.getWidth() / screen.getWidth();
-        double h = myScreen.getHeight() / screen.getHeight();
-        if (location != null) location.setLocation(screen.x + (location.x - myScreen.x) / w, screen.y + (location.y - myScreen.y) / h);
-        if (size != null) size.setSize(size.width / w, size.height / h);
+      if (myScreen != null && !myScreen.isEmpty() && screen != null && !screen.isEmpty()) {
+        if (location != null) ScreenUtil.moveAndScale(location, myScreen, screen);
+        if (size != null) ScreenUtil.moveAndScale(size, myScreen, screen);
         if (!isVisible(location, size)) return null; // adjusted state is not visible
       }
       if (type == Point.class) return (T)location;
@@ -336,7 +355,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     }
   }
 
-  private static boolean isVisible(CachedState state) {
+  private static boolean isVisible(@Nullable CachedState state) {
     return state != null && isVisible(state.myLocation, state.mySize);
   }
 
@@ -353,8 +372,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     return ScreenUtil.isVisible(new Rectangle(location, size));
   }
 
-  @Nullable
-  private static <T, R> R apply(@NotNull Function<T, R> function, @Nullable T value) {
+  private static @Nullable <T, R> R apply(@NotNull Function<? super T, ? extends R> function, @Nullable T value) {
     return value == null ? null : function.apply(value);
   }
 }

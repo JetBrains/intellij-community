@@ -1,44 +1,37 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.vfs;
 
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.tabs.TabInfo;
-import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
+import com.jediterm.terminal.ui.settings.SettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
-  private final JBTerminalWidget myTerminal;
-  private final TabbedSettingsProvider mySettingsProvider;
+  private final TerminalWidget myTerminalWidget;
+  private final SettingsProvider mySettingsProvider;
 
-  private final TabInfo myTabInfo;
-
-  public TerminalSessionVirtualFileImpl(@NotNull TabInfo tabInfo,
-                                        @NotNull JBTerminalWidget terminalWidget,
-                                        @NotNull TabbedSettingsProvider settingsProvider) {
-    myTabInfo = tabInfo;
-    myTerminal = terminalWidget;
+  public TerminalSessionVirtualFileImpl(@NotNull String name,
+                                        @NotNull TerminalWidget terminalWidget,
+                                        @NotNull SettingsProvider settingsProvider) {
+    myTerminalWidget = terminalWidget;
     mySettingsProvider = settingsProvider;
     setFileType(TerminalSessionFileType.INSTANCE);
     setWritable(true);
-    terminalWidget.setVirtualFile(this);
+    try {
+      rename(null, name);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Cannot rename");
+    }
   }
 
-  public JBTerminalWidget getTerminalWidget() {
-    return myTerminal;
+  public @NotNull TerminalWidget getTerminalWidget() {
+    return myTerminalWidget;
   }
 
-  @Override
-  @NotNull
-  public String getName() {
-    return myTabInfo.getText();
-  }
-
-  public TabInfo getTabInfo() {
-    return myTabInfo;
-  }
-
-  public TabbedSettingsProvider getSettingsProvider() {
+  public @NotNull SettingsProvider getSettingsProvider() {
     return mySettingsProvider;
   }
 }

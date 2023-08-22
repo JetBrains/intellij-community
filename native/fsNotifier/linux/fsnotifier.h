@@ -1,29 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #pragma once
 
-#define VERSION "20191018.1702"
+#ifndef VERSION
+#define VERSION "SNAPSHOT"
+#endif
+
+#define _DEFAULT_SOURCE
+#define _FILE_OFFSET_BITS 64
+
+#include <features.h>
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 
 
-// messaging
-typedef enum {
-  MSG_INSTANCE_LIMIT, MSG_WATCH_LIMIT
-} MSG;
+// messaging and logging
+void message(const char *text);
 
-void message(MSG id);
-
-
-// logging
+enum { LOG_ERR = 0, LOG_WARNING = 1, LOG_INFO = 2 };
 void userlog(int priority, const char* format, ...);
 
-#define CHECK_NULL(p, r) if (p == NULL) { userlog(LOG_ERR, "out of memory"); return r; }
+#define CHECK_NULL(p, r) if ((p) == NULL) { userlog(LOG_ERR, "out of memory"); return r; }
 
 
 // variable-length array
-typedef struct __array array;
+typedef struct array_str array;
 
 array* array_create(int initial_capacity);
 int array_size(array* a);
@@ -37,7 +40,7 @@ void array_delete_data(array* a);
 
 
 // poor man's hash table
-typedef struct __table table;
+typedef struct table_str table;
 
 table* table_create(int capacity);
 void* table_put(table* t, int key, void* value);
@@ -53,13 +56,14 @@ enum {
   ERR_MISSING = -4
 };
 
-bool init_inotify();
-void set_inotify_callback(void (* callback)(const char*, int));
-int get_inotify_fd();
+bool init_inotify(void);
+
+void set_inotify_callback(void (*callback)(const char *, uint32_t));
+int get_inotify_fd(void);
 int watch(const char* root, array* mounts);
 void unwatch(int id);
-bool process_inotify_input();
-void close_inotify();
+bool process_inotify_input(void);
+void close_inotify(void);
 
 
 // reads one line from stream, trims trailing carriage return if any

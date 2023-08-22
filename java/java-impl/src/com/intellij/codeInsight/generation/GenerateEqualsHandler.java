@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsHandler.class);
   private PsiField[] myEqualsFields;
@@ -90,7 +87,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     }
     boolean hasNonStaticFields = hasNonStaticFields(aClass);
     if (!hasNonStaticFields) {
-      HintManager.getInstance().showErrorHint(editor, "No fields to include in equals/hashCode have been found");
+      HintManager.getInstance().showErrorHint(editor, JavaBundle.message("generate.equals.no.fields.for.generation"));
       return null;
     }
 

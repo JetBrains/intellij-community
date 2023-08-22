@@ -92,8 +92,9 @@ public abstract class AntDomElement implements DomElement {
       return Collections.emptyIterator();
     }
     final Iterator<DomElement> it = children.iterator();
-    return new Iterator<AntDomElement>() {
+    return new Iterator<>() {
       private DomElement myUnprocessedElement;
+
       @Override
       public boolean hasNext() {
         findNextAntElement();
@@ -126,7 +127,7 @@ public abstract class AntDomElement implements DomElement {
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException("remove");
+        Iterator.super.remove();
       }
     };
   }

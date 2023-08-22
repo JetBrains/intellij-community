@@ -10,8 +10,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +60,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   protected SelectorBasedResponseHandler(GenericRepository repository) {
     super(repository);
     // standard selectors
-    setSelectors(ContainerUtil.newArrayList(
+    setSelectors(List.of(
       // matched against list of tasks at whole downloaded from "taskListUrl"
       new Selector(TASKS),
 
@@ -90,7 +90,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     return new ArrayList<>(mySelectors.values());
   }
 
-  public void setSelectors(@NotNull List<Selector> selectors) {
+  public void setSelectors(@NotNull List<? extends Selector> selectors) {
     mySelectors.clear();
     for (Selector selector : selectors) {
       mySelectors.put(selector.getName(), selector);
@@ -141,9 +141,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof SelectorBasedResponseHandler)) return false;
-
-    SelectorBasedResponseHandler handler = (SelectorBasedResponseHandler)o;
+    if (!(o instanceof SelectorBasedResponseHandler handler)) return false;
 
     if (!mySelectors.equals(handler.mySelectors)) return false;
 
@@ -231,7 +229,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   protected abstract List<Object> selectTasksList(@NotNull String response, int max) throws Exception;
 
   @Nullable
-  protected abstract String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception;
+  protected abstract @Nls String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception;
 
   @Nullable
   @Override

@@ -17,18 +17,27 @@
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.ui.icons.IconReplacer;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class IconButton extends ActiveIcon {
 
-  private final String myTooltip;
+  private final @Tooltip String myTooltip;
 
   private Icon myHovered;
 
   public IconButton(@Tooltip String tooltip, @Nullable final Icon regular, @Nullable final Icon hovered, @Nullable final Icon inactive) {
     super(regular, inactive);
+    myTooltip = tooltip;
+    setHovered(hovered);
+  }
+
+  private IconButton(@Tooltip String tooltip, @NotNull final ActiveIcon base, @Nullable final Icon hovered) {
+    super(base);
     myTooltip = tooltip;
     setHovered(hovered);
   }
@@ -45,8 +54,8 @@ public class IconButton extends ActiveIcon {
     this(tooltip, regular, regular, regular);
   }
 
-
-  protected void setIcons(@Nullable final Icon regular, @Nullable final Icon inactive, @Nullable final Icon hovered) {
+  @ApiStatus.Internal
+  public void setIcons(@Nullable final Icon regular, @Nullable final Icon inactive, @Nullable final Icon hovered) {
     setIcons(regular, inactive);
     setHovered(hovered);
   }
@@ -55,7 +64,12 @@ public class IconButton extends ActiveIcon {
     return myHovered;
   }
 
-  public String getTooltip() {
+  public @Tooltip String getTooltip() {
     return myTooltip;
+  }
+
+  @Override
+  public @NotNull IconButton replaceBy(@NotNull IconReplacer replacer) {
+    return new IconButton(myTooltip, super.replaceBy(replacer), replacer.replaceIcon(myHovered));
   }
 }

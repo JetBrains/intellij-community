@@ -18,14 +18,11 @@ package org.jetbrains.plugins.groovy.lang
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 
-/**
- * @author peter
- */
 class GroovySpellcheckerTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testParameterName() {
     myFixture.configureByText 'a.groovy', '''
-def test(int <TYPO descr="Typo: In word 'dddd'">dddd</TYPO>) {
+def test(int <TYPO descr="Typo: In word 'ddddd'">ddddd</TYPO>) {
 }
 '''
     checkTypos()
@@ -48,10 +45,10 @@ class SpockTest {
 
   void testStringEscapes() {
     myFixture.configureByText 'a.groovy', '''
-def foo = "\\ntest \\n<TYPO descr="Typo: In word 'dddd'">dddd</TYPO>"
-def foo1 = '\\ntest \\n<TYPO descr="Typo: In word 'dddd'">dddd</TYPO>'
-def bar = """\\ntest \\n<TYPO descr="Typo: In word 'dddd'">dddd</TYPO>"""
-def bar1 = \'''\\ntest \\n<TYPO descr="Typo: In word 'dddd'">dddd</TYPO>\'''
+def foo = "\\ntest \\n<TYPO descr="Typo: In word 'ddddd'">ddddd</TYPO>"
+def foo1 = '\\ntest \\n<TYPO descr="Typo: In word 'ddddd'">ddddd</TYPO>'
+def bar = """\\ntest \\n<TYPO descr="Typo: In word 'ddddd'">ddddd</TYPO>"""
+def bar1 = \'''\\ntest \\n<TYPO descr="Typo: In word 'ddddd'">ddddd</TYPO>\'''
 '''
     checkTypos()
   }

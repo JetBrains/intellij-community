@@ -1,21 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.*;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -28,15 +27,11 @@ import javax.swing.*;
 import java.util.Map;
 
 public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenceHost {
-
-  private static final Logger LOG = Logger.getInstance(XmlTagImpl.class);
-
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private final int myHC = ourHC++;
 
   //cannot be final because of clone implementation
-  @Nullable
-  private volatile XmlTagDelegate myImpl;
+  private volatile @Nullable XmlTagDelegate myImpl;
   private volatile XmlTagValue myValue;
   private volatile XmlAttribute[] myAttributes;
 
@@ -48,8 +43,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     super(type);
   }
 
-  @NotNull
-  private XmlTagDelegate getImpl() {
+  private @NotNull XmlTagDelegate getImpl() {
     XmlTagDelegate impl = myImpl;
     if (impl != null) return impl;
     impl = createDelegate();
@@ -58,8 +52,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return impl;
   }
 
-  @NotNull
-  protected XmlTagDelegate createDelegate() {
+  protected @NotNull XmlTagDelegate createDelegate() {
     return new XmlTagImplDelegate();
   }
 
@@ -111,9 +104,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getSubTagText(@NonNls String qname) {
+  public @Nullable @NonNls String getSubTagText(@NonNls String qname) {
     final XmlTag tag = findFirstSubTag(qname);
     if (tag == null) return null;
     return tag.getValue().getText();
@@ -130,28 +121,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_NAME || i == XmlTokenType.XML_TAG_NAME) {
-      return XmlChildRole.XML_TAG_NAME;
-    }
-    else if (i instanceof IXmlAttributeElementType) {
-      return XmlChildRole.XML_ATTRIBUTE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
-  }
-
-  @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getImpl().getName();
   }
 
   @Override
-  public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
+  public PsiElement setName(final @NotNull String name) throws IncorrectOperationException {
     return getImpl().setName(name);
   }
 
@@ -194,7 +169,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  public XmlTag @NotNull [] findSubTags(final String name, @Nullable final String namespace) {
+  public XmlTag @NotNull [] findSubTags(final String name, final @Nullable String namespace) {
     return getImpl().findSubTags(name, namespace);
   }
 
@@ -209,27 +184,23 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  @Nullable
-  public XmlAttribute getAttribute(String qname) {
+  public @Nullable XmlAttribute getAttribute(String qname) {
     return getImpl().getAttribute(qname);
   }
 
   @Override
-  @NotNull
-  public String getNamespace() {
+  public @NotNull String getNamespace() {
     return CachedValuesManager.getCachedValue(this, () ->
       Result.create(getNamespaceByPrefix(getNamespacePrefix()), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override
-  @NotNull
-  public String getNamespacePrefix() {
+  public @NotNull String getNamespacePrefix() {
     return getImpl().getNamespacePrefix(getName());
   }
 
   @Override
-  @NotNull
-  public String getNamespaceByPrefix(String prefix) {
+  public @NotNull String getNamespaceByPrefix(String prefix) {
     return getImpl().getNamespaceByPrefix(prefix);
   }
 
@@ -244,8 +215,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  @NotNull
-  public String getLocalName() {
+  public @NotNull String getLocalName() {
     return getImpl().getLocalName();
   }
 
@@ -255,8 +225,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getLocalNamespaceDeclarations() {
+  public @NotNull Map<String, String> getLocalNamespaceDeclarations() {
     return getImpl().getLocalNamespaceDeclarations();
   }
 
@@ -272,7 +241,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Override
   public XmlTag createChildTag(String localName, String namespace, String bodyText, boolean enforceNamespacesDeep) {
-    return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep);
+    return XmlUtil.createChildTag(this, localName, namespace, bodyText, enforceNamespacesDeep, getImpl()::createTagFromText);
   }
 
   protected XmlTagValue createXmlTagValue() {
@@ -285,8 +254,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  @NotNull
-  public XmlTagValue getValue() {
+  public @NotNull XmlTagValue getValue() {
     XmlTagValue tagValue = myValue;
     if (tagValue == null) {
       myValue = tagValue = createXmlTagValue();
@@ -340,11 +308,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  public void deleteChildInternal(@NotNull final ASTNode child) {
+  public void deleteChildInternal(final @NotNull ASTNode child) {
     getImpl().deleteChildInternal(child);
   }
 
-  protected void deleteChildInternalSuper(@NotNull final ASTNode child) {
+  protected void deleteChildInternalSuper(final @NotNull ASTNode child) {
     super.deleteChildInternal(child);
   }
 
@@ -375,11 +343,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Override
   public Icon getElementIcon(int flags) {
-    return PlatformIcons.XML_TAG_ICON;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Tag);
   }
 
   protected class XmlTagImplDelegate extends XmlTagDelegate {
-
     public XmlTagImplDelegate() {
       super(XmlTagImpl.this);
     }

@@ -1,25 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
+import com.intellij.ide.ui.OptionsTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
-import com.intellij.ide.util.gotoByName.GotoActionModel.MatchMode
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.java.navigation.ChooseByNameTest
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.CollectConsumer
-import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -27,21 +30,19 @@ import org.jetbrains.annotations.NotNull
 import java.awt.*
 import java.util.List
 import java.util.concurrent.TimeUnit
+import java.util.function.BiPredicate
 
-/**
- * @author peter
- */
 @CompileStatic
 class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey")
   private static final Comparator<MatchedValue> MATCH_COMPARATOR =
     { MatchedValue item1, MatchedValue item2 -> return item1.compareWeights(item2) } as Comparator<MatchedValue>
-  private static final Equality<MatchedValue> MATCH_EQUALITY =
-    { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as Equality<MatchedValue>
+  private static final BiPredicate<MatchedValue, MatchedValue> MATCH_EQUALITY =
+    { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as BiPredicate<MatchedValue, MatchedValue>
 
   void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
-    def fork = 'Rebase my GitHub fork'
+    def fork = 'Sync Fork'
     def rebase = 'Rebase...'
     def items = [matchedAction(fork, pattern),
                  matchedAction(rebase, pattern)].toSorted(MATCH_COMPARATOR)
@@ -89,8 +90,18 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assert actionMatches('invalidate caches', action) == MatchMode.NAME
     assert actionMatches('cache invalid', action) == MatchMode.NAME
     assert actionMatches('rebuild of all caches', action) == MatchMode.DESCRIPTION
-    assert actionMatches('restart', action) == (ApplicationManager.application.isRestartCapable() ? MatchMode.NAME : MatchMode.NONE)
     assert actionMatches('invcach', action) == MatchMode.NAME
+  }
+
+  void "test fixing layout match"() {
+    def action = ActionManager.instance.getAction("InvalidateCaches")
+    assert actionMatches('штм', action) == MatchMode.NAME
+    assert actionMatches('штм сфср', action) == MatchMode.NAME
+    assert actionMatches('привет мир', new DumbAwareAction("привет, мир") {
+      @Override
+      void actionPerformed(@NotNull AnActionEvent e) {
+      }
+    }) == MatchMode.NAME
   }
 
   void "test CamelCase text in action names"() {
@@ -110,6 +121,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
         return "testprovider"
       }
 
+      @NotNull
       @Override
       Collection<OptionDescription> getOptions() {
         return options
@@ -118,7 +130,37 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     def consumer = new CollectConsumer<Object>()
     provider.consumeTopHits("/testprovider CamelCase", consumer, project)
-    assert consumer.getResult() == [options[0], options[1], options[3], options[4]]
+    assert consumer.getResult() == [options[0], options[3]]
+  }
+
+  void "test TopHit CamelCase actions found in lower case"() {
+    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), testRootDisposable)
+    def action1 = createAction("CamelCase Name", "none")
+    def action2 = createAction("Simple Name", "CamelCase description")
+    def action3 = createAction("Prefix-CamelCase Name", "none")
+    def action4 = createAction("Non Camel Case Name", "none")
+    def action5 = createAction("Dash Camel-Case Name", "none")
+    def pattern = "camelcase"
+    assert actionMatches(pattern, action1) == MatchMode.NAME
+    assert actionMatches(pattern, action2) == MatchMode.DESCRIPTION
+    assert actionMatches(pattern, action3) == MatchMode.NAME
+    assert actionMatches(pattern, action4) == MatchMode.NAME
+    assert actionMatches(pattern, action5) == MatchMode.NAME
+  }
+
+  void "test TopHit CamelCase options found in lower case"() {
+    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), testRootDisposable)
+    def option1 = new OptionDescription("CamelCase Name", null, null)
+    def option2 = new OptionDescription("Simple Name", null, null)
+    def option3 = new OptionDescription("Prefix-CamelCase Name", null, null)
+    def option4 = new OptionDescription("Non Camel Case Name", null, null)
+    def option5 = new OptionDescription("Dash Camel-Case Name", null, null)
+    def pattern = "camelcase"
+    assert optionMatches(pattern, option1)
+    assert !optionMatches(pattern, option2)
+    assert optionMatches(pattern, option3)
+    assert !optionMatches(pattern, option4)
+    assert !optionMatches(pattern, option5)
   }
 
   private static class TestBooleanOption extends BooleanOptionDescription {
@@ -163,7 +205,7 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   void "test same action is not reported twice"() {
     def patterns = ["Patch", "Add", "Delete", "Show", "Toggle", "New", "New Class"]
 
-    def contributor = createActionContributor(project)
+    def contributor = createActionContributor(project, testRootDisposable)
     patterns.forEach { String pattern ->
       def result = ChooseByNameTest.calcContributorElements(contributor, pattern)
       def actions = result.findResults {
@@ -261,18 +303,21 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test navigable settings options appear in results"() {
-    def contributor = createActionContributor(project)
+    def contributor = createActionContributor(project, testRootDisposable)
     def patterns = [
       "support screen readers",
       "show line numbers",
       "tab placement"
     ]
 
+    def errors = []
     patterns.forEach { String pattern ->
       def elements = ChooseByNameTest.calcContributorElements(contributor, pattern)
-      assert elements.any { matchedValue -> isNavigableOption(((MatchedValue) matchedValue).value)
+      if (!elements.any { matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value) }) {
+        errors += "Failure for pattern '$pattern' - $elements"
       }
     }
+    assert errors.isEmpty()
   }
 
   private static boolean isNavigableOption(Object o) {
@@ -280,22 +325,22 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
 
-  private static List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
-    def wrappers = getActionsFromPopup(project, pattern)
+  private List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
+    def wrappers = getActionsFromPopup(project, testRootDisposable, pattern)
     wrappers.every { it.getPresentation() } // update best group name
     wrappers.sort()
     return wrappers
   }
 
-  private static String getPresentableGroupName(Project project, String pattern, String testActionId, boolean passFlag) {
+  private String getPresentableGroupName(Project project, String pattern, String testActionId, boolean passFlag) {
     def action = ActionManager.instance.getAction(testActionId)
     assert action != null
     return getPresentableGroupName(project, pattern, action, passFlag)
   }
 
-  private static String getPresentableGroupName(Project project, String pattern, AnAction testAction, boolean passFlag) {
+  private String getPresentableGroupName(Project project, String pattern, AnAction testAction, boolean passFlag) {
     return computeWithCustomDataProvider(passFlag) {
-      def result = getActionsFromPopup(project, pattern)
+      def result = getActionsFromPopup(project, testRootDisposable, pattern)
       def matches = result.findAll { it.action == testAction }
       if (matches.size() != 1) {
         fail("Matches: " + matches + "\nPopup actions:  " + result.size() + " - " + result)
@@ -345,8 +390,8 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  private static List<ActionWrapper> getActionsFromPopup(Project project, String pattern) {
-    def contributor = createActionContributor(project)
+  private static List<ActionWrapper> getActionsFromPopup(Project project, Disposable parentDisposable, String pattern) {
+    def contributor = createActionContributor(project, parentDisposable)
     return ChooseByNameTest.calcContributorElements(contributor, pattern).findResults {
       if (it instanceof MatchedValue && it.value instanceof ActionWrapper) {
         return it.value as ActionWrapper
@@ -356,30 +401,42 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private def actionMatches(String pattern, AnAction action) {
-    return new GotoActionModel(project, null, null).actionMatches(pattern, GotoActionItemProvider.buildMatcher(pattern), action)
+    def matcher = GotoActionItemProvider.buildMatcher(pattern)
+    def model = new GotoActionModel(project, null, null)
+    model.buildGroupMappings()
+    return model.actionMatches(pattern, matcher, action)
   }
 
   private MatchedValue matchedAction(String text, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
-    return matchedAction(createAction(text), pattern, mode, isAvailable)
+    return createMatchedAction(project, createAction(text), pattern, mode, isAvailable)
   }
 
-  private MatchedValue matchedAction(AnAction action, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
+  static MatchedValue createMatchedAction(Project project,
+                                          AnAction action,
+                                          String pattern,
+                                          MatchMode mode = MatchMode.NAME,
+                                          boolean isAvailable = true) {
     def model = new GotoActionModel(project, null, null)
-    def wrapper = new ActionWrapper(action, null, mode, DataContext.EMPTY_CONTEXT, model) {
+    def wrapper = new ActionWrapper(action, null, mode, model) {
       @Override
       boolean isAvailable() {
         return isAvailable
       }
     }
-    new MatchedValue(wrapper, pattern)
+    new MatchedValue(wrapper, pattern, GotoActionModel.MatchedValueType.ACTION)
   }
 
-  private static AnAction createAction(String text) {
-    new AnAction(text) {
+  private static AnAction createAction(String text, String description = null) {
+    def action = new AnAction(text) {
       @Override
       void actionPerformed(@NotNull AnActionEvent e) {
       }
     }
+    if (description != null) {
+      action.getTemplatePresentation().setDescription(description)
+    }
+
+    return action
   }
 
   private static DefaultActionGroup createActionGroup(String text, boolean hideByDefault) {
@@ -391,9 +448,14 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  private static boolean optionMatches(String pattern, OptionDescription optionDescription) {
+    def matcher = OptionsTopHitProvider.buildMatcher(pattern)
+    return matcher.matches(optionDescription.getOption())
+  }
+
 
   private static MatchedValue matchedOption(String text, String pattern) {
-    return new MatchedValue(new OptionDescription(text), pattern)
+    return new MatchedValue(new OptionDescription(text), pattern, GotoActionModel.MatchedValueType.OPTION)
   }
 
   private static MatchedValue matchedBooleanOption(String text, String pattern) {
@@ -407,12 +469,13 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       void setOptionState(boolean enabled) {
       }
     }
-    return new MatchedValue(option, pattern)
+    return new MatchedValue(option, pattern, GotoActionModel.MatchedValueType.OPTION)
   }
 
-  private static SearchEverywhereContributor<?> createActionContributor(Project project) {
-    def res = new TestActionContributor(project, null, null)
+  static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
+    TestActionContributor res = new TestActionContributor(project, null, null)
     res.setShowDisabled(true)
+    Disposer.register(parentDisposable, res)
     return res
   }
 

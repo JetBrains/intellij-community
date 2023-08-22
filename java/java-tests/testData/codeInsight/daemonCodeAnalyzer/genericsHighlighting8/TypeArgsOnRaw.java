@@ -13,7 +13,7 @@ class GenericsTest {
 
     public static void main(String[] args) {
 
-        String v1 = new SomeClass().<error descr="Type arguments given on a raw method"><String></error>getX();
+        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">String v1 = new SomeClass().<String>getX();</error>
         String v2 = new SomeClass().f();  //
 
     }

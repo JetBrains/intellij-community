@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyIfPartIfImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.util.List;
  */
 public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context> {
 
-  public PyUnwrapper(String description) {
+  public PyUnwrapper(@Nls String description) {
     super(description);
   }
 
@@ -94,8 +95,7 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
 
     public void extractFromElseBlock(PyStatementPart from) {
       PyStatementList body = from.getStatementList();
-      if (body != null)
-        extract(body.getFirstChild(), body.getLastChild(), from.getParent());
+      extract(body.getFirstChild(), body.getLastChild(), from.getParent());
     }
 
     public void extractFromWithBlock(PyWithStatement from) {

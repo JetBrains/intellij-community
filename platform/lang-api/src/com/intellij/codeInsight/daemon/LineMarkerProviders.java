@@ -15,7 +15,7 @@ public final class LineMarkerProviders extends LanguageExtension<LineMarkerProvi
   /**
    * @deprecated Use {@link #getInstance()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final LineMarkerProviders INSTANCE = ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode() ? null : getInstance();
 
   @NotNull

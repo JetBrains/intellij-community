@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -9,10 +9,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+import static com.intellij.structuralsearch.MatchOptions.CASE_SENSITIVE_ATTRIBUTE_NAME;
+import static com.intellij.structuralsearch.MatchOptions.OLD_CASE_SENSITIVE_ATTRIBUTE_NAME;
+
 /**
  * @author Bas Leijdekkers
  */
-public class ConfigurationUtil {
+public final class ConfigurationUtil {
   private ConfigurationUtil() {}
 
   @NotNull
@@ -22,6 +25,10 @@ public class ConfigurationUtil {
     final String className = configuration.getClass().getSimpleName();
     final Element element = new Element(Character.toLowerCase(className.charAt(0)) + className.substring(1));
     configuration.writeExternal(element);
+    if (Boolean.parseBoolean(element.getAttributeValue(OLD_CASE_SENSITIVE_ATTRIBUTE_NAME))) {
+      element.setAttribute(CASE_SENSITIVE_ATTRIBUTE_NAME, "true");
+    }
+    element.removeAttribute(OLD_CASE_SENSITIVE_ATTRIBUTE_NAME);
     return JDOMUtil.writeElement(element);
   }
 

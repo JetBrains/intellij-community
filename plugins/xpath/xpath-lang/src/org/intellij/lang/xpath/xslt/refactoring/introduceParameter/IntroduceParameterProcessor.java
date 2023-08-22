@@ -37,6 +37,7 @@ import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -124,9 +125,8 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
             XmlTag anchorParam = null;
             for (UsageInfo info : usageInfos) {
-                if (info instanceof XPathUsageInfo) {
-                    final XPathUsageInfo x = (XPathUsageInfo)info;
-                    final XPathVariableReference variableReference = XPathChangeUtil.createVariableReference(x.getExpression(), mySettings.getName());
+                if (info instanceof XPathUsageInfo x) {
+                  final XPathVariableReference variableReference = XPathChangeUtil.createVariableReference(x.getExpression(), mySettings.getName());
                     final XmlAttribute attribute = x.getAttribute();
                     assert attribute != null;
 
@@ -163,7 +163,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     @Override
     @NotNull
     protected String getCommandName() {
-        return XsltIntroduceParameterAction.COMMAND_NAME;
+        return XPathBundle.message("command.name.introduce.xslt.parameter");
     }
 
     private class MyUsageViewDescriptorAdapter extends UsageViewDescriptorAdapter {
@@ -175,7 +175,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
         @Override
         public String getProcessedElementsHeader() {
-            return "Adding parameter to template";
+            return XPathBundle.message("header.adding.parameter.to.template");
         }
     }
 }

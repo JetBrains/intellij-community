@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.CommitPlaceholderProvider;
+import com.intellij.tasks.TaskApiBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepository;
@@ -112,6 +113,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
     myEditor.getSettings().setCaretRowShown(false);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+    myEditor.getContentComponent().setFocusable(true);
 
     setupPlaceholdersComment();
     String advertiser = repository.getRepositoryType().getAdvertiser();
@@ -162,7 +164,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
         }
       }
     }
-    myComment.setText("<html>Available placeholders: " + comment + "</html>");
+    myComment.setText(TaskApiBundle.message("label.html.available.placeholders.html", comment));
   }
 
 

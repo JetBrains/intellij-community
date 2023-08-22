@@ -39,7 +39,7 @@ HtmlFile:test.html
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('TITLE')
           XmlToken:XML_TAG_END('>')
-          XmlText
+          HtmlRawText
             PsiWhiteSpace('\n')
             XmlToken:XML_DATA_CHARACTERS('Index')
             PsiWhiteSpace(' ')

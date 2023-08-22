@@ -1,149 +1,122 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.configurationStore.StoreUtil
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.*
+import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.useProject
 import com.intellij.util.io.createDirectories
-import junit.framework.TestCase
-import org.junit.ClassRule
+import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.*
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 
-@Suppress("UsePropertyAccessSyntax")
-class ProjectOpeningTest {
-  companion object {
-    @JvmStatic
-    internal fun closeProject(project: Project?) {
-      if (project != null && !project.isDisposed) {
-        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+class ProjectOpeningTest : BareTestFixtureTestCase() {
+  @Rule @JvmField val inMemoryFs = InMemoryFsRule()
+  @Rule @JvmField val tempDir = TempDirectory()
+
+  @Test fun cancelOnRunPostStartUpActivities() {
+    var job: Job? = null
+    class MyStartupActivity : InitProjectActivity {
+      val passed = AtomicBoolean()
+
+      override suspend fun run(project: Project) {
+        passed.set(true)
+        job!!.cancel("test")
       }
     }
 
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
-
-  @Rule
-  @JvmField
-  val tempDir = TemporaryDirectory()
-
-  @Test
-  fun openProjectCancelling() {
     val activity = MyStartupActivity()
-    ExtensionTestUtil.maskExtensions(StartupActivity.POST_STARTUP_ACTIVITY, listOf(activity), disposableRule.disposable, fireEvents = false)
-    val manager = ProjectManagerEx.getInstanceEx()
-    val foo = tempDir.newPath()
-    val project = manager.createProject(null, foo.toString())!!
-    try {
-      ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
-        override fun run(indicator: ProgressIndicator) {
-          assertThat(manager.openProject(project)).isFalse()
-        }
-      })
-      assertThat(project.isOpen).isFalse()
-      // 1 on maskExtensions call, second call our call
-      assertThat(activity.passed.get()).isTrue()
+    val ep = ExtensionPointName<InitProjectActivity>("com.intellij.initProjectActivity")
+    ExtensionTestUtil.maskExtensions(ep, listOf(activity), testRootDisposable, fireEvents = false)
+    runBlocking {
+      job = launch {
+        assertThat(doOpenProject()).isNull()
+      }
     }
-    finally {
-      runInEdtAndWait {
-        closeProject(project)
+    // 1 on maskExtensions call, second call our call
+    assertThat(activity.passed.get()).isTrue()
+  }
+
+  @Test fun cancelOnLoadingModules() {
+    runBlocking {
+      var job: Job? = null
+      job = launch {
+        assertThat(doOpenProject(createTestOpenProjectOptions().copy(beforeOpen = {
+          job!!.cancel("test")
+          job!!
+          true
+        }))).isNull()
       }
     }
   }
 
-  @Test
-  fun cancelOnLoadingModules() {
-    val foo = tempDir.newPath()
-    val manager: ProjectManagerEx? = ProjectManagerEx.getInstanceEx()
-    var project = manager!!.createProject(null, foo.toString())!!
-    try {
-      StoreUtil.saveSettings(project, false)
-      runInEdtAndWait {
-        closeProject(project)
-      }
-      ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable).subscribe(ProjectLifecycleListener.TOPIC,
-        object : ProjectLifecycleListener {
-          override fun projectComponentsInitialized(project: Project) {
-            val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
-            TestCase.assertNotNull(indicator)
-            indicator!!.cancel()
-            indicator.checkCanceled()
-          }
-        })
-      runInEdtAndWait {
-        project = manager.loadAndOpenProject(foo)!!
-      }
-      assertThat(project.isOpen).isFalse()
-      assertThat(project.isDisposed).isTrue()
+  private suspend fun doOpenProject(options: OpenProjectTask = createTestOpenProjectOptions()) {
+    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(inMemoryFs.fs.getPath("/p"), options)
+    if (project != null) {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
     }
-    finally {
-      runInEdtAndWait {
-        closeProject(project)
-      }
-    }
+    assertThat(project).isNull()
   }
 
-  @Test
-  fun isSameProjectForDirectoryBasedProject() {
-    val projectDir = tempDir.newPath()
+  @Test fun isSameProjectForDirectoryBasedProject() {
+    val projectDir = inMemoryFs.fs.getPath("/p")
     projectDir.createDirectories()
 
-    val dirBasedProject = ProjectManager.getInstance().createProject("project", projectDir.toAbsolutePath().toString())!!
-    Disposer.register(disposableRule.disposable, Disposable {
-      runInEdtAndWait { closeProject(dirBasedProject) }
-    })
-
-    assertThat(ProjectUtil.isSameProject(projectDir.toAbsolutePath().toString(), dirBasedProject)).isTrue()
-    assertThat(ProjectUtil.isSameProject(tempDir.newPath("project2").toAbsolutePath().toString(), dirBasedProject)).isFalse()
-    val iprFilePath = projectDir.resolve("project.ipr")
-    assertThat(ProjectUtil.isSameProject(iprFilePath.toAbsolutePath().toString(), dirBasedProject)).isTrue()
-    val miscXmlFilePath = projectDir.resolve(".idea/misc.xml")
-    assertThat(ProjectUtil.isSameProject(miscXmlFilePath.toAbsolutePath().toString(), dirBasedProject)).isTrue()
-    val someOtherFilePath = projectDir.resolve("misc.xml")
-    assertThat(ProjectUtil.isSameProject(someOtherFilePath.toAbsolutePath().toString(), dirBasedProject)).isFalse()
+    val dirBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir, createTestOpenProjectOptions())!!
+    dirBasedProject.useProject {
+      assertThat(ProjectUtil.isSameProject(projectDir, dirBasedProject)).isTrue()
+      assertThat(ProjectUtil.isSameProject(inMemoryFs.fs.getPath("/p2"), dirBasedProject)).isFalse()
+      val iprFilePath = projectDir.resolve("project.ipr")
+      assertThat(ProjectUtil.isSameProject(iprFilePath, dirBasedProject)).isTrue()
+      val miscXmlFilePath = projectDir.resolve(".idea/misc.xml")
+      assertThat(ProjectUtil.isSameProject(miscXmlFilePath, dirBasedProject)).isTrue()
+      val someOtherFilePath = projectDir.resolve("misc.xml")
+      assertThat(ProjectUtil.isSameProject(someOtherFilePath, dirBasedProject)).isFalse()
+    }
   }
 
-  @Test
-  fun isSameProjectForFileBasedProject() {
-    val projectDir = tempDir.newPath()
+  @Test fun isSameProjectForFileBasedProject() {
+    val projectDir = inMemoryFs.fs.getPath("/p")
     projectDir.createDirectories()
-
-    val iprFilePath = projectDir.resolve("project.ipr")
-    val fileBasedProject = ProjectManager.getInstance().createProject(iprFilePath.fileName.toString(), iprFilePath.toAbsolutePath().toString())!!
-    Disposer.register(disposableRule.disposable, Disposable {
-      runInEdtAndWait { closeProject(fileBasedProject) }
-    })
-    assertThat(ProjectUtil.isSameProject(projectDir.toAbsolutePath().toString(), fileBasedProject)).isTrue()
-    assertThat(ProjectUtil.isSameProject(tempDir.newPath("project2").toAbsolutePath().toString(), fileBasedProject)).isFalse()
-    val iprFilePath2 = projectDir.resolve("project2.ipr")
-    assertThat(ProjectUtil.isSameProject(iprFilePath2.toAbsolutePath().toString(), fileBasedProject)).isFalse()
+    val fileBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir.resolve("project.ipr"), createTestOpenProjectOptions())!!
+    fileBasedProject.useProject {
+      assertThat(ProjectUtil.isSameProject(projectDir, fileBasedProject)).isTrue()
+      assertThat(ProjectUtil.isSameProject(inMemoryFs.fs.getPath("/p2"), fileBasedProject)).isFalse()
+      val iprFilePath2 = projectDir.resolve("project2.ipr")
+      assertThat(ProjectUtil.isSameProject(iprFilePath2, fileBasedProject)).isFalse()
+    }
   }
-}
 
-private class MyStartupActivity : StartupActivity.DumbAware {
-  val passed = AtomicBoolean()
+  @Test fun projectFileLookup() {
+    val projectDir = tempDir.root.toPath()
+    val projectFile = Files.writeString(projectDir.resolve("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
+    val project = runBlocking {
+      ProjectUtil.openOrImportAsync(projectDir, OpenProjectTask())
+    }
+    assertThat(project).isNotNull()
+    val projectFilePath = project!!.useProject { it.projectFilePath }
+    assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
+  }
 
-  override fun runActivity(project: Project) {
-    passed.set(true)
-
-    ProgressManager.getInstance().progressIndicator!!.cancel()
+  @Test fun projectFileLookupSync() {
+    val projectDir = tempDir.root.toPath()
+    val projectFile = Files.writeString(projectDir.resolve("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
+    val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())
+    assertThat(project).isNotNull()
+    val projectFilePath = project!!.useProject { it.projectFilePath }
+    assertThat(projectFilePath).isEqualTo(projectFile.systemIndependentPath)
   }
 }

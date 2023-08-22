@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
 import com.intellij.application.options.schemes.SchemeNameGenerator;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -38,9 +39,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     super(schemesPanel);
   }
 
-  @NotNull
   @Override
-  protected Collection<String> getSchemeImportersNames() {
+  protected @NotNull Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
     for (ImportHandler importHandler : ImportHandler.EP_NAME.getExtensionList()) {
       importersNames.add(importHandler.getTitle());
@@ -59,7 +59,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       VirtualFile importSource = importer.getImportFile();
       if (importSource == null) {
         importSource =
-          SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null, "Choose " + importerName);
+          SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null,
+                                              IdeBundle.message("label.choose.color.scheme.importer", importerName));
       }
       if (importSource != null) {
         if ("jar".equals(importSource.getExtension())) {
@@ -128,7 +129,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       if (dialog.showAndGet()) {
         List<ColorSchemeItem> selectedItems = dialog.getSelectedItems();
         for (ColorSchemeItem item : selectedItems) {
-          doImport(importer, item.getFile());
+          doImport(importer, item.file());
         }
       }
     }
@@ -196,14 +197,12 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     super.exportScheme(project, schemeToExport, exporterName);
   }
 
-  @NotNull
   @Override
-  protected Class<EditorColorsScheme> getSchemeType() {
+  protected @NotNull Class<EditorColorsScheme> getSchemeType() {
     return EditorColorsScheme.class;
   }
 
-  @NotNull
-  protected abstract ColorAndFontOptions getOptions();
+  protected abstract @NotNull ColorAndFontOptions getOptions();
 
   private static class ImportSchemeChooserDialog extends DialogWrapper {
 
@@ -222,17 +221,15 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       init();
     }
 
-    @Nullable
     @Override
-    public Point getInitialLocation() {
+    public @Nullable Point getInitialLocation() {
       Point location = myComponentAbove.getLocationOnScreen();
       location.translate(0, myComponentAbove.getHeight() + JBUIScale.scale(20));
       return location;
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       JPanel schemesPanel = new JPanel(new BorderLayout());
       mySchemeList = new JBList<>(mySchemeItems);
       schemesPanel.add(mySchemeList, BorderLayout.CENTER);
@@ -249,26 +246,6 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     }
   }
 
-  private static class ColorSchemeItem {
-    private final String myName;
-    private final VirtualFile myFile;
-
-    ColorSchemeItem(String name, VirtualFile file) {
-      myName = name;
-      myFile = file;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
+  private record ColorSchemeItem(String name, VirtualFile file) {
   }
 }

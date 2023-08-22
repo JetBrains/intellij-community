@@ -1,0 +1,141 @@
+SHELL_SCRIPT
+  PsiComment(shebang)('#!/bin/sh')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    FUNCTION_DEFINITION
+      PsiElement(function)('function')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('addVersion')
+      PsiElement(()('(')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      BLOCK
+        PsiElement({)('{')
+        COMPOUND_LIST
+          PsiElement(\n)('\n')
+          PsiWhiteSpace('  ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('local')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              ASSIGNMENT_COMMAND
+                LITERAL
+                  PsiElement(word)('search')
+                PsiElement(=)('=')
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  PsiElement($)('$')
+                  SUBSHELL_COMMAND
+                    PsiElement(()('(')
+                    COMPOUND_LIST
+                      SUBSHELL_COMMAND
+                        PsiElement(()('(')
+                        COMPOUND_LIST
+                          SIMPLE_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
+                              LITERAL
+                                PsiElement(word)('echo')
+                            PsiWhiteSpace(' ')
+                            STRING
+                              PsiElement(OPEN_QUOTE)('"')
+                              VARIABLE
+                                PsiElement(var)('$actual')
+                              PsiElement(CLOSE_QUOTE)('"')
+                          PsiWhiteSpace(' ')
+                          PsiElement(|)('|')
+                          PsiWhiteSpace(' ')
+                          EVAL_COMMAND
+                            PsiElement(eval)('eval')
+                            PsiWhiteSpace(' ')
+                            STRING
+                              PsiElement(OPEN_QUOTE)('"')
+                              PsiElement(STRING_CONTENT)('awk '{print $')
+                              PsiElement(CLOSE_QUOTE)('"')
+                            SIMPLE_COMMAND_ELEMENT
+                              PsiElement($)('$')
+                              SHELL_PARAMETER_EXPANSION
+                                PsiElement({)('{')
+                                PsiElement(word)('argIndex')
+                                PsiElement(})('}')
+                            STRING
+                              PsiElement(OPEN_QUOTE)('"')
+                              PsiElement(STRING_CONTENT)('}'')
+                              PsiElement(CLOSE_QUOTE)('"')
+                          PsiWhiteSpace(' ')
+                          PsiElement(|)('|')
+                          PsiWhiteSpace(' ')
+                          SIMPLE_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
+                              LITERAL
+                                PsiElement(word)('grep')
+                            PsiWhiteSpace(' ')
+                            STRING
+                              PsiElement(OPEN_QUOTE)('"')
+                              VARIABLE
+                                PsiElement(var)('$expected')
+                              PsiElement(CLOSE_QUOTE)('"')
+                        PsiElement())(')')
+                      PsiWhiteSpace(' ')
+                      PsiElement(||)('||')
+                      PsiWhiteSpace(' ')
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('true')
+                    PsiElement())(')')
+                  PsiElement(CLOSE_QUOTE)('"')
+          PsiElement(\n)('\n')
+          PsiWhiteSpace('  ')
+          IF_COMMAND
+            PsiElement(if)('if')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              CONDITIONAL_COMMAND
+                PsiElement([[)('[[')
+                PsiWhiteSpace(' ')
+                EQUALITY_CONDITION
+                  LITERAL_CONDITION
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      VARIABLE
+                        PsiElement(var)('$search')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(==)('==')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(CLOSE_QUOTE)('"')
+                PsiWhiteSpace(' ')
+                PsiElement(]])(']]')
+              PsiElement(;)(';')
+            PsiWhiteSpace(' ')
+            THEN_CLAUSE
+              PsiElement(then)('then')
+              COMPOUND_LIST
+                PsiElement(\n)('\n')
+                PsiWhiteSpace('    ')
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('taskError')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(OPEN_QUOTE)('"')
+                    VARIABLE
+                      PsiElement(var)('$cmd')
+                    PsiElement(STRING_CONTENT)(' must be version ')
+                    VARIABLE
+                      PsiElement(var)('$expected')
+                    PsiElement(STRING_CONTENT)(', detected ')
+                    VARIABLE
+                      PsiElement(var)('$actual')
+                    PsiElement(CLOSE_QUOTE)('"')
+                PsiElement(\n)('\n')
+            PsiWhiteSpace('  ')
+            PsiElement(fi)('fi')
+          PsiElement(\n)('\n')
+        PsiElement(})('}')

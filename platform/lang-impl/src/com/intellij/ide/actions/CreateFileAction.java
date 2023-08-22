@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -7,19 +7,19 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,8 +27,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     super(text, description, icon);
   }
 
-  public CreateFileAction(Supplier<String> dynamicText, Supplier<String> dynamicDescription, final Icon icon) {
+  public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 
@@ -61,12 +62,12 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   @Override
-  protected PsiElement @NotNull [] invokeDialog(final Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(final @NotNull Project project, @NotNull PsiDirectory directory) {
     return PsiElement.EMPTY_ARRAY;
   }
 
   @Override
-  protected void invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull Consumer<PsiElement[]> elementsConsumer) {
+  protected void invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull Consumer<? super PsiElement[]> elementsConsumer) {
     MyInputValidator validator = new MyValidator(project, directory);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       try {
@@ -88,7 +89,8 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
   }
 
-  private JBPopup createLightWeightPopup(MyInputValidator validator, Consumer<PsiElement[]> consumer) {
+  private @NotNull JBPopup createLightWeightPopup(@NotNull MyInputValidator validator,
+                                                  @NotNull Consumer<? super PsiElement[]> consumer) {
     NewItemSimplePopupPanel contentPanel = new NewItemSimplePopupPanel();
     JTextField nameField = contentPanel.getTextField();
     JBPopup popup = NewItemPopupUtil.createNewItemPopup(IdeBundle.message("title.new.file"), contentPanel, nameField);
@@ -110,18 +112,23 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   @Override
-  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, @NotNull PsiDirectory directory) throws Exception {
     MkDirs mkdirs = new MkDirs(newName, directory);
-    return new PsiElement[]{WriteAction.compute(() -> mkdirs.directory.createFile(getFileName(mkdirs.newName)))};
+    PsiFile file = WriteAction.compute(() -> mkdirs.directory.createFile(getFileName(mkdirs.newName)));
+    FileTypeUsageCounterCollector.triggerCreate(file.getProject(), file.getVirtualFile());
+    return new PsiElement[]{file};
   }
 
+  @NotNull
   public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory parent, @NotNull String subdirName) {
     final PsiDirectory sub = parent.findSubdirectory(subdirName);
     return sub == null ? WriteAction.compute(() -> parent.createSubdirectory(subdirName)) : sub;
   }
 
-  public static class MkDirs {
+  public static final class MkDirs {
+    @NotNull
     public final String newName;
+    @NotNull
     public final PsiDirectory directory;
 
     public MkDirs(@NotNull String newName, @NotNull PsiDirectory directory) {
@@ -130,9 +137,10 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       }
       if (newName.contains("/")) {
         final List<String> subDirs = StringUtil.split(newName, "/");
-        newName = subDirs.remove(subDirs.size() - 1);
+        newName = ContainerUtil.getLastItem(subDirs);
         boolean firstToken = true;
-        for (String dir : subDirs) {
+        for (int i = 0; i < subDirs.size()-1; i++) {
+          String dir = subDirs.get(i);
           if (firstToken && "~".equals(dir)) {
             final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
             if (userHomeDir == null) throw new IncorrectOperationException("User home directory not found");
@@ -145,7 +153,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
             if (parentDirectory == null) throw new IncorrectOperationException("Not a valid directory");
             directory = parentDirectory;
           }
-          else if (!".".equals(dir)){
+          else if (!".".equals(dir)) {
             directory = findOrCreateSubdirectory(directory, dir);
           }
           firstToken = false;
@@ -158,7 +166,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName) {
+  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
     return IdeBundle.message("progress.creating.file", directory.getVirtualFile().getPresentableUrl(), File.separator, newName);
   }
 
@@ -168,7 +176,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected String getFileName(String newName) {
-    if (getDefaultExtension() == null || FileUtilRt.getExtension(newName).length() > 0) {
+    if (getDefaultExtension() == null || !FileUtilRt.getExtension(newName).isEmpty()) {
       return newName;
     }
     return newName + "." + getDefaultExtension();
@@ -180,7 +188,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected class MyValidator extends MyInputValidator implements InputValidatorEx {
-    private String myErrorText;
+    private @NlsContexts.DetailedDescription String myErrorText;
 
     public MyValidator(Project project, PsiDirectory directory){
       super(project, directory);
@@ -245,21 +253,11 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
 
     @Override
-    public PsiElement[] create(@NotNull String newName) throws Exception {
-      return super.create(newName);
-    }
-
-    @Override
     public boolean canClose(final String inputString) {
-      if (inputString.length() == 0) {
+      if (inputString.isEmpty()) {
         return super.canClose(inputString);
       }
 
-      final PsiDirectory psiDirectory = getDirectory();
-
-      final Project project = psiDirectory.getProject();
-      FileType fileType = FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
-      if (fileType == null) return false;
       return super.canClose(getFileName(inputString));
     }
   }

@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.breadcrumbs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,20 +18,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class FileBreadcrumbsCollector {
   
-  public static final ExtensionPointName<FileBreadcrumbsCollector> EP_NAME =
-    ExtensionPointName.create("com.intellij.fileBreadcrumbsCollector");
+  public static final ProjectExtensionPointName<FileBreadcrumbsCollector> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.fileBreadcrumbsCollector");
 
   /**
    * Checks if this collector handles the given file.
    */
+  @RequiresBackgroundThread
   public abstract boolean handlesFile(@NotNull VirtualFile virtualFile);
-
-  /**
-   * Checks if the breadcrumbs should be shown for the given file.
-   */
-  public boolean isShownForFile(@NotNull Editor editor, @NotNull VirtualFile file) {
-    return true;
-  }
 
   /**
    * Adds event listeners required to redraw the breadcrumbs when the contents of the file changes.
@@ -59,6 +54,6 @@ public abstract class FileBreadcrumbsCollector {
         }
       }
     }
-    return ContainerUtil.getLastItem(EP_NAME.getExtensionList(project));
+    return ContainerUtil.getLastItem(EP_NAME.getPoint(project).getExtensionList());
   }
 }

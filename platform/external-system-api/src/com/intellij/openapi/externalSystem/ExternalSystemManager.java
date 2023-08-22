@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * dependencies which are configured at external system but not at the ide' etc.
  * <p/>
  * That makes it relatively easy to add a new external system integration.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemManager<
   ProjectSettings extends ExternalProjectSettings,
@@ -42,7 +39,7 @@ public interface ExternalSystemManager<
   extends ParametersEnhancer
 {
 
-  ExtensionPointName<ExternalSystemManager<?, ?, ?, ?, ?>> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemManager");
+  ExtensionPointName<ExternalSystemManager<?, ?, ?, ?, ?>> EP_NAME = new ExtensionPointName<>("com.intellij.externalSystemManager");
 
   /**
    * @return    id of the external system represented by the current manager
@@ -107,8 +104,7 @@ public interface ExternalSystemManager<
    * for your {@link com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration} instead
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   default Object createTestConsoleProperties(@NotNull Project project,
                                              @NotNull Executor executor,
                                              @NotNull RunConfiguration runConfiguration) {

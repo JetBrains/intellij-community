@@ -65,8 +65,8 @@ public class FontPreferencesTest {
     String fontName = getNonExistingFontName();
     myPreferences.register(fontName, 25);
     checkState(Arrays.asList(fontName),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
-               FontPreferences.DEFAULT_FONT_NAME,
+               Arrays.asList(fontName),
+               fontName,
                fontName, 25);
   }
 
@@ -85,8 +85,8 @@ public class FontPreferencesTest {
     String fontName = getNonExistingFontName();
     myPreferences.addFontFamily(fontName);
     checkState(Arrays.asList(fontName),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
-               FontPreferences.DEFAULT_FONT_NAME,
+               Arrays.asList(fontName),
+               fontName,
                fontName, null);
   }
 
@@ -113,7 +113,6 @@ public class FontPreferencesTest {
                preferences.getFontFamily());
   }
 
-  @SuppressWarnings("AssignmentToForLoopParameter")
   public static void checkState(FontPreferences fontPreferences,
                           java.util.List<String> expectedRealFontFamilies,
                           java.util.List<String> expectedEffectiveFontFamilies,
@@ -124,9 +123,9 @@ public class FontPreferencesTest {
     assertEquals("Wrong font family", expectedFontFamily, fontPreferences.getFontFamily());
     for (int i = 0; i < namesAndSizes.length - 1; ) {
       String fontName = (String)namesAndSizes[i++];
-      Integer fontSize = (Integer)namesAndSizes[i++];
+      Number fontSize = (Number)namesAndSizes[i++];
       assertEquals("Wrong hasSize", fontSize != null, fontPreferences.hasSize(fontName));
-      assertEquals("Wrong font size", fontSize == null ? FontPreferences.DEFAULT_FONT_SIZE : fontSize.intValue(), fontPreferences.getSize(fontName));
+      assertEquals("Wrong font size", fontSize == null ? (float)FontPreferences.DEFAULT_FONT_SIZE : fontSize.floatValue(), fontPreferences.getSize2D(fontName), 0.001f);
     }
   }
 

@@ -18,8 +18,7 @@ import java.util.List;
 import static com.intellij.psi.util.PsiTreeUtil.countChildrenOfType;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 28.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTypeArgumentList, PsiListLikeElement {
 

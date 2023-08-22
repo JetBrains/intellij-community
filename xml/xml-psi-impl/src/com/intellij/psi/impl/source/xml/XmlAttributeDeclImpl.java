@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -11,8 +10,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
@@ -26,33 +23,6 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
 
   public XmlAttributeDeclImpl() {
     super(XML_ATTRIBUTE_DECL);
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else if (i == XML_ATT_REQUIRED) {
-      return XmlChildRole.XML_ATT_REQUIRED;
-    }
-    else if (i == XML_ATT_FIXED) {
-      return XmlChildRole.XML_ATT_FIXED;
-    }
-    else if (i == XML_ATT_IMPLIED) {
-      return XmlChildRole.XML_ATT_IMPLIED;
-    }
-    else if (i == XML_ATTRIBUTE_VALUE) {
-      return XmlChildRole.XML_DEFAULT_VALUE;
-    }
-    else if (i == XML_ENUMERATED_TYPE) {
-      return XmlChildRole.XML_ENUMERATED_TYPE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 
   @Override

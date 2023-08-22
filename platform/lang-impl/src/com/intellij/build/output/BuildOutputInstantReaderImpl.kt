@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ConcurrencyUtil.underThreadNameRunnable
 import org.jetbrains.annotations.ApiStatus
@@ -35,8 +37,8 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
   private var readFinishedFuture = CompletableFuture<Unit>()
 
   private val readerRunnable = underThreadNameRunnable(
-    "Reader thread for BuildOutputInstantReaderImpl@${System.identityHashCode(parentEventId)}") {
-    require(!readFinishedFuture.isDone) { "Can't read from closed stream" }
+    LangBundle.message("thread.name.reader.thread.for.buildoutputinstantreaderimpl.0", System.identityHashCode(parentEventId))) {
+    require(!readFinishedFuture.isDone) { LangBundle.message("error.can.t.read.from.closed.stream") }
 
     var lastMessage: BuildEvent? = null
     val messageConsumer = { event: BuildEvent ->
@@ -81,7 +83,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
 
   private val appendedLineProcessor = object : LineProcessor() {
     override fun process(line: String) {
-      require(state.get() != State.Closed) { "Can't append to closed stream" }
+      require(state.get() != State.Closed) { LangBundle.message("error.can.t.append.to.closed.stream", line) }
       try {
         while (state.get() != State.Closed) {
           if (state.compareAndSet(State.Idle, State.Running)) {
@@ -98,7 +100,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     }
   }
 
-  override fun getParentEventId() = parentEventId
+  override fun getParentEventId(): Any = parentEventId
 
   override fun append(csq: CharSequence): BuildOutputInstantReaderImpl {
     appendedLineProcessor.append(csq)
@@ -142,7 +144,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
       if (line != null || state.get() == State.Closed) break
       if (!waitIfNotClosed) return null
     }
-    if (line == null) return line
+    if (line == null) return null
     readLinesBuffer.addFirst(line)
     if (readLinesBuffer.size > pushBackBufferSize) {
       readLinesBuffer.removeLast()
@@ -150,7 +152,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     return line
   }
 
-  override fun pushBack() = pushBack(1)
+  override fun pushBack(): Unit = pushBack(1)
 
   override fun pushBack(numberOfLines: Int) {
     readLinesBufferPosition += numberOfLines

@@ -26,7 +26,7 @@ import java.util.List;
 /**
  *  This masquerading lexer cuts out `myIndent` spaces/tabs after each newline in the text passed to this lexer.
  *  The string without these parts (indents) is then passed to a delegate lexer to lex correctly without these indents.
- *  The production of this lexer can also be effectively used in {@link com.intellij.embedding.MasqueradingPsiBuilderAdapter}
+ *  The production of this lexer can also be effectively used in {@link MasqueradingPsiBuilderAdapter}
  *  to parse the text without these indents.
  */
 public class IndentEatingLexer extends MasqueradingLexer.SmartDelegate {

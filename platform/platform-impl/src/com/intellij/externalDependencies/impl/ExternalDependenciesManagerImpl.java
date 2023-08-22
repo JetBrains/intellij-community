@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
@@ -38,15 +39,13 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
 
   private final List<ProjectExternalDependency> myDependencies = new ArrayList<>();
 
-  @NotNull
   @Override
-  public <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
+  public @NotNull <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
     return ContainerUtil.filterIsInstance(myDependencies, aClass);
   }
 
-  @NotNull
   @Override
-  public List<ProjectExternalDependency> getAllDependencies() {
+  public @NotNull List<ProjectExternalDependency> getAllDependencies() {
     return Collections.unmodifiableList(myDependencies);
   }
 
@@ -57,12 +56,11 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
     myDependencies.sort(DEPENDENCY_COMPARATOR);
   }
 
-  @NotNull
   @Override
-  public ExternalDependenciesState getState() {
+  public @NotNull ExternalDependenciesState getState() {
     ExternalDependenciesState state = new ExternalDependenciesState();
-    for (ProjectExternalDependency dependency : myDependencies) {
-      state.myDependencies.add(new DependencyOnPluginState((DependencyOnPlugin)dependency));
+    for (DependencyOnPlugin dependency : getDependencies(DependencyOnPlugin.class)) {
+      state.myDependencies.add(new DependencyOnPluginState(dependency));
     }
     return state;
   }
@@ -78,7 +76,11 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
     if (!oldDependencies.equals(myDependencies) && !myDependencies.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       // may be executed immediately if start-up activities are already passed, but must be not performed in loadState
       NonUrgentExecutor.getInstance().execute(() -> {
-        StartupManager.getInstance(myProject).runAfterOpened(() -> CheckRequiredPluginsActivity.runCheck(myProject, this));
+        try {
+          StartupManager.getInstance(myProject).runAfterOpened(() -> CheckRequiredPluginsActivity.runCheck(myProject, this));
+        }
+        catch (AlreadyDisposedException ignored) {
+        }
       });
     }
   }

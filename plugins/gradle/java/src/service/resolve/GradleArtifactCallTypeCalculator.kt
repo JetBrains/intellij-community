@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.resolve
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
@@ -20,7 +21,7 @@ class GradleArtifactCallTypeCalculator : GrCallTypeCalculator {
       return createType(GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT, context)
     }
     else {
-      return PsiType.NULL
+      return PsiTypes.nullType()
     }
   }
 

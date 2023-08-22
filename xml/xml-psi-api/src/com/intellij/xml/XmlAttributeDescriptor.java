@@ -2,6 +2,7 @@
 
 package com.intellij.xml;
 
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlElement;
@@ -29,6 +30,7 @@ public interface XmlAttributeDescriptor extends PsiMetaData {
   String @Nullable [] getEnumeratedValues();
 
   @Nullable
+  @DetailedDescription
   String validateValue(XmlElement context, String value);
 
   @NotNull

@@ -1,22 +1,36 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.*;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 
-public class InputFileObject extends JpsFileObject {
+public final class InputFileObject extends JpsFileObject {
   private final File myFile;
   private final String myEncoding;
-  private Reference<File> myAbsFileRef;
+  private final ValueSupplier<File, RuntimeException> myAbsFile;
+  private final ValueSupplier<CharSequence, IOException> myContent;
 
-  InputFileObject(File f, String encoding) {
-    super(f.toURI(), findKind(f.getName()), StandardLocation.SOURCE_PATH);
+  InputFileObject(File f, String encoding, boolean canCacheContent) {
+    super(FileUtilRt.fileToUri(f), findKind(f.getName()), StandardLocation.SOURCE_PATH);
     this.myFile = f;
     myEncoding = encoding;
+    myAbsFile = ValueSupplier.asCaching(new ValueSupplier<File, RuntimeException>() {
+      @Override
+      public File get() {
+        return myFile.getAbsoluteFile();
+      }
+    });
+    final ValueSupplier<CharSequence, IOException> contentProvider = new ValueSupplier<CharSequence, IOException>() {
+      @Override
+      public CharSequence get() throws IOException {
+        return loadCharContent(myFile, myEncoding);
+      }
+    };
+    myContent = canCacheContent? ValueSupplier.asCaching(contentProvider) : contentProvider;
   }
 
   public File getFile() {
@@ -25,12 +39,12 @@ public class InputFileObject extends JpsFileObject {
 
   @Override
   public InputStream openInputStream() throws IOException {
-    return new FileInputStream(myFile);
+    return new BufferedInputStream(new FileInputStream(myFile));
   }
 
   @Override
   public OutputStream openOutputStream() throws IOException {
-    throw new UnsupportedOperationException();
+    return super.openOutputStream();
   }
 
   @Override
@@ -133,18 +147,13 @@ public class InputFileObject extends JpsFileObject {
   }
 
   private File getAbsoluteFile() {
-    File absFile = (myAbsFileRef == null ? null : myAbsFileRef.get());
-    if (absFile == null) {
-      absFile = myFile.getAbsoluteFile();
-      myAbsFileRef = new SoftReference<File>(absFile);
-    }
-    return absFile;
+    return myAbsFile.get();
   }
 
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     // todo: consider adding content caching if needed
     // todo: currently ignoreEncodingErrors is not honored. Do we actually need to support it?
-    return loadCharContent(myFile, myEncoding);
+    return myContent.get();
   }
 }

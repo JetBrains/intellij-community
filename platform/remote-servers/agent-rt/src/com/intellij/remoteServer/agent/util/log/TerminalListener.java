@@ -9,10 +9,12 @@ public interface TerminalListener {
 
   TerminalListener NULL = new TerminalListener() {
 
+    @Override
     public void close() {
       //
     }
 
+    @Override
     public void setTtyResizeHandler(TtyResizeHandler ttyResizeHandler) {
       //
     }

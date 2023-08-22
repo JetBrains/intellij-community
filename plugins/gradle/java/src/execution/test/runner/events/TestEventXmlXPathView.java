@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.JavaXmlDocumentKt;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -39,16 +26,12 @@ public class TestEventXmlXPathView implements TestEventXmlView {
    * validate, and is namespace aware.
    *
    * @param xml            the XML content to be parsed (must be well formed)
-   * @throws XmlParserException
    */
   public TestEventXmlXPathView(String xml) throws XmlParserException {
-    xpath = XPathFactory.newInstance().newXPath();
+    xpath = XPathFactory.newDefaultInstance().newXPath();
     try {
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       InputSource is = new InputSource(new StringReader(xml));
-      factory.setNamespaceAware(false);
-      factory.setValidating(false);
-      xmlDocument = factory.newDocumentBuilder().parse(is);
+      xmlDocument = JavaXmlDocumentKt.createDocumentBuilder().parse(is);
     }
     catch (Exception ex) {
       throw new XmlParserException(ex);
@@ -65,6 +48,13 @@ public class TestEventXmlXPathView implements TestEventXmlView {
   @Override
   public String getTestName() throws XmlParserException {
     return queryXml("/ijLog/event/test/descriptor/@name");
+  }
+
+  @NotNull
+  @Override
+  public String getTestDisplayName() throws XmlParserException {
+    String displayName = queryXml("/ijLog/event/test/descriptor/@displayName");
+    return Strings.isEmpty(displayName)? getTestName(): displayName;
   }
 
   @NotNull
@@ -154,6 +144,11 @@ public class TestEventXmlXPathView implements TestEventXmlView {
   @Override
   public String getEventTestResultFailureType() throws XmlParserException {
     return queryXml("/ijLog/event/test/result/failureType");
+  }
+
+  @Override
+  public @NotNull String getEventTestResultExceptionName() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/exceptionName");
   }
 
   @NotNull

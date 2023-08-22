@@ -1,29 +1,35 @@
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.laf.macos
 
 import com.intellij.ide.ui.laf.IntelliJLaf
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import javax.swing.UIDefaults
 import javax.swing.UIManager
 
-class MacIntelliJLaf : IntelliJLaf() {
+internal class MacIntelliJLaf : IntelliJLaf() {
   init {
-    putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
+    putUserData(StartupUiUtil.PLUGGABLE_LAF_KEY, name)
   }
-
-  override fun getName(): String {
-    return MacLafProvider.LAF_NAME
-  }
-
-  override fun loadDefaults(defaults: UIDefaults) {
-    super.loadDefaults(defaults)
-    defaults["ClassLoader"] = javaClass.classLoader
-  }
-
-  override fun getPrefix(): String = "/com/intellij/ide/ui/laf/intellijlaf"
-
-  override fun getSystemPrefix(): String? = "macintellijlaf"
 
   companion object {
     fun isMacLaf() = UIManager.getLookAndFeel() is MacIntelliJLaf
   }
+
+  override fun getName() = MacLafProvider.LAF_NAME
+
+  override fun loadDefaults(defaults: UIDefaults) {
+    super.loadDefaults(defaults)
+
+    for ((key, value) in baseDefaults) {
+      if (key is String && key.endsWith(".selectionBackground")) {
+        defaults.put(key, value)
+      }
+    }
+  }
+
+  override val prefix: String
+    get() = "com/intellij/ide/ui/laf/intellijlaf"
+  override val systemPrefix: String
+    get() = "com/intellij/laf/macos/macintellijlaf"
 }

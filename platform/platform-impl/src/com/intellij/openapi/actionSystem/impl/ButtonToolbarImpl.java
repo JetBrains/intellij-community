@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -15,8 +14,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
+import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
+
+@Deprecated(forRemoval = true)
 class ButtonToolbarImpl extends JPanel {
-  private final DataManager myDataManager;
   private final String myPlace;
   private final PresentationFactory myPresentationFactory;
   private final ArrayList<ActionJButton> myActions = new ArrayList<>();
@@ -25,12 +26,11 @@ class ButtonToolbarImpl extends JPanel {
     super(new GridBagLayout());
     myPlace = place;
     myPresentationFactory = new PresentationFactory();
-    myDataManager = DataManager.getInstance();
 
     initButtons(actionGroup);
 
     updateActions();
-    ActionManagerEx.getInstanceEx().addTimerListener(500, new WeakTimerListener(new MyTimerListener()));
+    ActionManagerEx.getInstanceEx().addTimerListener(new WeakTimerListener(new MyTimerListener()));
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 
@@ -67,11 +67,16 @@ class ButtonToolbarImpl extends JPanel {
     return this;
   }
 
+  private @NotNull DataContext getDataContext() {
+    Component target = getFocusedComponentInWindowOrSelf(this);
+    return DataManager.getInstance().getDataContext(target);
+  }
+
   private class ActionJButton extends JButton {
     private final AnAction myAction;
 
     ActionJButton(final AnAction action) {
-      super(action.getTemplatePresentation().getText());
+      super(action.getTemplatePresentation().getText(true));
       myAction = action;
       setMnemonic(action.getTemplatePresentation().getMnemonic());
       setDisplayedMnemonicIndex(action.getTemplatePresentation().getDisplayedMnemonicIndex());
@@ -81,14 +86,14 @@ class ButtonToolbarImpl extends JPanel {
         public void actionPerformed(ActionEvent e) {
           AnActionEvent event = new AnActionEvent(
             null,
-            ((DataManagerImpl)DataManager.getInstance()).getDataContextTest(ButtonToolbarImpl.this),
+            getDataContext(),
             myPlace,
             myPresentationFactory.getPresentation(action),
             ActionManager.getInstance(),
             e.getModifiers()
           );
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionUtil.performActionDumbAware(action, event);
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
           }
         }
       });
@@ -136,8 +141,7 @@ class ButtonToolbarImpl extends JPanel {
       // don't update toolbar if there is currently active modal dialog
 
       final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window instanceof Dialog) {
-        final Dialog dialog = (Dialog)window;
+      if (window instanceof Dialog dialog) {
         if (dialog.isModal() && !SwingUtilities.isDescendingFrom(ButtonToolbarImpl.this, dialog)) {
           return;
         }
@@ -148,7 +152,7 @@ class ButtonToolbarImpl extends JPanel {
   }
 
   private void updateActions() {
-    final DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
+    DataContext dataContext = getDataContext();
     for (ActionJButton action : myActions) {
       action.updateAction(dataContext);
     }

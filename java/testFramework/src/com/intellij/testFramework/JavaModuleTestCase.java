@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -12,7 +11,6 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -22,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -64,36 +63,34 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
   }
 
   @NotNull
-  protected Module createModule(@NotNull File moduleFile) {
+  protected Module createModule(@NotNull Path moduleFile) {
     return createModule(moduleFile, StdModuleTypes.JAVA);
   }
 
-  @NotNull
-  protected Module createModule(@NotNull final File moduleFile, @NotNull ModuleType moduleType) {
-    final String path = moduleFile.getAbsolutePath();
-    return createModule(path, moduleType);
+  protected @NotNull Module createModule(@NotNull Path moduleFile, @NotNull ModuleType<?> moduleType) {
+    Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(moduleFile, moduleType.getId()));
+    myModulesToDispose.add(module);
+    return module;
   }
 
-  @NotNull
-  protected Module createModule(@NotNull String path, @NotNull ModuleType moduleType) {
+  protected @NotNull Module createModule(@NotNull String path, @NotNull ModuleType<?> moduleType) {
     Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(path, moduleType.getId()));
-
     myModulesToDispose.add(module);
     return module;
   }
 
   @NotNull
   protected Module loadModule(@NotNull VirtualFile file) {
-    return loadModule(file.getPath());
+    return loadModule(file.toNioPath());
   }
 
-  @NotNull
-  protected Module loadModule(@NotNull String modulePath) {
-    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+  protected final @NotNull Module loadModule(@NotNull Path modulePath) {
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     Module module;
     try {
-      module = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Module, Exception>)() -> moduleManager.loadModule(
-        FileUtil.toSystemIndependentName(modulePath)));
+      module = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Module, Exception>)() -> {
+        return moduleManager.loadModule(modulePath);
+      });
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -129,23 +126,20 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
     return result.get();
   }
 
-  @NotNull
-  protected Module createModuleFromTestData(@NotNull String dirInTestData, @NotNull String newModuleFileName, @NotNull ModuleType moduleType,
-                                            boolean addSourceRoot)
+  protected final @NotNull Module createModuleFromTestData(@NotNull String dirInTestData,
+                                                           @NotNull String newModuleFileName,
+                                                           @NotNull ModuleType<?> moduleType,
+                                                           boolean addSourceRoot)
     throws IOException {
-    final File dirInTestDataFile = new File(dirInTestData);
-    assertTrue(dirInTestDataFile.isDirectory());
-    final File moduleDir = createTempDirectory();
-    FileUtil.copyDir(dirInTestDataFile, moduleDir);
-    final Module module = createModule(moduleDir + "/" + newModuleFileName, moduleType);
-    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
-    assertNotNull(root);
-    WriteCommandAction.writeCommandAction(module.getProject()).run(() -> root.refresh(false, true));
+    VirtualFile moduleDir = getTempDir().createVirtualDir();
+    FileUtil.copyDir(new File(dirInTestData), moduleDir.toNioPath().toFile());
+    moduleDir.refresh(false, true);
+    Module module = createModule(moduleDir.toNioPath().resolve(newModuleFileName), moduleType);
     if (addSourceRoot) {
-      PsiTestUtil.addSourceContentToRoots(module, root);
+      PsiTestUtil.addSourceContentToRoots(module, moduleDir);
     }
     else {
-      PsiTestUtil.addContentRoot(module, root);
+      PsiTestUtil.addContentRoot(module, moduleDir);
     }
     return module;
   }

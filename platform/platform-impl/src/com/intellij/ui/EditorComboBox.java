@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditorComboBox extends ComboBox implements DocumentListener {
-  public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<EditorComboBox>() {
+  public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<>() {
     @Override
     public String getText(EditorComboBox component) {
       return component.getText();

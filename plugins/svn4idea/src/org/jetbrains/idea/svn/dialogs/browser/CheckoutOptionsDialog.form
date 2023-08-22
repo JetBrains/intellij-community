@@ -28,7 +28,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/SvnBundle" key="checkout.options.destination.label"/>
+              <text resource-bundle="messages/SvnBundle" key="label.destination"/>
             </properties>
           </component>
           <component id="a1fdf" class="javax.swing.JCheckBox" binding="myExternalsCheckbox">
@@ -37,7 +37,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text resource-bundle="messages/SvnBundle" key="checkout.options.externals.label"/>
+              <text resource-bundle="messages/SvnBundle" key="checkbox.include.externals.locations"/>
             </properties>
           </component>
           <nested-form id="20d59" form-file="org/jetbrains/idea/svn/revision/SvnSelectRevisionPanel.form" binding="svnSelectRevisionPanel">

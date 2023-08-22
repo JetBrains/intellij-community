@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPattern> {
   public PsiMethodPattern() {
     super(PsiMethod.class);
@@ -35,7 +32,6 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
    * Selects the corrected method by argument types
    * @param inputTypes the array of FQN of the parameter types or wildcards.
    * The special values are:<bl><li>"?" - means any type</li><li>".." - instructs pattern to accept the rest of the arguments</li></bl>
-   * @return
    */
   public PsiMethodPattern withParameters(@NonNls final String... inputTypes) {
     final String[] types = inputTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : inputTypes;
@@ -80,7 +76,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
     return with(new PatternConditionPlus<PsiMethod, PsiClass>("definedInClass", pattern) {
 
       @Override
-      public boolean processValues(PsiMethod t, final ProcessingContext context, final PairProcessor<PsiClass, ProcessingContext> processor) {
+      public boolean processValues(PsiMethod t, final ProcessingContext context, final PairProcessor<? super PsiClass, ? super ProcessingContext> processor) {
         if (!processor.process(t.getContainingClass(), context)) return false;
         final Ref<Boolean> result = Ref.create(Boolean.TRUE);
         SuperMethodsSearch.search(t, null, true, false).forEach(signature -> {

@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
+import com.intellij.testFramework.NeedsIndex;
 
 public class TabCompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -34,16 +35,19 @@ public class TabCompletionTest extends LightFixtureCompletionTestCase {
     checkResultJava();
   }
 
+  @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for txt, properties and xml")
   public void testTabInXml() {
     configureByFile("TabInXml.xml");
     checkResultByFile("TabInXml_After.xml");
   }
 
+  @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for txt, properties and xml")
   public void testTabInXml2() {
     configureByFile("TabInXml2.xml");
     checkResultByFile("TabInXml2_After.xml");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodCallBeforeAnnotation() {
     myFixture.configureByFile("MethodCallBeforeAnnotation.java");
     myFixture.completeBasic();
@@ -51,6 +55,7 @@ public class TabCompletionTest extends LightFixtureCompletionTestCase {
     checkResultJava();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodCallBeforeAnnotation2() {
     myFixture.configureByFile("MethodCallBeforeAnnotation2.java");
     myFixture.completeBasic();
@@ -58,6 +63,7 @@ public class TabCompletionTest extends LightFixtureCompletionTestCase {
     checkResultJava();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testReplaceStringLiteral() {
     configureByTestName();
     checkResultJava();

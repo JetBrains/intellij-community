@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -8,14 +8,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import java.util.Objects;
-import javax.swing.JComponent;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.Objects;
 
 public class EditChangelistDialog extends DialogWrapper {
   private final NewEditChangelistPanel myPanel;
   private final Project myProject;
-  private final LocalChangeList myList;
+  private final @NotNull LocalChangeList myList;
 
   public EditChangelistDialog(Project project, @NotNull LocalChangeList list) {
     super(project, true);
@@ -23,7 +27,7 @@ public class EditChangelistDialog extends DialogWrapper {
     myList = list;
     myPanel = new NewEditChangelistPanel(project) {
       @Override
-      protected void nameChanged(String errorMessage) {
+      protected void nameChanged(@Nullable @Nls String errorMessage) {
         setOKActionEnabled(errorMessage == null);
         setErrorText(errorMessage, myPanel);
       }
@@ -34,6 +38,7 @@ public class EditChangelistDialog extends DialogWrapper {
     myPanel.getMakeActiveCheckBox().setSelected(myList.isDefault());
     myPanel.getMakeActiveCheckBox().setEnabled(!myList.isDefault());
     setTitle(VcsBundle.message("changes.dialog.editchangelist.title"));
+    setSize(JBUI.scale(500), JBUI.scale(230));
     init();
   }
 

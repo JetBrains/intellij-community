@@ -21,6 +21,9 @@ public interface TrailingSpacesOptionsProvider {
     Boolean getEnsureNewLineAtEOF();
 
     @Nullable
+    Boolean getRemoveTrailingBlankLines();
+
+    @Nullable
     Boolean getChangedLinesOnly();
 
     @Nullable

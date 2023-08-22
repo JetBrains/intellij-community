@@ -15,7 +15,7 @@
  */
 package com.intellij.diagnostic.report
 
-data class HeapReportProperties(
+internal data class HeapReportProperties(
   val reason: MemoryReportReason,
   val liveStats: String
 )

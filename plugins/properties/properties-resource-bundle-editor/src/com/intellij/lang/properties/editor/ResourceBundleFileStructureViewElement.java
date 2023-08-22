@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.editor;
 
@@ -11,8 +11,8 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
+public final class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   @NotNull
   private final ResourceBundle myResourceBundle;
   @NotNull
@@ -76,8 +76,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
 
   public static MultiMap<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {
     if (!resourceBundle.isValid()) {
-      //noinspection unchecked
-      return (MultiMap<String, IProperty>)MultiMap.EMPTY;
+      return MultiMap.empty();
     }
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
     final MultiMap<String, IProperty> propertyNames;
@@ -99,7 +98,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
 
   private static MultiMap<String, IProperty> getChildrenIdShowOnlyIncomplete(ResourceBundle resourceBundle) {
     final MultiMap<String, IProperty> propertyNames = MultiMap.createLinked();
-    TObjectIntHashMap<String> occurrences = new TObjectIntHashMap<>();
+    Object2IntMap<String> occurrences=new Object2IntOpenHashMap<>();
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       MultiMap<String, IProperty> currentFilePropertyNames = MultiMap.createLinked();
       for (IProperty property : file.getProperties()) {
@@ -108,36 +107,25 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
       }
       propertyNames.putAllValues(currentFilePropertyNames);
       for (String propertyName : currentFilePropertyNames.keySet()) {
-        if (occurrences.contains(propertyName)) {
-          occurrences.adjustValue(propertyName, 1);
-        }
-        else {
-          occurrences.put(propertyName, 1);
-        }
+        occurrences.mergeInt(propertyName, 1, Math::addExact);
       }
     }
     final int targetOccurrences = resourceBundle.getPropertiesFiles().size();
-    occurrences.forEachEntry(new TObjectIntProcedure<String>() {
-      @Override
-      public boolean execute(String propertyName, int occurrences) {
-        if (occurrences == targetOccurrences) {
-          propertyNames.remove(propertyName);
-        }
-        return true;
+    for (Object2IntMap.Entry<String> entry : occurrences.object2IntEntrySet()) {
+      if (entry.getIntValue() == targetOccurrences) {
+        propertyNames.remove(entry.getKey());
       }
-    });
+    }
     return propertyNames;
   }
 
-  @Nullable
   @Override
-  public IProperty[] getProperties() {
+  public IProperty @NotNull [] getProperties() {
     return IProperty.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public PsiFile[] getFiles() {
+  public PsiFile @Nullable [] getFiles() {
     ResourceBundle rb = getValue();
     if (rb == null) return null;
     final List<PropertiesFile> files = rb.getPropertiesFiles();
@@ -154,29 +142,9 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
       }
 
       @Override
-      public String getLocationString() {
-        return null;
-      }
-
-      @Override
       public Icon getIcon(boolean open) {
         return AllIcons.FileTypes.Properties;
       }
     };
-  }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
   }
 }

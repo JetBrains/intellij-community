@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.properties.IProperty;
@@ -19,6 +18,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspLanguage;
+import com.intellij.psi.jsp.JspxLanguage;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,20 +36,19 @@ import java.util.*;
 public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
   private static final Key<IProperty> CACHE = Key.create("i18n.property.cache");
-  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
+  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(new PsiFileStubImpl<>(null), null), PropertiesElementTypes.PROPERTY);
 
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
-    if (!(element instanceof PsiFile) || quick || !isFoldingsOn()) {
-      return FoldingDescriptor.EMPTY;
+    if (!(element instanceof PsiFile file) || quick || !isFoldingsOn()) {
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
-    final PsiFile file = (PsiFile)element;
     final List<FoldingDescriptor> result = new ArrayList<>();
-    boolean hasJsp = ContainerUtil.intersects(Arrays.asList(StdLanguages.JSP, StdLanguages.JSPX), file.getViewProvider().getLanguages());
+    boolean hasJsp = ContainerUtil.exists(file.getViewProvider().getLanguages(), (l) -> l instanceof JspLanguage || l instanceof JspxLanguage);
     //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
     file.accept(hasJsp ? new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         ProgressManager.checkCanceled();
         ULiteralExpression uLiteralExpression = UastContextKt.toUElement(expression, ULiteralExpression.class);
         if (uLiteralExpression != null) {
@@ -67,7 +68,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
       }
     });
 
-    return result.toArray(FoldingDescriptor.EMPTY);
+    return result.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   private static boolean isFoldingsOn() {
@@ -82,14 +83,13 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (!isI18nProperty(expression)) return;
     final IProperty property = getI18nProperty(expression);
     final HashSet<Object> set = new HashSet<>();
-    set.add(property != null ? property : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    set.add(property != null ? property : PsiModificationTracker.MODIFICATION_COUNT);
     final String msg = formatI18nProperty(expression, property);
 
     final UElement parent = expression.getUastParent();
     if (!msg.equals(UastLiteralUtils.getValueIfStringLiteral(expression)) &&
-        parent instanceof UCallExpression &&
+        parent instanceof UCallExpression expressions &&
         ((UCallExpression)parent).getValueArguments().get(0).getSourcePsi() == expression.getSourcePsi()) {
-      final UCallExpression expressions = (UCallExpression)parent;
       PsiElement callSourcePsi = expressions.getSourcePsi();
       if (callSourcePsi == null) return;
       final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(expression);
@@ -123,6 +123,9 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           }
           return;
         }
+      }
+      else {
+        return;
       }
     }
     result.add(new FoldingDescriptor(Objects.requireNonNull(sourcePsi.getNode()), sourcePsi.getTextRange(), null,
@@ -233,8 +236,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
           final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
           for (ResolveResult result : results) {
             final PsiElement element = result.getElement();
-            if (element instanceof IProperty) {
-              IProperty p = (IProperty)element;
+            if (element instanceof IProperty p) {
               sourcePsi.putUserData(CACHE, p);
               return p;
             }
@@ -242,8 +244,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
         }
         else {
           final PsiElement element = reference.resolve();
-          if (element instanceof IProperty) {
-            IProperty p = (IProperty)element;
+          if (element instanceof IProperty p) {
             sourcePsi.putUserData(CACHE, p);
             return p;
           }

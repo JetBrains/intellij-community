@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -25,12 +11,12 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class PropertyResolver extends PropertyProviderFinder {
-  private final String myPropertyName;
+public final class PropertyResolver extends PropertyProviderFinder {
+  private final @NonNls String myPropertyName;
   private PropertiesProvider myResult;
   private final Set<String> myVariants = new HashSet<>();
 
-  private PropertyResolver(@NotNull String propertyName, DomElement contextElement) {
+  private PropertyResolver(@NotNull @NonNls String propertyName, DomElement contextElement) {
     super(contextElement);
     myPropertyName = propertyName;
   }
@@ -40,22 +26,23 @@ public class PropertyResolver extends PropertyProviderFinder {
     // deliberately skip ancall params, they will be processed as a special case
   }
 
+  public record PropertyData(PsiElement element, Collection<String> variants, PropertiesProvider provider) {}
+
   @NotNull
-  public static Trinity<PsiElement, Collection<String>, PropertiesProvider> resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
+  public static PropertyData resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
     final PropertyResolver resolver = new PropertyResolver(propertyName, contextElement);
     resolver.execute(project, project.getDefaultTarget().getRawText());
-    if (resolver.getContextElement() instanceof PropertiesProvider) {
+    if (resolver.getContextElement() instanceof PropertiesProvider provider) {
       // special case - when context element is a property provider itself
-      resolver.propertyProviderFound((PropertiesProvider)resolver.getContextElement());
+      resolver.propertyProviderFound(provider);
     }
     return resolver.getResult();
-
   }
 
   @NotNull
-  public Trinity<PsiElement, Collection<String>, PropertiesProvider> getResult() {
+  public PropertyData getResult() {
     final PsiElement element = myResult != null ? myResult.getNavigationElement(myPropertyName) : null;
-    return new Trinity<>(element, Collections.unmodifiableSet(myVariants), myResult);
+    return new PropertyData(element, Collections.unmodifiableSet(myVariants), myResult);
   }
 
   @Override

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,16 +13,14 @@ import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroComponentProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
-public class DuplicateComponentsAction extends AbstractGuiEditorAction {
+
+public final class DuplicateComponentsAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance(DuplicateComponentsAction.class);
 
   public DuplicateComponentsAction() {
@@ -37,7 +34,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     assert parent != null;
     List<RadComponent> duplicates = new ArrayList<>();
     Map<RadComponent, RadComponent> duplicateMap = new HashMap<>();
-    TIntHashSet insertedRows = new TIntHashSet();
+    IntSet insertedRows = new IntOpenHashSet();
     boolean incrementRow = true;
     if (selection.size() > 1 && canDuplicate(selection, false) && FormEditingUtil.getSelectionBounds(selection).width == 1) {
       incrementRow = false;
@@ -71,9 +68,8 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
 
   private static void fillDuplicateMap(Map<RadComponent, RadComponent> duplicates, final RadComponent c, final RadComponent copy) {
     duplicates.put(c, copy);
-    if (c instanceof RadContainer) {
+    if (c instanceof RadContainer container) {
       LOG.assertTrue(copy instanceof RadContainer);
-      final RadContainer container = (RadContainer)c;
       final RadContainer containerCopy = (RadContainer)copy;
       for(int i=0; i<container.getComponentCount(); i++) {
         fillDuplicateMap(duplicates, container.getComponent(i), containerCopy.getComponent(i));
@@ -90,8 +86,7 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
         copy.setDefaultBinding(true);
       }
       for(IProperty prop: copy.getModifiedProperties()) {
-        if (prop instanceof IntroComponentProperty) {
-          final IntroComponentProperty componentProperty = (IntroComponentProperty)prop;
+        if (prop instanceof IntroComponentProperty componentProperty) {
           String copyValue = componentProperty.getValue(copy);
           for(RadComponent original: duplicates.keySet()) {
             if (original.getId().equals(copyValue)) {
@@ -149,8 +144,8 @@ public class DuplicateComponentsAction extends AbstractGuiEditorAction {
     return true;
   }
 
-  @Override @Nullable
-  protected String getCommandName() {
+  @Override
+  protected @NotNull String getCommandName() {
     return UIDesignerBundle.message("command.duplicate");
   }
 }

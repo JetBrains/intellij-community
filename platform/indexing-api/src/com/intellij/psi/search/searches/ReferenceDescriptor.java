@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-public class ReferenceDescriptor {
+public final class ReferenceDescriptor {
   @NotNull
   public static final Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {
     final PsiElement element = psiReference.getElement();
@@ -29,9 +29,7 @@ public class ReferenceDescriptor {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ReferenceDescriptor)) return false;
-
-    ReferenceDescriptor that = (ReferenceDescriptor)o;
+    if (!(o instanceof ReferenceDescriptor that)) return false;
 
     if (offset != that.offset) return false;
     return file.equals(that.file);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -41,10 +38,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
 
-/**
- * @author ilyas
- */
-public class ExtractUtil {
+public final class ExtractUtil {
   private static final Logger LOG = Logger.getInstance(ExtractUtil.class);
 
   private ExtractUtil() {
@@ -92,7 +86,7 @@ public class ExtractUtil {
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCall(helper);
 
-    if ((outputVars.length == 0 || PsiType.VOID.equals(type)) && !helper.hasReturnValue()) return new GrStatement[]{callExpression};
+    if ((outputVars.length == 0 || PsiTypes.voidType().equals(type)) && !helper.hasReturnValue()) return new GrStatement[]{callExpression};
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     if (helper.hasReturnValue()) {
       return new GrStatement[]{factory.createStatementFromText("return " + callExpression.getText())};
@@ -224,8 +218,7 @@ public class ExtractUtil {
     List<VariableInfo> result = new ArrayList<>();
 
     for (GrStatement statement : statements) {
-      if (statement instanceof GrVariableDeclaration) {
-        GrVariableDeclaration declaration = (GrVariableDeclaration)statement;
+      if (statement instanceof GrVariableDeclaration declaration) {
         for (GrVariable variable : declaration.getVariables()) {
           final VariableInfo removed = names.remove(variable.getName());
           if (removed != null) {
@@ -285,7 +278,7 @@ public class ExtractUtil {
     return result;
   }
 
-  public static GrMethod createMethod(ExtractMethodInfoHelper helper) {
+  public static @NotNull GrMethod createMethod(ExtractMethodInfoHelper helper) {
     StringBuilder buffer = new StringBuilder();
 
     //Add signature
@@ -306,7 +299,7 @@ public class ExtractUtil {
     buffer.append(") { \n");
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
-    generateBody(helper, PsiType.VOID.equals(type), buffer, helper.isForceReturn());
+    generateBody(helper, PsiTypes.voidType().equals(type), buffer, helper.isForceReturn());
 
     buffer.append("\n}");
 
@@ -413,7 +406,7 @@ public class ExtractUtil {
         if (unboxed != null) paramType = unboxed;
 
         String paramTypeText;
-        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramType.equals(PsiType.NULL)) {
+        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramType.equals(PsiTypes.nullType())) {
           paramTypeText = "";
         }
         else {

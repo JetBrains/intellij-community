@@ -1,92 +1,125 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.KeyedExtensionFactory
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.MODULE_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
-import gnu.trove.THashMap
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.tree.DefaultTreeModel
 
 private val PREDEFINED_PRIORITIES = mapOf(DIRECTORY_GROUPING to 10, MODULE_GROUPING to 20, REPOSITORY_GROUPING to 30)
 
-class ChangesGroupingSupport(val project: Project, source: Any, val showConflictsNode: Boolean) {
+open class ChangesGroupingSupport(val project: Project, source: Any, val showConflictsNode: Boolean) {
   private val changeSupport = PropertyChangeSupport(source)
-  private val groupingConfig: MutableMap<String, Boolean>
+  private val _groupingKeys = ConcurrentCollectionFactory.createConcurrentSet<String>() // updated on EDT
+  val groupingKeys get() = _groupingKeys.toSet()
 
-  val groupingKeys: Set<String>
-    get() = groupingConfig.filterValues { it }.keys
+  operator fun get(groupingKey: @NonNls String): Boolean {
+    if (!isAvailable(groupingKey)) return false
 
-  init {
-    groupingConfig = THashMap()
-    for (epBean in ChangesGroupingPolicyFactory.EP_NAME.extensionList) {
-      if (epBean.key != null) {
-        groupingConfig.put(epBean.key, false)
-      }
-    }
+    return _groupingKeys.contains(groupingKey)
   }
 
-  operator fun get(groupingKey: String): Boolean {
-    if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey")
-
-    return groupingConfig[groupingKey]!!
-  }
-
+  @RequiresEdt
   operator fun set(groupingKey: String, state: Boolean) {
-    if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey")
+    if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey") // NON-NLS
 
-    if (groupingConfig[groupingKey] != state) {
-      val oldGroupingKeys = groupingKeys
+    val currentState = _groupingKeys.contains(groupingKey)
+    if (currentState == state) return
 
-      groupingConfig[groupingKey] = state
-      changeSupport.firePropertyChange(PROP_GROUPING_KEYS, oldGroupingKeys, groupingKeys)
+    val oldGroupingKeys = _groupingKeys.toSet()
+    if (state) {
+      _groupingKeys += groupingKey
     }
+    else {
+      _groupingKeys -= groupingKey
+    }
+    changeSupport.firePropertyChange(PROP_GROUPING_KEYS, oldGroupingKeys, _groupingKeys.toSet())
   }
 
-  val grouping: ChangesGroupingPolicyFactory
-    get() = object : ChangesGroupingPolicyFactory() {
-      override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
-        var result = DefaultChangesGroupingPolicy.Factory(showConflictsNode).createGroupingPolicy(project, model)
-        groupingConfig.filterValues { it }.keys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach {
-          result = findFactory(it)!!.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
-        }
-        return result
-      }
-    }
-
-  val isNone: Boolean get() = groupingKeys.isEmpty()
+  val grouping: ChangesGroupingPolicyFactory get() = CombinedGroupingPolicyFactory()
+  val isNone: Boolean get() = _groupingKeys.isEmpty()
   val isDirectory: Boolean get() = this[DIRECTORY_GROUPING]
 
-  fun setGroupingKeysOrSkip(groupingKeys: Set<String>) {
-    groupingConfig.entries.forEach { it.setValue(it.key in groupingKeys) }
+  @RequiresEdt
+  fun setGroupingKeysOrSkip(newGroupingKeys: Collection<String>) {
+    _groupingKeys.clear()
+    _groupingKeys += newGroupingKeys.filter { groupingKey -> isAvailable(groupingKey) }
   }
-  fun isAvailable(groupingKey: String) = findFactory(groupingKey) != null
 
-  fun addPropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.addPropertyChangeListener(listener)
-  fun removePropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.removePropertyChangeListener(listener)
+  open fun isAvailable(groupingKey: String) = findFactory(groupingKey) != null
+
+  fun addPropertyChangeListener(listener: PropertyChangeListener) {
+    changeSupport.addPropertyChangeListener(listener)
+  }
+
+  fun removePropertyChangeListener(listener: PropertyChangeListener) {
+    changeSupport.removePropertyChangeListener(listener)
+  }
+
+  private inner class CombinedGroupingPolicyFactory : ChangesGroupingPolicyFactory() {
+    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
+      var result = DefaultChangesGroupingPolicy.Factory(showConflictsNode).createGroupingPolicy(project, model)
+      _groupingKeys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach { groupingKey ->
+        val factory = findFactory(groupingKey) ?: throw IllegalArgumentException("Unknown grouping $groupingKey") // NON-NLS
+        result = factory.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
+      }
+      return result
+    }
+  }
+
+  class Disabled(project: Project, source: Any) : ChangesGroupingSupport(project, source, false) {
+    override fun isAvailable(groupingKey: String): Boolean = false
+  }
 
   companion object {
     @JvmField
     val KEY = DataKey.create<ChangesGroupingSupport>("ChangesTree.GroupingSupport")
 
-    const val PROP_GROUPING_KEYS = "ChangesGroupingKeys"
-    const val DIRECTORY_GROUPING = "directory"
-    const val MODULE_GROUPING = "module"
-    const val REPOSITORY_GROUPING = "repository"
-    const val NONE_GROUPING = "none"
+    const val PROP_GROUPING_KEYS = "ChangesGroupingKeys" // NON-NLS
+    const val DIRECTORY_GROUPING = "directory" // NON-NLS
+    const val MODULE_GROUPING = "module" // NON-NLS
+    const val REPOSITORY_GROUPING = "repository" // NON-NLS
+    const val NONE_GROUPING = "none" // NON-NLS
+
+    private val FACTORIES = ClearableLazyValue.create { buildFactories() }
+
+    init {
+      ChangesGroupingPolicyFactory.EP_NAME.addChangeListener({ FACTORIES.drop() }, null)
+    }
 
     @JvmStatic
     fun getFactory(key: String): ChangesGroupingPolicyFactory {
       return findFactory(key) ?: NoneChangesGroupingFactory
     }
 
-    private fun findFactory(key: String): ChangesGroupingPolicyFactory? {
-      return KeyedExtensionFactory.findByKey(key, ChangesGroupingPolicyFactory.EP_NAME, ApplicationManager.getApplication().picoContainer)
+    @JvmStatic
+    fun findFactory(key: String): ChangesGroupingPolicyFactory? {
+      return FACTORIES.value[key]
+    }
+
+    private fun buildFactories(): Map<String, ChangesGroupingPolicyFactory> {
+      val result = mutableMapOf<String, ChangesGroupingPolicyFactory>()
+      for (bean in ChangesGroupingPolicyFactory.EP_NAME.extensionList) {
+        val key = bean.key ?: continue
+        val clazz = bean.implementationClass ?: continue
+        try {
+          result[key] = ApplicationManager.getApplication().instantiateClass(clazz, bean.pluginDescriptor)
+        }
+        catch (e: Throwable) {
+          logger<ChangesGroupingSupport>().error(e)
+        }
+      }
+      return result
     }
   }
 }

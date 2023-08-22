@@ -1,22 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +43,7 @@ public abstract class AutoScrollToSourceHandler {
         TreePath location = tree.getPathForLocation(e.getPoint().x, e.getPoint().y);
         if (location != null) {
           onMouseClicked(tree);
-          return isAutoScrollMode();
+          // return isAutoScrollMode(); // do not consume event to allow processing by a tree
         }
 
         return false;
@@ -135,21 +137,21 @@ public abstract class AutoScrollToSourceHandler {
       myAutoScrollAlarm.addRequest(
         () -> {
           if (component.isShowing()) { //for tests
-            if (!needToCheckFocus() || component.hasFocus()) {
+            if (!needToCheckFocus() || UIUtil.hasFocus(component)) {
               scrollToSource(component);
             }
           }
         },
-        500
+        Registry.intValue("ide.autoscroll.to.source.delay", 100)
       );
     }
   }
 
-  protected String getActionName() {
+  protected @NlsActions.ActionText String getActionName() {
     return UIBundle.message("autoscroll.to.source.action.name");
   }
 
-  protected String getActionDescription() {
+  protected @NlsActions.ActionDescription String getActionDescription() {
     return UIBundle.message("autoscroll.to.source.action.description");
   }
 
@@ -173,16 +175,11 @@ public abstract class AutoScrollToSourceHandler {
     return file.getLength() <= PersistentFSConstants.getMaxIntellisenseFileSize();
   }
 
-  protected void scrollToSource(final Component tree) {
-    DataContext dataContext=DataManager.getInstance().getDataContext(tree);
-    getReady(dataContext).doWhenDone(() -> ApplicationManager.getApplication().invokeLater(() -> {
-      DataContext context = DataManager.getInstance().getDataContext(tree);
-      final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
-      Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(context);
-      if (navigatables != null && navigatables.length == 1 && (vFile == null || isAutoScrollEnabledFor(vFile))) {
-        OpenSourceUtil.navigateToSource(false, true, navigatables[0]);
-      }
-    }));
+  @RequiresEdt
+  protected void scrollToSource(@NotNull Component tree) {
+    AutoScrollToSourceTaskManager.getInstance()
+      .scheduleScrollToSource(this,
+                              DataManager.getInstance().getDataContext(tree));
   }
 
   @NotNull
@@ -191,7 +188,7 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
-    AutoscrollToSourceAction(String actionName, String actionDescription) {
+    AutoscrollToSourceAction(@NlsActions.ActionText String actionName, @NlsActions.ActionDescription String actionDescription) {
       super(actionName, actionDescription, AllIcons.General.AutoscrollToSource);
     }
 
@@ -201,14 +198,14 @@ public abstract class AutoScrollToSourceHandler {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setAutoScrollMode(flag);
     }
-  }
-
-  private ActionCallback getReady(DataContext context) {
-    ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
-    return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -7,9 +7,10 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.DependencyAccessorsModel;
+import org.jetbrains.plugins.gradle.model.VersionCatalogsModel;
 
 import java.io.File;
 import java.util.List;
@@ -20,6 +21,8 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
   @NotNull
   public static final Key<BuildScriptClasspathData> KEY =
     Key.create(BuildScriptClasspathData.class, ProjectKeys.LIBRARY_DEPENDENCY.getProcessingWeight() + 1);
+  public static final Key<VersionCatalogsModel> VERSION_CATALOGS = Key.create(VersionCatalogsModel.class, KEY.getProcessingWeight());
+  public static final Key<DependencyAccessorsModel> ACCESSORS = Key.create(DependencyAccessorsModel.class, KEY.getProcessingWeight());
 
   @Nullable
   private File gradleHomeDir;
@@ -65,7 +68,7 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
 
   public static final class ClasspathEntry {
 
-    private final static Interner<ClasspathEntry> ourEntryInterner = new WeakInterner<>();
+    private final static Interner<ClasspathEntry> ourEntryInterner = Interner.createWeakInterner();
 
     @NotNull
     private final Set<String> classesFile;
@@ -86,7 +89,7 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
     /**
      * @deprecated use ClasspathEntry{@link #create(Set, Set, Set)} to avoid memory leaks
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @PropertyMapping({"classesFile", "sourcesFile", "javadocFile"})
     public ClasspathEntry(@NotNull Set<String> classesFile, @NotNull Set<String> sourcesFile, @NotNull Set<String> javadocFile) {
       this.classesFile = classesFile;
@@ -112,9 +115,7 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ClasspathEntry)) return false;
-
-      ClasspathEntry entry = (ClasspathEntry)o;
+      if (!(o instanceof ClasspathEntry entry)) return false;
 
       if (!classesFile.equals(entry.classesFile)) return false;
       if (!javadocFile.equals(entry.javadocFile)) return false;

@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import javax.swing.AbstractListModel
@@ -23,18 +25,39 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
       lastListIdx--
     }
 
+    var added = false
+    val hideUnknown = ApplicationManager.getApplication().let { !it.isInternal && !it.isEAP }
     for (item in items) {
+      if (item is GHPRTimelineItem.Unknown && (hideUnknown || item.__typename in GHPRTimelineItem.IGNORED_TYPES)) continue
       val merged = mergeIfPossible(lastItem, item)
       if (merged != null) {
         lastItem = merged
       }
       else {
-        if (lastItem != null && !isCollapsedMerge(lastItem)) list.add(lastItem)
+        if (lastItem != null && !isCollapsedMerge(lastItem)) {
+          list.add(lastItem)
+          added = true
+        }
         lastItem = item
       }
     }
-    if (lastItem != null && !isCollapsedMerge(lastItem)) list.add(lastItem)
-    fireIntervalAdded(this, lastListIdx + 1, list.lastIndex)
+    if (lastItem != null && !isCollapsedMerge(lastItem)) {
+      list.add(lastItem)
+      added = true
+    }
+    if (added) fireIntervalAdded(this, lastListIdx + 1, list.lastIndex)
+  }
+
+  fun update(item: GHPRTimelineItem) {
+    val idx = list.indexOf(item)
+    if (idx >= 0) list[idx] = item
+    fireContentsChanged(this, idx, idx)
+  }
+
+  fun remove(item: GHPRTimelineItem) {
+    val idx = list.indexOf(item)
+    if (idx >= 0) list.removeAt(idx)
+    fireIntervalRemoved(this, idx, idx)
   }
 
   fun removeAll() {
@@ -46,31 +69,69 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
   companion object {
     private const val MERGE_THRESHOLD_MS = DateFormatUtil.MINUTE * 2
 
-    private fun mergeIfPossible(existing: GHPRTimelineItem?, new: GHPRTimelineItem?): GHPRTimelineEvent? {
-      if (existing !is GHPRTimelineEvent || new !is GHPRTimelineEvent) return null
+    private fun mergeIfPossible(existing: GHPRTimelineItem?, new: GHPRTimelineItem?): GHPRTimelineItem? {
+      val groupedCommits = tryGroupCommits(existing, new)
+      if (groupedCommits != null) {
+        return groupedCommits
+      }
 
-      if (existing.actor == new.actor && new.createdAt.time - existing.createdAt.time <= MERGE_THRESHOLD_MS) {
-        if (existing is GHPRTimelineEvent.Simple && new is GHPRTimelineEvent.Simple) {
-          if (existing is GHPRTimelineMergedSimpleEvents) {
-            existing.add(new)
-            return existing
-          }
-          else {
-            return GHPRTimelineMergedSimpleEvents().apply {
-              add(existing)
-              add(new)
-            }
+      if (existing !is GHPRTimelineEvent || new !is GHPRTimelineEvent) return null
+      if (existing.actor != new.actor) return null
+      if (new.createdAt.time - existing.createdAt.time > MERGE_THRESHOLD_MS) return null
+
+      if (existing is GHPRTimelineEvent.Simple && new is GHPRTimelineEvent.Simple) {
+        if (existing is GHPRTimelineMergedSimpleEvents) {
+          existing.add(new)
+          return existing
+        }
+        else {
+          return GHPRTimelineMergedSimpleEvents().apply {
+            add(existing)
+            add(new)
           }
         }
-        else if (existing is GHPRTimelineEvent.State && new is GHPRTimelineEvent.State) {
-          if (existing is GHPRTimelineMergedStateEvents) {
-            existing.add(new)
-            return existing
+      }
+      else if (existing is GHPRTimelineEvent.State && new is GHPRTimelineEvent.State) {
+        if (existing is GHPRTimelineMergedStateEvents) {
+          existing.add(new)
+          return existing
+        }
+        else {
+          return GHPRTimelineMergedStateEvents(existing).apply {
+            add(new)
           }
-          else {
-            return GHPRTimelineMergedStateEvents(existing).apply {
-              add(new)
-            }
+        }
+      }
+      return null
+    }
+
+    private fun tryGroupCommits(existing: GHPRTimelineItem?, new: GHPRTimelineItem?): GHPRTimelineItem? {
+      if (existing is GHPullRequestCommitShort && new is GHPullRequestCommitShort) {
+        return GHPRTimelineGroupedCommits().apply {
+          add(existing)
+          add(new)
+        }
+      }
+
+      if (existing is GHPRTimelineGroupedCommits && new is GHPullRequestCommitShort) {
+        return existing.apply {
+          add(new)
+        }
+      }
+
+      if (existing is GHPullRequestCommitShort && new is GHPRTimelineGroupedCommits) {
+        return GHPRTimelineGroupedCommits().apply {
+          add(existing)
+          for (item in new.items) {
+            add(item)
+          }
+        }
+      }
+
+      if (existing is GHPRTimelineGroupedCommits && new is GHPRTimelineGroupedCommits) {
+        return existing.apply {
+          for (item in new.items) {
+            add(item)
           }
         }
       }

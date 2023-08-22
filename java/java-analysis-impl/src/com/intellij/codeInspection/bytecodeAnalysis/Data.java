@@ -62,6 +62,10 @@ final class Component {
   public Component copy() {
     return new Component(value, ids.clone());
   }
+
+  public boolean isSuperStateOf(Component other) {
+    return other.value == value && Arrays.asList(other.ids).containsAll(Arrays.asList(ids));
+  }
 }
 
 final class Equation {
@@ -223,8 +227,8 @@ final class Pending implements Result {
 }
 
 final class Effects implements Result {
-  static final Set<EffectQuantum> TOP_EFFECTS = Collections.singleton(EffectQuantum.TopEffectQuantum);
-  static final Effects VOLATILE_EFFECTS = new Effects(DataValue.UnknownDataValue2, Collections.singleton(EffectQuantum.TopEffectQuantum));
+  static final Set<EffectQuantum> TOP_EFFECTS = Set.of(EffectQuantum.TopEffectQuantum);
+  static final Effects VOLATILE_EFFECTS = new Effects(DataValue.UnknownDataValue2, TOP_EFFECTS);
 
   @NotNull final DataValue returnValue;
   @NotNull final Set<EffectQuantum> effects;
@@ -236,10 +240,20 @@ final class Effects implements Result {
 
   Effects combine(Effects other) {
     if (this.equals(other)) return this;
-    Set<EffectQuantum> newEffects = new HashSet<>(this.effects);
-    newEffects.addAll(other.effects);
-    if (newEffects.contains(EffectQuantum.TopEffectQuantum)) {
-      newEffects = TOP_EFFECTS;
+    Set<EffectQuantum> newEffects;
+    if (this.effects.containsAll(other.effects)) {
+      newEffects = this.effects;
+    }
+    else if (other.effects.containsAll(this.effects)) {
+      newEffects = other.effects;
+    }
+    else {
+      newEffects = new HashSet<>(this.effects);
+      newEffects.addAll(other.effects);
+      if (newEffects.contains(EffectQuantum.TopEffectQuantum)) {
+        newEffects = TOP_EFFECTS;
+      }
+      newEffects = Set.copyOf(newEffects);
     }
     DataValue newReturnValue = this.returnValue.equals(other.returnValue) ? this.returnValue : DataValue.UnknownDataValue1;
     return new Effects(newReturnValue, newEffects);

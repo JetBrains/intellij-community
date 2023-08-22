@@ -1,8 +1,8 @@
 package com.intellij.filePrediction.predictor
 
-import com.intellij.filePrediction.FilePredictionFeature
-import com.intellij.filePrediction.history.FileHistoryFeatures
-import com.intellij.filePrediction.history.NextFileProbability
+import com.intellij.filePrediction.features.FilePredictionFeature
+import com.intellij.filePrediction.features.history.FileHistoryFeatures
+import com.intellij.filePrediction.features.history.NextFileProbability
 
 @Suppress("unused")
 internal class FilePredictionFeaturesBuilder {
@@ -18,8 +18,8 @@ internal class FilePredictionFeaturesBuilder {
       is Boolean -> FilePredictionFeature.binary(value)
       is Double -> FilePredictionFeature.numerical(value)
       is Int -> FilePredictionFeature.numerical(value)
-      is String -> FilePredictionFeature.categorical(value)
-      else -> FilePredictionFeature.categorical(value.toString())
+      is String -> FilePredictionFeature.fileType(value)
+      else -> FilePredictionFeature.fileType(value.toString())
     }
   }
 
@@ -55,12 +55,12 @@ internal class FilePredictionFeaturesBuilder {
   }
 
   fun withFileType(type: String): FilePredictionFeaturesBuilder {
-    features["file_type"] = FilePredictionFeature.categorical(type)
+    features["file_type"] = FilePredictionFeature.fileType(type)
     return this
   }
 
   fun withPrevFileType(type: String): FilePredictionFeaturesBuilder {
-    features["prev_file_type"] = FilePredictionFeature.categorical(type)
+    features["prev_file_type"] = FilePredictionFeature.fileType(type)
     return this
   }
 

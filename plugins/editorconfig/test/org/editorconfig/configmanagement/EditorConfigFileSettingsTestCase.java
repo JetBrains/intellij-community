@@ -1,35 +1,46 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
-import static com.intellij.psi.util.PsiUtilCore.getPsiFile;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTestCase {
   private CodeStyleSettings myOriginalSettings;
+  private Path contentDir;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     CodeStyle.dropTemporarySettings(getProject());
     myOriginalSettings = CodeStyle.createTestSettings(CodeStyle.getSettings(getProject()));
-    EditorConfigCodeStyleSettingsModifier.setEnabledInTests(true);
+    EditorConfigCodeStyleSettingsModifier.Handler.INSTANCE.setEnabledInTests(true);
+    Utils.setEnabledInTests(true);
+
+    // move test data to temp dir to ensure that IJ Project .editorConfig files don't affect tests
+    Path testDataDir = Paths.get(PathManagerEx.getHomePath(EditorConfigFileSettingsTestCase.class), getRelativePath(), getTestName(true));
+    // no need to delete temp dir - global temp dir is created for each test and deleted after test execution
+    contentDir = Paths.get(FileUtil.getTempDirectory(), FileUtil.sanitizeFileName(getTestName(true), false));
+    FileUtil.copyDir(testDataDir.toFile(), contentDir.toFile());
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      EditorConfigCodeStyleSettingsModifier.setEnabledInTests(false);
+      Utils.setEnabledInTests(false);
+      EditorConfigCodeStyleSettingsModifier.Handler.INSTANCE.setEnabledInTests(false);
       CodeStyle.getSettings(getProject()).copyFrom(myOriginalSettings);
     }
     catch (Throwable e) {
@@ -42,17 +53,19 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
 
   protected abstract String getRelativePath();
 
-  protected final String getTestDataPath() {
-    return PathManagerEx.getHomePath(EditorConfigFileSettingsTestCase.class)
-           + "/" + getRelativePath()
-           + "/" + getTestName(true);
+  protected final @NotNull Path getTestDataPath() {
+    return contentDir;
   }
 
   @NotNull
   protected PsiFile findPsiFile(@NotNull String name) {
-    File file = new File(getTestDataPath() + "/" + name);
-    VirtualFile virtualFile = VfsUtil.findFileByIoFile(file, true);
-    assertNotNull("Can not find the file" + file.getPath(), virtualFile);
-    return getPsiFile(getProject(), virtualFile);
+    return PsiUtilCore.getPsiFile(getProject(), getVirtualFile(name));
+  }
+
+  protected final @NotNull VirtualFile getVirtualFile(@NotNull String name) {
+    Path file = getTestDataPath().resolve(name);
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    assertNotNull("Can not find the file" + file, virtualFile);
+    return virtualFile;
   }
 }

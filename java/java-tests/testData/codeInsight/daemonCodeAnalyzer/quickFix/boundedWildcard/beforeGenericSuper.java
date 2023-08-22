@@ -1,4 +1,4 @@
-// "Fix method 'foo' parameters with bounded wildcards" "true"
+// "Fix method 'foo' parameters with bounded wildcards" "true-preview"
 import java.util.List;
 
 interface Xo<T> {

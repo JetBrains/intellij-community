@@ -1,0 +1,4 @@
+// WITH_STDLIB
+class Foo {
+    fun isEmpty(): Boolean = true
+}

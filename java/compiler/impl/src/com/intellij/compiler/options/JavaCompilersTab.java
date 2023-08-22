@@ -119,7 +119,9 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
       myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
     }
     finally {
-      BuildManager.getInstance().clearState(myProject);
+      if (!myProject.isDefault()) {
+        BuildManager.getInstance().clearState(myProject);
+      }
       PsiManager.getInstance(myProject).dropPsiCaches();
     }
   }

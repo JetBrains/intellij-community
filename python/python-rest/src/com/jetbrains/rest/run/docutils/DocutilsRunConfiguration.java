@@ -23,6 +23,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.rest.PythonRestBundle;
 import com.jetbrains.rest.run.RestConfigurationEditor;
 import com.jetbrains.rest.run.RestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -55,11 +56,11 @@ public class DocutilsRunConfiguration extends RestRunConfiguration {
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     if (StringUtil.isEmptyOrSpaces(getInputFile()))
-      throw new RuntimeConfigurationError("Please specify input file name.");
+      throw new RuntimeConfigurationError(PythonRestBundle.message("python.rest.specify.input.file.name"));
   }
 
   @Override
   public String suggestedName() {
-    return "docutils task in " + getName();
+    return PythonRestBundle.message("python.rest.docutils.run.cfg.default.name", getName());
   }
 }

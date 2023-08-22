@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.ide.JavaUiBundle;
@@ -152,7 +152,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
 
   public void rebuildTree() {
     myTreeStructure.clearCaches();
-    myStructureTreeModel.invalidate();
+    myStructureTreeModel.invalidateAsync();
     updatePropertiesPanel(true);
     myArtifactsEditor.queueValidation();
   }
@@ -265,14 +265,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     }
 
     if (!rootSources.isEmpty()) {
-      final String message;
-      if (rootSources.size() == 1) {
-        final String name = rootSources.iterator().next().getPresentableName();
-        message = "The selected node belongs to '" + name + "' element. Do you want to remove the whole '" + name + "' element from the artifact?";
-      }
-      else {
-        message = "The selected node belongs to " + nodes.size() + " elements. Do you want to remove all these elements from the artifact?";
-      }
+      final String name = rootSources.iterator().next().getPresentableName();
+      final String message = JavaUiBundle.message("layout.tree.check.can.remove.dialog.message", name, rootSources.size());
       final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, JavaUiBundle.message(
         "dialog.title.remove.elements"), null);
       if (answer != Messages.YES) return false;
@@ -418,8 +412,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   @Override
   public void drop(DnDEvent aEvent) {
     final Object object = aEvent.getAttachedObject();
-    if (object instanceof PackagingElementDraggingObject) {
-      final PackagingElementDraggingObject draggingObject = (PackagingElementDraggingObject)object;
+    if (object instanceof PackagingElementDraggingObject draggingObject) {
       final PackagingElementNode<?> targetNode = draggingObject.getTargetNode();
       final CompositePackagingElement<?> targetElement = draggingObject.getTargetElement();
       if (targetElement == null || targetNode == null || !draggingObject.checkCanDrop()) return;
@@ -428,12 +421,12 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
       }
       final List<PackagingElement<?>> toSelect = new ArrayList<>();
       editLayout(() -> {
-        draggingObject.beforeDrop();
         final CompositePackagingElement<?> parent = getOrCreateModifiableParent(targetElement, targetNode);
         for (PackagingElement<?> element : draggingObject.createPackagingElements(myContext)) {
           toSelect.add(element);
           parent.addOrFindChild(element);
         }
+        draggingObject.beforeDrop();
       });
       updateAndSelect(targetNode, toSelect);
       myArtifactsEditor.getSourceItemsTree().rebuildTree();
@@ -478,7 +471,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public void updateTreeNodesPresentation() {
-    myStructureTreeModel.invalidate();
+    myStructureTreeModel.invalidateAsync();
   }
 
   public void updateRootNode() {
@@ -557,7 +550,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     return mySortElements;
   }
 
-  private class SelectedElementInfo<E extends PackagingElement<?>> {
+  private final class SelectedElementInfo<E extends PackagingElement<?>> {
     private final E myElement;
     private PackagingElementPropertiesPanel myCurrentPanel;
 

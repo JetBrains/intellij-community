@@ -2,6 +2,8 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +31,8 @@ public abstract class SingleEntryIndexer<V> implements DataIndexer<Integer, V, F
     if (value == null && !myAcceptNullValues) {
       return Collections.emptyMap();
     }
-    final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
+    VirtualFile file = inputData.getFile();
+    int key = file instanceof LightVirtualFile ? -1 : Math.abs(FileBasedIndex.getFileId(file));
     return Collections.singletonMap(key, value);
   }
 

@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -36,9 +36,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.util.containers.ContainerUtil.indexOf;
 
-/**
- * @author ibessonov
- */
 public class MavenApplicationConfigurationExecutionEnvironmentProvider implements MavenExecutionEnvironmentProvider {
 
   @Override
@@ -133,7 +130,7 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
       return ((JavaSdkType)type).getVMExecutablePath(jdk);
     }
     catch (CantRunException e) {
-      ExecutionErrorDialog.show(e, "Cannot use specified JRE", project);
+      ExecutionErrorDialog.show(e, RunnerBundle.message("dialog.title.cannot.use.specified.jre"), project);
     }
     return null;
   }
@@ -187,8 +184,10 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
           try {
             JavaParameters parameters = new JavaParameters();
             parameters.setJdk(JavaParametersUtil.createProjectJdk(getProject(), myApplicationConfiguration.getAlternativeJrePath()));
-            RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(
-              parameters, false, DebuggerSettings.getInstance().getTransport(), "", false);
+            RemoteConnection connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
+              .asyncAgent(true)
+              .project(environment.getProject())
+              .create(parameters);
 
             ParametersList programParametersList = javaParameters.getProgramParametersList();
 

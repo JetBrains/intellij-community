@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
@@ -23,7 +8,9 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.table.TableView;
@@ -34,17 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
-
   private CopyPasteProviderPanel myPanel;
   private boolean myPasteEnabled = false;
 
@@ -63,7 +46,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   public void setPasteActionEnabled(boolean enabled) {
     myPasteEnabled = enabled;
   }
-  
+
   @Override
   protected ListTableModel createListModel() {
     return new ListTableModel(new NameColumnInfo(), new ValueColumnInfo());
@@ -82,6 +65,12 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         editSelection(0);
       }
     });
+  }
+
+  @Override
+  public void setValues(List<? extends EnvironmentVariable> list) {
+    list.sort(Comparator.comparing(EnvironmentVariable::getName, NaturalComparator.INSTANCE));
+    super.setValues(list);
   }
 
   public List<EnvironmentVariable> getEnvironmentVariables() {
@@ -180,16 +169,21 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     @NotNull
     @Override
     public TableCellEditor getEditor(EnvironmentVariable variable) {
-      StringWithNewLinesCellEditor editor = new StringWithNewLinesCellEditor();
-      return editor;
+      return new StringWithNewLinesCellEditor();
     }
   }
 
-  private class CopyPasteProviderPanel extends JPanel implements DataProvider, CopyProvider, PasteProvider {
-    private CopyPasteProviderPanel(JComponent component) {
+  private final class CopyPasteProviderPanel extends JPanel implements DataProvider, CopyProvider, PasteProvider {
+    CopyPasteProviderPanel(JComponent component) {
       super(new GridLayout(1, 1));
       add(component);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
@@ -210,8 +204,18 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           column = view.getSelectedColumn();
         }
         if (row >= 0 && column >= 0) {
-          JTextField textField = (JTextField)((DefaultCellEditor)view.getCellEditor()).getComponent();
-          CopyPasteManager.getInstance().setContents(new StringSelection(textField.getSelectedText()));
+          Component component = ((DefaultCellEditor)view.getCellEditor()).getComponent();
+          String text = "";
+          if (component instanceof JTextField) {
+            text = ((JTextField)component).getSelectedText();
+          }
+          else if (component instanceof JComboBox<?>) {
+            text = ((JTextField)((JComboBox<?>)component).getEditor().getEditorComponent()).getSelectedText();
+          }
+          else {
+            Logger.getInstance(EnvVariablesTable.class).error("Unknown editor type: " + component);
+          }
+          CopyPasteManager.getInstance().setContents(new StringSelection(text));
         }
         return;
       }
@@ -258,13 +262,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           if (editor != null) {
             Component component = ((DefaultCellEditor)editor).getComponent();
             if (component instanceof JTextField) {
-              JTextField textField = (JTextField)component;
-              try {
-                textField.getDocument().insertString(textField.getCaretPosition(), content, null);
-              }
-              catch (BadLocationException e) {
-                //just ignore, paste failed
-              }
+              ((JTextField)component).paste();
             }
           }
         }
@@ -305,8 +303,13 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       public boolean isEnabled() {
         return myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
-    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.Menu_paste) {
+    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.MenuPaste) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPanel.performPaste(e.getDataContext());
@@ -320,6 +323,11 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       @Override
       public boolean isVisible() {
         return myPanel.isPastePossible(DataContext.EMPTY_CONTEXT);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     return new AnActionButton[]{copyButton, pasteButton};
@@ -354,8 +362,9 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         while (pos > 0 && pair.charAt(pos - 1) == '\\') {
           pos = pair.indexOf('=', pos + 1);
         }
-        pair = pair.replaceAll("[\\\\]{1}","\\\\\\\\");
-        result.put(StringUtil.unescapeStringCharacters(pair.substring(0, pos)),
+        if (pos <= 0) continue;
+        pair = pair.replaceAll("[\\\\]","\\\\\\\\");
+        result.put(StringUtil.unescapeStringCharacters(pair.substring(0, pos)).trim(),
           StringUtil.unescapeStringCharacters(pair.substring(pos + 1)));
       }
     }

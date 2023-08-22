@@ -42,5 +42,8 @@ public interface SourceToOutputMapping {
   Collection<String> getOutputs(@NotNull String srcPath) throws IOException;
 
   @NotNull
+  Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException;
+
+  @NotNull
   Iterator<String> getSourcesIterator() throws IOException;
 }

@@ -1,0 +1,6 @@
+import kotlin.math.sign
+
+// WITH_STDLIB
+fun test(x: Double) {
+    sign(x)
+}

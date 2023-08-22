@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,10 +18,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@State(name = "TestHistory", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "TestHistory", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class TestHistoryConfiguration implements PersistentStateComponent<TestHistoryConfiguration.State> {
 
   public static class State {
@@ -38,19 +36,10 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
     }
   }
 
-  @Tag("configuration")
-  public static class ConfigurationBean {
-
-    @Attribute("name")
-    public String name;
-    @Attribute("configurationId")
-    public String configurationId;
-  }
-
   private State myState = new State();
 
   public static TestHistoryConfiguration getInstance(Project project) {
-    return ServiceManager.getService(project, TestHistoryConfiguration.class);
+    return project.getService(TestHistoryConfiguration.class);
   }
 
   @Override

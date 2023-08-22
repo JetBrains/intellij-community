@@ -25,21 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
-  public void readIdeaSpecific(@NotNull Element root, T model, @Nullable SdkType projectSdkType, @Nullable Map<String, String> levels) {
-    expandElement(root, model);
-
-    readLanguageLevel(root, model);
-
-    setupCompilerOutputs(root, model);
-    readContentEntry(root, model);
-
-    setupJdk(root, model, projectSdkType);
-    setupLibraryRoots(root, model);
-    overrideModulesScopes(root, model);
-    if (levels != null) {
-      readLibraryLevels(root, levels);
-    }
-  }
 
   public void initLevels(final Element root, T model, Map<String, String> levels) throws InvalidDataException {
     expandElement(root, model);

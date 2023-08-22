@@ -5,12 +5,14 @@
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
+import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,7 @@ import javax.swing.event.ChangeListener;
 import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton>
-  implements UserActivityProviderComponent, SettingsEditorFragment.Component<CommonProgramRunConfigurationParameters> {
+  implements UserActivityProviderComponent {
   @NonNls private static final String ENVS = "envs";
   @NonNls public static final String ENV = "env";
   @NonNls public static final String NAME = "name";
@@ -31,9 +33,16 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
 
   public EnvironmentVariablesComponent() {
     super();
-    myEnvVars = new EnvironmentVariablesTextFieldWithBrowseButton();
+    myEnvVars = createBrowseComponent();
     setComponent(myEnvVars);
     setText(ExecutionBundle.message("environment.variables.component.title"));
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEnvVars.getChildComponent());
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+  }
+
+  @NotNull
+  protected EnvironmentVariablesTextFieldWithBrowseButton createBrowseComponent() {
+    return new EnvironmentVariablesTextFieldWithBrowseButton();
   }
 
   public void setEnvs(@NotNull Map<String, String> envs) {
@@ -62,21 +71,20 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myEnvVars.setData(envData);
   }
 
-  @Override
   public void reset(CommonProgramRunConfigurationParameters s) {
     setEnvs(s.getEnvs());
     setPassParentEnvs(s.isPassParentEnvs());
+    if (s instanceof EnvFilesOptions) {
+      myEnvVars.setEnvFilePaths(((EnvFilesOptions)s).getEnvFilePaths());
+    }
   }
 
-  @Override
   public void apply(CommonProgramRunConfigurationParameters s) {
     s.setEnvs(getEnvs());
     s.setPassParentEnvs(isPassParentEnvs());
-  }
-
-  @Override
-  public boolean isVisible(CommonProgramRunConfigurationParameters s) {
-    return !s.getEnvs().isEmpty();
+    if (s instanceof EnvFilesOptions) {
+      ((EnvFilesOptions)s).setEnvFilePaths(myEnvVars.getEnvFilePaths());
+    }
   }
 
   /**

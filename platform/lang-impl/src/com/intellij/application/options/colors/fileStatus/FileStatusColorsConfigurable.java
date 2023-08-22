@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -29,15 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FileStatusColorsConfigurable implements SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
+public final class FileStatusColorsConfigurable implements SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
   private final static String FILE_STATUS_COLORS_ID = "file.status.colors";
 
-  private final FileStatusColorsPanel myPanel;
-
-  public FileStatusColorsConfigurable() {
-    myPanel = new FileStatusColorsPanel(FileStatusFactory.getInstance().getAllFileStatuses());
-  }
+  @Nullable private FileStatusColorsPanel myPanel;
 
   @NotNull
   @Override
@@ -59,25 +41,39 @@ public class FileStatusColorsConfigurable implements SearchableConfigurable, Con
   @Nullable
   @Override
   public JComponent createComponent() {
+    if (myPanel == null) {
+      myPanel = new FileStatusColorsPanel(FileStatusFactory.getInstance().getAllFileStatuses());
+    }
     return myPanel.getComponent();
   }
 
   @Override
+  public void disposeUIResources() {
+    if (myPanel != null) {
+      myPanel = null;
+    }
+  }
+
+  @Override
   public boolean isModified() {
-    return myPanel.getModel().isModified();
+    return myPanel != null && myPanel.getModel().isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myPanel.getModel().apply();
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      FileStatusManager.getInstance(project).fileStatusesChanged();
+    if (myPanel != null) {
+      myPanel.getModel().apply();
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        FileStatusManager.getInstance(project).fileStatusesChanged();
+      }
     }
   }
 
   @Override
   public void reset() {
-    myPanel.getModel().reset();
+    if (myPanel != null) {
+      myPanel.getModel().reset();
+    }
   }
 
   @Override

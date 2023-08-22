@@ -1,7 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
@@ -10,46 +10,51 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public abstract class GraphAlgorithms {
   public static GraphAlgorithms getInstance() {
-    return ServiceManager.getService(GraphAlgorithms.class);
+    return ApplicationManager.getApplication().getService(GraphAlgorithms.class);
   }
 
-  /**
-   * @deprecated use more generic {@link #findShortestPath(InboundSemiGraph, Object, Object)} instead
-   */
-  @Deprecated
-  @Nullable
-  public abstract <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish);
+  public abstract <Node> @NotNull Collection<Node> findNodesWhichBelongToAnyPathBetweenTwoNodes(
+    @NotNull Graph<Node> graph,
+    @NotNull Node start,
+    @NotNull Node finish
+  );
 
-  @Nullable
-  public abstract <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
+  public abstract <Node> @NotNull Collection<Node> findNodeNeighbourhood(
+    @NotNull Graph<Node> graph,
+    @NotNull Node node,
+    int levelBound
+  );
 
-  @NotNull
-  public abstract <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
-                                                             @NotNull ProgressIndicator progressIndicator);
+  public abstract @Nullable <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
 
-  @NotNull
-  public abstract <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
+  public abstract @NotNull <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
+                                                                      @NotNull ProgressIndicator progressIndicator);
 
-  @NotNull
-  public abstract <Node> List<List<Node>> removePathsWithCycles(@NotNull List<? extends List<Node>> paths);
+  public abstract @NotNull <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
 
-  @NotNull
-  public abstract <Node> Graph<Node> invertEdgeDirections(@NotNull Graph<Node> graph);
+  public abstract <Node> void iterateOverAllSimpleCycles(
+    @NotNull Graph<Node> graph,
+    @NotNull Consumer<? super List<Node>> cycleConsumer
+  );
 
-  @NotNull
-  public abstract <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph);
+  public abstract @NotNull <Node> List<List<Node>> removePathsWithCycles(@NotNull List<? extends List<Node>> paths);
 
-  @NotNull
-  public abstract <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull Graph<Node> graph);
+  public abstract @NotNull <Node> Graph<Node> invertEdgeDirections(@NotNull Graph<Node> graph);
+
+  public abstract @NotNull <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph);
+
+  public abstract @NotNull <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull Graph<Node> graph);
 
   /**
    * Adds start node and all its outs to given set recursively.
    * Nodes which are already in set aren't processed.
-   *  @param start node to start from
-   * @param set set to be populated
+   *
+   * @param start node to start from
+   * @param set   set to be populated
    */
   public abstract <Node> void collectOutsRecursively(@NotNull Graph<Node> graph, Node start, Set<? super Node> set);
 }

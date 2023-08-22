@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search.impl
 
 import com.intellij.lang.Language
@@ -9,7 +9,7 @@ import com.intellij.model.search.SearchWordQueryBuilder
 import com.intellij.model.search.TextOccurrence
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchScopeUtil.restrictScopeTo
 import com.intellij.psi.search.PsiSearchScopeUtil.restrictScopeToFileLanguage
 import com.intellij.psi.search.SearchScope
@@ -23,7 +23,7 @@ internal data class SearchWordQueryBuilderImpl(
   private val myContainerName: String? = null,
   private val myCaseSensitive: Boolean = true,
   private val mySearchContexts: Set<SearchContext> = emptySet(),
-  private val mySearchScope: SearchScope = GlobalSearchScope.EMPTY_SCOPE,
+  private val mySearchScope: SearchScope = LocalSearchScope.EMPTY,
   private val myFileTypes: Collection<FileType>? = null,
   private val myFileLanguage: LanguageInfo = LanguageInfo.NoLanguage,
   private val myInjection: InjectionInfo = InjectionInfo.NoInjection
@@ -55,6 +55,8 @@ internal data class SearchWordQueryBuilderImpl(
     require(contexts.isNotEmpty())
     return copy(mySearchContexts = contexts)
   }
+
+  override fun includeInjections(): SearchWordQueryBuilder = copy(myInjection = InjectionInfo.IncludeInjections)
 
   override fun inInjections(): SearchWordQueryBuilder = copy(myInjection = InjectionInfo.InInjection(LanguageInfo.NoLanguage))
 
@@ -91,6 +93,8 @@ internal data class SearchWordQueryBuilderImpl(
   )
 
   override fun buildOccurrenceQuery(): Query<out TextOccurrence> = buildQuery(TextOccurrenceWalker)
+
+  override fun buildLeafOccurrenceQuery(): Query<out TextOccurrence> = buildQuery(IdLeafOccurenceMapper)
 
   internal data class Parameters(
     val project: Project,

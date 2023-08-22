@@ -18,6 +18,7 @@ package org.intellij.plugins.xsltDebugger;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -49,7 +50,9 @@ import java.util.EventListener;
  * This is the main place that interacts with the debugged XSLT processor. Waits until the processor
  * hits a breakpoint, resumes execution, etc.
  */
-public class XsltDebuggerSession implements Disposable {
+public final class XsltDebuggerSession implements Disposable {
+  private static final Logger LOG = Logger.getInstance(XsltDebuggerSession.class);
+
   private static final Key<XsltDebuggerSession> DEBUGGER_SESSION = Key.create("DEBUGGER_SESSION");
 
   private final Project myProject;
@@ -175,7 +178,7 @@ public class XsltDebuggerSession implements Disposable {
 
       return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     } catch (MalformedURLException | URISyntaxException e) {
-      e.printStackTrace();
+      LOG.warn(e);
       return null;
     }
   }

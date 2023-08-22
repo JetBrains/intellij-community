@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +57,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     checkEditorState("barfootest", 6, 0, 0);
 
     executeCommand(
-      (Runnable)() -> ApplicationManager.getApplication().runWriteAction(() -> getFirstEditor().getDocument().insertString(0, "___")),
+      () -> ApplicationManager.getApplication().runWriteAction(() -> getFirstEditor().getDocument().insertString(0, "___")),
       "Dummy");
     checkEditorState("___barfootest", 9, 0, 0);
 
@@ -104,7 +104,15 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     checkEditorText(initial, getFirstEditor());
   }
 
+  public void testTransparentBackspaceBeforeRedo() {
+    doTestTransparentActionBeforeRedo(() -> backspace(getFirstEditor()));
+  }
+
   public void testTransparentActionBeforeRedo() {
+    doTestTransparentActionBeforeRedo(() -> typeInText("1"));
+  }
+
+  private void doTestTransparentActionBeforeRedo(@NotNull Command command) {
     Editor editor = getFirstEditor();
 
     executeCommand(() -> typeInText("a"));
@@ -116,7 +124,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     undo(editor);
     checkEditorText(afterType1, editor);
 
-    executeTransparently(() -> typeInText("1"));
+    executeTransparently(command);
 
     assertUndoIsAvailable(editor);
     assertRedoIsAvailable(editor);
@@ -228,7 +236,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
   }
 
   public void testNoConfirmationForTransparentAction() {
-    Messages.setTestDialog(TestDialog.DEFAULT); // throw an exception if there's a need to request confirmation from user
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT); // throw an exception if there's a need to request confirmation from user
 
     executeTransparentlyInWriteAction(() -> CommandProcessor.getInstance()
       .executeCommand(myProject, () -> typeInChar(' '), "", null, UndoConfirmationPolicy.REQUEST_CONFIRMATION));
@@ -237,7 +245,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     checkEditorText("test");
   }
 
-  private <T extends Exception> void executeTransparentlyInWriteAction(@NotNull ThrowableRunnable<T> action) {
+  private static <T extends Exception> void executeTransparentlyInWriteAction(@NotNull ThrowableRunnable<T> action) {
     executeTransparently(() -> WriteAction.run(action));
   }
 }

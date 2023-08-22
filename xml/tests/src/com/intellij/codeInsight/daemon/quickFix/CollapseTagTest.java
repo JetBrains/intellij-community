@@ -45,15 +45,17 @@ public class CollapseTagTest extends BasePlatformTestCase {
 
   public void testCollapseInnerTag() {
     myFixture.enableInspections(new CheckTagEmptyBodyInspection());
-    PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, "<a>\n" +
-                                                                   "    <b></b><caret>\n" +
-                                                                   "</a>");
-    assertFalse(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
+    PsiFile file = myFixture.configureByText(XmlFileType.INSTANCE, """
+      <a>
+          <b><caret></b>
+      </a>""");
+    assertTrue(new CollapseTagIntention().isAvailable(getProject(), myFixture.getEditor(), file));
     IntentionAction action = myFixture.findSingleIntention("Collapse");
     assertNotNull(action);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> action.invoke(getProject(), myFixture.getEditor(), file));
-    myFixture.checkResult("<a>\n" +
-                          "    <b/>\n" +
-                          "</a>");
+    myFixture.checkResult("""
+                            <a>
+                                <b/>
+                            </a>""");
   }
 }

@@ -15,10 +15,15 @@
  */
 package org.jetbrains.idea.maven.utils.library;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import icons.OpenapiIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
@@ -29,35 +34,51 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class RepositoryLibraryDescription {
-  @NotNull
+  @NotNull @NonNls
   public static final String LatestVersionId = "LATEST";
-  @NotNull
+  @NotNull @NonNls
   public static final String LatestVersionDisplayName = "Latest";
-  @NotNull
+  @NotNull @NonNls
   public static final String ReleaseVersionId = "RELEASE";
-  @NotNull
+  @NotNull @NonNls
   public static final String DefaultVersionId = ReleaseVersionId;
-  @NotNull
+  @NotNull @NonNls
   public static final String ReleaseVersionDisplayName = "Release";
-  @NotNull
+  @NotNull @NonNls
   public static final String SnapshotVersionSuffix = "-SNAPSHOT";
 
   public static final Icon DEFAULT_ICON = OpenapiIcons.RepositoryLibraryLogo;
-  
+
   private static volatile Map<String, RepositoryLibraryDescription> ourStaticallyDefinedLibraries;
   
   private final String groupId;
   private final String artifactId;
-  private final String libraryName;
+  private final @NlsContexts.DialogTitle String libraryName;
 
-  protected RepositoryLibraryDescription(String groupId, String artifactId, String libraryName) {
+  public final String jarRemoteRepositoryId;
+  public final boolean sha256sumCheckEnabled;
+
+  protected RepositoryLibraryDescription(String groupId, String artifactId, @NlsContexts.DialogTitle String libraryName,
+                                         String jarRemoteRepositoryId, boolean sha256sumCheckEnabled) {
     this.groupId = groupId == null? "" : groupId;
     this.artifactId = artifactId == null? "" : artifactId;
-    this.libraryName = libraryName == null? "<unknown>" : libraryName;
+    this.libraryName = libraryName == null ? CodeInsightBundle.message("unknown.node.text") : libraryName;
+    this.sha256sumCheckEnabled = sha256sumCheckEnabled;
+    this.jarRemoteRepositoryId = jarRemoteRepositoryId;
+  }
+
+  protected RepositoryLibraryDescription(String groupId, String artifactId, @NlsContexts.DialogTitle String libraryName) {
+      this(groupId, artifactId, libraryName, null, false);
   }
 
   @NotNull
   public static RepositoryLibraryDescription findDescription(@Nullable final String groupId, @Nullable final String artifactId) {
+    return findDescription(groupId, artifactId, null, false);
+  }
+
+  @NotNull
+  public static RepositoryLibraryDescription findDescription(@Nullable final String groupId, @Nullable final String artifactId,
+                                                             String bindToRemoteRepository, boolean sha256sumCheckEnabled) {
     if (ourStaticallyDefinedLibraries == null) {
       final HashMap<String, RepositoryLibraryDescription> map = new HashMap<>();
       for (RepositoryLibraryDefinition def : RepositoryLibraryDefinition.EP_NAME.getExtensions()) {
@@ -66,19 +87,24 @@ public class RepositoryLibraryDescription {
       }
       ourStaticallyDefinedLibraries = Collections.unmodifiableMap(Collections.synchronizedMap(map));
     }
-    final String id = groupId == null && artifactId == null? "<unknown>" : groupId + ":" + artifactId;
+    @NlsSafe
+    final String id = groupId == null && artifactId == null ? CodeInsightBundle.message("unknown.node.text") : groupId + ":" + artifactId;
     final RepositoryLibraryDescription description = ourStaticallyDefinedLibraries.get(id);
-    return description != null? description : new RepositoryLibraryDescription(groupId, artifactId, id);
+    return description != null? description : new RepositoryLibraryDescription(groupId, artifactId, id, bindToRemoteRepository,
+                                                                               sha256sumCheckEnabled);
   }
 
   @NotNull
   public static RepositoryLibraryDescription findDescription(@NotNull final RepositoryLibraryProperties properties) {
-    return findDescription(properties.getGroupId(), properties.getArtifactId());
+    return findDescription(properties.getGroupId(), properties.getArtifactId(), properties.getJarRepositoryId(),
+                           properties.isEnableSha256Checksum());
   }
 
   @NotNull
   public static RepositoryLibraryDescription findDescription(@NotNull final JpsMavenRepositoryLibraryDescriptor descriptor) {
-    return findDescription(descriptor.getGroupId(), descriptor.getArtifactId());
+    return findDescription(descriptor.getGroupId(), descriptor.getArtifactId(),
+                           descriptor.getJarRepositoryId(),
+                           descriptor.isVerifySha256Checksum());
   }
 
   @NotNull
@@ -92,13 +118,25 @@ public class RepositoryLibraryDescription {
   }
 
   @NotNull
-  public String getDisplayName() {
+  public @NlsContexts.DialogTitle String getDisplayName() {
     return libraryName;
   }
 
   @NotNull
   public Icon getIcon() {
-    return DEFAULT_ICON;
+    if (sha256sumCheckEnabled && jarRemoteRepositoryId != null) {
+      return OpenapiIcons.MavenBindChecksum;
+    }
+
+    if (sha256sumCheckEnabled) {
+      return OpenapiIcons.MavenChecksum;
+    }
+
+    if (jarRemoteRepositoryId != null) {
+      return OpenapiIcons.MavenBind;
+    }
+
+    return OpenapiIcons.RepositoryLibraryLogo;
   }
 
   @Nullable
@@ -116,7 +154,7 @@ public class RepositoryLibraryDescription {
     return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), ReleaseVersionId, true, ContainerUtil.emptyList());
   }
 
-  public String getDisplayName(String version) {
+  public @NlsSafe String getDisplayName(String version) {
     if (LatestVersionId.equals(version)) {
       version = LatestVersionDisplayName;
     }
@@ -126,7 +164,7 @@ public class RepositoryLibraryDescription {
     return getDisplayName() + (version == null ? "" : ":" + version);
   }
 
-  public String getMavenCoordinates(String version) {
+  public @NlsSafe String getMavenCoordinates(String version) {
     return getGroupId() + ":" + getArtifactId() + ":" + version;
   }
 }

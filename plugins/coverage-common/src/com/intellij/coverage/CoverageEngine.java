@@ -1,5 +1,7 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
@@ -7,18 +9,25 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +38,7 @@ import java.util.*;
  * Coverage engine provide coverage support for different languages or coverage runner classes.
  * E.g. engine for JVM languages, Ruby, Python
  * <p/>
- * Each coverage engine may work with several coverage runner. E.g. Java coverage engine supports IDEA/EMMA/Cobertura,
+ * Each coverage engine may work with several coverage runners. E.g. Java coverage engine supports IDEA/Jacoco,
  * Ruby engine works with RCov
  *
  * @author Roman.Chernyatchik
@@ -43,9 +52,9 @@ public abstract class CoverageEngine {
    * @param conf Run Configuration
    * @return True if coverage for given run configuration is supported by this engine
    */
-  public abstract boolean isApplicableTo(@Nullable final RunConfigurationBase conf);
+  public abstract boolean isApplicableTo(@NotNull final RunConfigurationBase<?> conf);
 
-  public abstract boolean canHavePerTestCoverage(@Nullable final RunConfigurationBase conf);
+  public abstract boolean canHavePerTestCoverage(@NotNull final RunConfigurationBase<?> conf);
 
   /**
    * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
@@ -80,7 +89,7 @@ public abstract class CoverageEngine {
    * @return Coverage enabled configuration with engine specific settings
    */
   @NotNull
-  public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final RunConfigurationBase conf);
+  public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@NotNull final RunConfigurationBase<?> conf);
 
   /**
    * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
@@ -92,7 +101,7 @@ public abstract class CoverageEngine {
    * @param lastCoverageTimeStamp    timestamp
    * @param suiteToMerge             Suite to merge this coverage data with
    * @param coverageByTestEnabled    Collect coverage for test option
-   * @param tracingEnabled           Tracing option
+   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
    * @param trackTestFolders         Track test folders option
    * @return Suite
    */
@@ -104,15 +113,14 @@ public abstract class CoverageEngine {
                                            final long lastCoverageTimeStamp,
                                            @Nullable final String suiteToMerge,
                                            final boolean coverageByTestEnabled,
-                                           final boolean tracingEnabled,
+                                           final boolean branchCoverage,
                                            final boolean trackTestFolders) {
     return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
-                               coverageByTestEnabled, tracingEnabled, trackTestFolders, null);
+                               coverageByTestEnabled, branchCoverage, trackTestFolders, null);
   }
 
   /**
    * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
-   *
    *
    * @param covRunner                Coverage Runner
    * @param name                     Suite name
@@ -121,9 +129,8 @@ public abstract class CoverageEngine {
    * @param lastCoverageTimeStamp    timestamp
    * @param suiteToMerge             Suite to merge this coverage data with
    * @param coverageByTestEnabled    Collect coverage for test option
-   * @param tracingEnabled           Tracing option
+   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
    * @param trackTestFolders         Track test folders option
-   * @param project
    * @return Suite
    */
   @Nullable
@@ -134,7 +141,7 @@ public abstract class CoverageEngine {
                                                     final long lastCoverageTimeStamp,
                                                     @Nullable final String suiteToMerge,
                                                     final boolean coverageByTestEnabled,
-                                                    final boolean tracingEnabled,
+                                                    final boolean branchCoverage,
                                                     final boolean trackTestFolders, Project project);
 
   /**
@@ -142,7 +149,6 @@ public abstract class CoverageEngine {
    *
    * @param covRunner                Coverage Runner
    * @param name                     Suite name
-   * @param coverageDataFileProvider
    * @param config                   Coverage engine configuration
    * @return Suite
    */
@@ -185,9 +191,6 @@ public abstract class CoverageEngine {
   /**
    * E.g. all *.class files for java source file with several classes
    *
-   *
-   * @param srcFile
-   * @param module
    * @return files
    */
   @NotNull
@@ -201,8 +204,6 @@ public abstract class CoverageEngine {
   /**
    * When output directory is empty we probably should recompile source and then choose suite again
    *
-   * @param module
-   * @param chooseSuiteAction
    * @return True if should stop and wait compilation (e.g. for Java). False if we can ignore output (e.g. for Ruby)
    */
   public abstract boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
@@ -212,9 +213,6 @@ public abstract class CoverageEngine {
    * Qualified name same as in coverage raw project data
    * E.g. java class qualified name by *.class file of some Java class in corresponding source file
    *
-   * @param outputFile
-   * @param sourceFile
-   * @return
    */
   @Nullable
   public String getQualifiedName(@NotNull final File outputFile,
@@ -226,8 +224,6 @@ public abstract class CoverageEngine {
    * Returns the list of qualified names of classes generated from a particular source file.
    * (The concept of "qualified name" is specific to each coverage engine but it should be
    * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
-   * @param sourceFile
-   * @return
    */
   @NotNull
   public abstract Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile);
@@ -236,11 +232,6 @@ public abstract class CoverageEngine {
    * Decide include a file or not in coverage report if coverage data isn't available for the file. E.g file wasn't touched by coverage
    * util
    *
-   * @param qualifiedName
-   * @param outputFile
-   * @param sourceFile
-   * @param suite
-   * @return
    */
   public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
                                                 @NotNull final File outputFile,
@@ -252,7 +243,6 @@ public abstract class CoverageEngine {
   /**
    * Collect code lines if untouched file should be included in coverage information. These lines will be marked as uncovered.
    *
-   * @param suite
    * @return List (probably empty) of code lines or null if all lines should be marked as uncovered
    */
   @Nullable
@@ -279,7 +269,7 @@ public abstract class CoverageEngine {
                                     int endOffset,
                                     @Nullable LineData lineData) {
     final int hits = lineData == null ? 0 : lineData.getHits();
-    return "Hits: " + hits;
+    return CoverageBundle.message("hits.title", hits);
   }
 
   public abstract List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project);
@@ -310,17 +300,27 @@ public abstract class CoverageEngine {
                                                        @NotNull final CoverageSuitesBundle currentSuite) {
     final ExportToHTMLDialog dialog = new ExportToHTMLDialog(project, true);
     dialog.setTitle(CoverageBundle.message("generate.coverage.report.for", currentSuite.getPresentableName()));
+    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
+    if (StringUtil.isEmpty(settings.OUTPUT_DIRECTORY)) {
+      final VirtualFile file = ProjectUtil.guessProjectDir(project);
+      if (file != null) {
+        final String path = file.getCanonicalPath();
+        if (path != null) {
+          settings.OUTPUT_DIRECTORY = FileUtil.toSystemDependentName(path) + File.separator + "htmlReport";
+        }
+      }
+    }
 
     return dialog;
   }
 
-  public abstract String getPresentableText();
+  public abstract @NlsActions.ActionText String getPresentableText();
 
   public boolean coverageProjectViewStatisticsApplicableTo(VirtualFile fileOrDir) {
     return false;
   }
 
-  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, Editor editor) {
+  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, @NotNull Editor editor) {
     return lines;
   }
 
@@ -329,8 +329,8 @@ public abstract class CoverageEngine {
                                                           final TreeMap<Integer, LineData> lines,
                                                           final boolean coverageByTestApplicable,
                                                           @NotNull final CoverageSuitesBundle coverageSuite,
-                                                          final Function<Integer, Integer> newToOldConverter,
-                                                          final Function<Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
+                                                          final Function<? super Integer, Integer> newToOldConverter,
+                                                          final Function<? super Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
     return CoverageLineMarkerRenderer
       .getRenderer(lineNumber, className, lines, coverageByTestApplicable, coverageSuite, newToOldConverter, oldToNewConverter,
                    subCoverageActive);
@@ -348,7 +348,13 @@ public abstract class CoverageEngine {
     return false;
   }
 
-  public static String getEditorTitle() {
+  @ApiStatus.Experimental
+  @NotNull
+  public CoverageEditorAnnotator createSrcFileAnnotator(PsiFile file, Editor editor) {
+    return new CoverageEditorAnnotatorImpl(file, editor);
+  }
+
+  public static @TabTitle String getEditorTitle() {
     return CoverageBundle.message("coverage.tab.title");
   }
 
@@ -358,15 +364,15 @@ public abstract class CoverageEngine {
     return null;
   }
 
-  public boolean isInLibraryClasses(Project project, VirtualFile file) {
+  public boolean isInLibraryClasses(final Project project, final VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    return projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file);
+    return ReadAction.compute(() -> projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file));
   }
 
   public boolean isInLibrarySource(Project project, VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    return projectFileIndex.isInLibrarySource(file);
+    return ReadAction.compute(() -> projectFileIndex.isInLibrarySource(file));
   }
 }

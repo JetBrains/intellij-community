@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -11,6 +12,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,9 +24,7 @@ import static com.intellij.openapi.vcs.changes.ChangeListDataKt.getChangeListDat
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static one.util.streamex.StreamEx.of;
 
-/**
- * @author yole
- */
+
 public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList> {
   private final Project myProject;
   private final ChangeListManagerEx myClManager;
@@ -34,17 +34,18 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     super(userObject);
     myProject = project;
     myChangeListRemoteState = changeListRemoteState;
-    myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
+    myClManager = ChangeListManagerEx.getInstanceEx(project);
   }
 
   @Override
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
-    if (userObject instanceof LocalChangeList) {
-      final LocalChangeList list = ((LocalChangeList)userObject);
-      renderer.appendTextWithIssueLinks(list.getName(),
-             list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    if (userObject instanceof LocalChangeList list) {
+      String listName = list.getName();
+      if (StringUtil.isEmptyOrSpaces(listName)) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name");
+      renderer.appendTextWithIssueLinks(listName, list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                                                   : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       if (getChangeListData(list) != null) {
-        renderer.append(" (i)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(" (i)", SimpleTextAttributes.GRAYED_ATTRIBUTES); //NON-NLS
         renderer.setToolTipText(getTooltipText());
       }
       appendCount(renderer);
@@ -58,7 +59,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       else if (myClManager.isInUpdate()) {
         appendUpdatingState(renderer);
       }
-      if (! myChangeListRemoteState.allUpToDate()) {
+      if (!myChangeListRemoteState.allUpToDate()) {
         renderer.append(spaceAndThinSpace());
         renderer.append(VcsBundle.message("changes.nodetitle.have.outdated.files"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
@@ -69,6 +70,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   private String getTooltipText() {
     if (!(userObject instanceof LocalChangeList)) return null;
@@ -78,7 +80,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     String dataInfo = data.getPresentation();
     String message = cropMessageIfNeeded(((LocalChangeList)userObject).getComment());
 
-    StringBuilder sb = new StringBuilder();
+    @Nls StringBuilder sb = new StringBuilder();
     if (!StringUtil.isEmpty(dataInfo)) sb.append(dataInfo);
     if (!StringUtil.isEmpty(message)) {
       if (sb.length() > 0) sb.append(UIUtil.BR).append(UIUtil.BR);
@@ -105,7 +107,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @Override
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
-    final Change[] changes = dragBean.getChanges();
+    final List<Change> changes = dragBean.getChanges();
     for (Change change : getUserObject().getChanges()) {
       for (Change incomingChange : changes) {
         if (change == incomingChange) return false;
@@ -127,7 +129,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
     addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
     addIfNotNull(toUpdate, dragBean.getIgnoredFiles());
-    if (! toUpdate.isEmpty()) {
+    if (!toUpdate.isEmpty()) {
       dragOwner.addUnversionedFiles(dropList, ContainerUtil.mapNotNull(toUpdate, FilePath::getVirtualFile));
     }
   }

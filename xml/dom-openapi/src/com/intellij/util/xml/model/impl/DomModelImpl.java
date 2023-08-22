@@ -38,15 +38,6 @@ public class DomModelImpl<T extends DomElement> implements DomModel<T> {
   private Class<T> myClass;
   private Project myProject;
 
-  /**
-   * @deprecated Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
-   */
-  @Deprecated
-  public DomModelImpl(T mergedModel, @NotNull Set<XmlFile> configFiles) {
-    myMergedModel = DomUtil.getFileElement(mergedModel);
-    myConfigFiles = configFiles;
-  }
-
   public DomModelImpl(DomFileElement<T> mergedModel, @NotNull Set<XmlFile> configFiles) {
     myMergedModel = DomUtil.getFileElement(mergedModel);
     myConfigFiles = configFiles;

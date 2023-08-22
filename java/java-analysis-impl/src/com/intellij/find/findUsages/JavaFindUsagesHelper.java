@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaFindUsagesHelper {
+public final class JavaFindUsagesHelper {
   private static final Logger LOG = Logger.getInstance(JavaFindUsagesHelper.class);
 
   @NotNull
@@ -95,8 +95,7 @@ public class JavaFindUsagesHelper {
   public static boolean processElementUsages(@NotNull PsiElement element,
                                              @NotNull FindUsagesOptions options,
                                              @NotNull Processor<? super UsageInfo> processor) {
-    if (options instanceof JavaVariableFindUsagesOptions) {
-      JavaVariableFindUsagesOptions varOptions = (JavaVariableFindUsagesOptions) options;
+    if (options instanceof JavaVariableFindUsagesOptions varOptions) {
       if (varOptions.isReadAccess || varOptions.isWriteAccess){
         if (varOptions.isReadAccess && varOptions.isWriteAccess){
           if (!addElementUsages(element, options, processor)) return false;
@@ -138,9 +137,7 @@ public class JavaFindUsagesHelper {
       if (!addClassesUsages((PsiPackage)element, (JavaPackageFindUsagesOptions)options, processor)) return false;
     }
 
-    if (options instanceof JavaClassFindUsagesOptions) {
-      JavaClassFindUsagesOptions classOptions = (JavaClassFindUsagesOptions)options;
-      PsiClass psiClass = (PsiClass)element;
+    if (options instanceof JavaClassFindUsagesOptions classOptions && element instanceof PsiClass psiClass) {
       PsiManager manager = ReadAction.compute(psiClass::getManager);
       if (classOptions.isMethodsUsages){
         if (!addMethodsUsages(psiClass, manager, classOptions, processor)) return false;
@@ -172,10 +169,9 @@ public class JavaFindUsagesHelper {
       }
     }
 
-    if (options instanceof JavaMethodFindUsagesOptions){
+    if (options instanceof JavaMethodFindUsagesOptions methodOptions){
       PsiMethod psiMethod = (PsiMethod)element;
       boolean isAbstract = ReadAction.compute(() -> psiMethod.hasModifierProperty(PsiModifier.ABSTRACT));
-      JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
       if (isAbstract ? methodOptions.isImplementingMethods : methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
         FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
@@ -205,7 +201,7 @@ public class JavaFindUsagesHelper {
       for (AliasingPsiTarget psiTarget : aliasingPsiTargetMapper.getTargets(pomTarget)) {
         boolean success = ReferencesSearch
           .search(new ReferencesSearch.SearchParameters(ReadAction.compute(() -> PomService.convertToPsi(psiTarget)), options.searchScope, false, options.fastTrack))
-          .forEach(new ReadActionProcessor<PsiReference>() {
+          .forEach(new ReadActionProcessor<>() {
             @Override
             public boolean processInReadAction(PsiReference reference) {
               return addResult(reference, options, processor);
@@ -242,12 +238,13 @@ public class JavaFindUsagesHelper {
           progress.setText(JavaAnalysisBundle.message("find.searching.for.references.to.class.progress", name));
         }
         ProgressManager.checkCanceled();
-        boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-          @Override
-          public boolean processInReadAction(PsiReference psiReference) {
-            return addResult(psiReference, options, processor);
-          }
-        });
+        boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(
+          new ReadActionProcessor<>() {
+            @Override
+            public boolean processInReadAction(PsiReference psiReference) {
+              return addResult(psiReference, options, processor);
+            }
+          });
         if (!success) return false;
       }
     }
@@ -348,12 +345,13 @@ public class JavaFindUsagesHelper {
           if (!addElementUsages(fields[i], options, processor)) return false;
         }
         else {
-          boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(field, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-            @Override
-            public boolean processInReadAction(PsiReference reference) {
-              return addResultFromReference(reference, fieldClass, manager, aClass, options, processor);
-            }
-          });
+          boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(field, options.searchScope, false, options.fastTrack)).forEach(
+            new ReadActionProcessor<>() {
+              @Override
+              public boolean processInReadAction(PsiReference reference) {
+                return addResultFromReference(reference, fieldClass, manager, aClass, options, processor);
+              }
+            });
           if (!success) return false;
         }
       }
@@ -370,8 +368,7 @@ public class JavaFindUsagesHelper {
   @Nullable
   private static PsiClass getFieldOrMethodAccessedClass(@NotNull PsiReferenceExpression ref, @NotNull PsiClass fieldOrMethodClass) {
     PsiElement[] children = ref.getChildren();
-    if (children.length > 1 && children[0] instanceof PsiExpression) {
-      PsiExpression expr = (PsiExpression)children[0];
+    if (children.length > 1 && children[0] instanceof PsiExpression expr) {
       PsiType type = expr.getType();
       if (type != null) {
         if (!(type instanceof PsiClassType)) return null;
@@ -453,7 +450,7 @@ public class JavaFindUsagesHelper {
           !(options instanceof JavaMethodFindUsagesOptions) || !((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages;
         return MethodReferencesSearch
           .search(new MethodReferencesSearch.SearchParameters(method, searchScope, strictSignatureSearch, options.fastTrack))
-          .forEach(new ReadActionProcessor<PsiReference>() {
+          .forEach(new ReadActionProcessor<>() {
             @Override
             public boolean processInReadAction(PsiReference ref) {
               return addResult(ref, options, processor);
@@ -463,7 +460,7 @@ public class JavaFindUsagesHelper {
       return true;
     }
 
-    ReadActionProcessor<PsiReference> consumer = new ReadActionProcessor<PsiReference>() {
+    ReadActionProcessor<PsiReference> consumer = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(PsiReference ref) {
         return addResult(ref, options, processor);
@@ -489,7 +486,7 @@ public class JavaFindUsagesHelper {
   private static boolean addResult(@NotNull PsiReference ref, @NotNull FindUsagesOptions options, @NotNull Processor<? super UsageInfo> processor) {
     if (acceptUsage(ref.getElement(), options)) {
       TextRange rangeInElement = ref.getRangeInElement();
-      return processor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+      return processor.process(new UsageInfo(ref.getElement(), rangeInElement, false));
     }
     return true;
   }

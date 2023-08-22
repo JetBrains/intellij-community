@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion.builder
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -19,11 +19,11 @@ abstract class GrBuilderTransformationCompletionTestBase extends GroovyCompletio
     return GroovyProjectDescriptors.GROOVY_LATEST
   }
 
-  void doVariantableTest(String text, String... args) {
-    doVariantableTest(text, CompletionResult.contain, args)
+  void doCompletionTest(String text, String... args) {
+    doCompletionTest(text, CompletionResult.contain, args)
   }
 
-  void doVariantableTest(String text, CompletionResult cr, String... args) {
+  void doCompletionTest(String text, CompletionResult cr, String... args) {
     doVariantableTest(text, '', BASIC, cr, 1, args)
   }
 }

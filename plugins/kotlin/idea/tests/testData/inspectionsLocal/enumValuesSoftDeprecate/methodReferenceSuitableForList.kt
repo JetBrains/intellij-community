@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries
+// API_VERSION: 1.9
+// WITH_STDLIB
+enum class EnumClass
+
+fun foo() {
+    // No special handling for method references
+    EnumClass.values<caret>()::size
+}

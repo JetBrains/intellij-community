@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.crlf;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,9 +17,8 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
-
   @Override
-  public void setUp() throws Exception {
+  public void setUp() {
     super.setUp();
     git("config core.autocrlf false");
   }
@@ -81,7 +80,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
     createCrlfFile("src/win7");
 
     List<VirtualFile> files = ContainerUtil.map(asList("unix", "win1", "win2", "win3", "src/win4", "src/win5", "src/win6", "src/win7"),
-                                                s -> VfsUtil.findFileByIoFile(new File(projectRoot.getPath(), s), true));
+                                                s -> VfsUtil.findFileByIoFile(new File(getProjectRoot().getPath(), s), true));
     assertTrue("Warning should be done, since one of the files has CRLFs and no related attributes",
                GitCrlfProblemsDetector.detect(myProject, git, files).shouldWarn());
   }
@@ -109,7 +108,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
 
   private File createFile(String relPath) throws IOException {
     List<String> split = StringUtil.split(relPath, "/");
-    File parent = new File(projectRoot.getPath());
+    File parent = new File(getProjectRoot().getPath());
     for (Iterator<String> it = split.iterator(); it.hasNext(); ) {
       String item = it.next();
       File file = new File(parent, item);

@@ -16,24 +16,41 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Consumer;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author Mikhail Golubev
@@ -44,30 +61,106 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 
+  // PY-10719
+  public void testBeforeImportAboveNoInspectionComment() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719
+  public void testBetweenImportsAboveNoInspectionComment() {
+    doMultiFileAutoImportTest("Import 'b'");
+  }
+
+  // PY-10719
+  public void testBeforeImportBelowFileCommentBlock() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBetweenStatementAndImportAboveBoundComments() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeStatementBelowFileCommentBlock() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeStatementAboveBoundComments() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeImportAboveBoundCommentsBelowFileCommentBlock() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBetweenImportsAboveBoundComments() {
+    doMultiFileAutoImportTest("Import 'b'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeImportBelowFileCommentBlockExceptNoInspectionComment() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-26016
+  public void testBeforeStatementAboveBoundCommentsBelowFileCommentBlock() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
+  // PY-10719 PY-53487
+  public void testBeforeStatementAboveNoInspectionComment() {
+    doMultiFileAutoImportTest("Import 'a'");
+  }
+
   // PY-19773
   public void testReexportedName() {
     doMultiFileAutoImportTest("Import 'flask.request'");
   }
 
   public void testOsPathFunctions() {
-    doMultiFileAutoImportTest("Import", fix -> {
-      final List<ImportCandidateHolder> candidates = fix.getCandidates();
-      final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("join"));
-      assertSameElements(names, "os.path.join()");
-      return true;
-    });
+    Consumer<VirtualFile> fileConsumer = file -> {
+      doMultiFileAutoImportTest("Import", fix -> {
+        final List<ImportCandidateHolder> candidates = fix.getCandidates();
+        final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText());
+        assertSameElements(names, "os.path.commonpath");
+        return true;
+      });
+    };
+    runWithAdditionalFileInLibDir(
+      "ntpath.py",
+      "def commonpath(paths):\n" +
+      "    pass",
+      f -> runWithAdditionalFileInLibDir(
+        "os.py",
+        """
+          if windows():
+              import ntpath as path
+          else:
+              import posixpath as path""",
+        f1 -> runWithAdditionalFileInLibDir(
+          "posixpath.py",
+          "def commonpath(paths):\n" +
+          "    pass",
+          fileConsumer
+        )
+      )
+    );
   }
 
   // PY-19975
   public void testCanonicalNamesFromHigherLevelPackage() {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<ImportCandidateHolder> candidates = fix.getCandidates();
-      final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("MyClass"));
+      final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText());
       assertOrderedEquals(names, "bar.MyClass", "foo.MyClass");
       return true;
     });
   }
-  
+
   // PY-22422
   public void testAddParenthesesAndTrailingCommaToUpdatedFromImport() {
     getPythonCodeStyleSettings().FROM_IMPORT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
@@ -80,7 +173,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-21563
   public void testCombineFromImportsForReferencesInTypeComment() {
-    doMultiFileAutoImportTest("Import 'typing.Set'");
+    doMultiFileAutoImportTest("Import 'typing.FrozenSet'");
   }
 
   // PY-25234
@@ -91,11 +184,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       (__) ->
         runWithAdditionalFileInSkeletonDir(
           "sys.py",
-          "# encoding: utf-8\n" +
-          "# module sys\n" +
-          "# from (built-in)\n" +
-          "# by generator 1.138\n" +
-          "path = 10",
+          """
+            # encoding: utf-8
+            # module sys
+            # from (built-in)
+            # by generator 1.138
+            path = 10""",
           (___) -> doMultiFileAutoImportTest("Import 'sys'")
         )
     );
@@ -103,13 +197,15 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-25234
   public void testUserSkeletonStdlibModule() {
-    doMultiFileAutoImportTest("Import 'alembic'");
+    runWithAdditionalClassEntryInSdkRoots(getTestName(true) + "/site-packages", () -> {
+      doMultiFileAutoImportTest("Import 'alembic'");
+    });
   }
 
   // PY-16176
   public void testAllVariantsSuggestedWhenExistingNonProjectImportFits() {
     doMultiFileAutoImportTest("Import", quickfix -> {
-      final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText("time"));
+      final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText());
       assertOrderedEquals(candidates, "time from datetime", "time");
       return false;
     });
@@ -118,7 +214,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   // PY-16176
   public void testExistingImportsAlwaysSuggestedFirstEvenIfLonger() {
     doMultiFileAutoImportTest("Import", quickfix -> {
-      final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText("ClassB"));
+      final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText());
       assertOrderedEquals(candidates, "ClassB from long.pkg.path", "short.ClassB");
       return false;
     });
@@ -127,8 +223,8 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   // PY-16176
   public void testExistingImportsAlwaysSuggestedFirstEvenIfNonProject() {
     doMultiFileAutoImportTest("Import", quickfix -> {
-      final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText("datetime"));
-      assertOrderedEquals(candidates, "datetime(date) from datetime", "mod.datetime");
+      final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText());
+      assertOrderedEquals(candidates, "datetime from datetime", "mod.datetime");
       return false;
     });
   }
@@ -151,7 +247,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   // PY-20100
   public void testAlwaysSplitFromImports() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
-    doMultiFileAutoImportTest("Import 'mod.bar()'");
+    doMultiFileAutoImportTest("Import 'mod.bar'");
   }
 
   // PY-20976
@@ -163,8 +259,8 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
         runWithAdditionalFileInLibDir(
           "os/path.py",
           "",
-          (___) -> doTestProposedImportsOrdering("path",
-                                                 "path from sys", "first.path", "first.second.path()", "os.path", "first._third.path")
+          (___) -> doTestProposedImportsOrdering(
+            "path from sys", "first.path", "first.second.path", "os.path", "first._third.path")
         )
     );
   }
@@ -174,7 +270,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestProposedImportsOrdering("path", "pkg.path", "sys.path")
+      (__) -> doTestProposedImportsOrdering("pkg.path", "sys.path")
     );
   }
 
@@ -183,23 +279,23 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "_private.path")
+      (__) -> doTestProposedImportsOrdering("first.second.path", "sys.path", "_private.path")
     );
   }
 
   // PY-20976
   public void testOrderingSymbolBeforeModule() {
-    doTestProposedImportsOrdering("foo", "first.module.foo()", "first.a.foo");
+    doTestProposedImportsOrdering("first.module.foo", "first.a.foo");
   }
 
   // PY-20976
   public void testOrderingModuleBeforePackage() {
-    doTestProposedImportsOrdering("foo", "b.foo", "a.foo");
+    doTestProposedImportsOrdering("b.foo", "a.foo");
   }
 
   // PY-20976
   public void testOrderingPathComponentsNumber() {
-    doTestProposedImportsOrdering("foo", "c.foo", "b.c.foo", "a.b.c.foo");
+    doTestProposedImportsOrdering("c.foo", "b.c.foo", "a.b.c.foo");
   }
 
   // PY-20976
@@ -211,7 +307,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
         runWithAdditionalFileInLibDir(
           "os/path.py",
           "",
-          (___) -> doTestProposedImportsOrdering("path", "path from sys", "src.path", "os.path")
+          (___) -> doTestProposedImportsOrdering("path from sys", "src.path", "os.path")
         )
     );
   }
@@ -244,9 +340,133 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import");
   }
 
-  private void doTestProposedImportsOrdering(@NotNull String text, String @NotNull ... expected) {
+  // PY-36374
+  public void testGlobalDefinitionDoesNotShadowCommonPackageAliasVariant() {
     doMultiFileAutoImportTest("Import", fix -> {
-      final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText(text));
+      List<ImportCandidateHolder> candidates = fix.getCandidates();
+      ImportCandidateHolder importNumpyAsNpVariant = ContainerUtil.find(candidates, c -> {
+        PsiDirectory dir = as(c.getImportable(), PsiDirectory.class);
+        return dir != null && dir.getName().equals("numpy") && "np".equals(c.getAsName());
+      });
+      assertNotNull(importNumpyAsNpVariant);
+      List<String> candidateText = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());
+      assertContainsInRelativeOrder(candidateText, "numpy as np", "pandas.np");
+      return true;
+    });
+  }
+
+  // PY-36374
+  public void testUnrelatedSubpackagesNotSuggestedForCommonPackageAliases() {
+    doMultiFileAutoImportTest("Import", fix -> {
+      ImportCandidateHolder onlyCandidate = assertOneElement(fix.getCandidates());
+      assertEquals("numpy as np", onlyCandidate.getPresentableText());
+      return false;
+    });
+  }
+
+  public void testCommonPackageAlias() {
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-46356
+  public void testCommonSubModuleAliasPlainImport() {
+    PyCodeInsightSettings codeInsightSettings = PyCodeInsightSettings.getInstance();
+    boolean oldPreferFromImport = codeInsightSettings.PREFER_FROM_IMPORT;
+    codeInsightSettings.PREFER_FROM_IMPORT = false;
+    try {
+      doMultiFileAutoImportTest("Qualify with an imported module");
+    }
+    finally {
+      codeInsightSettings.PREFER_FROM_IMPORT = oldPreferFromImport;
+    }
+  }
+
+  // PY-46356
+  public void testCommonSubModuleAliasFromImport() {
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-46358
+  public void testLocalPlainImportForCommonPackageAlias() {
+    doMultiFileAutoImportTest("Import 'numpy as np' locally");
+  }
+
+  // PY-46358
+  public void testLocalFromImportForCommonPackageAlias() {
+    doMultiFileAutoImportTest("Import 'matplotlib.pyplot as plt' locally");
+  }
+
+  // PY-46361
+  public void testPackagesFromPythonSkeletonsNotSuggested() {
+    doMultiFileNegativeTest("Import");
+
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
+    List<PyFile> djangoPackages = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromComponents("django"),
+                                                                       myFixture.getProject(), scope);
+    if (djangoPackages.size() != 1) {
+      dumpSdkRootsFileSystemAndIndexResults();
+    }
+    PyFile djangoPackage = assertOneElement(djangoPackages);
+    assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoPackage));
+  }
+
+  // PY-46361
+  public void testClassesFromPythonSkeletonsNotSuggested() {
+    doMultiFileNegativeTest("Import");
+
+    PyClass djangoViewClass = PyClassNameIndex.findClass("django.views.generic.base.View", myFixture.getProject());
+    if (djangoViewClass == null) {
+      dumpSdkRootsFileSystemAndIndexResults();
+    }
+    assertNotNull(djangoViewClass);
+    assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoViewClass.getContainingFile()));
+  }
+
+  private void dumpSdkRootsFileSystemAndIndexResults() {
+    dumpSdkRoots();
+    VirtualFile skeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
+    skeletonsDir.refresh(true, true);
+    System.out.println("Under VFS (django): " + skeletonsDir.findChild("django"));
+    System.out.println("Under VFS (django/__init__.py): " + skeletonsDir.findFileByRelativePath("django/__init__.py"));
+    Path djangoDirPath = skeletonsDir.toNioPath().resolve("django");
+    System.out.println("Under NIO (django): " + Files.exists(djangoDirPath));
+    Path djangoInitPyPath = skeletonsDir.toNioPath().resolve("django/__init__.py");
+    System.out.println("Under NIO (django/__init__.py): " + Files.exists(djangoInitPyPath));
+    GlobalSearchScope projectScope = GlobalSearchScope.allScope(myFixture.getProject());
+    System.out.println("Under filename index (django): " + FilenameIndex.getVirtualFilesByName("django", projectScope));
+    List<VirtualFile> djangoInitPy = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName("__init__.py", projectScope),
+                                                          f -> f.getParent().getName().equals("django"));
+    System.out.println("Under filename index (django/__init__.py): " + djangoInitPy);
+    final List<PyFile> djangoModules = PyModuleNameIndex.findByShortName("django", myFixture.getProject(), projectScope);
+    System.out.println("Under module name index: " + ContainerUtil.map(djangoModules, PsiFile::getVirtualFile));
+  }
+
+  // PY-46344
+  public void testImportAbstractContainersFromCollectionsABC() {
+    Consumer<VirtualFile> fileConsumer = file -> {
+      doMultiFileAutoImportTest("Import", fix -> {
+        final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());
+        assertNotNull(candidates);
+        assertContainsElements(candidates, "collections.abc.Sized");
+        assertDoesntContain(candidates, "collections.Sized");
+        return false;
+      });
+    };
+    runWithAdditionalFileInLibDir(
+      "_collections_abc.py",
+      """
+        __all__ = ["Sized"]
+        __name__ = "collections.abc"
+        class Sized:
+            pass
+        """,
+      fileConsumer
+    );
+  }
+
+  private void doTestProposedImportsOrdering(String @NotNull ... expected) {
+    doMultiFileAutoImportTest("Import", fix -> {
+      final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());
       assertNotNull(candidates);
       assertContainsInRelativeOrder(candidates, expected);
       return false;
@@ -257,7 +477,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest(hintPrefix, null);
   }
 
-  private void doMultiFileAutoImportTest(@NotNull String hintPrefix, @Nullable Processor<AutoImportQuickFix> checkQuickfix) {
+  private void doMultiFileAutoImportTest(@NotNull String hintPrefix, @Nullable Processor<? super AutoImportQuickFix> checkQuickfix) {
     configureMultiFileProject();
 
     final PsiElement hostUnderCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());

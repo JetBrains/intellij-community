@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -17,9 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(CompletionAutoPopupHandler.class);
   public static final Key<Boolean> ourTestingAutopopup = Key.create("TestingAutopopup");
@@ -57,10 +54,10 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   /**
-   * @deprecated can be emulated with {@link com.intellij.openapi.application.AppUIExecutor}
+   * @deprecated can be emulated with {@link AppUIExecutor}
    */
-  @Deprecated
-  public static void runLaterWithCommitted(@NotNull Project project, @SuppressWarnings("unused") Document document, @NotNull Runnable runnable) {
+  @Deprecated(forRemoval = true)
+  public static void runLaterWithCommitted(@NotNull Project project, Document document, @NotNull Runnable runnable) {
     AppUIExecutor.onUiThread().later().withDocumentsCommitted(project).execute(runnable);
   }
 }

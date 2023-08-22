@@ -21,8 +21,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.doc.TaskPsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,9 +41,10 @@ public class ShowTaskDescription extends BaseTaskAction {
       final LocalTask activeTask = getActiveTask(event);
       presentation.setEnabled(activeTask != null && activeTask.isIssue() && activeTask.getDescription() != null);
       if (activeTask == null || !activeTask.isIssue()) {
-        presentation.setText(getTemplatePresentation().getText());
+        presentation.setTextWithMnemonic(getTemplatePresentation().getTextWithPossibleMnemonic());
       } else {
-        presentation.setText("Show '" + activeTask.getPresentableName() + "' _Description");
+        presentation.setText(TaskBundle.message("action.show.description.text",
+                                                StringUtil.escapeMnemonics(activeTask.getPresentableName())));
       }
     }
   }
@@ -55,7 +59,7 @@ public class ShowTaskDescription extends BaseTaskAction {
                                                   () -> DocumentationManager.getInstance(project).showJavaDocInfo(new TaskPsiElement(PsiManager.getInstance(project), task), null), getCommandName(), null);
   }
 
-  protected String getCommandName() {
+  protected @NlsContexts.Command String getCommandName() {
     String text = getTemplatePresentation().getText();
     return text != null ? text : "";
   }

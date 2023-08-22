@@ -1,39 +1,44 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 class ScopedClassHierarchy {
-  private static final TObjectHashingStrategy<PsiClass> CLASS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiClass>() {
+  private static final HashingStrategy<PsiClass> CLASS_HASHING_STRATEGY = new HashingStrategy<PsiClass>() {
     @Override
-    public int computeHashCode(PsiClass object) {
-      return StringUtil.notNullize(object.getQualifiedName()).hashCode();
+    public int hashCode(PsiClass object) {
+      return object == null ? 0 : Strings.notNullize(object.getQualifiedName()).hashCode();
     }
 
     @Override
     public boolean equals(PsiClass o1, PsiClass o2) {
-      final String qname1 = o1.getQualifiedName();
-      if (qname1 != null) return qname1.equals(o2.getQualifiedName());
+      if (o1 == o2) {
+        return true;
+      }
+      if (o1 == null || o2 == null) {
+        return false;
+      }
 
+      String qname1 = o1.getQualifiedName();
+      if (qname1 != null) {
+        return qname1.equals(o2.getQualifiedName());
+      }
       return o1.getManager().areElementsEquivalent(o1, o2);
     }
   };
@@ -79,9 +84,12 @@ class ScopedClassHierarchy {
 
   @NotNull
   static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
+    if (psiClass instanceof PsiAnonymousClass) {
+      return new ScopedClassHierarchy(psiClass, resolveScope);
+    }
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Map<GlobalSearchScope, ScopedClassHierarchy> result = ConcurrentFactoryMap.createMap(resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1));
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }).get(resolveScope);
   }
 
@@ -90,7 +98,7 @@ class ScopedClassHierarchy {
     ScopedClassHierarchy hierarchy = getHierarchy(derivedClass, scope);
     Map<PsiClass, PsiClassType.ClassResolveResult> map = hierarchy.mySupersWithSubstitutors;
     if (map == null) {
-      map = new THashMap<>(CLASS_HASHING_STRATEGY);
+      map = CollectionFactory.createCustomHashingStrategyMap(CLASS_HASHING_STRATEGY);
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       hierarchy.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), map);
       if (stamp.mayCacheNow()) {
@@ -141,7 +149,7 @@ class ScopedClassHierarchy {
     PsiUtilCore.ensureValid(myPlaceClass);
     List<PsiClassType.ClassResolveResult> list = new ArrayList<>();
     for (PsiClassType type : myPlaceClass.getSuperTypes()) {
-      PsiUtil.ensureValidType(type);
+      PsiUtil.ensureValidType(type, myPlaceClass);
       PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);
       if (corrected == null) continue;
 
@@ -162,7 +170,7 @@ class ScopedClassHierarchy {
 
   @NotNull
   private Map<PsiClass, PsiSubstitutor> calcAllMemberSupers(final LanguageLevel level) {
-    final Map<PsiClass, PsiSubstitutor> map = new THashMap<>();
+    final Map<PsiClass, PsiSubstitutor> map = new HashMap<>();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myPlaceClass.getProject());
     new PairProcessor<PsiClass, PsiSubstitutor>() {
       @Override

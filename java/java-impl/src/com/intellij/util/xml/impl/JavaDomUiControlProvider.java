@@ -9,9 +9,6 @@ import com.intellij.util.xml.ui.PsiClassControl;
 import com.intellij.util.xml.ui.PsiClassTableCellEditor;
 import com.intellij.util.xml.ui.PsiTypeControl;
 
-/**
- * @author peter
- */
 final class JavaDomUiControlProvider implements Consumer<DomUIFactory> {
   @Override
   public void consume(DomUIFactory factory) {

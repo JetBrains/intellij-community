@@ -17,6 +17,7 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ import java.io.File;
 
 public class DetailController {
   private final MasterController myMasterController;
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm();
   private DetailView myDetailView;
   private ItemWrapper mySelectedItem;
 
@@ -47,7 +48,8 @@ public class DetailController {
     }
   }
 
-  private String getTitle2Text(String fullText) {
+  @Nls
+  private String getTitle2Text(@Nls String fullText) {
     int labelWidth = getLabel().getWidth();
     if (fullText == null || fullText.length() == 0) return " ";
     while (getLabel().getFontMetrics(getLabel().getFont()).stringWidth(fullText) > labelWidth) {

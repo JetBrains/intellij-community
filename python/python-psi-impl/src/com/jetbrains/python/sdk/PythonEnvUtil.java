@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public class PythonEnvUtil {
+public final class PythonEnvUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = "PYTHONPATH";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONIOENCODING = "PYTHONIOENCODING";

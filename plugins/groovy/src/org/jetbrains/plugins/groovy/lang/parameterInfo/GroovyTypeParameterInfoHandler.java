@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -63,24 +62,13 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     return GrTypeArgumentList.class;
   }
 
-  @Override
-  public boolean couldShowInLookup() {
-    return false;
-  }
-
-  @Override
-  public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    return null;
-  }
-
   @Nullable
   @Override
   public GrTypeArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     final GrTypeArgumentList parameterList = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), GrTypeArgumentList.class);
 
     if (parameterList != null) {
-      if (!(parameterList.getParent() instanceof GrCodeReferenceElement)) return null;
-      final GrCodeReferenceElement ref = ((GrCodeReferenceElement)parameterList.getParent());
+      if (!(parameterList.getParent() instanceof GrCodeReferenceElement ref)) return null;
 
       final PsiElement resolved = ref.resolve();
       if (!(resolved instanceof PsiTypeParameterListOwner)) return null;
@@ -111,7 +99,7 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     int index = ParameterInfoUtils.getCurrentParameterIndex(parameterOwner.getNode(), context.getOffset(), getActualParameterDelimiterType());
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();
-    context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? (PsiElement)objectsToView[index] : null);
+    context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? objectsToView[index] : null);
   }
 
   @Override

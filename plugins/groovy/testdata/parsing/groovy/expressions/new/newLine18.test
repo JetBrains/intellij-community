@@ -12,9 +12,9 @@ Groovy script
     Logical expression
       Literal
         PsiElement(true)('true')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(||)('||')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Literal
         PsiElement(false)('false')
     PsiElement())(')')

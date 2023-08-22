@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The application wide settings for the git
  */
-@State(name = "Git.Application.Settings", storages = @Storage(value = "git.xml", roamingType = RoamingType.PER_OS))
+@State(name = "Git.Application.Settings", storages = @Storage(value = "git.xml", roamingType = RoamingType.DISABLED))
 public final class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 
@@ -18,12 +19,12 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
-    public boolean AUTO_COMMIT_ON_CHERRY_PICK = true;
     public boolean USE_CREDENTIAL_HELPER = false;
+    public boolean STAGING_AREA_ENABLED = false;
   }
 
   public static GitVcsApplicationSettings getInstance() {
-    return ServiceManager.getService(GitVcsApplicationSettings.class);
+    return ApplicationManager.getApplication().getService(GitVcsApplicationSettings.class);
   }
 
   @Override
@@ -42,7 +43,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
    * auto-detection
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String getPathToGit() {
     return GitExecutableManager.getInstance().getPathToGit();
   }
@@ -54,6 +55,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setPathToGit(@Nullable String pathToGit) {
     myState.myPathToGit = pathToGit;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
   }
 
   public boolean isIgnoreWhitespaces() {
@@ -73,20 +75,20 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     myState.ANNOTATE_DETECT_INNER_MOVEMENTS = value;
   }
 
-  public void setAutoCommitOnCherryPick(boolean autoCommit) {
-    myState.AUTO_COMMIT_ON_CHERRY_PICK = autoCommit;
-  }
-
-  public boolean isAutoCommitOnCherryPick() {
-    return myState.AUTO_COMMIT_ON_CHERRY_PICK;
-  }
-
   public void setUseCredentialHelper(boolean useCredentialHelper) {
     myState.USE_CREDENTIAL_HELPER = useCredentialHelper;
   }
 
   public boolean isUseCredentialHelper() {
     return myState.USE_CREDENTIAL_HELPER;
+  }
+
+  public boolean isStagingAreaEnabled() {
+    return myState.STAGING_AREA_ENABLED;
+  }
+
+  public void setStagingAreaEnabled(boolean isStagingAreaEnabled) {
+    myState.STAGING_AREA_ENABLED = isStagingAreaEnabled;
   }
 
   public enum AnnotateDetectMovementsOption {

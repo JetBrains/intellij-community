@@ -1,0 +1,3 @@
+from d3dshot.capture_outputs.pytorch_capture_output import PytorchCaptureOutput
+
+class PytorchFloatCaptureOutput(PytorchCaptureOutput): ...

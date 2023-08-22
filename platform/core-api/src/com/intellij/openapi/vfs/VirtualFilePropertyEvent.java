@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.util.FileContentUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,8 +32,7 @@ public class VirtualFilePropertyEvent extends VirtualFileEvent {
    * @see VirtualFile#PROP_HIDDEN
    * @see VirtualFile#PROP_SYMLINK_TARGET
    */
-  @NotNull
-  public String getPropertyName() {
+  public @NotNull String getPropertyName() {
     return myPropertyName;
   }
 
@@ -57,10 +54,5 @@ public class VirtualFilePropertyEvent extends VirtualFileEvent {
    */
   public Object getNewValue() {
     return myNewValue;
-  }
-
-  @ApiStatus.Experimental
-  public boolean isRename() {
-    return myPropertyName == VirtualFile.PROP_NAME && getRequestor() != FileContentUtilCore.FORCE_RELOAD_REQUESTOR;
   }
 }

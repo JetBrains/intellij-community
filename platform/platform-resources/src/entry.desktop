@@ -8,3 +8,4 @@ Comment=$COMMENT$
 Categories=Development;IDE;
 Terminal=false
 StartupWMClass=$WM_CLASS$
+StartupNotify=true

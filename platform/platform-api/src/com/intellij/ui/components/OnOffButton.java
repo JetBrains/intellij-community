@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
@@ -16,29 +18,29 @@ import java.util.Locale;
  * @author Konstantin Bulenkov
  */
 public class OnOffButton extends JToggleButton {
-  private String myOnText = "ON";
-  private String myOffText = "OFF";
+  private @NlsContexts.Button String myOnText = IdeBundle.message("onoff.button.on");
+  private @NlsContexts.Button String myOffText = IdeBundle.message("onoff.button.off");
 
   public OnOffButton() {
     setBorder(null);
     setOpaque(false);
   }
 
-  public String getOnText() {
+  public @NlsContexts.Button String getOnText() {
     return myOnText;
   }
 
   @SuppressWarnings("unused")
-  public void setOnText(String onText) {
+  public void setOnText(@NlsContexts.Button String onText) {
     myOnText = onText;
   }
 
-  public String getOffText() {
+  public @NlsContexts.Button String getOffText() {
     return myOffText;
   }
 
   @SuppressWarnings("unused")
-  public void setOffText(String offText) {
+  public void setOffText(@NlsContexts.Button String offText) {
     myOffText = offText;
   }
 
@@ -60,10 +62,10 @@ public class OnOffButton extends JToggleButton {
     private static final Color BORDER_COLOR = JBColor.namedColor("ToggleButton.borderColor", new JBColor(Gray._192, Gray._80));
     private static final Color BUTTON_COLOR = JBColor.namedColor("ToggleButton.buttonColor", new JBColor(Gray._200, Gray._100));
     private static final Color ON_BACKGROUND = JBColor.namedColor("ToggleButton.onBackground", new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
-    private static final Color ON_FOREGROUND = JBColor.namedColor("ToggleButton.onForeground", new JBColor(() -> UIUtil.getListForeground(true, true)));
+    private static final Color ON_FOREGROUND = JBColor.namedColor("ToggleButton.onForeground", JBColor.lazy(() -> UIUtil.getListForeground(true, true)));
 
-    private static final Color OFF_BACKGROUND = JBColor.namedColor("ToggleButton.offBackground", new JBColor(() -> UIUtil.getPanelBackground()));
-    private static final Color OFF_FOREGROUND = JBColor.namedColor("ToggleButton.offForeground", new JBColor(() -> UIUtil.getLabelDisabledForeground()));
+    private static final Color OFF_BACKGROUND = JBColor.namedColor("ToggleButton.offBackground", JBColor.lazy(() -> UIUtil.getPanelBackground()));
+    private static final Color OFF_FOREGROUND = JBColor.namedColor("ToggleButton.offForeground", JBColor.lazy(() -> UIUtil.getLabelDisabledForeground()));
 
     @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
@@ -88,14 +90,13 @@ public class OnOffButton extends JToggleButton {
 
     @Override
     public void paint(Graphics g, JComponent c) {
-      if (!(c instanceof OnOffButton)) return;
+      if (!(c instanceof OnOffButton button)) return;
 
       int toggleArc = JBUIScale.scale(3);
       int buttonArc = JBUIScale.scale(5);
       int vGap = JBUIScale.scale(3);
       int hGap = JBUIScale.scale(3);
 
-      OnOffButton button = (OnOffButton)c;
       Dimension size = button.getSize();
       int w = size.width - 2 * vGap;
       int h = size.height - 2 * hGap;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.icons.AllIcons;
@@ -8,8 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclaration;
@@ -18,10 +16,7 @@ import org.jetbrains.uast.UastContextKt;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Pavel.Dolgov
- */
-public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
+public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   private final RefModule myRefModule;
 
   private Map<String, List<String>> myExportedPackageNames;
@@ -37,7 +32,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   }
 
   @Override
-  protected void initialize() {
+  protected synchronized void initialize() {
     ((WritableRefEntity)myRefModule).add(this);
   }
 
@@ -93,17 +88,15 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
     return myRequiredModules != null ? myRequiredModules : Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(boolean expanded) {
+  public @NotNull Icon getIcon(boolean expanded) {
     return AllIcons.Nodes.JavaModule;
   }
 
   private void buildRequiresReferences(PsiJavaModule javaModule) {
     for (PsiRequiresStatement statement : javaModule.getRequires()) {
       PsiElement element = addReference(statement.getModuleReference());
-      if (element instanceof PsiJavaModule) {
-        PsiJavaModule requiredModule = (PsiJavaModule)element;
+      if (element instanceof PsiJavaModule requiredModule) {
         Map<String, List<String>> packagesExportedByModule = getPackagesExportedByModule(requiredModule);
         if (myRequiredModules == null) myRequiredModules = new ArrayList<>(1);
         myRequiredModules.add(new RequiredModule(requiredModule.getName(), packagesExportedByModule, statement.hasModifierProperty(PsiModifier.TRANSITIVE)));
@@ -118,7 +111,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
       String packageName = null;
       if (element instanceof PsiPackage) {
         packageName = ((PsiPackage)element).getQualifiedName();
-        if (myExportedPackageNames == null) myExportedPackageNames = new THashMap<>(1);
+        if (myExportedPackageNames == null) myExportedPackageNames = new HashMap<>(1);
         myExportedPackageNames.put(packageName, emptyList);
       }
       for (PsiJavaModuleReferenceElement referenceElement : statement.getModuleReferences()) {
@@ -143,7 +136,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
         if (providerInterface instanceof PsiClass) {
           final RefElement refInterface = getRefManager().getReference(providerInterface);
           if (refInterface instanceof RefClassImpl) {
-            if (myServiceInterfaces == null) myServiceInterfaces = new THashSet<>();
+            if (myServiceInterfaces == null) myServiceInterfaces = new HashSet<>();
             myServiceInterfaces.add((RefClass)refInterface);
 
             for (PsiJavaCodeReferenceElement implementationReference : implementationList.getReferenceElements()) {
@@ -155,7 +148,8 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
                 if (targetElement == null) {
                   final RefElement refClass = getRefManager().getReference(implementationClass);
                   if (refClass instanceof RefClassImpl) {
-                    if (myServiceImplementations == null) myServiceImplementations = new THashSet<>();
+                    refClass.initializeIfNeeded();
+                    if (myServiceImplementations == null) myServiceImplementations = new HashSet<>();
                     myServiceImplementations.add((RefClass)refClass);
 
                     final RefMethod refConstructor = ((RefClassImpl)refClass).getDefaultConstructor();
@@ -194,7 +188,9 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
         if (usedInterface instanceof PsiClass) {
           final RefElement refClass = getRefManager().getReference(usedInterface);
           if (refClass instanceof RefClass) {
-            if (myUsedServices == null) myUsedServices = new THashSet<>();
+            if (myUsedServices == null) {
+              myUsedServices = new HashSet<>();
+            }
             myUsedServices.add((RefClass)refClass);
           }
         }
@@ -210,8 +206,6 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
       buildExportsReferences(javaModule);
       buildProvidesReferences(javaModule);
       buildUsesReferences(javaModule);
-
-      getRefManager().fireBuildReferences(this);
     }
   }
 
@@ -241,12 +235,12 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   public static RefJavaModule moduleFromExternalName(@NotNull RefManagerImpl manager, @NotNull String fqName) {
     Project project = manager.getProject();
     PsiJavaModule javaModule = JavaPsiFacade.getInstance(project).findModule(fqName, GlobalSearchScope.projectScope(project));
-    return javaModule == null ? null : new RefJavaModuleImpl(javaModule, manager);
+    return javaModule == null ? null : (RefJavaModule)manager.getReference(javaModule);
   }
 
   @NotNull
   private static Map<String, List<String>> getPackagesExportedByModule(@NotNull PsiJavaModule javaModule) {
-    Map<String, List<String>> exportedPackages = new THashMap<>();
+    Map<String, List<String>> exportedPackages = new HashMap<>();
     for (PsiPackageAccessibilityStatement statement : javaModule.getExports()) {
       String packageName = statement.getPackageName();
       if (packageName != null) {

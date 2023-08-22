@@ -8,9 +8,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class QuerySearchRequest {
   public final Query<PsiReference> query;
   public final SearchRequestCollector collector;
@@ -23,7 +20,7 @@ public class QuerySearchRequest {
     this.query = query;
     this.collector = collector;
     if (inReadAction) {
-      this.processor = new ReadActionProcessor<PsiReference>() {
+      this.processor = new ReadActionProcessor<>() {
         @Override
         public boolean processInReadAction(PsiReference psiReference) {
           return processor.process(psiReference, collector);

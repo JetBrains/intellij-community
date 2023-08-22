@@ -1,37 +1,28 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.PagePool;
-import com.intellij.util.io.RandomAccessDataFile;
-import gnu.trove.TIntArrayList;
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.StorageLockContext;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
-import java.text.MessageFormat;
+import java.nio.file.Path;
 
-public abstract class AbstractRecordsTable implements Disposable, Forceable {
+/**
+ * Table of indirect addressing, logically contains tuples (id, address, size, capacity), do
+ * the mapping id -> (address, size, capacity), and stores tuples as fixed-size records on
+ * the top of {@link PagedFileStorage}.
+ * <br>
+ * Subclasses could add fields to the tuple, and implement more efficient storage formats.
+ * <br>
+ * Thread safety is unclear: some methods are protected against concurrent access, some are not.
+ */
+public abstract class AbstractRecordsTable implements IRecordsTable {
   private static final Logger LOG = Logger.getInstance(AbstractRecordsTable.class);
 
   private static final int HEADER_MAGIC_OFFSET = 0;
@@ -48,24 +39,38 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
 
   protected static final int DEFAULT_RECORD_SIZE = CAPACITY_OFFSET + 4;
 
-  protected final RandomAccessDataFile myStorage;
+  protected final PagedFileStorage myStorage;
 
-  private TIntArrayList myFreeRecordsList = null;
+  private IntList myFreeRecordsList = null;
   private boolean myIsDirty = false;
   protected static final int SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD = -1;
 
-  public AbstractRecordsTable(final File storageFilePath, final PagePool pool) throws IOException {
-    myStorage = new RandomAccessDataFile(storageFilePath, pool);
+  public AbstractRecordsTable(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
+    myStorage = new PagedFileStorage(storageFilePath, context, getPageSize(), areDataAlignedToPage(), false);
+    myStorage.lockWrite();
+    try {
     if (myStorage.length() == 0) {
       myStorage.put(0, new byte[getHeaderSize()], 0, getHeaderSize());
       markDirty();
     }
     else {
       if (myStorage.getInt(HEADER_MAGIC_OFFSET) != getSafelyClosedMagic()) {
-        myStorage.dispose();
-        throw new IOException("Records table for '" + storageFilePath + "' haven't been closed correctly. Rebuild required.");
+          myStorage.close();
+          throw new IOException("Records table for '" + storageFilePath + "' haven't been closed correctly. Rebuild required.");
+        }
+        }
       }
+    finally {
+      myStorage.unlockWrite();
     }
+  }
+
+  private static int getPageSize() {
+    return AbstractStorage.PAGE_SIZE;
+  }
+
+  private boolean areDataAlignedToPage() {
+    return ((getPageSize() - getHeaderSize()) % getRecordSize() == 0) && (getPageSize() % getRecordSize() == 0);
   }
 
   private int getSafelyClosedMagic() {
@@ -82,33 +87,47 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
 
   protected abstract byte[] getZeros();
 
+  @Override
   public int createNewRecord() throws IOException {
     markDirty();
     ensureFreeRecordsScanned();
 
-    if (myFreeRecordsList.isEmpty()) {
+    int reusedRecord = reserveFreeRecord();
+    if (reusedRecord == -1) {
       int result = getRecordsCount() + 1;
       doCleanRecord(result);
-      if (getRecordsCount() != result)  LOG.error("Failed to correctly allocate new record in: " + myStorage.getFile());
+      if (getRecordsCount() != result) {
+        LOG.error("Failed to correctly allocate new record in: " + myStorage);
+      }
       return result;
     }
     else {
-      final int result = myFreeRecordsList.remove(myFreeRecordsList.size() - 1);
-      assert isSizeOfRemovedRecord(getSize(result));
-      setSize(result, 0);
-      return result;
+      assert isSizeOfRemovedRecord(getSize(reusedRecord));
+      setSize(reusedRecord, 0);
+      setCapacity(reusedRecord, 0);
+      return reusedRecord;
     }
   }
 
+  private int reserveFreeRecord() throws IOException {
+    ensureFreeRecordsScanned();
+    synchronized (myFreeRecordsList) {
+      return myFreeRecordsList.isEmpty() ? -1 : myFreeRecordsList.removeInt(myFreeRecordsList.size() - 1);
+    }
+  }
+
+  @Override
   public int getRecordsCount() throws IOException {
     int recordsLength = (int)myStorage.length() - getHeaderSize();
     if ((recordsLength % getRecordSize()) != 0) {
-      throw new IOException(MessageFormat.format("Corrupted records: storageLength={0} recordsLength={1} recordSize={2}",
-                                                 myStorage.length(), recordsLength, getRecordSize()));
+      throw new CorruptedException(
+        "Corrupted records: storageLength="+myStorage.length()+" recordsLength="+recordsLength+" recordSize="+getRecordSize()
+      );
     }
     return recordsLength / getRecordSize();
   }
 
+  @Override
   public RecordIdIterator createRecordIdIterator() throws IOException {
     return new RecordIdIterator() {
       private final int count = getRecordsCount();
@@ -126,13 +145,14 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
       }
 
       @Override
-      public boolean validId() {
+      public boolean validId() throws IOException {
         assert hasNextId();
         return isSizeOfLiveRecord(getSize(recordId));
       }
     };
   }
 
+  @Override
   @TestOnly
   public int getLiveRecordsCount() throws IOException {
     ensureFreeRecordsScanned();
@@ -145,8 +165,8 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     }
   }
 
-  private TIntArrayList scanForFreeRecords() throws IOException {
-    final TIntArrayList result = new TIntArrayList();
+  private IntList scanForFreeRecords() throws IOException {
+    IntList result = new IntArrayList();
     for (int i = 1; i <= getRecordsCount(); i++) {
       if (isSizeOfRemovedRecord(getSize(i))) {
         result.add(i);
@@ -155,42 +175,57 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     return result;
   }
 
-  private void doCleanRecord(int record) {
+  private void doCleanRecord(int record) throws IOException {
     myStorage.put(getOffset(record, 0), getZeros(), 0, getRecordSize());
   }
 
-  public long getAddress(int record) {
+  @Override
+  public long getAddress(int record) throws IOException {
     return myStorage.getLong(getOffset(record, ADDRESS_OFFSET));
   }
 
-  public void setAddress(int record, long address) {
+  @Override
+  public void setAddress(int record, long address) throws IOException {
     markDirty();
     myStorage.putLong(getOffset(record, ADDRESS_OFFSET), address);
   }
 
-  public int getSize(int record) {
+  @Override
+  public int getSize(int record) throws IOException {
     return myStorage.getInt(getOffset(record, SIZE_OFFSET));
   }
 
-  public void setSize(int record, int size) {
+  @Override
+  public void setSize(int record, int size) throws IOException {
     markDirty();
     myStorage.putInt(getOffset(record, SIZE_OFFSET), size);
   }
 
-  public int getCapacity(int record) {
+  @Override
+  public int getCapacity(int record) throws IOException {
     return myStorage.getInt(getOffset(record, CAPACITY_OFFSET));
   }
 
-  public void setCapacity(int record, int capacity) {
+  @Override
+  public void setCapacity(int record, int capacity) throws IOException {
     markDirty();
     myStorage.putInt(getOffset(record, CAPACITY_OFFSET), capacity);
   }
 
   protected int getOffset(int record, int section) {
-    assert record > 0;
-    return getHeaderSize() + (record - 1) * getRecordSize() + section;
+    assert record > 0 : "record = " + record;
+    int offset = getHeaderSize() + (record - 1) * getRecordSize() + section;
+    if (offset < 0) {
+      throw new IllegalArgumentException("offset is negative (" + offset + "): " +
+                                         "record = " + record + ", " +
+                                         "section " + section + ", " +
+                                         "header size " + getHeaderSize() + ", " +
+                                         "record size = " + getRecordSize());
+    }
+    return offset;
   }
 
+  @Override
   public void deleteRecord(final int record) throws IOException {
     markDirty();
     ensureFreeRecordsScanned();
@@ -199,36 +234,27 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     myFreeRecordsList.add(record);
   }
 
-  public int getVersion() {
+  @Override
+  public int getVersion() throws IOException {
     return myStorage.getInt(HEADER_VERSION_OFFSET);
   }
 
-  public void setVersion(final int expectedVersion) {
+  @Override
+  public void setVersion(final int expectedVersion) throws IOException {
     markDirty();
     myStorage.putInt(HEADER_VERSION_OFFSET, expectedVersion);
   }
 
   @Override
-  public void dispose() {
-    if (!myStorage.isDisposed()) {
-      markClean();
-      myStorage.dispose();
-    }
+  public void close() throws IOException {
+    markClean();
+    myStorage.close();
   }
 
   @Override
-  public void force() {
+  public void force() throws IOException {
     markClean();
     myStorage.force();
-  }
-
-  public boolean flushSome(int maxPages) {
-    myStorage.flushSomePages(maxPages);
-    if (!myStorage.isDirty()) {
-      force();
-      return true;
-    }
-    return false;
   }
 
   @Override
@@ -236,14 +262,15 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     return myIsDirty || myStorage.isDirty();
   }
 
-  public void markDirty() {
+  @Override
+  public void markDirty() throws IOException {
     if (!myIsDirty) {
       myIsDirty = true;
       myStorage.putInt(HEADER_MAGIC_OFFSET, DIRTY_MAGIC);
     }
   }
 
-  private void markClean() {
+  private void markClean() throws IOException {
     if (myIsDirty) {
       myIsDirty = false;
       myStorage.putInt(HEADER_MAGIC_OFFSET, getSafelyClosedMagic());

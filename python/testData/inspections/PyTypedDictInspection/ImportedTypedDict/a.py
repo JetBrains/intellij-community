@@ -1,4 +1,4 @@
-from .test import Test1, Base
+from test import Test1, Base
 
 b = Base(a=2)
 t = Test1(a=2)

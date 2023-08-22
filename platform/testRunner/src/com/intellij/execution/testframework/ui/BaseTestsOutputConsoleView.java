@@ -26,7 +26,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected TestConsoleProperties myProperties;
   private TestResultsPanel myTestResultsPanel;
 
-  public BaseTestsOutputConsoleView(TestConsoleProperties properties, AbstractTestProxy unboundOutputRoot) {
+  public BaseTestsOutputConsoleView(@NotNull TestConsoleProperties properties, AbstractTestProxy unboundOutputRoot) {
     myProperties = properties;
 
     myConsole = myProperties.createConsole();
@@ -46,7 +46,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   protected abstract TestResultsPanel createTestResultsPanel();
 
   @Override
-  public void attachToProcess(final ProcessHandler processHandler) {
+  public void attachToProcess(final @NotNull ProcessHandler processHandler) {
     myConsole.attachToProcess(processHandler);
   }
 

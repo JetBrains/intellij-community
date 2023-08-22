@@ -1,226 +1,163 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-@ApiStatus.Experimental
-public class NlsContexts {
+/**
+ * See the <a href="https://jetbrains.design/intellij/">IntelliJ Platform UI Guidelines</a>.
+ */
+public final class NlsContexts {
   /**
    * Dialogs
    */
   @NlsContext(prefix = "dialog.title")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface DialogTitle {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface DialogTitle { }
 
   @NlsContext(prefix = "dialog.message")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface DialogMessage {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.LOCAL_VARIABLE})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface DialogMessage { }
 
   /**
    * Popups
    */
   @NlsContext(prefix = "popup.title")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface PopupTitle {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface PopupTitle { }
 
   @NlsContext(prefix = "popup.content")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface PopupContent {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface PopupContent { }
 
   @NlsContext(prefix = "popup.advertisement")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface PopupAdvertisement {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface PopupAdvertisement { }
 
   /**
    * Notifications
    */
   @NlsContext(prefix = "notification.title")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface NotificationTitle {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface NotificationTitle { }
 
   @NlsContext(prefix = "notification.subtitle")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface NotificationSubtitle {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface NotificationSubtitle { }
 
   @NlsContext(prefix = "notification.content")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface NotificationContent {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface NotificationContent { }
 
   @NlsContext(prefix = "status.text")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface StatusText {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface StatusText { }
 
   @NlsContext(prefix = "hint.text")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface HintText {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface HintText { }
 
   @NlsContext(prefix = "configurable.name")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface ConfigurableName {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface ConfigurableName { }
 
   @NlsContext(prefix = "parsing.error")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ParsingError {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface ParsingError { }
 
   @NlsContext(prefix = "status.bar.text")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface StatusBarText {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface StatusBarText { }
 
   /**
    * Use it for annotating OS provided notification title, such as "project built" or "tests running finished".
    * See also #SystemNotificationText.
    */
   @NlsContext(prefix = "system.notification.title")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface SystemNotificationTitle {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface SystemNotificationTitle { }
 
   /**
    * Use it for annotating OS provided notification content.
    * See also #SystemNotificationTitle.
    */
   @NlsContext(prefix = "system.notification.text")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface SystemNotificationText {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface SystemNotificationText { }
 
   @NlsContext(prefix = "command.name")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface Command {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface Command { }
 
   @NlsContext(prefix = "tab.title")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface TabTitle {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface TabTitle { }
 
   /**
    * Annotate by {@code #AttributeDescriptor} text attribute keys, see {@link com.intellij.openapi.options.colors.AttributesDescriptor}
    */
   @NlsContext(prefix = "attribute.descriptor")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface AttributeDescriptor {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface AttributeDescriptor { }
 
   @NlsContext(prefix = "column.name")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface ColumnName {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface ColumnName { }
 
   /**
    * Swing components
    */
   @NlsContext(prefix = "label")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface Label {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface Label { }
 
   @NlsContext(prefix = "link.label")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface LinkLabel {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface LinkLabel { }
 
   @NlsContext(prefix = "checkbox")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface Checkbox {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface Checkbox { }
 
   @NlsContext(prefix = "radio")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface RadioButton {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface RadioButton { }
 
   @NlsContext(prefix = "border.title")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface BorderTitle {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface BorderTitle { }
 
   @NlsContext(prefix = "tooltip")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface Tooltip {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface Tooltip { }
 
   @NlsContext(prefix = "separator")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface Separator {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface Separator { }
 
   @NlsContext(prefix = "button")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface Button {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
+  public @Nls(capitalization = Nls.Capitalization.Title) @interface Button { }
 
   @NlsContext(prefix = "text")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface DetailedDescription {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface DetailedDescription { }
 
   @NlsContext(prefix = "list.item")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ListItem {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface ListItem { }
 
   @NlsContext(prefix = "progress.text")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ProgressText {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface ProgressText { }
 
   @NlsContext(prefix = "progress.details")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ProgressDetails {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface ProgressDetails { }
 
   @NlsContext(prefix = "progress.title")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ProgressTitle {
-  }
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @interface ProgressTitle { }
 }

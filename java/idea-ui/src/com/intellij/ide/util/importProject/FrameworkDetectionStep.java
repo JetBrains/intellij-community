@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
@@ -34,8 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,15 +104,16 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
   }
 
   @Override
-  protected void onFinished(final List<? extends DetectedFrameworkDescription> result, final boolean canceled) {
-    myDetectedFrameworksComponent.getTree().rebuildTree(result);
-    if (result.isEmpty()) {
+  protected void onFinished(@Nullable List<? extends DetectedFrameworkDescription> result, final boolean canceled) {
+    List<? extends DetectedFrameworkDescription> frameworks = ContainerUtil.notNullize(result);
+    myDetectedFrameworksComponent.getTree().rebuildTree(frameworks);
+    if (frameworks.isEmpty()) {
       myFrameworksDetectedLabel.setText(JavaUiBundle.message("label.text.no.frameworks.detected"));
     }
     else {
       myFrameworksDetectedLabel.setText(JavaUiBundle.message("label.text.the.following.frameworks.are.detected"));
     }
-    myFrameworksPanel.setVisible(!result.isEmpty());
+    myFrameworksPanel.setVisible(!frameworks.isEmpty());
   }
 
   @Override
@@ -134,7 +122,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
   }
 
   public static boolean isEnabled() {
-    return FrameworkDetector.EP_NAME.getExtensions().length > 0;
+    return FrameworkDetector.EP_NAME.hasAnyExtensions();
   }
 
   @Override

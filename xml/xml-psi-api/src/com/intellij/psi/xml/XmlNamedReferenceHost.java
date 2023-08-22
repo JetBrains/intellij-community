@@ -2,6 +2,7 @@
 package com.intellij.psi.xml;
 
 import com.intellij.model.psi.PsiExternalReferenceHost;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xml.XmlNamedReferenceProviderBean;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,5 @@ public interface XmlNamedReferenceHost extends PsiExternalReferenceHost {
    * and uses returned string to obtain the provider.
    * In case the XML tag name is actually "foo", then the provider is queried for references.
    */
-  @Nullable
-  String getHostName();
+  @Nullable @NlsSafe String getHostName();
 }

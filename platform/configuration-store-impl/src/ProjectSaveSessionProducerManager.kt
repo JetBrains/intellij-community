@@ -1,34 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
+import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.SmartList
-import com.intellij.util.containers.mapSmart
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class ProjectSaveSessionProducerManager(protected val project: Project) : SaveSessionProducerManager() {
-  suspend fun saveWithAdditionalSaveSessions(extraSessions: List<SaveSession>): SaveResult {
-    val saveSessions = SmartList<SaveSession>()
+  suspend fun saveWithAdditionalSaveSessions(extraSessions: Collection<SaveSession>): SaveResult {
+    val saveSessions = mutableListOf<SaveSession>()
     collectSaveSessions(saveSessions)
     if (saveSessions.isEmpty() && extraSessions.isEmpty()) {
       return SaveResult.EMPTY
     }
 
-    val saveResult = withEdtContext(project) {
-      runWriteAction {
-        val r = SaveResult()
-        saveSessions(extraSessions, r)
-        saveSessions(saveSessions, r)
-        r
-      }
+    val saveResult = writeAction {
+      val r = SaveResult()
+      saveSessions(extraSessions, r)
+      saveSessions(saveSessions, r)
+      r
     }
     validate(saveResult)
     return saveResult
@@ -38,15 +34,15 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
     val notifications = getUnableToSaveNotifications()
     val readonlyFiles = saveResult.readonlyFiles
     if (readonlyFiles.isEmpty()) {
-      notifications.forEach { it.expire() }
+      notifications.forEach(UnableToSaveProjectNotification::expire)
       return
     }
 
     if (notifications.isNotEmpty()) {
-      throw UnresolvedReadOnlyFilesException(readonlyFiles.mapSmart { it.file })
+      throw UnresolvedReadOnlyFilesException(readonlyFiles.map { it.file })
     }
 
-    val status = ensureFilesWritable(project, getFilesList(readonlyFiles))
+    val status = ensureFilesWritable(project, getFileList(readonlyFiles))
     if (status.hasReadonlyFiles()) {
       val unresolvedReadOnlyFiles = status.readonlyFiles.toList()
       dropUnableToSaveProjectNotification(project, unresolvedReadOnlyFiles)
@@ -56,19 +52,17 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
 
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
-    withEdtContext(project) {
-      runWriteAction {
-        val r = SaveResult()
-        for (entry in oldList) {
-          executeSave(entry.session, r)
-        }
-        r
+    writeAction {
+      val r = SaveResult()
+      for (entry in oldList) {
+        executeSave(entry.session, r)
       }
+      r
     }.appendTo(saveResult)
 
     if (readonlyFiles.isNotEmpty()) {
-      dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
-      saveResult.addError(UnresolvedReadOnlyFilesException(readonlyFiles.mapSmart { it.file }))
+      dropUnableToSaveProjectNotification(project, getFileList(readonlyFiles))
+      saveResult.addError(UnresolvedReadOnlyFilesException(readonlyFiles.map { it.file }))
     }
   }
 
@@ -78,7 +72,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
       Notifications.Bus.notify(UnableToSaveProjectNotification(project, readOnlyFiles), project)
     }
     else {
-      notifications[0].setFiles(readOnlyFiles)
+      notifications[0].files = readOnlyFiles
     }
   }
 
@@ -88,4 +82,4 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
   }
 }
 
-private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.mapSmart { it.file }
+private fun getFileList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.map { it.file }

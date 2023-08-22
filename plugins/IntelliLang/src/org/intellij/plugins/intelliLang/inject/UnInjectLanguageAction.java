@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,24 +15,26 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-/**
- * @author Dmitry Avdeev
- */
-public class UnInjectLanguageAction implements IntentionAction, LowPriorityAction {
-
+public final class UnInjectLanguageAction implements IntentionAction, LowPriorityAction {
   @Override
   @NotNull
   public String getText() {
     return IntelliLangBundle.message("intelliLang.uninject.language.action.text");
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.uninject.language.action.preview"));
   }
 
   @Override
@@ -75,8 +64,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
     if (psiFile == null) {
       PsiReference reference = file.findReferenceAt(offset);
       if (reference == null) return;
-      if (reference.getElement() instanceof PsiLanguageInjectionHost) {
-        PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)reference.getElement();
+      if (reference.getElement() instanceof PsiLanguageInjectionHost host) {
         for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
           if (support.isApplicableTo(host) && support.removeInjectionInPlace(host)) {
             PsiManager.getInstance(project).dropPsiCaches();
@@ -108,8 +96,8 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
   }
 
   private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host) {
-    final THashSet<String> languages = new THashSet<>();
-    final List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
+    Set<String> languages = new HashSet<>();
+    List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
     if (files == null) return false;
     for (Pair<PsiElement, TextRange> pair : files) {
       for (Language lang = pair.first.getLanguage(); lang != null; lang = lang.getBaseLanguage()) {

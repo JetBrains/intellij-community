@@ -1,0 +1,1 @@
+public final [ResolvedTo(BODY_RESOLVE)] fun memberFunction(): R|kotlin/Unit|

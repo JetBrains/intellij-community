@@ -1,39 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class IntentionsUI {
   private final Project myProject;
   public static IntentionsUI getInstance(Project project) {
-    return ServiceManager.getService(project, IntentionsUI.class);
+    return project.getService(IntentionsUI.class);
   }
 
-  public IntentionsUI(Project project) {
+  IntentionsUI(@NotNull Project project) {
     myProject = project;
   }
 
   private final AtomicReference<CachedIntentions> myCachedIntentions = new AtomicReference<>();
 
-  @NotNull
-  public CachedIntentions getCachedIntentions(@Nullable Editor editor, @NotNull PsiFile file) {
+  public @NotNull CachedIntentions getCachedIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     return myCachedIntentions.updateAndGet(cachedIntentions -> {
       if (cachedIntentions != null && editor == cachedIntentions.getEditor() && file == cachedIntentions.getFile()) {
         return cachedIntentions;
       }
-      else {
-        return new CachedIntentions(myProject, file, editor);
-      }
+      return new CachedIntentions(myProject, file, editor);
     });
-
   }
 
   public void invalidate() {
@@ -41,7 +35,22 @@ public abstract class IntentionsUI {
     hide();
   }
 
+  void invalidateForEditor(@NotNull Editor editor) {
+    myCachedIntentions.updateAndGet(cachedIntentions -> {
+      return cachedIntentions != null && editor == cachedIntentions.getEditor() ? null : cachedIntentions;
+    });
+    hideForEditor(editor);
+  }
+
   public abstract void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged);
 
   public abstract void hide();
+
+  /**
+   * Hide intention UI for a particular editor
+   * @param editor editor where intention UI might be shown
+   */
+  public void hideForEditor(@NotNull Editor editor) {
+    hide();
+  }
 }

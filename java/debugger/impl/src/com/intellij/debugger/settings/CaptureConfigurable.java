@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.CommonBundle;
@@ -10,9 +10,9 @@ import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -58,6 +58,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -93,9 +94,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   @Override
   public JComponent createComponent() {
     myTableModel = new MyTableModel();
+    myTableModel.addFromAnnotations(myProject);
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
+    table.setShowGrid(false);
 
     JTextField stringCellEditor = new JTextField();
     stringCellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
@@ -148,6 +151,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> {
           try {
@@ -170,6 +178,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = true);
         table.repaint();
@@ -184,6 +197,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> c.myEnabled = false);
         table.repaint();
@@ -194,6 +212,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(table.getSelectedRowCount() == 1 && !table.isEditing());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -216,8 +239,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
 
           @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
+            return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
           }
         };
         descriptor.setDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));
@@ -237,10 +260,15 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
-            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+            Messages.showErrorDialog(e.getProject(), msg != null && !msg.isEmpty() ? msg : ex.toString(),
                                      JavaDebuggerBundle.message("export.failed"));
           }
         }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     });
     decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.export"),
@@ -250,7 +278,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       public void actionPerformed(@NotNull final AnActionEvent e) {
         VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
           .createSaveFileDialog(new FileSaverDescriptor(JavaDebuggerBundle.message("export.selected.capture.points.to.file"), "", "xml"), e.getProject())
-          .save(null, null);
+          .save((Path)null, null);
         if (wrapper == null) return;
 
         Element rootElement = new Element("capture-points");
@@ -265,11 +293,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
         });
         try {
-          JDOMUtil.write(rootElement, wrapper.getFile());
+          JDOMUtil.write(rootElement, wrapper.getFile().toPath());
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+          Messages.showErrorDialog(e.getProject(), msg != null && !msg.isEmpty() ? msg : ex.toString(),
                                    JavaDebuggerBundle.message("export.failed"));
         }
       }
@@ -277,6 +305,11 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       @Override
       public boolean isEnabled() {
         return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     });
 
@@ -294,7 +327,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     return IntStreamEx.of(table.getSelectedRows()).map(table::convertRowIndexToModel).mapToObj(myTableModel::get);
   }
 
-  private static class MyTableModel extends AbstractTableModel implements ItemRemovable {
+  private static final class MyTableModel extends AbstractTableModel implements ItemRemovable {
     public static final int ENABLED_COLUMN = 0;
     public static final int CLASS_COLUMN = 1;
     public static final int METHOD_COLUMN = 2;
@@ -305,8 +338,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     static final String[] COLUMN_NAMES = getColumns();
 
-    @NotNull
-    private static String[] getColumns() {
+    private static @NotNull String @NotNull [] getColumns() {
       return new String[]{"",
         JavaDebuggerBundle.message("settings.capture.column.capture.class.name"),
         JavaDebuggerBundle.message("settings.capture.column.capture.method.name"),
@@ -320,18 +352,16 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     private MyTableModel() {
       myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
-      scanPoints();
     }
 
-    private void scanPoints() {
+    private void addFromAnnotations(@NotNull Project project) {
       if (Registry.is("debugger.capture.points.annotations")) {
         List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
-        processCaptureAnnotations((capture, e, annotation) -> {
+        processCaptureAnnotations(project, (capture, e, annotation) -> {
           if (e instanceof PsiMethod) {
             addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
           }
-          else if (e instanceof PsiParameter) {
-            PsiParameter psiParameter = (PsiParameter)e;
+          else if (e instanceof PsiParameter psiParameter) {
             PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
             addCapturePointIfNeeded(psiParameter, psiMethod,
                                     DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
@@ -412,23 +442,16 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     @Override
     public Object getValueAt(int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
-      switch (col) {
-        case ENABLED_COLUMN:
-          return point.myEnabled;
-        case CLASS_COLUMN:
-          return point.myClassName;
-        case METHOD_COLUMN:
-          return point.myMethodName;
-        case PARAM_COLUMN:
-          return point.myCaptureKeyExpression;
-        case INSERT_CLASS_COLUMN:
-          return point.myInsertClassName;
-        case INSERT_METHOD_COLUMN:
-          return point.myInsertMethodName;
-        case INSERT_KEY_EXPR:
-          return point.myInsertKeyExpression;
-      }
-      return null;
+      return switch (col) {
+        case ENABLED_COLUMN -> point.myEnabled;
+        case CLASS_COLUMN -> point.myClassName;
+        case METHOD_COLUMN -> point.myMethodName;
+        case PARAM_COLUMN -> point.myCaptureKeyExpression;
+        case INSERT_CLASS_COLUMN -> point.myInsertClassName;
+        case INSERT_METHOD_COLUMN -> point.myInsertMethodName;
+        case INSERT_KEY_EXPR -> point.myInsertKeyExpression;
+        default -> null;
+      };
     }
 
     @Override
@@ -440,33 +463,19 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     public void setValueAt(Object value, int row, int col) {
       CapturePoint point = myCapturePoints.get(row);
       switch (col) {
-        case ENABLED_COLUMN:
-          point.myEnabled = (boolean)value;
-          break;
-        case CLASS_COLUMN:
-          point.myClassName = (String)value;
-          break;
-        case METHOD_COLUMN:
-          point.myMethodName = (String)value;
-          break;
-        case PARAM_COLUMN:
-          point.myCaptureKeyExpression = (String)value;
-          break;
-        case INSERT_CLASS_COLUMN:
-          point.myInsertClassName = (String)value;
-          break;
-        case INSERT_METHOD_COLUMN:
-          point.myInsertMethodName = (String)value;
-          break;
-        case INSERT_KEY_EXPR:
-          point.myInsertKeyExpression = (String)value;
-          break;
+        case ENABLED_COLUMN -> point.myEnabled = (boolean)value;
+        case CLASS_COLUMN -> point.myClassName = (String)value;
+        case METHOD_COLUMN -> point.myMethodName = (String)value;
+        case PARAM_COLUMN -> point.myCaptureKeyExpression = (String)value;
+        case INSERT_CLASS_COLUMN -> point.myInsertClassName = (String)value;
+        case INSERT_METHOD_COLUMN -> point.myInsertMethodName = (String)value;
+        case INSERT_KEY_EXPR -> point.myInsertKeyExpression = (String)value;
       }
       fireTableCellUpdated(row, col);
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       return columnIndex == ENABLED_COLUMN ? Boolean.class : String.class;
     }
 
@@ -530,7 +539,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
-    myTableModel.scanPoints();
+    myTableModel.addFromAnnotations(myProject);
     myTableModel.fireTableDataChanged();
   }
 
@@ -544,12 +553,15 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     void accept(boolean capture, PsiModifierListOwner e, PsiAnnotation annotation);
   }
 
-  static void processCaptureAnnotations(CapturePointConsumer consumer) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-    DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
-    scanPointsInt(project, debuggerProjectSettings, true, consumer);
-    scanPointsInt(project, debuggerProjectSettings, false, consumer);
+  static void processCaptureAnnotations(@Nullable Project project, CapturePointConsumer consumer) {
+    if (project == null) { // fallback
+      project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+    }
+    if (!project.isDefault()) {
+      DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
+      scanPointsInt(project, debuggerProjectSettings, true, consumer);
+      scanPointsInt(project, debuggerProjectSettings, false, consumer);
+    }
   }
 
   private static void scanPointsInt(Project project,
@@ -578,7 +590,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       .toList();
   }
 
-  private class AsyncAnnotationsDialog extends DialogWrapper {
+  private final class AsyncAnnotationsDialog extends DialogWrapper {
     private final AnnotationsPanel myAsyncSchedulePanel;
     private final AnnotationsPanel myAsyncExecutePanel;
     private final DebuggerProjectSettings mySettings;
@@ -612,7 +624,6 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       return splitter;
     }
 
-    @SuppressWarnings("SSBasedInspection")
     @Override
     protected void doOKAction() {
       mySettings.myAsyncScheduleAnnotations = StreamEx.of(myAsyncSchedulePanel.getAnnotations())
@@ -624,9 +635,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       super.doOKAction();
     }
 
-    @Nullable
     @Override
-    protected String getHelpId() {
+    protected @NotNull String getHelpId() {
       return "reference.idesettings.debugger.customAsyncAnnotations";
     }
   }

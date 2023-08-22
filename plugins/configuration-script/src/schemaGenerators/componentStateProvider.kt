@@ -11,21 +11,21 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.ReflectionUtil
-import gnu.trove.THashMap
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.io.JsonObjectBuilder
 
 internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
-  private val pathToStateClass: MutableMap<String, Class<out BaseState>> = THashMap()
+  private val pathToStateClass: MutableMap<String, Class<out BaseState>> = CollectionFactory.createSmallMemoryFootprintMap()
 
   private val objectSchemaGenerator = OptionClassJsonSchemaGenerator("classDefinitions")
 
-  override val definitionNodeKey: CharSequence?
+  override val definitionNodeKey: CharSequence
     get() = objectSchemaGenerator.definitionNodeKey
 
   // schema is generated without project - we cannot rely on created component adapter for services
   override fun generate(rootBuilder: JsonObjectBuilder) {
-    for (plugin in PluginManagerCore.getLoadedPlugins()) {
-      for (serviceDescriptor in (plugin as IdeaPluginDescriptorImpl).project.services) {
+    for (plugin in PluginManagerCore.loadedPlugins) {
+      for (serviceDescriptor in (plugin as IdeaPluginDescriptorImpl).projectContainerDescriptor.services) {
         processServiceDescriptor(serviceDescriptor, plugin)
       }
     }
@@ -39,7 +39,7 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
       return
     }
 
-    val pathToJsonObjectBuilder: MutableMap<String, JsonObjectBuilder> = THashMap()
+    val pathToJsonObjectBuilder: MutableMap<String, JsonObjectBuilder> = CollectionFactory.createSmallMemoryFootprintMap()
     for (path in pathToStateClass.keys.sorted()) {
       val keys = path.split(".")
       val jsonObjectBuilder: JsonObjectBuilder

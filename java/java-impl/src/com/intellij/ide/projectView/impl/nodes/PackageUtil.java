@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PackageUtil {
+public final class PackageUtil {
   static PsiPackage @NotNull [] getSubpackages(@NotNull PsiPackage aPackage,
                                                @Nullable Module module,
                                                final boolean searchInLibraries) {
@@ -99,7 +99,7 @@ public class PackageUtil {
   }
 
   @NotNull
-  static Collection<AbstractTreeNode<?>> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
+  public static Collection<AbstractTreeNode<?>> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
                                                                        @NotNull Project project,
                                                                        @NotNull ViewSettings settings,
                                                                        @Nullable Module module,

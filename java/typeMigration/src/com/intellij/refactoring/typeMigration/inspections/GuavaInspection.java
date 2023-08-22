@@ -1,13 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -22,21 +23,21 @@ import com.intellij.refactoring.typeMigration.rules.guava.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
-  private final static Set<String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
-
-  public final static String PROBLEM_DESCRIPTION = "Guava's functional primitives can be replaced by Java API";
-
+  private final static Set<@NonNls String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
 
   public boolean checkVariables = true;
   public boolean checkChains = true;
@@ -44,13 +45,12 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean ignoreJavaxNullable = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.variables.option"), "checkVariables");
-    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.method.chains.option"), "checkChains");
-    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.return.types.option"), "checkReturnTypes");
-    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.erase.option"), "ignoreJavaxNullable");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("checkVariables", TypeMigrationBundle.message("inspection.guava.variables.option")),
+      checkbox("checkChains", TypeMigrationBundle.message("inspection.guava.method.chains.option")),
+      checkbox("checkReturnTypes", TypeMigrationBundle.message("inspection.guava.return.types.option")),
+      checkbox("ignoreJavaxNullable", TypeMigrationBundle.message("inspection.guava.erase.option")));
   }
 
   @NotNull
@@ -60,44 +60,41 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
-      private final AtomicNotNullLazyValue<Map<String, PsiClass>> myGuavaClassConversions =
-        new AtomicNotNullLazyValue<Map<String, PsiClass>>() {
-          @NotNull
-          @Override
-          protected Map<String, PsiClass> compute() {
-            Map<String, PsiClass> map = new HashMap<>();
-            for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
-              if (rule instanceof BaseGuavaTypeConversionRule) {
-                final String fromClass = ((BaseGuavaTypeConversionRule)rule).ruleFromClass();
-                final String toClass = ((BaseGuavaTypeConversionRule)rule).ruleToClass();
+      private final NotNullLazyValue<Map<String, PsiClass>> myGuavaClassConversions = NotNullLazyValue.atomicLazy(() -> {
+        Map<String, PsiClass> map = new HashMap<>();
+        for (TypeConversionRule rule : TypeConversionRule.EP_NAME.getExtensions()) {
+          if (rule instanceof BaseGuavaTypeConversionRule) {
+            final String fromClass = ((BaseGuavaTypeConversionRule)rule).ruleFromClass();
+            final String toClass = ((BaseGuavaTypeConversionRule)rule).ruleToClass();
 
-                final Project project = holder.getProject();
-                final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-                final PsiClass targetClass = javaPsiFacade.findClass(toClass, GlobalSearchScope.allScope(project));
+            final Project project = holder.getProject();
+            final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+            final PsiClass targetClass = javaPsiFacade.findClass(toClass, GlobalSearchScope.allScope(project));
 
-                if (targetClass != null) {
-                  map.put(fromClass, targetClass);
-                }
-              }
+            if (targetClass != null) {
+              map.put(fromClass, targetClass);
             }
-            return map;
           }
-        };
+        }
+        return map;
+      });
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         if (!checkVariables) return;
+        final PsiIdentifier identifier = variable.getNameIdentifier();
+        if (identifier == null) return;
         final PsiType type = variable.getType();
         PsiType targetType = getConversionClassType(type);
         if (targetType != null) {
-          holder.registerProblem(variable.getNameIdentifier(),
-                                 PROBLEM_DESCRIPTION,
+          holder.registerProblem(identifier,
+                                 TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"),
                                  new MigrateGuavaTypeFix(variable, targetType));
         }
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
         if (!checkReturnTypes) return;
         final PsiType targetType = getConversionClassType(method.getReturnType());
@@ -105,14 +102,14 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
           final PsiTypeElement typeElement = method.getReturnTypeElement();
           if (typeElement != null) {
             holder.registerProblem(typeElement,
-                                   PROBLEM_DESCRIPTION,
+                                   TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"),
                                    new MigrateGuavaTypeFix(method, targetType));
           }
         }
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         checkFluentIterableGenerationMethod(expression);
         checkPredicatesUtilityMethod(expression);
       }
@@ -120,10 +117,13 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       private void checkPredicatesUtilityMethod(PsiMethodCallExpression expression) {
         if (GuavaPredicateConversionRule.isPredicates(expression)) {
           final PsiClassType initialType = (PsiClassType)expression.getType();
+          if (initialType == null) return;
           PsiClassType targetType = createTargetType(initialType);
           if (targetType == null) return;
-          holder.registerProblem(expression.getMethodExpression().getReferenceNameElement(),
-                                 PROBLEM_DESCRIPTION,
+          final PsiElement anchor = expression.getMethodExpression().getReferenceNameElement();
+          assert anchor != null;
+          holder.registerProblem(anchor,
+                                 TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"),
                                  new MigrateGuavaTypeFix(expression, targetType));
         }
       }
@@ -146,7 +146,8 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
         if (chain.getParent() instanceof PsiReferenceExpression && chain.getParent().getParent() instanceof PsiMethodCallExpression) {
           highlightedElement = chain.getParent().getParent();
         }
-        holder.registerProblem(highlightedElement, PROBLEM_DESCRIPTION, new MigrateGuavaTypeFix(chain, targetType));
+        holder.registerProblem(highlightedElement,
+                               TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"), new MigrateGuavaTypeFix(chain, targetType));
       }
 
       @Nullable
@@ -177,7 +178,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
         return null;
       }
 
-      private PsiType wrapAsArray(PsiArrayType initial, PsiType created) {
+      private static PsiType wrapAsArray(PsiArrayType initial, PsiType created) {
         PsiArrayType result = new PsiArrayType(created);
         while (initial.getComponentType() instanceof PsiArrayType) {
           initial = (PsiArrayType)initial.getComponentType();
@@ -186,7 +187,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
         return result;
       }
 
-      private boolean isFluentIterableFromCall(PsiMethodCallExpression expression) {
+      private static boolean isFluentIterableFromCall(PsiMethodCallExpression expression) {
         PsiMethod method = expression.resolveMethod();
         if (method == null || !GuavaFluentIterableConversionRule.CHAIN_HEAD_METHODS.contains(method.getName())) {
           return false;
@@ -196,7 +197,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
                                   GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()));
       }
 
-      private PsiMethodCallExpression findGuavaMethodChain(PsiMethodCallExpression expression) {
+      private static PsiMethodCallExpression findGuavaMethodChain(PsiMethodCallExpression expression) {
         PsiMethodCallExpression chain = expression;
         while (true) {
           final PsiMethodCallExpression current = PsiTreeUtil.getParentOfType(chain, PsiMethodCallExpression.class);
@@ -252,8 +253,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
     };
   }
 
-  public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
-    public static final String FAMILY_NAME = "Migrate Guava's type to Java";
+  public final class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix {
     private final PsiType myTargetType;
 
     private MigrateGuavaTypeFix(@NotNull PsiElement element, PsiType targetType) {
@@ -282,21 +282,20 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       if (!myTargetType.isValid() || !element.isValid()) {
         return getFamilyName();
       }
-      final String presentation;
       if (element instanceof PsiMethodCallExpression) {
-        presentation = "method chain";
+        return TypeMigrationBundle.message("migrate.method.chain.fix.text", myTargetType.getCanonicalText(false));
       }
-      else {
-        presentation = TypeMigrationProcessor.getPresentation(element);
-      }
-      return TypeMigrationBundle.message("migrate.fix.text", presentation, myTargetType.getCanonicalText(false));
+
+      return TypeMigrationBundle.message("migrate.fix.text",
+                                         TypeMigrationProcessor.getPresentation(element),
+                                         StringUtil.escapeXmlEntities(myTargetType.getCanonicalText(false)));
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return FAMILY_NAME;
+      return TypeMigrationBundle.message("migrate.guava.to.java.family.name");
     }
 
     @Override
@@ -322,9 +321,9 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
     }
 
     private MigrateGuavaTypeFix getFix(CommonProblemDescriptor descriptor) {
-      final QuickFix[] fixes = descriptor.getFixes();
+      final QuickFix<?>[] fixes = descriptor.getFixes();
       LOG.assertTrue(fixes != null);
-      for (QuickFix fix : fixes) {
+      for (QuickFix<?> fix : fixes) {
         if (fix instanceof MigrateGuavaTypeFix) {
           return (MigrateGuavaTypeFix)fix;
         }
@@ -348,7 +347,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
                                                           true);
     }
 
-    private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<? extends PsiElement> elements,
+    private static Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<? extends PsiElement> elements,
                                                                              @NotNull final List<PsiType> types) {
       LOG.assertTrue(elements.size() == types.size());
       final Map<PsiElement, PsiType> mappings = new HashMap<>();

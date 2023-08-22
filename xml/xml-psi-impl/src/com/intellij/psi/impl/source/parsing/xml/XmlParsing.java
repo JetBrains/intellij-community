@@ -15,8 +15,46 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
+import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE;
+import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE;
+import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER;
+import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE_START_DELIMITER;
+import static com.intellij.psi.xml.XmlElementType.XML_BAD_CHARACTER;
+import static com.intellij.psi.xml.XmlElementType.XML_CDATA;
+import static com.intellij.psi.xml.XmlElementType.XML_CDATA_END;
+import static com.intellij.psi.xml.XmlElementType.XML_CDATA_START;
+import static com.intellij.psi.xml.XmlElementType.XML_CHAR_ENTITY_REF;
+import static com.intellij.psi.xml.XmlElementType.XML_COMMENT;
+import static com.intellij.psi.xml.XmlElementType.XML_COMMENT_CHARACTERS;
+import static com.intellij.psi.xml.XmlElementType.XML_COMMENT_END;
+import static com.intellij.psi.xml.XmlElementType.XML_COMMENT_START;
+import static com.intellij.psi.xml.XmlElementType.XML_CONDITIONAL_COMMENT_END;
+import static com.intellij.psi.xml.XmlElementType.XML_CONDITIONAL_COMMENT_END_START;
+import static com.intellij.psi.xml.XmlElementType.XML_CONDITIONAL_COMMENT_START;
+import static com.intellij.psi.xml.XmlElementType.XML_CONDITIONAL_COMMENT_START_END;
+import static com.intellij.psi.xml.XmlElementType.XML_DOCTYPE;
+import static com.intellij.psi.xml.XmlElementType.XML_DOCTYPE_END;
+import static com.intellij.psi.xml.XmlElementType.XML_DOCTYPE_START;
+import static com.intellij.psi.xml.XmlElementType.XML_DOCUMENT;
+import static com.intellij.psi.xml.XmlElementType.XML_EMPTY_ELEMENT_END;
+import static com.intellij.psi.xml.XmlElementType.XML_END_TAG_START;
+import static com.intellij.psi.xml.XmlElementType.XML_ENTITY_REF;
+import static com.intellij.psi.xml.XmlElementType.XML_ENTITY_REF_TOKEN;
+import static com.intellij.psi.xml.XmlElementType.XML_EQ;
+import static com.intellij.psi.xml.XmlElementType.XML_NAME;
+import static com.intellij.psi.xml.XmlElementType.XML_PI_END;
+import static com.intellij.psi.xml.XmlElementType.XML_PI_START;
+import static com.intellij.psi.xml.XmlElementType.XML_PROCESSING_INSTRUCTION;
+import static com.intellij.psi.xml.XmlElementType.XML_PROLOG;
+import static com.intellij.psi.xml.XmlElementType.XML_REAL_WHITE_SPACE;
+import static com.intellij.psi.xml.XmlElementType.XML_START_TAG_START;
+import static com.intellij.psi.xml.XmlElementType.XML_TAG;
+import static com.intellij.psi.xml.XmlElementType.XML_TAG_CHARACTERS;
+import static com.intellij.psi.xml.XmlElementType.XML_TAG_END;
+import static com.intellij.psi.xml.XmlElementType.XML_TEXT;
+
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.ICustomParsingType;
 import com.intellij.psi.tree.IElementType;
@@ -26,8 +64,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.psi.xml.XmlElementType.*;
 
 /*
  * @author max
@@ -79,7 +115,7 @@ public class XmlParsing {
     }
 
     if (error != null) {
-      error.error(XmlPsiBundle.message("top.level.element.is.not.completed"));
+      error.error(XmlPsiBundle.message("xml.parsing.top.level.element.is.not.completed"));
     }
 
     if (rootTagCount == 0) {
@@ -135,7 +171,7 @@ public class XmlParsing {
         if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
           footer.rollbackTo();
           myTagNamesStack.pop();
-          tag.doneBefore(XML_TAG, content, XmlErrorBundle.message("named.element.is.not.closed", tagName));
+          tag.doneBefore(XML_TAG, content, XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", tagName));
           content.drop();
           return;
         }
@@ -216,14 +252,14 @@ public class XmlParsing {
       advance();
     }
     else {
-      error(XmlPsiBundle.message("tag.start.is.not.closed"));
+      error(XmlPsiBundle.message("xml.parsing.tag.start.is.not.closed"));
       myTagNamesStack.pop();
       tag.done(XML_TAG);
       return null;
     }
 
     if (myTagNamesStack.size() > BALANCING_DEPTH_THRESHOLD) {
-      error(XmlPsiBundle.message("way.too.unbalanced"));
+      error(XmlPsiBundle.message("xml.parsing.way.too.unbalanced"));
       tag.done(XML_TAG);
       return null;
     }
@@ -267,7 +303,7 @@ public class XmlParsing {
         xmlText = startText(xmlText);
         final PsiBuilder.Marker error = mark();
         advance();
-        error.error(XmlPsiBundle.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
+        error.error(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
       else if (tt instanceof ICustomParsingType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
@@ -366,12 +402,11 @@ public class XmlParsing {
     if (token() == XML_EQ) {
       advance();
       parseAttributeValue();
-      att.done(XML_ATTRIBUTE);
     }
     else {
-      error(XmlErrorBundle.message("expected.attribute.eq.sign"));
-      att.done(XML_ATTRIBUTE);
+      error(XmlPsiBundle.message("xml.parsing.expected.attribute.eq.sign"));
     }
+    att.done(XML_ATTRIBUTE);
   }
 
   private void parseAttributeValue() {
@@ -387,7 +422,7 @@ public class XmlParsing {
         if (tt == XML_BAD_CHARACTER) {
           final PsiBuilder.Marker error = mark();
           advance();
-          error.error(XmlPsiBundle.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
+          error.error(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
         }
         else if (tt == XML_ENTITY_REF_TOKEN) {
           parseReference();
@@ -457,7 +492,7 @@ public class XmlParsing {
           advance();
         }
         else {
-          error(XmlErrorBundle.message("expected.attribute.eq.sign"));
+          error(XmlPsiBundle.message("xml.parsing.expected.attribute.eq.sign"));
         }
         parseAttributeValue();
       }
@@ -486,7 +521,7 @@ public class XmlParsing {
     myBuilder.advanceLexer();
   }
 
-  private void error(@NotNull String message) {
+  private void error(@NotNull @ParsingError String message) {
     myBuilder.error(message);
   }
 }

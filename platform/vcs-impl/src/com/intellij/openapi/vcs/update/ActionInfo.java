@@ -3,10 +3,13 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -32,6 +35,7 @@ public interface ActionInfo {
     public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.update.scope", scopeName), envToConfMap) {
         @Override
+        @NlsSafe
         protected String getActionNameForDimensions() {
           return "update-v2";
         }
@@ -39,7 +43,7 @@ public interface ActionInfo {
         @NotNull
         @Override
         protected String getDoNotShowMessage() {
-          return "Don't show again";
+          return VcsBundle.message("update.checkbox.don.t.show.again");
         }
 
         @Override
@@ -151,6 +155,7 @@ public interface ActionInfo {
     public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.integrate.scope", scopeName), envToConfMap) {
         @Override
+        @NlsSafe
         protected String getActionNameForDimensions() {
           return "integrate";
         }
@@ -202,10 +207,11 @@ public interface ActionInfo {
 
   UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName);
 
-  String getActionName(String scopeName);
+  @NlsActions.ActionText String getActionName(String scopeName);
 
   String getActionName();
 
+  @Nls
   String getGroupName(FileGroup fileGroup);
 
   boolean canGroupByChangelist();

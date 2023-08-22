@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.editor.Document;
@@ -42,19 +42,21 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     MODIFIERS.put(PsiModifier.ABSTRACT, ABSTRACT);
   }
 
-  private static final ArrangementSettingsToken ANON_CLASS_PARAMETER_LIST = new ArrangementSettingsToken("Dummy", "not matchable anon class argument list");
-  private static final ArrangementSettingsToken ANONYMOUS_CLASS_BODY = new ArrangementSettingsToken("Dummy", "not matchable anonymous class body");
+  @SuppressWarnings({"DialogTitleCapitalization", "HardCodedStringLiteral"}) // not visible in UI
+  private static final ArrangementSettingsToken ANON_CLASS_PARAMETER_LIST =
+    new ArrangementSettingsToken("Dummy", "not matchable anon class argument list");
+  @SuppressWarnings({"DialogTitleCapitalization", "HardCodedStringLiteral"})
+  private static final ArrangementSettingsToken ANONYMOUS_CLASS_BODY =
+    new ArrangementSettingsToken("Dummy", "not matchable anonymous class body");
 
-  @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<>();
-  @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<>();
-
-  @NotNull private final  JavaArrangementParseInfo      myInfo;
+  @NotNull private final Stack<JavaElementArrangementEntry> myStack = new Stack<>();
+  @NotNull private final JavaArrangementParseInfo myInfo;
   @NotNull private final Collection<? extends TextRange> myRanges;
-  @NotNull private final  Set<ArrangementSettingsToken> myGroupingRules;
-  @NotNull private final  MethodBodyProcessor           myMethodBodyProcessor;
+  @NotNull private final Set<ArrangementSettingsToken> myGroupingRules;
+  @NotNull private final MethodBodyProcessor myMethodBodyProcessor;
   private final boolean myCheckDeep;
-  @NotNull private final  ArrangementSectionDetector mySectionDetector;
-  @Nullable private final Document                      myDocument;
+  @NotNull private final ArrangementSectionDetector mySectionDetector;
+  @Nullable private final Document myDocument;
 
   @NotNull private final HashMap<PsiClass, Set<PsiField>> myCachedClassFields = new HashMap<>();
 
@@ -75,7 +77,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     mySectionDetector = new ArrangementSectionDetector(document, settings, data -> {
       TextRange range = data.getTextRange();
       JavaSectionArrangementEntry entry = new JavaSectionArrangementEntry(getCurrent(), data.getToken(), range, data.getText(), true);
-      registerEntry(data.getElement(), entry);
+      registerEntry(entry);
     });
   }
 
@@ -105,7 +107,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
 
     TextRange codeBlockRange = new TextRange(lBrace.getTextRange().getStartOffset(), rBrace.getTextRange().getEndOffset());
-    JavaElementArrangementEntry entry = createNewEntry(lBrace, codeBlockRange, ANONYMOUS_CLASS_BODY, aClass.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(codeBlockRange, ANONYMOUS_CLASS_BODY, aClass.getName());
 
     if (entry == null) {
       return;
@@ -124,7 +126,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClass(PsiClass aClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
     boolean isSectionCommentsDetected = registerSectionComments(aClass);
     TextRange range = isSectionCommentsDetected ? getElementRangeWithoutComments(aClass) : aClass.getTextRange();
 
@@ -135,24 +137,24 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     else if (aClass.isInterface()) {
       type = INTERFACE;
     }
-    JavaElementArrangementEntry entry = createNewEntry(aClass, range, type, aClass.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(range, type, aClass.getName());
     processEntry(entry, aClass, aClass);
   }
 
   @Override
-  public void visitTypeParameter(PsiTypeParameter parameter) {
+  public void visitTypeParameter(@NotNull PsiTypeParameter parameter) {
   }
 
   @Override
-  public void visitAnonymousClass(final PsiAnonymousClass aClass) {
-    JavaElementArrangementEntry entry = createNewEntry(aClass, aClass.getTextRange(), ANONYMOUS_CLASS, aClass.getName(), true);
+  public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
+    JavaElementArrangementEntry entry = createNewEntry(aClass.getTextRange(), ANONYMOUS_CLASS, aClass.getName());
     if (entry == null) {
       return;
     }
     processChildrenWithinEntryScope(entry, () -> {
       PsiExpressionList list = aClass.getArgumentList();
       if (list != null && list.getTextLength() > 0) {
-        JavaElementArrangementEntry listEntry = createNewEntry(list, list.getTextRange(), ANON_CLASS_PARAMETER_LIST, aClass.getName(), true);
+        JavaElementArrangementEntry listEntry = createNewEntry(list.getTextRange(), ANON_CLASS_PARAMETER_LIST, aClass.getName());
         processEntry(listEntry, null, list);
       }
       createAndProcessAnonymousClassBodyEntry(aClass);
@@ -160,11 +162,11 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitField(PsiField field) {
+  public void visitField(@NotNull PsiField field) {
     boolean isSectionCommentsDetected = registerSectionComments(field);
 
-    // There is a possible case that more than one field is declared for the same type like 'int i, j;'. We want to process only
-    // the first one then.
+    // There is a possible case that more than one field is declared for the same type like 'int i, j;'.
+    // the case is handled in getFieldWithSiblings().
     PsiElement fieldPrev = getPreviousNonWsComment(field.getPrevSibling(), 0);
     if (PsiUtil.isJavaToken(fieldPrev, JavaTokenType.COMMA)) {
       return;
@@ -219,17 +221,50 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       }
     }
 
-    JavaElementArrangementEntry entry = createNewEntry(field, range, FIELD, field.getName(), true);
-    if (entry == null)
+    JavaElementArrangementEntry entry = createNewEntry(range, FIELD, field.getName());
+    if (entry == null) {
       return;
+    }
 
     processEntry(entry, field, field.getInitializer());
     myInfo.onFieldEntryCreated(field, entry);
 
-    List<PsiField> referencedFields = getReferencedFields(field);
+    List<PsiField> referencedFields = new ArrayList<>();
+    for (PsiField adjacentField : getFieldWithSiblings(field)) {
+      referencedFields.addAll(getReferencedFields(adjacentField));
+    }
     for (PsiField referencedField : referencedFields) {
       myInfo.registerFieldInitializationDependency(field, referencedField);
     }
+  }
+
+  /*
+   * Process cases like int a,b,c;
+   */
+  private static List<PsiField> getFieldWithSiblings(@NotNull PsiField field) {
+    List<PsiField> fields = new ArrayList<>();
+    fields.add(field);
+    PsiElement next = getNextAfterWsOrComment(field);
+    while (next != null && PsiUtil.isJavaToken(next, JavaTokenType.COMMA)) {
+      next = getNextAfterWsOrComment(next);
+      if (next instanceof PsiField) {
+        fields.add((PsiField)next);
+      }
+      else {
+        break;
+      }
+      next = getNextAfterWsOrComment(next);
+    }
+    return fields;
+  }
+
+  @Nullable
+  private static PsiElement getNextAfterWsOrComment(@NotNull PsiElement element) {
+    PsiElement next = element.getNextSibling();
+    while (next instanceof PsiWhiteSpace || next instanceof PsiComment) {
+      next = next.getNextSibling();
+    }
+    return next;
   }
 
   @NotNull
@@ -255,7 +290,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       private static final int MAX_METHOD_LOOKUP_DEPTH = 3;
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         PsiElement ref = expression.resolve();
         if (ref instanceof PsiField && containingClassFields.contains(ref) && hasSameStaticModifier(field, (PsiField)ref)) {
           referencedElements.add((PsiField)ref);
@@ -330,8 +365,8 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClassInitializer(PsiClassInitializer initializer) {
-    JavaElementArrangementEntry entry = createNewEntry(initializer, initializer.getTextRange(), INIT_BLOCK, null, true);
+  public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
+    JavaElementArrangementEntry entry = createNewEntry(initializer.getTextRange(), INIT_BLOCK, null);
     if (entry == null) {
       return;
     }
@@ -360,7 +395,8 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     for (PsiElement e : children) {
       if (e instanceof PsiComment) {
         comments.add((PsiComment)e);
-      } else if (!(e instanceof PsiWhiteSpace)) {
+      }
+      else if (!(e instanceof PsiWhiteSpace)) {
         return comments;
       }
     }
@@ -369,13 +405,13 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitMethod(PsiMethod method) {
+  public void visitMethod(@NotNull PsiMethod method) {
     boolean isSectionCommentsDetected = registerSectionComments(method);
     final TextRange range = isSectionCommentsDetected ? getElementRangeWithoutComments(method)
                                                       : method.getTextRange();
 
     ArrangementSettingsToken type = method.isConstructor() ? CONSTRUCTOR : METHOD;
-    JavaElementArrangementEntry entry = createNewEntry(method, range, type, method.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(range, type, method.getName());
     if (entry == null) {
       return;
     }
@@ -446,13 +482,12 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+  public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
   }
 
   private void processEntry(@Nullable JavaElementArrangementEntry entry,
                             @Nullable PsiModifierListOwner modifier,
-                            @Nullable final PsiElement nextPsiRoot)
-  {
+                            @Nullable final PsiElement nextPsiRoot) {
     if (entry == null) {
       return;
     }
@@ -475,8 +510,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
   }
 
-  private void registerEntry(@NotNull PsiElement element, @NotNull JavaElementArrangementEntry entry) {
-    myEntries.put(element, entry);
+  private void registerEntry(@NotNull JavaElementArrangementEntry entry) {
     DefaultArrangementEntry current = getCurrent();
     if (current == null) {
       myInfo.addEntry(entry);
@@ -487,25 +521,18 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Nullable
-  private JavaElementArrangementEntry createNewEntry(@NotNull PsiElement element,
-                                                     @NotNull TextRange range,
+  private JavaElementArrangementEntry createNewEntry(@NotNull TextRange range,
                                                      @NotNull ArrangementSettingsToken type,
-                                                     @Nullable String name,
-                                                     boolean canArrange) {
+                                                     @Nullable String name) {
     if (!isWithinBounds(range)) {
       return null;
     }
     DefaultArrangementEntry current = getCurrent();
     JavaElementArrangementEntry entry;
-    if (canArrange) {
-      TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLineIfPossible(range, myDocument);
-      TextRange rangeToUse = expandedRange == null ? range : expandedRange;
-      entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, true);
-    }
-    else {
-      entry = new JavaElementArrangementEntry(current, range, type, name, false);
-    }
-    registerEntry(element, entry);
+    TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLineIfPossible(range, myDocument);
+    TextRange rangeToUse = expandedRange == null ? range : expandedRange;
+    entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, true);
+    registerEntry(entry);
     return entry;
   }
 
@@ -551,15 +578,14 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression psiMethodCallExpression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression psiMethodCallExpression) {
       PsiReference reference = psiMethodCallExpression.getMethodExpression().getReference();
       if (reference == null) {
         return;
       }
       PsiElement e = reference.resolve();
-      if (e instanceof PsiMethod) {
+      if (e instanceof PsiMethod m) {
         assert myBaseMethod != null;
-        PsiMethod m = (PsiMethod)e;
         if (m.getContainingClass() == myBaseMethod.getContainingClass()) {
           myInfo.registerMethodCallDependency(myBaseMethod, m);
         }
@@ -574,7 +600,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       PsiMethod method = tryCast(expression.resolve(), PsiMethod.class);
       if (method == null) return;
       assert myBaseMethod != null;

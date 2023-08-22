@@ -4,8 +4,6 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -19,6 +17,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -109,11 +108,10 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     gb.gridwidth = 2;
 
     myLeftPanel.add(listContainer, gb);
-    if (tableModel instanceof CommittedChangesNavigation) {
-      final CommittedChangesNavigation navigation = (CommittedChangesNavigation) tableModel;
+    if (tableModel instanceof CommittedChangesNavigation navigation) {
 
-      final JButton backButton = new JButton("< Older");
-      final JButton forwardButton = new JButton("Newer >");
+      final JButton backButton = new JButton(VcsBundle.message("changes.button.older"));
+      final JButton forwardButton = new JButton(VcsBundle.message("changes.button.newer"));
 
       backButton.addActionListener(new ActionListener() {
         @Override
@@ -193,6 +191,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     }
   }
 
+  @Nls
   private String formatText(final CommittedChangeList list) {
     return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, list.getComment());
   }
@@ -202,7 +201,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
   }
 
   public void setTableContextMenu(final ActionGroup group) {
-    PopupHandler.installPopupHandler(myChangeListsView, group, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myChangeListsView, group, "CommittedChangesTablePopup");
   }
 
   public void startLoading() {

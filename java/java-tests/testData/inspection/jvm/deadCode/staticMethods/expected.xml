@@ -12,5 +12,11 @@
     <problem_class>unused declaration</problem_class>
     <description>Method has one usage but it is not reachable from entry points.</description>
   </problem>
+  <problem>
+    <file>Test.kt</file>
+    <line>12</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Class has one instantiation, but it is not reachable from entry points.</description>
+  </problem>
 </problems>
 

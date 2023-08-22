@@ -4,7 +4,7 @@ package com.intellij.ide.util.treeView;
 
 import java.util.Comparator;
 
-public class IndexComparator implements Comparator<NodeDescriptor<?>> {
+public final class IndexComparator implements Comparator<NodeDescriptor<?>> {
   public static final IndexComparator INSTANCE = new IndexComparator();
 
   private IndexComparator() {}

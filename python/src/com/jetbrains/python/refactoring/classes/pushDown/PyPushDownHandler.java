@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring.classes.pushDown;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Query;
@@ -26,6 +27,7 @@ import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.vp.Creator;
 import com.jetbrains.python.vp.ViewPresenterUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,7 +49,7 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
     }
 
     ViewPresenterUtils
-      .linkViewWithPresenterAndLaunch(PyPushDownPresenter.class, PyPushDownView.class, new Creator<PyPushDownView, PyPushDownPresenter>() {
+      .linkViewWithPresenterAndLaunch(PyPushDownPresenter.class, PyPushDownView.class, new Creator<>() {
         @NotNull
         @Override
         public PyPushDownPresenter createPresenter(@NotNull PyPushDownView view) {
@@ -63,7 +65,7 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
   }
 
   @Override
-  protected String getTitle() {
+  protected @DialogTitle String getTitle() {
     return getRefactoringName();
   }
 
@@ -72,7 +74,7 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
     return "members.push.down";
   }
 
-  public static String getRefactoringName() {
+  public static @Nls String getRefactoringName() {
     return RefactoringBundle.message("push.members.down.title");
   }
 }

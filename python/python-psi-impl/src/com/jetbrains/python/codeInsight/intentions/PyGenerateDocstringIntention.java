@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -29,18 +30,10 @@ import java.util.List;
  * (with checked format)
  */
 public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
-  private String myText;
-
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.doc.string.stub");
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return myText;
+    return PyPsiBundle.message("INTN.NAME.insert.docstring.stub");
   }
 
   @Override
@@ -62,7 +55,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   private boolean isAvailableForFunction(PyFunction function) {
     if (function.getDocStringValue() != null) {
       if (PyDocstringGenerator.forDocStringOwner(function).withInferredParameters(false).hasParametersToAdd()) {
-        myText = PyPsiBundle.message("INTN.add.parameters.to.docstring");
+        setText(PyPsiBundle.message("INTN.add.parameters.to.docstring"));
         return true;
       }
       else {
@@ -70,7 +63,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
       }
     }
     else {
-      myText = PyPsiBundle.message("INTN.doc.string.stub");
+      setText(PyPsiBundle.message("INTN.insert.docstring.stub"));
       return true;
     }
   }
@@ -122,6 +115,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
       if (i < 0) {
         return false;
       }
+      SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
       settings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
     }
     return true;

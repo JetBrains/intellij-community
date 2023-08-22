@@ -27,6 +27,4 @@ public abstract class JpsArtifactPropertiesSerializer<P extends JpsElement> exte
   }
 
   public abstract P loadProperties(List<ArtifactPropertiesState> stateList);
-
-  public abstract void saveProperties(P properties, List<ArtifactPropertiesState> stateList);
 }

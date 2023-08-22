@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 
 public interface FileSystemInterface {
   // default values for missing files (same as in corresponding java.io.File methods)
@@ -28,6 +29,14 @@ public interface FileSystemInterface {
 
   boolean isSymLink(@NotNull VirtualFile file);
   @Nullable String resolveSymLink(@NotNull VirtualFile file);
+
+  /**
+   * Returns all virtual files under which the given path is known in the VFS, starting with virtual file for the passed path.
+   * Please note, that it is guaranteed to find all aliases only if path is canonical.
+   */
+  default @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
+    return Collections.emptyList();
+  }
 
   @NotNull VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
   @NotNull VirtualFile createChildFile(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;

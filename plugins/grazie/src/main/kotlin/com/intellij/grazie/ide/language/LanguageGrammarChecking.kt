@@ -1,32 +1,51 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.grazie.ide.language
 
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
+import com.intellij.grazie.grammar.strategy.StrategyUtils
+import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
-class LanguageGrammarChecking : LanguageExtensionPoint<GrammarCheckingStrategy>() {
-  companion object : LanguageExtension<GrammarCheckingStrategy>("com.intellij.grazie.grammar.strategy") {
-    val EP_NAME: ExtensionPointName<LanguageExtensionPoint<GrammarCheckingStrategy>> = ExtensionPointName.create(
-      "com.intellij.grazie.grammar.strategy")
+private const val EXTENSION_POINT_NAME = "com.intellij.grazie.grammar.strategy"
 
-    fun getLanguageExtensionPoints(): List<LanguageExtensionPoint<GrammarCheckingStrategy>> = EP_NAME.extensionList
+@Suppress("unused", "UNUSED_PARAMETER")
+@Deprecated("Use TextExtractor API instead of strategies")
+object LanguageGrammarChecking : LanguageExtension<GrammarCheckingStrategy>(EXTENSION_POINT_NAME) {
+  @JvmField
+  val EP_NAME = ExtensionPointName<LanguageExtensionPoint<GrammarCheckingStrategy>>(EXTENSION_POINT_NAME)
 
-    fun getStrategies(): Set<GrammarCheckingStrategy> = getLanguageExtensionPoints().map { it.instance }.toSet()
+  /**
+   * @return all registered GrammarCheckingStrategy without internal ones
+   */
+  fun getStrategies(): Set<GrammarCheckingStrategy> = EP_NAME.extensionList
+    .map { it.instance }
+    .toSortedSet(Comparator { f, s -> f.getName().compareTo(s.getName()) })
 
-    fun getExtensionPointByStrategy(strategy: GrammarCheckingStrategy) = EP_NAME.extensions.firstOrNull { it.instance == strategy }
+  fun getStrategyByID(id: String) = EP_NAME.extensionList.firstOrNull { it.instance.getID() == id }?.instance
 
-    fun getStrategiesForElement(element: PsiElement, enabledIDs: Set<String>, disabledIDs: Set<String>): Set<GrammarCheckingStrategy> {
-      return LanguageGrammarChecking.allForLanguage(element.language)
-        .asSequence()
-        .filter {
-          it.isMyContextRoot(element) &&
-          it.getContextRootTextDomain(element) != TextDomain.NON_TEXT &&
-          (it.getID() in enabledIDs || (it.isEnabledByDefault() && it.getID() !in disabledIDs))
-        }.toSet()
-    }
+  fun getExtensionPointByStrategy(strategy: GrammarCheckingStrategy) = EP_NAME.extensionList.firstOrNull { it.instance == strategy }
+
+  /**
+   * @param element [PsiElement] with text to check
+   * @return all strategies without internal ones which match element language, if the checking in it isn't disabled by the user.
+   */
+  fun getStrategiesForElement(element: PsiElement, enabledIDs: Set<String>, disabledIDs: Set<String>): Set<GrammarCheckingStrategy> {
+    val disabledLanguages = GrazieConfig.get().checkingContext.getEffectivelyDisabledLanguageIds()
+    return allForLanguage(element.language)
+      .asSequence()
+      .filter {
+        val language = Language.findLanguageByID(StrategyUtils.getStrategyExtensionPoint(it).language)
+        language != null && language.id !in disabledLanguages &&
+        it.isMyContextRoot(element) &&
+        it.getContextRootTextDomain(element) != TextDomain.NON_TEXT
+      }.toSet()
   }
 }

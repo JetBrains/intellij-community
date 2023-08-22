@@ -1,39 +1,51 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
 
-public class CloseViewAction extends BaseViewAction {
+public final class CloseViewAction extends BaseViewAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 
   @Override
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(content));
-    e.getPresentation().setIcon(AllIcons.Actions.Close);
-    e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
+    boolean unpinAction = isUnpinAction(e, content);
+    Presentation presentation = e.getPresentation();
+    if (unpinAction) {
+      String text = RegistryManager.getInstance().is("ide.editor.tabs.interactive.pin.button") ?
+                    TextWithMnemonic.parse(IdeBundle.message("action.unpin.tab")).dropMnemonic(true).getText() :
+                    "";
+      presentation.setText(text);
+    }
+    presentation.setIcon(unpinAction ? AllIcons.Actions.PinTab : AllIcons.Actions.Close);
+    presentation.setHoveredIcon(unpinAction ? AllIcons.Actions.PinTab : AllIcons.Actions.CloseHovered);
   }
 
   @Override
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    perform(context, content[0]);
+   if (isUnpinAction(e, content)) {
+     if (Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
+       content[0].setPinned(false);
+     }
+     return;
+   }
+   perform(context, content[0]);
   }
 
   public static boolean perform(ViewContext context, Content content) {
@@ -44,4 +56,7 @@ public class CloseViewAction extends BaseViewAction {
     return content.length == 1 && content[0].isCloseable();
   }
 
+  private static boolean isUnpinAction(AnActionEvent e, Content[] content) {
+    return content.length == 1 && content[0].isPinnable() && content[0].isPinned() && !ViewContext.isPopupPlace(e.getPlace());
+  }
 }

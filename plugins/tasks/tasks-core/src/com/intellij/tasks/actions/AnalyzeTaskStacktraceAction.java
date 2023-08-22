@@ -57,7 +57,7 @@ public class AnalyzeTaskStacktraceAction extends BaseTaskAction {
     if (stacktraceDialog.showAndGet() && stacktraceDialog.getTraces().length > 0) {
       Comment[] comments = stacktraceDialog.getTraces();
       for (Comment comment : comments) {
-        AnalyzeStacktraceUtil.addConsole(project, null, task.getId(), comment.getText());
+        AnalyzeStacktraceUtil.addConsole(project, null, task.getId(), comment.getText()); //NON-NLS
       }
     }
   }

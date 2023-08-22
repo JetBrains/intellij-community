@@ -21,9 +21,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GrReferenceTypeEnhancer {
 
   public static final ExtensionPointName<GrReferenceTypeEnhancer> EP_NAME = ExtensionPointName.create("org.intellij.groovy.referenceTypeEnhancer");

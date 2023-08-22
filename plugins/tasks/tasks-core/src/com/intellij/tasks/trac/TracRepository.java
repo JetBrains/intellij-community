@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.trac;
 
 import com.intellij.tasks.Comment;
@@ -10,23 +10,15 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import icons.TasksCoreIcons;
+import org.apache.xmlrpc.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.Objects;
-import java.util.Vector;
-import javax.swing.Icon;
-import org.apache.xmlrpc.CommonsXmlRpcTransport;
-import org.apache.xmlrpc.XmlRpc;
-import org.apache.xmlrpc.XmlRpcClient;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.XmlRpcRequest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -129,6 +121,7 @@ public class TracRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public String getSummary() {
+        //noinspection HardCodedStringLiteral
         return map.get("summary");
       }
 
@@ -152,24 +145,23 @@ public class TracRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public TaskType getType() {
-        TaskType taskType = TaskType.OTHER;
         String type = map.get("type");
-        if (type == null) return taskType;
-        if ("Feature".equals(type) || "enhancement".equals(type)) taskType = TaskType.FEATURE;
-        else if ("Bug".equals(type) || "defect".equals(type) || "error".equals(type)) taskType = TaskType.BUG;
-        else if ("Exception".equals(type)) taskType = TaskType.EXCEPTION;
-        return taskType;
+        if (type == null) return TaskType.OTHER;
+        return switch (type) {
+          case "Feature", "enhancement" -> TaskType.FEATURE;
+          case "Bug", "defect", "error" -> TaskType.BUG;
+          case "Exception" -> TaskType.EXCEPTION;
+          default -> TaskType.OTHER;
+        };
       }
 
-      @Nullable
       @Override
-      public Date getUpdated() {
+      public @NotNull Date getUpdated() {
         return getDate(vector.get(2));
       }
 
-      @Nullable
       @Override
-      public Date getCreated() {
+      public @NotNull Date getCreated() {
         return getDate(vector.get(1));
       }
 
@@ -189,9 +181,8 @@ public class TracRepository extends BaseRepositoryImpl {
         return null;
       }
 
-      @Nullable
       @Override
-      public TaskRepository getRepository() {
+      public @NotNull TaskRepository getRepository() {
         return TracRepository.this;
       }
     };
@@ -228,7 +219,7 @@ public class TracRepository extends BaseRepositoryImpl {
     return new TracRepository(this);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public TracRepository() {
     // for serialization
   }

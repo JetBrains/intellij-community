@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,9 +29,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 
@@ -76,15 +75,14 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     return new GrChangeSignatureProcessor(myProject, info);
   }
 
-  @NotNull
   @Override
-  protected List<Pair<String, JPanel>> createAdditionalPanels() {
+  protected @NotNull List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     // this method is invoked before constructor body
     myExceptionsModel = new ExceptionsTableModel(myMethod.getMethod().getThrowsList());
     myExceptionsModel.setTypeInfos(myMethod.getMethod());
 
     final JBTable table = new JBTable(myExceptionsModel);
-    table.setStriped(true);
+    table.setShowGrid(false);
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
@@ -101,28 +99,6 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
-
-   /* myPropExceptionsButton = new AnActionButton(              //todo propagate parameters
-      RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, PlatformIcons.NEW_EXCEPTION) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();
-        Consumer<Set<PsiMethod>> callback = new Consumer<Set<PsiMethod>>() {
-          @Override
-          public void consume(Set<PsiMethod> psiMethods) {
-            myMethodsToPropagateExceptions = psiMethods;
-            myExceptionPropagationTree = chooser.get().getTree();
-          }
-        };
-        chooser.set(new JavaCallerChooser(myMethod.getMethod(),
-                                          myProject,
-                                          RefactoringBundle.message("changeSignature.exception.caller.chooser"),
-                                          myExceptionPropagationTree,
-                                          callback));
-        chooser.get().show();
-      }
-    };
-    myPropExceptionsButton.setShortcut(CustomShortcutSet.fromString("alt X"));*/
 
     final JPanel panel = ToolbarDecorator.createDecorator(table).createPanel();
       //.addExtraAction(myPropExceptionsButton).createPanel();
@@ -159,20 +135,8 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
   @Nullable
   @Override
-  protected CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<PsiMethod>> callback) {
+  protected CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PsiMethod>> callback) {
     return null; //todo next iteration
-  }
-
-
-  private boolean isGroovyMethodName(String name) {
-    String methodText = "def " + name + "(){}";
-    try {
-      final GrMethod method = GroovyPsiElementFactory.getInstance(getProject()).createMethodFromText(methodText);
-      return method != null;
-    }
-    catch (Throwable e) {
-      return false;
-    }
   }
 
   private static boolean checkType(PsiTypeCodeFragment typeCodeFragment, boolean allowEllipsis) {
@@ -241,7 +205,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
         }
 
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", myMethod.getMethod().getResolveScope());
+        PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, myMethod.getMethod().getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return GroovyRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }

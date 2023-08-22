@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
@@ -79,8 +79,8 @@ class AsBooleanTransformation extends Transformation {
     PsiElement parent = methodCall.getParent();
     if (parent instanceof GrIfStatement || parent instanceof GrWhileStatement) return true;
     if (parent instanceof GrConditionalExpression && ((GrConditionalExpression)parent).getCondition().equals(methodCall)) return true;
-    if (parent instanceof GrUnaryExpression && PsiType.BOOLEAN.equals(((GrUnaryExpression)parent).getType())) return true;
-    if (parent instanceof GrBinaryExpression && PsiType.BOOLEAN.equals(((GrBinaryExpression)parent).getType())) return true;
+    if (parent instanceof GrUnaryExpression && PsiTypes.booleanType().equals(((GrUnaryExpression)parent).getType())) return true;
+    if (parent instanceof GrBinaryExpression && PsiTypes.booleanType().equals(((GrBinaryExpression)parent).getType())) return true;
     return false;
   }
 }

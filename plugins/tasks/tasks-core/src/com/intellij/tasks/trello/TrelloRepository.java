@@ -20,7 +20,6 @@ import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloCard;
 import com.intellij.tasks.trello.model.TrelloList;
 import com.intellij.tasks.trello.model.TrelloUser;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.http.*;
@@ -117,7 +116,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     final List<TrelloCard> cards = fetchCards(offset + limit, withClosed);
-    return ContainerUtil.map2Array(cards, Task.class, (Function<TrelloCard, Task>)card -> new TrelloTask(card, this));
+    return ContainerUtil.map2Array(cards, Task.class, card -> new TrelloTask(card, this));
   }
 
   @Nullable
@@ -366,8 +365,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
       @Override
       public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
         // pass
-        if (request instanceof HttpRequestWrapper) {
-          final HttpRequestWrapper wrapper = (HttpRequestWrapper)request;
+        if (request instanceof HttpRequestWrapper wrapper) {
           try {
             wrapper.setURI(new URIBuilder(wrapper.getURI())
                              .addParameter("token", myPassword)

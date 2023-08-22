@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.AppTopics;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,42 +21,66 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
-public class DelayedDocumentWatcher implements AutoTestWatcher {
-
+public final class DelayedDocumentWatcher implements AutoTestWatcher {
   // All instance fields should be accessed in EDT
   private final Project myProject;
   private final int myDelayMillis;
-  private final Consumer<? super Integer> myModificationStampConsumer;
-  private final Condition<? super VirtualFile> myChangedFileFilter;
+  private final IntConsumer myModificationStampConsumer;
+  private final Predicate<? super VirtualFile> myChangedFileFilter;
   private final MyDocumentAdapter myListener;
+  private final AbstractAutoTestManager myAutoTestManager;
 
   private Disposable myDisposable;
   private SingleAlarm myAlarm;
-  private final Set<VirtualFile> myChangedFiles = new THashSet<>();
+  // reduce memory usage
+  private final Set<VirtualFile> myChangedFiles = CollectionFactory.createSmallMemoryFootprintSet();
   private boolean myDocumentSavingInProgress = false;
   private MessageBusConnection myConnection;
   private int myModificationStamp = 0;
 
+  /**
+   * @deprecated Use {@link #DelayedDocumentWatcher(Project, int, AbstractAutoTestManager, Predicate)}
+   */
+  @SuppressWarnings({"DataFlowIssue", "UsagesOfObsoleteApi"})
+  @Deprecated(forRemoval = true)
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
-                                @NotNull Consumer<? super Integer> modificationStampConsumer,
+                                @NotNull com.intellij.util.Consumer<? super Integer> modificationStampConsumer,
                                 @Nullable Condition<? super VirtualFile> changedFileFilter) {
+    this(project, delayMillis, it -> modificationStampConsumer.consume(it), null, it -> changedFileFilter.value(it));
+  }
+
+  public DelayedDocumentWatcher(@NotNull Project project,
+                         int delayMillis,
+                         @NotNull AbstractAutoTestManager autoTestManager,
+                         @Nullable Predicate<? super VirtualFile> changedFileFilter) {
+    this(project, delayMillis, null, autoTestManager, changedFileFilter);
+  }
+
+  private DelayedDocumentWatcher(@NotNull Project project,
+                                 int delayMillis,
+                                 @Nullable IntConsumer modificationStampConsumer,
+                                 @Nullable AbstractAutoTestManager autoTestManager,
+                                 @Nullable Predicate<? super VirtualFile> changedFileFilter) {
     myProject = project;
     myDelayMillis = delayMillis;
     myModificationStampConsumer = modificationStampConsumer;
+    myAutoTestManager = autoTestManager;
     myChangedFileFilter = changedFileFilter;
     myListener = new MyDocumentAdapter();
   }
@@ -64,6 +90,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     return myProject;
   }
 
+  @RequiresEdt(generateAssertion = false)
   @Override
   public void activate() {
     if (myConnection == null) {
@@ -78,20 +105,20 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
           ApplicationManager.getApplication().invokeLater(() -> myDocumentSavingInProgress = false, ModalityState.any());
         }
       });
-      LookupManager.getInstance(myProject).addPropertyChangeListener(new PropertyChangeListener() {
+      myConnection.subscribe(LookupManagerListener.TOPIC, new LookupManagerListener() {
         @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName()) && evt.getNewValue() == null
-              && !myChangedFiles.isEmpty()) {
+        public void activeLookupChanged(@Nullable Lookup oldLookup, @Nullable Lookup newLookup) {
+          if (newLookup == null && !myChangedFiles.isEmpty()) {
             myAlarm.cancelAndRequest();
           }
         }
-      }, myDisposable);
+      });
 
       myAlarm = new SingleAlarm(new MyRunnable(), myDelayMillis, Alarm.ThreadToUse.SWING_THREAD, myDisposable);
     }
   }
 
+  @RequiresEdt(generateAssertion = false)
   @Override
   public void deactivate() {
     if (myDisposable != null) {
@@ -102,11 +129,6 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
       myConnection.disconnect();
       myConnection = null;
     }
-  }
-
-  @Override
-  public boolean isUpToDate(int modificationStamp) {
-    return myModificationStamp == modificationStamp;
   }
 
   private class MyDocumentAdapter implements DocumentListener {
@@ -127,7 +149,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
         if (ProjectUtil.isProjectOrWorkspaceFile(file)) {
           return;
         }
-        if (myChangedFileFilter != null && !myChangedFileFilter.value(file)) {
+        if (myChangedFileFilter != null && !myChangedFileFilter.test(file)) {
           return;
         }
 
@@ -144,7 +166,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     public void run() {
       final int oldModificationStamp = myModificationStamp;
       asyncCheckErrors(myChangedFiles, errorsFound -> {
-        if (Disposer.isDisposed(myDisposable)) {
+        if (myDisposable == null) {
           return;
         }
         if (myModificationStamp != oldModificationStamp) {
@@ -163,7 +185,15 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
           return;
         }
         myChangedFiles.clear();
-        myModificationStampConsumer.consume(myModificationStamp);
+        if (myModificationStampConsumer != null) {
+          myModificationStampConsumer.accept(myModificationStamp);
+        }
+        else {
+          int initialModificationStamp = myModificationStamp;
+          Objects.requireNonNull(myAutoTestManager).restartAllAutoTests(() -> {
+            return myModificationStamp == initialModificationStamp;
+          });
+        }
       });
     }
   }
@@ -179,7 +209,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
         }
         return false;
       });
-      ApplicationManager.getApplication().invokeLater(() -> errorsFoundConsumer.consume(errorsFound), ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> errorsFoundConsumer.accept(errorsFound), ModalityState.any());
     });
   }
 }

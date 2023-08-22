@@ -2,11 +2,11 @@ package pkg;
 
 class TestInnerClassConstructor {
    void l() {
-      new TestInnerClassConstructor.Inner("text");// 5
+      new Inner("text");// 5
    }// 6
 
    void m() {
-      new TestInnerClassConstructor.Another(3, 4);// 9
+      new Another(3, 4);// 9
    }// 10
 
    void n(String var1) {

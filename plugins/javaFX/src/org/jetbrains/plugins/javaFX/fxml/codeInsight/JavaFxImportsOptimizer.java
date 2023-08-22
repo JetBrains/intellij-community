@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -73,7 +73,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     }
     final PsiFileFactory factory = PsiFileFactory.getInstance(file.getProject());
 
-    final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", StdFileTypes.XML, StringUtil.join(imports, "\n"));
+    final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", XmlFileType.INSTANCE, StringUtil.join(imports, "\n"));
     final XmlDocument document = dummyFile.getDocument();
     final XmlProlog newImportList = document != null ? document.getProlog() : null;
     if (newImportList == null) return EmptyRunnable.getInstance();
@@ -114,13 +114,13 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
 
   public static abstract class JavaFxUsedClassesVisitor extends XmlRecursiveElementVisitor {
     @Override
-    public void visitXmlProlog(XmlProlog prolog) {}
+    public void visitXmlProlog(@NotNull XmlProlog prolog) {}
 
     @Override
-    public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {}
+    public void visitXmlProcessingInstruction(@NotNull XmlProcessingInstruction processingInstruction) {}
 
     @Override
-    public void visitXmlAttribute(XmlAttribute attribute) {
+    public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
       final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
       if (descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
@@ -134,7 +134,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     }
 
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
       super.visitXmlTag(tag);
       final XmlElementDescriptor descriptor = tag.getDescriptor();
       if (descriptor instanceof JavaFxClassTagDescriptorBase) {
@@ -149,8 +149,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     }
 
     private void appendClassName(PsiElement declaration) {
-      if (declaration instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass)declaration;
+      if (declaration instanceof PsiClass psiClass) {
         final String ownerClassQN = getTopmostOwnerClassQualifiedName(psiClass);
         if (ownerClassQN != null) {
           appendClassName(ownerClassQN);

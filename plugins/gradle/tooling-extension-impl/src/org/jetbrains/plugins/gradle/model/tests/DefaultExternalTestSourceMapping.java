@@ -4,8 +4,13 @@ package org.jetbrains.plugins.gradle.model.tests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
+
+import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiableFileSet;
+import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiablePathSet;
 
 public class DefaultExternalTestSourceMapping implements ExternalTestSourceMapping {
   @Nullable
@@ -13,16 +18,16 @@ public class DefaultExternalTestSourceMapping implements ExternalTestSourceMappi
   @Nullable
   private String testTaskPath;
   @NotNull
-  private Set<String> sourceFolders = Collections.emptySet();
+  private Set<File> sourceFolders = Collections.emptySet();
 
   @Override
   @NotNull
   public Set<String> getSourceFolders() {
-    return Collections.unmodifiableSet(sourceFolders);
+    return unmodifiablePathSet(sourceFolders);
   }
 
   public void setSourceFolders(@NotNull Set<String> sourceFolders) {
-    this.sourceFolders = sourceFolders;
+    this.sourceFolders = unmodifiableFileSet(sourceFolders);
   }
 
   @NotNull
@@ -54,8 +59,8 @@ public class DefaultExternalTestSourceMapping implements ExternalTestSourceMappi
 
     DefaultExternalTestSourceMapping mapping = (DefaultExternalTestSourceMapping)o;
 
-    if (testName != null ? !testName.equals(mapping.testName) : mapping.testName != null) return false;
-    if (testTaskPath != null ? !testTaskPath.equals(mapping.testTaskPath) : mapping.testTaskPath != null) return false;
+    if (!Objects.equals(testName, mapping.testName)) return false;
+    if (!Objects.equals(testTaskPath, mapping.testTaskPath)) return false;
     if (!sourceFolders.equals(mapping.sourceFolders)) return false;
 
     return true;

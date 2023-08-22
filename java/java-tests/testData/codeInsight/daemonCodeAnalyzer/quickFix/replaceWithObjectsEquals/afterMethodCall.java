@@ -1,4 +1,4 @@
-// "Replace 'foo().equals(...)' with 'Objects.equals(foo(), ...)'" "true"
+// "Replace 'foo().equals(...)' with 'Objects.equals(foo(), ...)'" "true-preview"
 
 import org.jetbrains.annotations.*;
 

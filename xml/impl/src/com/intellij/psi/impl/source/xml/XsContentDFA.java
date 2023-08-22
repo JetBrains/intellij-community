@@ -50,8 +50,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-class XsContentDFA extends XmlContentDFA {
-
+final class XsContentDFA extends XmlContentDFA {
   private final XSCMValidator myContentModel;
   private final SubstitutionGroupHandler myHandler;
   private final int[] myState;
@@ -90,8 +89,7 @@ class XsContentDFA extends XmlContentDFA {
     final List vector = myContentModel.whatCanGoHere(myState);
     ArrayList<XmlElementDescriptor> list = new ArrayList<>();
     for (Object o : vector) {
-      if (o instanceof XSElementDecl) {
-        final XSElementDecl elementDecl = (XSElementDecl)o;
+      if (o instanceof XSElementDecl elementDecl) {
         XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors,
                                                              elementDescriptor -> elementDecl.getName().equals(elementDescriptor.getName()));
         ContainerUtil.addIfNotNull(list, descriptor);

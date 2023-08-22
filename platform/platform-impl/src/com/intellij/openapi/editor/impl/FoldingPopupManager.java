@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +66,7 @@ public class FoldingPopupManager implements EditorMouseListener, EditorMouseMoti
     }
   }
 
-  @NotNull
-  private static DocumentFragment createDocumentFragment(@NotNull FoldRegion fold) {
+  private static @NotNull DocumentFragment createDocumentFragment(@NotNull FoldRegion fold) {
     EditorImpl editor = (EditorImpl)fold.getEditor();
     Document document = editor.getDocument();
     FoldingGroup group = fold.getGroup();
@@ -89,19 +87,4 @@ public class FoldingPopupManager implements EditorMouseListener, EditorMouseMoti
     if (e.getEditor().getUserData(DISABLED) != null) return;
     TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e.getMouseEvent(), true);
   }
-
-  @Override
-  public void mouseDragged(@NotNull EditorMouseEvent e) {}
-
-  @Override
-  public void mousePressed(@NotNull EditorMouseEvent e) {}
-
-  @Override
-  public void mouseClicked(@NotNull EditorMouseEvent e) {}
-
-  @Override
-  public void mouseReleased(@NotNull EditorMouseEvent e) {}
-
-  @Override
-  public void mouseEntered(@NotNull EditorMouseEvent e) {}
 }

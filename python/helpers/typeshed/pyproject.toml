@@ -1,11 +1,36 @@
 [tool.black]
 line_length = 130
-target_version = ["py37"]
+target_version = ["py310"]
+skip_magic_trailing_comma = true
+# Exclude protobuf files because they have long line lengths
+# Ideally, we could configure black to allow longer line lengths
+# for just these files, but doesn't seem possible yet.
+force-exclude = ".*_pb2.pyi"
 
 [tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
+profile = "black"
 combine_as_imports = true
 line_length = 130
+skip = [".git", ".github", ".venv"]
+extra_standard_library = [
+    "typing_extensions",
+    "_typeshed",
+    # Extra modules not recognized by isort
+    "_ast",
+    "_collections_abc",
+    "_compression",
+    "_csv",
+    "_ctypes",
+    "_curses",
+    "_heapq",
+    "_markupbase",
+    "_random",
+    "_threading_local",
+    "_tkinter",
+    "_tracemalloc",
+    "_warnings",
+    "_weakrefset",
+    "genericpath",
+    "opcode",
+    "pyexpat",
+]

@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class RepositoriesModelImpl implements RepositoriesModel {
-  private final Set<MavenRepositoryModel> myRepositories = new HashSet<MavenRepositoryModel>();
+  private final Set<MavenRepositoryModel> myRepositories = new HashSet<>();
 
   @Override
   public void add(MavenRepositoryModel model) {

@@ -1,8 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,33 +6,27 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import static com.intellij.lang.LanguageUtil.matchingMetaLanguages;
+import java.util.*;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T myDefaultImplementation;
   private final /* non static!!! */ Key<T> myCacheKey;
   private final /* non static!!! */ Key<List<T>> myAllCacheKey;
 
-  public LanguageExtension(@NotNull final ExtensionPointName<? extends KeyedLazyInstance<T>> epName) {
+  public LanguageExtension(final @NotNull ExtensionPointName<? extends KeyedLazyInstance<T>> epName) {
     this(epName.getName(), null);
   }
 
-  public LanguageExtension(@NotNull @NonNls final String epName) {
+  public LanguageExtension(final @NotNull @NonNls String epName) {
     this(epName, null);
   }
 
-  public LanguageExtension(@NotNull final ExtensionPointName<? extends KeyedLazyInstance<T>> epName, @Nullable T defaultImplementation) {
+  public LanguageExtension(final @NotNull ExtensionPointName<? extends KeyedLazyInstance<T>> epName, @Nullable T defaultImplementation) {
     this(epName.getName(), defaultImplementation);
   }
 
@@ -47,9 +37,8 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     myAllCacheKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName);
   }
 
-  @NotNull
   @Override
-  protected String keyToString(@NotNull final Language key) {
+  protected @NotNull String keyToString(final @NotNull Language key) {
     return key.getID();
   }
 
@@ -64,7 +53,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     for (Language derivedLanguage : languages) {
       clearCacheForLanguage(derivedLanguage);
 
-      Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(derivedLanguage);
+      Collection<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(derivedLanguage);
       for (MetaLanguage metaLanguage : metaLanguages) {
         clearCacheForLanguage(metaLanguage);
       }
@@ -119,16 +108,14 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   /**
    *  @see #allForLanguageOrAny(Language)
    */
-  @NotNull
-  public List<T> allForLanguage(@NotNull Language language) {
+  public @NotNull List<T> allForLanguage(@NotNull Language language) {
     List<T> cached = language.getUserData(myAllCacheKey);
     if (cached != null) return cached;
     List<T> result = collectAllForLanguage(language);
     return language.putUserDataIfAbsent(myAllCacheKey, result);
   }
 
-  @NotNull
-  private List<T> collectAllForLanguage(@NotNull Language language) {
+  private @NotNull List<T> collectAllForLanguage(@NotNull Language language) {
     boolean copyList = true;
     List<T> result = null;
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
@@ -138,7 +125,10 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       }
       else if (!list.isEmpty()) {
         if (copyList) {
-          result = new ArrayList<>(ContainerUtil.concat(result, list));
+          List<T> newResult = new ArrayList<>(result.size() + list.size());
+          newResult.addAll(result);
+          newResult.addAll(list);
+          result = newResult;
           copyList = false;
         }
         else {
@@ -149,15 +139,14 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return result;
   }
 
-  @NotNull
   @Override
-  protected List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-    Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(key);
+  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+    Collection<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(key);
     if (metaLanguages.isEmpty()) {
       return super.buildExtensions(stringKey, key);
     }
 
-    Set<String> allKeys = new THashSet<>();
+    Set<String> allKeys = new HashSet<>();
     allKeys.add(stringKey);
     for (MetaLanguage language : metaLanguages) {
       allKeys.add(keyToString(language));
@@ -165,10 +154,11 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return buildExtensions(allKeys);
   }
 
-  @NotNull
-  public List<T> allForLanguageOrAny(@NotNull Language l) {
+  public @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
     List<T> forLanguage = allForLanguage(l);
-    if (l == Language.ANY) return forLanguage;
+    if (l == Language.ANY) {
+      return forLanguage;
+    }
     return ContainerUtil.concat(forLanguage, allForLanguage(Language.ANY));
   }
 

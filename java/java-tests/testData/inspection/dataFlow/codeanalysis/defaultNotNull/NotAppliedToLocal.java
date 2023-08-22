@@ -1,7 +1,7 @@
-import codeanalysis.experimental.annotations.DefaultNotNull;
-import codeanalysis.experimental.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-@DefaultNotNull
+@NullMarked
 class NullnessDemo {
   @Nullable Object something() {
     return null;

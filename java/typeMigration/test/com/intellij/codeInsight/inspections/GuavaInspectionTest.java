@@ -1,23 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.inspections.GuavaInspection;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -54,6 +53,14 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   public void testOptional3() {
     doTest();
+  }
+  
+  public void testOptional4() {
+    doTest();
+  }
+
+  public void testOptionalArray() {
+    doTestAllFile();
   }
 
   public void testSimpleFluentIterable() {
@@ -104,7 +111,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void _testChainedFluentIterableWithOf() {
+  public void testChainedFluentIterableWithOf() {
     doTest();
   }
 
@@ -250,6 +257,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTestAllFile();
   }
 
+  public void testPredicates5() {
+    doTest();
+  }
+
   public void testFluentIterableElementTypeChanged() {
     doTest();
   }
@@ -284,12 +295,12 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
+  private void doTestNoQuickFixes(@NotNull Class<? extends PsiElement> @NotNull ... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
 
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (GuavaInspection.MigrateGuavaTypeFix.FAMILY_NAME.equals(action.getFamilyName())) {
+      if (TypeMigrationBundle.message("migrate.guava.to.java.family.name").equals(action.getFamilyName())) {
         final PsiElement element = ((GuavaInspection.MigrateGuavaTypeFix)action).getStartElement();
         if (PsiTreeUtil.instanceOf(element, highlightedElements)) {
           fail("Quick fix is found but not expected for types " + Arrays.toString(highlightedElements));
@@ -304,7 +315,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     boolean actionFound = false;
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (GuavaInspection.MigrateGuavaTypeFix.FAMILY_NAME.equals(action.getFamilyName())) {
+      if (TypeMigrationBundle.message("migrate.guava.to.java.family.name").equals(action.getFamilyName())) {
         myFixture.launchAction(action);
         actionFound = true;
         break;
@@ -318,14 +329,12 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
     for (HighlightInfo info : myFixture.doHighlighting())
-      if (GuavaInspection.PROBLEM_DESCRIPTION.equals(info.getDescription())) {
-        final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> marker = info.quickFixActionRanges.get(0);
+      if (TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description").equals(info.getDescription())) {
+        HighlightInfo.IntentionActionDescriptor desc = info.findRegisteredQuickFix((descriptor, range) -> descriptor);
         final PsiElement someElement = myFixture.getFile().findElementAt(0);
         assertNotNull(someElement);
-        final List<IntentionAction> options = marker.getFirst().getOptions(someElement, myFixture.getEditor());
-        assertNotNull(options);
         boolean doBreak = false;
-        for (IntentionAction option : options) {
+        for (IntentionAction option : desc.getOptions(someElement, myFixture.getEditor())) {
           if (option instanceof CleanupInspectionIntention) {
             myFixture.launchAction(option);
             doBreak = true;

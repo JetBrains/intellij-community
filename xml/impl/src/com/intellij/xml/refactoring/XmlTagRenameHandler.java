@@ -2,7 +2,6 @@
 
 package com.intellij.xml.refactoring;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -35,10 +34,9 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     final PsiElement element = getElement(dataContext);
     if (element == null || PsiElementRenameHandler.isVetoed(element)) return false;
     PsiElement parent = element.getParent();
-    if (!(parent instanceof XmlTag)) {
+    if (!(parent instanceof XmlTag tag)) {
       return false;
     }
-    XmlTag tag = (XmlTag)parent;
     String prefix = tag.getNamespacePrefix();
     if (StringUtil.isNotEmpty(prefix)) {
       Editor editor = getEditor(dataContext);
@@ -108,8 +106,6 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
     if (!isRenaming(context)) {
       return;
     }
-
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
 
     if (isInplaceRenameAvailable(editor)) {
       XmlTagInplaceRenamer.rename(editor, (XmlTag)element.getParent());

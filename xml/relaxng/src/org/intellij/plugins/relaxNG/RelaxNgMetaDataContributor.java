@@ -60,8 +60,7 @@ public final class RelaxNgMetaDataContributor implements MetaDataContributor {
     registrar.registerMetaData(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
-        if (element instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)element;
+        if (element instanceof XmlTag tag) {
           final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
           return domElement instanceof RngDefine;
         }
@@ -80,11 +79,11 @@ public final class RelaxNgMetaDataContributor implements MetaDataContributor {
     return Arrays.asList(RngDomInspection.class, UnusedDefineInspection.class);
   }
 
-  public static final class ResourceProvider implements StandardResourceProvider {
+  static final class ResourceProvider implements StandardResourceProvider {
     @Override
     public void registerResources(ResourceRegistrar registrar) {
       registrar.addStdResource(RNG_NAMESPACE, "/resources/relaxng.rng", getClass());
-      registrar.addStdResource(HtmlUtil.SVG_NAMESPACE, "/resources/html5-schema/svg11/svg11.rnc", getClass());
+      registrar.addStdResource(HtmlUtil.SVG_NAMESPACE, "/resources/html5-schema/svg20/svg20.rnc", getClass());
       registrar.addStdResource(HtmlUtil.MATH_ML_NAMESPACE, "/resources/html5-schema/mml3/mathml3.rnc", getClass());
       registrar.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");
     }

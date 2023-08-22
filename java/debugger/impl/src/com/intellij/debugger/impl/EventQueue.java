@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.engine.PossiblySyncCommand;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -36,7 +23,7 @@ public class EventQueue<E> {
 
   private volatile boolean myIsClosed = false;
 
-  public EventQueue (int countPriorities) {
+  public EventQueue(int countPriorities) {
     myLock = new ReentrantLock();
     myEventsAvailable = myLock.newCondition();
     myEvents = new LinkedList[countPriorities];
@@ -46,7 +33,7 @@ public class EventQueue<E> {
   }
 
   public boolean pushBack(@NotNull E event, int priority) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.debug("pushBack event " + event);
     }
 
@@ -65,7 +52,7 @@ public class EventQueue<E> {
   }
 
   public boolean put(@NotNull E event, int priority) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.debug("put event " + event);
     }
 
@@ -87,7 +74,7 @@ public class EventQueue<E> {
     return (LinkedList<E>)myEvents[priority];
   }
 
-  public void close(){
+  public void close() {
     myLock.lock();
     try {
       myIsClosed = true;
@@ -102,7 +89,7 @@ public class EventQueue<E> {
     myLock.lock();
     try {
       while (true) {
-        if(myIsClosed) {
+        if (myIsClosed) {
           throw new EventQueueClosedException();
         }
         for (int i = 0; i < myEvents.length; i++) {
@@ -147,6 +134,15 @@ public class EventQueue<E> {
       }
     }
     return allEvents;
+  }
+
+  public boolean isEmpty() {
+    return ConcurrencyUtil.withLock(myLock, () -> ContainerUtil.and(myEvents, AbstractCollection::isEmpty));
+  }
+
+  public boolean hasAsyncCommands() {
+    return ConcurrencyUtil.withLock(myLock, () ->
+      Arrays.stream(myEvents).flatMap(Collection::stream).anyMatch(c -> !(c instanceof PossiblySyncCommand)));
   }
 
   public void reopen() {

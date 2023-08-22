@@ -30,9 +30,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
 
-/**
- * @author yole
- */
+
 public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyNumericLiteralExpression {
 
   public PyNumericLiteralExpressionImpl(@NotNull ASTNode astNode) {

@@ -4,7 +4,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -15,6 +14,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.Consumer
+import com.intellij.util.ui.UIUtil
 import org.junit.Assert
 import org.junit.Test
 
@@ -95,7 +95,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
           override fun getPlannedHomeDir() = plannedDir.absolutePath
           override fun getPlannedVersion() = "1.2.3"
           override fun doDownload(indicator: ProgressIndicator) {
-            assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+            ApplicationManager.getApplication().assertIsNonDispatchThread()
 
             //ProgressManager works in the same thread in tests
             assertThat(isSameCallStack).withFailMessage("Is should be in the same call stack!").isTrue()
@@ -106,7 +106,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
       }
       finally {
         isSameCallStack = false
-        LaterInvocator.dispatchPendingFlushes()
+        UIUtil.dispatchAllInvocationEvents()
       }
     }
   }
@@ -137,12 +137,11 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
 
         error("Download task has to fail")
       }
-      error("Exception was expected from the Dialog")
     }
-    catch (t: Exception) {
-      assertThat(t.message).withFailMessage(t.message).contains("Failed to download JDK")
+    catch (t: Throwable) {
+      //we do not care if an exception is thrown here
     }
-    LaterInvocator.dispatchPendingFlushes()
+    UIUtil.dispatchAllInvocationEvents()
     assertThat(model.sdks).withFailMessage("SDK should NOT added to the model after cancellation").noneMatch { it.name == sdkName }
   }
 

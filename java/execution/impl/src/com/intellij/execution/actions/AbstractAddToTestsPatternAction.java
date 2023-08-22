@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -22,6 +8,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -35,6 +22,12 @@ import javax.swing.*;
 import java.util.*;
 
 public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigurationBase> extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @NotNull protected abstract AbstractPatternBasedConfigurationProducer<T> getPatternBasedProducer();
 
   @NotNull protected abstract ConfigurationType getConfigurationType();
@@ -46,7 +39,8 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    final PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (psiElements == null) return;
     final LinkedHashSet<PsiElement> classes = new LinkedHashSet<>();
     PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<>(classes);
     getPatternBasedProducer().collectTestMembers(psiElements, true, true, processor);
@@ -56,38 +50,45 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
     if (patternConfigurations.size() == 1) {
       final T configuration = patternConfigurations.get(0);
       for (PsiElement aClass : classes) {
-        getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
+        String qName = getPatternBasedProducer().getQName(aClass);
+        if (qName != null) {
+          getPatterns(configuration).add(qName);
+        }
       }
     } else {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<T>("Choose suite to add", patternConfigurations) {
-        @Override
-        public PopupStep onChosen(T configuration, boolean finalChoice) {
-          for (PsiElement aClass : classes) {
-            getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
+      JBPopupFactory.getInstance().createListPopup(
+        new BaseListPopupStep<>(JavaCompilerBundle.message("popup.title.choose.suite.to.add"), patternConfigurations) {
+          @Override
+          public PopupStep onChosen(T configuration, boolean finalChoice) {
+            for (PsiElement aClass : classes) {
+              String qName = getPatternBasedProducer().getQName(aClass);
+              if (qName != null) {
+                getPatterns(configuration).add(qName);
+              }
+            }
+            return FINAL_CHOICE;
           }
-          return FINAL_CHOICE;
-        }
 
-        @Override
-        public Icon getIconFor(T configuration) {
-          return configuration.getIcon();
-        }
+          @Override
+          public Icon getIconFor(T configuration) {
+            return configuration.getIcon();
+          }
 
-        @NotNull
-        @Override
-        public String getTextFor(T value) {
-          return value.getName();
-        }
-      }).showInBestPositionFor(dataContext);
+          @NotNull
+          @Override
+          public String getTextFor(T value) {
+            return value.getName();
+          }
+        }).showInBestPositionFor(dataContext);
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    presentation.setVisible(false);
+    presentation.setEnabledAndVisible(false);
     final DataContext dataContext = e.getDataContext();
-    final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    final PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
       PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor = new PsiElementProcessor.CollectElementsWithLimit<>(2);
       getPatternBasedProducer().collectTestMembers(psiElements, false, false, processor);
@@ -97,7 +98,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
       if (project != null) {
         final List<T> foundConfigurations = collectPatternConfigurations(collection, project);
         if (!foundConfigurations.isEmpty()) {
-          presentation.setVisible(true);
+          presentation.setEnabledAndVisible(true);
           if (foundConfigurations.size() == 1) {
             presentation.setText(ExecutionBundle.message("add.to.temp.suite.0", foundConfigurations.get(0).getName()));
           }

@@ -1,15 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,13 +60,23 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     }
     myModuleNameLocationComponent.bindModuleSettings(myNamePathComponent);
 
-    myExpertDecorator = new HideableDecorator(myExpertPlaceholder, "Mor&e Settings", false);
+    myExpertDecorator = new HideableDecorator(myExpertPlaceholder,
+                                              JavaUiBundle.message("projects.settings.wizard.expert.decorator.separator.title"),
+                                              false);
     myExpertPanel.setBorder(JBUI.Borders.empty(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
     if (myWizardContext.isCreatingNewProject()) {
       addProjectFormat(modulePanel);
     }
+  }
+
+  JPanel getExpertPlaceholder() {
+    return myExpertPlaceholder;
+  }
+
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
   }
 
   private JPanel getModulePanel() {
@@ -74,7 +88,7 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   }
 
   private void addProjectFormat(JPanel panel) {
-    addField("Project \u001bformat:", myFormatPanel.getStorageFormatComboBox(), panel);
+    addField(JavaUiBundle.message("project.settings.wizard.label.project.format"), myFormatPanel.getStorageFormatComboBox(), panel);
   }
 
   @Override
@@ -95,6 +109,9 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     }
     mySettingsPanel.revalidate();
     mySettingsPanel.repaint();
+    if (isNewWizard()) {
+      myPanel.setBorder(JBUI.Borders.empty(10));
+    }
   }
 
   private static void restorePanel(JPanel component, int i) {
@@ -113,6 +130,9 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   public void onStepLeaving() {
     SelectTemplateSettings settings = SelectTemplateSettings.getInstance();
     settings.EXPERT_MODE = myExpertDecorator.isExpanded();
+    if (mySettingsStep != null) {
+      mySettingsStep.onStepLeaving();
+    }
   }
 
   @Override
@@ -168,12 +188,12 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   }
 
   @Override
-  public void addSettingsField(@NotNull String label, @NotNull JComponent field) {
+  public void addSettingsField(@NotNull @NlsContexts.Label String label, @NotNull JComponent field) {
     JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : getModulePanel();
     addField(label, field, panel);
   }
 
-  static void addField(String label, JComponent field, JPanel panel) {
+  static void addField(@NlsContexts.Label String label, JComponent field, JPanel panel) {
     JLabel jLabel = new JBLabel(label);
     jLabel.setLabelFor(field);
     jLabel.setVerticalAlignment(SwingConstants.TOP);
@@ -187,17 +207,17 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   public void addSettingsComponent(@NotNull JComponent component) {
     JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : getModulePanel();
     panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
   }
 
   @Override
   public void addExpertPanel(@NotNull JComponent panel) {
     myExpertPanel.add(panel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                    GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+                                                    GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
   }
 
   @Override
-  public void addExpertField(@NotNull String label, @NotNull JComponent field) {
+  public void addExpertField(@NotNull @NlsContexts.Label String label, @NotNull JComponent field) {
     JPanel panel = myWizardContext.isCreatingNewProject() ? getModulePanel() : myExpertPanel;
     addField(label, field, panel);
   }

@@ -6,6 +6,7 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,16 +48,16 @@ public final class TestProxyPrinterProvider {
     private final Filter myFilter;
 
     HyperlinkPrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
-                            @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
-                            @NotNull Filter filter) {
+                     @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
+                     @NotNull Filter filter) {
       super(testsOutputConsoleView, testsOutputConsoleView.getProperties(), null);
       myContentTypeCondition = contentTypeCondition;
       myFilter = filter;
     }
 
     @Override
-    public void print(String text, ConsoleViewContentType contentType) {
-      if (contentType == null || !myContentTypeCondition.value(contentType)) {
+    public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+      if (!myContentTypeCondition.value(contentType)) {
         defaultPrint(text, contentType);
         return;
       }
@@ -78,13 +79,14 @@ public final class TestProxyPrinterProvider {
     }
 
     private void printLine(@NotNull String line, @NotNull ConsoleViewContentType contentType) {
-      Filter.Result result;
-      try {
-        result = myFilter.applyFilter(line, line.length());
-      }
-      catch (Throwable t) {
-        throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
-      }
+      Filter.Result result = ReadAction.compute(() -> {
+        try {
+          return myFilter.applyFilter(line, line.length());
+        }
+        catch (Throwable t) {
+          throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
+        }
+      });
       if (result != null) {
         List<Filter.ResultItem> items = sort(result.getResultItems());
         int lastOffset = 0;

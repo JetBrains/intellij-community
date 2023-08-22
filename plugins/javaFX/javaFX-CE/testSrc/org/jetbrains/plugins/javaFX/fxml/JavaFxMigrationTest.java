@@ -9,9 +9,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxMigrationTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testImportClasses() {

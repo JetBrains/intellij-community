@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +25,28 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
                        @NotNull WatchesRootNode parent,
                        @NotNull XExpression expression,
                        @Nullable XStackFrame stackFrame) {
-    super(tree, parent, expression.getExpression(), new XWatchValue(expression, tree, stackFrame));
+    this(tree, parent, expression, stackFrame, expression.getExpression());
+  }
+
+  WatchNodeImpl(@NotNull XDebuggerTree tree,
+                @NotNull WatchesRootNode parent,
+                @NotNull XExpression expression,
+                @Nullable XStackFrame stackFrame,
+                @NotNull String name) {
+    this(tree, parent, expression, name, new XWatchValue(expression, tree, stackFrame));
+  }
+
+  WatchNodeImpl(@NotNull XDebuggerTree tree,
+                @NotNull WatchesRootNode parent,
+                @NotNull XExpression expression,
+                @NotNull String name,
+                @NotNull XValue value) {
+    super(tree, parent, name, value);
+    myExpression = expression;
+  }
+
+  protected WatchNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, XExpression expression, XNamedValue value) {
+    super(tree, parent, expression.getExpression(), value);
     myExpression = expression;
   }
 
@@ -39,11 +60,19 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   @Override
   public XValue getValueContainer() {
     XValue container = super.getValueContainer();
-    XValue value = ((XWatchValue)container).myValue;
-    return value != null ? value : container;
+    if (container instanceof XWatchValue) {
+      XValue value = ((XWatchValue)container).myValue;
+      if (value != null) {
+        return value;
+      }
+    }
+    return container;
   }
 
-  void computePresentationIfNeeded() {
+  protected void evaluated() {
+  }
+
+  public void computePresentationIfNeeded() {
     if (getValuePresentation() == null) {
       getValueContainer().computePresentation(this, XValuePlace.TREE);
     }
@@ -75,7 +104,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
         if (myTree.isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
           XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
           if (evaluator != null) {
-            evaluator.evaluate(myExpression, new MyEvaluationCallback(node, place), myStackFrame.getSourcePosition());
+            evaluator.evaluate(myExpression, new MyEvaluationCallback((WatchNodeImpl)node, place), myStackFrame.getSourcePosition());
             return;
           }
         }
@@ -88,10 +117,10 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {
-      @NotNull private final XValueNode myNode;
+      @NotNull private final WatchNodeImpl myNode;
       @NotNull private final XValuePlace myPlace;
 
-      MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
+      MyEvaluationCallback(@NotNull WatchNodeImpl node, @NotNull XValuePlace place) {
         myNode = node;
         myPlace = place;
       }
@@ -104,6 +133,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
       @Override
       public void evaluated(@NotNull XValue result) {
         myValue = result;
+        myNode.evaluated();
         result.computePresentation(myNode, myPlace);
       }
 

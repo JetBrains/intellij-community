@@ -1,14 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -27,17 +29,17 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * User : ktisha
@@ -49,42 +51,29 @@ public class PyPep8NamingInspection extends PyInspection {
   private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
   private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
   // See error codes of the tool "pep8-naming"
-  private static final Map<String, String> ERROR_CODES_DESCRIPTION = ImmutableMap.<String, String>builder()
-    .put("N801", "Class names should use CamelCase convention")
-    .put("N802", "Function name should be lowercase")
-    .put("N803", "Argument name should be lowercase")
-    .put("N806", "Variable in function should be lowercase")
-    .put("N811", "Constant variable imported as non constant")
-    .put("N812", "Lowercase variable imported as non lowercase")
-    .put("N813", "CamelCase variable imported as lowercase")
-    .put("N814", "CamelCase variable imported as constant")
-    .build();
+  private static final Map<String, Supplier<@InspectionMessage String>> ERROR_CODES_DESCRIPTION = Map.of(
+    "N801", PyPsiBundle.messagePointer("INSP.pep8.naming.class.names.should.use.capwords.convention"),
+    "N802", PyPsiBundle.messagePointer("INSP.pep8.naming.function.name.should.be.lowercase"),
+    "N803", PyPsiBundle.messagePointer("INSP.pep8.naming.argument.name.should.be.lowercase"),
+    "N806", PyPsiBundle.messagePointer("INSP.pep8.naming.variable.in.function.should.be.lowercase"),
+    "N811", PyPsiBundle.messagePointer("INSP.pep8.naming.constant.variable.imported.as.non.constant"),
+    "N812", PyPsiBundle.messagePointer("INSP.pep8.naming.lowercase.variable.imported.as.non.lowercase"),
+    "N813", PyPsiBundle.messagePointer("INSP.pep8.naming.camelcase.variable.imported.as.lowercase"),
+    "N814", PyPsiBundle.messagePointer("INSP.pep8.naming.camelcase.variable.imported.as.constant")
+  );
   public final List<String> ignoredErrors = new ArrayList<>();
   public boolean ignoreOverriddenFunctions = true;
   public final List<String> ignoredBaseClasses = Lists.newArrayList("unittest.TestCase", "unittest.case.TestCase");
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel rootPanel = new JPanel(new BorderLayout());
-    JCheckBox checkBox = PythonUiService.getInstance()
-      .createInspectionCheckBox(PyPsiBundle.message("ignore.overridden.functions"), this, "ignoreOverriddenFunctions");
-    if (checkBox != null) {
-      rootPanel.add(checkBox, BorderLayout.NORTH);
-    }
-
-    JComponent classes = PythonUiService.getInstance().createListEditForm("Excluded base classes", ignoredBaseClasses);
-    JComponent errors = PythonUiService.getInstance().createListEditForm("Ignored errors", ignoredErrors);
-
-    if (classes != null && errors != null) {
-      JComponent splitter = PythonUiService.getInstance().onePixelSplitter(false, classes, errors);
-
-      if (splitter != null) {
-        rootPanel.add(splitter, BorderLayout.CENTER);
-      }
-    }
-
-    return rootPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreOverriddenFunctions", PyPsiBundle.message("ignore.overridden.functions")),
+      horizontalStack(
+        stringList("ignoredBaseClasses", PyPsiBundle.message("INSP.pep8.naming.column.name.excluded.base.classes")),
+        stringList("ignoredErrors", PyPsiBundle.message("INSP.pep8.naming.column.name.ignored.errors"))
+      )
+    );
   }
 
   protected void addFunctionQuickFixes(ProblemsHolder holder,
@@ -103,7 +92,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
   }
 
-  protected LocalQuickFix[] createRenameAndIngoreErrorQuickFixes(@Nullable PsiElement node,
+  protected LocalQuickFix[] createRenameAndIgnoreErrorQuickFixes(@Nullable PsiElement node,
                                                                  String errorCode) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     if (node != null) {
@@ -121,7 +110,7 @@ public class PyPep8NamingInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class IgnoreBaseClassQuickFix implements LocalQuickFix {
@@ -157,21 +146,38 @@ public class PyPep8NamingInspection extends PyInspection {
     public List<String> getBaseClassNames() {
       return myBaseClassNames;
     }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      // The quick fix updates the inspection's settings, nothing changes in the current file
+      return IntentionPreviewInfo.EMPTY;
+    }
   }
 
-  protected static class IgnoreErrorFix implements LocalQuickFix {
+  protected class IgnoreErrorFix implements LocalQuickFix {
     private final String myCode;
-    private static final String myText = "Ignore errors like this";
 
     IgnoreErrorFix(String code) {
       myCode = code;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return myText;
+      return PyPsiBundle.message("QFIX.NAME.ignore.errors.like.this");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      if (ignoredErrors.contains(myCode)) return IntentionPreviewInfo.EMPTY;
+      ArrayList<String> updated = new ArrayList<>(ignoredErrors);
+      updated.add(myCode);
+      return IntentionPreviewInfo.addListOption(updated, myCode, PyPsiBundle.message("INSP.pep8.naming.column.name.ignored.errors"));
     }
 
     @Override
@@ -187,12 +193,12 @@ public class PyPep8NamingInspection extends PyInspection {
   }
 
   public class Visitor extends PyInspectionVisitor {
-    public Visitor(ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, PyClass.class);
       if (function == null) return;
       final Scope scope = ControlFlowCache.getScope(function);
@@ -221,7 +227,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyParameter(PyParameter node) {
+    public void visitPyParameter(@NotNull PyParameter node) {
       final String name = node.getName();
       if (name == null) return;
 
@@ -233,15 +239,15 @@ public class PyPep8NamingInspection extends PyInspection {
 
     protected void registerAndAddRenameAndIgnoreErrorQuickFixes(@Nullable final PsiElement node, @NotNull final String errorCode) {
       if (getHolder() != null && getHolder().isOnTheFly()) {
-        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode), createRenameAndIngoreErrorQuickFixes(node, errorCode));
+        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), createRenameAndIgnoreErrorQuickFixes(node, errorCode));
       }
       else {
-        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode), new IgnoreErrorFix(errorCode));
+        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode).get(), new IgnoreErrorFix(errorCode));
       }
     }
 
     @Override
-    public void visitPyFunction(PyFunction function) {
+    public void visitPyFunction(@NotNull PyFunction function) {
       final PyClass containingClass = function.getContainingClass();
       if (ignoreOverriddenFunctions && isOverriddenMethod(function)) return;
       final String name = function.getName();
@@ -257,7 +263,7 @@ public class PyPep8NamingInspection extends PyInspection {
           final String errorCode = "N802";
           if (!ignoredErrors.contains(errorCode)) {
             quickFixes.add(new IgnoreErrorFix(errorCode));
-            registerProblem(nameNode.getPsi(), ERROR_CODES_DESCRIPTION.get(errorCode),
+            registerProblem(nameNode.getPsi(), ERROR_CODES_DESCRIPTION.get(errorCode).get(),
                             quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
           }
         }
@@ -282,7 +288,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(PyClass node) {
+    public void visitPyClass(@NotNull PyClass node) {
       final String name = node.getName();
       if (name == null) return;
       final String errorCode = "N801";
@@ -308,7 +314,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyImportElement(PyImportElement node) {
+    public void visitPyImportElement(@NotNull PyImportElement node) {
       final String asName = node.getAsName();
       final QualifiedName importedQName = node.getImportedQName();
       if (importedQName == null) return;

@@ -26,3 +26,18 @@ class C:
   @x.deleter
   def x(self):
       pass
+
+
+class Parent:
+    """
+    Parent class doc
+    """
+    def foo(self):
+        """
+        Parent foo doc
+        """
+        pass
+
+class Child(Parent):
+    def foo(self):
+        pass

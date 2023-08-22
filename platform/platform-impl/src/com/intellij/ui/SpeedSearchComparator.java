@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +17,7 @@ public class SpeedSearchComparator {
   private MinusculeMatcher myMinusculeMatcher;
   private final boolean myShouldMatchFromTheBeginning;
   private final boolean myShouldMatchCamelCase;
+  private final String myHardSeparators;
 
   public SpeedSearchComparator() {
     this(true);
@@ -27,16 +28,20 @@ public class SpeedSearchComparator {
   }
 
   public SpeedSearchComparator(boolean shouldMatchFromTheBeginning, boolean shouldMatchCamelCase) {
+    this(shouldMatchFromTheBeginning, shouldMatchCamelCase, "");
+  }
+
+  public SpeedSearchComparator(boolean shouldMatchFromTheBeginning, boolean shouldMatchCamelCase, @NotNull String hardSeparators) {
     myShouldMatchFromTheBeginning = shouldMatchFromTheBeginning;
     myShouldMatchCamelCase = shouldMatchCamelCase;
+    myHardSeparators = hardSeparators;
   }
 
   public int matchingDegree(String pattern, String text) {
     return obtainMatcher(pattern).matchingDegree(text);
   }
 
-  @Nullable
-  public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+  public @Nullable Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
     return obtainMatcher(pattern).matchingFragments(text);
   }
 
@@ -54,9 +59,8 @@ public class SpeedSearchComparator {
     return myMinusculeMatcher;
   }
 
-  @NotNull
-  protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern).build();
+  private @NotNull MinusculeMatcher createMatcher(@NotNull String pattern) {
+    return NameUtil.buildMatcher(pattern).withSeparators(myHardSeparators).build();
   }
 
   public String getRecentSearchText() {

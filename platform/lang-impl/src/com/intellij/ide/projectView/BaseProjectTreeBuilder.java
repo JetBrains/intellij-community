@@ -15,13 +15,11 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -40,8 +38,7 @@ import java.util.List;
 /**
  * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   protected final Project myProject;
 
@@ -58,12 +55,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   @Override
   public Promise<Object> revalidateElement(@NotNull Object element) {
-    if (!(element instanceof AbstractTreeNode)) {
+    if (!(element instanceof AbstractTreeNode node)) {
       return Promises.rejectedPromise();
     }
 
     final AsyncPromise<Object> result = new AsyncPromise<>();
-    AbstractTreeNode node = (AbstractTreeNode)element;
     final Object value = node.getValue();
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
     batch(indicator -> {
@@ -78,13 +74,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
+    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode<?>)nodeDescriptor).isAlwaysShowPlus();
   }
 
   @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getParentDescriptor() == null ||
-           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
+           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode<?>)nodeDescriptor).isAlwaysExpand();
   }
 
   @Override
@@ -102,7 +98,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private static VirtualFile getFileToRefresh(Object element) {
     Object object = element;
     if (element instanceof AbstractTreeNode) {
-      object = ((AbstractTreeNode)element).getValue();
+      object = ((AbstractTreeNode<?>)element).getValue();
     }
 
     return object instanceof PsiDirectory
@@ -132,7 +128,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   /**
    * @deprecated Use {@link #selectAsync}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
     return Promises.toActionCallback(_select(element, file, requestFocus, Conditions.alwaysTrue()));
@@ -145,7 +141,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   public ActionCallback selectInWidth(Object element,
                                       boolean requestFocus,
-                                      Condition<AbstractTreeNode<?>> nonStopCondition) {
+                                      Condition<? super AbstractTreeNode<?>> nonStopCondition) {
     return Promises.toActionCallback(_select(element, null, requestFocus, nonStopCondition));
   }
 
@@ -162,7 +158,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     final AsyncPromise<Object> result = new AsyncPromise<>();
     UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), updater.getModalityState());
     batch(indicator -> {
-      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, null, false);
+      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, false);
       UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
     });
     return result;
@@ -175,7 +171,6 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                        AsyncPromise<Object> result,
                        @NotNull final ProgressIndicator indicator,
                        @Nullable final Ref<Object> virtualSelectTarget,
-                       FocusRequestor focusRequestor,
                        boolean isSecondAttempt) {
     AbstractTreeNode<?> alreadySelected = alreadySelectedNode(element);
 
@@ -205,7 +200,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
             result.cancel();
           }
           else {
-            _select(file, file, requestFocus, nonStopCondition, result, indicator, virtualSelectTarget, focusRequestor, true);
+            _select(file, file, requestFocus, nonStopCondition, result, indicator, virtualSelectTarget, true);
           }
         });
     }
@@ -219,7 +214,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   private AbstractTreeNode alreadySelectedNode(final Object element) {
     final TreePath[] selectionPaths = getTree().getSelectionPaths();
-    if (selectionPaths == null || selectionPaths.length == 0) {
+    if (selectionPaths == null) {
       return null;
     }
     for (TreePath selectionPath : selectionPaths) {
@@ -252,7 +247,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private Promise<AbstractTreeNode<?>> expandPathTo(final VirtualFile file,
                                                  @NotNull final AbstractTreeNode root,
                                                  final Object element,
-                                                 @NotNull final Condition<AbstractTreeNode<?>> nonStopCondition,
+                                                 @NotNull final Condition<? super AbstractTreeNode<?>> nonStopCondition,
                                                  @NotNull final ProgressIndicator indicator,
                                                  @Nullable final Ref<Object> target) {
     final AsyncPromise<AbstractTreeNode<?>> async = new AsyncPromise<>();
@@ -272,7 +267,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       return async;
     }
 
-    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode)root).contains(file)) {
+    if (root instanceof ProjectViewNode && file != null && !((ProjectViewNode<?>)root).contains(file)) {
       async.setError("not applicable");
       return async;
     }
@@ -284,7 +279,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         final DefaultMutableTreeNode rootNode = getNodeForElement(root);
         if (rootNode != null) {
           final List<AbstractTreeNode<?>> kids = collectChildren(rootNode);
-          expandChild(kids, 0, nonStopCondition, file, element, async, indicator, target);
+          expandChild(kids, 0, nonStopCondition, file, element, async, indicator, null);
         }
         else {
           async.cancel();
@@ -320,14 +315,14 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   private void expandChild(@NotNull final List<? extends AbstractTreeNode<?>> kids,
                            int i,
-                           @NotNull final Condition<AbstractTreeNode<?>> nonStopCondition,
+                           final @NotNull Condition<? super AbstractTreeNode<?>> nonStopCondition,
                            final VirtualFile file,
                            final Object element,
                            @NotNull final AsyncPromise<? super AbstractTreeNode<?>> async,
                            @NotNull final ProgressIndicator indicator,
                            final Ref<Object> virtualSelectTarget) {
     while (i < kids.size()) {
-      final AbstractTreeNode eachKid = kids.get(i);
+      final AbstractTreeNode<?> eachKid = kids.get(i);
       final boolean[] nodeWasCollapsed = {true};
       final DefaultMutableTreeNode nodeForElement = getNodeForElement(eachKid);
       if (nodeForElement != null) {
@@ -376,11 +371,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean validateNode(@NotNull final Object child) {
-    if (child == null) {
-      return false;
-    }
-    if (child instanceof ProjectViewNode) {
-      final ProjectViewNode projectViewNode = (ProjectViewNode)child;
+    if (child instanceof ProjectViewNode<?> projectViewNode) {
       return projectViewNode.validate();
     }
     return true;

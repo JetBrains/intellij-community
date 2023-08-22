@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -11,9 +11,11 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 final class ShortcutFilteringPanel extends JPanel {
-  private final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(false, new VerticalLayout(JBUIScale.scale(2)));
+  private final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(false, new VerticalLayout(2));
   private final MouseShortcutPanel myMousePanel = new MouseShortcutPanel(true);
 
   private Shortcut myShortcut;
@@ -80,11 +82,11 @@ final class ShortcutFilteringPanel extends JPanel {
   };
 
   ShortcutFilteringPanel() {
-    super(new VerticalLayout(JBUIScale.scale(2)));
+    super(new VerticalLayout(2));
 
-    myKeyboardPanel.myFirstStroke.setColumns(13);
+    myKeyboardPanel.myFirstStroke.setColumns(20);
     myKeyboardPanel.myFirstStroke.putClientProperty("JTextField.variant", "search");
-    myKeyboardPanel.mySecondStroke.setColumns(13);
+    myKeyboardPanel.mySecondStroke.setColumns(20);
     myKeyboardPanel.mySecondStroke.putClientProperty("JTextField.variant", "search");
     myKeyboardPanel.mySecondStroke.setVisible(false);
     myKeyboardPanel.mySecondStrokeEnable.setText(KeyMapBundle.message("filter.enable.second.stroke.checkbox"));
@@ -98,11 +100,11 @@ final class ShortcutFilteringPanel extends JPanel {
     JLabel label = new JLabel(KeyMapBundle.message("filter.mouse.pad.label"));
     label.setOpaque(false);
     label.setIcon(AllIcons.General.Mouse);
-    label.setForeground(MouseShortcutPanel.FOREGROUND);
+    label.setForeground(UIUtil.getContextHelpForeground());
     label.setBorder(JBUI.Borders.empty(14, 4));
     myMousePanel.add(BorderLayout.CENTER, label);
     myMousePanel.addPropertyChangeListener("shortcut", myPropertyListener);
-    myMousePanel.setBorder(JBUI.Borders.customLine(MouseShortcutPanel.BORDER, 1, 0, 0, 0));
+    myMousePanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
 
     add(VerticalLayout.TOP, myKeyboardPanel);
     add(VerticalLayout.TOP, myMousePanel);

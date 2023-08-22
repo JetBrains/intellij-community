@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -8,11 +8,9 @@ import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.CustomLiveTemplate;
-import com.intellij.codeInsight.template.CustomLiveTemplateBase;
-import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.codeInsight.template.*;
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -34,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class ListTemplatesHandler implements CodeInsightActionHandler {
+public final class ListTemplatesHandler implements CodeInsightActionHandler {
 
   private static final Logger LOG = Logger.getInstance(ListTemplatesHandler.class);
 
@@ -44,7 +42,8 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();
-    List<TemplateImpl> applicableTemplates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, false);
+    List<TemplateImpl> applicableTemplates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
+      TemplateActionContext.expanding(file, editor));
 
     Map<TemplateImpl, String> matchingTemplates = filterTemplatesByPrefix(applicableTemplates, editor, offset, false, true);
     MultiMap<String, CustomLiveTemplateLookupElement> customTemplatesLookupElements = getCustomTemplatesLookupItems(editor, file, offset);
@@ -69,7 +68,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
                                                                   int offset, boolean fullMatch, boolean searchInDescription) {
     if (offset > editor.getDocument().getTextLength()) {
       LOG.error("Cannot filter templates, index out of bounds. Offset: " + offset,
-                AttachmentFactory.createAttachment(editor.getDocument()));
+                CoreAttachmentFactory.createAttachment(editor.getDocument()));
     }
     CharSequence documentText = editor.getDocument().getCharsSequence().subSequence(0, offset);
 
@@ -90,6 +89,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         }
       }
       else {
+        if (!ClientId.isCurrentlyUnderLocalId() && prefixWithoutDots.isEmpty()) {
+          matchingTemplates.put(template, prefixWithoutDots);
+          continue;
+        }
+
         for (int i = templateKey.length(); i > 0; i--) {
           ProgressManager.checkCanceled();
           String prefix = templateKey.substring(0, i);
@@ -142,9 +146,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
                                                                                                 int offset) {
     final MultiMap<String, CustomLiveTemplateLookupElement> result = MultiMap.create();
     CustomTemplateCallback customTemplateCallback = new CustomTemplateCallback(editor, file);
-    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+    TemplateActionContext templateActionContext = TemplateActionContext.expanding(file, editor);
+    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext)) {
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
-        String customTemplatePrefix = ((CustomLiveTemplateBase)customLiveTemplate).computeTemplateKeyWithoutContextChecking(customTemplateCallback);
+        String customTemplatePrefix =
+          ((CustomLiveTemplateBase)customLiveTemplate).computeTemplateKeyWithoutContextChecking(customTemplateCallback);
         if (customTemplatePrefix != null) {
           result.putValues(customTemplatePrefix, ((CustomLiveTemplateBase)customLiveTemplate).getLookupElements(file, editor, offset));
         }
@@ -213,7 +219,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return chars.subSequence(start, offset).toString();
   }
 
-  private static class MyLookupAdapter implements LookupListener {
+  private static final class MyLookupAdapter implements LookupListener {
     private final Map<TemplateImpl, String> myTemplate2Argument;
     private final PsiFile myFile;
 
@@ -261,7 +267,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static class TemplatesArranger extends LookupArranger {
+  private static final class TemplatesArranger extends LookupArranger {
 
     @Override
     public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {

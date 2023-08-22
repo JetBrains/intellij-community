@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -35,13 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class MorphAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance(MorphAction.class);
-
-  private final ComponentItem myLastMorphComponent = null;
 
   public MorphAction() {
     super(true);
@@ -61,7 +57,7 @@ public class MorphAction extends AbstractGuiEditorAction {
       return true;
     };
 
-    PaletteListPopupStep step = new PaletteListPopupStep(editor, myLastMorphComponent, processor,
+    PaletteListPopupStep step = new PaletteListPopupStep(editor, null, processor,
                                                          UIDesignerBundle.message("morph.component.title"));
     step.hideNonAtomic();
     if (selection.size() == 1) {
@@ -72,7 +68,8 @@ public class MorphAction extends AbstractGuiEditorAction {
   }
 
   private static boolean morphComponent(final GuiEditor editor, final RadComponent oldComponent, ComponentItem targetItem) {
-    targetItem = InsertComponentProcessor.replaceAnyComponentItem(editor, targetItem, "Morph to Non-Palette Component");
+    targetItem =
+      InsertComponentProcessor.replaceAnyComponentItem(editor, targetItem, UIDesignerBundle.message("morph.non.palette.component"));
     if (targetItem == null) {
       return false;
     }
@@ -139,8 +136,7 @@ public class MorphAction extends AbstractGuiEditorAction {
       public boolean visit(final IComponent component) {
         RadComponent rc = (RadComponent) component;
         for(IProperty p: component.getModifiedProperties()) {
-          if (p instanceof IntroComponentProperty) {
-            IntroComponentProperty icp = (IntroComponentProperty) p;
+          if (p instanceof IntroComponentProperty icp) {
             final String value = icp.getValue(rc);
             if (value.equals(c.getId())) {
               try {

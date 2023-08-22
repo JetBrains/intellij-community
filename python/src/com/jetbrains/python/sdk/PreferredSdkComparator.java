@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -8,11 +8,8 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import java.util.Comparator;
 
-/**
-* @author yole
-*/
 public class PreferredSdkComparator implements Comparator<Sdk> {
-  public static PreferredSdkComparator INSTANCE = new PreferredSdkComparator();
+  public static final PreferredSdkComparator INSTANCE = new PreferredSdkComparator();
 
   @Override
   public int compare(Sdk o1, Sdk o2) {
@@ -36,8 +33,8 @@ public class PreferredSdkComparator implements Comparator<Sdk> {
       return detectedWeight2 - detectedWeight1;
     }
 
-    int venv1weight = PythonSdkUtil.isVirtualEnv(o1) ? 0 : 1;
-    int venv2weight = PythonSdkUtil.isVirtualEnv(o2) ? 0 : 1;
+    int venv1weight = PythonSdkUtil.isVirtualEnv(o1) || PythonSdkUtil.isCondaVirtualEnv(o1) ? 0 : 1;
+    int venv2weight = PythonSdkUtil.isVirtualEnv(o2) || PythonSdkUtil.isCondaVirtualEnv(o2) ? 0 : 1;
     if (venv1weight != venv2weight) {
       return venv2weight - venv1weight;
     }

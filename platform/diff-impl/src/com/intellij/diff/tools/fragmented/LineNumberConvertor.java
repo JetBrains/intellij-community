@@ -1,29 +1,19 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
+import com.intellij.diff.comparison.iterables.DiffIterable;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil;
+import com.intellij.diff.util.Range;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.IntUnaryOperator;
 
-public class LineNumberConvertor {
+public final class LineNumberConvertor {
   // Master -> Slave
   @NotNull private final TreeMap<Integer, Data> myFragments;
 
@@ -59,7 +49,7 @@ public class LineNumberConvertor {
   //
 
   @NotNull
-  public TIntFunction createConvertor() {
+  public IntUnaryOperator createConvertor() {
     return this::convert;
   }
 
@@ -125,6 +115,16 @@ public class LineNumberConvertor {
     public LineNumberConvertor build() {
       return new LineNumberConvertor(myFragments, myInvertedFragments);
     }
+  }
+
+  @NotNull
+  public static LineNumberConvertor fromIterable(@NotNull DiffIterable iterable) {
+    LineNumberConvertor.Builder builder = new LineNumberConvertor.Builder();
+    for (Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
+      Range range = pair.first;
+      builder.put(range.start1, range.start2, range.end1 - range.start1, range.end2 - range.start2);
+    }
+    return builder.build();
   }
 
   private static class Data {

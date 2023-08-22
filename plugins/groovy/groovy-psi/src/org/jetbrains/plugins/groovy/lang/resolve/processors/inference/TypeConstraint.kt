@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import com.intellij.psi.util.PsiUtil.captureToplevelWildcards
@@ -19,7 +20,7 @@ class TypeConstraint(
 ) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
-    var argType = rightType ?: PsiType.NULL
+    var argType = rightType ?: PsiTypes.nullType()
     if (argType is GrTupleType) {
       argType = TypesUtil.rawWildcard(argType, context) ?: argType
     }

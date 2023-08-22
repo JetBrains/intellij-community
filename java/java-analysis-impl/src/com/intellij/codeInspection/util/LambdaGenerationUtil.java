@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  *
  * @author Tagir Valeev
  */
-public class LambdaGenerationUtil {
+public final class LambdaGenerationUtil {
   /**
    * Tests the element (expression or statement) whether it could be converted to the body
    * of lambda expression mapped to functional interface which SAM does not declare any
@@ -77,17 +77,17 @@ public class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // do not go down the local/anonymous classes
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       // do not go down the nested lambda expressions
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if(!myCanBeLambdaBody) return;
       super.visitReferenceExpression(expression);
       PsiElement element = expression.resolve();
@@ -106,7 +106,7 @@ public class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       PsiStatement exitedStatement = statement.findExitedStatement();
       if(exitedStatement == null || !PsiTreeUtil.isAncestor(myRoot, exitedStatement, false)) {
         myCanBeLambdaBody = false;
@@ -115,7 +115,7 @@ public class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitContinueStatement(PsiContinueStatement statement) {
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       PsiStatement continuedStatement = statement.findContinuedStatement();
       if(continuedStatement == null || !PsiTreeUtil.isAncestor(myRoot, continuedStatement, false)) {
         myCanBeLambdaBody = false;
@@ -124,7 +124,7 @@ public class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       myCanBeLambdaBody = false;
     }
 

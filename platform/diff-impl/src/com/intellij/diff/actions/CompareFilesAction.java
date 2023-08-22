@@ -22,17 +22,23 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Set;
 
 public class CompareFilesAction extends BaseShowDiffAction {
   public static final DataKey<DiffRequest> DIFF_REQUEST = DataKey.create("CompareFilesAction.DiffRequest");
@@ -44,34 +50,34 @@ public class CompareFilesAction extends BaseShowDiffAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
-    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-
     String text = ActionsBundle.message("action.compare.files.text");
-    if (files != null && files.length == 1) {
-      text = ActionsBundle.message("action.compare.with.text");
-    }
-    else if (files != null && files.length == 2) {
-      Type type1 = getType(files[0]);
-      Type type2 = getType(files[1]);
 
-      if (type1 != type2) {
-        text = ActionsBundle.message("action.compare.text");
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files != null) {
+      if (files.length == 1) {
+        text = ActionsBundle.message("action.compare.with.text");
       }
-      else {
-        switch (type1) {
-          case FILE:
-            text = ActionsBundle.message("action.compare.files.text");
-            break;
-          case DIRECTORY:
-            text = ActionsBundle.message("action.CompareDirs.text");
-            break;
-          case ARCHIVE:
-            text = ActionsBundle.message("action.compare.archives.text");
-            break;
+      else if (files.length == 2 || files.length == 3) {
+        Set<Type> types = ContainerUtil.map2Set(files, CompareFilesAction::getType);
+        if (types.size() != 1) {
+          text = ActionsBundle.message("action.compare.text");
+        }
+        else {
+          text = ActionsBundle.message(switch (types.iterator().next()) {
+            case FILE -> "action.compare.files.text";
+            case DIRECTORY -> "action.CompareDirs.text";
+            case ARCHIVE -> "action.compare.archives.text";
+          });
         }
       }
     }
+
     e.getPresentation().setText(text);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -86,15 +92,16 @@ public class CompareFilesAction extends BaseShowDiffAction {
       return false;
     }
 
-    if (files.length == 1) {
-      return hasContent(files[0]);
+    if (files.length == 0 || files.length > 3) return false;
+    boolean hasContent = ContainerUtil.all(Arrays.asList(files), BaseShowDiffAction::hasContent);
+    if (!hasContent) return false;
+
+    if (files.length == 3) {
+      Set<Type> types = ContainerUtil.map2Set(files, CompareFilesAction::getType);
+      if (types.contains(Type.DIRECTORY) || types.contains(Type.ARCHIVE)) return false;
     }
-    else if (files.length == 2) {
-      return hasContent(files[0]) && hasContent(files[1]);
-    }
-    else {
-      return false;
-    }
+
+    return true;
   }
 
   @Nullable
@@ -113,26 +120,35 @@ public class CompareFilesAction extends BaseShowDiffAction {
 
     VirtualFile file1;
     VirtualFile file2;
+    VirtualFile baseFile = null;
 
-    VirtualFile[] data = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (data.length == 1) {
-      file1 = data[0];
+    VirtualFile[] files = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files.length == 1) {
+      file1 = files[0];
       file2 = getOtherFile(project, file1);
       if (file2 == null || !hasContent(file2)) return null;
     }
+    else if (files.length == 2) {
+      file1 = files[0];
+      file2 = files[1];
+    }
     else {
-      file1 = data[0];
-      file2 = data[1];
+      file1 = files[0];
+      baseFile = files[1];
+      file2 = files[2];
     }
 
-    if (!file1.isValid() || !file2.isValid()) return null; // getOtherFile() shows dialog that can invalidate files
+    // getOtherFile() shows dialog that can invalidate files
+    if (!file1.isValid() || !file2.isValid() || (baseFile != null && !baseFile.isValid())) return null;
 
-    Type type1 = getType(file1);
-    Type type2 = getType(file2);
-    if (type1 == Type.DIRECTORY || type2 == Type.DIRECTORY) FeatureUsageTracker.getInstance().triggerFeatureUsed("dir.diff");
-    if (type1 == Type.ARCHIVE || type2 == Type.ARCHIVE) FeatureUsageTracker.getInstance().triggerFeatureUsed("jar.diff");
+    Set<Type> types = ContainerUtil.map2Set(files, CompareFilesAction::getType);
+    if (types.contains(Type.DIRECTORY)) FeatureUsageTracker.getInstance().triggerFeatureUsed("dir.diff");
+    if (types.contains(Type.ARCHIVE)) FeatureUsageTracker.getInstance().triggerFeatureUsed("jar.diff");
+    if ("ipynb".equals(file1.getExtension()) && "ipynb".equals(file2.getExtension())) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("jupyter.compare.notebooks");
+    }
 
-    return createMutableChainFromFiles(project, file1, file2);
+    return createMutableChainFromFiles(project, file1, file2, baseFile);
   }
 
   @Nullable
@@ -150,7 +166,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
       key = LAST_USED_FILE_KEY;
     }
     VirtualFile selectedFile = getDefaultSelection(project, key, file);
-    VirtualFile otherFile = FileChooser.chooseFile(descriptor, project, selectedFile);
+    VirtualFile otherFile = FileChooser.chooseFile(descriptor.withTitle(DiffBundle.message("select.file.to.compare")), project, selectedFile);
     if (otherFile != null) updateDefaultSelection(project, key, otherFile);
     return otherFile;
   }

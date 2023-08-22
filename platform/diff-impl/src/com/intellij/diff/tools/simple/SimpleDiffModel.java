@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.simple;
 
+import com.intellij.diff.util.DiffDividerDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
@@ -8,9 +9,12 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
+import java.util.*;
 
 public class SimpleDiffModel {
   @NotNull private final SimpleDiffViewer myViewer;
@@ -19,10 +23,13 @@ public class SimpleDiffModel {
   @NotNull private final List<SimpleDiffChange> myAllChanges = new ArrayList<>();
   @NotNull private ThreeState myIsContentsEqual = ThreeState.UNSURE;
 
-  @NotNull private final List<SimpleDiffChangeUi> myPresentations = new ArrayList<>();
+  @NotNull private final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
+
+  @NotNull private final SimpleAlignedDiffModel myAlignedDiffModel;
 
   public SimpleDiffModel(@NotNull SimpleDiffViewer viewer) {
     myViewer = viewer;
+    myAlignedDiffModel = new SimpleAlignedDiffModel(viewer);
   }
 
   @NotNull
@@ -32,7 +39,7 @@ public class SimpleDiffModel {
 
   @NotNull
   public List<SimpleDiffChange> getChanges() {
-    return myValidChanges;
+    return Collections.unmodifiableList(myValidChanges);
   }
 
   @NotNull
@@ -40,7 +47,7 @@ public class SimpleDiffModel {
     return ContainerUtil.filter(myAllChanges, it -> !it.isDestroyed());
   }
 
-  public void setChanges(@NotNull List<SimpleDiffChange> changes, boolean isContentsEqual) {
+  public void setChanges(@NotNull List<? extends SimpleDiffChange> changes, boolean isContentsEqual) {
     clear();
 
     for (int i = 0; i < changes.size(); i++) {
@@ -49,6 +56,7 @@ public class SimpleDiffModel {
 
       SimpleDiffChangeUi changeUi = myViewer.createUi(change);
       changeUi.installHighlighter(previousChange);
+      myAlignedDiffModel.alignChange(change);
       myPresentations.add(changeUi);
     }
 
@@ -64,6 +72,7 @@ public class SimpleDiffModel {
     myValidChanges.clear();
     myAllChanges.clear();
     myPresentations.clear();
+    myAlignedDiffModel.clear();
     myIsContentsEqual = ThreeState.UNSURE;
   }
 
@@ -87,7 +96,7 @@ public class SimpleDiffModel {
     LineRange lineRange = DiffUtil.getAffectedLineRange(e);
     int shift = DiffUtil.countLinesShift(e);
 
-    List<SimpleDiffChange> invalidated = new ArrayList<>();
+    Set<SimpleDiffChange> invalidated = new HashSet<>();
     for (SimpleDiffChange change : myValidChanges) {
       if (change.processDocumentChange(lineRange.start, lineRange.end, shift, side)) {
         invalidated.add(change);
@@ -98,5 +107,27 @@ public class SimpleDiffModel {
     }
 
     myValidChanges.removeAll(invalidated);
+  }
+
+  public void paintPolygons(@NotNull Graphics2D g, @NotNull JComponent divider) {
+    MyPaintable paintable = new MyPaintable(myPresentations);
+    DiffDividerDrawUtil.paintPolygons(g, divider.getWidth(), myViewer.getEditor1(), myViewer.getEditor2(), paintable);
+  }
+
+  private static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
+    private final @NotNull List<@Nullable SimpleDiffChangeUi> myPresentations;
+
+    private MyPaintable(@NotNull List<@Nullable SimpleDiffChangeUi> presentations) {
+      myPresentations = presentations;
+    }
+
+    @Override
+    public void process(@NotNull DiffDividerDrawUtil.DividerPaintable.Handler handler) {
+      for (SimpleDiffChangeUi diffChange : myPresentations) {
+        if (diffChange == null) continue;
+        boolean keepWalk = diffChange.drawDivider(handler);
+        if (!keepWalk) return;
+      }
+    }
   }
 }

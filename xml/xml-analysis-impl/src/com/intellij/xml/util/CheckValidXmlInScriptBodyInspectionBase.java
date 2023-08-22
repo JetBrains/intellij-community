@@ -55,7 +55,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
-      @Override public void visitXmlTag(final XmlTag tag) {
+      @Override public void visitXmlTag(final @NotNull XmlTag tag) {
         if (HtmlUtil.isHtmlTag(tag)) return;
         
         if (HtmlUtil.SCRIPT_TAG_NAME.equals(tag.getName()) ||
@@ -94,7 +94,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
                     final int offsetInElement = offset - elementRange.getStartOffset();
                     holder.registerProblem(
                       psiElement,
-                      XmlAnalysisBundle.message("unescaped.xml.character"),
+                      XmlAnalysisBundle.message("xml.inspections.unescaped.xml.character"),
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                       createFix(psiElement, offsetInElement)
                     );

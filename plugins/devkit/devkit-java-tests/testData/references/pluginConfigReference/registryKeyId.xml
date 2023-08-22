@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="myDefaultValue" description="My description" restartRequired="true" key="my.plugin.key"/>
+  </extensions>
+</idea-plugin>

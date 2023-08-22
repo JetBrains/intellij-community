@@ -23,6 +23,11 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @deprecated please use ComboBox with browse extension, see <a href="https://jetbrains.design/intellij/controls/built_in_button/#browse">UI guidelines</a>
+ * for details
+ */
+@Deprecated
 public class ComboboxWithBrowseButton extends ComponentWithBrowseButton<JComboBox> {
   public ComboboxWithBrowseButton() {
     super(new JComboBox(), null);

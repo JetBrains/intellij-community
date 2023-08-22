@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -25,7 +24,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProviderKt;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Max Medvedev
@@ -36,16 +36,13 @@ public class GrPackageInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Package name mismatch";
+    return GroovyBundle.message("inspection.message.package.name.mismatch");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyInspectionBundle.message("gr.package.inspection.check.scripts"), "myCheckScripts");
-    return optionsPanel;
-
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("myCheckScripts", GroovyBundle.message("gr.package.inspection.check.scripts")));
   }
 
   @NotNull
@@ -65,8 +62,10 @@ public class GrPackageInspection extends BaseInspection {
           PsiElement toHighlight = getElementToHighlight((GroovyFile)file);
           if (toHighlight == null) return;
 
-          registerError(toHighlight, "Package name mismatch. Actual: '" + actual + "', expected: '" + expectedPackage+"'",
-                        new LocalQuickFix[]{new ChangePackageQuickFix(expectedPackage), GroovyQuickFixFactory.getInstance().createGrMoveToDirFix(actual)},
+          registerError(toHighlight,
+                        GroovyBundle.message("inspection.message.package.name.mismatch.actual.0.expected.1", actual, expectedPackage),
+                        new LocalQuickFix[]{new ChangePackageQuickFix(expectedPackage),
+                          GroovyQuickFixFactory.getInstance().createGrMoveToDirFix(actual)},
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }

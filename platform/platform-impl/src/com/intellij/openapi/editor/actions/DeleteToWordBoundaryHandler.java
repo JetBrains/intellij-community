@@ -9,22 +9,22 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author eldar
  */
-class DeleteToWordBoundaryHandler extends EditorWriteActionHandler {
+class DeleteToWordBoundaryHandler extends EditorWriteActionHandler.ForEachCaret {
   private final boolean myIsUntilStart;
   private final boolean myNegateCamelMode;
 
   DeleteToWordBoundaryHandler(boolean isUntilStart, boolean negateCamelMode) {
-    super(true);
     myIsUntilStart = isUntilStart;
     myNegateCamelMode = negateCamelMode;
   }
 
   @Override
-  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
     CopyPasteManager.getInstance().stopKillRings();
 

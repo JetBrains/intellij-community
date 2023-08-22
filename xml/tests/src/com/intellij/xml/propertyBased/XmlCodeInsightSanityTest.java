@@ -36,20 +36,10 @@ public class XmlCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   @NotNull
-  private Supplier<MadTestingAction> actionsOnXmlFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
-    String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(XmlFileType.INSTANCE);
-
+  private Supplier<MadTestingAction> actionsOnXmlFiles(Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture,
                                                 PathManager.getHomePath(),
-                                                f -> {
-                                                  String name = f.getName();
-                                                  for (String extension: extensions) {
-                                                    if (name.endsWith("." + extension)) {
-                                                      LOG.debug(f.getPath());
-                                                      return true;
-                                                    }
-                                                  }
-                                                  return false;
-                                                }, fileActions);
+                                                f -> FileTypeManager.getInstance().getFileTypeByFileName(f.getName()) == XmlFileType.INSTANCE,
+                                                fileActions);
   }
 }

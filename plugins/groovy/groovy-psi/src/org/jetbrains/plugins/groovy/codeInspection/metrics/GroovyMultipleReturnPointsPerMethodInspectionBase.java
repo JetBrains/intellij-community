@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -19,7 +21,7 @@ public class GroovyMultipleReturnPointsPerMethodInspectionBase extends GroovyMet
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer returnPointCount = (Integer) infos[0];
-    return "<code>#ref</code> has " + returnPointCount + " return points #loc";
+    return GroovyBundle.message("inspection.message.ref.has.0.return.points", returnPointCount);
 
   }
 
@@ -73,7 +75,7 @@ public class GroovyMultipleReturnPointsPerMethodInspectionBase extends GroovyMet
         return true;
       }
       final PsiType returnType = method.getReturnType();
-      return PsiType.VOID.equals(returnType);
+      return PsiTypes.voidType().equals(returnType);
     }
   }
 }

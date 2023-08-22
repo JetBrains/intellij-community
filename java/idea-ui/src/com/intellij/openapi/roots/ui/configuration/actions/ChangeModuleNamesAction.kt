@@ -3,12 +3,12 @@ package com.intellij.openapi.roots.ui.configuration.actions
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.isQualifiedModuleNamesEnabled
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.ui.Messages
@@ -22,6 +22,10 @@ class ChangeModuleNamesAction : DumbAwareAction(JavaUiBundle.message("action.tex
     e.presentation.isVisible = project != null && isQualifiedModuleNamesEnabled(project) && e.getData(LangDataKeys.MODIFIABLE_MODULE_MODEL) != null
     val modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY)
     e.presentation.isEnabled = modules != null && modules.size > 1
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -46,8 +50,6 @@ class ChangeModuleNamesAction : DumbAwareAction(JavaUiBundle.message("action.tex
         }
         return null
       }
-
-      override fun checkInput(inputString: String) = getErrorText(inputString) == null
 
       override fun canClose(inputString: String) = getErrorText(inputString) == null
     }

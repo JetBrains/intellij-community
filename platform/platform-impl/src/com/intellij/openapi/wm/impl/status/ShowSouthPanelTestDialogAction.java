@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -36,9 +22,12 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     new MyDialogWrapper(e.getProject()).show();
   }
 
-  private static class MyDialogWrapper extends DialogWrapper {
-    private final boolean ORIGINAL_ALLOW_MERGE_BUTTONS;
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
+  private static class MyDialogWrapper extends DialogWrapper {
     private final Wrapper mySouthPanel = new Wrapper();
 
     private final JButton myRefresh = new JButton("Refresh");
@@ -48,7 +37,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     private final JCheckBox myHasOptionAction = new JCheckBox("Option action", false);
     private final JCheckBox myHasLeftAction = new JCheckBox("Left action", true);
     private final JCheckBox myHasDoNotShowCheckbox = new JCheckBox("'Do not show' checkbox", true);
-    private final JCheckBox myAllowMergeButtons = new JCheckBox("Allow merge buttons", false);
     private final JCheckBox myCompact = new JCheckBox("Compact style", false);
     private final JCheckBox myErrorText = new JCheckBox("Error text", false);
     private final JCheckBox myMoveErrorTextToButtons = new JCheckBox("Move error text to the buttons", false);
@@ -56,26 +44,15 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
 
     MyDialogWrapper(Project project) {
       super(project);
-      ORIGINAL_ALLOW_MERGE_BUTTONS = UISettings.getShadowInstance().getAllowMergeButtons();
       init();
     }
 
     @Override
-    protected void dispose() {
-      UISettings.getShadowInstance().setAllowMergeButtons(ORIGINAL_ALLOW_MERGE_BUTTONS);
-      super.dispose();
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
       myRefresh.addActionListener(e -> refreshSouthPanel());
-
-      myAllowMergeButtons.setSelected(ORIGINAL_ALLOW_MERGE_BUTTONS);
-      myAllowMergeButtons.addActionListener(e -> UISettings.getShadowInstance().setAllowMergeButtons(myAllowMergeButtons.isSelected()));
 
       myErrorText.addActionListener(e -> setErrorText(myErrorText.isSelected() ? "Error text" : null, myErrorText));
       myCenterButtons.addActionListener(e -> setButtonsAlignment(myCenterButtons.isSelected() ? SwingUtilities.CENTER : SwingUtilities.RIGHT));
@@ -87,7 +64,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       panel.add(myHasOptionAction);
       panel.add(myHasLeftAction);
       panel.add(myHasDoNotShowCheckbox);
-      panel.add(myAllowMergeButtons);
       panel.add(myCompact);
       panel.add(myErrorText);
       panel.add(myMoveErrorTextToButtons);
@@ -121,15 +97,13 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       return myHasLeftAction.isSelected() ? new Action[]{new MyAction("Left")} : new Action[0];
     }
 
-    @NotNull
     @Override
-    protected DialogStyle getStyle() {
+    protected @NotNull DialogStyle getStyle() {
       return myCompact.isSelected() ? DialogStyle.COMPACT : DialogStyle.NO_STYLE;
     }
 
-    @Nullable
     @Override
-    protected JComponent createDoNotAskCheckbox() {
+    protected @Nullable JComponent createDoNotAskCheckbox() {
       return myHasDoNotShowCheckbox.isSelected() ? new JCheckBox("Do not show again") : null;
     }
 

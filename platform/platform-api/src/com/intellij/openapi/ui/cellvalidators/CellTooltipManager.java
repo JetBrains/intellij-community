@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.cellvalidators;
 
 import com.intellij.openapi.Disposable;
@@ -8,10 +8,11 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExpandedItemRendererComponentWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,6 @@ public final class CellTooltipManager {
   private Dimension             popupSize;
   private boolean               isOverPopup;
   private boolean               isClosing;
-
   @ApiStatus.Experimental
   public CellTooltipManager(@NotNull Disposable parentDisposable) {
     this.parentDisposable = parentDisposable;
@@ -91,6 +91,12 @@ public final class CellTooltipManager {
     if (cellComponentProvider != null) {
       JComponent cellRenderer = cellComponentProvider.getCellRendererComponent(e);
       ValidationInfo info = cellRenderer != null ? (ValidationInfo)cellRenderer.getClientProperty(ValidatingTableCellRendererWrapper.CELL_VALIDATION_PROPERTY) : null;
+      if (info==null && cellRenderer instanceof ExpandedItemRendererComponentWrapper wrapper) {
+        Component unwrapped = ExpandedItemRendererComponentWrapper.unwrap(wrapper);
+        if (unwrapped instanceof JComponent unwrappedCellRenderer) {
+          info = (ValidationInfo)unwrappedCellRenderer.getClientProperty(ValidatingTableCellRendererWrapper.CELL_VALIDATION_PROPERTY);
+        }
+      }
 
       if (info != null) {
         if (!info.equals(validationInfo)) {
@@ -138,7 +144,7 @@ public final class CellTooltipManager {
       cellRect = cellComponentProvider.getCellRect(e);
       JComponent c = cellComponentProvider.getCellRendererComponent(e);
 
-      Insets i = c != null ? c.getInsets() : JBUI.emptyInsets();
+      Insets i = c != null ? c.getInsets() : JBInsets.emptyInsets();
       Point point = new Point(cellRect.x + JBUIScale.scale(40), cellRect.y + i.top - JBUIScale.scale(6) - popupSize.height);
       cellPopup.show(new RelativePoint(cellComponentProvider.getOwner(), point));
     }

@@ -30,7 +30,7 @@ public abstract class AbstractLineWrapPositionStrategyTest {
   private Mockery myMockery;
   private Project myProject;
 
-  public void setUp() {
+  public void prepare() {
     myMockery = new JUnit4Mockery() {{
       setImposteriser(ClassImposteriser.INSTANCE);
     }};

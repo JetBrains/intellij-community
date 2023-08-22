@@ -1,14 +1,24 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
+
+import com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizer;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 public class PyNumericContainerValueEvaluator extends PyFullValueEvaluator {
 
-  protected PyNumericContainerValueEvaluator(String linkText, PyFrameAccessor debugProcess, String expression) {
+  protected PyNumericContainerValueEvaluator(@Nls String linkText, PyFrameAccessor debugProcess, String expression) {
     super(linkText, debugProcess, expression);
   }
 
   @Override
   protected void showCustomPopup(PyFrameAccessor debugProcess, PyDebugValue debugValue) {
-    debugProcess.showNumericContainer(debugValue);
+    PyNumericContainerPopupCustomizer.Companion.getInstance().showFullValuePopup(debugProcess, debugValue);
+  }
+
+  @Override
+  public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
+    doEvaluate(callback, !isCopyValueCallback(callback));
   }
 
   @Override

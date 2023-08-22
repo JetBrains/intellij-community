@@ -1,39 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.UIBundle;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author spleaner
- */
 public class DefaultDebugExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.DEBUG;
-  private final String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
-  private final String myDescription = XDebuggerBundle.message("string.debugger.runner.description");
 
   @NotNull
   @Override
@@ -51,6 +34,11 @@ public class DefaultDebugExecutor extends Executor {
   @NotNull
   public Icon getIcon() {
     return AllIcons.Actions.StartDebugger;
+  }
+
+  @Override
+  public @NotNull Icon getRerunIcon() {
+    return AllIcons.Actions.RestartDebugger;
   }
 
   @Override
@@ -78,17 +66,30 @@ public class DefaultDebugExecutor extends Executor {
   @Override
   @NotNull
   public String getStartActionText() {
-    return myStartActionText;
+    return XDebuggerBundle.message("debugger.runner.start.action.text");
+  }
+
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Override
+  public @NotNull String getStartActionText(@NotNull String configurationName) {
+    if (configurationName.isEmpty()) return getStartActionText();
+    return TextWithMnemonic.parse(XDebuggerBundle.message("debugger.runner.start.action.text.2"))
+      .replaceFirst("%s", shortenNameIfNeeded(configurationName)).toString();
   }
 
   @Override
   public String getDescription() {
-    return myDescription;
+    return XDebuggerBundle.message("string.debugger.runner.description");
   }
 
   @Override
   public String getHelpId() {
     return "debugging.DebugWindow";
+  }
+
+  @Override
+  public boolean isSupportedOnTarget() {
+    return EXECUTOR_ID.equalsIgnoreCase(getId());
   }
 
   public static Executor getDebugExecutorInstance() {

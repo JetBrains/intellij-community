@@ -97,8 +97,7 @@ public class IdeaDriver {
       final String input = inputFile.getPath();
       final String uri = UriOrFile.toUri(input);
       try {
-        if (inFormat instanceof MultiInputFormat) {
-          final MultiInputFormat format = (MultiInputFormat)inFormat;
+        if (inFormat instanceof MultiInputFormat format) {
           final String[] uris = new String[inputFiles.length];
           for (int i = 0; i < inputFiles.length; i++) {
             uris[i] = UriOrFile.toUri(inputFiles[i].getPath());
@@ -137,8 +136,9 @@ public class IdeaDriver {
             final String s = reference(null, sourceUri);
             final File file = new File(outputFile.getParentFile(), s);
             if (file.exists()) {
-              final String msg = "The file '" + file.getAbsolutePath() + "' already exists. Overwrite it?";
-              final int choice = Messages.showYesNoDialog(myProject, msg, RelaxngBundle.message("output.file.exists"), Messages.getWarningIcon());
+              final String msg = RelaxngBundle.message("relaxng.convert-schema.dialog.file-exists.message", file.getAbsolutePath());
+              final int choice = Messages.showYesNoDialog(myProject, msg, RelaxngBundle.message(
+                "relaxng.convert-schema.dialog.file-exists.title"), Messages.getWarningIcon());
               if (choice == Messages.YES) {
                 return super.open(sourceUri, encoding);
               } else if (choice == 1) {
@@ -161,48 +161,39 @@ public class IdeaDriver {
       errorHandler.error(e);
     } catch (MalformedURLException e) {
       Logger.getInstance(getClass().getName()).error(e);
-    } catch (InputFailedException e) {
+    } catch (InputFailedException | OutputFailedException | InvalidParamsException e) {
       // handled by ErrorHandler
-    } catch (InvalidParamsException e) {
-      // handled by ErrorHandler
-    } catch (OutputFailedException e) {
-      // handled by ErrorHandler
-    } catch (SAXException e) {
+    }
+    catch (SAXException e) {
       // cannot happen or is already handled
     }
   }
 
 
-  private OutputFormat getOutputFormat(SchemaType outputType) {
-    switch (outputType) {
-      case DTD:
-        return new DtdOutputFormat();
-      case RNC:
-        return new RncOutputFormat();
-      case RNG:
-        return new RngOutputFormat();
-      case XSD:
-        return new XsdOutputFormat();
-      default:
+  private static OutputFormat getOutputFormat(SchemaType outputType) {
+    return switch (outputType) {
+      case DTD -> new DtdOutputFormat();
+      case RNC -> new RncOutputFormat();
+      case RNG -> new RngOutputFormat();
+      case XSD -> new XsdOutputFormat();
+      default -> {
         assert false : "Unsupported output type: " + outputType;
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
-  private InputFormat getInputFormat(SchemaType type) {
-    switch (type) {
-      case DTD:
-        return new DtdInputFormat();
-      case RNC:
-        return new CompactParseInputFormat();
-      case RNG:
-        return new SAXParseInputFormat();
-      case XML:
-        return new XmlInputFormat();
-      default:
+  private static InputFormat getInputFormat(SchemaType type) {
+    return switch (type) {
+      case DTD -> new DtdInputFormat();
+      case RNC -> new CompactParseInputFormat();
+      case RNG -> new SAXParseInputFormat();
+      case XML -> new XmlInputFormat();
+      default -> {
         assert false : "Unsupported input type: " + type;
-        return null;
-    }
+        yield null;
+      }
+    };
   }
 
   private static class CanceledException extends RuntimeException {

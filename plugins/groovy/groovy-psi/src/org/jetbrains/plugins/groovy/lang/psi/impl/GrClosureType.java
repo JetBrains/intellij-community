@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Lazy;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -27,10 +28,7 @@ import java.util.List;
 import static com.intellij.util.LazyKt.recursionSafeLazy;
 import static kotlin.LazyKt.lazyOf;
 
-/**
- * @author ven
- */
-public class GrClosureType extends GrLiteralClassType {
+public final class GrClosureType extends GrLiteralClassType {
 
   private final List<GrSignature> mySignatures;
   private final Lazy<PsiType[]> myTypeArgs;
@@ -72,7 +70,7 @@ public class GrClosureType extends GrLiteralClassType {
     final PsiClass psiClass = resolve();
     if (psiClass != null && psiClass.getTypeParameters().length == 1) {
       final PsiType type = GrClosureSignatureUtil.getReturnType(mySignatures);
-      if (type == PsiType.NULL || type == null) {
+      if (type == PsiTypes.nullType() || type == null) {
         return new PsiType[]{null};
       }
       else {
@@ -165,6 +163,7 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "PsiType: Closure<*>";
   }

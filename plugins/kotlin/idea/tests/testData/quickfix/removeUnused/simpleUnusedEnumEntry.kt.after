@@ -1,0 +1,9 @@
+// "Safe delete 'WORLD'" "true"
+enum class MyEnum {
+    HELLO,
+}
+
+fun main() {
+    MyEnum.HELLO
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SafeDeleteFix

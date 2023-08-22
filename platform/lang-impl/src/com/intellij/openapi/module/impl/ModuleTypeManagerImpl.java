@@ -30,17 +30,17 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public void registerModuleType(ModuleType type) {
+  public void registerModuleType(@NotNull ModuleType type) {
     registerModuleType(type, false);
   }
 
   @Override
-  public void unregisterModuleType(ModuleType<?> type) {
+  public void unregisterModuleType(@NotNull ModuleType<?> type) {
     myModuleTypes.remove(type);
   }
 
   @Override
-  public void registerModuleType(ModuleType type, boolean classpathProvider) {
+  public void registerModuleType(@NotNull ModuleType type, boolean classpathProvider) {
     for (ModuleType<?> oldType : myModuleTypes.keySet()) {
       if (oldType.getId().equals(type.getId())) {
         PluginException.logPluginError(LOG, "Trying to register a module type that clashes with existing one. Old=" + oldType + ", new = " + type, null, type.getClass());
@@ -52,19 +52,19 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public ModuleType<?>[] getRegisteredTypes() {
+  public @NotNull List<ModuleType<?>> getRegisteredTypes() {
     List<ModuleType<?>> result = new ArrayList<>(myModuleTypes.keySet());
-    for (ModuleTypeEP moduleTypeEP : EP_NAME.getExtensionList()) {
-      ModuleType<?> moduleType = moduleTypeEP.getModuleType();
+    EP_NAME.forEachExtensionSafe(ep -> {
+      ModuleType<?> moduleType = ep.getModuleType();
       if (!myModuleTypes.containsKey(moduleType)) {
         result.add(moduleType);
       }
-    }
-    return result.toArray(new ModuleType[0]);
+    });
+    return result;
   }
 
   @Override
-  public ModuleType<?> findByID(@Nullable String moduleTypeId) {
+  public @NotNull ModuleType<?> findByID(@Nullable String moduleTypeId) {
     if (moduleTypeId == null) {
       return getDefaultModuleType();
     }
@@ -75,7 +75,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
       }
     }
 
-    ModuleTypeEP result = EP_NAME.getByKey(moduleTypeId, it -> it.id);
+    ModuleTypeEP result = EP_NAME.getByKey(moduleTypeId, ModuleTypeManagerImpl.class, it -> it.id);
     if (result != null) {
       return result.getModuleType();
     }
@@ -95,7 +95,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public ModuleType<?> getDefaultModuleType() {
+  public @NotNull ModuleType<?> getDefaultModuleType() {
     return EmptyModuleType.getInstance();
   }
 }

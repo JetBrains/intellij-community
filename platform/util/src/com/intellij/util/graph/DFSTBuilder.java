@@ -1,78 +1,113 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph;
 
-import com.intellij.openapi.util.Couple;
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntStack;
-import com.intellij.util.containers.Stack;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.ArrayUtilRt;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntStack;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.ObjIntConsumer;
+import java.util.function.ToIntFunction;
 
-/**
- * @author dsl, ven
- */
 public final class DFSTBuilder<Node> {
-  private final OutboundSemiGraph<Node> myGraph;
-  private final TObjectIntHashMap<Node> myNodeToNNumber; // node -> node number in topological order [0..size). Independent nodes are in reversed loading order (loading order is the graph.getNodes() order)
+
+  private final @NotNull OutboundSemiGraph<Node> myGraph;
+
+  private final ToIntFunction<Node> myNodeToNNumber;
+  // node -> node number in topological order [0..size). Independent nodes are in reversed loading order (loading order is the graph.getNodes() order)
   private final Node[] myInvN; // node number in topological order [0..size) -> node
-  private Couple<Node> myBackEdge;
+  private Map.Entry<Node, Node> myBackEdge;
+
+  private final Node[] allNodes;
 
   private Comparator<Node> myNComparator;
   private Comparator<Node> myTComparator;
-  private final TIntArrayList mySCCs = new TIntArrayList(); // strongly connected component sizes
-  private final TObjectIntHashMap<Node> myNodeToTNumber = new TObjectIntHashMap<>(); // node -> number in scc topological order. Independent scc are in reversed loading order
+  private final IntList mySCCs = new IntArrayList(); // strongly connected component sizes
+  private final ToIntFunction<Node> myNodeToTNumber;
+    // node -> number in scc topological order. Independent scc are in reversed loading order
 
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
-  private final Node[] myAllNodes;
-
-  /**
-   * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
-   */
-  public DFSTBuilder(@NotNull Graph<Node> graph) {
-    this(graph, null);
-  }
-
-  /**
-   * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
-   */
-  public DFSTBuilder(@NotNull Graph<Node> graph, @Nullable Node entryNode) {
-    this((OutboundSemiGraph<Node>)graph, entryNode);
-  }
 
   /**
    * @see DFSTBuilder#DFSTBuilder(OutboundSemiGraph, Object)
    */
   public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph) {
-    this(graph, null);
+    this(graph, null, false);
   }
 
-  /**
-   * @param entryNode is a first node for Tarjan's algorithm. Different entry nodes produce different node numbers in topological ordering.
-   *                  if all nodes of the graph is reachable from the entry node and the entry node doesn't have incoming edges then
-   *                  passing the entry node could be used for finding "natural" back edges (like a loop back edge)
-   */
-  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph, @Nullable Node entryNode) {
+  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph,
+                     @Nullable Node entryNode) {
+    this(graph, entryNode, false);
+  }
+
+  @ApiStatus.Internal
+  public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph,
+                     @Nullable Node entryNode,
+                     boolean useIdentityStrategy) {
+    this.myGraph = graph;
     //noinspection unchecked
-    myAllNodes = (Node[])graph.getNodes().toArray();
+    this.allNodes = (Node[])graph.getNodes().toArray();
+
     if (entryNode != null) {
-      int index = ArrayUtil.indexOf(myAllNodes, entryNode);
+      int index = useIdentityStrategy ? ArrayUtil.indexOfIdentity(allNodes, entryNode) : ArrayUtil.indexOf(allNodes, entryNode);
       if (index != -1) {
-        ArrayUtil.swap(myAllNodes, 0, index);
+        ArrayUtil.swap(allNodes, 0, index);
       }
     }
-    myGraph = graph;
-    int size = graph.getNodes().size();
-    myNodeToNNumber = new TObjectIntHashMap<>(size * 2, 0.5f);
+    int size = allNodes.length;
     //noinspection unchecked
     myInvN = (Node[])new Object[size];
     //noinspection unchecked
     myInvT = (Node[])new Object[size];
-    new Tarjan().build();
+
+    if (useIdentityStrategy) {
+      Reference2IntOpenHashMap<Node> nMap = new Reference2IntOpenHashMap<>(size * 2, 0.5f);
+      Reference2IntOpenHashMap<Node> tMap = new Reference2IntOpenHashMap<>();
+      myNodeToNNumber = nMap;
+      myNodeToTNumber = tMap;
+      new Tarjan(tMap::put, nMap::put, allNodes, true);
+    }
+    else {
+      //noinspection SSBasedInspection
+      Object2IntOpenHashMap<Node> nMap = new Object2IntOpenHashMap<>(size * 2, 0.5f);
+      //noinspection SSBasedInspection
+      Object2IntOpenHashMap<Node> tMap = new Object2IntOpenHashMap<>();
+      myNodeToNNumber = nMap;
+      myNodeToTNumber = tMap;
+      new Tarjan(tMap::put, nMap::put, allNodes, false);
+    }
+  }
+
+  private static final class TarjanFrame<Node> {
+    private final int nodeI;
+    private final Node[] allNodes;
+    private final int[] out;
+    int nextUnexploredIndex;
+
+    TarjanFrame(int nodeI, Node[] allNodes, int[] out) {
+      this.nodeI = nodeI;
+      this.allNodes = allNodes;
+      this.out = out;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder o = new StringBuilder();
+      o.append(allNodes[nodeI]).append(" -> [");
+      for (int id : out) {
+        o.append(allNodes[id]).append(", ");
+      }
+      return o.append(']').toString();
+    }
   }
 
   /**
@@ -88,95 +123,83 @@ public final class DFSTBuilder<Node> {
     private final int[] lowLink = new int[myInvN.length];
     private final int[] index = new int[myInvN.length];
 
-    private final IntStack nodesOnStack = new IntStack();
+    private final IntStack nodesOnStack = new IntArrayList();
     private final boolean[] isOnStack = new boolean[index.length];
 
-    private final class Frame {
-      Frame(int nodeI) {
-        this.nodeI = nodeI;
-        Iterator<Node> outNodes = myGraph.getOut(myAllNodes[nodeI]);
-        TIntArrayList list = new TIntArrayList();
-
-        while (outNodes.hasNext()) {
-          Node node = outNodes.next();
-          list.add(nodeIndex.get(node));
-        }
-        out = list.toNativeArray();
-      }
-
-      private final int nodeI;
-      private final int[] out;
-      private int nextUnexploredIndex;
-
-      @Override
-      public String toString() {
-        StringBuilder o = new StringBuilder();
-        o.append(myAllNodes[nodeI]).append(" -> [");
-        for (int id : out) {
-          o.append(myAllNodes[id]).append(", ");
-        }
-        return o.append(']').toString();
-      }
-    }
-
-    private final Stack<Frame> frames = new Stack<>(); // recursion stack
-    private final TObjectIntHashMap<Node> nodeIndex = new TObjectIntHashMap<>();
+    private final Deque<TarjanFrame<Node>> frames = new ArrayDeque<>(); // recursion stack
     private int dfsIndex;
     private int sccsSizeCombined;
-    private final TIntArrayList topo = new TIntArrayList(index.length); // nodes in reverse topological order
+    private final IntList topo = new IntArrayList(index.length); // nodes in reverse topological order
+    private final ToIntFunction<? super Node> myNodeIndex;
 
-    private void build() {
+    private Tarjan(ObjIntConsumer<Node> putTNumber, ObjIntConsumer<Node> putNNumber, Node[] allNodes, boolean useIdentityStrategy) {
+      myNodeIndex = useIdentityStrategy ?
+                    createReference2IntMap(allNodes) :
+                    createObject2IntMap(allNodes);
       Arrays.fill(index, -1);
-      for (int i = 0; i < myAllNodes.length; i++) {
-        Node node = myAllNodes[i];
-        nodeIndex.put(node, i);
-      }
+      build(putTNumber, putNNumber, allNodes);
+    }
+
+    private void build(ObjIntConsumer<? super Node> putTNumber,
+                       ObjIntConsumer<? super Node> putNNumber,
+                       Node[] allNodes) {
       for (int i = 0; i < index.length; i++) {
-        if (index[i] == -1) {
-          frames.push(new Frame(i));
-          List<List<Node>> sccs = new ArrayList<>();
+        if (index[i] != -1) {
+          continue;
+        }
 
-          strongConnect(sccs);
+        frames.addLast(new TarjanFrame<>(i, allNodes, buildOuts(allNodes[i])));
+        List<List<Node>> sccs = new ArrayList<>();
 
-          for (List<Node> scc : sccs) {
-            int sccSize = scc.size();
+        strongConnect(sccs, allNodes);
 
-            mySCCs.add(sccSize);
-            int sccBase = index.length - sccsSizeCombined - sccSize;
+        for (List<Node> scc : sccs) {
+          int sccSize = scc.size();
 
-            // root node should be first in scc for some reason
-            Node rootNode = myAllNodes[i];
-            int rIndex = scc.indexOf(rootNode);
-            if (rIndex != -1) {
-              ContainerUtil.swapElements(scc, rIndex, 0);
-            }
+          mySCCs.add(sccSize);
+          int sccBase = index.length - sccsSizeCombined - sccSize;
 
-            for (int j = 0; j < scc.size(); j++) {
-              Node sccNode = scc.get(j);
-              int tIndex = sccBase + j;
-              myInvT[tIndex] = sccNode;
-              myNodeToTNumber.put(sccNode, tIndex);
-            }
-            sccsSizeCombined += sccSize;
+          // root node should be first in scc for some reason
+          Node rootNode = allNodes[i];
+          int rIndex = scc.indexOf(rootNode);
+          if (rIndex != -1) {
+            Node e1 = scc.get(rIndex);
+            Node e2 = scc.get(0);
+            scc.set(rIndex, e2);
+            scc.set(0, e1);
           }
+
+          for (int j = 0; j < scc.size(); j++) {
+            Node sccNode = scc.get(j);
+            int tIndex = sccBase + j;
+            myInvT[tIndex] = sccNode;
+            putTNumber.accept(sccNode, tIndex);
+          }
+          sccsSizeCombined += sccSize;
         }
       }
 
       for (int i = 0; i < topo.size(); i++) {
-        int nodeI = topo.get(i);
-        Node node = myAllNodes[nodeI];
+        int nodeI = topo.getInt(i);
+        Node node = allNodes[nodeI];
 
-        myNodeToNNumber.put(node, index.length - 1 - i);
+        putNNumber.accept(node, index.length - 1 - i);
         myInvN[index.length - 1 - i] = node;
       }
-      mySCCs.reverse(); // have to place SCCs in topological order too
+
+      // have to place SCCs in topological order too
+      for (int i = 0, j = mySCCs.size() - 1; i < j; i++, j--) {
+        int tmp = mySCCs.getInt(i);
+        mySCCs.set(i, mySCCs.getInt(j));
+        mySCCs.set(j, tmp);
+      }
     }
 
-    private void strongConnect(@NotNull List<? super List<Node>> sccs) {
+    private void strongConnect(@NotNull List<? super List<Node>> sccs, Node[] allNodes) {
       int successor = -1;
       nextNode:
       while (!frames.isEmpty()) {
-        Frame pair = frames.peek();
+        TarjanFrame<Node> pair = frames.peekLast();
         int i = pair.nodeI;
 
         // we have returned to the node
@@ -197,18 +220,18 @@ public final class DFSTBuilder<Node> {
         while (pair.nextUnexploredIndex < pair.out.length) {
           int nextI = pair.out[pair.nextUnexploredIndex++];
           if (index[nextI] == -1) {
-            frames.push(new Frame(nextI));
+            frames.addLast(new TarjanFrame<>(nextI, allNodes, buildOuts(allNodes[nextI])));
             continue nextNode;
           }
           if (isOnStack[nextI]) {
             lowLink[i] = Math.min(lowLink[i], index[nextI]);
 
             if (myBackEdge == null) {
-              myBackEdge = Couple.of(myAllNodes[nextI], myAllNodes[i]);
+              myBackEdge = new AbstractMap.SimpleImmutableEntry<>(allNodes[nextI], allNodes[i]);
             }
           }
         }
-        frames.pop();
+        frames.removeLast();
         topo.add(i);
         // we are really back, pop a scc
         if (lowLink[i] == index[i]) {
@@ -216,8 +239,8 @@ public final class DFSTBuilder<Node> {
           List<Node> scc = new ArrayList<>();
           int pushedI;
           do {
-            pushedI = nodesOnStack.pop();
-            Node pushed = myAllNodes[pushedI];
+            pushedI = nodesOnStack.popInt();
+            Node pushed = allNodes[pushedI];
             isOnStack[pushedI] = false;
             scc.add(pushed);
           }
@@ -226,10 +249,36 @@ public final class DFSTBuilder<Node> {
         }
       }
     }
+
+    private int[] buildOuts(@NotNull Node node) {
+      IntList list = new IntArrayList();
+      Iterator<Node> out = myGraph.getOut(node);
+      while (out.hasNext()) {
+        list.add(myNodeIndex.applyAsInt(out.next()));
+      }
+      return list.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : list.toIntArray();
+    }
+
+    @ReviseWhenPortedToJDK(value = "8", description = "define static")
+    private @NotNull Object2IntMap<Node> createObject2IntMap(Node[] nodes) {
+      Object2IntMap<Node> result = new Object2IntOpenHashMap<>(nodes.length);
+      for (int i = 0; i < nodes.length; i++) {
+        result.put(nodes[i], i);
+      }
+      return result;
+    }
+
+    @ReviseWhenPortedToJDK(value = "8", description = "define static")
+    private @NotNull Reference2IntOpenHashMap<Node> createReference2IntMap(Node[] nodes) {
+      Reference2IntOpenHashMap<Node> nodeIndex = new Reference2IntOpenHashMap<>(nodes.length);
+      for (int i = 0; i < nodes.length; i++) {
+        nodeIndex.put(nodes[i], i);
+      }
+      return nodeIndex;
+    }
   }
 
-  @NotNull
-  public Comparator<Node> comparator() {
+  public @NotNull Comparator<Node> comparator() {
     return comparator(isAcyclic());
   }
 
@@ -237,24 +286,22 @@ public final class DFSTBuilder<Node> {
    * @param useNNumber if true then a node number in topological ordering will be used for comparison
    *           otherwise a node number in scc topological order will be used
    */
-  @NotNull
-  public Comparator<Node> comparator(boolean useNNumber) {
+  public @NotNull Comparator<Node> comparator(boolean useNNumber) {
     if (useNNumber) {
       if (myNComparator == null) {
-        myNComparator = Comparator.comparingInt(myNodeToNNumber::get);
+        myNComparator = Comparator.comparingInt(myNodeToNNumber);
       }
       return myNComparator;
     }
     else {
       if (myTComparator == null) {
-        myTComparator = Comparator.comparingInt(myNodeToTNumber::get);
+        myTComparator = Comparator.comparingInt(myNodeToTNumber);
       }
       return myTComparator;
     }
   }
 
-  @Nullable
-  public Couple<Node> getCircularDependency() {
+  public @Nullable Map.Entry<Node, Node> getCircularDependency() {
     return myBackEdge;
   }
 
@@ -262,13 +309,11 @@ public final class DFSTBuilder<Node> {
     return getCircularDependency() == null;
   }
 
-  @NotNull
-  public Node getNodeByNNumber(final int n) {
+  public @NotNull Node getNodeByNNumber(final int n) {
     return myInvN[n];
   }
 
-  @NotNull
-  public Node getNodeByTNumber(final int n) {
+  public @NotNull Node getNodeByTNumber(final int n) {
     return myInvT[n];
   }
 
@@ -276,28 +321,25 @@ public final class DFSTBuilder<Node> {
    * @return the list containing the number of nodes in strongly connected components.
    * Respective nodes could be obtained via {@link #getNodeByTNumber(int)}.
    */
-  @NotNull
-  public TIntArrayList getSCCs() {
+  public @NotNull IntList getSCCs() {
     return mySCCs;
   }
 
-  @NotNull
-  public Collection<Collection<Node>> getComponents() {
-    final TIntArrayList componentSizes = getSCCs();
+  public @NotNull Collection<Collection<Node>> getComponents() {
+    IntList componentSizes = getSCCs();
     if (componentSizes.isEmpty()) {
       return Collections.emptyList();
     }
 
     return new MyCollection<Collection<Node>>(componentSizes.size()) {
-      @NotNull
       @Override
-      public Iterator<Collection<Node>> iterator() {
+      public @NotNull Iterator<Collection<Node>> iterator() {
         return new MyIterator<Collection<Node>>(componentSizes.size()) {
           private int offset;
 
           @Override
           protected Collection<Node> get(int i) {
-            final int cSize = componentSizes.get(i);
+            final int cSize = componentSizes.getInt(i);
             final int cOffset = offset;
             if (cSize == 0) {
               return Collections.emptyList();
@@ -305,9 +347,8 @@ public final class DFSTBuilder<Node> {
 
             offset += cSize;
             return new MyCollection<Node>(cSize) {
-              @NotNull
               @Override
-              public Iterator<Node> iterator() {
+              public @NotNull Iterator<Node> iterator() {
                 return new MyIterator<Node>(cSize) {
                   @Override
                   public Node get(int i) {
@@ -364,10 +405,9 @@ public final class DFSTBuilder<Node> {
     }
   }
 
-  @NotNull
-  public List<Node> getSortedNodes() {
-    List<Node> result = new ArrayList<>(myGraph.getNodes());
-    result.sort(comparator());
-    return result;
+  public @NotNull List<Node> getSortedNodes() {
+    Node[] result = allNodes.clone();
+    Arrays.sort(result, comparator());
+    return Arrays.asList(result);
   }
 }

@@ -15,19 +15,16 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleColoredComponent;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author peter
- */
 public interface MemberChooserObject {
   void renderTreeNode(SimpleColoredComponent component, JTree tree);
 
-  @NotNull
-  String getText();
+  @NlsContexts.Label @NotNull String getText();
 
   boolean equals(Object o);
 

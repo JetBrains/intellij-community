@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.openapi.util.Comparing;
@@ -15,102 +15,97 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author peter
+ * Factory for {@link String}, {@link Character} and {@link Object}-based patterns. Provides methods for composing patterns
+ * with e.g. logical operations.
+ * <p>
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/element-patterns.html">IntelliJ Platform Docs</a>
+ * for a high-level overview.
  */
 @SuppressWarnings("unchecked")
 public class StandardPatterns {
 
   private static final FalsePattern FALSE_PATTERN = new FalsePattern();
 
-  @NotNull
-  public static StringPattern string() {
+  public static @NotNull StringPattern string() {
     return StringPattern.STRING_PATTERN;
   }
 
-  @NotNull
-  public static CharPattern character() {
+  public static @NotNull CharPattern character() {
     return new CharPattern();
   }
 
-  @NotNull
-  public static <T> ObjectPattern.Capture<T> instanceOf(@NotNull Class<T> aClass) {
+  public static @NotNull <T> ObjectPattern.Capture<T> instanceOf(@NotNull Class<T> aClass) {
     return new ObjectPattern.Capture<>(aClass);
   }
 
-  @NotNull
   @SafeVarargs
-  public static <T> ElementPattern<T> instanceOf(Class<T> @NotNull ... classes) {
+  public static @NotNull <T> ElementPattern<T> instanceOf(Class<T> @NotNull ... classes) {
     ElementPattern[] patterns = ContainerUtil.map(classes, StandardPatterns::instanceOf, new ElementPattern[0]);
     return or(patterns);
   }
 
-  @NotNull
-  public static <T> ElementPattern save(final Key<T> key) {
+  public static @NotNull <T> ElementPattern save(final Key<T> key) {
     return new ObjectPattern.Capture<>(new InitialPatternCondition(Object.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         context.put(key, (T)o);
         return true;
       }
 
       @Override
-      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
+      public void append(final @NotNull @NonNls StringBuilder builder, final String indent) {
         builder.append("save(").append(key).append(")");
       }
     });
   }
 
-  @NotNull
-  public static ObjectPattern.Capture<Object> object() {
+  public static @NotNull ObjectPattern.Capture<Object> object() {
     return instanceOf(Object.class);
   }
 
-  @NotNull
-  public static <T> ObjectPattern.Capture<T> object(@NotNull T value) {
+  public static @NotNull <T> ObjectPattern.Capture<T> object(@NotNull T value) {
     return instanceOf((Class<T>)value.getClass()).equalTo(value);
   }
 
-  @NotNull
-  public static <T> CollectionPattern<T> collection(Class<T> aClass) {
+  public static @NotNull <T> CollectionPattern<T> collection(Class<T> aClass) {
     return new CollectionPattern<>();
   }
 
-  @NotNull
-  public static ElementPattern get(@NotNull @NonNls final String key) {
+  public static @NotNull ElementPattern get(final @NotNull @NonNls String key) {
     return new ObjectPattern.Capture(new InitialPatternCondition(Object.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         return Comparing.equal(o, context.get(key));
       }
 
       @Override
-      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
+      public void append(final @NotNull @NonNls StringBuilder builder, final String indent) {
         builder.append("get(").append(key).append(")");
       }
     });
   }
 
-  @NotNull
-  public static <T> CollectionPattern<T> collection() {
+  public static @NotNull <T> CollectionPattern<T> collection() {
     return new CollectionPattern<>();
   }
 
-  @NotNull
   @SafeVarargs
-  public static <E> ElementPattern<E> or(final ElementPattern<? extends E> @NotNull ... patterns) {
+  public static @NotNull <E> ElementPattern<E> or(final ElementPattern<? extends E> @NotNull ... patterns) {
     return new ObjectPattern.Capture<>(new InitialPatternConditionPlus(Object.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        for (final ElementPattern pattern : patterns) {
-          if (pattern.accepts(o, context)) return true;
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
+        for (ElementPattern<?> pattern : patterns) {
+          if (pattern.accepts(o, context)) {
+            return true;
+          }
         }
         return false;
       }
 
       @Override
-      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
+      public void append(final @NotNull @NonNls StringBuilder builder, final String indent) {
         boolean first = true;
-        for (final ElementPattern pattern : patterns) {
+        for (ElementPattern<?> pattern : patterns) {
           if (!first) {
             builder.append("\n").append(indent);
           }
@@ -126,9 +121,8 @@ public class StandardPatterns {
     });
   }
 
-  @NotNull
   @SafeVarargs
-  public static <E> ElementPattern<E> and(final ElementPattern<? extends E>... patterns) {
+  public static @NotNull <E> ElementPattern<E> and(final ElementPattern<? extends E>... patterns) {
     final List<InitialPatternCondition> initial = new SmartList<>();
     for (ElementPattern<?> pattern : patterns) {
       initial.add(pattern.getCondition().getInitialCondition());
@@ -142,11 +136,10 @@ public class StandardPatterns {
     return result;
   }
 
-  @NotNull
-  private static <E> ObjectPattern.Capture<E> composeInitialConditions(final List<? extends InitialPatternCondition> initial) {
+  private static @NotNull <E> ObjectPattern.Capture<E> composeInitialConditions(final List<? extends InitialPatternCondition> initial) {
     return new ObjectPattern.Capture<>(new InitialPatternCondition(Object.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         for (final InitialPatternCondition pattern : initial) {
           if (!pattern.accepts(o, context)) return false;
         }
@@ -154,7 +147,7 @@ public class StandardPatterns {
       }
 
       @Override
-      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
+      public void append(final @NotNull @NonNls StringBuilder builder, final String indent) {
         boolean first = true;
         for (final InitialPatternCondition pattern : initial) {
           if (!first) {
@@ -167,16 +160,15 @@ public class StandardPatterns {
     });
   }
 
-  @NotNull
-  public static <E> ObjectPattern.Capture<E> not(final ElementPattern<E> pattern) {
+  public static @NotNull <E> ObjectPattern.Capture<E> not(final ElementPattern<E> pattern) {
     return new ObjectPattern.Capture<>(new InitialPatternConditionPlus(Object.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         return !pattern.accepts(o, context);
       }
 
       @Override
-      public void append(@NotNull @NonNls final StringBuilder builder, final String indent) {
+      public void append(final @NotNull @NonNls StringBuilder builder, final String indent) {
         pattern.getCondition().append(builder.append("not("), indent + "  ");
         builder.append(")");
       }
@@ -188,11 +180,10 @@ public class StandardPatterns {
     });
   }
 
-  @NotNull
-  public static <T> ObjectPattern.Capture<T> optional(final ElementPattern<T> pattern) {
+  public static @NotNull <T> ObjectPattern.Capture<T> optional(final ElementPattern<T> pattern) {
     return new ObjectPattern.Capture<>(new InitialPatternCondition(Object.class) {
       @Override
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(final @Nullable Object o, final ProcessingContext context) {
         pattern.accepts(o, context);
         return true;
       }
@@ -200,8 +191,7 @@ public class StandardPatterns {
   }
 
 
-  @NotNull
-  public static <E> ElementPattern<E> alwaysFalse() {
+  public static @NotNull <E> ElementPattern<E> alwaysFalse() {
     return FALSE_PATTERN;
   }
 

@@ -82,18 +82,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
         testsRoot.setPresentation(getEmptySuite());
         testsRoot.setTestFailed(getEmptySuite(), null, false);
       }
-      PySMTestProxyUtilsKt.calculateAndReturnMagnitude(testsRoot);
       super.onBeforeTestingFinished(testsRoot);
-    }
-
-    @Override
-    public void onTestFailed(@NotNull final SMTestProxy test) {
-      super.onTestFailed(test);
-      SMTestProxy currentTest = test.getParent();
-      while (currentTest != null && currentTest.getParent() != null) {
-        currentTest.setTestFailed(" ", null, false);
-        currentTest = currentTest.getParent();
-      }
     }
 
     private static String getEmptySuite() {

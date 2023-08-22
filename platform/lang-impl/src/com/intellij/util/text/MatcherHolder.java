@@ -24,12 +24,6 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public interface MatcherHolder {
-  /**
-   * @deprecated use {@link #associateMatcher(JComponent, Matcher)}
-   */
-  @Deprecated
-  void setPatternMatcher(Matcher matcher);
-
   static void associateMatcher(@NotNull JComponent component, @Nullable Matcher matcher) {
     component.putClientProperty(MatcherHolder.class, matcher);
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
@@ -26,9 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.Charset;
 
-/**
- * @author cdr
-*/
 public class ChooseEncodingDialog extends DialogWrapper {
   private final Charset[] myCharsets;
   private final Charset myDefaultCharset;
@@ -44,8 +27,7 @@ public class ChooseEncodingDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     AbstractListModel model = new AbstractListModel() {
       @Override
       public int getSize() {
@@ -66,6 +48,7 @@ public class ChooseEncodingDialog extends DialogWrapper {
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
         Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         Charset charset = (Charset)value;
+        //noinspection HardCodedStringLiteral
         setText(charset.displayName());
         return component;
       }
@@ -86,8 +69,7 @@ public class ChooseEncodingDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "#com.intellij.openapi.vfs.encoding.ChooseEncodingDialog";
   }
   

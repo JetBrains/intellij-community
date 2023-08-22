@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.Topic;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -22,37 +21,36 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.debugger.pydev.ProcessDebugger;
+import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.psi.PyUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.IntStream;
+import java.util.Map;
+import java.util.Set;
 
 import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.addGroupValues;
 
-
 public class PyStackFrame extends XStackFrame {
-
   private static final Logger LOG = Logger.getInstance(PyStackFrame.class);
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
-  public static final String DOUBLE_UNDERSCORE = "__";
-  @NotNull @NonNls public static final Set<String> HIDE_TYPES = ContainerUtil.set("function", "type", "classobj", "module");
-  public static final int DUNDER_VALUES_IND = 0;
-  public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
-  public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;
-  public static final int NUMBER_OF_GROUPS = IPYTHON_VALUES_IND + 1;
-  @NotNull @NonNls public static final Set<String> COMPREHENSION_NAMES = ImmutableSet.of("<genexpr>", "<listcomp>", "<dictcomp>",
+  @NotNull @NonNls public static final Set<String> COMPREHENSION_NAMES = Set.of("<genexpr>", "<listcomp>", "<dictcomp>",
                                                                                          "<setcomp>");
   private final Project myProject;
   private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;
+  private volatile boolean isExternal = true;
 
   private @Nullable Map<String, PyDebugValueDescriptor> myChildrenDescriptors;
+
+  @Topic.AppLevel
+  public static final Topic<PyStackFrameRefreshedListener> TOPIC = new Topic<>(PyStackFrameRefreshedListener.class);
 
   public PyStackFrame(@NotNull Project project,
                       @NotNull final PyFrameAccessor debugProcess,
@@ -61,6 +59,22 @@ public class PyStackFrame extends XStackFrame {
     myDebugProcess = debugProcess;
     myFrameInfo = frameInfo;
     myPosition = position;
+    computeIsExternal();
+  }
+
+  private void computeIsExternal() {
+    if (myPosition != null) {
+      VirtualFile file = myPosition.getFile();
+      PyUtil.runWithProgress(myProject, PyBundle.message("debugger.progress.title.stackframe.processing"), false, true, indicator -> {
+        isExternal = ReadAction.compute(() -> {
+                                          final Document document = FileDocumentManager.getInstance().getDocument(file);
+                                          if (document != null && myProject != null) {
+                                            return !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
+                                          }
+                                          return true;
+                                        });
+      });
+    }
   }
 
   @Override
@@ -83,22 +97,9 @@ public class PyStackFrame extends XStackFrame {
     component.setIcon(AllIcons.Debugger.Frame);
 
     if (myPosition == null) {
-      component.append("<frame not available>", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      component.append(PyBundle.message("debugger.stack.frame.frame.not.available"), SimpleTextAttributes.GRAY_ATTRIBUTES);
       return;
     }
-
-    final VirtualFile file = myPosition.getFile();
-    boolean isExternal =
-      ReadAction.compute(() -> {
-
-        final Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-          return !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
-        }
-        else {
-          return true;
-        }
-      });
 
     component.append(myFrameInfo.getName(), gray(isExternal));
     component.append(", ", gray(isExternal));
@@ -117,18 +118,18 @@ public class PyStackFrame extends XStackFrame {
     myDebugProcess.setCurrentRootNode(node);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        boolean cached = myDebugProcess.isCurrentFrameCached();
-        XValueChildrenList values = myDebugProcess.loadFrame();
+        boolean cached = myDebugProcess.isFrameCached(this);
+        XValueChildrenList values = myDebugProcess.loadFrame(this);
         if (!node.isObsolete()) {
           addChildren(node, values);
         }
         if (values != null && !cached) {
-          PyDebugValue.getAsyncValues(myDebugProcess, values);
+          PyDebugValue.getAsyncValues(this, myDebugProcess, values);
         }
       }
       catch (PyDebuggerException e) {
         if (!node.isObsolete()) {
-          node.setErrorMessage("Unable to display frame variables");
+          node.setErrorMessage(PyBundle.message("debugger.stack.frame.unable.to.display.frame.variables"));
         }
         LOG.warn(e);
       }
@@ -142,39 +143,25 @@ public class PyStackFrame extends XStackFrame {
     }
     final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
     final XValueChildrenList filteredChildren = new XValueChildrenList();
-    final HashMap<String, XValue> returnedValues = new HashMap<>();
-    final ArrayList<Map<String, XValue>> specialValuesGroups = new ArrayList<>();
-    IntStream.range(0, NUMBER_OF_GROUPS).mapToObj(i -> new HashMap<String, XValue>()).forEach(specialValuesGroups::add);
+    boolean isReturnEmpty = true;
     boolean isSpecialEmpty = true;
 
     for (int i = 0; i < children.size(); i++) {
       XValue value = children.getValue(i);
       String name = children.getName(i);
-      if (value instanceof PyDebugValue) {
-        PyDebugValue pyValue = (PyDebugValue)value;
+      if (value instanceof PyDebugValue pyValue) {
 
         restoreValueDescriptor(pyValue);
 
-        if (pyValue.isReturnedVal() && debuggerSettings.isWatchReturnValues()) {
-          returnedValues.put(name, value);
+        if (name.equals(ProtocolParser.DUMMY_RET_VAL) && debuggerSettings.isWatchReturnValues()) {
+          isReturnEmpty = false;
         }
         else if (!debuggerSettings.isSimplifiedView()) {
+          if (ProtocolParser.HIDDEN_TYPES.contains(name)) continue;
           filteredChildren.add(name, value);
         }
         else {
-          int groupIndex = -1;
-          if (name.startsWith(DOUBLE_UNDERSCORE) && (name.endsWith(DOUBLE_UNDERSCORE)) && name.length() > 4 &&
-              !name.equals("__exception__")) {
-            groupIndex = DUNDER_VALUES_IND;
-          }
-          else if (pyValue.isIPythonHidden()) {
-            groupIndex = IPYTHON_VALUES_IND;
-          }
-          else if (HIDE_TYPES.contains(pyValue.getType())) {
-            groupIndex = SPECIAL_TYPES_IND;
-          }
-          if (groupIndex > -1) {
-            specialValuesGroups.get(groupIndex).put(name, value);
+          if (name.equals(ProtocolParser.DUMMY_SPECIAL_VAR) || name.equals(ProtocolParser.DUMMY_IPYTHON_HIDDEN)) {
             isSpecialEmpty = false;
           }
           else {
@@ -183,24 +170,16 @@ public class PyStackFrame extends XStackFrame {
         }
       }
     }
-    node.addChildren(filteredChildren, returnedValues.isEmpty() && isSpecialEmpty);
-    if (!returnedValues.isEmpty()) {
-      addGroupValues(PyBundle.message("debugger.stack.frame.return.values"), AllIcons.Debugger.WatchLastReturnValue, node, returnedValues, "()");
+    node.addChildren(filteredChildren, isReturnEmpty && isSpecialEmpty);
+    if (!isReturnEmpty) {
+      addGroupValues(PyBundle.message("debugger.stack.frame.return.values"),
+                     AllIcons.Debugger.WatchLastReturnValue, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.RETURN, "()");
     }
     if (!isSpecialEmpty) {
-      final Map<String, XValue> specialElements = mergeSpecialGroupElementsOrdered(specialValuesGroups);
-      addGroupValues(PyBundle.message("debugger.stack.frame.special.variables"), PythonIcons.Python.Debug.SpecialVar, node, specialElements, null);
+      addGroupValues(PyBundle.message("debugger.stack.frame.special.variables"),
+                     PythonIcons.Python.Debug.SpecialVar, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.SPECIAL, null);
     }
-  }
-
-  private static Map<String, XValue> mergeSpecialGroupElementsOrdered(List<Map<String, XValue>> specialValuesGroups) {
-    final LinkedHashMap<String, XValue> result = new LinkedHashMap<>();
-    for (Map<String, XValue> group : specialValuesGroups) {
-      for (Map.Entry<String, XValue> entry : group.entrySet()) {
-        result.put(entry.getKey(), entry.getValue());
-      }
-    }
-    return result;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).stackFrameRefreshed();
   }
 
   public String getThreadId() {
@@ -248,5 +227,9 @@ public class PyStackFrame extends XStackFrame {
       }
       value.setDescriptor(descriptor);
     }
+  }
+
+  public interface PyStackFrameRefreshedListener {
+    void stackFrameRefreshed();
   }
 }

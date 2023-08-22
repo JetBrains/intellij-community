@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -20,7 +21,6 @@ import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,10 +28,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import static git4idea.GitUtil.isUnderGit;
 import static java.util.Arrays.asList;
 
-public class GitUpdateEnvironment implements UpdateEnvironment {
+@Service(Service.Level.PROJECT)
+public final class GitUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
 
   public GitUpdateEnvironment(@NotNull Project project) {
@@ -56,11 +56,6 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   public boolean validateOptions(Collection<FilePath> filePaths) {
-    for (FilePath p : filePaths) {
-      if (!isUnderGit(p)) {
-        return false;
-      }
-    }
     return true;
   }
 
@@ -71,7 +66,6 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   }
 
   @Override
-  @CalledInAwt
   public boolean hasCustomNotification() {
     // If the log won't be refreshed after update, we won't be able to build a visible pack for the updated range.
     // Unless we force refresh it by hands, but if we do it, calculating update project info would take enormous amount of time & memory.

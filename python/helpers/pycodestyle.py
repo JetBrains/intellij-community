@@ -25,7 +25,6 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 r"""
 Check Python source code formatting, according to PEP 8.
 
@@ -49,6 +48,7 @@ W warnings
 """
 from __future__ import with_statement
 
+import bisect
 import inspect
 import keyword
 import os
@@ -57,7 +57,6 @@ import sys
 import time
 import tokenize
 import warnings
-import bisect
 
 try:
     from functools import lru_cache
@@ -78,7 +77,14 @@ try:
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.5.0'  # patched #836, PY-37054
+# this is a performance hack.  see https://bugs.python.org/issue43014
+if (
+        sys.version_info < (3, 10) and
+        callable(getattr(tokenize, '_compile', None))
+):  # pragma: no cover (<py310)
+    tokenize._compile = lru_cache()(tokenize._compile)  # type: ignore
+
+__version__ = '2.8.0'  # patched PY-37054
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
@@ -104,6 +110,7 @@ BLANK_LINES_CONFIG = {
     'method': 1,
 }
 MAX_DOC_LENGTH = 72
+INDENT_SIZE = 4
 REPORT_FORMAT = {
     'default': '%(path)s:%(row)d:%(col)d: %(code)s %(text)s',
     'pylint': '%(path)s:%(row)d: [%(code)s] %(text)s',
@@ -113,7 +120,7 @@ PyCF_ONLY_AST = 1024
 SINGLETONS = frozenset(['False', 'None', 'True'])
 KEYWORDS = frozenset(keyword.kwlist + ['print', 'async']) - SINGLETONS
 UNARY_OPERATORS = frozenset(['>>', '**', '*', '+', '-'])
-ARITHMETIC_OP = frozenset(['**', '*', '/', '//', '+', '-'])
+ARITHMETIC_OP = frozenset(['**', '*', '/', '//', '+', '-', '@'])
 WS_OPTIONAL_OPERATORS = ARITHMETIC_OP.union(['^', '&', '|', '<<', '>>', '%'])
 # Warn for -> function annotation operator in py3.5+ (issue 803)
 FUNCTION_RETURN_ANNOTATION_OP = ['->'] if sys.version_info >= (3, 5) else []
@@ -136,11 +143,12 @@ RAISE_COMMA_REGEX = re.compile(r'raise\s+\w+\s*,')
 RERAISE_COMMA_REGEX = re.compile(r'raise\s+\w+\s*,.*,\s*\w+\s*$')
 ERRORCODE_REGEX = re.compile(r'\b[A-Z]\d{3}\b')
 DOCSTRING_REGEX = re.compile(r'u?r?["\']')
-EXTRANEOUS_WHITESPACE_REGEX = re.compile(r'[\[({] | [\]}),;]| :(?!=)')
+EXTRANEOUS_WHITESPACE_REGEX = re.compile(r'[\[({][ \t]|[ \t][\]}),;:](?!=)')
 WHITESPACE_AFTER_COMMA_REGEX = re.compile(r'[,;:]\s*(?:  |\t)')
 COMPARE_SINGLETON_REGEX = re.compile(r'(\bNone|\bFalse|\bTrue)?\s*([=!]=)'
                                      r'\s*(?(1)|(None|False|True))\b')
-COMPARE_NEGATIVE_REGEX = re.compile(r'\b(not)\s+[^][)(}{ ]+\s+(in|is)\s')
+COMPARE_NEGATIVE_REGEX = re.compile(r'\b(?<!is\s)(not)\s+[^][)(}{ ]+\s+'
+                                    r'(in|is)\s')
 COMPARE_TYPE_REGEX = re.compile(r'(?:[=!]=|is(?:\s+not)?)\s+type(?:s.\w+Type'
                                 r'|\s*\(\s*([^)]*[^ )])\s*\))')
 KEYWORD_REGEX = re.compile(r'(\s*)\b(?:%s)\b(\s*)' % r'|'.join(KEYWORDS))
@@ -160,7 +168,8 @@ STARTSWITH_INDENT_STATEMENT_REGEX = re.compile(
         'while',
     )))
 )
-DUNDER_REGEX = re.compile(r'^__([^\s]+)__ = ')
+DUNDER_REGEX = re.compile(r"^__([^\s]+)__(?::\s*[a-zA-Z.0-9_\[\]\"]+)? = ")
+BLANK_EXCEPT_REGEX = re.compile(r"except\s*:")
 
 _checks = {'physical_line': {}, 'logical_line': {}, 'tree': {}}
 
@@ -263,7 +272,7 @@ def trailing_blank_lines(physical_line, lines, line_number, total_lines):
     However the last line should end with a new line (warning W292).
     """
     if line_number == total_lines:
-        stripped_last_line = physical_line.rstrip()
+        stripped_last_line = physical_line.rstrip('\r\n')
         if physical_line and not stripped_last_line:
             return 0, "W391 blank line at end of file"
         if stripped_last_line == physical_line:
@@ -314,6 +323,41 @@ def maximum_line_length(physical_line, max_line_length, multiline,
 ########################################################################
 
 
+def _is_one_liner(logical_line, indent_level, lines, line_number):
+    if not STARTSWITH_TOP_LEVEL_REGEX.match(logical_line):
+        return False
+
+    line_idx = line_number - 1
+
+    if line_idx < 1:
+        prev_indent = 0
+    else:
+        prev_indent = expand_indent(lines[line_idx - 1])
+
+    if prev_indent > indent_level:
+        return False
+
+    while line_idx < len(lines):
+        line = lines[line_idx].strip()
+        if not line.startswith('@') and STARTSWITH_TOP_LEVEL_REGEX.match(line):
+            break
+        else:
+            line_idx += 1
+    else:
+        return False  # invalid syntax: EOF while searching for def/class
+
+    next_idx = line_idx + 1
+    while next_idx < len(lines):
+        if lines[next_idx].strip():
+            break
+        else:
+            next_idx += 1
+    else:
+        return True  # line is last in the file
+
+    return expand_indent(lines[next_idx]) <= indent_level
+
+
 @register_check
 def blank_lines(logical_line, blank_lines, indent_level, line_number,
                 blank_before, previous_logical,
@@ -350,7 +394,7 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
     top_level_lines = BLANK_LINES_CONFIG['top_level']
     method_lines = BLANK_LINES_CONFIG['method']
 
-    if line_number < top_level_lines + 1 and not previous_logical:
+    if not previous_logical and blank_before < top_level_lines:
         return  # Don't expect blank lines before the first line
     if previous_logical.startswith('@'):
         if blank_lines:
@@ -360,16 +404,11 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
           ):
         yield 0, "E303 too many blank lines (%d)" % blank_lines
     elif STARTSWITH_TOP_LEVEL_REGEX.match(logical_line):
-        # If this is a one-liner (i.e. this is not a decorator and the
-        # next line is not more indented), and the previous line is also
-        # not deeper (it would be better to check if the previous line
-        # is part of another def/class at the same level), don't require
-        # blank lines around this.
-        prev_line = lines[line_number - 2] if line_number >= 2 else ''
-        next_line = lines[line_number] if line_number < len(lines) else ''
-        if (not logical_line.startswith("@") and
-                expand_indent(prev_line) <= indent_level and
-                expand_indent(next_line) <= indent_level):
+        # allow a group of one-liners
+        if (
+            _is_one_liner(logical_line, indent_level, lines, line_number) and
+            blank_before == 0
+        ):
             return
         if indent_level:
             if not (blank_before == method_lines or
@@ -383,7 +422,7 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
                 for line in lines[line_number - top_level_lines::-1]:
                     if line.strip() and expand_indent(line) < ancestor_level:
                         ancestor_level = expand_indent(line)
-                        nested = line.lstrip().startswith('def ')
+                        nested = STARTSWITH_DEF_REGEX.match(line.lstrip())
                         if nested or ancestor_level == 0:
                             break
                 if nested:
@@ -430,7 +469,7 @@ def extraneous_whitespace(logical_line):
         text = match.group()
         char = text.strip()
         found = match.start()
-        if text == char + ' ':
+        if text[-1].isspace():
             # assert char in '([{'
             yield found + 1, "E201 whitespace after '%s'" % char
         elif line[found - 1] != ',':
@@ -512,8 +551,9 @@ def missing_whitespace(logical_line):
 
 @register_check
 def indentation(logical_line, previous_logical, indent_char,
-                indent_level, previous_indent_level):
-    r"""Use 4 spaces per indentation level.
+                indent_level, previous_indent_level,
+                indent_size):
+    r"""Use indent_size (PEP8 says 4) spaces per indentation level.
 
     For really old code that you don't want to mess up, you can continue
     to use 8-space tabs.
@@ -533,8 +573,11 @@ def indentation(logical_line, previous_logical, indent_char,
     """
     c = 0 if logical_line else 3
     tmpl = "E11%d %s" if logical_line else "E11%d %s (comment)"
-    if indent_level % 4:
-        yield 0, tmpl % (1 + c, "indentation is not a multiple of four")
+    if indent_level % indent_size:
+        yield 0, tmpl % (
+            1 + c,
+            "indentation is not a multiple of " + str(indent_size),
+        )
     indent_expect = previous_logical.endswith(':')
     if indent_expect and indent_level <= previous_indent_level:
         yield 0, tmpl % (2 + c, "expected an indented block")
@@ -550,7 +593,7 @@ def indentation(logical_line, previous_logical, indent_char,
 
 @register_check
 def continued_indentation(logical_line, tokens, indent_level, hang_closing,
-                          indent_char, noqa, verbose):
+                          indent_char, indent_size, noqa, verbose):
     r"""Continuation lines indentation.
 
     Continuation lines should align wrapped elements either vertically
@@ -589,7 +632,8 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
     indent_next = logical_line.endswith(':')
 
     row = depth = 0
-    valid_hangs = (4,) if indent_char != '\t' else (4, 8)
+    valid_hangs = (indent_size,) if indent_char != '\t' \
+        else (indent_size, indent_size * 2)
     # remember how many brackets were opened on each line
     parens = [0] * nrows
     # relative indents of physical lines
@@ -654,7 +698,8 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
                     # visual indent is broken
                     yield (start, "E128 continuation line "
                            "under-indented for visual indent")
-            elif hanging_indent or (indent_next and rel_indent[row] == 8):
+            elif hanging_indent or (indent_next and
+                                    rel_indent[row] == 2 * indent_size):
                 # hanging indent is verified
                 if close_bracket and not hang_closing:
                     yield (start, "E123 closing bracket does not match "
@@ -677,7 +722,7 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
                     error = "E131", "unaligned for hanging indent"
                 else:
                     hangs[depth] = hang
-                    if hang > 4:
+                    if hang > indent_size:
                         error = "E126", "over-indented for hanging indent"
                     else:
                         error = "E121", "under-indented for hanging indent"
@@ -695,6 +740,9 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
         elif (token_type in (tokenize.STRING, tokenize.COMMENT) or
               text in ('u', 'ur', 'b', 'br')):
             indent_chances[start[1]] = str
+        # visual indent after assert/raise/with
+        elif not row and not depth and text in ["assert", "raise", "with"]:
+            indent_chances[end[1] + 1] = True
         # special case for the "if" statement because len("if (") == 4
         elif not indent_chances and not row and not depth and text == 'if':
             indent_chances[end[1] + 1] = True
@@ -741,8 +789,8 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
         if last_token_multiline:
             rel_indent[end[0] - first_row] = rel_indent[row]
 
-    if indent_next and expand_indent(line) == indent_level + 4:
-        pos = (start[0], indent[0] + 4)
+    if indent_next and expand_indent(line) == indent_level + indent_size:
+        pos = (start[0], indent[0] + indent_size)
         if visual_indent:
             code = "E129 visually indented line"
         else:
@@ -769,14 +817,21 @@ def whitespace_before_parameters(logical_line, tokens):
     prev_type, prev_text, __, prev_end, __ = tokens[0]
     for index in range(1, len(tokens)):
         token_type, text, start, end, __ = tokens[index]
-        if (token_type == tokenize.OP and
+        if (
+            token_type == tokenize.OP and
             text in '([' and
             start != prev_end and
             (prev_type == tokenize.NAME or prev_text in '}])') and
             # Syntax "class A (B):" is allowed, but avoid it
             (index < 2 or tokens[index - 2][1] != 'class') and
-                # Allow "return (a.foo for a in range(5))"
-                not keyword.iskeyword(prev_text)):
+            # Allow "return (a.foo for a in range(5))"
+            not keyword.iskeyword(prev_text) and
+            # 'match' and 'case' are only soft keywords
+            (
+                sys.version_info < (3, 9) or
+                not keyword.issoftkeyword(prev_text)
+            )
+        ):
             yield prev_end, "E211 whitespace before '%s'" % text
         prev_type = token_type
         prev_text = text
@@ -860,6 +915,21 @@ def missing_whitespace_around_operator(logical_line, tokens):
                 # Tolerate the "<>" operator, even if running Python 3
                 # Deal with Python 3's annotated return value "->"
                 pass
+            elif (
+                    # def f(a, /, b):
+                    #           ^
+                    # def f(a, b, /):
+                    #              ^
+                    # f = lambda a, /:
+                    #                ^
+                    prev_text == '/' and text in {',', ')', ':'} or
+                    # def f(a, b, /):
+                    #               ^
+                    prev_text == ')' and text == ':'
+            ):
+                # Tolerate the "/" operator in function definition
+                # For more info see PEP570
+                pass
             else:
                 if need_space is True or need_space[1]:
                     # A needed trailing space was not found
@@ -883,8 +953,13 @@ def missing_whitespace_around_operator(logical_line, tokens):
                 # Check if the operator is used as a binary operator
                 # Allow unary operators: -123, -x, +1.
                 # Allow argument unpacking: foo(*args, **kwargs).
-                if (prev_text in '}])' if prev_type == tokenize.OP
-                        else prev_text not in KEYWORDS):
+                if prev_type == tokenize.OP and prev_text in '}])' or (
+                    prev_type != tokenize.OP and
+                    prev_text not in KEYWORDS and (
+                        sys.version_info < (3, 9) or
+                        not keyword.issoftkeyword(prev_text)
+                    )
+                ):
                     need_space = None
             elif text in WS_OPTIONAL_OPERATORS:
                 need_space = None
@@ -1338,8 +1413,10 @@ def comparison_to_singleton(logical_line, noqa):
     None was set to some other value.  The other value might have a type
     (such as a container) that could be false in a boolean context!
     """
-    match = not noqa and COMPARE_SINGLETON_REGEX.search(logical_line)
-    if match:
+    if noqa:
+        return
+
+    for match in COMPARE_SINGLETON_REGEX.finditer(logical_line):
         singleton = match.group(1) or match.group(3)
         same = (match.group(2) == '==')
 
@@ -1413,8 +1490,7 @@ def bare_except(logical_line, noqa):
     if noqa:
         return
 
-    regex = re.compile(r"except\s*:")
-    match = regex.match(logical_line)
+    match = BLANK_EXCEPT_REGEX.match(logical_line)
     if match:
         yield match.start(), "E722 do not use bare 'except'"
 
@@ -1759,10 +1835,8 @@ else:
     def readlines(filename):
         """Read the source code."""
         try:
-            with open(filename, 'rb') as f:
-                (coding, lines) = tokenize.detect_encoding(f.readline)
-                f = TextIOWrapper(f, coding, line_buffering=True)
-                return [line.decode(coding) for line in lines] + f.readlines()
+            with tokenize.open(filename) as f:
+                return f.readlines()
         except (LookupError, SyntaxError, UnicodeError):
             # Fall back if file encoding is improperly declared
             with open(filename, encoding='latin-1') as f:
@@ -1790,6 +1864,7 @@ def expand_indent(line):
     >>> expand_indent('        \t')
     16
     """
+    line = line.rstrip('\n\r')
     if '\t' not in line:
         return len(line) - len(line.lstrip())
     result = 0
@@ -1912,8 +1987,10 @@ class Checker(object):
         self._ast_checks = options.ast_checks
         self.max_line_length = options.max_line_length
         self.max_doc_length = options.max_doc_length
+        self.indent_size = options.indent_size
         self.multiline = False  # in a multiline string?
         self.hang_closing = options.hang_closing
+        self.indent_size = options.indent_size
         self.verbose = options.verbose
         self.filename = filename
         # Dictionary where a checker can store its custom state.
@@ -2077,21 +2154,30 @@ class Checker(object):
             self.report_error(1, 0, 'E902 %s' % self._io_error, readlines)
         tokengen = tokenize.generate_tokens(self.readline)
         try:
+            prev_physical = ''
             for token in tokengen:
                 if token[2][0] > self.total_lines:
                     return
                 self.noqa = token[4] and noqa(token[4])
-                self.maybe_check_physical(token)
+                self.maybe_check_physical(token, prev_physical)
                 yield token
+                prev_physical = token[4]
         except (SyntaxError, tokenize.TokenError):
             self.report_invalid_syntax()
 
-    def maybe_check_physical(self, token):
+    def maybe_check_physical(self, token, prev_physical):
         """If appropriate for token, check current physical line(s)."""
         # Called after every token, but act only on end of line.
+
+        # a newline token ends a single physical line.
         if _is_eol_token(token):
-            # Obviously, a newline token ends a single physical line.
-            self.check_physical(token[4])
+            # if the file does not end with a newline, the NEWLINE
+            # token is inserted by the parser, but it does not contain
+            # the previous physical line in `token[4]`
+            if token[4] == '':
+                self.check_physical(prev_physical)
+            else:
+                self.check_physical(token[4])
         elif token[0] == tokenize.STRING and '\n' in token[1]:
             # Less obviously, a string that contains newlines is a
             # multiline string, either triple-quoted or with internal
@@ -2471,8 +2557,8 @@ def get_parser(prog='pycodestyle', version=__version__):
                           usage="%prog [options] input ...")
     parser.config_options = [
         'exclude', 'filename', 'select', 'ignore', 'max-line-length',
-        'max-doc-length', 'hang-closing', 'count', 'format', 'quiet',
-        'show-pep8', 'show-source', 'statistics', 'verbose']
+        'max-doc-length', 'indent-size', 'hang-closing', 'count', 'format',
+        'quiet', 'show-pep8', 'show-source', 'statistics', 'verbose']
     parser.add_option('-v', '--verbose', default=0, action='count',
                       help="print status messages, or debug with -vv")
     parser.add_option('-q', '--quiet', default=0, action='count',
@@ -2512,6 +2598,10 @@ def get_parser(prog='pycodestyle', version=__version__):
                       default=None,
                       help="set maximum allowed doc line length and perform "
                            "these checks (unchecked if not set)")
+    parser.add_option('--indent-size', type='int', metavar='n',
+                      default=INDENT_SIZE,
+                      help="set how many spaces make up an indent "
+                           "(default: %default)")
     parser.add_option('--hang-closing', action='store_true',
                       help="hang closing bracket instead of matching "
                            "indentation of opening bracket's line")

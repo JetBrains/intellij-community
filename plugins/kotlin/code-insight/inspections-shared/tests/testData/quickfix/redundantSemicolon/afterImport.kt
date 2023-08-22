@@ -1,0 +1,8 @@
+// "Remove redundant semicolon" "true"
+import kotlin.*;<caret>
+
+fun foo() {
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.DeletePsiElementOfInterestFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.DeletePsiElementOfInterestFix

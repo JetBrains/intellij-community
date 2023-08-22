@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -10,9 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public class FlowDropLocation implements ComponentDropLocation {
   private int myInsertIndex;
   private final String myInsertBeforeId;
@@ -107,7 +105,7 @@ public class FlowDropLocation implements ComponentDropLocation {
       }
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, myContainer.getDisplayName());
     }
-    else if (myInsertIndex == myContainer.getComponentCount() && isRightAlign()) {
+    else if (myInsertIndex == myContainer.getComponentCount()) {
       Rectangle bounds = myContainer.getComponent(myInsertIndex-1).getBounds();
       Rectangle rc = new Rectangle(bounds.x+bounds.width, bounds.y, 8, bounds.height);
       feedbackLayer.putFeedback(myContainer.getDelegee(), rc, VertInsertFeedbackPainter.INSTANCE, myContainer.getDisplayName());

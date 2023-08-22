@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.TIntArrayList;
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 public final class BuildNumber implements Comparable<BuildNumber> {
@@ -25,7 +24,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
 
   public static final int SNAPSHOT_VALUE = Integer.MAX_VALUE;
 
-  @NotNull private final String myProductCode;
+  private final @NotNull String myProductCode;
   private final int @NotNull [] myComponents;
 
   public BuildNumber(@NotNull String productCode, int baselineVersion, int buildNumber) {
@@ -37,12 +36,11 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     myComponents = components;
   }
 
-  private static boolean isPlaceholder(@NotNull String value) {
+  private static boolean isPlaceholder(String value) {
     return "__BUILD_NUMBER__".equals(value) || "__BUILD__".equals(value);
   }
 
-  @NotNull
-  public String getProductCode() {
+  public @NotNull String getProductCode() {
     return myProductCode;
   }
 
@@ -55,37 +53,27 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public boolean isSnapshot() {
-    for (int value : myComponents) {
-      if (value == SNAPSHOT_VALUE) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) != -1;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public BuildNumber withoutProductCode() {
+  public @NotNull BuildNumber withoutProductCode() {
     return myProductCode.isEmpty() ? this : new BuildNumber("", myComponents);
   }
 
-  @NotNull
-  public String asString() {
+  public @NotNull @NlsSafe String asString() {
     return asString(true, true);
   }
 
-  @NotNull
-  public String asStringWithoutProductCode() {
+  public @NotNull @NlsSafe String asStringWithoutProductCode() {
     return asString(false, true);
   }
 
-  @NotNull
-  public String asStringWithoutProductCodeAndSnapshot() {
+  public @NotNull String asStringWithoutProductCodeAndSnapshot() {
     return asString(false, false);
   }
 
-  @NotNull
-  private String asString(boolean includeProductCode, boolean withSnapshotMarker) {
+  private @NotNull String asString(boolean includeProductCode, boolean withSnapshotMarker) {
     StringBuilder builder = new StringBuilder();
 
     if (includeProductCode && !myProductCode.isEmpty()) {
@@ -107,15 +95,19 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return builder.toString();
   }
 
+  public static @Nullable BuildNumber fromPluginsCompatibleBuild() {
+    return fromString(getPluginsCompatibleBuild());
+  }
+
   /**
    * Attempts to parse build number from the specified string.
    * Returns {@code null} if the string is not a valid build number.
    */
-  @Nullable
-  public static BuildNumber fromStringOrNull(@NotNull String version) {
+  public static @Nullable BuildNumber fromStringOrNull(@NotNull String version) {
     try {
       return fromString(version);
-    } catch (RuntimeException ignored) {
+    }
+    catch (RuntimeException ignored) {
       return null;
     }
   }
@@ -125,7 +117,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       return null;
     }
     version = version.trim();
-    return version.isEmpty() ? null : fromString(version, null, null);
+    return fromString(version, null, null);
   }
 
   public static @Nullable BuildNumber fromStringWithProductCode(@NotNull String version, @NotNull String productCode) {
@@ -133,6 +125,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@NotNull String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
+    if (version.isEmpty()) return null;
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;
@@ -156,19 +149,18 @@ public final class BuildNumber implements Comparable<BuildNumber> {
         return null;
       }
 
-      List<String> stringComponents = StringUtil.split(code, ".");
-      TIntArrayList intComponentsList = new TIntArrayList();
-
-      for (String stringComponent : stringComponents) {
+      String[] stringComponents = code.split("\\.");
+      int[] intComponentsList = new int[stringComponents.length];
+      for (int i = 0, n = stringComponents.length; i < n; i++) {
+        String stringComponent = stringComponents[i];
         int comp = parseBuildNumber(version, stringComponent, pluginName);
-        intComponentsList.add(comp);
-        if (comp == SNAPSHOT_VALUE) {
+        intComponentsList[i] = comp;
+        if (comp == SNAPSHOT_VALUE && (i + 1) != n) {
+          intComponentsList = Arrays.copyOf(intComponentsList, i + 1);
           break;
         }
       }
-
-      int[] intComponents = intComponentsList.toNativeArray();
-      return new BuildNumber(productCode, intComponents);
+      return new BuildNumber(productCode, intComponentsList);
     }
     else {
       int buildNumber = parseBuildNumber(version, code, pluginName);
@@ -297,8 +289,11 @@ public final class BuildNumber implements Comparable<BuildNumber> {
    * This method is for internal platform use only. In regular code use {@link com.intellij.openapi.application.ApplicationInfo#getBuild()} instead.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static BuildNumber currentVersion() {
+  public static @NotNull BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
+  }
+
+  private static @Nullable String getPluginsCompatibleBuild() {
+    return EarlyAccessRegistryManager.INSTANCE.getString("idea.plugins.compatible.build");
   }
 }

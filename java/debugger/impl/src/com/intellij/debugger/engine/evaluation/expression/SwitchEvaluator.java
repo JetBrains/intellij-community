@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.sun.jdi.BooleanValue;
+import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,23 +24,48 @@ public class SwitchEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object switchValue = UnBoxingEvaluator.unbox(myExpressionEvaluator.evaluate(context), context);
+    Object switchValue = myExpressionEvaluator.evaluate(context);
+    Object unboxedSwitchValue = switchValue != null ? UnBoxingEvaluator.unbox(switchValue, context) : null;
     Object res = null;
     try {
       boolean caseFound = false;
-      for (Evaluator evaluator : myBodyEvaluators) {
+      int defaultLabelNum = -1;
+      for (int i = 0; i < myBodyEvaluators.length; i++) {
+        Evaluator evaluator = myBodyEvaluators[i];
         if (caseFound) {
           res = evaluator.evaluate(context);
         }
         else {
           Evaluator e = DisableGC.unwrap(evaluator);
-          if (e instanceof SwitchCaseEvaluator) {
-            res = ((SwitchCaseEvaluator)e).match(switchValue, context);
+          if (e instanceof SwitchCaseEvaluator caseEvaluator) {
+            if (caseEvaluator.myDefaultCase) {
+              defaultLabelNum = i;
+              continue;
+            }
+            res = caseEvaluator.match(unboxedSwitchValue, context);
             if (Boolean.TRUE.equals(res)) {
               caseFound = true;
             }
             else if (res instanceof Value) {
               return res;
+            }
+          }
+        }
+      }
+      if (!caseFound && defaultLabelNum != -1) {
+        for (int i = defaultLabelNum; i < myBodyEvaluators.length; i++) {
+          Evaluator evaluator = myBodyEvaluators[i];
+          if (caseFound) {
+            res = evaluator.evaluate(context);
+          }
+          else {
+            caseFound = true;
+            Evaluator e = DisableGC.unwrap(evaluator);
+            if (e instanceof SwitchCaseEvaluator) {
+              res = ((SwitchCaseEvaluator)e).match(unboxedSwitchValue, context);
+              if (res instanceof Value) {
+                return res;
+              }
             }
           }
         }
@@ -57,25 +84,47 @@ public class SwitchEvaluator implements Evaluator {
 
   static class SwitchCaseEvaluator implements Evaluator {
     final List<? extends Evaluator> myEvaluators;
+    final @Nullable Evaluator myGuardEvaluator;
     final boolean myDefaultCase;
 
-    SwitchCaseEvaluator(List<? extends Evaluator> evaluators, boolean defaultCase) {
+    SwitchCaseEvaluator(List<? extends Evaluator> evaluators, @Nullable Evaluator guardEvaluator, boolean defaultCase) {
       myEvaluators = evaluators;
+      myGuardEvaluator = guardEvaluator;
       myDefaultCase = defaultCase;
     }
 
     Object match(Object value, EvaluationContextImpl context) throws EvaluateException {
-      if (myDefaultCase) {
+      // According to JEP 406, to maintain backward compatibility with the old
+      // semantics of switch, the default label does not match a null selector.
+      if (myDefaultCase && value != null) {
         return true;
       }
       for (Evaluator evaluator : myEvaluators) {
-        if (value.equals(UnBoxingEvaluator.unbox(evaluator.evaluate(context), context))) {
+        if (evaluator instanceof PatternLabelEvaluator) {
+          if (((BooleanValue)evaluator.evaluate(context)).booleanValue() &&
+              (myGuardEvaluator == null || myGuardEvaluator.evaluate(context) instanceof BooleanValue bool && bool.booleanValue())) {
+            return true;
+          }
+          continue;
+        }
+        Object labelValue = evaluator.evaluate(context);
+        Object unboxedLabelValue = labelValue != null ? UnBoxingEvaluator.unbox(labelValue, context) : null;
+        if (resultsEquals(value, unboxedLabelValue)) {
           return true;
         }
       }
       return false;
     }
 
+    static boolean resultsEquals(Object val1, Object val2) {
+      if (val1 == null || val2 == null) {
+        return val1 == val2;
+      }
+      if (val1 instanceof StringReference && val2 instanceof StringReference) {
+        return ((StringReference)val1).value().equals(((StringReference)val2).value());
+      }
+      return val1.equals(val2);
+    }
 
     @Override
     public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
@@ -86,8 +135,8 @@ public class SwitchEvaluator implements Evaluator {
   static class SwitchCaseRuleEvaluator extends SwitchCaseEvaluator {
     final Evaluator myBodyEvaluator;
 
-    SwitchCaseRuleEvaluator(List<? extends Evaluator> evaluators, boolean defaultCase, Evaluator bodyEvaluator) {
-      super(evaluators, defaultCase);
+    SwitchCaseRuleEvaluator(List<? extends Evaluator> evaluators, @Nullable Evaluator guardEvaluator, boolean defaultCase, Evaluator bodyEvaluator) {
+      super(evaluators, guardEvaluator, defaultCase);
       myBodyEvaluator = bodyEvaluator;
     }
 

@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -7,32 +9,32 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.properties.Delegates
 
-@RunsInEdt
 internal class ComponentStoreModificationTrackerTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val projectRule = ApplicationRule()
+  }
+
   private var testAppConfig: Path by Delegates.notNull()
   private var componentStore: MyComponentStore by Delegates.notNull()
 
   @JvmField
   @Rule
   val fsRule = InMemoryFsRule()
-
-  @JvmField
-  @Rule
-  val edtRule = EdtRule()
 
   @Before
   fun setUp() {
@@ -164,31 +166,27 @@ internal class ComponentStoreModificationTrackerTest {
       <component name="TestPersistentStateComponentWithModificationTracker" foo="new" />
     </application>""".trimIndent())
   }
-
 }
 
 private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStore() {
-  private class MyStorageManager(private val rootDir: Path) : StateStorageManagerImpl("application") {
+  private class MyStorageManager : StateStorageManagerImpl("application", componentManager = null) {
     override fun getFileBasedStorageConfiguration(fileSpec: String) = appFileBasedStorageConfiguration
 
     override val isUseXmlProlog = false
 
     override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-    override fun expandMacros(path: String) = if (path[0] == '$') super.expandMacros(path) else "${expandMacro(APP_CONFIG)}/$path"
-
-    override fun resolvePath(path: String): Path = rootDir.resolve(path)
+    override fun expandMacro(collapsedPath: String): Path = if (collapsedPath[0] == '$') super.expandMacro(collapsedPath) else macros.get(0).value.resolve(collapsedPath)
   }
 
-  override val storageManager = MyStorageManager(testAppConfigPath)
+  override val storageManager: StateStorageManagerImpl = MyStorageManager()
 
   init {
-    setPath(testAppConfigPath.systemIndependentPath)
+    setPath(testAppConfigPath)
   }
 
-  override fun setPath(path: String) {
-    storageManager.addMacro(APP_CONFIG, path)
+  override fun setPath(path: Path) {
     // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
-    storageManager.addMacro(ROOT_CONFIG, path)
+    storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path)))
   }
 }

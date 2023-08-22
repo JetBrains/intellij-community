@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.actions;
 
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -48,7 +36,7 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
   }
 
   @Override
-  protected DomElement createElement(final T context, final Editor editor, PsiFile file, final Project project) {
+  protected void createElement(final T context, final Editor editor, PsiFile file, final Project project) {
     PsiClass selectedClass;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       PsiClass baseClass = getBaseClass(context, project, myBaseClass);
@@ -65,13 +53,12 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
     else {
       selectedClass = getBaseClass(context, project, myBaseClass == null ? CommonClassNames.JAVA_LANG_OBJECT : myBaseClass);
     }
-    if (selectedClass == null) return null;
+    if (selectedClass == null) return;
 
-    return createElement(context, editor, file, project, selectedClass);
+    createElement(context, editor, file, project, selectedClass);
   }
 
-  @Nullable
-  protected DomElement createElement(final T context,
+  protected void createElement(final T context,
                                      final Editor editor,
                                      final PsiFile file,
                                      final Project project,
@@ -79,15 +66,14 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
     final Map<String, String> map = new HashMap<>();
     map.put("CLASS_NAME", selectedClass.getQualifiedName());
     WriteCommandAction.writeCommandAction(project, file).run(() -> DomTemplateRunner.getInstance(project).runTemplate(createElement(context), myTemplate, editor, map));
-    return null;
   }
 
-  protected String getChooserTitle() {
+  protected @NlsContexts.DialogTitle String getChooserTitle() {
     String text = getTemplatePresentation().getText();
-    if (text.endsWith("...")) {
+    if (text != null && text.endsWith("...")) {
       text = StringUtil.trimEnd(text, "...");
     }
-    return "Choose " + text + " Class";
+    return JavaBundle.message("create.class.mapping.dialog.title", text);
   }
 
   protected abstract DomElement createElement(T context);

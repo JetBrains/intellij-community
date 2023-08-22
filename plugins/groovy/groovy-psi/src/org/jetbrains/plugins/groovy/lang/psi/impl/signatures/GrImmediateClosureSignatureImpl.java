@@ -74,9 +74,7 @@ public class GrImmediateClosureSignatureImpl implements GrSignature {
 
   @Override
   public GrClosureParameter @NotNull [] getParameters() {
-    GrClosureParameter[] result = new GrClosureParameter[myParameters.length];
-    System.arraycopy(myParameters, 0, result, 0, myParameters.length);
-    return result;
+    return myParameters.clone();
   }
 
   @Override

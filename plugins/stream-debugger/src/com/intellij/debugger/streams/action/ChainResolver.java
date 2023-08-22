@@ -1,65 +1,71 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.streams.lib.LibrarySupportProvider;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Helps {@link TraceStreamAction} understand if there is a suitable chain under the debugger position or not.
  */
-class ChainResolver {
+final class ChainResolver {
   private static final Logger LOG = Logger.getInstance(ChainResolver.class);
 
-  private ChainsSearchResult mySearchResult = new ChainsSearchResult(0, -1, null);
+  private final AtomicReference<ChainsSearchResult> mySearchResult = new AtomicReference<>(new ChainsSearchResult(0, -1, null));
+  private final ExecutorService myExecutor =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Stream debugger chains detector");
 
   @NotNull ChainStatus tryFindChain(@NotNull PsiElement elementAtDebugger) {
-    if (mySearchResult.isSuitableFor(elementAtDebugger)) {
-      return mySearchResult.chainsStatus;
+    ChainsSearchResult result = mySearchResult.get();
+    if (result.isSuitableFor(elementAtDebugger)) {
+      return result.chainsStatus;
     }
 
-    mySearchResult = ChainsSearchResult.of(elementAtDebugger);
-    checkChainsExistenceInBackground(elementAtDebugger, mySearchResult);
-    return mySearchResult.chainsStatus;
+    result = ChainsSearchResult.of(elementAtDebugger);
+    checkChainsExistenceInBackground(elementAtDebugger, result, myExecutor);
+    mySearchResult.set(result);
+    return result.chainsStatus;
   }
 
   private static void checkChainsExistenceInBackground(@NotNull PsiElement elementAtDebugger,
-                                                       @NotNull ChainsSearchResult searchResult) {
+                                                       @NotNull ChainsSearchResult searchResult,
+                                                       @NotNull ExecutorService executor) {
     List<LibrarySupportProvider> extensions = forLanguage(elementAtDebugger.getLanguage());
     if (extensions.isEmpty()) {
       searchResult.markUnsupportedLanguage();
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        DumbService.getInstance(elementAtDebugger.getProject()).runReadActionInSmartMode(() -> {
-          LibrarySupportProvider provider = ExtensionProcessingHelper
-            .findFirstSafe(p -> p.getChainBuilder().isChainExists(elementAtDebugger), extensions);
-          boolean found = provider != null;
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Chains found:" + found);
-          }
-          searchResult.updateStatus(found);
-        });
-      });
+      ReadAction.nonBlocking(() -> {
+        LibrarySupportProvider provider = ExtensionProcessingHelper.INSTANCE
+          .findFirstSafe(p -> p.getChainBuilder().isChainExists(elementAtDebugger), extensions);
+        boolean found = provider != null;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Chains found:" + found);
+        }
+        searchResult.updateStatus(found);
+      }).inSmartMode(elementAtDebugger.getProject()).submit(executor);
     }
   }
 
   @NotNull List<StreamChainWithLibrary> getChains(@NotNull PsiElement elementAtDebugger) {
-    if (!mySearchResult.isSuitableFor(elementAtDebugger) || !mySearchResult.chainsStatus.equals(ChainStatus.FOUND)) {
-      LOG.error("Cannot build chains: " + mySearchResult.chainsStatus);
+    ChainsSearchResult result = mySearchResult.get();
+    if (!result.isSuitableFor(elementAtDebugger) || !result.chainsStatus.equals(ChainStatus.FOUND)) {
+      LOG.error("Cannot build chains: " + result.chainsStatus);
       return Collections.emptyList();
     }
 
@@ -80,8 +86,8 @@ class ChainResolver {
     return chains;
   }
 
-  private static List<LibrarySupportProvider> forLanguage(@NotNull Language language) {
-    return LibrarySupportProvider.EP_NAME.getByGroupingKey(language.getID(), LibrarySupportProvider::getLanguageId);
+  private static @NotNull List<LibrarySupportProvider> forLanguage(@NotNull Language language) {
+    return LibrarySupportProvider.EP_NAME.getByGroupingKey(language.getID(), ChainResolver.class, LibrarySupportProvider::getLanguageId);
   }
 
   enum ChainStatus {

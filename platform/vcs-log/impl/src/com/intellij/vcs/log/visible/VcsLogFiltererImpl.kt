@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsScope
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogFilter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.data.index.IndexDataGetter
@@ -18,7 +20,7 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
-import com.intellij.vcs.log.history.EMPTY_HISTORY
+import com.intellij.vcs.log.history.FileHistory
 import com.intellij.vcs.log.history.FileHistoryBuilder
 import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
@@ -27,10 +29,10 @@ import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.util.VcsLogUtil.SHORT_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromHashes
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.BiConsumer
 import java.util.stream.Collectors
 
@@ -40,8 +42,6 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                          private val commitDetailsGetter: DataGetter<out VcsFullCommitDetails>,
                          private val index: VcsLogIndex) : VcsLogFilterer {
 
-  override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean = false
-
   override fun filter(dataPack: DataPack,
                       oldVisiblePack: VisiblePack,
                       sortType: PermanentGraph.SortType,
@@ -50,79 +50,85 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val hashFilter = allFilters.get(VcsLogFilterCollection.HASH_FILTER)
     val filters = allFilters.without(VcsLogFilterCollection.HASH_FILTER)
 
-    val start = System.currentTimeMillis()
-
-    if (hashFilter != null && !hashFilter.hashes.isEmpty()) { // hashes should be shown, no matter if they match other filters or not
-      val hashFilterResult = applyHashFilter(dataPack, hashFilter.hashes, sortType, commitCount)
-      if (hashFilterResult != null) {
-        LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
-                  " for filtering by " + hashFilterResult.first.filters + ", sort type " + sortType)
-        return hashFilterResult
-      }
-    }
-
-    val visibleRoots = VcsLogUtil.getAllVisibleRoots(dataPack.logProviders.keys, filters)
-    var matchingHeads = getMatchingHeads(dataPack.refsModel, visibleRoots, filters)
-
-    val rangeFilters = allFilters.get(VcsLogFilterCollection.RANGE_FILTER)
-    val commitCandidates: TIntHashSet?
-    val forceFilterByVcs: Boolean
-    if (rangeFilters != null) {
-      /*
-        If we have both a range filter and a branch filter (e.g. `183\nmaster..feature`) they should be united: the graph should show both
-        commits contained in the range, and commits reachable from branches.
-
-        But the main filtering logic is opposite: matchingHeads + some other filter => makes the intersection of commits.
-        To overcome this logic for the range filter case, we are not using matchingHeads, but are collecting all commits reachable from
-        matchingHeads, and unite them with commits belonging to the range.
-       */
-      val branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER)
-      val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
-      val explicitMatchingHeads = getMatchingHeads(dataPack.refsModel, visibleRoots, branchFilter, revisionFilter)
-      val commitsReachableFromHeads = if (explicitMatchingHeads != null)
-        collectCommitsReachableFromHeads(dataPack, explicitMatchingHeads)
-      else TIntHashSet()
-
-      when (val commitsForRangeFilter = filterByRange(dataPack, rangeFilters)) {
-        is RangeFilterResult.Commits -> {
-          commitCandidates = TroveUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
-          forceFilterByVcs = false
-        }
-        is RangeFilterResult.Error -> {
-          commitCandidates = null
-          forceFilterByVcs = true
-        }
-        is RangeFilterResult.InvalidRange -> {
-          commitCandidates = null
-          forceFilterByVcs = true
+    TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogFilter.getName()).useWithScope {
+      if (hashFilter != null && !hashFilter.hashes.isEmpty()) { // hashes should be shown, no matter if they match other filters or not
+        val hashFilterResult = applyHashFilter(dataPack, hashFilter, sortType, commitCount)
+        if (hashFilterResult != null) {
+          it.setAttribute("filters", hashFilterResult.first.filters.toString())
+          it.setAttribute("sortType", sortType.toString())
+          return hashFilterResult
         }
       }
 
-      /*
-        At the same time, the root filter should intersect with the range filter (and the branch filter),
-        therefore we take matching heads from the root filter, but use reachable commits set for the branch filter.
-      */
-      val matchingHeadsFromRoots = getMatchingHeads(dataPack.refsModel, visibleRoots)
-      matchingHeads = matchingHeadsFromRoots
+      val visibleRoots = VcsLogUtil.getAllVisibleRoots(dataPack.logProviders.keys, filters)
+      var matchingHeads = getMatchingHeads(dataPack.refsModel, visibleRoots, filters)
+
+      val rangeFilters = allFilters.get(VcsLogFilterCollection.RANGE_FILTER)
+      val commitCandidates: IntSet?
+      val forceFilterByVcs: Boolean
+      if (rangeFilters != null) {
+        /*
+          If we have both a range filter and a branch filter (e.g. `183\nmaster..feature`) they should be united: the graph should show both
+          commits contained in the range, and commits reachable from branches.
+
+          But the main filtering logic is opposite: matchingHeads + some other filter => makes the intersection of commits.
+          To overcome this logic for the range filter case, we are not using matchingHeads, but are collecting all commits reachable from
+          matchingHeads, and unite them with commits belonging to the range.
+         */
+        val branchFilter = filters.get(VcsLogFilterCollection.BRANCH_FILTER)
+        val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
+        val explicitMatchingHeads = getMatchingHeads(dataPack.refsModel, visibleRoots, branchFilter, revisionFilter)
+        val commitsReachableFromHeads = if (explicitMatchingHeads != null)
+          collectCommitsReachableFromHeads(dataPack, explicitMatchingHeads)
+        else IntOpenHashSet()
+
+        when (val commitsForRangeFilter = filterByRange(dataPack, rangeFilters)) {
+          is RangeFilterResult.Commits -> {
+            commitCandidates = IntCollectionUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
+            forceFilterByVcs = false
+          }
+          is RangeFilterResult.Error -> {
+            commitCandidates = null
+            forceFilterByVcs = true
+          }
+          is RangeFilterResult.InvalidRange -> {
+            commitCandidates = null
+            forceFilterByVcs = true
+          }
+        }
+
+        /*
+          At the same time, the root filter should intersect with the range filter (and the branch filter),
+          therefore we take matching heads from the root filter, but use reachable commits set for the branch filter.
+        */
+        val matchingHeadsFromRoots = getMatchingHeads(dataPack.refsModel, visibleRoots)
+        matchingHeads = matchingHeadsFromRoots
+      }
+      else {
+        commitCandidates = null
+        forceFilterByVcs = false
+      }
+
+      try {
+        val filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads, commitCandidates, forceFilterByVcs)
+
+        val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits, filterResult.fileHistoryData)
+        val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
+
+        it.setAttribute("filters", filters.toString())
+        it.setAttribute("sortType", sortType.toString())
+        return Pair(visiblePack, filterResult.commitCount)
+      }
+      catch (e: VcsException) {
+        return Pair(VisiblePack.ErrorVisiblePack(dataPack, filters, e), commitCount)
+      }
     }
-    else {
-      commitCandidates = null
-      forceFilterByVcs = false
-    }
-
-    val filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads, commitCandidates, forceFilterByVcs)
-
-    val visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits, filterResult.fileHistoryData)
-    val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
-
-    LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters + ", sort type " + sortType)
-    return Pair(visiblePack, filterResult.commitCount)
   }
 
-  private fun collectCommitsReachableFromHeads(dataPack: DataPack, matchingHeads: Set<Int>): TIntHashSet {
-    @Suppress("UNCHECKED_CAST") val permanentGraph = dataPack.permanentGraph as? PermanentGraphInfo<Int> ?: return TIntHashSet()
+  private fun collectCommitsReachableFromHeads(dataPack: DataPack, matchingHeads: Set<Int>): IntSet {
+    @Suppress("UNCHECKED_CAST") val permanentGraph = dataPack.permanentGraph as? PermanentGraphInfo<Int> ?: return IntOpenHashSet()
     val startIds = matchingHeads.map { permanentGraph.permanentCommitsInfo.getNodeId(it) }
-    val result = TIntHashSet()
+    val result = IntOpenHashSet()
     DfsWalk(startIds, permanentGraph.linearGraph).walk(true) { node: Int ->
       result.add(permanentGraph.permanentCommitsInfo.getCommitId(node))
       true
@@ -130,11 +136,11 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return result
   }
 
-  fun createVisibleGraph(dataPack: DataPack,
-                         sortType: PermanentGraph.SortType,
-                         matchingHeads: Set<Int>?,
-                         matchingCommits: Set<Int>?,
-                         fileHistoryData: FileHistoryData? = null): VisibleGraph<Int> {
+  private fun createVisibleGraph(dataPack: DataPack,
+                                 sortType: PermanentGraph.SortType,
+                                 matchingHeads: Set<Int>?,
+                                 matchingCommits: Set<Int>?,
+                                 fileHistoryData: FileHistoryData?): VisibleGraph<Int> {
     if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
       return EmptyVisibleGraph.getInstance()
     }
@@ -147,29 +153,33 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     if (fileHistoryData.startPaths.size == 1 && fileHistoryData.startPaths.single().isDirectory) {
       val unmatchedRenames = matchingCommits?.let { fileHistoryData.getCommitsWithRenames().subtract(it) } ?: emptySet()
       val preprocessor = FileHistoryBuilder(null, fileHistoryData.startPaths.single(), fileHistoryData,
-                                            EMPTY_HISTORY, unmatchedRenames)
+                                            FileHistory.EMPTY, unmatchedRenames,
+                                            removeTrivialMerges = FileHistoryBuilder.isRemoveTrivialMerges,
+                                            refine = FileHistoryBuilder.isRefine)
       return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits?.union(unmatchedRenames), preprocessor)
     }
 
     val preprocessor = BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> { controller, permanentGraphInfo ->
-      removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
-        LOG.debug("Removed ${trivialMerges.size} trivial merges")
+      if (FileHistoryBuilder.isRemoveTrivialMerges) {
+        removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
+          LOG.debug("Removed ${trivialMerges.size} trivial merges")
+        }
       }
     }
     return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits, preprocessor)
   }
 
+  @Throws(VcsException::class)
   private fun filterByDetails(dataPack: DataPack,
                               filters: VcsLogFilterCollection,
                               commitCount: CommitCountStage,
                               visibleRoots: Collection<VirtualFile>,
                               matchingHeads: Set<Int>?,
-                              commitCandidates: TIntHashSet?,
+                              commitCandidates: IntSet?,
                               forceFilterByVcs: Boolean): FilterByDetailsResult {
     val detailsFilters = filters.detailsFilters
     if (!forceFilterByVcs && detailsFilters.isEmpty()) {
-      val matchingCommits = if (commitCandidates != null) TroveUtil.createJavaSet(commitCandidates) else null
-      return FilterByDetailsResult(matchingCommits, false, commitCount)
+      return FilterByDetailsResult(commitCandidates, false, commitCount)
     }
 
     val dataGetter = index.dataGetter
@@ -190,18 +200,18 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val headsForVcs = if (filterAllWithVcs) matchingHeads else getMatchingHeads(dataPack.refsModel, rootsForVcs, filtersForVcs)
     val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filtersForVcs, headsForVcs, commitCount, commitCandidates)
 
-    val filteredCommits: Set<Int>? = union(filteredWithIndex, filteredWithVcs.matchingCommits)
+    val filteredCommits = union(filteredWithIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount, historyData)
   }
 
   private sealed class RangeFilterResult {
-    class Commits(val commits: TIntHashSet) : RangeFilterResult()
+    class Commits(val commits: IntSet) : RangeFilterResult()
     object InvalidRange : RangeFilterResult()
     object Error : RangeFilterResult()
   }
 
   private fun filterByRange(dataPack: DataPack, rangeFilter: VcsLogRangeFilter): RangeFilterResult {
-    val set = TIntHashSet()
+    val set = IntOpenHashSet()
     for (range in rangeFilter.ranges) {
       var rangeResolvedAnywhere = false
       for ((root, _) in logProviders) {
@@ -209,7 +219,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         if (resolvedRange != null) {
           val commits = getCommitsByRange(dataPack, root, resolvedRange)
           if (commits == null) return RangeFilterResult.Error // error => will be handled by the VCS provider
-          else TroveUtil.addAll(set, commits)
+          else set.addAll(commits)
           rangeResolvedAnywhere = true
         }
       }
@@ -233,7 +243,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     return from to to
   }
 
-  private fun getCommitsByRange(dataPack: DataPack, root: VirtualFile, range: Pair<CommitId, CommitId>): TIntHashSet? {
+  private fun getCommitsByRange(dataPack: DataPack, root: VirtualFile, range: Pair<CommitId, CommitId>): IntSet? {
     val fromIndex = storage.getCommitIndex(range.first.hash, root)
     val toIndex = storage.getCommitIndex(range.second.hash, root)
 
@@ -241,7 +251,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun resolveCommit(dataPack: DataPack, root: VirtualFile, refName: String): CommitId? {
-    if (refName.length == FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(refName).matches()) {
+    if (VcsLogUtil.isFullHash(refName)) {
       val commitId = CommitId(HashImpl.build(refName), root)
       return if (storage.containsCommit(commitId)) commitId else null
     }
@@ -259,28 +269,31 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
   private fun filterWithIndex(dataGetter: IndexDataGetter,
                               detailsFilters: List<VcsLogDetailsFilter>,
-                              commitCandidates: TIntHashSet?): Pair<Set<Int>?, FileHistoryData?> {
+                              commitCandidates: IntSet?): Pair<IntSet?, FileHistoryData?> {
     val structureFilter = detailsFilters.filterIsInstance(VcsLogStructureFilter::class.java).singleOrNull()
                           ?: return Pair(dataGetter.filter(detailsFilters, commitCandidates), null)
 
     val historyData = dataGetter.createFileHistoryData(structureFilter.files).build()
-    val candidates = TroveUtil.intersect(TroveUtil.createTroveSet(historyData.getCommits()), commitCandidates)
+    val candidates = IntCollectionUtil.intersect(historyData.getCommits(), commitCandidates)
 
     val filtersWithoutStructure = detailsFilters.filterNot { it is VcsLogStructureFilter }
-    if (filtersWithoutStructure.isEmpty()) return Pair(TroveUtil.createJavaSet(candidates), historyData)
+    if (filtersWithoutStructure.isEmpty()) {
+      return Pair(candidates, historyData)
+    }
 
     return Pair(dataGetter.filter(filtersWithoutStructure, candidates), historyData)
   }
 
+  @Throws(VcsException::class)
   private fun filterWithVcs(graph: PermanentGraph<Int>,
                             filters: VcsLogFilterCollection,
                             matchingHeads: Set<Int>?,
                             commitCount: CommitCountStage,
-                            commitCandidates: TIntHashSet?): FilterByDetailsResult {
+                            commitCandidates: IntSet?): FilterByDetailsResult {
     var commitCountToTry = commitCount
     if (commitCountToTry == CommitCountStage.INITIAL) {
       if (filters.get(VcsLogFilterCollection.RANGE_FILTER) == null) { // not filtering in memory by range for simplicity
-        val commitsFromMemory = filterDetailsInMemory(graph, filters.detailsFilters, matchingHeads, commitCandidates).toCommitIndexes()
+        val commitsFromMemory = filterDetailsInMemory(graph, filters.detailsFilters, matchingHeads, commitCandidates)
         if (commitsFromMemory.size >= commitCountToTry.count) {
           return FilterByDetailsResult(commitsFromMemory, true, commitCountToTry)
         }
@@ -288,26 +301,17 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       commitCountToTry = commitCountToTry.next()
     }
 
-    try {
-      val commitsFromVcs = filteredDetailsInVcs(logProviders, filters, commitCountToTry.count).toCommitIndexes()
-      return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry)
-    }
-    catch (e: VcsException) {
-      //TODO show an error balloon or something else for non-ea guys.
-      LOG.error(e)
-      return FilterByDetailsResult(emptySet(), true, commitCountToTry)
-    }
+    val commitsFromVcs = filterWithVcs(filters, commitCountToTry.count)
+    return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry)
   }
 
   @Throws(VcsException::class)
-  private fun filteredDetailsInVcs(providers: Map<VirtualFile, VcsLogProvider>,
-                                   filterCollection: VcsLogFilterCollection,
-                                   maxCount: Int): Collection<CommitId> {
-    val commits = mutableListOf<CommitId>()
+  private fun filterWithVcs(filterCollection: VcsLogFilterCollection, maxCount: Int): IntSet {
+    val commits = IntOpenHashSet()
 
-    val visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keys, filterCollection)
+    val visibleRoots = VcsLogUtil.getAllVisibleRoots(logProviders.keys, filterCollection)
     for (root in visibleRoots) {
-      val provider = providers.getValue(root)
+      val provider = logProviders.getValue(root)
 
       val userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER)
       if (userFilter != null && userFilter.getUsers(root).isEmpty()) {
@@ -344,18 +348,20 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
           .with(VcsLogFilterObject.fromRange(resolvedRanges))
       }
 
-      val matchingCommits = provider.getCommitsMatchingFilter(root, actualFilterCollection, maxCount)
-      commits.addAll(matchingCommits.map { commit -> CommitId(commit.id, root) })
+      provider.getCommitsMatchingFilter(root, actualFilterCollection, maxCount).forEach { commit ->
+        commits.add(storage.getCommitIndex(commit.id, root))
+      }
     }
 
     return commits
   }
 
   private fun applyHashFilter(dataPack: DataPack,
-                              hashes: Collection<String>,
+                              hashFilter: VcsLogHashFilter,
                               sortType: PermanentGraph.SortType,
                               commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>? {
-    val hashFilterResult = hashSetOf<Int>()
+    val hashes = hashFilter.hashes
+    val hashFilterResult = IntOpenHashSet()
     for (partOfHash in hashes) {
       if (partOfHash.length == FULL_HASH_LENGTH) {
         val hash = HashImpl.build(partOfHash)
@@ -375,20 +381,25 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       if (hashFilterResult.isEmpty()) return null
 
       val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, hashFilterResult)
-      val visiblePack = VisiblePack(dataPack, visibleGraph, filterMessages, VcsLogFilterObject.collection(fromHashes(hashes)))
+      val visiblePack = VisiblePack(dataPack, visibleGraph, filterMessages, VcsLogFilterObject.collection(hashFilter))
       return Pair(visiblePack, if (filterMessages) commitCount.next() else CommitCountStage.ALL)
     }
 
     val textFilter = VcsLogFilterObject.fromPatternsList(ArrayList(hashes), false)
-    val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
-                                           commitCount, dataPack.logProviders.keys, null, null, false)
-    if (hashFilterResult.isEmpty() && textFilterResult.matchingCommits.matchesNothing()) return null
-    val filterResult = union(textFilterResult.matchingCommits, hashFilterResult)
+    try {
+      val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
+                                             commitCount, dataPack.logProviders.keys, null, null, false)
+      if (hashFilterResult.isEmpty() && textFilterResult.matchingCommits.matchesNothing()) return null
+      val filterResult = union(textFilterResult.matchingCommits, hashFilterResult)
 
-    val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, filterResult)
-    val visiblePack = VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
-                                  VcsLogFilterObject.collection(fromHashes(hashes), textFilter))
-    return Pair(visiblePack, textFilterResult.commitCount)
+      val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, filterResult)
+      val visiblePack = VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
+                                    VcsLogFilterObject.collection(hashFilter, textFilter))
+      return Pair(visiblePack, textFilterResult.commitCount)
+    }
+    catch (e: VcsException) {
+      return Pair(VisiblePack.ErrorVisiblePack(dataPack, VcsLogFilterObject.collection(hashFilter, textFilter), e), commitCount)
+    }
   }
 
   fun getMatchingHeads(refs: RefsModel,
@@ -433,7 +444,9 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getMatchingHeads(roots: Collection<VirtualFile>, filter: VcsLogRevisionFilter): Set<Int> {
-    return filter.heads.filter { roots.contains(it.root) }.toCommitIndexes()
+    return filter.heads.filter { roots.contains(it.root) }.mapTo(IntOpenHashSet()) { commitId ->
+      storage.getCommitIndex(commitId.hash, commitId.root)
+    }
   }
 
   private fun getMatchingHeads(refsModel: RefsModel, roots: Collection<VirtualFile>): Set<Int> {
@@ -446,15 +459,15 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   private fun filterDetailsInMemory(permanentGraph: PermanentGraph<Int>,
                                     detailsFilters: List<VcsLogDetailsFilter>,
                                     matchingHeads: Set<Int>?,
-                                    commitCandidates: TIntHashSet?): Collection<CommitId> {
-    val result = mutableListOf<CommitId>()
+                                    commitCandidates: IntSet?): IntSet {
+    val result = IntOpenHashSet()
     for (commit in permanentGraph.allCommits) {
       if (commitCandidates == null || commitCandidates.contains(commit.id)) {
         val data = getDetailsFromCache(commit.id)
                    ?: // no more continuous details in the cache
                    break
         if (matchesAllFilters(data, permanentGraph, detailsFilters, matchingHeads)) {
-          result.add(CommitId(data.id, data.root))
+          result.add(storage.getCommitIndex(data.id, data.root))
         }
       }
     }
@@ -481,14 +494,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun getDetailsFromCache(commitIndex: Int): VcsCommitMetadata? {
-    return topCommitsDetailsCache.get(commitIndex) ?: UIUtil.invokeAndWaitIfNeeded(
-      Computable<VcsCommitMetadata> { commitDetailsGetter.getCommitDataIfAvailable(commitIndex) })
-  }
-
-  private fun Collection<CommitId>.toCommitIndexes(): Set<Int> {
-    return this.mapTo(mutableSetOf()) { commitId ->
-      storage.getCommitIndex(commitId.hash, commitId.root)
-    }
+    return topCommitsDetailsCache.get(commitIndex) ?: commitDetailsGetter.getCommitDataIfAvailable(commitIndex)
   }
 
   private fun Collection<VcsRef>.toReferencedCommitIndexes(): Set<Int> {
@@ -500,7 +506,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
 private val LOG = Logger.getInstance(VcsLogFiltererImpl::class.java)
 
-private data class FilterByDetailsResult(val matchingCommits: Set<Int>?,
+private data class FilterByDetailsResult(val matchingCommits: IntSet?,
                                          val canRequestMore: Boolean,
                                          val commitCount: CommitCountStage,
                                          val fileHistoryData: FileHistoryData? = null)
@@ -521,8 +527,11 @@ internal fun <T> Collection<T>?.matchesNothing(): Boolean {
   return this != null && this.isEmpty()
 }
 
-internal fun <T> union(c1: Set<T>?, c2: Set<T>?): Set<T>? {
+internal fun union(c1: IntSet?, c2: IntSet?): IntSet? {
   if (c1 == null) return c2
   if (c2 == null) return c1
-  return c1.union(c2)
+
+  val result = IntOpenHashSet(c1)
+  result.addAll(c2)
+  return result
 }

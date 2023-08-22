@@ -20,14 +20,16 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 public class XmlJoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testJoiningText() {
-    configureFromFileText(getTestName(true) + ".xml", 
-                          "<body>\n" +
-                          " a<caret>b\n" +
-                          " cd\n" +
-                          "</body>");
+    configureFromFileText(getTestName(true) + ".xml",
+                          """
+                            <body>
+                             a<caret>b
+                             cd
+                            </body>""");
     executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
-    checkResultByText("<body>\n" +
-                      " ab cd\n" +
-                      "</body>");
+    checkResultByText("""
+                        <body>
+                         ab cd
+                        </body>""");
   }
 }

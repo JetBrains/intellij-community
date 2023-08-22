@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -35,9 +36,9 @@ public abstract class HgChangesetsCommand {
   private static final Logger LOG = Logger.getInstance(HgChangesetsCommand.class.getName());
 
   protected final Project project;
-  protected final String command;
+  protected final @NonNls String command;
 
-  public HgChangesetsCommand(Project project, String command) {
+  public HgChangesetsCommand(Project project, @NonNls String command) {
     this.project = project;
     this.command = command;
   }
@@ -93,5 +94,5 @@ public abstract class HgChangesetsCommand {
     return false;
   }
 
-  protected abstract void addArguments(List<String> args);
+  protected abstract void addArguments(List<@NonNls String> args);
 }

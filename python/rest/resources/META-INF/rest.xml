@@ -32,7 +32,7 @@
     <indexPatternBuilder implementation="com.jetbrains.rest.RestIndexPatternBuilder" />
     <todoIndexer filetype="ReST" implementationClass="com.jetbrains.rest.RestTodoIndexer" />
 
-    <fileEditorProvider implementation="com.jetbrains.rest.editor.RestSplitEditorProvider"/>
+    <fileEditorProvider implementation="com.jetbrains.rest.editor.RestSplitEditorProvider" fileType="ReST"/>
     <applicationConfigurable groupId="language" instance="com.jetbrains.rest.editor.RestConfigurable"
                              id="restructured.text.topic" bundle="messages.RestBundle" key="configurable.RestConfigurable.display.name"/>
     <applicationService serviceImplementation="com.jetbrains.rest.editor.RestSettings"/>

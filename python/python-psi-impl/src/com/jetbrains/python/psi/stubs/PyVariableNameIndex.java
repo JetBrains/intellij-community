@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
+
 public class PyVariableNameIndex extends StringStubIndexExtension<PyTargetExpression> {
   public static final StubIndexKey<String, PyTargetExpression> KEY = StubIndexKey.createIndexKey("Py.variable.shortName");
 

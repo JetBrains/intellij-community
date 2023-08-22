@@ -44,9 +44,11 @@ public class PyDocstringTest extends PyTestCase {
   }
 
   public void testComment() {  //PY-8505
-    doTestLexer(" >>> if True:\n" +
-                " ... #comm\n"+
-                " ...   pass", "Py:SPACE", "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK");
+    doTestLexer("""
+                   >>> if True:
+                   ... #comm
+                   ...   pass\
+                  """, "Py:SPACE", "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK");
   }
   public void testFunctionName() {
     doCompletionTest();
@@ -106,7 +108,7 @@ public class PyDocstringTest extends PyTestCase {
           remainingTokens.append(" \"").append(lexer.getTokenType().toString()).append("\"");
           lexer.advance();
         }
-        fail("Too many tokens. Following tokens: " + remainingTokens.toString());
+        fail("Too many tokens. Following tokens: " + remainingTokens);
       }
       String tokenName = lexer.getTokenType().toString();
       assertEquals("Token mismatch at position " + idx, expectedTokens[idx], tokenName);

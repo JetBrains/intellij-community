@@ -7,13 +7,22 @@ public class JsonComplianceCheckerOptions {
   private final boolean isCaseInsensitiveEnumCheck;
   private final boolean isForceStrict;
 
+  private final boolean isReportMissingNotRequiredProperties;
+
   public JsonComplianceCheckerOptions(boolean caseInsensitiveEnumCheck) {
     this(caseInsensitiveEnumCheck, false);
   }
 
   private JsonComplianceCheckerOptions(boolean caseInsensitiveEnumCheck, boolean forceStrict) {
-    isCaseInsensitiveEnumCheck = caseInsensitiveEnumCheck;
-    isForceStrict = forceStrict;
+    this(caseInsensitiveEnumCheck, forceStrict, false);
+  }
+
+  public JsonComplianceCheckerOptions(boolean isCaseInsensitiveEnumCheck,
+                                      boolean isForceStrict,
+                                      boolean isReportMissingNotRequiredProperties) {
+    this.isCaseInsensitiveEnumCheck = isCaseInsensitiveEnumCheck;
+    this.isForceStrict = isForceStrict;
+    this.isReportMissingNotRequiredProperties = isReportMissingNotRequiredProperties;
   }
 
   public JsonComplianceCheckerOptions withForcedStrict() {
@@ -26,5 +35,9 @@ public class JsonComplianceCheckerOptions {
 
   public boolean isForceStrict() {
     return isForceStrict;
+  }
+
+  public boolean isReportMissingNotRequiredProperties() {
+    return isReportMissingNotRequiredProperties;
   }
 }

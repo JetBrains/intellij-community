@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.collect.Iterables;
@@ -141,7 +142,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
     mySut.memberInfoChanged(myMemberInfos);
   }
 
-  private static class NamePredicate extends NotNullPredicate<PyMemberInfo<?>> {
+  private static final class NamePredicate extends NotNullPredicate<PyMemberInfo<?>> {
     @NotNull
     private final String myNameToSearch;
 

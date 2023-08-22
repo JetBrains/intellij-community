@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.scale.JBUIScale;
@@ -12,6 +12,11 @@ import java.awt.*;
 import static java.lang.Math.ceil;
 
 /**
+ * A dimension which updates its scaled size when the user scale factor changes (see {@link ScaleType}).
+ * <p></p>
+ * Say, a dimension is created as 100x100 and the user scale factor is 2.0. Its scaled size will be 200x200.
+ * Then the user scale factor changes to, say, 3.0. The new scaled size will become 300x300.
+ *
  * @author Konstantin Bulenkov
  * @author tav
  */
@@ -19,7 +24,7 @@ public class JBDimension extends Dimension {
   Size2D size2D;
   private final MyScaler scaler = new MyScaler();
 
-  private static class Size2D {
+  private static final class Size2D {
     double width;
     double height;
 
@@ -46,12 +51,40 @@ public class JBDimension extends Dimension {
     }
   }
 
+  /**
+   * A new dimension with the provided unscaled size.
+   * <p></p>
+   * The real dimension size will be scaled according to the current user scale factor.
+   *
+   * @param width unscaled with
+   * @param height unscaled size
+   */
   public JBDimension(int width, int height) {
     this(width, height, false);
   }
 
+  public static @NotNull JBDimension size(Dimension size) {
+    if (size instanceof JBDimension) {
+      JBDimension newSize = ((JBDimension)size).newSize();
+      return size instanceof UIResource ? newSize.asUIResource() : newSize;
+    }
+    return new JBDimension(size.width, size.height);
+  }
+
+  /**
+   * A new dimension with the provided unscaled or pre-scaled size.
+   * <p></p>
+   * When {@code preScaled} is true, the passed size will be treated as the current scaled
+   * dimension size (and the unscaled dimension size will be calculated according to the
+   * current user scale factor). Passing {@code preScaled} as false is equal to calling
+   * {@link #JBDimension(int, int)}.
+   *
+   * @param width unscaled or pre-scaled with
+   * @param height unscaled or pre-scaled size
+   * @param preScaled whether the passed size is unscaled ot scaled
+   */
   public JBDimension(int width, int height, boolean preScaled) {
-    this((double)width, (double)height, preScaled);
+    this(width, (double)height, preScaled);
   }
 
   private JBDimension(double width, double height, boolean preScaled) {
@@ -60,29 +93,26 @@ public class JBDimension extends Dimension {
     set(size2D);
   }
 
-  private double scale(double size) {
+  private static double scale(double size) {
     return Math.max(-1, JBUIScale.scale((float)size));
   }
 
-  @NotNull
-  public static JBDimension create(Dimension from, boolean preScaled) {
+  public static @NotNull JBDimension create(Dimension from, boolean preScaled) {
     if (from instanceof JBDimension) {
       return ((JBDimension)from);
     }
     return new JBDimension(from.width, from.height, preScaled);
   }
 
-  @NotNull
-  public static JBDimension create(Dimension from) {
+  public static @NotNull JBDimension create(Dimension from) {
     return create(from, false);
   }
 
-  @NotNull
-  public JBDimensionUIResource asUIResource() {
+  public @NotNull JBDimensionUIResource asUIResource() {
     return new JBDimensionUIResource(this);
   }
 
-  public static class JBDimensionUIResource extends JBDimension implements UIResource {
+  public static final class JBDimensionUIResource extends JBDimension implements UIResource {
     public JBDimensionUIResource(JBDimension size) {
       super(0, 0);
       set(size.width, size.height);
@@ -91,8 +121,7 @@ public class JBDimension extends Dimension {
     }
   }
 
-  @NotNull
-  public JBDimension withWidth(int width) {
+  public @NotNull JBDimension withWidth(int width) {
     JBDimension size = new JBDimension(0, 0);
     size.size2D.set(scale(width), size2D.height);
 
@@ -100,8 +129,7 @@ public class JBDimension extends Dimension {
     return size;
   }
 
-  @NotNull
-  public JBDimension withHeight(int height) {
+  public @NotNull JBDimension withHeight(int height) {
     JBDimension size = new JBDimension(0, 0);
     size.size2D.set(size2D.width, scale(height));
 
@@ -136,8 +164,7 @@ public class JBDimension extends Dimension {
   /**
    * @return this JBDimension with updated size
    */
-  @NotNull
-  public JBDimension size() {
+  public @NotNull JBDimension size() {
     update();
     return this;
   }
@@ -145,8 +172,7 @@ public class JBDimension extends Dimension {
   /**
    * @return new JBDimension with updated size
    */
-  @NotNull
-  public JBDimension newSize() {
+  public @NotNull JBDimension newSize() {
     update();
     return new JBDimension(size2D.width, size2D.height, true);
   }
@@ -186,14 +212,13 @@ public class JBDimension extends Dimension {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof JBDimension)) return false;
+    if (!(obj instanceof JBDimension that)) return false;
 
-    JBDimension that = (JBDimension)obj;
     return size2D.equals(that.size2D);
   }
 }
 
-class MyScaler extends Scaler {
+final class MyScaler extends Scaler {
   @Override
   protected double currentScale() {
     return JBUIScale.scale(1f);

@@ -4,8 +4,7 @@ class C {
         String s = switch (n) {
             case 2:
                 break "b";
-            case 3:
-            case 1:
+            case 3, 1:
             default:
                 break "a";
         };

@@ -15,8 +15,10 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +31,7 @@ import java.util.Arrays;
 /**
  * @author Konstantin Bulenkov
  */
-public class EditSourceInNewWindowAction extends DumbAwareAction {
+public class EditSourceInNewWindowAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
@@ -48,5 +50,10 @@ public class EditSourceInNewWindowAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null && getVirtualFiles(e).length == 1);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

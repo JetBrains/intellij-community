@@ -1,13 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiJavaModuleReference;
-import com.intellij.psi.PsiJavaModuleReferenceElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiRequiresStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -16,18 +12,22 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
+public final class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
   private final NotNullLazyValue<PsiJavaModuleReferenceElement> myModuleReference;
 
   public ClsRequiresStatementImpl(PsiRequiresStatementStub stub) {
     super(stub);
-    myModuleReference = new AtomicNotNullLazyValue<PsiJavaModuleReferenceElement>() {
-      @NotNull
-      @Override
-      protected PsiJavaModuleReferenceElement compute() {
-        return new ClsJavaModuleReferenceElementImpl(ClsRequiresStatementImpl.this, getStub().getModuleName());
-      }
-    };
+    myModuleReference = NotNullLazyValue.atomicLazy(() -> new ClsJavaModuleReferenceElementImpl(this, getStub().getModuleName()));
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitRequiresStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

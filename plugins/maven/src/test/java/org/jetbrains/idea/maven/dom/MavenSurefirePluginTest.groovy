@@ -4,21 +4,17 @@ package org.jetbrains.idea.maven.dom
 
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
+import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp()
-    setRepositoryPath(new MavenCustomRepositoryHelper(myDir, "plugins").getTestDataPath("plugins"))
-    //need to recreate fixture
-    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins", ['local1'] as String[])
-    myIndicesFixture.setUp();
+  protected MavenIndicesTestFixture createIndicesFixture() {
+    return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins", ['local1'] as String[])
   }
+  
 
+  @Test
   void testCompletion() {
     configureProjectPom("""
   <groupId>simpleMaven</groupId>
@@ -48,6 +44,7 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(myProjectPom, "main", "test")
   }
 
+  @Test 
   void testCompletionSurefireProperties() {
     configureProjectPom("""
   <groupId>simpleMaven</groupId>
@@ -73,6 +70,7 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(myProjectPom, "surefire.forkNumber", "surefire.threadNumber")
   }
 
+  @Test 
   void testCompletionSurefirePropertiesOutsideConfiguration() {
     configureProjectPom("""
   <groupId>simpleMaven</groupId>
@@ -99,6 +97,7 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(myProjectPom)
   }
 
+  @Test 
   void testSurefirePropertiesHighlighting() {
     importProject("""
   <groupId>simpleMaven</groupId>
@@ -135,6 +134,8 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
     </plugins>
   </build>
 """)
+
+    resolvePlugins()
 
     createProjectPom("""
   <groupId>simpleMaven</groupId>

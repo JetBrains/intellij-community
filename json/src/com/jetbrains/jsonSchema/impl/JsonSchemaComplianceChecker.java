@@ -11,10 +11,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class JsonSchemaComplianceChecker {
   @NotNull private final JsonLikePsiWalker myWalker;
   private final LocalInspectionToolSession mySession;
   @NotNull private final JsonComplianceCheckerOptions myOptions;
-  @Nullable private final String myMessagePrefix;
+  @Nullable private final @Nls String myMessagePrefix;
 
   public JsonSchemaComplianceChecker(@NotNull JsonSchemaObject rootSchema,
                                      @NotNull ProblemsHolder holder,
@@ -43,7 +44,7 @@ public class JsonSchemaComplianceChecker {
                                      @NotNull JsonLikePsiWalker walker,
                                      @NotNull LocalInspectionToolSession session,
                                      @NotNull JsonComplianceCheckerOptions options,
-                                     @Nullable String messagePrefix) {
+                                     @Nullable @Nls String messagePrefix) {
     myRootSchema = rootSchema;
     myHolder = holder;
     myWalker = walker;
@@ -89,7 +90,7 @@ public class JsonSchemaComplianceChecker {
     List<TextRange> ranges = new ArrayList<>();
     List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = new ArrayList<>();
     for (Map.Entry<PsiElement, JsonValidationError> entry : checker.getErrors().entrySet()) {
-      TextRange range = entry.getKey().getTextRange();
+      TextRange range = myWalker.adjustErrorHighlightingRange(entry.getKey());
       boolean processed = false;
       for (int i = 0; i < ranges.size(); i++) {
         TextRange currRange = ranges.get(i);
@@ -103,7 +104,7 @@ public class JsonSchemaComplianceChecker {
       if (processed) continue;
 
       ranges.add(range);
-      entries.add(ContainerUtil.newArrayList(entry));
+      entries.add(new SmartList<>(entry));
     }
 
     // for each set of intersecting ranges, compute the best errors to show

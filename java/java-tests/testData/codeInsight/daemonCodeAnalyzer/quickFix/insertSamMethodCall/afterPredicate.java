@@ -1,4 +1,4 @@
-// "Insert '.test' to call functional interface method" "true"
+// "Insert '.test' to call functional interface method" "true-preview"
 import java.util.function.Function;
 import java.util.function.Predicate;
 

@@ -1,29 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.util.Computable;
-
 import java.lang.reflect.Field;
+import java.util.function.Supplier;
 
-class StubFieldAccessor implements Computable<ObjectStubSerializer> {
-  private final Field myField;
+final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? extends Stub>> {
   final String externalId;
-  private volatile ObjectStubSerializer myFieldValue;
+  private final Field myField;
+  private volatile ObjectStubSerializer<?, Stub> myFieldValue;
 
   StubFieldAccessor(String externalId, Field field) {
     this.externalId = externalId;
-    myField = field;
+    this.myField = field;
+    try {
+      field.setAccessible(true);
+    }
+    catch (SecurityException ignore) { }
   }
 
   @Override
-  public ObjectStubSerializer compute() {
-    ObjectStubSerializer delegate = myFieldValue;
+  public ObjectStubSerializer<?, Stub> get() {
+    ObjectStubSerializer<?, Stub> delegate = myFieldValue;
     if (delegate == null) {
       try {
-        myFieldValue = delegate = (ObjectStubSerializer)myField.get(null);
+        @SuppressWarnings("unchecked") ObjectStubSerializer<?, Stub> value = (ObjectStubSerializer<?, Stub>)myField.get(null);
+        myFieldValue = delegate = value;
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);
+      }
+      catch (ClassCastException e) {
+        throw new IllegalArgumentException(myField + " is not assignable to 'ObjectStubSerializer'", e);
       }
       if (!delegate.getExternalId().equals(externalId)) {
         throw new IllegalStateException(

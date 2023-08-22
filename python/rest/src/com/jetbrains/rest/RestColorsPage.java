@@ -67,29 +67,37 @@ public class RestColorsPage implements ColorSettingsPage {
   @NotNull
   public String getDemoText() {
     return
-      ".. comment for documentation master file\n\n" +
-      "===============\n" +
-      " Section Title\n" +
-      "===============\n\n" +
-      ".. toctree::\n" +
-      "   :maxdepth: 2\n\n" +
-      "There is *some italics text*\n" +
-      "and **bold one** " +
-      "and ``inline literals``\n\n" +
-      "A link_ in citation style.\n" +
-      "\n" +
-      ".. _link: http://www.google.com\n\n" +
-      ".. rubric:: Footnotes\n" +
-      ".. [*] footnote.\n" +
-      ".. [REL09] Citation\n\n" +
-      ":ref:`builders`\n\n" +
-      "\n" +
-      "::\n" +
-      "\n" +
-      "  Whitespace, newlines, blank lines, and\n" +
-      "  all kinds of markup (like *this* or\n" +
-      "  \\this) is preserved by literal blocks.\n\n" +
-      "It was literal block.";
+      """
+        .. comment for documentation master file
+
+        ===============
+         Section Title
+        ===============
+
+        .. toctree::
+           :maxdepth: 2
+
+        There is *some italics text*
+        and **bold one** and ``inline literals``
+
+        A link_ in citation style.
+
+        .. _link: http://www.google.com
+
+        .. rubric:: Footnotes
+        .. [*] footnote.
+        .. [REL09] Citation
+
+        :ref:`builders`
+
+
+        ::
+
+          Whitespace, newlines, blank lines, and
+          all kinds of markup (like *this* or
+          \\this) is preserved by literal blocks.
+
+        It was literal block.""";
   }
 
   @Override

@@ -1,12 +1,34 @@
 <component name="libraryTable">
   <library name="proxy-vole" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:proxy-vole:1.0.5-jb.2" />
+    <properties jar-repository-id="central-proxy" maven-id="org.bidib.com.github.markusbernhardt:proxy-vole:1.1.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.0/proxy-vole-1.1.0.jar">
+          <sha256sum>336cf897cea035f32e16c996e57df4157656c5d919fd11abaab308a4580728af</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.17/delight-rhino-sandbox-0.0.17.jar">
+          <sha256sum>e22941d77d0d01dfc6ee5612ad421860baae8a3a0dea2eeb67658061f34527b4</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="net.java.dev.jna:jna" />
+        <dependency maven-id="net.java.dev.jna:jna-platform" />
+        <dependency maven-id="org.ini4j:ini4j" />
+        <dependency maven-id="org.mozilla:rhino-runtime" />
+        <dependency maven-id="com.google.guava:guava" />
+        <dependency maven-id="org.slf4j:slf4j-api" />
+      </exclude>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/proxy-vole/1.0.5-jb.2/proxy-vole-1.0.5-jb.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.0/proxy-vole-1.1.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.17/delight-rhino-sandbox-0.0.17.jar!/" />
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.0/proxy-vole-1.1.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.17/delight-rhino-sandbox-0.0.17-javadoc.jar!/" />
+    </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/proxy-vole/1.0.5-jb.2/proxy-vole-1.0.5-jb.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.0/proxy-vole-1.1.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.17/delight-rhino-sandbox-0.0.17-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

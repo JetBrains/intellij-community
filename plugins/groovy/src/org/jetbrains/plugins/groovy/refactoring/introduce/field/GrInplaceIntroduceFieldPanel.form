@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myRootPane" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="540" height="88"/>
+      <xy x="20" y="20" width="540" height="89"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <labelFor value="58f26"/>
-              <text value="&amp;Initialize in:"/>
+              <text resource-bundle="messages/GroovyRefactoringBundle" key="initialize.in.label"/>
             </properties>
           </component>
           <component id="58f26" class="javax.swing.JComboBox" binding="myInitCB">
@@ -39,7 +39,7 @@
         </constraints>
         <properties>
           <horizontalAlignment value="10"/>
-          <text value="Declare &amp;final"/>
+          <text resource-bundle="messages/GroovyRefactoringBundle" key="declare.final.checkbox"/>
         </properties>
       </component>
       <component id="d8bd5" class="javax.swing.JComponent" binding="myPreview" custom-create="true">

@@ -54,6 +54,12 @@ public class FindClassTest extends JavaPsiTestCase {
       myPackDir = createChildDirectory(mySrcDir1, "p");
       VirtualFile file1 = createChildData(myPackDir, "A.java");
       setFileText(file1, "package p; public class A{ public void foo(); }");
+      VirtualFile file2 = createChildData(myPackDir, "AB.java");
+      setFileText(file2, "package p; public class AB { public void foo(); }");
+      
+      VirtualFile file3 = createChildData(myPackDir, "B.java");
+      setFileText(file3, "package p; public class B { public void foo(); }");
+      
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
       PsiTestUtil.addContentRoot(myModule, myPrjDir1);
@@ -81,20 +87,20 @@ public class FindClassTest extends JavaPsiTestCase {
   }
 
   public void testClassUnderExcludedFolder() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    WriteAction.run(() -> {
       PsiTestUtil.addExcludedRoot(myModule, myPackDir);
 
-      PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
-      assertNull(psiClass);
+      assertNull(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
 
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
       final ContentEntry content = rootModel.getContentEntries()[0];
       content.removeExcludeFolder(content.getExcludeFolders()[0]);
       rootModel.commit();
-
-      psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
-      assertEquals("p.A", psiClass.getQualifiedName());
     });
+
+    PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
+    assertNotNull(psiClass);
+    assertEquals("p.A", psiClass.getQualifiedName());
   }
 
   public void testClassUnderIgnoredFolder() {
@@ -196,16 +202,16 @@ public class FindClassTest extends JavaPsiTestCase {
   }
 
   public void testFindClassInDumbMode() {
-    try {
-      DumbServiceImpl.getInstance(myProject).setDumb(true);
+    DumbServiceImpl.getInstance(myProject).runInDumbModeSynchronously(() -> {
       DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
         assertNotNull(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
         assertNotNull(myJavaFacade.findClass("p.A", new PackageScope(myJavaFacade.findPackage("p"), true, true)));
+
+        PsiClass bClass = myJavaFacade.findClass("p.B", GlobalSearchScope.allScope(myProject));
+        assertNotNull(bClass);
+        assertEquals("B", bClass.getName());
       });
-    }
-    finally {
-      DumbServiceImpl.getInstance(myProject).setDumb(false);
-    }
+    });
   }
 
 }

@@ -15,10 +15,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
   private final String myReplacementText;
 
@@ -45,13 +41,13 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.simplify.$0", myReplacementText);
+    return PyPsiBundle.message("QFIX.simplify.boolean.expression", myReplacementText);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.simplify.boolean.expression");
+    return PyPsiBundle.message("QFIX.NAME.simplify.boolean.expression");
   }
 
   @Override

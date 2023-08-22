@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Condition;
@@ -30,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ListUtil {
+public final class ListUtil {
   public static final String SELECTED_BY_MOUSE_EVENT = "byMouseEvent";
 
   public static <T> MouseMotionListener installAutoSelectOnMouseMove(@NotNull JList<T> list) {
@@ -90,6 +76,14 @@ public class ListUtil {
   public static <T> List<T> removeSelectedItems(@NotNull JList<T> list, @Nullable Condition<? super T> condition) {
     int[] indices = list.getSelectedIndices();
     return removeIndices(list, indices, condition);
+  }
+
+  public static <T> T getItem(@NotNull ListModel<T> model, int index) {
+    return getExtension(model).get(model, index);
+  }
+
+  public static <T> int getIndex(@NotNull ListModel<T> model, T item) {
+    return getExtension(model).getIndex(model, item);
   }
 
   public static <T> void removeItem(@NotNull ListModel<T> model, int index) {
@@ -338,6 +332,7 @@ public class ListUtil {
   //@formatter:off
   private interface ListModelExtension<T, ModelType extends ListModel<T>> {
     T get(ModelType model, int index);
+    int getIndex(ModelType model, T item);
     void set(ModelType model, int index, T item);
     void remove(ModelType model, int index);
     void removeAll(ModelType model);
@@ -346,14 +341,16 @@ public class ListUtil {
 
   private static final ListModelExtension DEFAULT_MODEL = new ListModelExtension<Object, DefaultListModel<Object>>() {
     @Override public Object get(DefaultListModel<Object> model, int index) { return model.get(index);}
+    @Override public int getIndex(DefaultListModel<Object> model, Object item) { return model.indexOf(item);}
     @Override public void set(DefaultListModel<Object> model, int index, Object item) { model.set(index, item);}
     @Override public void remove(DefaultListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(DefaultListModel<Object> model) { model.removeAllElements();}
-    @Override public void addAll(DefaultListModel<Object> model, List<?> item) { model.addElement(item);}
+    @Override public void addAll(DefaultListModel<Object> model, List<?> items) { model.addAll(items);}
   };
 
   private static final ListModelExtension COLLECTION_MODEL = new ListModelExtension<Object, CollectionListModel<Object>>() {
     @Override public Object get(CollectionListModel<Object> model, int index) { return model.getElementAt(index);}
+    @Override public int getIndex(CollectionListModel<Object> model, Object item) { return model.getElementIndex(item);}
     @Override public void set(CollectionListModel<Object> model, int index, Object item) { model.setElementAt(item, index);}
     @Override public void remove(CollectionListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(CollectionListModel<Object> model) { model.removeAll();}
@@ -362,6 +359,7 @@ public class ListUtil {
 
   private static final ListModelExtension SORTED_MODEL = new ListModelExtension<Object, SortedListModel<Object>>() {
     @Override public Object get(SortedListModel<Object> model, int index) { return model.get(index);}
+    @Override public int getIndex(SortedListModel<Object> model, Object item) { return model.indexOf(item);}
     @Override public void set(SortedListModel<Object> model, int index, Object item) { model.remove(index); model.add(item);}
     @Override public void remove(SortedListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(SortedListModel<Object> model) { model.clear();}
@@ -370,6 +368,7 @@ public class ListUtil {
 
   private static final ListModelExtension FILTERED_MODEL = new ListModelExtension<Object, FilteringListModel<Object>>() {
     @Override public Object get(FilteringListModel<Object> model, int index) { return model.getElementAt(index);}
+    @Override public int getIndex(FilteringListModel<Object> model, Object item) { return model.getElementIndex(item);}
     @Override public void set(FilteringListModel<Object> model, int index, Object item) { getExtension(model.getOriginalModel()).set(model.getOriginalModel(), index, item);}
     @Override public void remove(FilteringListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(FilteringListModel<Object> model) { model.replaceAll(Collections.emptyList());}

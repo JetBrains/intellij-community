@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.actions
 
@@ -11,12 +11,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeList
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThreeState
-import java.util.*
 
 class RemoveChangeListAction : AbstractChangeListAction() {
   private val LOG = logger<RemoveChangeListAction>()
@@ -34,8 +32,11 @@ class RemoveChangeListAction : AbstractChangeListAction() {
     val hasChanges = !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES))
     if (hasChanges) {
       val containsActiveChangelist = changeLists.any { it is LocalChangeList && it.isDefault }
+      val changeListName =
+        if (containsActiveChangelist) VcsBundle.message("changes.another.change.list")
+        else VcsBundle.message("changes.default.change.list")
       presentation.description = ActionsBundle.message("action.ChangesView.RemoveChangeList.description.template",
-                                                       changeLists.size, if (containsActiveChangelist) "another" else "default")
+                                                       changeLists.size, changeListName)
     }
     else {
       presentation.description = null
@@ -57,11 +58,11 @@ class RemoveChangeListAction : AbstractChangeListAction() {
     val selectedLists = e.getRequiredData(VcsDataKeys.CHANGE_LISTS)
 
     @Suppress("UNCHECKED_CAST")
-    deleteLists(project, Arrays.asList(*selectedLists) as Collection<LocalChangeList>)
+    deleteLists(project, listOf(*selectedLists) as Collection<LocalChangeList>)
   }
 
   private fun deleteLists(project: Project, lists: Collection<LocalChangeList>) {
-    val manager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+    val manager = ChangeListManagerEx.getInstanceEx(project)
 
     val toRemove = mutableListOf<LocalChangeList>()
     val toAsk = mutableListOf<LocalChangeList>()
@@ -84,7 +85,7 @@ class RemoveChangeListAction : AbstractChangeListAction() {
       if (remainingLists.isEmpty()) {
         if (!confirmAllChangeListsRemoval(project, pendingLists, toAsk)) return
 
-        var defaultList = manager.getChangeList(LocalChangeList.getDefaultName())
+        var defaultList = manager.findChangeList(LocalChangeList.getDefaultName())
         if (defaultList == null) {
           defaultList = manager.addChangeList(LocalChangeList.getDefaultName(), null)
         }

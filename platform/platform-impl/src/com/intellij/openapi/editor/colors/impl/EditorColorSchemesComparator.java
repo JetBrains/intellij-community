@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Comparator;
 
 import static com.intellij.openapi.editor.colors.EditorColorsScheme.DEFAULT_SCHEME_NAME;
@@ -25,13 +13,13 @@ import static com.intellij.openapi.editor.colors.EditorColorsScheme.DEFAULT_SCHE
 /**
  * Defines the order in which editor color schemes are displayed.
  */
-public class EditorColorSchemesComparator implements Comparator<EditorColorsScheme> {
-  public final static EditorColorSchemesComparator INSTANCE = new EditorColorSchemesComparator();
+public final class EditorColorSchemesComparator implements Comparator<EditorColorsScheme> {
+  public static final EditorColorSchemesComparator INSTANCE = new EditorColorSchemesComparator();
 
-  public final static int DEFAULT_SCHEME          = 0;
-  public final static int ONE_OF_DEFAULT_SCHEMES  = DEFAULT_SCHEME + 1;
-  public final static int BUNDLED_SCHEME          = ONE_OF_DEFAULT_SCHEMES + 1;
-  public final static int CUSTOM_SCHEME           = BUNDLED_SCHEME + 1;
+  public static final int DEFAULT_SCHEME          = 0;
+  public static final int ONE_OF_DEFAULT_SCHEMES  = DEFAULT_SCHEME + 1;
+  public static final int BUNDLED_SCHEME          = ONE_OF_DEFAULT_SCHEMES + 1;
+  public static final int CUSTOM_SCHEME           = BUNDLED_SCHEME + 1;
 
   private EditorColorSchemesComparator() {
   }
@@ -52,6 +40,12 @@ public class EditorColorSchemesComparator implements Comparator<EditorColorsSche
         return DEFAULT_SCHEME_NAME.equals(original.getName()) ? DEFAULT_SCHEME : ONE_OF_DEFAULT_SCHEMES;
       }
       if (original instanceof ReadOnlyColorsScheme) {
+        if (ExperimentalUI.isNewUI()) {
+          int i = Arrays.asList("High contrast", "Dark", "Light").indexOf(original.getName());
+          if (i >= 0) {
+            return -(i + 1);
+          }
+        }
         return BUNDLED_SCHEME;
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.command.impl;
 
@@ -38,7 +38,7 @@ public class CannotUndoReportDialog extends DialogWrapper implements DataProvide
     for (DocumentReference file : files) {
       model.addElement(file);
     }
-    myProblemFilesList.setCellRenderer(new SimpleListCellRenderer<DocumentReference>() {
+    myProblemFilesList.setCellRenderer(new SimpleListCellRenderer<>() {
       @Override
       public void customize(@NotNull JList<? extends DocumentReference> list,
                             DocumentReference file,
@@ -77,14 +77,12 @@ public class CannotUndoReportDialog extends DialogWrapper implements DataProvide
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       DocumentReference value = myProblemFilesList.getSelectedValue();
       VirtualFile file = value != null ? value.getFile() : null;

@@ -1,4 +1,4 @@
-// "Replace lambda with method reference" "true"
+// "Replace lambda with method reference" "true-preview"
 public class IDEA100452 {
   public static <T>  MatchOp<T> match(MatchOp.MatchKind matchKind) {
     class MatchSink extends BooleanTerminalSink<T> {

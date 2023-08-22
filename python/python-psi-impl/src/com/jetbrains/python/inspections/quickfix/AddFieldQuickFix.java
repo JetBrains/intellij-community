@@ -8,15 +8,13 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -29,16 +27,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * Available on self.my_something when my_something is unresolved.
- * User: dcheryasov
  */
-public class AddFieldQuickFix implements LocalQuickFix {
-
+public final class AddFieldQuickFix implements LocalQuickFix {
   private final String myInitializer;
   private final String myClassName;
   private final String myIdentifier;
-  private boolean replaceInitializer = false;
+  private final boolean replaceInitializer;
 
   public AddFieldQuickFix(@NotNull final String identifier, @NotNull final String initializer, final String className, boolean replace) {
     myIdentifier = identifier;
@@ -50,13 +48,13 @@ public class AddFieldQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", myIdentifier, myClassName);
+    return PyPsiBundle.message("QFIX.add.field.to.class", myIdentifier, myClassName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.add.field.to.class");
+    return PyPsiBundle.message("QFIX.NAME.add.field.to.class");
   }
 
   @NotNull
@@ -69,7 +67,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (params.length > 0) {
       selfName = params[0].getName();
     }
-    final PyStatement newStmt = callback.fun(selfName);
+    final PyStatement newStmt = callback.apply(selfName);
     final PsiElement result = PyPsiRefactoringUtil.addElementToStatementList(newStmt, statementList, true);
     PyPsiUtils.removeRedundantPass(statementList);
     return result;
@@ -133,11 +131,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           else {
             builder.replaceElement(leftExpression.getLastChild(), myIdentifier);
           }
-          final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile == null) return;
-          final Editor editor = PythonUiService.getInstance().openTextEditor(file.getProject(), virtualFile);
-          if (editor == null) return;
-          builder.run(editor, false);
+          PythonTemplateRunner.runTemplate(file, builder);
         }
       }
     }
@@ -168,7 +162,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         newInit = (PyFunction)clsContent.addAfter(newInit, addAnchor);
 
         PythonUiService.getInstance()
-          .showBalloonInfo(project, PyPsiBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), itemName));
+          .showBalloonInfo(project, PyPsiBundle.message("QFIX.add.field.to.class.popup.content.added.init", cls.getName(), itemName));
 
         final PyStatementList statementList = newInit.getStatementList();
         final PyStatement[] statements = statementList.getStatements();
@@ -218,10 +212,10 @@ public class AddFieldQuickFix implements LocalQuickFix {
           else {
             seen = true;
           }
-          sb.append(params[i].getText());
+          sb.append(params[i].getName());
         }
         sb.append(")");
-        functionText += "    " + sb.toString();
+        functionText += "    " + sb;
       }
       else {
         functionText += "    pass";
@@ -233,7 +227,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     );
   }
 
-  private static class CreateFieldCallback implements Function<String, PyStatement> {
+  private static final class CreateFieldCallback implements Function<String, PyStatement> {
     private final Project myProject;
     private final String myItemName;
     private final String myInitializer;
@@ -245,7 +239,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
 
     @Override
-    public PyStatement fun(String selfName) {
+    public PyStatement apply(String selfName) {
       return PyElementGenerator.getInstance(myProject)
         .createFromText(LanguageLevel.getDefault(), PyStatement.class, selfName + "." + myItemName + " = " + myInitializer);
     }

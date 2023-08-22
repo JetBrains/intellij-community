@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -12,22 +11,27 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull;
+import static org.jetbrains.plugins.gradle.util.GradleModuleDataKt.getGradleIdentityPath;
 
 /**
  * @author Vladislav.Soroka
@@ -38,7 +42,7 @@ public class GradleExtensionsSettings {
   private final Settings myState = new Settings();
 
   public GradleExtensionsSettings(Project project) {
-    ExternalSystemApiUtil.subscribe(project, GradleConstants.SYSTEM_ID, new GradleSettingsListenerAdapter() {
+    ExternalSystemApiUtil.subscribe(project, GradleConstants.SYSTEM_ID, new GradleSettingsListener() {
       @Override
       public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
         myState.remove(linkedProjectPaths);
@@ -48,7 +52,7 @@ public class GradleExtensionsSettings {
 
   @NotNull
   public static Settings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GradleExtensionsSettings.class).myState;
+    return project.getService(GradleExtensionsSettings.class).myState;
   }
 
   public static void load(Project project) {
@@ -78,13 +82,13 @@ public class GradleExtensionsSettings {
     public Map<String, GradleProject> projects = new HashMap<>();
 
     public void add(@NotNull String rootPath,
-                    @NotNull Collection<DataNode<GradleExtensions>> extensionsData) {
+                    @NotNull Collection<? extends DataNode<GradleExtensions>> extensionsData) {
       Map<String, GradleExtensions> extensionMap = new HashMap<>();
       for (DataNode<GradleExtensions> node : extensionsData) {
         DataNode<?> parent = node.getParent();
         if (parent == null) continue;
         if (!(parent.getData() instanceof ModuleData)) continue;
-        String gradlePath = GradleProjectResolverUtil.getGradlePath((ModuleData)parent.getData());
+        String gradlePath = getGradleIdentityPath((ModuleData)parent.getData());
         extensionMap.put(gradlePath, node.getData());
       }
 
@@ -138,13 +142,13 @@ public class GradleExtensionsSettings {
           gradleTask.description = description.toString();
           extensionsData.tasksMap.put(gradleTask.name, gradleTask);
         }
-        extensionsData.tasks = new SmartList<>(extensionsData.tasksMap.values());
         for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
           GradleConfiguration gradleConfiguration = new GradleConfiguration();
           gradleConfiguration.name = configuration.getName();
           gradleConfiguration.description = configuration.getDescription();
           gradleConfiguration.visible = configuration.isVisible();
           gradleConfiguration.scriptClasspath = configuration.isScriptClasspathConfiguration();
+          gradleConfiguration.declarationAlternatives = configuration.getDeclarationAlternatives();
           if (gradleConfiguration.scriptClasspath) {
             extensionsData.buildScriptConfigurations.put(configuration.getName(), gradleConfiguration);
           }
@@ -176,7 +180,7 @@ public class GradleExtensionsSettings {
     public GradleExtensionsData getExtensionsFor(@Nullable Module module) {
       if (module == null) return null;
       return getExtensionsFor(ExternalSystemApiUtil.getExternalRootProjectPath(module),
-                              GradleProjectResolverUtil.getGradlePath(module));
+                              getGradleIdentityPathOrNull(module));
     }
 
     /**
@@ -188,14 +192,20 @@ public class GradleExtensionsSettings {
      */
     @Nullable
     public GradleExtensionsData getExtensionsFor(@Nullable String rootProjectPath, @Nullable String gradlePath) {
-      if (rootProjectPath == null || gradlePath == null) return null;
-      GradleProject gradleProject = projects.get(rootProjectPath);
+      GradleProject gradleProject = getRootGradleProject(rootProjectPath);
       if (gradleProject == null) return null;
       return gradleProject.extensions.get(gradlePath);
     }
+
+    @Contract("null -> null")
+    @Nullable
+    public GradleProject getRootGradleProject(@Nullable String rootProjectPath) {
+      if (rootProjectPath == null) return null;
+      return projects.get(rootProjectPath);
+    }
   }
 
-  static class GradleProject {
+  public static class GradleProject {
     public Map<String, GradleExtensionsData> extensions = new HashMap<>();
   }
 
@@ -210,15 +220,11 @@ public class GradleExtensionsSettings {
     public final Map<String, GradleProp> properties = new HashMap<>();
     @NotNull
     public final Map<String, GradleTask> tasksMap = new LinkedHashMap<>();
-    /**
-     * @deprecated to be removed, use {@link GradleExtensionsData#tasksMap} instead
-     */
-    @Deprecated
-    public List<GradleTask> tasks = Collections.emptyList();
     @NotNull
     public final Map<String, GradleConfiguration> configurations = new HashMap<>();
     @NotNull
     public final Map<String, GradleConfiguration> buildScriptConfigurations = new HashMap<>();
+
     @Nullable
     public GradleExtensionsData getParent() {
       if (myGradleProject == null) return null;
@@ -314,5 +320,20 @@ public class GradleExtensionsSettings {
     public boolean visible = true;
     public boolean scriptClasspath;
     public String description;
+    public List<String> declarationAlternatives;
+  }
+
+  @Nullable
+  public static GradleProject getRootProject(@NotNull PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile().getOriginalFile();
+    final Project project = containingFile.getProject();
+    return getInstance(project).getRootGradleProject(getRootProjectPath(element));
+  }
+
+  @Nullable
+  public static String getRootProjectPath(@NotNull PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile().getOriginalFile();
+    final Module module = ModuleUtilCore.findModuleForFile(containingFile);
+    return ExternalSystemApiUtil.getExternalRootProjectPath(module);
   }
 }

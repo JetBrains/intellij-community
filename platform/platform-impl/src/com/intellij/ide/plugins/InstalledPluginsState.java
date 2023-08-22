@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,21 +18,24 @@ import java.util.*;
  */
 @Service
 public final class InstalledPluginsState {
-  @Nullable
-  public static InstalledPluginsState getInstanceIfLoaded() {
+
+  public static final @NonNls String RESTART_REQUIRED_MESSAGE = "Not allowing load/unload without restart because of pending restart operation";
+
+  public static @Nullable InstalledPluginsState getInstanceIfLoaded() {
     return LoadingState.COMPONENTS_LOADED.isOccurred() ? getInstance() : null;
   }
 
   public static InstalledPluginsState getInstance() {
-    return ServiceManager.getService(InstalledPluginsState.class);
+    return ApplicationManager.getApplication().getService(InstalledPluginsState.class);
   }
 
   private final Object myLock = new Object();
   private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = new IdentityHashMap<>();
   private final Set<PluginId> myInstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<PluginId> myUpdatedPlugins = new HashSet<>();
+  private final Set<PluginId> myUpdatedWithoutRestartPlugins = new HashSet<>();
   private final Set<PluginId> myUninstalledWithoutRestartPlugins = new HashSet<>();
-  private final Set<String> myOutdatedPlugins = new SmartHashSet<>();
+  private final Set<String> myOutdatedPlugins = new HashSet<>();
   private boolean myInstallationInProgress = false;
   private boolean myRestartRequired = false;
 
@@ -58,15 +62,13 @@ public final class InstalledPluginsState {
     }
   }
 
-  @NotNull
-  public Collection<IdeaPluginDescriptor> getInstalledPlugins() {
+  public @NotNull Collection<IdeaPluginDescriptor> getInstalledPlugins() {
     synchronized (myLock) {
       return Collections.unmodifiableCollection(myInstalledPlugins.values());
     }
   }
 
-  @NotNull
-  public Collection<PluginId> getUpdatedPlugins() {
+  public @NotNull Collection<PluginId> getUpdatedPlugins() {
     synchronized (myLock) {
       return Collections.unmodifiableCollection(myUpdatedPlugins);
     }
@@ -98,6 +100,12 @@ public final class InstalledPluginsState {
 
   public boolean wasUpdated(@NotNull PluginId id) {
     synchronized (myLock) {
+      return myUpdatedPlugins.contains(id) || myUpdatedWithoutRestartPlugins.contains(id);
+    }
+  }
+
+  public boolean wasUpdatedWithRestart(@NotNull PluginId id) {
+    synchronized (myLock) {
       return myUpdatedPlugins.contains(id);
     }
   }
@@ -113,7 +121,7 @@ public final class InstalledPluginsState {
     }
 
     boolean supersedes = PluginManagerCore.isCompatible(descriptor) &&
-                         PluginDownloader.compareVersionsSkipBrokenAndIncompatible(existing, descriptor.getVersion()) > 0;
+                         PluginDownloader.compareVersionsSkipBrokenAndIncompatible(descriptor.getVersion(), existing) > 0;
 
     String idString = id.getIdString();
 
@@ -134,7 +142,12 @@ public final class InstalledPluginsState {
     synchronized (myLock) {
       myOutdatedPlugins.remove(id.getIdString());
       if (isUpdate) {
-        myUpdatedPlugins.add(id);
+        if (restartNeeded) {
+          myUpdatedPlugins.add(id);
+        }
+        else {
+          myUpdatedWithoutRestartPlugins.add(id);
+        }
       }
       else if (restartNeeded) {
         myInstalledPlugins.put(id, descriptor);
@@ -143,16 +156,19 @@ public final class InstalledPluginsState {
         myInstalledWithoutRestartPlugins.add(id);
       }
     }
+    PluginManagerUsageCollector.pluginInstallationFinished(descriptor);
   }
 
 
-  public void onPluginUninstall(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
+  public void onPluginUninstall(@NotNull IdeaPluginDescriptor descriptor,
+                                boolean isDynamicallyUnloadable) {
     PluginId id = descriptor.getPluginId();
-    synchronized (myLock) {
-      if (!restartNeeded) {
+    if (isDynamicallyUnloadable) {
+      synchronized (myLock) {
         myUninstalledWithoutRestartPlugins.add(id);
       }
     }
+    PluginManagerUsageCollector.pluginRemoved(id);
   }
 
   public void resetChangesAppliedWithoutRestart() {

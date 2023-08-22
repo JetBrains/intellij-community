@@ -24,7 +24,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 
-class XPathUsageInfo extends UsageInfo {
+final class XPathUsageInfo extends UsageInfo {
     private final XPathExpression myExpression;
 
     @SuppressWarnings({ "ConstantConditions" })

@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -29,7 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import icons.GradleIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -57,23 +56,16 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     this(ProjectDataManager.getInstance());
   }
 
-  /**
-   * @deprecated use {@link GradleProjectImportBuilder#GradleProjectImportBuilder(ProjectDataManager)}
-   */
-  @Deprecated
-  public GradleProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager dataManager) {
-    this((ProjectDataManager)dataManager);
-  }
-
   public GradleProjectImportBuilder(@NotNull ProjectDataManager dataManager) {
     super(dataManager, () -> new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
-    LOG.warn("Do not use `GradleProjectImportBuilder` directly. Use instead:\n" +
-             "Internal stable Api\n" +
-             " Use `com.intellij.ide.actions.ImportModuleAction.doImport` to import (attach) a new project.\n" +
-             " Use `com.intellij.ide.impl.ProjectUtil.openOrImport` to open (import) a new project.\n" +
-             "Internal experimental Api\n" +
-             " Use `org.jetbrains.plugins.gradle.service.project.open.openGradleProject` to open (import) a new gradle project.\n" +
-             " Use `org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject` to link a gradle project to an opened idea project.",
+    LOG.warn("""
+               Do not use `GradleProjectImportBuilder` directly. Use instead:
+               Internal stable Api
+                Use `com.intellij.ide.actions.ImportModuleAction.doImport` to import (attach) a new project.
+                Use `com.intellij.ide.impl.ProjectUtil.openOrImport` to open (import) a new project.
+               Internal experimental Api
+                Use `org.jetbrains.plugins.gradle.service.project.open.openGradleProject` to open (import) a new gradle project.
+                Use `org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject` to link a gradle project to an opened idea project.""",
              new Throwable());
   }
 
@@ -108,7 +100,7 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
 
     Set<String> existingPaths = Arrays.stream(jdkTable.getAllJdks())
                                       .map(sdk -> sdk.getHomePath())
-                                      .collect(Collectors.toCollection(() -> new THashSet<>(FileUtil.PATH_HASHING_STRATEGY)));
+                                      .collect(Collectors.toCollection(() -> CollectionFactory.createFilePathSet()));
     for (String javaHome : javaSdkType.suggestHomePaths()) {
       if (!existingPaths.contains(FileUtil.toCanonicalPath(javaHome))) {
         Sdk jdk = javaSdkType.createJdk(ObjectUtils.notNull(javaSdkType.suggestSdkName(null, javaHome), ""), javaHome);
@@ -159,7 +151,8 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
           }
         };
 
-        Runnable importTask = () -> ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
+        Runnable importTask =
+          () -> ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
 
         boolean showSelectiveImportDialog = GradleSettings.getInstance(project).showSelectiveImportDialogOnInitialImport();
         if (showSelectiveImportDialog && !ApplicationManager.getApplication().isHeadlessEnvironment()) {

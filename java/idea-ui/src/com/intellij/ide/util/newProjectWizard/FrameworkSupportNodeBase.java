@@ -4,6 +4,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
   }
 
   @NotNull
-  protected final String getTitle() {
+  protected final @NlsContexts.Label String getTitle() {
     return getUserObject().getPresentableName();
   }
 
@@ -75,7 +76,7 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     return getUserObject().getId();
   }
 
-  @SuppressWarnings({"unchecked", "RedundantCast", "rawtypes"})
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @NotNull
   public List<FrameworkSupportNodeBase> getChildren() {
     return children != null ? (List)children : Collections.emptyList();

@@ -23,8 +23,6 @@ import javax.swing.*;
 
 /**
  * ComboBox with Editor and Strings as item
- *
- * @author dsl
  */
 public class StringComboboxEditor extends EditorComboBoxEditor {
   public static final Key<JComboBox> COMBO_BOX_KEY = Key.create("COMBO_BOX_KEY");

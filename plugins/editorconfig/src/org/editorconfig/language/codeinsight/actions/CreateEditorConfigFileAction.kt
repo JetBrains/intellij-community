@@ -12,11 +12,10 @@ import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.messages.EditorConfigBundle
 
 class CreateEditorConfigFileAction : CreateInDirectoryActionBase(
-  EditorConfigBundle["create.file.title"],
-  EditorConfigBundle["create.file.description"],
+  EditorConfigBundle.get("create.file.title"),
+  EditorConfigBundle.get("create.file.description"),
   AllIcons.Nodes.Editorconfig
 ) {
-  @Suppress("UsePropertyAccessSyntax")
   override fun actionPerformed(event: AnActionEvent) {
     val view = event.getData(LangDataKeys.IDE_VIEW) ?: return
     val directory = view.getOrChooseDirectory() ?: return

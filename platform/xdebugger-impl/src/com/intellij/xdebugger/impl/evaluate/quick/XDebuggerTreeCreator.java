@@ -62,9 +62,8 @@ public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,Str
   }
 
   @Override
-  public void createDescriptorByNode(Object node, ResultConsumer<Pair<XValue, String>> resultConsumer) {
-    if (node instanceof XValueNodeImpl) {
-      XValueNodeImpl valueNode = (XValueNodeImpl)node;
+  public void createDescriptorByNode(Object node, ResultConsumer<? super Pair<XValue, String>> resultConsumer) {
+    if (node instanceof XValueNodeImpl valueNode) {
       resultConsumer.onSuccess(Pair.create(valueNode.getValueContainer(), valueNode.getName()));
     }
   }

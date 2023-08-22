@@ -1,27 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
-import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
@@ -41,20 +39,21 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
+import static com.intellij.openapi.util.Predicates.nonNull;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
+import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
+import static com.intellij.util.ui.UIUtil.BR;
 
-public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
+public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   private final static Logger LOG = Logger.getInstance(AbstractCommonUpdateAction.class);
 
   private final boolean myAlwaysVisible;
@@ -68,7 +67,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     myAlwaysVisible = alwaysVisible;
   }
 
-  private String getCompleteActionName(VcsContext dataContext) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private @NlsActions.ActionText String getCompleteActionName(VcsContext dataContext) {
     return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext, myActionInfo));
   }
 
@@ -108,14 +112,21 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
       if (ApplicationManager.getApplication().isDispatchThread()) {
         // Not only documents, but also project settings should be saved,
-        // to ensure that if as result of Update some project settings will be changed,
+        // to ensure that if as a result of Update some project settings will be changed,
         // all local changes are saved in prior and do not overwrite remote changes.
         // Also, there is a chance that save during update can break it -
         // we do disable auto saving during update, but still, there is a chance that save will occur.
-        StoreUtil.saveDocumentsAndProjectSettings(project);
+        FileDocumentManager.getInstance().saveAllDocuments();
+        forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project, false);
       }
 
-      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText());
+      Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles, myActionInfo, getTemplatePresentation().getText()) {
+        @Override
+        public void onSuccess() {
+          super.onSuccess();
+          AbstractCommonUpdateAction.this.onSuccess();
+        }
+      };
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         task.run(new EmptyProgressIndicator());
@@ -128,6 +139,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     }
   }
 
+  protected void onSuccess() {}
+
   private static boolean someSessionWasCanceled(List<? extends UpdateSession> updateSessions) {
     for (UpdateSession updateSession : updateSessions) {
       if (updateSession.isCanceled()) {
@@ -137,7 +150,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     return false;
   }
 
-  private static String getAllFilesAreUpToDateMessage(FilePath[] roots) {
+  private static @NlsContexts.NotificationContent String getAllFilesAreUpToDateMessage(FilePath[] roots) {
     if (roots.length == 1 && !roots[0].isDirectory()) {
       return VcsBundle.message("message.text.file.is.up.to.date");
     }
@@ -183,7 +196,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       }
     }
 
-    final Map<AbstractVcs, Collection<FilePath>> result = new THashMap<>();
+    final Map<AbstractVcs, Collection<FilePath>> result = new HashMap<>();
     for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
       AbstractVcs vcs = entry.getKey();
       result.put(vcs, vcs.filterUniqueRoots(new ArrayList<>(entry.getValue()), FilePath::getVirtualFile));
@@ -258,8 +271,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       }
     }
 
+    final AbstractVcs singleVcs = vcsManager.getSingleVCS();
     presentation.setVisible(true);
-    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning());
+    presentation.setEnabled(!vcsManager.isBackgroundVcsOperationRunning() &&
+                            (singleVcs == null || !singleVcs.isUpdateActionDisabled()));
   }
 
   private static boolean supportingVcsesAreEmpty(final ProjectLevelVcsManager vcsManager, final ActionInfo actionInfo) {
@@ -272,9 +287,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
   @ApiStatus.Internal
   public static class Updater extends Task.Backgroundable {
-    private final String LOCAL_HISTORY_ACTION = VcsBundle.message("local.history.update.from.vcs");
 
-    private final Project myProject;
     private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
     protected UpdatedFiles myUpdatedFiles;
     private final FilePath[] myRoots;
@@ -292,12 +305,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     private LocalHistoryAction myLocalHistoryAction;
 
     private final ActionInfo myActionInfo;
-    private final String myActionName;
+    private final @Nls String myActionName;
 
-    public Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles,
-                   final ActionInfo actionInfo, final String actionName) {
-      super(project, actionName, true, VcsConfiguration.getInstance(project).getUpdateOption());
-      myProject = project;
+    public Updater(final Project project,
+                   final FilePath[] roots,
+                   final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles,
+                   final ActionInfo actionInfo,
+                   final @NlsContexts.ProgressTitle String actionName) {
+      super(project, actionName, true);
       myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
       myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
       myRoots = roots;
@@ -328,16 +343,18 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     }
 
     private void runImpl() {
-      StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+      if (myProject != null) {
+        StoreReloadManager.Companion.getInstance(myProject).blockReloadingProjectOnExternalChanges();
+      }
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
-      myBefore = LocalHistory.getInstance().putSystemLabel(myProject, "Before update");
-      myLocalHistoryAction = LocalHistory.getInstance().startAction(LOCAL_HISTORY_ACTION);
+      myBefore = LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("update.label.before.update"));
+      myLocalHistoryAction = LocalHistory.getInstance().startAction(VcsBundle.message("local.history.update.from.vcs"));
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
       }
-      IdeActivity activity = IdeActivity.started(myProject, "vcs", "update");
+      StructuredIdeActivity activity = UPDATE_ACTIVITY.started(myProject);
       try {
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;
@@ -425,56 +442,55 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     private Notification prepareNotification(@NotNull UpdateInfoTree tree,
                                              boolean someSessionWasCancelled,
                                              @NotNull List<? extends UpdateSession> updateSessions) {
-      int allFiles = getUpdatedFilesCount();
+      int allFilesCount = getUpdatedFilesCount();
       String additionalContent = nullize(updateSessions.stream().
         map(UpdateSession::getAdditionalNotificationContent).
-        filter(Objects::nonNull).
+        filter(nonNull()).
         collect(Collectors.joining(", ")));
 
-      String title;
-      String content;
-      NotificationType type;
-      if (someSessionWasCancelled) {
-        title = "Project Partially Updated";
-        content = allFiles + " " + pluralize("file", allFiles) + " updated";
-        type = NotificationType.WARNING;
-      }
-      else {
-        title = allFiles + " " + pluralize("File", allFiles) + " Updated";
-        content = notNullize(prepareScopeUpdatedText(tree));
-        type = NotificationType.INFORMATION;
-      }
+      String title = someSessionWasCancelled
+                     ? VcsBundle.message("update.notification.title.project.partially.updated")
+                     : VcsBundle.message("update.notification.title.count.files.updated", allFilesCount);
+
+      String content = someSessionWasCancelled
+                       ? VcsBundle.message("update.notification.content.files.updated", allFilesCount)
+                       : notNullize(prepareScopeUpdatedText(tree));
+
+      NotificationType type = someSessionWasCancelled
+                              ? NotificationType.WARNING
+                              : NotificationType.INFORMATION;
 
       if (additionalContent != null) {
         if (!content.isEmpty()) {
-          content += "<br/>";
+          content += BR;
         }
         content += additionalContent;
       }
 
-      return STANDARD_NOTIFICATION.createNotification(title, content, type, null);
+      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
     }
 
     private int getUpdatedFilesCount() {
-      return myUpdatedFiles.getTopLevelGroups().stream().mapToInt(this::getFilesCount).sum();
+      return myUpdatedFiles.getTopLevelGroups().stream().mapToInt(Updater::getFilesCount).sum();
     }
 
-    private int getFilesCount(@NotNull FileGroup group) {
+    private static int getFilesCount(@NotNull FileGroup group) {
       return group.getFiles().size() + group.getChildren().stream().mapToInt(g -> getFilesCount(g)).sum();
     }
 
     @Nullable
-    private String prepareScopeUpdatedText(@NotNull UpdateInfoTree tree) {
+    @Nls
+    private static String prepareScopeUpdatedText(@NotNull UpdateInfoTree tree) {
       String scopeText = null;
       NamedScope scopeFilter = tree.getFilterScope();
       if (scopeFilter != null) {
         int filteredFiles = tree.getFilteredFilesCount();
-        String filterName = scopeFilter.getName();
+        String filterName = scopeFilter.getPresentableName();
         if (filteredFiles == 0) {
-          scopeText = filterName + " wasn't modified";
+          scopeText = VcsBundle.message("update.file.name.wasn.t.modified", filterName);
         }
         else {
-          scopeText = filteredFiles + " in " + filterName;
+          scopeText = VcsBundle.message("update.filtered.files.count.in.filter.name", filteredFiles, filterName);
         }
       }
       return scopeText;
@@ -487,8 +503,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
-        LocalHistory.getInstance().putSystemLabel(myProject, LOCAL_HISTORY_ACTION); // TODO check why this label is needed
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
+        LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("local.history.update.from.vcs")); // TODO check why this label is needed
         return;
       }
       boolean continueChain = false;
@@ -506,7 +522,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       if (myLocalHistoryAction != null) {
         myLocalHistoryAction.finish();
       }
-      myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
+      myAfter = LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("update.label.after.update"));
 
       if (myActionInfo.canChangeFileStatus()) {
         final List<VirtualFile> files = new ArrayList<>();
@@ -528,7 +544,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       final boolean updateSuccess = !someSessionWasCancelled && myGroupedExceptions.isEmpty();
 
       if (myProject.isDisposed()) {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         return;
       }
 
@@ -558,7 +574,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           content = getAllFilesAreUpToDateMessage(myRoots);
           type = NotificationType.INFORMATION;
         }
-        VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type));
+        VcsNotifier.getInstance(myProject).notify(
+          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED));
       }
       else if (!myUpdatedFiles.isEmpty()) {
 
@@ -572,13 +589,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
 
           Notification notification = prepareNotification(tree, someSessionWasCancelled, myUpdateSessions);
-          notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View", notification));
+          notification.addAction(new ViewUpdateInfoNotification(myProject, tree, VcsBundle.message("update.notification.content.view"), notification));
           VcsNotifier.getInstance(myProject).notify(notification);
         }
       }
 
 
-      StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+      StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
 
       if (continueChainFinal && updateSuccess) {
         if (!noMerged) {
@@ -591,7 +608,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         }
       }
     }
-
 
     private void showContextInterruptedError() {
       gatherContextInterruptedMessages();

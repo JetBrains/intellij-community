@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,7 +9,6 @@ import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ColoredItem;
@@ -22,34 +21,46 @@ import com.intellij.util.NotNullizer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
+import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-class ServiceModel implements Disposable, InvokerSupplier {
-  static final ExtensionPointName<ServiceViewContributor<?>> CONTRIBUTOR_EP_NAME =
-    ExtensionPointName.create("com.intellij.serviceViewContributor");
+import static com.intellij.execution.services.ServiceViewContributor.CONTRIBUTOR_EP_NAME;
+
+final class ServiceModel implements Disposable, InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(ServiceModel.class);
 
   static final TreeTraversal NOT_LOADED_LAST_BFS = new TreeTraversal("NOT_LOADED_LAST_BFS") {
     @NotNull
     @Override
-    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                    @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
       return new NotLoadedLastBfsIt<>(roots, tree);
+    }
+  };
+  static final TreeTraversal ONLY_LOADED_BFS = new TreeTraversal("ONLY_LOADED_BFS") {
+    @NotNull
+    @Override
+    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                    @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+      return new OnlyLoadedBfsIt<>(roots, tree);
     }
   };
   private static final NotNullizer ourNotNullizer = new NotNullizer("ServiceViewTreeTraversal.NotNull");
 
   private final Project myProject;
-  private final Invoker myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
+  private final Invoker myInvoker = Invoker.forBackgroundThreadWithoutReadAction(this);
   private final List<ServiceViewItem> myRoots = new CopyOnWriteArrayList<>();
-  private volatile boolean myRootsInitialized;
   private final List<ServiceModelEventListener> myListeners = new CopyOnWriteArrayList<>();
 
   ServiceModel(@NotNull Project project) {
@@ -76,61 +87,40 @@ class ServiceModel implements Disposable, InvokerSupplier {
 
   @NotNull
   List<? extends ServiceViewItem> getRoots() {
-    return myRootsInitialized ? myRoots : Collections.emptyList();
+    return myRoots;
   }
 
-  CancellablePromise<?> initRoots() {
-    return getInvoker().invoke(() -> {
-      if (!myRootsInitialized) {
-        myRoots.addAll(doGetRoots());
-        myRootsInitialized = true;
-      }
-    });
+  private JBIterable<ServiceViewItem> doFindItems(Condition<? super ServiceViewItem> visitChildrenCondition,
+                                                  Condition<? super ServiceViewItem> condition,
+                                                  boolean safe) {
+    return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
+        visitChildrenCondition.value(node) ? new ArrayList<>(node.getChildren()) : null)
+      .withRoots(myRoots)
+      .traverse(safe ? ONLY_LOADED_BFS : NOT_LOADED_LAST_BFS)
+      .filter(condition);
   }
 
-  private List<? extends ServiceViewItem> doGetRoots() {
-    List<ServiceViewItem> result = new ArrayList<>();
-    for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
-      try {
-        ContributorNode root = new ContributorNode(myProject, contributor);
-        root.loadChildren();
-        if (!root.getChildren().isEmpty()) {
-          result.add(root);
-        }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        PluginException.logPluginError(LOG, "Failed to init service view contributor " + contributor.getClass(), e, contributor.getClass());
-      }
-    }
-    return result;
-  }
-
-  private JBIterable<ServiceViewItem> findItems(Object service, Class<?> contributorClass) {
+  private JBIterable<ServiceViewItem> findItems(Object service, Class<?> contributorClass, boolean safe) {
     Object value = service instanceof ServiceViewProvidingContributor ?
                    ((ServiceViewProvidingContributor<?, ?>)service).asService() : service;
-    return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
-      contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(node.getChildren()) : null)
-      .withRoots(myRoots)
-      .traverse(NOT_LOADED_LAST_BFS)
-      .filter(node -> node.getValue().equals(value));
+    return doFindItems(node -> contributorClass.isInstance(node.getRootContributor()),
+                       node -> node.getValue().equals(value),
+                       safe);
   }
 
   @Nullable
-  ServiceViewItem findItem(Condition<? super ServiceViewItem> condition, Condition<? super ServiceViewItem> visitChildrenCondition) {
-    return JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
-      visitChildrenCondition.value(node) ? new ArrayList<>(node.getChildren()) : null)
-      .withRoots(myRoots)
-      .traverse(NOT_LOADED_LAST_BFS)
-      .filter(condition)
-      .first();
+  ServiceViewItem findItem(Condition<? super ServiceViewItem> visitChildrenCondition, Condition<? super ServiceViewItem> condition) {
+    return doFindItems(visitChildrenCondition, condition, false).first();
   }
 
   @Nullable
   ServiceViewItem findItem(Object service, Class<?> contributorClass) {
-    return findItems(service, contributorClass).first();
+    return findItems(service, contributorClass, false).first();
+  }
+
+  @Nullable
+  ServiceViewItem findItemSafe(Object service, Class<?> contributorClass) {
+    return findItems(service, contributorClass, true).first();
   }
 
   @Nullable
@@ -155,34 +145,31 @@ class ServiceModel implements Disposable, InvokerSupplier {
 
   @NotNull
   CancellablePromise<?> handle(@NotNull ServiceEvent e) {
-    return getInvoker().invoke(() -> {
+    Runnable handler = () -> {
       LOG.debug("Handle event: " + e);
       switch (e.type) {
-        case SERVICE_ADDED:
-          addService(e);
-          break;
-        case SERVICE_REMOVED:
-          removeService(e);
-          break;
-        case SERVICE_CHANGED:
-          serviceChanged(e);
-          break;
-        case SERVICE_STRUCTURE_CHANGED:
-          serviceStructureChanged(e);
-          break;
-        case SERVICE_GROUP_CHANGED:
-          serviceGroupChanged(e);
-          break;
-        case GROUP_CHANGED:
-          groupChanged(e);
-          break;
-        default:
-          reset(e.contributorClass);
+        case SERVICE_ADDED -> addService(e);
+        case SERVICE_REMOVED -> removeService(e);
+        case SERVICE_CHANGED -> serviceChanged(e);
+        case SERVICE_CHILDREN_CHANGED -> serviceChildrenChanged(e);
+        case SERVICE_STRUCTURE_CHANGED -> serviceStructureChanged(e);
+        case SERVICE_GROUP_CHANGED -> serviceGroupChanged(e);
+        case GROUP_CHANGED -> groupChanged(e);
+        default -> reset(e.contributorClass);
       }
-      for (ServiceModelEventListener listener : myListeners) {
-        listener.eventProcessed(e);
-      }
-    });
+      notifyListeners(e);
+    };
+    if (e.type != ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
+      return getInvoker().invoke(handler);
+    }
+    handler.run();
+    return Promises.resolvedCancellablePromise(null);
+  }
+
+  void notifyListeners(ServiceEvent e) {
+    for (ServiceModelEventListener listener : myListeners) {
+      listener.eventProcessed(e);
+    }
   }
 
   private void reset(Class<?> contributorClass) {
@@ -334,10 +321,15 @@ class ServiceModel implements Disposable, InvokerSupplier {
     ((ServiceViewItem)node).setViewDescriptor(viewDescriptor);
   }
 
+  private void serviceChildrenChanged(ServiceEvent e) {
+    ServiceViewItem item = findItem(e.target, e.contributorClass);
+    if (item instanceof ServiceNode node) {
+      node.reloadChildren();
+    }
+  }
   private void serviceStructureChanged(ServiceEvent e) {
     ServiceViewItem item = findItem(e.target, e.contributorClass);
-    if (item instanceof ServiceNode) {
-      ServiceNode node = (ServiceNode)item;
+    if (item instanceof ServiceNode node) {
       updateServiceViewDescriptor(node, e.target);
       node.reloadChildren();
     }
@@ -385,7 +377,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   private void groupChanged(ServiceEvent e) {
-    JBIterable<ServiceGroupNode> groups = findItems(e.target, e.contributorClass).filter(ServiceGroupNode.class);
+    JBIterable<ServiceGroupNode> groups = findItems(e.target, e.contributorClass, false).filter(ServiceGroupNode.class);
     ServiceGroupNode first = groups.first();
     if (first == null) return;
 
@@ -616,11 +608,11 @@ class ServiceModel implements Disposable, InvokerSupplier {
       return myRemoved || myParent != null && myParent.isRemoved();
     }
 
-    ItemPresentation getItemPresentation(@Nullable ServiceViewOptions viewOptions) {
+    ItemPresentation getItemPresentation(@Nullable ServiceViewOptions viewOptions, @NotNull ServiceViewItemState state) {
       if (isRemoved()) return myPresentation;
 
       ItemPresentation presentation =
-        viewOptions == null ? getViewDescriptor().getPresentation() : getViewDescriptor().getCustomPresentation(viewOptions);
+        viewOptions == null ? getViewDescriptor().getPresentation() : getViewDescriptor().getCustomPresentation(viewOptions, state);
       myPresentation = presentation instanceof PresentationData ?
                        (PresentationData)presentation :
                        new PresentationData(presentation.getPresentableText(),
@@ -649,7 +641,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ContributorNode extends ServiceViewItem {
+  static final class ContributorNode extends ServiceViewItem {
     private final Project myProject;
 
     ContributorNode(@NotNull Project project, @NotNull ServiceViewContributor<?> contributor) {
@@ -666,7 +658,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ServiceNode extends ServiceViewItem {
+  static final class ServiceNode extends ServiceViewItem {
     private final Project myProject;
     private final ServiceViewContributor<?> myProvidingContributor;
     private volatile boolean myChildrenInitialized;
@@ -736,7 +728,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     }
   }
 
-  static class ServiceGroupNode extends ServiceViewItem {
+  static final class ServiceGroupNode extends ServiceViewItem {
     ServiceGroupNode(@NotNull Object group, @Nullable ServiceViewItem parent, @NotNull ServiceViewContributor<?> contributor,
                      @NotNull ServiceViewDescriptor viewDescriptor) {
       super(group, parent, contributor, viewDescriptor);
@@ -795,6 +787,35 @@ class ServiceModel implements Disposable, InvokerSupplier {
         if (iterable != null) {
           JBIterable.from(iterable).map(ourNotNullizer::notNullize).addAllTo(myQueue);
         }
+      }
+      if (myQueue.isEmpty()) {
+        return stop();
+      }
+      myTop = ourNotNullizer.nullize(myQueue.remove());
+      return myTop;
+    }
+  }
+
+  private static final class OnlyLoadedBfsIt<T> extends TreeTraversal.It<T> {
+    Deque<T> myQueue = new ArrayDeque<>();
+    T myTop;
+
+    OnlyLoadedBfsIt(@NotNull Iterable<? extends T> roots, Function<? super T, ? extends Iterable<? extends T>> tree) {
+      super(tree);
+      JBIterable.from(roots).map(ourNotNullizer::notNullize).addAllTo(myQueue);
+    }
+
+    @Override
+    public T nextImpl() {
+      if (myTop != null) {
+        if (!(myTop instanceof ServiceNode) ||
+            ((ServiceNode)myTop).isChildrenInitialized() || ((ServiceNode)myTop).isLoaded()) {
+          Iterable<? extends T> iterable = tree.fun(myTop);
+          if (iterable != null) {
+            JBIterable.from(iterable).map(ourNotNullizer::notNullize).addAllTo(myQueue);
+          }
+        }
+        myTop = null;
       }
       if (myQueue.isEmpty()) {
         return stop();

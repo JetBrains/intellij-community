@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.SmartList;
@@ -8,15 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TableUtil {
+public final class TableUtil {
   private TableUtil() {
   }
 
@@ -24,8 +21,7 @@ public class TableUtil {
     boolean isOperationApplyable(@NotNull TableModel model, int row);
   }
 
-  @NotNull
-  public static List<Object[]> removeSelectedItems(@NotNull JTable table) {
+  public static @NotNull List<Object[]> removeSelectedItems(@NotNull JTable table) {
     return removeSelectedItems(table, null);
   }
 
@@ -57,10 +53,9 @@ public class TableUtil {
     table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(minCellRect.width / 2,allHeight)));
   }
 
-  @NotNull
-  public static List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
+  public static @NotNull List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
     final TableModel model = table.getModel();
-    if (!(model instanceof ItemRemovable)) {
+    if (!(model instanceof ItemRemovable itemRemovable)) {
       throw new RuntimeException("model must be instance of ItemRemovable");
     }
 
@@ -69,7 +64,6 @@ public class TableUtil {
     }
 
     final List<Object[]> removedItems = new SmartList<>();
-    final ItemRemovable itemRemovable = (ItemRemovable)model;
     final int columnCount = model.getColumnCount();
     doRemoveSelectedItems(table, new ItemRemovable() {
       @Override
@@ -146,9 +140,7 @@ public class TableUtil {
       }
     }
     Rectangle cellRect = table.getCellRect(selectionModel.getMinSelectionIndex(), 0, true);
-    if (cellRect != null) {
-      table.scrollRectToVisible(cellRect);
-    }
+    table.scrollRectToVisible(cellRect);
     table.repaint();
     return counter;
   }
@@ -173,9 +165,7 @@ public class TableUtil {
       }
     }
     Rectangle cellRect = table.getCellRect(selectionModel.getMaxSelectionIndex(), 0, true);
-    if (cellRect != null) {
-      table.scrollRectToVisible(cellRect);
-    }
+    table.scrollRectToVisible(cellRect);
     table.repaint();
     return counter;
   }
@@ -243,5 +233,40 @@ public class TableUtil {
       scrollPane.revalidate();
       scrollPane.repaint();
     }
+  }
+
+
+  public static Rectangle getColumnBounds(@NotNull JTableHeader header, int index) {
+    return header.getHeaderRect(index);
+  }
+
+  public static Rectangle getColumnBounds(@NotNull JTableHeader header, @Nullable TableColumn column) {
+    return getColumnBounds(header, getColumnIndex(header, column));
+  }
+
+  public static int getColumnIndex(@NotNull JTableHeader header, @Nullable TableColumn column) {
+    if (column == null) return -1;
+    TableColumnModel model = header.getColumnModel();
+    if (model == null) return -1;
+    int index = model.getColumnCount();
+    while (0 < index--) {
+      if (column == model.getColumn(index)) break;
+    }
+    return index;
+  }
+
+  public static boolean isFocused(@NotNull JTableHeader header) {
+    return !header.isPaintingForPrint() && header.hasFocus();
+  }
+
+  public static TableCellRenderer getRenderer(@NotNull JTableHeader header, @Nullable TableColumn column) {
+    TableCellRenderer renderer = column == null ? null : column.getHeaderRenderer();
+    return renderer != null ? renderer : header.getDefaultRenderer();
+  }
+
+  public static Component getRendererComponent(@NotNull JTableHeader header, @Nullable TableColumn column, int index, boolean focused) {
+    TableCellRenderer renderer = column == null ? null : getRenderer(header, column);
+    return renderer == null ? null : renderer.getTableCellRendererComponent(
+      header.getTable(), column.getHeaderValue(), false, focused, -1, index);
   }
 }

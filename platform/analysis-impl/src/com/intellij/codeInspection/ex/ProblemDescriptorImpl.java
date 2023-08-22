@@ -20,6 +20,7 @@ import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,8 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase {
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               @NotNull String descriptionTemplate,
-                               LocalQuickFix[] fixes,
+                               @NotNull @InspectionMessage String descriptionTemplate,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
@@ -45,8 +46,8 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase {
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               @NotNull String descriptionTemplate,
-                               LocalQuickFix[] fixes,
+                               @NotNull @InspectionMessage String descriptionTemplate,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
@@ -57,12 +58,12 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase {
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               @NotNull String descriptionTemplate,
-                               LocalQuickFix[] fixes,
+                               @NotNull @InspectionMessage String descriptionTemplate,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
-                               final boolean showTooltip,
+                               boolean showTooltip,
                                @Nullable HintAction hintAction,
                                boolean onTheFly) {
     super(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, showTooltip, onTheFly);

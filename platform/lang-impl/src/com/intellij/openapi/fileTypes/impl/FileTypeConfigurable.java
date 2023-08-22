@@ -1,27 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,17 +44,20 @@ import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll, FileTypeSelectable {
   private static final Insets TITLE_INSETS = JBUI.insetsTop(8);
 
-  private RecognizedFileTypes myRecognizedFileType;
+  private RecognizedFileTypesPanel myRecognizedFileType;
   private PatternsPanel myPatterns;
   private HashBangPanel myHashBangs;
   private FileTypePanel myFileTypePanel;
-  private Set<FileType> myTempFileTypes;
-  private FileTypeAssocTable<FileType> myTempPatternsTable;
+  private Set<FileTypeManagerImpl.FileTypeWithDescriptor> myTempFileTypes;
+  private FileTypeAssocTable<FileTypeManagerImpl.FileTypeWithDescriptor> myTempPatternsTable;
   private FileTypeAssocTable<Language> myTempTemplateDataLanguages;
-  private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<>();
+  private final Map<UserFileType<?>, UserFileType<?>> myOriginalToEditedMap = new HashMap<>();
+  private FileType myFileTypeToPreselect;
+  private IgnoredFilesAndFoldersPanel myIgnoreFilesPanel;
+  private final FileTypeManagerImpl myFileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
 
   @Override
   public String getDisplayName() {
@@ -52,68 +66,147 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public JComponent createComponent() {
+    JBTabbedPane tabbedPane = new JBTabbedPane();
     myFileTypePanel = new FileTypePanel();
-    myFileTypePanel.myIgnorePanel.setBorder(
-      IdeBorderFactory.createTitledBorder(IdeBundle.message("editbox.ignore.files.and.folders"), false, TITLE_INSETS).setShowLine(false));
-    myRecognizedFileType = new RecognizedFileTypes(myFileTypePanel.myRecognizedFileTypesPanel);
-    myPatterns = new PatternsPanel(myFileTypePanel.myPatternsPanel);
-    myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
+    myRecognizedFileType = new RecognizedFileTypesPanel();
+    JBSplitter splitter = new JBSplitter(false, 0.3f);
+    splitter.setFirstComponent(myRecognizedFileType);
+
+    JPanel rightPanel = new JPanel(new BorderLayout());
+    myPatterns = new PatternsPanel();
+    myHashBangs = new HashBangPanel();
+    rightPanel.add(myPatterns, BorderLayout.CENTER);
+    rightPanel.add(myHashBangs, BorderLayout.SOUTH);
+    splitter.setSecondComponent(rightPanel);
+
+    myFileTypePanel.myUpperPanel.add(splitter, BorderLayout.CENTER);
+
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
-    myFileTypePanel.myIgnoreFilesField.setColumns(30);
-    return myFileTypePanel.myWholePanel;
+    myFileTypePanel.myAssociatePanel.setVisible(OSAssociateFileTypesUtil.isAvailable());
+    myFileTypePanel.myAssociatePanel.setBorder(JBUI.Borders.emptyTop(16));
+    myFileTypePanel.myAssociateButton.setText(
+      FileTypesBundle.message("filetype.associate.button", ApplicationNamesInfo.getInstance().getFullProductName()));
+    myFileTypePanel.myAssociateButton.addActionListener(__ -> OSAssociateFileTypesUtil.chooseAndAssociate(
+      new OSAssociateFileTypesUtil.Callback() {
+        @Override
+        public void beforeStart() {
+          ApplicationManager.getApplication().invokeLater(()-> {
+            myFileTypePanel.myAssociateButton.setEnabled(false);
+            updateAssociateMessageLabel(
+              FileTypesBundle.message("filetype.associate.message.updating"), null);
+          }, ModalityState.any());
+        }
+
+        @Override
+        public void onSuccess(boolean isOsRestartRequired) {
+          ApplicationManager.getApplication().invokeLater(()-> {
+            myFileTypePanel.myAssociateButton.setEnabled(true);
+            if (isOsRestartRequired) {
+              updateAssociateMessageLabel(
+                FileTypesBundle.message("filetype.associate.message.os.restart"), AllIcons.General.Warning);
+            }
+            else {
+              updateAssociateMessageLabel("", null);
+            }
+            showAssociationBalloon(
+              FileTypesBundle.message("filetype.associate.success.message", ApplicationInfo.getInstance().getFullApplicationName()),
+              HintUtil.getInformationColor());
+          }, ModalityState.any());
+        }
+
+        @Override
+        public void onFailure(@NotNull @Nls String errorMessage) {
+          ApplicationManager.getApplication().invokeLater(()-> {
+            myFileTypePanel.myAssociateButton.setEnabled(true);
+            updateAssociateMessageLabel("", null);
+            showAssociationBalloon(errorMessage, HintUtil.getErrorColor());
+          }, ModalityState.any());
+        }
+      }
+    ));
+    tabbedPane.add(FileTypesBundle.message("filetype.recognized.group"), myFileTypePanel.myWholePanel);
+
+    myIgnoreFilesPanel = new IgnoredFilesAndFoldersPanel();
+    tabbedPane.add(FileTypesBundle.message("filetype.ignore.group"), myIgnoreFilesPanel);
+    return tabbedPane;
+  }
+
+  private void updateAssociateMessageLabel(@NotNull @Nls String message, @Nullable Icon icon) {
+    myFileTypePanel.myAssociateMessageLabel.setText(message);
+    myFileTypePanel.myAssociateMessageLabel.setIcon(icon);
+  }
+
+  private void showAssociationBalloon(@NotNull @Nls String message, @NotNull Color color) {
+    Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(message))
+      .setFillColor(color)
+      .setHideOnKeyOutside(true)
+      .createBalloon();
+    JComponent component = myFileTypePanel.myAssociateButton;
+    RelativePoint relativePoint = new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight() - JBUI.scale(10)));
+    balloon.show(relativePoint, Balloon.Position.below);
   }
 
   private void updateFileTypeList() {
-    List<FileType> types = ContainerUtil.filter(myTempFileTypes, fileType -> !fileType.isReadOnly());
-    types.sort((o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
-    myRecognizedFileType.setFileTypes(types.toArray(FileType.EMPTY_ARRAY));
+    List<FileTypeManagerImpl.FileTypeWithDescriptor> types = ContainerUtil.sorted(ContainerUtil.filter(myTempFileTypes, ftd -> !ftd.fileType.isReadOnly()),
+    (o1, o2) -> o1.fileType.getDescription().compareToIgnoreCase(o2.fileType.getDescription()));
+    myRecognizedFileType.setFileTypes(types);
   }
 
   @NotNull
-  private static Set<FileType> getRegisteredFilesTypes() {
-    return ContainerUtil.set(FileTypeManager.getInstance().getRegisteredFileTypes());
+  private Set<FileTypeManagerImpl.FileTypeWithDescriptor> getRegisteredFilesTypes() {
+    return new HashSet<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors());
   }
 
   @Override
   public void apply() {
-    Set<UserFileType> modifiedUserTypes = myOriginalToEditedMap.keySet();
-    for (UserFileType oldType : modifiedUserTypes) {
-      oldType.copyFrom(myOriginalToEditedMap.get(oldType));
-    }
-    myOriginalToEditedMap.clear();
+    copyTypeMap();
 
-    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      if (!fileTypeManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
-        fileTypeManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
+      if (!myFileTypeManager.isIgnoredFilesListEqualToCurrent(myIgnoreFilesPanel.getValues())) {
+        myFileTypeManager.setIgnoredFilesList(myIgnoreFilesPanel.getValues());
       }
-      fileTypeManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
+      myFileTypeManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
       TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
     });
   }
 
+  private void copyTypeMap() {
+    Set<UserFileType<?>> modifiedUserTypes = myOriginalToEditedMap.keySet();
+    for (UserFileType<?> oldType : modifiedUserTypes) {
+      //noinspection unchecked,rawtypes
+      oldType.copyFrom((UserFileType)myOriginalToEditedMap.get(oldType));
+    }
+    myOriginalToEditedMap.clear();
+  }
+
   @Override
   public void reset() {
-    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
-    myTempPatternsTable = fileTypeManager.getExtensionMap().copy();
+    myTempPatternsTable = myFileTypeManager.getExtensionMap().copy();
     myTempTemplateDataLanguages = TemplateDataLanguagePatterns.getInstance().getAssocTable();
 
     myTempFileTypes = getRegisteredFilesTypes();
     myOriginalToEditedMap.clear();
 
+    FileTypeManagerImpl.FileTypeWithDescriptor lastSelectedFileType = myRecognizedFileType.getSelectedFileType();
+
     updateFileTypeList();
     updateExtensionList();
 
-    myFileTypePanel.myIgnoreFilesField.setText(fileTypeManager.getIgnoredFilesList());
+    myIgnoreFilesPanel.setValues(myFileTypeManager.getIgnoredFilesList());
+    if (myFileTypeToPreselect != null) {
+      myRecognizedFileType.selectFileType(myFileTypeToPreselect);
+    }
+    else if (lastSelectedFileType != null) {
+      myRecognizedFileType.selectFileType(lastSelectedFileType.fileType);
+    }
   }
 
   @Override
   public boolean isModified() {
-    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
-    if (!fileTypeManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+    if (!myFileTypeManager.isIgnoredFilesListEqualToCurrent(myIgnoreFilesPanel.getValues())) {
       return true;
     }
-    return !myTempPatternsTable.equals(fileTypeManager.getExtensionMap()) ||
+    return !myTempPatternsTable.equals(myFileTypeManager.getExtensionMap()) ||
            !myTempFileTypes.equals(getRegisteredFilesTypes()) ||
            !myOriginalToEditedMap.isEmpty() ||
            !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
@@ -122,7 +215,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   @Override
   public void disposeUIResources() {
     if (myFileTypePanel != null) {
-      myRecognizedFileType.setFileTypes(FileType.EMPTY_ARRAY);
+      myRecognizedFileType.setFileTypes(Collections.emptyList());
       myPatterns.clearList();
       myHashBangs.clearList();
     }
@@ -132,71 +225,94 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myHashBangs = null;
   }
 
-  private static class ExtensionRenderer extends DefaultListCellRenderer {
-    @NotNull
+  private static final class ExtensionRenderer extends ColoredListCellRenderer<Pair<FileNameMatcher, Language>> {
     @Override
-    public Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      setText(" " + getText());
-      return this;
+    protected void customizeCellRenderer(@NotNull JList<? extends Pair<FileNameMatcher, Language>> list,
+                                         Pair<FileNameMatcher, Language> value,
+                                         int index,
+                                         boolean selected,
+                                         boolean hasFocus) {
+      append(value.first.getPresentableString());
+      if (value.second != null) {
+        append(" (" + value.second.getDisplayName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES, false);
+      }
     }
+  }
 
+  private static final class HashBangRenderer extends ColoredListCellRenderer<String> {
     @Override
-    public Dimension getPreferredSize() {
-      return new JBDimension(0, 20);
+    protected void customizeCellRenderer(@NotNull JList<? extends String> list,
+                                         String value,
+                                         int index,
+                                         boolean selected,
+                                         boolean hasFocus) {
+      append("#!*", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      //noinspection HardCodedStringLiteral
+      append(value);
+      append("*", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 
   private void updateExtensionList() {
-    FileType type = myRecognizedFileType.getSelectedFileType();
-    if (type == null) return;
-    List<String> extensions = new ArrayList<>();
-
-    for (FileNameMatcher assoc : myTempPatternsTable.getAssociations(type)) {
-      extensions.add(assoc.getPresentableString());
-    }
-
-    myPatterns.refill(extensions);
-    myHashBangs.refill(myTempPatternsTable.getHashBangPatterns(type));
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
+    if (ftd == null) return;
+    myPatterns.refill(myTempPatternsTable.getAssociations(ftd));
+    myHashBangs.refill(myTempPatternsTable.getHashBangPatterns(ftd));
   }
 
   private void editFileType() {
-    FileType fileType = myRecognizedFileType.getSelectedFileType();
-    if (!canBeModified(fileType)) return;
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
+    if (ftd==null||!canBeModified(ftd.fileType)) return;
 
-    UserFileType userFileType = (UserFileType)fileType;
-    UserFileType ftToEdit = myOriginalToEditedMap.get(userFileType);
+    UserFileType<?> userFileType = (UserFileType<?>)ftd.fileType;
+    UserFileType<?> ftToEdit = myOriginalToEditedMap.get(userFileType);
     if (ftToEdit == null) ftToEdit = userFileType.clone();
-    @SuppressWarnings("unchecked") TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
+    TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
     if (editor.showAndGet()) {
-      myOriginalToEditedMap.put(userFileType, ftToEdit);
+      FileTypeConfigurableInteractions.fileTypeEdited.log();
+      if (userFileType.equals(ftToEdit)) {
+        myOriginalToEditedMap.remove(userFileType);
+      } else {
+        myOriginalToEditedMap.put(userFileType, ftToEdit);
+      }
+      myRecognizedFileType.myCellRenderer.resetDuplicates();
     }
   }
 
   private void removeFileType() {
-    FileType fileType = myRecognizedFileType.getSelectedFileType();
-    if (fileType == null) return;
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
+    if (ftd == null) return;
+    FileType fileType = ftd.fileType;
+    FileTypeConfigurableInteractions.fileTypeRemoved.log();
 
-    myTempFileTypes.remove(fileType);
+    int index = myRecognizedFileType.myFileTypesList.getSelectedIndex();
+    myTempFileTypes.remove(ftd);
     if (fileType instanceof UserFileType) {
       myOriginalToEditedMap.remove(fileType);
     }
-    myTempPatternsTable.removeAllAssociations(fileType);
+    List<FileNameMatcher> matchers = myTempPatternsTable.getAssociations(ftd);
+    myTempPatternsTable.removeAllAssociations(ftd);
+    for (FileNameMatcher matcher : matchers) {
+      myTempTemplateDataLanguages.removeAssociation(matcher, null);
+    }
 
     updateFileTypeList();
     updateExtensionList();
+    index = Math.min(index, myRecognizedFileType.myFileTypesList.getModel().getSize() - 1);
+    ScrollingUtil.selectItem(myRecognizedFileType.myFileTypesList, index);
   }
 
-  private static boolean canBeModified(FileType fileType) {
+  private static boolean canBeModified(@Nullable FileType fileType) {
     return fileType instanceof AbstractFileType; //todo: add API for canBeModified
   }
 
   private void addFileType() {
     //TODO: support adding binary file types...
     AbstractFileType type = new AbstractFileType(new SyntaxTable());
-    TypeEditor<AbstractFileType> editor = new TypeEditor<>(myRecognizedFileType.myFileTypesList, type, FileTypesBundle.message("filetype.edit.new.title"));
+    TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, type, FileTypesBundle.message("filetype.edit.new.title"));
     if (editor.showAndGet()) {
-      myTempFileTypes.add(type);
+      FileTypeConfigurableInteractions.fileTypeAdded.log();
+      myTempFileTypes.add(FileTypeManagerImpl.coreDescriptorFor(type));
       updateFileTypeList();
       updateExtensionList();
       myRecognizedFileType.selectFileType(type);
@@ -204,23 +320,29 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   }
 
   private void editPattern() {
-    String item = myPatterns.getSelectedItem();
-    if (item == null) return;
-
-    editPattern(item);
+    Pair<FileNameMatcher, Language> item = myPatterns.getSelectedItem();
+    if (item != null) {
+      editPattern(item);
+    }
   }
 
-  private void editPattern(@Nullable String item) {
-    FileType type = myRecognizedFileType.getSelectedFileType();
-    if (type == null) return;
+  private void editPattern(@Nullable("null means new") Pair<FileNameMatcher, Language> item) {
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
+    if (ftd == null) return;
+    FileType type = ftd.fileType;
 
-    String title =
-      item == null
-      ? FileTypesBundle.message("filetype.edit.add.pattern.title")
-      : FileTypesBundle.message("filetype.edit.edit.pattern.title");
+    if (item == null) {
+      FileTypeConfigurableInteractions.patternAdded.log(type);
+    }
+    else {
+      FileTypeConfigurableInteractions.patternEdited.log(type);
+    }
 
-    Language oldLanguage = item == null ? null : myTempTemplateDataLanguages.findAssociatedFileType(item);
-    FileTypePatternDialog dialog = new FileTypePatternDialog(item, type, oldLanguage);
+    String title = FileTypesBundle.message(item == null ? "filetype.edit.add.pattern.title" : "filetype.edit.edit.pattern.title");
+
+    Language oldLanguage = item == null ? null : item.second;
+    String oldPattern = item == null ? null : item.first.getPresentableString();
+    FileTypePatternDialog dialog = new FileTypePatternDialog(oldPattern, type, oldLanguage);
     DialogBuilder builder = new DialogBuilder(myPatterns.myList);
     builder.setPreferredFocusComponent(dialog.getPatternField());
     builder.setCenterPanel(dialog.getMainPanel());
@@ -231,8 +353,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       if (StringUtil.isEmpty(pattern)) return;
 
       FileNameMatcher matcher = FileTypeManager.parseFromString(pattern);
-      FileType registeredFileType = findExistingFileType(matcher);
-      if (registeredFileType != null && registeredFileType != type) {
+      FileTypeManagerImpl.FileTypeWithDescriptor registeredFtd = findExistingFileType(matcher);
+      if (registeredFtd != null && registeredFtd.fileType != type) {
+        FileType registeredFileType = registeredFtd.fileType;
         if (registeredFileType.isReadOnly()) {
           Messages.showMessageDialog(myPatterns.myList,
                                      FileTypesBundle.message("filetype.edit.add.pattern.exists.error", registeredFileType.getDescription()),
@@ -245,10 +368,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
                                               FileTypesBundle.message("filetype.edit.add.pattern.reassign.button"),
                                               CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
         if (ret == Messages.OK) {
-          myTempPatternsTable.removeAssociation(matcher, registeredFileType);
-          if (oldLanguage != null) {
-            myTempTemplateDataLanguages.removeAssociation(matcher, oldLanguage);
-          }
+          myTempPatternsTable.removeAssociation(matcher, registeredFtd);
+          myTempTemplateDataLanguages.removeAssociation(matcher, null);
         }
         else {
           return;
@@ -256,13 +377,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       }
 
       if (item != null) {
-        FileNameMatcher oldMatcher = FileTypeManager.parseFromString(item);
-        myTempPatternsTable.removeAssociation(oldMatcher, type);
-        if (oldLanguage != null) {
-          myTempTemplateDataLanguages.removeAssociation(oldMatcher, oldLanguage);
-        }
+        myTempPatternsTable.removeAssociation(item.first, ftd);
+        myTempTemplateDataLanguages.removeAssociation(item.first, item.second);
       }
-      myTempPatternsTable.addAssociation(matcher, type);
+      myTempPatternsTable.addAssociation(matcher, ftd);
       Language language = dialog.getTemplateDataLanguage();
       if (language != null) {
         myTempTemplateDataLanguages.addAssociation(matcher, language);
@@ -278,59 +396,60 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     editPattern(null);
   }
 
-  @Nullable
-  private FileType findExistingFileType(@NotNull FileNameMatcher matcher) {
-    FileType type = myTempPatternsTable.findAssociatedFileType(matcher);
-
-    if (type != null && type != FileTypes.UNKNOWN) {
-      return type;
+  private @Nullable FileTypeManagerImpl.FileTypeWithDescriptor findExistingFileType(@NotNull FileNameMatcher matcher) {
+    FileTypeManagerImpl.@Nullable FileTypeWithDescriptor ftd = myTempPatternsTable.findAssociatedFileType(matcher);
+    if (ftd != null && ftd.fileType != FileTypes.UNKNOWN) {
+      return ftd;
     }
-    FileType registeredFileType = FileTypeManager.getInstance().getFileTypeByExtension(matcher.getPresentableString());
-    if (registeredFileType != FileTypes.UNKNOWN && registeredFileType.isReadOnly()) {
-      return registeredFileType;
+    FileTypeManagerImpl.@NotNull FileTypeWithDescriptor registeredFtd = myFileTypeManager.getFileTypeWithDescriptorByExtension(matcher.getPresentableString());
+    if (registeredFtd.fileType != FileTypes.UNKNOWN && registeredFtd.fileType.isReadOnly()) {
+      return registeredFtd;
     }
     return null;
   }
 
   private void removePattern() {
-    FileType type = myRecognizedFileType.getSelectedFileType();
-    if (type == null) return;
-    String extension = myPatterns.removeSelected();
-    if (extension == null) return;
-    FileNameMatcher matcher = FileTypeManager.parseFromString(extension);
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
+    if (ftd == null) return;
+    FileTypeConfigurableInteractions.patternRemoved.log(ftd.fileType);
+    Pair<FileNameMatcher, Language> removed = myPatterns.removeSelected();
+    if (removed == null) return;
 
-    myTempPatternsTable.removeAssociation(matcher, type);
+    myTempPatternsTable.removeAssociation(removed.first, ftd);
+    myTempTemplateDataLanguages.removeAssociation(removed.first, removed.second);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myList, true));
   }
+
   private void removeHashBang() {
-    FileType type = myRecognizedFileType.getSelectedFileType();
-    if (type == null) return;
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
+    if (ftd == null) return;
+    FileTypeConfigurableInteractions.hashbangRemoved.log(ftd.fileType);
     String extension = myHashBangs.removeSelected();
     if (extension == null) return;
 
-    myTempPatternsTable.removeHashBangPattern(extension, type);
+    myTempPatternsTable.removeHashBangPattern(extension, ftd);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myHashBangs.myList, true));
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "preferences.fileTypes";
   }
 
-  class RecognizedFileTypes {
-    private final JList<FileType> myFileTypesList = new JBList<>(new DefaultListModel<>());
-    RecognizedFileTypes(@NotNull JPanel panel) {
-      panel.setLayout(new BorderLayout());
+  final class RecognizedFileTypesPanel extends JPanel {
+    private final JList<FileTypeManagerImpl.FileTypeWithDescriptor> myFileTypesList = new JBList<>(new DefaultListModel<>());
+    private final FileTypeWithDescriptorRenderer<FileTypeManagerImpl.FileTypeWithDescriptor> myCellRenderer;
+
+    RecognizedFileTypesPanel() {
+      setLayout(new BorderLayout());
 
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myFileTypesList.setCellRenderer(new FileTypeRenderer(() -> {
-        List<FileType> result = new ArrayList<>();
-        for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
-          result.add(myFileTypesList.getModel().getElementAt(i));
-        }
-        return result;
-      }));
+      myCellRenderer = new FileTypeWithDescriptorRenderer<>(myFileTypesList.getModel(), ftd -> {
+        FileType fileType = ftd.fileType;
+        UserFileType<?> modified = myOriginalToEditedMap.get(fileType);
+        return modified != null ? modified : fileType;
+      });
+      myFileTypesList.setCellRenderer(myCellRenderer);
 
       new DoubleClickListener() {
         @Override
@@ -341,40 +460,48 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       }.installOn(myFileTypesList);
 
       ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myFileTypesList)
+        .setScrollPaneBorder(JBUI.Borders.empty())
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),1,1,0,1))
         .setAddAction(__ -> addFileType())
         .setRemoveAction(__ -> removeFileType())
         .setEditAction(__ -> editFileType())
-        .setEditActionUpdater(e -> {
-          FileType fileType = getSelectedFileType();
-          return canBeModified(fileType);
-        })
-        .setRemoveActionUpdater(e -> canBeModified(getSelectedFileType()))
+        .setEditActionUpdater(e -> selectedTypeCanBeModified())
+        .setRemoveActionUpdater(e -> selectedTypeCanBeModified())
         .disableUpDownActions();
 
-      panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-      panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.recognized.group"), false, TITLE_INSETS).setShowLine(false));
+      add(toolbarDecorator.createPanel(), BorderLayout.NORTH);
+      JScrollPane scrollPane = new JBScrollPane(myFileTypesList);
+      add(scrollPane, BorderLayout.CENTER);
+      scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
 
-      new MySpeedSearch(myFileTypesList);
+      MySpeedSearch search = new MySpeedSearch(myFileTypesList);
+      search.setupListeners();
     }
 
-    private class MySpeedSearch extends SpeedSearchBase<JList<FileType>> {
+    private boolean selectedTypeCanBeModified() {
+      FileTypeManagerImpl.FileTypeWithDescriptor ftd = getSelectedFileType();
+      if (ftd == null) return false;
+      return canBeModified(ftd.fileType);
+    }
+
+    private final class MySpeedSearch extends SpeedSearchBase<JList<FileTypeManagerImpl.FileTypeWithDescriptor>> {
       private final List<Condition<Pair<Object, String>>> myOrderedConverters;
       private Object myCurrentType;
       private String myExtension;
 
-      private MySpeedSearch(@NotNull JList<FileType> component) {
-        super(component);
+      private MySpeedSearch(@NotNull JList<FileTypeManagerImpl.FileTypeWithDescriptor> component) {
+        super(component, null);
         myOrderedConverters = Arrays.asList(
           // simple
           p -> {
             String value = p.first.toString();
-            if (p.first instanceof FileType) {
-              value = ((FileType)p.first).getDescription();
+            if (p.first instanceof FileTypeManagerImpl.FileTypeWithDescriptor) {
+              value = ((FileTypeManagerImpl.FileTypeWithDescriptor)p.first).fileType.getDescription();
             }
             return getComparator().matchingFragments(p.second, value) != null;
           },
           // by-extension
-          p -> p.first instanceof FileType && myCurrentType != null && myCurrentType.equals(p.first)
+          p -> p.first instanceof FileTypeManagerImpl.FileTypeWithDescriptor && myCurrentType != null && myCurrentType.equals(p.first)
         );
       }
 
@@ -389,7 +516,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       @Nullable
       @Override
-      protected final String getElementText(Object element) {
+      protected String getElementText(Object element) {
         throw new IllegalStateException();
       }
 
@@ -399,14 +526,19 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       }
 
       @Override
-      protected Object @NotNull [] getAllElements() {
-        return ListSpeedSearch.getAllListElements(myComponent);
+      protected int getElementCount() {
+        return myComponent.getModel().getSize();
+      }
+
+      @Override
+      protected Object getElementAt(int viewIndex) {
+        return myComponent.getModel().getElementAt(viewIndex);
       }
 
       @Override
       protected void selectElement(Object element, String selectedText) {
         if (element != null) {
-          ScrollingUtil.selectItem(myComponent, (FileType)element);
+          ScrollingUtil.selectItem(myComponent, (FileTypeManagerImpl.FileTypeWithDescriptor)element);
           if (element.equals(myCurrentType)) {
             myPatterns.select(myExtension);
           }
@@ -415,6 +547,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       @Override
       protected void onSearchFieldUpdated(String s) {
+        super.onSearchFieldUpdated(s);
         if (myTempPatternsTable == null) return;
         int index = s.lastIndexOf('.');
         if (index < 0) {
@@ -430,15 +563,15 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       }
     }
 
-    FileType getSelectedFileType() {
+    FileTypeManagerImpl.FileTypeWithDescriptor getSelectedFileType() {
       return myFileTypesList.getSelectedValue();
     }
 
-    void setFileTypes(FileType @NotNull [] types) {
-      DefaultListModel<FileType> listModel = (DefaultListModel<FileType>)myFileTypesList.getModel();
+    void setFileTypes(@NotNull Collection<FileTypeManagerImpl.FileTypeWithDescriptor> types) {
+      DefaultListModel<FileTypeManagerImpl.FileTypeWithDescriptor> listModel = (DefaultListModel<FileTypeManagerImpl.FileTypeWithDescriptor>)myFileTypesList.getModel();
       listModel.clear();
-      for (FileType type : types) {
-        if (type != FileTypes.UNKNOWN) {
+      for (FileTypeManagerImpl.FileTypeWithDescriptor type : types) {
+        if (type.fileType != FileTypes.UNKNOWN) {
           listModel.addElement(type);
         }
       }
@@ -446,112 +579,116 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
 
     void selectFileType(@NotNull FileType fileType) {
-      myFileTypesList.setSelectedValue(fileType, true);
+      myFileTypesList.setSelectedValue(FileTypeManagerImpl.FileTypeWithDescriptor.allFor(fileType), true);
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFileTypesList, true));
     }
   }
 
-  class PatternsPanel {
-    private final JBList<String> myList = new JBList<>(new DefaultListModel<>());
+  @Override
+  public void selectFileType(@NotNull FileType fileType) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myRecognizedFileType == null) {
+      myFileTypeToPreselect = fileType;
+    }
+    else {
+      myRecognizedFileType.selectFileType(fileType);
+    }
+  }
 
-    PatternsPanel(@NotNull JPanel panel) {
-      panel.setLayout(new BorderLayout());
+  final class PatternsPanel extends JPanel {
+    private final JBList<Pair<FileNameMatcher, Language>> myList = new JBList<>(new DefaultListModel<>());
+
+    PatternsPanel() {
+      setLayout(new BorderLayout());
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setCellRenderer(new ExtensionRenderer());
       myList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
+      myList.setBorder(JBUI.Borders.empty());
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
+        .setScrollPaneBorder(JBUI.Borders.empty())
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),1,1,0,1))
         .setAddAction(__ -> addPattern())
         .setEditAction(__ -> editPattern())
         .setRemoveAction(__ -> removePattern())
         .disableUpDownActions();
-      panel.add(decorator.createPanel(), BorderLayout.CENTER);
-
-      panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false, TITLE_INSETS).setShowLine(false));
+      add(decorator.createPanel(), BorderLayout.NORTH);
+      JScrollPane scrollPane = new JBScrollPane(myList);
+      scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
+      add(scrollPane, BorderLayout.CENTER);
+      //noinspection DialogTitleCapitalization IDEA-254041
+      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false, TITLE_INSETS).setShowLine(false));
     }
 
     void clearList() {
-      getListModel().clear();
+      ((DefaultListModel<Pair<FileNameMatcher, Language>>)myList.getModel()).clear();
       myList.clearSelection();
-    }
-
-    @NotNull
-    private DefaultListModel<String> getListModel() {
-      return (DefaultListModel<String>)myList.getModel();
     }
 
     void select(@NotNull String pattern) {
       for (int i = 0; i < myList.getItemsCount(); i++) {
-        String at = myList.getModel().getElementAt(i);
-        FileNameMatcher matcher = FileTypeManager.parseFromString(at);
-        if (matcher.acceptsCharSequence(pattern)) {
+        Pair<FileNameMatcher, Language> at = myList.getModel().getElementAt(i);
+        if (at.first.acceptsCharSequence(pattern)) {
           ScrollingUtil.selectItem(myList, i);
           return;
         }
       }
     }
 
-    String removeSelected() {
-      String selectedValue = getSelectedItem();
+    Pair<FileNameMatcher, Language> removeSelected() {
+      Pair<FileNameMatcher, Language> selectedValue = getSelectedItem();
       if (selectedValue == null) return null;
       ListUtil.removeSelectedItems(myList);
       return selectedValue;
     }
 
-    String getSelectedItem() {
+    Pair<FileNameMatcher, Language> getSelectedItem() {
       return myList.getSelectedValue();
     }
 
-    private void refill(@NotNull List<String> extensions) {
+    private void refill(@NotNull List<? extends FileNameMatcher> matchers) {
       clearList();
-      Collections.sort(extensions);
-      for (String extension : extensions) {
-        getListModel().addElement(extension);
+      List<FileNameMatcher> copy = new ArrayList<>(matchers);
+      copy.sort(Comparator.comparing(FileNameMatcher::getPresentableString));
+      DefaultListModel<Pair<FileNameMatcher, Language>> model = (DefaultListModel<Pair<FileNameMatcher, Language>>)myList.getModel();
+      for (FileNameMatcher matcher : copy) {
+        Language language = myTempTemplateDataLanguages.findAssociatedFileType(matcher);
+        model.addElement(Pair.create(matcher, language));
       }
       ScrollingUtil.ensureSelectionExists(myList);
     }
   }
 
-  class HashBangPanel {
+  final class HashBangPanel extends JPanel {
     private final JBList<String> myList = new JBList<>(new DefaultListModel<>());
 
-    HashBangPanel(@NotNull JPanel panel) {
-      panel.setLayout(new BorderLayout());
+    HashBangPanel() {
+      setLayout(new BorderLayout());
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myList.setCellRenderer(new ExtensionRenderer(){
-        @Override
-        public @NotNull Component getListCellRendererComponent(@NotNull JList list,
-                                                               Object value,
-                                                               int index,
-                                                               boolean isSelected,
-                                                               boolean cellHasFocus) {
-          Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          setText(" #!*"+value+"*");
-          return component;
-        }
-      });
-      myList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
+      myList.setCellRenderer(new HashBangRenderer());
+      myList.setEmptyText(FileTypesBundle.message("filetype.settings.no.patterns"));
+      myList.setBorder(JBUI.Borders.empty());
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
+        .setScrollPaneBorder(JBUI.Borders.empty())
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),1,1,0,1))
         .setAddAction(__ -> editHashBang(null))
         .setAddActionName(LangBundle.message("action.HashBangPanel.add.hashbang.pattern.text"))
         .setEditAction(__ -> editHashBang())
         .setRemoveAction(__ -> removeHashBang())
         .disableUpDownActions();
 
-      panel.add(decorator.createPanel(), BorderLayout.CENTER);
-
-      panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
+      add(decorator.createPanel(), BorderLayout.NORTH);
+      JScrollPane scrollPane = new JBScrollPane(myList);
+      add(scrollPane, BorderLayout.CENTER);
+      scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
+      //noinspection DialogTitleCapitalization IDEA-254041
+      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
     }
 
     void clearList() {
-      getListModel().clear();
+      ((DefaultListModel<String>)myList.getModel()).clear();
       myList.clearSelection();
-    }
-
-    @NotNull
-    private DefaultListModel<String> getListModel() {
-      return (DefaultListModel<String>)myList.getModel();
     }
 
     void select(@NotNull String pattern) {
@@ -569,11 +706,11 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myList.getSelectedValue();
     }
 
-    private void refill(@NotNull List<String> values) {
+    private void refill(@NotNull List<String> patterns) {
       clearList();
-      Collections.sort(values);
-      for (String extension : values) {
-        getListModel().addElement(extension);
+      DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
+      for (@NlsSafe String pattern : ContainerUtil.sorted(patterns)) {
+        model.addElement(pattern);
       }
       ScrollingUtil.ensureSelectionExists(myList);
     }
@@ -586,22 +723,30 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     editHashBang(item);
   }
   private void editHashBang(@Nullable("null means new") String oldHashBang) {
-    FileType type = myRecognizedFileType.getSelectedFileType();
-    if (type == null) return;
+    FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
+    if (ftd == null) return;
+    FileType type = ftd.fileType;
 
-    String title = FileTypesBundle.message("filetype.edit.hashbang.title");
+    if (oldHashBang == null) {
+      FileTypeConfigurableInteractions.hashbangAdded.log(type);
+    }
+    else {
+      FileTypeConfigurableInteractions.hashbangEdited.log(type);
+    }
 
-    Language oldLanguage = oldHashBang == null ? null : myTempTemplateDataLanguages.findAssociatedFileType(oldHashBang);
+    String title = FileTypesBundle.message(oldHashBang == null ? "filetype.add.hashbang.title" : "filetype.edit.hashbang.title");
+
     String hashbang = Messages.showInputDialog(myHashBangs.myList, FileTypesBundle.message("filetype.edit.hashbang.prompt"), title, null, oldHashBang, null);
     if (StringUtil.isEmpty(hashbang)) {
       return; //canceled or empty
     }
     HashBangConflict conflict = checkHashBangConflict(hashbang);
-    if (conflict != null) {
-      FileType existingFileType = conflict.fileType;
-      if (existingFileType == type) return; // ignore duplicate
+    if (conflict != null && conflict.fileType.fileType != type) {
+      FileTypeManagerImpl.FileTypeWithDescriptor existingFtd = conflict.fileType;
+      FileType existingFileType = existingFtd.fileType;
       if (!conflict.writeable) {
-        String message = conflict.exact ? FileTypesBundle.message("filetype.edit.hashbang.exists.exact.error", existingFileType.getDescription())
+        String message = conflict.exact
+                         ? FileTypesBundle.message("filetype.edit.hashbang.exists.exact.error", existingFileType.getDescription())
                          : FileTypesBundle.message("filetype.edit.hashbang.exists.similar.error", existingFileType.getDescription(), conflict.existingHashBang);
         Messages.showMessageDialog(myHashBangs.myList, message, title, Messages.getErrorIcon());
         return;
@@ -615,68 +760,64 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       if (ret != Messages.OK) {
         return;
       }
-      myTempPatternsTable.removeHashBangPattern(hashbang, existingFileType);
-      if (oldLanguage != null) {
-        myTempTemplateDataLanguages.removeHashBangPattern(hashbang, oldLanguage);
-      }
+      myTempPatternsTable.removeHashBangPattern(hashbang, existingFtd);
       myTempPatternsTable.removeHashBangPattern(conflict.existingHashBang, conflict.fileType);
     }
     if (oldHashBang != null) {
-      myTempPatternsTable.removeHashBangPattern(oldHashBang, type);
-      if (oldLanguage != null) {
-        myTempTemplateDataLanguages.removeHashBangPattern(oldHashBang, oldLanguage);
-      }
+      myTempPatternsTable.removeHashBangPattern(oldHashBang, ftd);
     }
-    myTempPatternsTable.addHashBangPattern(hashbang, type);
+    myTempPatternsTable.addHashBangPattern(hashbang, ftd);
 
     updateExtensionList();
     myHashBangs.select(hashbang);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myList, true));
   }
 
-  // describes conflict between two hashbang patterns when user tried to create new/edit existing hashbang
-  private static class HashBangConflict {
-    FileType fileType; // conflicting file type
-    boolean exact; // true: conflict with the file type with the exactly the same hashbang/false: similar hashbang (more selective or less selective)
-    boolean writeable; //file type can be changed
-    String existingHashBang; // the hashbang of the conflicting file type
-  }
-  private static boolean isStandardFileType(@NotNull FileType fileType) {
-    return FileTypeManager.getInstance().getStdFileType(fileType.getName()) == fileType;
+  /**
+   * describes conflict between two hashbang patterns when user tried to create new/edit existing hashbang
+   *
+   * @param fileType         conflicting file type
+   * @param exact            true: conflict with the file type with exactly the same hashbang/false: similar hashbang (more selective or less selective)
+   * @param writeable        file type can be changed
+   * @param existingHashBang the hashbang of the conflicting file type
+   */
+  private record HashBangConflict(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor fileType,
+                                  boolean exact, boolean writeable,
+                                  @NotNull String existingHashBang) {
   }
 
-  // check if there is a conflict between new hasbang and exising ones
+  private boolean isStandardFileType(@NotNull FileType fileType) {
+    return myFileTypeManager.getStdFileType(fileType.getName()) == fileType;
+  }
+
+  // check if there is a conflict between new hashbang and existing ones
   private HashBangConflict checkHashBangConflict(@NotNull String hashbang) {
-    HashBangConflict conflict = new HashBangConflict();
-    for (Map.Entry<String, FileType> entry : myTempPatternsTable.getAllHashBangPatterns().entrySet()) {
+    for (Map.Entry<String, FileTypeManagerImpl.FileTypeWithDescriptor> entry : myTempPatternsTable.getInternalRawHashBangPatterns().entrySet()) {
       String existingHashBang = entry.getKey();
       if (hashbang.contains(existingHashBang) || existingHashBang.contains(hashbang)) {
-        conflict.fileType = entry.getValue();
-        conflict.exact = existingHashBang.equals(hashbang);
-        conflict.writeable = !conflict.fileType.isReadOnly() && !isStandardFileType(conflict.fileType);
-        conflict.existingHashBang = existingHashBang;
-        return conflict;
+        FileTypeManagerImpl.FileTypeWithDescriptor ftd = entry.getValue();
+        boolean exact = existingHashBang.equals(hashbang);
+        boolean writeable = !ftd.fileType.isReadOnly() && !isStandardFileType(ftd.fileType);
+        return new HashBangConflict(ftd, exact, writeable, existingHashBang);
       }
     }
-    List<FileTypeRegistry.FileTypeDetector> detectors = FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensionList();
-    for (FileTypeRegistry.FileTypeDetector detector : detectors) {
+    for (FileTypeRegistry.FileTypeDetector detector : FileTypeRegistry.FileTypeDetector.EP_NAME.getIterable()) {
       if (detector instanceof HashBangFileTypeDetector) {
         String existingHashBang = ((HashBangFileTypeDetector)detector).getMarker();
         if (hashbang.contains(existingHashBang) || existingHashBang.contains(hashbang)) {
-          conflict.fileType = ((HashBangFileTypeDetector)detector).getFileType();
-          conflict.exact = existingHashBang.equals(hashbang);
-          conflict.writeable = false;
-          conflict.existingHashBang = existingHashBang;
-          return conflict;
+          FileType fileType = ((HashBangFileTypeDetector)detector).getFileType();
+          boolean exact = existingHashBang.equals(hashbang);
+          boolean writeable = false;
+          FileTypeManagerImpl.FileTypeWithDescriptor ftd = FileTypeManagerImpl.detectPluginDescriptor(fileType);
+          return new HashBangConflict(ftd, exact, writeable, existingHashBang);
         }
       }
     }
     return null;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }

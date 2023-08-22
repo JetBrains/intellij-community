@@ -1,4 +1,4 @@
-// "Convert compact constructor to canonical" "true"
+// "Convert compact constructor to canonical" "true-preview"
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 

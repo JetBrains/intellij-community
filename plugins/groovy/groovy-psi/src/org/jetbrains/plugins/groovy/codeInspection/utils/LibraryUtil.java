@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-public class LibraryUtil {
+public final class LibraryUtil {
 
   private LibraryUtil() {
     super();
@@ -53,11 +53,9 @@ public class LibraryUtil {
 
   public static boolean isOverrideOfLibraryMethodParameter(
       PsiVariable variable) {
-    if (variable instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter) variable;
+    if (variable instanceof PsiParameter parameter) {
       final PsiElement scope = parameter.getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod) scope;
+      if (scope instanceof PsiMethod method) {
         if (isOverrideOfLibraryMethod(method)) {
           return true;
         }

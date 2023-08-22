@@ -19,8 +19,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@linkplain com.intellij.refactoring.listeners.RefactoringElementListenerProvider} receives a notification on undo.
- * @author dsl
+ * {@linkplain RefactoringElementListenerProvider} receives a notification on undo.
  */
 public interface UndoRefactoringElementListener {
   void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName);

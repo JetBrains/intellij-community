@@ -52,7 +52,7 @@ public class StringIndex {
                      boolean failOnRebuildRequest)
     throws IOException {
     IndexId<String, String> id = IndexId.create(testName + "string_index");
-    IndexExtension<String, String, PathContentPair> extension = new IndexExtension<String, String, PathContentPair>() {
+    IndexExtension<String, String, PathContentPair> extension = new IndexExtension<>() {
       @NotNull
       @Override
       public IndexId<String, String> getName() {
@@ -83,7 +83,7 @@ public class StringIndex {
       }
     };
 
-    DataExternalizer<Collection<String>> anotherStringExternalizer = new DataExternalizer<Collection<String>>() {
+    DataExternalizer<Collection<String>> anotherStringExternalizer = new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Collection<String> value)
         throws IOException {
@@ -104,10 +104,10 @@ public class StringIndex {
         return list;
       }
     };
-    myIndex = new MapReduceIndex<String, String, PathContentPair>(extension,
-                                                                  storage,
-                                                                  new PersistentMapBasedForwardIndex(forwardIndexFile.toPath(), false),
-                                                                  new KeyCollectionForwardIndexAccessor<>(anotherStringExternalizer)) {
+    myIndex = new MapReduceIndex<>(extension,
+                                   storage,
+                                   new PersistentMapBasedForwardIndex(forwardIndexFile.toPath(), false),
+                                   new KeyCollectionForwardIndexAccessor<>(anotherStringExternalizer)) {
       @Override
       public void checkCanceled() {
         ProgressManager.checkCanceled();
@@ -118,11 +118,11 @@ public class StringIndex {
         if (failOnRebuildRequest) {
           ex.printStackTrace();
           Assert.fail("Rebuild is not expected in this test");
-        } else {
+        }
+        else {
           myRebuildThrowable = ex;
         }
       }
-
     };
   }
 
@@ -167,7 +167,7 @@ public class StringIndex {
       for (int idx = 0; idx < content.length(); idx++) {
         final char ch = content.charAt(idx);
         if (Character.isWhitespace(ch)) {
-          if (builder.length() > 0) {
+          if (!builder.isEmpty()) {
             _map.put(builder.toString(), inputData.path);
             builder.setLength(0);
           }
@@ -177,7 +177,7 @@ public class StringIndex {
         }
       }
       // emit the last word
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         _map.put(builder.toString(), inputData.path);
         builder.setLength(0);
       }

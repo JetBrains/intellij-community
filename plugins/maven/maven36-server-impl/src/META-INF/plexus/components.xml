@@ -26,56 +26,6 @@
     </component>
 
     <component>
-      <role>org.apache.maven.artifact.resolver.ArtifactResolver</role>
-      <role-hint>ide</role-hint>
-      <implementation>org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver</implementation>
-      <description />
-      <isolated-realm>false</isolated-realm>
-      <requirements>
-        <requirement>
-          <role>org.codehaus.plexus.logging.Logger</role>
-          <role-hint />
-          <field-name>logger</field-name>
-        </requirement>
-        <requirement>
-          <role>org.apache.maven.artifact.factory.ArtifactFactory</role>
-          <role-hint />
-          <field-name>artifactFactory</field-name>
-        </requirement>
-        <requirement>
-          <role>org.apache.maven.artifact.resolver.ArtifactCollector</role>
-          <role-hint />
-          <field-name>artifactCollector</field-name>
-        </requirement>
-        <requirement>
-          <role>org.apache.maven.artifact.resolver.ResolutionErrorHandler</role>
-          <role-hint />
-          <field-name>resolutionErrorHandler</field-name>
-        </requirement>
-        <requirement>
-          <role>org.apache.maven.artifact.metadata.ArtifactMetadataSource</role>
-          <role-hint />
-          <field-name>source</field-name>
-        </requirement>
-        <requirement>
-          <role>org.codehaus.plexus.PlexusContainer</role>
-          <role-hint />
-          <field-name>container</field-name>
-        </requirement>
-        <requirement>
-          <role>org.apache.maven.plugin.LegacySupport</role>
-          <role-hint />
-          <field-name>legacySupport</field-name>
-        </requirement>
-        <requirement>
-          <role>org.eclipse.aether.RepositorySystem</role>
-          <role-hint />
-          <field-name>repoSystem</field-name>
-        </requirement>
-      </requirements>
-    </component>
-
-    <component>
       <role>org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager</role>
       <role-hint>ide</role-hint>
       <implementation>org.jetbrains.idea.maven.server.embedder.CustomMaven3RepositoryMetadataManager</implementation>

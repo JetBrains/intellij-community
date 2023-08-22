@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SuspendManagerUtil {
+public final class SuspendManagerUtil {
   private static final Logger LOG = Logger.getInstance(SuspendManagerUtil.class);
 
   public static boolean isEvaluating(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
@@ -44,7 +31,7 @@ public class SuspendManagerUtil {
   public static SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     for (SuspendContextImpl context : suspendManager.getEventContexts()) {
       if ((context.getThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL)
-          && !context.isExplicitlyResumed(thread)){
+          && !context.isExplicitlyResumed(thread)) {
         return context;
       }
     }
@@ -53,7 +40,7 @@ public class SuspendManagerUtil {
   }
 
   public static void assertSuspendContext(SuspendContextImpl context) {
-    if(LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       LOG.assertTrue(context.myInProgress, "You can invoke methods only inside commands invoked for SuspendContext");
     }
   }
@@ -63,13 +50,13 @@ public class SuspendManagerUtil {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return suspendManager.getEventContexts().stream()
       .filter(suspendContext -> suspendContext.suspends(thread))
-      .collect(Collectors.toCollection(SmartHashSet::new));
+      .collect(Collectors.toCollection(HashSet::new));
   }
 
   @Nullable
   public static SuspendContextImpl getSuspendingContext(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return suspendManager.getEventContexts().stream().filter(suspendContext -> suspendContext.suspends(thread)).findFirst().orElse(null);
+    return ContainerUtil.find(suspendManager.getEventContexts(), suspendContext -> suspendContext.suspends(thread));
   }
 
   public static void restoreAfterResume(SuspendContextImpl context, Object resumeData) {

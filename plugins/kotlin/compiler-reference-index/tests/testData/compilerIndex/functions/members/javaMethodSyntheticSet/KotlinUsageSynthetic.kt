@@ -1,0 +1,3 @@
+fun kotlinUsageSynthetic() {
+    Kotlin().smth = ""
+}

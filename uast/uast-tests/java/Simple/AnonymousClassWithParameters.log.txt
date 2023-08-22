@@ -16,6 +16,8 @@ UFile (package = )
                     UObjectLiteralExpression
                         ULiteralExpression (value = "Name")
                         UClass (name = null)
+                            UMethod (name = <anon-init>)
+                                UParameter (name = name)
                             UMethod (name = bar)
                                 UAnnotation (fqName = java.lang.Override)
                                 UBlockExpression

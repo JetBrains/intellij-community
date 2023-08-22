@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -68,7 +69,7 @@ public class ModuleOptionsTableModel extends AbstractTableModel implements ItemR
 
     if (!candidates.isEmpty()) {
       candidates.sort(Comparator.comparing(Module::getName));
-      ChooseModulesDialog chooser = new ChooseModulesDialog(parent, candidates, "Choose module");
+      ChooseModulesDialog chooser = new ChooseModulesDialog(parent, candidates, JavaCompilerBundle.message("dialog.title.choose.module"));
       chooser.show();
       List<Module> chosen = chooser.getChosenElements();
 

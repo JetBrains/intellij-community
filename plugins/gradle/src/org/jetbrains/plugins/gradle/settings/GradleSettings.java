@@ -13,6 +13,8 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,14 +26,13 @@ import java.util.TreeSet;
 
 /**
  * Holds shared project-level gradle-related settings (should be kept at the '*.ipr' or under '.idea').
- *
- * @author peter
  */
 @State(name = "GradleSettings", storages = @Storage("gradle.xml"))
 public class GradleSettings extends AbstractExternalSystemSettings<GradleSettings, GradleProjectSettings, GradleSettingsListener>
   implements PersistentStateComponent<GradleSettings.MyState> {
 
   private boolean isOfflineMode = false;
+  private boolean isDownloadSources = Registry.is("gradle.download.sources", false);
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
@@ -40,11 +41,6 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   @NotNull
   public static GradleSettings getInstance(@NotNull Project project) {
     return project.getService(GradleSettings.class);
-  }
-
-  @Override
-  public void subscribe(@NotNull ExternalSystemSettingsListener<GradleProjectSettings> listener) {
-    doSubscribe(new DelegatingGradleSettingsListenerAdapter(listener), getProject());
   }
 
   @Override
@@ -63,6 +59,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     fillState(state);
 
     state.setOfflineMode(isOfflineWork());
+    state.setDownloadSources(isDownloadSources());
 
     return state;
   }
@@ -72,6 +69,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     super.loadState(state);
 
     setOfflineWork(state.isOfflineMode());
+    setDownloadSources(state.isDownloadSources());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -102,14 +100,15 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
    * in order to increase performance
    */
   @Nullable
+  @NlsSafe
   public String getServiceDirectoryPath() {
-    return GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    return GradleLocalSettings.getInstance(getProject()).getGradleUserHome();
   }
 
   public void setServiceDirectoryPath(@Nullable String newPath) {
-    String myServiceDirectoryPath = GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    String myServiceDirectoryPath = GradleLocalSettings.getInstance(getProject()).getGradleUserHome();
     if (!Objects.equals(myServiceDirectoryPath, newPath)) {
-      GradleSystemSettings.getInstance().setServiceDirectoryPath(newPath);
+      GradleLocalSettings.getInstance(getProject()).setGradleUserHome(newPath);
       getPublisher().onServiceDirectoryPathChange(myServiceDirectoryPath, newPath);
     }
   }
@@ -143,10 +142,21 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(value);
   }
 
+  public boolean isDownloadSources() {
+    return isDownloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    isDownloadSources = downloadSources;
+  }
+
   @Override
   protected void checkSettings(@NotNull GradleProjectSettings old, @NotNull GradleProjectSettings current) {
     if (!Objects.equals(old.getGradleHome(), current.getGradleHome())) {
       getPublisher().onGradleHomeChange(old.getGradleHome(), current.getGradleHome(), current.getExternalProjectPath());
+    }
+    if (!Objects.equals(old.getGradleJvm(), current.getGradleJvm())) {
+      getPublisher().onGradleJvmChange(old.getGradleJvm(), current.getGradleJvm(), current.getExternalProjectPath());
     }
     if (old.getDistributionType() != current.getDistributionType()) {
       getPublisher().onGradleDistributionTypeChange(current.getDistributionType(), current.getExternalProjectPath());
@@ -165,8 +175,10 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   }
 
   public static class MyState implements State<GradleProjectSettings> {
+
     private final Set<GradleProjectSettings> myProjectSettings = new TreeSet<>();
     private boolean isOfflineMode = false;
+    private boolean isDownloadSources = false;
 
     @Override
     @XCollection(elementTypes = GradleProjectSettings.class)
@@ -187,6 +199,14 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
     public void setOfflineMode(boolean isOfflineMode) {
       this.isOfflineMode = isOfflineMode;
+    }
+
+    public boolean isDownloadSources() {
+      return isDownloadSources;
+    }
+
+    public void setDownloadSources(boolean downloadSources) {
+      isDownloadSources = downloadSources;
     }
   }
 }

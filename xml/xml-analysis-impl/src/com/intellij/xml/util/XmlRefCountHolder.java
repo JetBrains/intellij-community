@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
@@ -43,14 +29,11 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author spleaner
- */
-public class XmlRefCountHolder {
+public final class XmlRefCountHolder {
   private static final Key<CachedValue<XmlRefCountHolder>> xmlRefCountHolderKey = Key.create("xml ref count holder");
 
   private static final UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object> CACHE =
-    new UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object>() {
+    new UserDataCache<>() {
       @Override
       protected CachedValue<XmlRefCountHolder> compute(final XmlFile file, final Object p) {
         return CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
@@ -160,7 +143,7 @@ public class XmlRefCountHolder {
     return myUsedNamespaces.contains(ns);
   }
 
-  private static class IdGatheringRecursiveVisitor extends XmlRecursiveElementWalkingVisitor {
+  private static final class IdGatheringRecursiveVisitor extends XmlRecursiveElementWalkingVisitor {
     private final XmlRefCountHolder myHolder;
 
     private IdGatheringRecursiveVisitor(@NotNull XmlRefCountHolder holder) {
@@ -197,7 +180,7 @@ public class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlComment(final XmlComment comment) {
+    public void visitXmlComment(final @NotNull XmlComment comment) {
       doVisitAnyComment(comment);
       super.visitXmlComment(comment);
     }
@@ -210,7 +193,7 @@ public class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
       myHolder.addUsedPrefix(tag.getNamespacePrefix());
       myHolder.addUsedNamespace(tag.getNamespace());
       String text = tag.getValue().getTrimmedText();
@@ -219,7 +202,7 @@ public class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlAttribute(XmlAttribute attribute) {
+    public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
       if (!attribute.isNamespaceDeclaration()) {
         myHolder.addUsedPrefix(attribute.getNamespacePrefix());
       }
@@ -228,11 +211,9 @@ public class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlAttributeValue(final XmlAttributeValue value) {
+    public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
       final PsiElement element = value.getParent();
-      if (!(element instanceof XmlAttribute)) return;
-
-      final XmlAttribute attribute = (XmlAttribute)element;
+      if (!(element instanceof XmlAttribute attribute)) return;
 
       final XmlTag tag = attribute.getParent();
       if (tag == null) return;
@@ -240,7 +221,7 @@ public class XmlRefCountHolder {
       final XmlElementDescriptor descriptor = tag.getDescriptor();
       if (descriptor == null) return;
 
-      final XmlAttributeDescriptor attributeDescriptor = descriptor.getAttributeDescriptor(attribute);
+      final XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
       if (attributeDescriptor != null) {
         if (attributeDescriptor.hasIdType()) {
           updateMap(attribute, value, false);

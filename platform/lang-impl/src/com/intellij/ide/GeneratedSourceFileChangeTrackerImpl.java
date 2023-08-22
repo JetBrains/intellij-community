@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -13,13 +13,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.GeneratedSourcesFilter;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
@@ -35,6 +34,9 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
   private final SingleAlarm myCheckingQueue;
   private final Set<VirtualFile> myFilesToCheck = Collections.synchronizedSet(new HashSet<>());
   private final Set<VirtualFile> myEditedGeneratedFiles = Collections.synchronizedSet(new HashSet<>());
+
+  @SuppressWarnings("StaticNonFinalField")
+  // static non final by design
   public static boolean IN_TRACKER_TEST;
 
   public GeneratedSourceFileChangeTrackerImpl(@NotNull Project project) {
@@ -69,28 +71,27 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
         return;
       }
 
-      Project[] openProjects = ProjectUtil.getOpenProjects();
+      Project[] openProjects = ProjectUtilCore.getOpenProjects();
       if (openProjects.length == 0) {
         return;
       }
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-      if (file == null) {
+      if (file == null || LightVirtualFile.shouldSkipEventSystem(file)) {
         return;
       }
 
-      for (Project project : ProjectUtil.getOpenProjects()) {
+      for (Project project : openProjects) {
         if (project.isDisposed()) {
           continue;
         }
 
+        // It's too costly to synchronously check whether the file is under the project, so delegate the check to
+        // the background activities of all projects
+
         GeneratedSourceFileChangeTrackerImpl fileChangeTracker = (GeneratedSourceFileChangeTrackerImpl)getInstance(project);
-        ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
-        if (fileIndex.isInContent(file) || fileIndex.isInLibrary(file)) {
-          fileChangeTracker.myFilesToCheck.add(file);
-          fileChangeTracker.myCheckingQueue.cancelAndRequest();
-          // don't stop, one file maybe in different projects
-        }
+        fileChangeTracker.myFilesToCheck.add(file);
+        fileChangeTracker.myCheckingQueue.cancelAndRequest();
       }
     }
   }
@@ -130,11 +131,17 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        myFilesToCheck.addAll(myEditedGeneratedFiles);
-        myEditedGeneratedFiles.clear();
-        myCheckingQueue.cancelAndRequest();
+        resetOnRootsChanged();
       }
     });
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
+                         (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> resetOnRootsChanged());
+  }
+
+  private void resetOnRootsChanged() {
+    myFilesToCheck.addAll(myEditedGeneratedFiles);
+    myEditedGeneratedFiles.clear();
+    myCheckingQueue.cancelAndRequest();
   }
 
   private void checkFiles() {
@@ -144,19 +151,34 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
       myFilesToCheck.clear();
     }
     if (files.length == 0) return;
-    final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
-    ReadAction.run(() -> {
+    final int[] i = {0};
+
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
+      ReadAction.nonBlocking(() -> {
       if (myProject.isDisposed()) return;
-      for (VirtualFile file : files) {
-        if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
-          newEditedGeneratedFiles.add(file);
+      final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
+      try {
+        while (i[0] < files.length) {
+          ProgressManager.checkCanceled();
+
+          VirtualFile file = files[i[0]];
+          if (fileIndex.isInContent(file) || fileIndex.isInLibrary(file)) {
+            if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
+              newEditedGeneratedFiles.add(file);
+            }
+          }
+
+          i[0]++;
+        }
+      } finally {
+        // In case of canceled exception or (really) any other exception
+        // some files could be already processed
+        // let's not wait for the next available read lock slot
+        if (!newEditedGeneratedFiles.isEmpty()) {
+          myEditedGeneratedFiles.addAll(newEditedGeneratedFiles);
+          EditorNotifications.getInstance(myProject).updateAllNotifications();
         }
       }
-    });
-
-    if (!newEditedGeneratedFiles.isEmpty()) {
-      myEditedGeneratedFiles.addAll(newEditedGeneratedFiles);
-      EditorNotifications.getInstance(myProject).updateAllNotifications();
-    }
+    }).executeSynchronously();
   }
 }

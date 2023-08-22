@@ -70,7 +70,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
 
   private static boolean needToEnlargeMethodScope(PsiMethod method) {
     final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    return isStatic && method.getParameterList().getParametersCount() == 2 &&
+    return isStatic && method.getParameterList().getParametersCount() == 2 && PropertyUtilBase.hasAccessorName(method) &&
            InheritanceUtil.isInheritor(method.getParameterList().getParameters()[0].getType(), JavaFxCommonNames.JAVAFX_SCENE_NODE) ||
            !isStatic && !method.hasModifierProperty(PsiModifier.PUBLIC) &&
            AnnotationUtil.isAnnotated(method, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, 0);

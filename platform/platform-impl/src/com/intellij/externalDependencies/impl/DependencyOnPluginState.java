@@ -26,8 +26,8 @@ public class DependencyOnPluginState {
 
   DependencyOnPluginState(DependencyOnPlugin dependency) {
     myId = dependency.getPluginId();
-    myMinVersion = dependency.getMinVersion();
-    myMaxVersion = dependency.getMaxVersion();
+    myMinVersion = dependency.getRawMinVersion();
+    myMaxVersion = dependency.getRawMaxVersion();
   }
 
   @Attribute("id")

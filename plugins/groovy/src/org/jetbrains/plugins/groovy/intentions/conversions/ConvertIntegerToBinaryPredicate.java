@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -28,13 +29,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 public class ConvertIntegerToBinaryPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrLiteral)) return false;
+    if (!(element instanceof GrLiteral expression)) return false;
 
-    final GrLiteral expression = (GrLiteral)element;
     final PsiType type = expression.getType();
     if (type == null) return false;
 
-    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type) &&
+    if (!PsiTypes.intType().equals(type) && !PsiTypes.longType().equals(type) &&
         !type.equalsToText("java.lang.Integer") && !type.equalsToText("java.lang.Long")) {
       return false;
     }

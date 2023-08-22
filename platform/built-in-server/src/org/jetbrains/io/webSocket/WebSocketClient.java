@@ -3,10 +3,7 @@ package org.jetbrains.io.webSocket;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import io.netty.handler.codec.http.websocketx.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.io.jsonRpc.Client;
 
@@ -21,11 +18,16 @@ public class WebSocketClient extends Client {
     this.handshaker = handshaker;
   }
 
-  @NotNull
+
   @Override
-  public ChannelFuture send(@NotNull ByteBuf message) {
+  public @NotNull ChannelFuture send(@NotNull ByteBuf message) {
+    return sendFrame(message, false);
+  }
+
+  @NotNull
+  public ChannelFuture sendFrame(@NotNull ByteBuf message, boolean binary) {
     if (channel.isOpen()) {
-      return channel.writeAndFlush(new TextWebSocketFrame(message));
+      return channel.writeAndFlush(binary ? new BinaryWebSocketFrame(message) : new TextWebSocketFrame(message));
     }
     else {
       return channel.newFailedFuture(new ClosedChannelException());

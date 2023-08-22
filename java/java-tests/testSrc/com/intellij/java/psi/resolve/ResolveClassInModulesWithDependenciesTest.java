@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,6 +20,7 @@ import org.easymock.IArgumentMatcher;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static org.easymock.EasyMock.*;
@@ -56,7 +58,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
   }
 
   public void testModuleSourceAsLibrarySource() throws Exception {
-    VirtualFile dir = createTempVfsDirectory();
+    VirtualFile dir = getTempDir().createVirtualDir();
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.emptyList(), Collections.singletonList(dir.getUrl()));
 
     final PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);
@@ -68,7 +70,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
   }
 
   public void testModuleSourceAsLibraryClasses() throws Exception {
-    VirtualFile dir = createTempVfsDirectory();
+    VirtualFile dir = getTempDir().createVirtualDir();
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(dir.getUrl()), Collections.emptyList());
 
     PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);
@@ -77,7 +79,8 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
     assertNotNull(file);
     createFile(myModule, dir, "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
     //need this to ensure that PsiJavaFileBaseImpl.myResolveCache is filled to reproduce IDEA-91309
-    DependenciesBuilder.analyzeFileDependencies(psiFile, (place, dependency) -> { });
+    DependenciesBuilder.analyzeFileDependencies(psiFile, (place, dependency) -> {
+    });
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
 
@@ -104,6 +107,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
 
   public void testNoSubpackagesAccess() throws Exception {
     PsiElementFinder mock = createMockFinder();
+    deregisterLombok();
     ExtensionPointImpl<PsiElementFinder> point = (ExtensionPointImpl<PsiElementFinder>)PsiElementFinder.EP.getPoint(myProject);
     point.maskAll(ContainerUtil.concat(point.getExtensionList(), Collections.singletonList(mock)), getTestRootDisposable(), false);
 
@@ -112,6 +116,14 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
     reference.getVariants();
 
     verify(mock);
+  }
+
+  private void deregisterLombok() {
+    ExtensionPointImpl<PsiAugmentProvider> augmentProviders = (ExtensionPointImpl<PsiAugmentProvider>)PsiAugmentProvider.EP_NAME.getPoint();
+    List<PsiAugmentProvider> withoutLombok =
+      ContainerUtil.filter(augmentProviders.getExtensionList(),
+                           it -> !it.getClass().getName().equals("de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"));
+    augmentProviders.maskAll(withoutLombok, getTestRootDisposable(), false);
   }
 
   private static PsiElementFinder createMockFinder() {

@@ -2,27 +2,25 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class PyTerminalBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.PyTerminalBundle";
-  private static final PyTerminalBundle INSTANCE = new PyTerminalBundle();
+public final class PyTerminalBundle {
+  private static final @NonNls String BUNDLE = "messages.PyTerminalBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(PyTerminalBundle.class, BUNDLE);
 
   private PyTerminalBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

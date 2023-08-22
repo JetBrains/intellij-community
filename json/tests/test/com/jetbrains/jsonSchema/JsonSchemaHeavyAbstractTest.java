@@ -24,9 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Irina.Chernushina on 12/5/2016.
- */
 public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
   private Map<String, UserDefinedJsonSchemaConfiguration> mySchemas;
   protected LookupElement[] myItems;
@@ -62,6 +59,18 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
       return PathManager.getHomePath() + "/json" + getBasePath() + "/";
     }
     return PathManager.getHomePath() + "/community/json" + getBasePath() + "/";
+  }
+
+  public static @NotNull String getJsonSchemaTestDataFilePath(@NotNull String jsonSchemaRelativePath) {
+    PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();
+    String prefix;
+    if (strategy.equals(PathManagerEx.TestDataLookupStrategy.COMMUNITY)) {
+      prefix = PathManager.getHomePath() + "/json/";
+    }
+    else {
+      prefix = PathManager.getHomePath() + "/community/json/";
+    }
+    return prefix + "/tests/testData/jsonSchema/" + jsonSchemaRelativePath;
   }
 
   @Override

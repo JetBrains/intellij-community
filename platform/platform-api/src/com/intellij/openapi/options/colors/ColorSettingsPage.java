@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -42,8 +43,11 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
    * surrounded by XML-like tags, for example: {@code <class>MyClass</class>}.
    * The mapping between the names of the tags and the text attribute keys used for highlighting
    * is defined by the {@link #getAdditionalHighlightingTagToDescriptorMap()} method.
+   * <p>The returned text <strong>must use {@code \n} as a line separator</strong>, so if you read it from a file make sure to adjust it via 
+   * {@link com.intellij.openapi.util.text.StringUtil#convertLineSeparators(String)}.
+   * </p>
    *
-   * @return the text to show in the preview pane.
+   * @return the text to show in the preview pane or empty text to hide it.
    */
   @NonNls @NotNull String getDemoText();
 
@@ -69,6 +73,8 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
    * Allows to define additional customizations for the preview editor, which cannot be configured by markup in demo text.
    */
   default @Nullable PreviewCustomizer getPreviewEditorCustomizer() { return null; }
+
+  default @NotNull EditorColorsScheme customizeColorScheme(@NotNull EditorColorsScheme scheme) { return scheme; }
 
   /**
    * Specifies customizations for the preview editor, which cannot be configured by markup in demo text.

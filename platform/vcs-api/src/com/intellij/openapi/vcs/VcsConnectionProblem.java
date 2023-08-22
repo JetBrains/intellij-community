@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.vcs;
 
-/**
- * @author peter
- */
+import org.jetbrains.annotations.Nls;
+
 public class VcsConnectionProblem extends VcsException {
-  public VcsConnectionProblem(String message) {
+  public VcsConnectionProblem(@Nls String message) {
     super(message);
   }
 

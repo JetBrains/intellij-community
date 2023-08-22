@@ -13,9 +13,6 @@ import java.awt.*;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
-/**
- * @author ibessonov
- */
 public class RunAnythingMavenItem extends RunAnythingItemBase {
 
   public RunAnythingMavenItem(@NotNull String command, @Nullable Icon icon) {
@@ -35,6 +32,7 @@ public class RunAnythingMavenItem extends RunAnythingItemBase {
         String description = option.getDescription();
         if (description != null) {
           SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
+          //noinspection HardCodedStringLiteral
           descriptionComponent.append(" " + shortenTextWithEllipsis(description, 200, 0), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
           component.add(descriptionComponent, BorderLayout.EAST);
         }

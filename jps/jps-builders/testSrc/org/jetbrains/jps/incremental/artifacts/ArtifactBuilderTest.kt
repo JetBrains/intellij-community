@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.artifacts
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.directoryContent
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.zipFile
+import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive
 import org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root
@@ -31,11 +19,19 @@ import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.security.DigestInputStream
+import java.security.MessageDigest
+import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.jar.JarFile
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.inputStream
 
 class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   fun testFileCopy() {
@@ -158,10 +154,14 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testCopyLibrary() {
-    val library = addProjectLibrary("lib", createFile("lib/a.jar"))
+    val libDir = createDir("lib")
+    directoryContent {
+      zip("a.jar") { file("a.txt") }
+    }.generate(File(libDir))
+    val library = addProjectLibrary("lib", "$libDir/a.jar")
     val a = addArtifact(root().lib(library))
     buildAll()
-    assertOutput(a, directoryContent { file("a.jar") })
+    assertOutput(a, directoryContent { zip("a.jar") { file("a.txt") } })
   }
 
   fun testModuleOutput() {
@@ -315,6 +315,39 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     }})
   }
 
+  private fun Path.checksum(): String = inputStream().buffered().use { input ->
+    val digest = MessageDigest.getInstance("SHA-256")
+    DigestInputStream(input, digest).use {
+      var bytesRead = 0
+      val buffer = ByteArray(1024 * 8)
+      while (bytesRead != -1) {
+        bytesRead = it.read(buffer)
+      }
+    }
+    Base64.getEncoder().encodeToString(digest.digest())
+  }
+
+  fun `test jars build reproducibility`() {
+    myBuildParams[GlobalOptions.BUILD_DATE_IN_SECONDS] = (System.currentTimeMillis() / 1000).toString()
+    val jar = root().archive("a.jar")
+      .extractedDir(createXJarFile(), "/")
+      .dir("META-INF").fileCopy(createFile("src/MANIFEST.MF"))
+      .let { addArtifact("a", it).outputPath }
+      ?.let { Paths.get(it).resolve("a.jar") }
+    requireNotNull(jar)
+    val checksums = (1..2).map {
+      // sleeping more than a second ensures different last modification time
+      // for the next iteration jar if the build date isn't provided or ignored
+      TimeUnit.SECONDS.sleep(2)
+      FileUtil.delete(jar.parent)
+      assert(!Files.exists(jar))
+      buildAll()
+      assert(Files.exists(jar))
+      jar.checksum()
+    }.distinct()
+    assert(checksums.count() == 1)
+  }
+
   fun `test no duplicated directory entries for extracted directory packed into JAR file`() {
     val zipPath = createXJarFile()
     val a = addArtifact("a", root().archive("a.jar").extractedDir(zipPath, ""))
@@ -331,7 +364,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
         file("file.txt", "text")
       }
     }.generateInTempDir()
-    return FileUtil.toSystemIndependentName(zipFile.absolutePath)
+    return zipFile.toAbsolutePath().systemIndependentPath
   }
 
   fun testSelfIncludingArtifact() {
@@ -424,13 +457,12 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   fun testProperlyReportValueWithInvalidCrcInRepackedFile() {
-    val corruptedJar = PathManagerEx.findFileUnderCommunityHome(
-      "jps/jps-builders/testData/output/corruptedJar/incorrect-crc.jar")!!.absolutePath
+    val corruptedJar = PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output/corruptedJar/incorrect-crc.jar")!!.absolutePath
     val a = addArtifact(archive("a.jar").extractedDir(corruptedJar, ""))
     val result = doBuild(CompileScopeTestBuilder.rebuild().artifacts(a))
     result.assertFailed()
     val message = result.getMessages(BuildMessage.Kind.ERROR).first()
-    assertTrue(message.messageText, message.messageText.contains("incorrect-crc.jar"));
+    assertTrue(message.messageText, message.messageText.contains("incorrect-crc.jar"))
   }
 
   fun testBuildModuleBeforeArtifactIfSomeDirectoryInsideModuleOutputIsCopiedToArtifact() {

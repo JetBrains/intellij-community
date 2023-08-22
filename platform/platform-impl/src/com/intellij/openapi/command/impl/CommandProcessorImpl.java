@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 class CommandProcessorImpl extends CoreCommandProcessor {
   @Override
-  public void finishCommand(@NotNull final CommandToken command, @Nullable final Throwable throwable) {
+  public void finishCommand(final @NotNull CommandToken command, final @Nullable Throwable throwable) {
     if (myCurrentCommand != command) return;
     final boolean failed;
     try {
@@ -34,7 +34,7 @@ class CommandProcessorImpl extends CoreCommandProcessor {
         super.finishCommand(command, throwable);
       }
       catch (Throwable e) {
-        if (throwable != null) {
+        if (throwable != null && throwable != e) {
           e.addSuppressed(throwable);
         }
         throw e;

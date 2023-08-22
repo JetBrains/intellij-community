@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.jvm.DefaultJvmElementVisitor;
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmElementVisitor;
@@ -13,8 +14,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -30,12 +29,11 @@ import org.jetbrains.idea.devkit.inspections.quickfix.RegisterComponentFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
   private static final Logger LOG = Logger.getInstance(ComponentNotRegisteredInspection.class);
@@ -44,49 +42,23 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
   public boolean IGNORE_NON_PUBLIC = true;
 
   private static final Map<ComponentType, RegistrationCheckerUtil.RegistrationType> COMPONENT_TYPE_TO_REGISTRATION_TYPE =
-    ContainerUtil.<ComponentType, RegistrationCheckerUtil.RegistrationType>immutableMapBuilder()
-      .put(ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT)
-      .put(ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT)
-      .put(ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT)
-      .build();
+    Map.of(
+      ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT,
+      ComponentType.PROJECT, RegistrationCheckerUtil.RegistrationType.PROJECT_COMPONENT,
+      ComponentType.MODULE, RegistrationCheckerUtil.RegistrationType.MODULE_COMPONENT);
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    JPanel jPanel = new JPanel();
-    jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
-
-    final JCheckBox ignoreNonPublic = new JCheckBox(
-      DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public"),
-      IGNORE_NON_PUBLIC);
-    ignoreNonPublic.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        IGNORE_NON_PUBLIC = ignoreNonPublic.isSelected();
-      }
-    });
-
-    final JCheckBox checkJavaActions = new JCheckBox(
-      DevKitBundle.message("inspections.component.not.registered.option.check.actions"),
-      CHECK_ACTIONS);
-    checkJavaActions.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        boolean selected = checkJavaActions.isSelected();
-        CHECK_ACTIONS = selected;
-        ignoreNonPublic.setEnabled(selected);
-      }
-    });
-
-    jPanel.add(checkJavaActions);
-    jPanel.add(ignoreNonPublic);
-    return jPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_NON_PUBLIC", DevKitBundle.message("inspections.component.not.registered.option.ignore.non.public")),
+      checkbox("CHECK_ACTIONS", DevKitBundle.message("inspections.component.not.registered.option.check.actions"))
+    );
   }
 
   @Nullable
   @Override
   protected JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
-    return new DefaultJvmElementVisitor<Boolean>() {
+    return new DefaultJvmElementVisitor<>() {
       @Override
       public Boolean visitClass(@NotNull JvmClass clazz) {
         PsiElement sourceElement = clazz.getSourceElement();
@@ -118,7 +90,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     }
 
     if (checkedClass.isInheritor(actionClass, true)) {
-      if (!isActionRegistered(checkedClass, project) && canFix(checkedClass)) {
+      if (!isActionRegistered(checkedClass) && canFix(checkedClass)) {
         LocalQuickFix fix = new RegisterActionFix(checkedClass);
         sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
                                             DevKitBundle.message("new.menu.action.text")), fix);
@@ -127,6 +99,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
       return;
     }
 
+    //noinspection deprecation
     PsiClass baseComponentClass = JavaPsiFacade.getInstance(project).findClass(BaseComponent.class.getName(), scope);
     if (baseComponentClass == null) {
       // stop if component class cannot be found (non-devkit module/project)
@@ -136,7 +109,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     // if directly implements BaseComponent, check that registered as some component
     if (checkedClass.isInheritor(baseComponentClass, false)) {
       if (findRegistrationType(checkedClass, RegistrationCheckerUtil.RegistrationType.ALL_COMPONENTS) == null && canFix(checkedClass)) {
-        sink.highlight(DevKitBundle.message("inspections.component.not.registered.message", "Component"));
+        sink.highlight(DevKitBundle.message("inspections.component.not.registered.message", "Component")); //NON-NLS
       }
       return;
     }
@@ -179,23 +152,21 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     return true;
   }
 
-  private static boolean isActionRegistered(@NotNull PsiClass actionClass, Project project) {
+  private static boolean isActionRegistered(@NotNull PsiClass actionClass) {
     final PsiClass registrationType = findRegistrationType(actionClass, RegistrationCheckerUtil.RegistrationType.ACTION);
     if (registrationType != null) {
       return true;
     }
 
-    if (isTooCostlyToSearch(actionClass, project)) return false;
-
     // search code usages: 1) own CTOR calls  2) usage via "new ActionClass()"
     for (PsiMethod method : actionClass.getConstructors()) {
-      final Query<PsiReference> search = MethodReferencesSearch.search(method);
+      final Query<PsiReference> search = MethodReferencesSearch.search(method, method.getUseScope(), true);
       if (search.findFirst() != null) {
         return true;
       }
     }
 
-    final Query<PsiReference> search = ReferencesSearch.search(actionClass);
+    final Query<PsiReference> search = ReferencesSearch.search(actionClass, actionClass.getUseScope());
     for (PsiReference reference : search) {
       if (!(reference instanceof PsiJavaCodeReferenceElement)) continue;
 
@@ -209,17 +180,6 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     }
 
     return false;
-  }
-
-  private static boolean isTooCostlyToSearch(@NotNull PsiClass actionClass, Project project) {
-    final SearchScope useScope = actionClass.getUseScope();
-    if (!(useScope instanceof GlobalSearchScope)) return false;
-
-    final PsiSearchHelper.SearchCostResult searchCost = PsiSearchHelper.getInstance(project)
-      .isCheapEnoughToSearch(Objects.requireNonNull(actionClass.getName()),
-                             (GlobalSearchScope)useScope,
-                             actionClass.getContainingFile(), null);
-    return searchCost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
   }
 
   private static boolean canFix(@NotNull PsiClass psiClass) {

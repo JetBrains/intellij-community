@@ -16,12 +16,10 @@
 
 package com.intellij.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author ven
- */
 public interface PsiClassOwner extends PsiFile {
   /**
    * @return classes owned by this element.
@@ -34,7 +32,7 @@ public interface PsiClassOwner extends PsiFile {
    * @return the name specified in the package statement, or an empty string for a JSP page or
    * file which has no package statement.
    */
-  String getPackageName();
+  @NlsSafe String getPackageName();
 
-  void setPackageName(String packageName) throws IncorrectOperationException;
+  void setPackageName(@NotNull String packageName) throws IncorrectOperationException;
 }

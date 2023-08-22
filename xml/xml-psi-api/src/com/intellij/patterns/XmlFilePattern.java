@@ -21,9 +21,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePattern<XmlFile, Self>{
 
   public XmlFilePattern() {
@@ -35,7 +32,7 @@ public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePa
   }
 
   public Self withRootTag(final ElementPattern<XmlTag> rootTag) {
-    return with(new PatternCondition<XmlFile>("withRootTag") {
+    return with(new PatternCondition<>("withRootTag") {
       @Override
       public boolean accepts(@NotNull final XmlFile xmlFile, final ProcessingContext context) {
         XmlDocument document = xmlFile.getDocument();

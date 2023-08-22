@@ -245,6 +245,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.lang.AssertionError AssertionError(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.AssertionError AssertionError(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -3815,9 +3820,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.lang.System void checkKey(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='java.lang.System void setProperties(java.util.Properties) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -3842,6 +3844,7 @@
     </item>
     <item name='java.lang.Thread java.lang.Object clone()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -3866,6 +3869,11 @@
     <item name='java.lang.Thread long getId()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.Thread void destroy()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;fail&quot;"/>
         </annotation>
     </item>
     <item name='java.lang.Thread void setDefaultUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler) 0'>
@@ -4018,6 +4026,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.Throwable java.lang.Throwable initCause(java.lang.Throwable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Throwable void addSuppressed(java.lang.Throwable) 0'>

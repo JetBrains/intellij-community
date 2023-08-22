@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -26,10 +12,11 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ClassLiteralGetter {
+public final class ClassLiteralGetter {
 
   public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
                                     @NotNull Consumer<? super LookupElement> result, final PrefixMatcher matcher) {
@@ -45,10 +32,10 @@ public class ClassLiteralGetter {
 
     boolean addInheritors = false;
     PsiElement position = parameters.getPosition();
-    if (classParameter instanceof PsiWildcardType) {
-      final PsiWildcardType wildcardType = (PsiWildcardType)classParameter;
+    if (classParameter instanceof PsiWildcardType wildcardType) {
       classParameter = wildcardType.isSuper() ? wildcardType.getSuperBound() : wildcardType.getExtendsBound();
-      addInheritors = wildcardType.isExtends() && classParameter instanceof PsiClassType;
+      addInheritors = !wildcardType.isSuper() && classParameter instanceof PsiClassType &&
+                    !(matcher.getPrefix().isEmpty() && TypeUtils.isJavaLangObject(classParameter));
     } else if (!matcher.getPrefix().isEmpty()) {
       addInheritors = true;
       classParameter = PsiType.getJavaLangObject(position.getManager(), position.getResolveScope());

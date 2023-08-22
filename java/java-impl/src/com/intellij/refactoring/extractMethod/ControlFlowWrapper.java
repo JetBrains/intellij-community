@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -13,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -27,12 +27,12 @@ public final class ControlFlowWrapper {
   private boolean myGenerateConditionalExit;
   private Collection<PsiStatement> myExitStatements;
   private PsiStatement myFirstExitStatementCopy;
-  private IntArrayList myExitPoints;
+  private IntList myExitPoints;
 
-  public ControlFlowWrapper(Project project, PsiElement codeFragment, PsiElement[] elements) throws PrepareFailedException {
+  public ControlFlowWrapper(PsiElement codeFragment, PsiElement[] elements) throws PrepareFailedException {
     try {
-      myControlFlow =
-        ControlFlowFactory.getInstance(project).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
+      myControlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment),
+                                          ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       throw new PrepareFailedException(JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());
@@ -125,7 +125,7 @@ public final class ControlFlowWrapper {
     myFirstExitStatementCopy = (PsiStatement)first.copy();
   }
 
-  boolean isGenerateConditionalExit() {
+  public boolean isGenerateConditionalExit() {
     return myGenerateConditionalExit;
   }
 
@@ -148,19 +148,15 @@ public final class ControlFlowWrapper {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toIntArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
-      final Set<PsiVariable> outputVariables = ContainerUtil.set(myOutputVariables);
+      final Set<PsiVariable> outputVariables = ContainerUtil.newHashSet(myOutputVariables);
       for (PsiStatement statement : myExitStatements) {
         statement.accept(new JavaRecursiveElementVisitor() {
 
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
-            final PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiVariable) {
-              final PsiVariable variable = (PsiVariable)resolved;
-              if (isWrittenInside(variable)) {
-                outputVariables.add(variable);
-              }
+            if (expression.resolve() instanceof PsiVariable variable && isWrittenInside(variable)) {
+              outputVariables.add(variable);
             }
           }
 
@@ -184,7 +180,7 @@ public final class ControlFlowWrapper {
     return myOutputVariables;
   }
 
-  boolean isReturnPresentBetween() {
+  public boolean isReturnPresentBetween() {
     return ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
   }
 

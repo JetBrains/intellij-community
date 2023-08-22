@@ -4,6 +4,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.runner.ui.*;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -92,14 +93,14 @@ public class SMTRunnerRunDashboardCustomizer extends RunDashboardCustomizer {
     presentation.addText(" [", SimpleTextAttributes.GRAY_ATTRIBUTES);
     boolean addSeparator = false;
     if (failed > 0) {
-      presentation.addText("failed: " + failed, ERROR_ATTRIBUTES);
+      presentation.addText(TestRunnerBundle.message("tests.result.failed.count", failed), ERROR_ATTRIBUTES);
       addSeparator = true;
     }
     if (passed > 0 || ignored + failed == 0) {
       if (addSeparator) {
         presentation.addText(", ", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
-      presentation.addText("passed: " + passed, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      presentation.addText(TestRunnerBundle.message("tests.result.passed.count", passed), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       addSeparator = true;
     }
 
@@ -107,10 +108,10 @@ public class SMTRunnerRunDashboardCustomizer extends RunDashboardCustomizer {
       if (addSeparator) {
         presentation.addText(", ", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
-      presentation.addText("ignored: " + ignored, IGNORE_ATTRIBUTES);
+      presentation.addText(TestRunnerBundle.message("tests.result.ignored.count", ignored), IGNORE_ATTRIBUTES);
     }
 
-    presentation.addText(" of " + total + "]", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    presentation.addText(TestRunnerBundle.message("tests.result.total.count", total) + "]", SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   private static class NodeUpdaterEventsListener implements TestResultsViewer.EventsListener {

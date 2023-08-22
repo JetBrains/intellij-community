@@ -1,25 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryJar;
 
-import com.intellij.facet.frameworks.LibrariesDownloadConnectionService;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.SerializationException;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.URL;
+import java.util.Set;
 
 /**
  * @author Ivan Chirkov
  */
-public class LibraryJarStatisticsService implements DumbAware {
-
-  private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
+public final class LibraryJarStatisticsService implements DumbAware {
 
   private static final LibraryJarStatisticsService ourInstance = new LibraryJarStatisticsService();
   private LibraryJarDescriptor[] ourDescriptors;
@@ -29,9 +25,13 @@ public class LibraryJarStatisticsService implements DumbAware {
     return ourInstance;
   }
 
+  public Set<String> getLibraryNames() {
+    return ContainerUtil.map2Set(getTechnologyDescriptors(), descriptor -> descriptor.myName);
+  }
+
   public LibraryJarDescriptor @NotNull [] getTechnologyDescriptors() {
     if (ourDescriptors == null) {
-      if (!StatisticsUploadAssistant.isSendAllowed()) return LibraryJarDescriptor.EMPTY;
+      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return LibraryJarDescriptor.EMPTY;
       final URL url = createVersionsUrl();
       if (url == null) return LibraryJarDescriptor.EMPTY;
       final LibraryJarDescriptors descriptors = deserialize(url);
@@ -56,19 +56,6 @@ public class LibraryJarStatisticsService implements DumbAware {
 
   @Nullable
   private static URL createVersionsUrl() {
-    final String serviceUrl = LibrariesDownloadConnectionService.getInstance().getServiceUrl();
-    if (StringUtil.isNotEmpty(serviceUrl)) {
-      try {
-        final String url = serviceUrl + "/" + FILE_NAME;
-        HttpConfigurable.getInstance().prepareURL(url);
-
-        return new URL(url);
-      }
-      catch (IOException e) {
-        // no route to host, unknown host, malformed url, etc.
-      }
-    }
-
-    return null;
+    return LibraryJarDescriptor.class.getResource("/com/intellij/internal/statistic/libraryJar/library-jar-statistics.xml");
   }
 }

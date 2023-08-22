@@ -11,9 +11,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyReprExpressionImpl extends PyElementImpl implements PyReprExpression {
   public PyReprExpressionImpl(ASTNode astNode) {
     super(astNode);

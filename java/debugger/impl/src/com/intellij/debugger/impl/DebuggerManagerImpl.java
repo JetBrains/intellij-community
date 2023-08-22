@@ -1,12 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.NameMapper;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.*;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
@@ -30,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -38,6 +35,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +48,7 @@ import java.util.*;
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
   public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
+  private static final int WAIT_KILL_TIMEOUT = 10000;
 
   private final Project myProject;
   private final Map<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
@@ -65,7 +64,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       final DebuggerSession session = newContext.getDebuggerSession();
       if (event == DebuggerSession.Event.PAUSE && myDebuggerStateManager.myDebuggerSession != session) {
         // if paused in non-active session; switch current session
-        myDebuggerStateManager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, event, null);
+        myDebuggerStateManager.setState(newContext, session != null ? session.getState() : DebuggerSession.State.DISPOSED, event, null);
         return;
       }
 
@@ -145,7 +144,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   public DebuggerSession getSession(DebugProcess process) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return getSessions().stream().filter(debuggerSession -> process == debuggerSession.getProcess()).findFirst().orElse(null);
+    return ContainerUtil.find(getSessions(), debuggerSession -> process == debuggerSession.getProcess());
   }
 
   @NotNull
@@ -177,7 +176,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   @Nullable
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     DebuggerSession session = DebuggerSession.create(debugProcess, environment);
     ExecutionResult executionResult = session.getProcess().getExecutionResult();
@@ -185,9 +183,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       return null;
     }
     session.getContextManager().addListener(mySessionListener);
-    getContextManager()
-      .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
-                session.getState(), DebuggerSession.Event.CONTEXT, null);
+
+    // the whole method may still be called from EDT, we need to update the state immediately in this case
+    UIUtil.invokeLaterIfNeeded(() -> {
+      getContextManager()
+        .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
+                  session.getState(), DebuggerSession.Event.CONTEXT, null);
+    });
 
     final ProcessHandler processHandler = executionResult.getProcessHandler();
 
@@ -209,19 +211,27 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
           if (debugProcess != null) {
             // if current thread is a "debugger manager thread", stop will execute synchronously
             // it is KillableColoredProcessHandler responsibility to terminate VM
-            debugProcess.stop(willBeDestroyed && !(processHandler instanceof KillableColoredProcessHandler && ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
+            debugProcess.stop(willBeDestroyed &&
+                              !(processHandler instanceof KillableColoredProcessHandler &&
+                                ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
 
             // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
             // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
             if (!DebuggerManagerThreadImpl.isManagerThread()) {
               if (SwingUtilities.isEventDispatchThread()) {
                 ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-                  ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-                  debugProcess.waitFor(10000);
-                }, JavaDebuggerBundle.message("waiting.for.debugger.response"), false, debugProcess.getProject());
+                  ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+                  indicator.setIndeterminate(false);
+                  int wait = 0;
+                  while (wait < WAIT_KILL_TIMEOUT && !indicator.isCanceled()) {
+                    indicator.setFraction((double)wait / WAIT_KILL_TIMEOUT);
+                    debugProcess.waitFor(200);
+                    wait += 200;
+                  }
+                }, JavaDebuggerBundle.message("waiting.for.debugger.response"), true, debugProcess.getProject());
               }
               else {
-                debugProcess.waitFor(10000);
+                debugProcess.waitFor(WAIT_KILL_TIMEOUT);
               }
             }
           }
@@ -330,31 +340,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                                                        final boolean debuggerInServerMode,
                                                        int transport, final String debugPort,
                                                        boolean checkValidity) throws ExecutionException {
-    return createDebugParameters(parameters, debuggerInServerMode, transport, debugPort, checkValidity, true);
-  }
-
-  /**
-   * @deprecated use {@link RemoteConnectionBuilder}
-   */
-  @Deprecated
-  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
-                                                       final boolean debuggerInServerMode,
-                                                       int transport, final String debugPort,
-                                                       boolean checkValidity,
-                                                       boolean addAsyncDebuggerAgent)
-    throws ExecutionException {
     return new RemoteConnectionBuilder(debuggerInServerMode, transport, debugPort)
       .checkValidity(checkValidity)
-      .asyncAgent(addAsyncDebuggerAgent)
-      .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
+      .asyncAgent(true)
       .create(parameters);
-  }
-
-  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
-                                                       GenericDebuggerRunnerSettings settings,
-                                                       boolean checkValidity)
-    throws ExecutionException {
-    return createDebugParameters(parameters, settings.LOCAL, settings.getTransport(), settings.getDebugPort(), checkValidity);
   }
 
   private static class MyDebuggerStateManager extends DebuggerStateManager {
@@ -367,7 +356,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
 
     @Override
-    public void setState(@NotNull final DebuggerContextImpl context, DebuggerSession.State state, DebuggerSession.Event event, String description) {
+    public void setState(@NotNull final DebuggerContextImpl context,
+                         DebuggerSession.State state,
+                         DebuggerSession.Event event,
+                         String description) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       myDebuggerSession = context.getDebuggerSession();
       if (myDebuggerSession != null) {

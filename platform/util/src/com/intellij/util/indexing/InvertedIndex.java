@@ -17,11 +17,13 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Eugene Zhuravlev
+ * Base interface for the <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#Inverted_indices">inverted indexes</a>.
  */
 public interface InvertedIndex<Key, Value, Input> {
   @NotNull
@@ -34,6 +36,8 @@ public interface InvertedIndex<Key, Value, Input> {
    */
   @NotNull
   Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content);
+
+  @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data);
 
   void flush() throws StorageException;
 

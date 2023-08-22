@@ -25,7 +25,7 @@ import java.util.*
 
 class VcsRootErrorsFinderTest : VcsRootBaseTest() {
 
-  private val PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT
+  private val PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT.get()
   
   fun `test no roots then no errors`() {
     doTest(VcsRootConfiguration())
@@ -149,8 +149,7 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
     expected.addAll(unregAll(vcsRootConfiguration.unregErrors))
     expected.addAll(extraAll(vcsRootConfiguration.extraErrors))
     projectRoot.refresh(false, true)
-    val actual = ContainerUtil.filter(VcsRootErrorsFinder(myProject).find()
-    ) { error -> error.vcsKey == vcs.keyInstanceMethod }
+    val actual = ContainerUtil.filter(VcsRootErrorsFinder(myProject).find()) { error -> error.mapping.vcs == vcs.keyInstanceMethod.name }
     VcsTestUtil.assertEqualCollections(actual, expected)
   }
 
@@ -183,11 +182,12 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
   }
 
   private fun unreg(path: String): VcsRootError {
-    return VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, VcsTestUtil.toAbsolute(path, myProject), vcs.name)
+    return VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, VcsDirectoryMapping(VcsTestUtil.toAbsolute(path, myProject), vcs.name))
   }
 
   private fun extra(path: String): VcsRootError {
-    return VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, if (PROJECT == path) PROJECT else VcsTestUtil.toAbsolute(path, myProject),
-                            vcs.name)
+    val mappings = if (PROJECT == path) VcsDirectoryMapping.createDefault(vcs.name)
+    else VcsDirectoryMapping(VcsTestUtil.toAbsolute(path, myProject), vcs.name)
+    return VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mappings)
   }
 }

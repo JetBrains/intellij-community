@@ -15,8 +15,8 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
@@ -240,7 +240,7 @@ public class WrapperTest extends JavaFormatterTestCase {
     settings.PARENTHESES_EXPRESSION_RPAREN_WRAP = false;
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED | CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE=5;
+    settings.getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE=5;
     settings.RIGHT_MARGIN = 25;
     doTest("ParenthesizedExpressionWrap", "ParenthesizedExpressionWrap_left");
   }
@@ -344,6 +344,7 @@ public class WrapperTest extends JavaFormatterTestCase {
 
   public void testSimpleMethods() throws Exception {
     CommonCodeStyleSettings settings = getSettings(JavaLanguage.INSTANCE);
+    settings.SPACE_WITHIN_BRACES = true;
 
     defaultCodeStyle();
     settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
@@ -445,25 +446,26 @@ public class WrapperTest extends JavaFormatterTestCase {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 140;
     getSettings(JavaLanguage.INSTANCE).CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings(JavaLanguage.INSTANCE).METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings(JavaLanguage.INSTANCE).getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 2;
-    getSettings(JavaLanguage.INSTANCE).getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
+    getSettings(JavaLanguage.INSTANCE).getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 2;
+    getSettings(JavaLanguage.INSTANCE).getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2;
     getSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
 
-    doTextTest("class Foo {\n" +
-               "  void foo() {\n" +
-               "    for (int i = 0; i < descriptors.length; i++) {\n" +
-               "      descriptors[i] = manager.createProblemDescriptor(results.get(i), \"Usage of the API documented as @since 1.5\", (LocalQuickFix)null,ProblemHighlightType.GENERIC_ERROR_OR_WARNING);\n" +
-               "    }" +
-               "  }\n" +
-               "}",
-               "class Foo {\n" +
-               "  void foo() {\n" +
-               "    for (int i = 0; i < descriptors.length; i++) {\n" +
-               "      descriptors[i] = manager.createProblemDescriptor(results.get(i), \"Usage of the API documented as @since 1.5\", (LocalQuickFix) null,\n" +
-               "                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);\n" +
-               "    }\n" +
-               "  }\n" +
-               "}");
+    doTextTest("""
+                 class Foo {
+                   void foo() {
+                     for (int i = 0; i < descriptors.length; i++) {
+                       descriptors[i] = manager.createProblemDescriptor(results.get(i), "Usage of the API documented as @since 1.5", (LocalQuickFix)null,ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                     }  }
+                 }""",
+               """
+                 class Foo {
+                   void foo() {
+                     for (int i = 0; i < descriptors.length; i++) {
+                       descriptors[i] = manager.createProblemDescriptor(results.get(i), "Usage of the API documented as @since 1.5", (LocalQuickFix) null,
+                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                     }
+                   }
+                 }""");
   }
 
   private void defaultCodeStyle() {
@@ -512,30 +514,34 @@ public class WrapperTest extends JavaFormatterTestCase {
     getSettings(JavaLanguage.INSTANCE).THROWS_LIST_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     getSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_THROWS_LIST = false;
 
-    doTextTest("class Foo {\n" +
-               "    void methodFoo() throws IOException, InvalidOperationException {\n" +
-               "    }\n" +
-               "}",
-               "class Foo {\n" +
-               "    void methodFoo()\n" +
-               "            throws IOException, InvalidOperationException {\n" +
-               "    }\n" +
-               "}");
+    doTextTest("""
+                 class Foo {
+                     void methodFoo() throws IOException, InvalidOperationException {
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void methodFoo()
+                             throws IOException, InvalidOperationException {
+                     }
+                 }""");
 
     getSettings(JavaLanguage.INSTANCE).THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     getSettings(JavaLanguage.INSTANCE).THROWS_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_THROWS_LIST = false;
 
-    doTextTest("class Foo {\n" +
-               "    void methodFoo() throws IOException, InvalidOperationException {\n" +
-               "    }\n" +
-               "}",
-               "class Foo {\n" +
-               "    void methodFoo() throws\n" +
-               "            IOException,\n" +
-               "            InvalidOperationException {\n" +
-               "    }\n" +
-               "}");
+    doTextTest("""
+                 class Foo {
+                     void methodFoo() throws IOException, InvalidOperationException {
+                     }
+                 }""",
+               """
+                 class Foo {
+                     void methodFoo() throws
+                             IOException,
+                             InvalidOperationException {
+                     }
+                 }""");
 
   }
 

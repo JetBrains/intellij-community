@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.FormatterEnabledAccessor;
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.*;
 
-public class IntellijPropertyKindMap {
+public final class IntellijPropertyKindMap {
   private final static Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = new HashMap<>();
 
   static {
@@ -32,6 +33,7 @@ public class IntellijPropertyKindMap {
     PROPERTY_KIND_MAP.put("formatter_off_tag", GENERIC);
     PROPERTY_KIND_MAP.put("formatter_on_tag", GENERIC);
     PROPERTY_KIND_MAP.put("formatter_tags_enabled", GENERIC);
+    PROPERTY_KIND_MAP.put(FormatterEnabledAccessor.PROPERTY_NAME, GENERIC);
     PROPERTY_KIND_MAP.put("visual_guides", GENERIC);
     PROPERTY_KIND_MAP.put("wrap_on_typing", GENERIC);
     PROPERTY_KIND_MAP.put("smart_tabs", GENERIC);

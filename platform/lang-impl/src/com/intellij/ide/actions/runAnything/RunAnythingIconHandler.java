@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,8 +12,8 @@ import javax.swing.text.JTextComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-class RunAnythingIconHandler implements PropertyChangeListener {
-  private static final String FOREGROUND_PROPERTY = "foreground";
+final class RunAnythingIconHandler implements PropertyChangeListener {
+  private static final @NonNls String FOREGROUND_PROPERTY = "foreground";
   protected static final String MATCHED_PROVIDER_PROPERTY = "JTextField.match";
 
   private final Consumer<? super ExtendableTextComponent.Extension> myConsumer;
@@ -45,7 +46,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     myConsumer.consume(new RunConfigurationTypeExtension((Icon)variant));
   }
 
-  private static class RunConfigurationTypeExtension implements ExtendableTextComponent.Extension {
+  private static final class RunConfigurationTypeExtension implements ExtendableTextComponent.Extension {
     private final Icon myVariant;
 
     RunConfigurationTypeExtension(Icon variant) {

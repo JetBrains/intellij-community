@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 
-public class GitRefUtil {
+public final class GitRefUtil {
   private static final Logger LOG = Logger.getInstance(GitRefUtil.class);
   private static final Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)");
 
@@ -66,7 +66,7 @@ public class GitRefUtil {
 
     String branch = null;
     int start = i;
-    if (start < line.length() && Character.isWhitespace(line.charAt(start++))) {
+    if (Character.isWhitespace(line.charAt(start++))) {
       for (i = start; i < line.length(); i++) {
         char c = line.charAt(i);
         if (Character.isWhitespace(c)) {
@@ -79,12 +79,7 @@ public class GitRefUtil {
     if (branch == null || !branch.startsWith(REFS_HEADS_PREFIX) && !branch.startsWith(REFS_REMOTES_PREFIX)) {
       return null;
     }
-    return Pair.create(shortBuffer(branch), shortBuffer(hash.trim()));
-  }
-
-  @NotNull
-  private static String shortBuffer(String raw) {
-    return new String(raw);
+    return Pair.create(branch, hash.trim());
   }
 
   @NotNull

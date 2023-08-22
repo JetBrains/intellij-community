@@ -3,14 +3,17 @@ package com.intellij.lang.properties.editor.inspections.incomplete;
 
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.editor.ResourceBundleEditorBundle;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,31 +36,32 @@ public class IncompletePropertyInspectionOptionsPanel {
   public JPanel buildPanel() {
     JPanel panel = ToolbarDecorator
       .createDecorator(myList)
-      .setPanelBorder(IdeBorderFactory.createTitledBorder("Ignored suffixes"))
       .disableUpDownActions()
       .setAddAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        final String result = Messages.showInputDialog(CommonDataKeys.PROJECT.getData(button.getDataContext()),
-                                                       ResourceBundleEditorBundle.message("incomplete.property.add.ignored.suffixes.dialog.message"),
-                                                       ResourceBundleEditorBundle.message("incomplete.property.add.ignored.suffixes.dialog.title"), null);
-        if (result != null) {
-          mySuffixes.addAll(StringUtil.split(result, ","));
+        @Override
+        public void run(AnActionButton button) {
+          final String result = Messages.showInputDialog(CommonDataKeys.PROJECT.getData(button.getDataContext()),
+                                                         ResourceBundleEditorBundle.message("incomplete.property.add.ignored.suffixes.dialog.message"),
+                                                         ResourceBundleEditorBundle.message("incomplete.property.add.ignored.suffixes.dialog.title"), null);
+          if (result != null) {
+            mySuffixes.addAll(StringUtil.split(result, ","));
+            changed();
+          }
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          for (String s : myList.getSelectedValuesList()) {
+            mySuffixes.remove(s);
+          }
           changed();
         }
-      }
-    }).setRemoveAction(new AnActionButtonRunnable() {
+      })
+      .setToolbarPosition(ActionToolbarPosition.RIGHT)
+      .createPanel();
+    myList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
-      public void run(AnActionButton button) {
-        for (String s : myList.getSelectedValuesList()) {
-          mySuffixes.remove(s);
-        }
-        changed();
-      }
-    }).createPanel();
-    myList.setCellRenderer(new ColoredListCellRenderer<String>() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, String suffix, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, @NlsSafe String suffix, int index, boolean selected, boolean hasFocus) {
         append(suffix);
         final Locale locale = PropertiesUtil.getLocale("_" + suffix + ".properties");
         if (locale != PropertiesUtil.DEFAULT_LOCALE) {
@@ -65,12 +69,18 @@ public class IncompletePropertyInspectionOptionsPanel {
             append(" ");
             append(PropertiesUtil.getPresentableLocale(locale), SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
-        } else {
-          append("Default locale");
+        }
+        else {
+          append(ResourceBundleEditorBundle.message("incomplete.property.inspection.default.locale.presentation"));
         }
       }
     });
-    return panel;
+    return UI.PanelFactory
+      .panel(panel)
+      .withLabel(ResourceBundleEditorBundle.message("incomplete.property.inspection.ignored.suffixes.label"))
+      .moveLabelOnTop()
+      .resizeY(true)
+      .createPanel();
   }
 
   public boolean showDialogAndGet(Project project) {

@@ -21,25 +21,25 @@ import java.util.Set;
 
 @State(name = "EclipseModuleManager")
 public class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element>, StateStorageChooserEx {
-  @NonNls private static final String VALUE_ATTR = "value";
-  @NonNls private static final String VARELEMENT = "varelement";
-  @NonNls private static final String VAR_ATTRIBUTE = "var";
-  @NonNls private static final String CONELEMENT = "conelement";
-  @NonNls private static final String FORCED_JDK = "forced_jdk";
-  @NonNls private static final String SRC_DESCRIPTION = "src_description";
-  @NonNls private static final String EXPECTED_POSITION = "expected_position";
-  @NonNls private static final String SRC_FOLDER = "src_folder";
+  @NonNls static final String VALUE_ATTR = "value";
+  @NonNls static final String VARELEMENT = "varelement";
+  @NonNls static final String VAR_ATTRIBUTE = "var";
+  @NonNls static final String CONELEMENT = "conelement";
+  @NonNls static final String FORCED_JDK = "forced_jdk";
+  @NonNls static final String SRC_DESCRIPTION = "src_description";
+  @NonNls static final String EXPECTED_POSITION = "expected_position";
+  @NonNls static final String SRC_FOLDER = "src_folder";
   private CachedXmlDocumentSet myDocumentSet;
   private final Map<String, String> myEclipseVariablePaths = new LinkedHashMap<>();
   private final Set<String> myEclipseUrls = new LinkedHashSet<>();
   private final Set<String> myUnknownCons = new LinkedHashSet<>();
   private boolean myForceConfigureJDK;
-  @NonNls private static final String SRC_PREFIX = "src:";
-  @NonNls private static final String SRC_LINK_PREFIX = "linksrc:";
-  @NonNls private static final String LINK_PREFIX = "link:";
-  @NonNls private static final String PREFIX_ATTR = "kind";
+  @NonNls static final String SRC_PREFIX = "src:";
+  @NonNls static final String SRC_LINK_PREFIX = "linksrc:";
+  @NonNls static final String LINK_PREFIX = "link:";
+  @NonNls static final String PREFIX_ATTR = "kind";
   private final Module myModule;
-  @NonNls private static final String LIBELEMENT = "libelement";
+  @NonNls static final String LIBELEMENT = "libelement";
   private int myExpectedModuleSourcePlace;
   private final Map<String, Integer> mySrcPlace = new LinkedHashMap<>();
   private String myInvalidJdk;

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.lang.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A token type which represents a fragment of text (possibly in a different language)
  * which is not parsed during the current lexer or parser pass and can be parsed later when
- * its contents is requested.
+ * its contents are requested.
  *
  * @author max
  */
@@ -22,41 +21,19 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
 
   public static final Key<Language> LANGUAGE_KEY = Key.create("LANGUAGE_KEY");
 
-  public ILazyParseableElementType(@NotNull @NonNls final String debugName) {
+  public ILazyParseableElementType(final @NotNull @NonNls String debugName) {
     this(debugName, null);
   }
 
-  public ILazyParseableElementType(@NotNull @NonNls final String debugName, @Nullable final Language language) {
+  public ILazyParseableElementType(final @NotNull @NonNls String debugName, final @Nullable Language language) {
     super(debugName, language);
   }
 
   /**
-   * Allows to construct element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
+   * Allows constructing element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
    */
-  public ILazyParseableElementType(@NotNull @NonNls final String debugName, @Nullable final Language language, final boolean register) {
+  public ILazyParseableElementType(final @NotNull @NonNls String debugName, final @Nullable Language language, final boolean register) {
     super(debugName, language, register);
-  }
-
-  /**
-   * Parses the contents of the specified chameleon node and returns PsiBuilder.
-   * In future this method should deprecate all other parsing methods: parseContents(), doParseContents(), etc.
-   * It provides more flexible and CPU/memory efficient access to parser algorithms for all needs:
-   * editing, indexing and analysis.
-   * <p/>
-   *
-   * The parseContent() implementation in terms of parseLight() is just the following:
-   * {@code}parseLight().getTreeBuilt().getFirstChildNode(){@code}
-   *
-   * @param chameleon the node to parse.
-   * @return the parsed contents of the node in the form PsiBuilder.
-   *
-   * @deprecated Not needed anymore, override {@link ILazyParseableElementType#parseContents(ASTNode)}
-   *             or implement {@link ILightLazyParseableElementType} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public PsiBuilder parseLight(ASTNode chameleon) {
-    throw new UnsupportedOperationException(String.valueOf(chameleon));
   }
 
   /**
@@ -82,18 +59,12 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
     return node.getFirstChildNode();
   }
 
-  protected Language getLanguageForParser(PsiElement psi) {
+  protected @NotNull Language getLanguageForParser(@NotNull PsiElement psi) {
     return getLanguage();
   }
 
-  @Nullable
   public ASTNode createNode(CharSequence text) {
     return null;
-  }
-
-  @Override
-  public boolean reuseCollapsedTokens() {
-    return false;
   }
 
   // Please, add no more public methods here. Add them to `ILazyParseableElementTypeBase` instead.

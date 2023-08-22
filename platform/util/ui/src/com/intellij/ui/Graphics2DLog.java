@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -21,15 +22,15 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class Graphics2DLog extends Graphics2D {
-  protected final Graphics2D myPeer;
+public final class Graphics2DLog extends Graphics2D {
+  private final Graphics2D myPeer;
 
   public Graphics2DLog(Graphics g) {
     myPeer = (Graphics2D)g;
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
-  protected void log(String msg) {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static void log(@NonNls String msg) {
     System.out.println(msg);
   }
 
@@ -507,11 +508,6 @@ public class Graphics2DLog extends Graphics2D {
   }
 
   @Override
-  public void finalize() {
-    myPeer.finalize();
-  }
-
-  @Override
   public String toString() {
     return myPeer.toString();
   }
@@ -533,8 +529,7 @@ public class Graphics2DLog extends Graphics2D {
     return myPeer.getClipBounds(r);
   }
 
-  @Nullable
-  private static String toHex(Color c) {
+  private static @Nullable String toHex(Color c) {
     return c == null ? null : ColorUtil.toHex(c);
   }
 }

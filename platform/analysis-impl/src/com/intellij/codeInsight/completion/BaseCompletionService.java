@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
@@ -16,18 +17,29 @@ import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * @author peter
- */
 public class BaseCompletionService extends CompletionService {
   private static final Logger LOG = Logger.getInstance(BaseCompletionService.class);
 
   @Nullable protected CompletionProcess myApiCompletionProcess;
+
+  @ApiStatus.Internal
+  public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
+  /**
+   * Timestamp when a lookup item was added to the {@link CompletionResultSet}
+   */
+  public static final Key<Long> LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS = Key.create("lookup element add time");
+  /**
+   * The order in which the element was added to the {@link CompletionResultSet}
+   */
+  public static final Key<Integer> LOOKUP_ELEMENT_RESULT_SET_ORDER = Key.create("lookup element result set order");
+
+  public static final Key<Boolean> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 
   @Override
   public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
@@ -87,6 +99,7 @@ public class BaseCompletionService extends CompletionService {
     protected CompletionSorter mySorter;
     @Nullable
     protected final BaseCompletionService.BaseCompletionResultSet myOriginal;
+    private int myItemCounter = 0;
 
     protected BaseCompletionResultSet(Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
                                       CompletionContributor contributor, CompletionParameters parameters,
@@ -110,6 +123,10 @@ public class BaseCompletionService extends CompletionService {
 
       CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), mySorter);
       if (matched != null) {
+        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor);
+        element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
+        element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, myItemCounter);
+        myItemCounter += 1;
         passResult(matched);
       }
     }
@@ -203,7 +220,7 @@ public class BaseCompletionService extends CompletionService {
         });
       }
     }
-    return sorter.withClassifier("priority", true, new ClassifierFactory<LookupElement>("liftShorter") {
+    return sorter.withClassifier("priority", true, new ClassifierFactory<>("liftShorter") {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
         return new LiftShorterItemsClassifier("liftShorter", next, new LiftShorterItemsClassifier.LiftingCondition(), false);

@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,9 @@ public class GuiFormFileType implements /*UIBased*/FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "form";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
+  private GuiFormFileType() {
+  }
+
   @Override
   @NotNull
   public String getName() {
@@ -41,7 +45,13 @@ public class GuiFormFileType implements /*UIBased*/FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.gui.designer.form");
+    return IdeBundle.message("filetype.gui.designer.form.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return IdeBundle.message("filetype.gui.designer.form.display.name");
   }
 
   @Override
@@ -57,11 +67,6 @@ public class GuiFormFileType implements /*UIBased*/FileType {
 
   @Override
   public boolean isBinary() {
-    return false;
-  }
-
-  @Override
-  public boolean isReadOnly() {
     return false;
   }
 

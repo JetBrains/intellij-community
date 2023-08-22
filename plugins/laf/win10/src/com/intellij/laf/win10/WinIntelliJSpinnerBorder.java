@@ -24,12 +24,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
-public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
+public final class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (!(c instanceof JSpinner)) return;
+    if (!(c instanceof JSpinner spinner)) return;
 
-    JSpinner spinner = (JSpinner)c;
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -38,10 +37,10 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
       Rectangle r = new Rectangle(x, y, width, height);
 
       int bw = 1;
-      Object op = spinner.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(spinner);
 
       if (c.isEnabled() && op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, DarculaSpinnerBorder.isFocused(c));
+        op.setGraphicsColor(g2, DarculaSpinnerBorder.isFocused(c));
         bw = 2;
       }
       else if (c.isEnabled()) {

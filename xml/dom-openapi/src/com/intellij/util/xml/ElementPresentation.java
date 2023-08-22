@@ -15,24 +15,26 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
- * @author peter
- * @see com.intellij.util.xml.DomElement#getPresentation()
+ * @see DomElement#getPresentation()
  * @see ElementPresentationTemplate
  */
 public abstract class ElementPresentation {
   @Nullable
-  public abstract String getElementName();
+  public abstract @NlsSafe String getElementName();
 
-  public abstract String getTypeName();
+  public abstract @NlsSafe String getTypeName();
 
   @Nullable
   public abstract Icon getIcon();
 
+  @Nls
   @Nullable
   public String getDocumentation() { return null;}
 }

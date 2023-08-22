@@ -45,12 +45,7 @@ import org.jetbrains.annotations.NotNull;
  * Defines the implementation of a parser for a custom language.
  */
 public class IgnoreParserDefinition implements ParserDefinition {
-  public static class Lazy {
-    /**
-     * Whitespaces.
-     */
-    public static final TokenSet WHITE_SPACES = TokenSet.WHITE_SPACE;
-
+  public static final class Lazy {
     /**
      * Regular comment started with #
      */
@@ -92,7 +87,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the parser instance.
    */
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new IgnoreParser();
   }
 
@@ -102,23 +97,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the file node element type.
    */
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE;
-  }
-
-  /**
-   * Returns the set of token types which are treated as whitespace by the PSI builder. Tokens of those types are
-   * automatically skipped by PsiBuilder. Whitespace elements on the bounds of nodes built by PsiBuilder are
-   * automatically excluded from the text range of the nodes. <p><strong>It is strongly advised you return TokenSet
-   * that only contains {@link com.intellij.psi.TokenType#WHITE_SPACE}, which is suitable for all the languages unless
-   * you really need to use special whitespace token</strong>
-   *
-   * @return the set of whitespace token types.
-   */
-  @NotNull
-  @Override
-  public TokenSet getWhitespaceTokens() {
-    return Lazy.WHITE_SPACES;
   }
 
   /**
@@ -167,7 +147,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the PSI file element.
    */
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     if (viewProvider.getBaseLanguage() instanceof IgnoreLanguage) {
       return ((IgnoreLanguage)viewProvider.getBaseLanguage()).createFile(viewProvider);
     }

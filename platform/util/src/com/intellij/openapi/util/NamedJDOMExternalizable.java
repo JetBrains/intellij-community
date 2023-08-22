@@ -15,8 +15,16 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @deprecated use {@link com.intellij.openapi.components.PersistentStateComponent} instead and specify file name in 
+ * {@link com.intellij.openapi.components.State} annotation.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 public interface NamedJDOMExternalizable extends JDOMExternalizable {
   @NonNls String getExternalFileName();
 }

@@ -58,8 +58,7 @@ public abstract class AbstractOpeningExpander implements Expander {
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
         final TreeNode treeNode = (TreeNode)children.nextElement();
-        if (treeNode instanceof RepositoryTreeNode) {
-          final RepositoryTreeNode repositoryTreeNode = (RepositoryTreeNode)treeNode;
+        if (treeNode instanceof RepositoryTreeNode repositoryTreeNode) {
           Url childUrl = repositoryTreeNode.getURL();
           if (checkChild(childUrl)) {
             if (mySelectionPath.equals(childUrl)) {

@@ -37,6 +37,7 @@ import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurab
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +119,7 @@ public class CloudAccountSelectionEditor {
   private void createAccount(ServerType<?> cloudType) {
     RemoteServer<?> newAccount = RemoteServersManager.getInstance().createServer(cloudType, generateServerName(cloudType));
 
-    final Ref<Consumer<String>> errorConsumerRef = new Ref<>();
+    final Ref<Consumer<@Nls String>> errorConsumerRef = new Ref<>();
 
     SingleRemoteServerConfigurable configurable = new SingleRemoteServerConfigurable(newAccount, null, true) {
 

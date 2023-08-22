@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
@@ -11,10 +11,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class CastingLookupElementDecorator extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
+public final class CastingLookupElementDecorator extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   public static final ClassConditionKey<CastingLookupElementDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(CastingLookupElementDecorator.class);
 
   private final LookupElement myCastItem;
@@ -44,7 +41,7 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     getDelegate().renderElement(presentation);
     final String castType = getItemText(presentation, getCastItem());
     presentation.setItemText("(" + castType + ")" + presentation.getItemText());

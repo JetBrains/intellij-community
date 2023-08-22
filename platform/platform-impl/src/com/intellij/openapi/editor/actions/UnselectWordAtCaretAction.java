@@ -31,13 +31,14 @@ public class UnselectWordAtCaretAction extends EditorAction implements DumbAware
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
+  @Override
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext) {
+    return TextComponentEditorAction.getEditorFromContext(dataContext);
+  }
 
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     }
   }
 }

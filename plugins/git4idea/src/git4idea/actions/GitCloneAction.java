@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -28,8 +29,12 @@ import org.jetbrains.annotations.NotNull;
 public class GitCloneAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

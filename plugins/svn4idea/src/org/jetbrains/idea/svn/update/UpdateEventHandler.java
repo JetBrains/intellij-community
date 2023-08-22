@@ -1,14 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
@@ -39,8 +42,8 @@ public class UpdateEventHandler implements ProgressTracker {
   // its own revisions.
   private final Stack<List<Pair<String, String>>> myFilesWaitingForRevision;
 
-  protected String myText;
-  protected String myText2;
+  protected @NlsContexts.ProgressText @Nullable String myText;
+  protected @NlsContexts.ProgressDetails @Nullable String myText2;
 
   public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator,
                             @Nullable final SvnUpdateContext sequentialUpdatesContext) {
@@ -254,7 +257,7 @@ public class UpdateEventHandler implements ProgressTracker {
     }
   }
 
-  private static FileGroup createFileGroup(String name, String id) {
+  private static @NotNull FileGroup createFileGroup(@Nls String name, String id) {
     return new FileGroup(name, name, false, id, true);
   }
 

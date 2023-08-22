@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -34,6 +35,11 @@ public class DebuggerTreeWithHistoryPanel<D> extends DebuggerTreeWithHistoryCont
     myMainPanel.repaint();
   }
 
+  @Override
+  protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
+    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree)).addToTop(createToolbar(mainPanel, tree));
+  }
+
   public JPanel getMainPanel() {
     return myMainPanel;
   }
@@ -42,7 +48,7 @@ public class DebuggerTreeWithHistoryPanel<D> extends DebuggerTreeWithHistoryCont
     myTree.invokeLater(() -> myTree.rebuildAndRestore(XDebuggerTreeState.saveState(myTree)));
   }
 
-  public XDebuggerTree getTree() {
+  public @NotNull XDebuggerTree getTree() {
     return myTree;
   }
 }

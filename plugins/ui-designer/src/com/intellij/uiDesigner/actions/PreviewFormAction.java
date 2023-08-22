@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
@@ -29,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -43,6 +43,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -52,6 +53,7 @@ import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
 import com.jgoodies.forms.layout.CellConstraints;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,11 +66,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public final class PreviewFormAction extends AnAction{
+public final class PreviewFormAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**
@@ -77,7 +75,7 @@ public final class PreviewFormAction extends AnAction{
    */
   private static final String CLASS_TO_BIND_NAME = "com.intellij.uiDesigner.FormPreviewFrame";
   private static final String CLASS_TO_BIND_RESOURCE_NAME = "com/intellij/uiDesigner/FormPreviewFrame";
-  @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "RuntimeBundle";
+  @NonNls private static final String RUNTIME_BUNDLE_PREFIX = "messages.RuntimeBundle";
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
   @NotNull
@@ -106,9 +104,9 @@ public final class PreviewFormAction extends AnAction{
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
+    GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
 
-    if(editor == null){
+    if (editor == null) {
       e.getPresentation().setVisible(false);
       return;
     }
@@ -116,8 +114,13 @@ public final class PreviewFormAction extends AnAction{
     final VirtualFile file = editor.getFile();
     e.getPresentation().setVisible(
       FileDocumentManager.getInstance().getDocument(file) != null &&
-      FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.GUI_DESIGNER_FORM)
+      FileTypeRegistry.getInstance().isFileOfType(file, GuiFormFileType.INSTANCE)
     );
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT ;
   }
 
   private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,
@@ -232,7 +235,7 @@ public final class PreviewFormAction extends AnAction{
       final HashSet<String> bundleSet = new HashSet<>();
       FormEditingUtil.iterateStringDescriptors(
         rootContainer,
-        new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
+        new FormEditingUtil.StringDescriptorVisitor<>() {
           @Override
           public boolean visit(final IComponent component, final StringDescriptor descriptor) {
             if (descriptor.getBundleName() != null) {
@@ -338,9 +341,9 @@ public final class PreviewFormAction extends AnAction{
     private final Module myModule;
     private final JavaParameters myParams;
     private final String myTempPath;
-    private final String myStatusbarMessage;
+    private final @Nls String myStatusbarMessage;
 
-    MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
+    MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final @Nls String statusbarMessage) {
       myModule = module;
       myParams = params;
       myTempPath = tempPath;

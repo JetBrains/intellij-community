@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -16,10 +18,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -45,16 +49,31 @@ public class GroovyStaticImportMethodFix extends Intention {
 
   @Override
   @NotNull
-  public String getText() {
-    String text = "Static import method";
+  public @IntentionName String getText() {
     if (getCandidates().size() == 1) {
       final int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME;
-      text += " '" + PsiFormatUtil.formatMethod(getCandidates().get(0), PsiSubstitutor.EMPTY, options, 0) + "'";
+      String methodText = PsiFormatUtil.formatMethod(getCandidates().get(0), PsiSubstitutor.EMPTY, options, 0);
+      return GroovyBundle.message("static.import.method.0.fix", methodText);
     }
     else {
-      text += "...";
+      return GroovyBundle.message("static.import.method.fix");
     }
-    return text;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    List<PsiMethod> candidates = getCandidates();
+    if (candidates.size() != 1) {
+      return null;
+    }
+    GrMethodCall call = myMethodCall.getElement();
+    if (call == null) {
+      return null;
+    }
+    GrMethodCall copy = PsiTreeUtil.findSameElementInCopy(call, target);
+    GroovyStaticImportMethodFix fix = new GroovyStaticImportMethodFix(copy);
+    fix.myCandidates = candidates;
+    return fix;
   }
 
   @Override

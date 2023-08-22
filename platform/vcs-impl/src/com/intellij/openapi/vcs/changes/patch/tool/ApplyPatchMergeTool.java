@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
@@ -7,7 +7,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-public class ApplyPatchMergeTool implements MergeTool {
+final class ApplyPatchMergeTool implements MergeTool {
   @NotNull
   @Override
   public MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request) {
@@ -72,12 +72,11 @@ public class ApplyPatchMergeTool implements MergeTool {
           if (result == MergeResult.RESOLVED) {
             int unresolved = getUnresolvedCount();
             if (unresolved != 0 &&
-                Messages.showConfirmationDialog(getComponent().getRootPane(),
-                                                DiffBundle
-                                                  .message("apply.patch.partially.resolved.changes.confirmation.message", unresolved),
-                                                DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                                DiffBundle.message("merge.save.and.finish.button"),
-                                                DiffBundle.message("merge.continue.button")) != Messages.YES) {
+                !MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                                            DiffBundle.message("apply.patch.partially.resolved.changes.confirmation.message", unresolved))
+                  .yesText(DiffBundle.message("merge.save.and.finish.button"))
+                  .noText(DiffBundle.message("merge.continue.button"))
+                  .ask(getComponent().getRootPane())) {
               return;
             }
           }

@@ -4,6 +4,7 @@ package com.intellij.openapi.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
@@ -73,8 +74,6 @@ public class MultiLineLabelUI extends BasicLabelUI {
     Rectangle textR,
     int textIconGap) {
     boolean orientationIsLeftToRight = true;
-    int hAlign = horizontalAlignment;
-    int hTextPos = horizontalTextPosition;
 
 
     if (c != null) {
@@ -86,25 +85,19 @@ public class MultiLineLabelUI extends BasicLabelUI {
 
     // Translate LEADING/TRAILING values in horizontalAlignment
     // to LEFT/RIGHT values depending on the components orientation
-    switch (horizontalAlignment) {
-    case LEADING:
-      hAlign = (orientationIsLeftToRight) ? LEFT : RIGHT;
-      break;
-    case TRAILING:
-      hAlign = (orientationIsLeftToRight) ? RIGHT : LEFT;
-      break;
-    }
+    int hAlign = switch (horizontalAlignment) {
+      case LEADING -> (orientationIsLeftToRight) ? LEFT : RIGHT;
+      case TRAILING -> (orientationIsLeftToRight) ? RIGHT : LEFT;
+      default -> horizontalAlignment;
+    };
 
     // Translate LEADING/TRAILING values in horizontalTextPosition
     // to LEFT/RIGHT values depending on the components orientation
-    switch (horizontalTextPosition) {
-    case LEADING:
-      hTextPos = (orientationIsLeftToRight) ? LEFT : RIGHT;
-      break;
-    case TRAILING:
-      hTextPos = (orientationIsLeftToRight) ? RIGHT : LEFT;
-      break;
-    }
+    int hTextPos = switch (horizontalTextPosition) {
+      case LEADING -> (orientationIsLeftToRight) ? LEFT : RIGHT;
+      case TRAILING -> (orientationIsLeftToRight) ? RIGHT : LEFT;
+      default -> horizontalTextPosition;
+    };
 
     return layoutCompoundLabel(fm,
       text,
@@ -159,7 +152,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
 
     // Fix for textIsEmpty sent by Paulo Santos
     boolean textIsEmpty =
-      (text == null) || (text.length == 0) || (text.length == 1 && ((text[0] == null) || "".equals(text[0])));
+      (text == null) || (text.length == 0) || (text.length == 1 && ((text[0] == null) || text[0].isEmpty()));
 
     String rettext = "";
     if (textIsEmpty) {
@@ -325,9 +318,9 @@ public class MultiLineLabelUI extends BasicLabelUI {
     }
   }
 
-  public static Dimension computeMultiLineDimension(FontMetrics fm, String[] strs) {
+  public static Dimension computeMultiLineDimension(FontMetrics fm, @Nls String [] strs) {
     int width = 0;
-    for (String str : strs) {
+    for (@Nls String str : strs) {
       width = Math.max(width, SwingUtilities.computeStringWidth(fm, str));
     }
     return new Dimension(width, fm.getHeight() * strs.length);
@@ -343,8 +336,8 @@ public class MultiLineLabelUI extends BasicLabelUI {
     return myLines;
   }
 
-  public static String convertTabs(String text, final int tabLength) {
-    StringBuilder buf = new StringBuilder(text.length());
+  public static String convertTabs(@Nls String text, final int tabLength) {
+    @Nls StringBuilder buf = new StringBuilder(text.length());
     for (int idx = 0; idx < text.length(); idx++) {
       char ch = text.charAt(idx);
       if (ch == '\t') {

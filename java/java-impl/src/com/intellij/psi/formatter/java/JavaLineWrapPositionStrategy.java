@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.PsiAwareDefaultLineWrapPositionStrategy;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -82,7 +83,34 @@ public class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositio
         wrapPos = range.getStartOffset();
       }
     }
+    else if (element.getNode().getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
+      CharSequence docChars = document.getCharsSequence();
+      TextRange range = element.getTextRange();
+      int urlOffset = getUrlOffset(docChars, startOffset, endOffset);
+      if (urlOffset >= 0) {
+        int urlEnd = urlOffset;
+        while (urlEnd < range.getEndOffset()) {
+          if (StringUtil.isWhiteSpace(docChars.charAt(urlEnd))) {
+            break;
+          }
+          urlEnd ++;
+        }
+        if (urlEnd > wrapPos)
+          return urlEnd < range.getEndOffset() ? urlEnd : NO_LINE_WRAP;
+      }
+    }
     return wrapPos;
+  }
+
+  private static int getUrlOffset(@NotNull CharSequence chars, int startOffset, int endOffset) {
+    @SuppressWarnings("HttpUrlsUsage") final String[] URL_PREFIX = { "http://", "https://", "ftp://"};
+    for (String urlPrefix : URL_PREFIX) {
+      int urlOffset = CharArrayUtil.indexOf(chars, urlPrefix, startOffset, endOffset);
+      if (urlOffset >= 0) {
+        return urlOffset;
+      }
+    }
+    return -1;
   }
 
   private static boolean isInsidePreTag(@NotNull PsiElement element, @NotNull CharSequence chars, int offset) {

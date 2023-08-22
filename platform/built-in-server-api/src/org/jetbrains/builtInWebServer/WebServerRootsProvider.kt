@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -8,7 +9,7 @@ data class PathQuery(val searchInLibs: Boolean = true, val searchInArtifacts: Bo
 
 abstract class WebServerRootsProvider {
   companion object {
-    val EP_NAME: ExtensionPointName<WebServerRootsProvider> = ExtensionPointName.create<WebServerRootsProvider>("org.jetbrains.webServerRootsProvider")
+    val EP_NAME: ExtensionPointName<WebServerRootsProvider> = ExtensionPointName("org.jetbrains.webServerRootsProvider")
   }
   
   abstract fun resolve(path: String, project: Project, pathQuery: PathQuery): PathInfo?

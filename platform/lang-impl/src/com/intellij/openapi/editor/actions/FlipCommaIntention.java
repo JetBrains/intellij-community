@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.*;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
@@ -29,17 +16,20 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FlipCommaIntention implements IntentionAction {
+import static com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContextKt.isComma;
+
+
+public final class FlipCommaIntention implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return getFamilyName();
+    return CodeInsightBundle.message("intention.name.flip");
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Flip ','";
+    return CodeInsightBundle.message("intention.family.name.flip");
   }
 
   @Override
@@ -147,13 +137,10 @@ public class FlipCommaIntention implements IntentionAction {
     return file.findElementAt(editor.getCaretModel().getOffset());
   }
 
-  private static boolean isComma(@Nullable PsiElement element) {
-    return element != null && element.textMatches(",");
-  }
-
   @NotNull
   private static JBIterable<PsiElement> getSiblings(PsiElement element, boolean fwd) {
     SyntaxTraverser.ApiEx<PsiElement> api = fwd ? SyntaxTraverser.psiApi() : SyntaxTraverser.psiApiReversed();
+    api.next(element);
     JBIterable<PsiElement> flatSiblings = JBIterable.generate(element, api::next).skip(1);
     return SyntaxTraverser.syntaxTraverser(api)
       .withRoots(flatSiblings)
@@ -162,8 +149,8 @@ public class FlipCommaIntention implements IntentionAction {
   }
 
   private static boolean isFlippable(PsiElement e) {
-    if (e instanceof PsiWhiteSpace || e instanceof PsiComment) return false;
-    return StringUtil.isNotEmpty(e.getText());
+    if (e instanceof PsiWhiteSpace || e instanceof PsiComment || e.textMatches("\n")) return false;
+    return !StringUtil.collapseWhiteSpace(e.getText()).isEmpty();
   }
 
   @Nullable

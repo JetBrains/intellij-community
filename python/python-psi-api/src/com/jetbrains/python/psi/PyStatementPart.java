@@ -17,7 +17,6 @@ package com.jetbrains.python.psi;
 
 /**
  * Abstract part of a multipart statement.
- * User: dcheryasov
  */
 public interface PyStatementPart extends PyStatementListContainer {
   PyStatementPart[] EMPTY_ARRAY = new PyStatementPart[0];

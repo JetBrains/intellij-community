@@ -1,32 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class ClassUtil {
+public final class ClassUtil {
   private ClassUtil() { }
 
   public static String extractPackageName(String className) {
@@ -38,7 +26,7 @@ public class ClassUtil {
   }
 
   @NotNull
-  public static String extractClassName(@NotNull String fqName) {
+  public static @NlsSafe String extractClassName(@NotNull String fqName) {
     int i = fqName.lastIndexOf('.');
     return i == -1 ? fqName : fqName.substring(i + 1);
   }
@@ -83,9 +71,9 @@ public class ClassUtil {
   }
 
   private static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass, @NotNull final PsiClass containingClass) {
-    TObjectIntHashMap<PsiClass> indices =
+    ObjectIntMap<PsiClass> indices =
       CachedValuesManager.getCachedValue(containingClass, () -> {
-        final TObjectIntHashMap<PsiClass> map = new TObjectIntHashMap<>();
+        ObjectIntMap<PsiClass> map = new ObjectIntHashMap<>();
         int index = 0;
         for (PsiClass aClass : SyntaxTraverser.psiTraverser().withRoot(containingClass).postOrderDfsTraversal().filter(PsiClass.class)) {
           if (aClass.getQualifiedName() == null) {
@@ -116,7 +104,7 @@ public class ClassUtil {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (!jvmCompatible) {
           super.visitClass(aClass);
           if (aClass.getQualifiedName() == null) {
@@ -140,7 +128,7 @@ public class ClassUtil {
       }
 
       @Override
-      public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      public void visitTypeParameter(final @NotNull PsiTypeParameter classParameter) {
         if (!jvmCompatible) {
           super.visitTypeParameter(classParameter);
         }
@@ -232,6 +220,7 @@ public class ClassUtil {
   }
 
   @Nullable
+  @NlsSafe
   public static String getJVMClassName(@NotNull PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null) {
@@ -277,7 +266,7 @@ public class ClassUtil {
       signature.append(getBinaryPresentation(param.getType()));
     }
     signature.append(")");
-    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
+    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiTypes.voidType())));
     return signature.toString();
   }
 

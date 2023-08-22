@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +19,8 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 
 import java.util.*;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnRevisionsNavigationMediator implements CommittedChangesNavigation {
   private static final Logger LOG = Logger.getInstance(SvnRevisionsNavigationMediator.class);
@@ -56,7 +58,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     Info info = infoRef.get();
     if (info == null || !info.getRevision().isValid() || info.getRepositoryRootUrl() == null) {
-      throw new VcsException("Could not get head info for " + location);
+      throw new VcsException(message("error.could.not.get.head.info.for.url", location));
     }
 
     final Iterator<ChangesBunch> visualIterator = project.isDefault() ? null :
@@ -88,7 +90,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
   private void underProgress(final VcsException[] exception, final Runnable process) throws VcsException {
     final boolean succeeded = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      process, "Getting latest repository revision", true, myProject);
+      process, message("progress.title.getting.latest.repository.revision"), true, myProject);
 
     if (exception[0] != null) {
       throw exception[0];
@@ -171,7 +173,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     }
   }
 
-  private static class VisuallyCachedProvider extends CachedProvider {
+  private static final class VisuallyCachedProvider extends CachedProvider {
     private final Project myProject;
     private final RepositoryLocation myLocation;
 
@@ -188,7 +190,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     }
   }
 
-  private static class InternallyCachedProvider extends CachedProvider {
+  private static final class InternallyCachedProvider extends CachedProvider {
     private final Project myProject;
     private boolean myHolesDetected;
 

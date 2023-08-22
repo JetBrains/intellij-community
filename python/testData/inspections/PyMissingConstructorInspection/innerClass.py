@@ -1,7 +1,7 @@
 
 class Base(object):
   def __init__(self, param):
-    print "Base", param
+    print("Base", param)
 
 
 class Wrapper(object):
@@ -9,7 +9,7 @@ class Wrapper(object):
     def __init__(self, param1, param2):
       # Here PyCharm claims no super call
       super(Wrapper.Child, self).__init__(param2)
-      print "Child", param1
+      print("Child", param1)
 
   def __init__(self):
     self.child = self.Child("aaa", "bbb")

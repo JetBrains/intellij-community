@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.inspection;
 
 import com.intellij.codeInspection.*;
@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(FrequentlyUsedInheritorInspection.class);
@@ -58,8 +56,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
       if (InheritanceUtil.isInheritorOrSelf(psi, aClass, true)) {
         continue;
       }
-      final LocalQuickFix quickFix = new ChangeSuperClassFix(aClass,
-                                                             psi,
+      final LocalQuickFix quickFix = new ChangeSuperClassFix(psi,
                                                              superClass,
                                                              searchResult.number,
                                                              searchResult.psi.isInterface() && !aClass.isInterface());
@@ -98,7 +95,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
       return isInSourceContent(aClass) ? Pair.create(superClass, aClass.getExtendsList()) : null;
     }
 
-    PsiClass anInterface = StreamEx.of(aClass.getInterfaces())
+    PsiClass anInterface = Arrays.stream(aClass.getInterfaces())
       .filter(c -> !CommonClassNames.JAVA_LANG_OBJECT.equals(c.getQualifiedName()))
       .filter(c -> isInSourceContent(c))
       .collect(MoreCollectors.onlyOne())
@@ -111,18 +108,21 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
     }
   }
 
-  @NotNull
-  private static List<ClassAndInheritorCount> getTopInheritorsUsingCompilerIndices(@NotNull PsiClass aClass,
-                                                                                   @NotNull GlobalSearchScope searchScope,
-                                                                                   @NotNull PsiElement place) {
+  private static @NotNull List<ClassAndInheritorCount> getTopInheritorsUsingCompilerIndices(@NotNull PsiClass aClass,
+                                                                                            @NotNull GlobalSearchScope searchScope,
+                                                                                            @NotNull PsiElement place) {
     String qName = aClass.getQualifiedName();
-    if (qName == null) return Collections.emptyList();
+    if (qName == null) {
+      return Collections.emptyList();
+    }
 
-    final Project project = aClass.getProject();
-    final CompilerReferenceServiceEx compilerRefService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
+    Project project = aClass.getProject();
+    CompilerReferenceServiceEx compilerRefService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstanceIfEnabled(project);
     try {
-      int id = compilerRefService.getNameId(qName);
-      if (id == 0) return Collections.emptyList();
+      int id = compilerRefService == null ? 0 : compilerRefService.getNameId(qName);
+      if (id == 0) {
+        return Collections.emptyList();
+      }
       return findInheritors(aClass, new CompilerRef.JavaCompilerClassRef(id), searchScope, place, -1, project, compilerRefService);
     }
     catch (ReferenceIndexUnavailableException e) {
@@ -131,13 +131,13 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
   }
 
   private static List<ClassAndInheritorCount> findInheritors(@NotNull PsiClass aClass,
-                                                             @NotNull CompilerRef.JavaCompilerClassRef classAsCompilerRef,
+                                                             @NotNull CompilerRef.CompilerClassHierarchyElementDef classAsCompilerRef,
                                                              @NotNull GlobalSearchScope searchScope,
                                                              @NotNull PsiElement place,
                                                              int hierarchyCardinality,
                                                              @NotNull Project project,
                                                              @NotNull CompilerReferenceServiceEx compilerRefService) {
-    CompilerRef.CompilerClassHierarchyElementDef[] directInheritors = compilerRefService.getDirectInheritors(classAsCompilerRef);
+    Collection<CompilerRef.CompilerClassHierarchyElementDef> directInheritors = compilerRefService.getDirectInheritors(classAsCompilerRef);
 
     if (hierarchyCardinality == -1) {
       hierarchyCardinality = compilerRefService.getInheritorCount(classAsCompilerRef);
@@ -147,8 +147,8 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
     }
     int finalHierarchyCardinality = hierarchyCardinality;
 
-    List<ClassAndInheritorCount> directInheritorStats = Stream
-      .of(directInheritors)
+    List<ClassAndInheritorCount> directInheritorStats = directInheritors
+      .stream()
       .filter(inheritor -> !(inheritor instanceof CompilerRef.CompilerAnonymousClassDef))
       .map(inheritor -> {
         ProgressManager.checkCanceled();
@@ -174,16 +174,16 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
         return null;
       })
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .toList();
 
-    PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(project);
+    PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(project);
     return directInheritorStats
       .stream()
       .filter(c -> resolveHelper.isAccessible(c.psi, place, null))
       .flatMap(c -> StreamEx.of(getClassesIfInterface(c, finalHierarchyCardinality, searchScope, place, project, compilerRefService)).prepend(c))
       .sorted()
       .limit(MAX_RESULT)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private static List<ClassAndInheritorCount> getClassesIfInterface(@NotNull ClassAndInheritorCount classAndInheritorCount,
@@ -194,7 +194,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
                                                                     CompilerReferenceServiceEx compilerRefService) {
     if (classAndInheritorCount.psi.isInterface()) {
       return findInheritors(classAndInheritorCount.psi,
-                            (CompilerRef.JavaCompilerClassRef)classAndInheritorCount.descriptor,
+                            classAndInheritorCount.descriptor,
                             searchScope,
                             place,
                             hierarchyCardinality,
@@ -211,22 +211,11 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
     return index.isInContent(file);
   }
 
-  private static class ClassAndInheritorCount implements Comparable<ClassAndInheritorCount> {
-    private final PsiClass psi;
-    private final CompilerRef.CompilerClassHierarchyElementDef descriptor;
-    private final int number;
-
-    private ClassAndInheritorCount(PsiClass psi,
-                                   CompilerRef.CompilerClassHierarchyElementDef descriptor,
-                                   int number) {
-      this.psi = psi;
-      this.descriptor = descriptor;
-      this.number = number;
-    }
-
+  private record ClassAndInheritorCount(PsiClass psi, CompilerRef.CompilerClassHierarchyElementDef descriptor, int number)
+    implements Comparable<ClassAndInheritorCount> {
     @Override
     public int compareTo(@NotNull ClassAndInheritorCount o) {
-      return - number + o.number;
+      return -number + o.number;
     }
   }
 }

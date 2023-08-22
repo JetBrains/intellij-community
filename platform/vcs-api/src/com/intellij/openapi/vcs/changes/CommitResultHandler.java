@@ -20,16 +20,7 @@ public interface CommitResultHandler extends EventListener {
   default void onCancel() {
   }
 
-  /**
-   * @deprecated Use {@link #onFailure(List<VcsException>)} instead.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  default void onFailure() {
-  }
-
   @SuppressWarnings("unused")
   default void onFailure(@NotNull List<VcsException> errors) {
-    onFailure();
   }
 }

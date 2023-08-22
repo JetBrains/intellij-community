@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -16,7 +17,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.io.PowerStatus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_UNDERLINE;
 
-public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
+final class AffectedTestsInChangeListPainter implements ChangeListDecorator {
   private final Project myProject;
   private final Alarm myAlarm;
   private final AtomicReference<Set<String>> myChangeListsToShow = new AtomicReference<>(Collections.emptySet());
@@ -45,11 +46,6 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
 
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
-        scheduleUpdate();
-      }
-
-      @Override
-      public void unchangedFileStatusChanged() {
         scheduleUpdate();
       }
     };
@@ -81,9 +77,10 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
     if (!myChangeListsToShow.get().contains(changeList.getId())) return;
 
     renderer.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    renderer.append("show affected tests", new SimpleTextAttributes(STYLE_UNDERLINE, UIUtil.getInactiveTextColor()), (Runnable)() -> {
+    renderer.append(JavaCompilerBundle.message("test.discovery.show.affected.tests"), new SimpleTextAttributes(STYLE_UNDERLINE,
+                                                                                                               NamedColorUtil.getInactiveTextColor()), (Runnable)() -> {
       DataContext dataContext = DataManager.getInstance().getDataContext(renderer.getTree());
-      Change[] changes = changeList.getChanges().toArray(new Change[0]);
+      Change[] changes = changeList.getChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
       ShowAffectedTestsAction.showDiscoveredTestsByChanges(myProject, changes, changeList.getName(), dataContext);
     });
   }
@@ -104,7 +101,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
         .map(list -> {
           Collection<Change> changes = list.getChanges();
 
-          PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, changes.toArray(new Change[0]));
+          PsiMethod[] methods = ShowAffectedTestsAction.findMethods(myProject, changes.toArray(Change.EMPTY_CHANGE_ARRAY));
           List<String> paths = ShowAffectedTestsAction.getRelativeAffectedPaths(myProject, changes);
           if (methods.length == 0 && paths.isEmpty()) return null;
 

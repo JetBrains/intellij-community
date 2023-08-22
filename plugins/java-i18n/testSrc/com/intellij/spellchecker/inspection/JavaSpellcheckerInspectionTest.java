@@ -43,6 +43,30 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
   public void testNonNlsLocalVariable() { doTest(); }
   public void testNonNlsLocalVariableAndComment() { doTest(); }
   public void testFieldComment() { doTest(); }
+  public void testDoNotCheckDerivedNames() { doTest(); }
+  public void testSkipDateTime() {
+    myFixture.addClass("""
+                         package java.text;
+                         public class SimpleDateFormat{
+                         public SimpleDateFormat(String pattern){}
+                         public void applyPattern(String pattern){}
+                         public void applyLocalizedPattern(String pattern){}
+                         }
+                         """);
+    myFixture.addClass("""
+                         package java.time.format;
+                         public class DateTimeFormatter{
+                         public static DateTimeFormatter ofPattern(String pattern){return null;}
+                         }
+                         """);
+    myFixture.addClass("""
+                         package java.time.format;
+                         public class DateTimeFormatterBuilder{
+                         public DateTimeFormatterBuilder appendPattern(String pattern){return this;}
+                         }
+                         """);
+    doTest();
+  }
 
   private void doTest() {
     myFixture.enableInspections(SpellcheckerInspectionTestCase.getInspectionTools());

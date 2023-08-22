@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,25 +14,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * @author yole
+ * Provides simple directory-oriented generators, which usually used in small IDEs, where there is only one module
+ * {@link com.intellij.ide.util.projectWizard.AbstractNewProjectStep}
+ * {@link com.intellij.ide.util.projectWizard.ProjectSettingsStepBase}
+ * {@link com.intellij.ide.util.projectWizard.CustomStepProjectGenerator}
+ * {@link HideableProjectGenerator}
+ * 
  */
 public interface DirectoryProjectGenerator<T> {
-  ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
-
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  default String getDescription() {
+  default @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
     return null;
   }
 
-  @Nullable
-  default String getHelpId() {
+  default @Nullable String getHelpId() {
     return null;
   }
 
   // to be removed in 2017.3
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
+  @Deprecated(forRemoval = true)
   default boolean isPrimaryGenerator() {
     return true;
   }
@@ -43,22 +40,14 @@ public interface DirectoryProjectGenerator<T> {
   @NlsContexts.Label
   String getName();
 
-  @NotNull
-  default NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
-    return new NotNullLazyValue<ProjectGeneratorPeer<T>>() {
-      @NotNull
-      @Override
-      protected ProjectGeneratorPeer<T> compute() {
-        return createPeer();
-      }
-    };
+  default @NotNull NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+    return NotNullLazyValue.lazy(this::createPeer);
   }
 
   /**
    * Creates new peer - new project settings and UI for them
    */
-  @NotNull
-  default ProjectGeneratorPeer<T> createPeer() {
+  default @NotNull ProjectGeneratorPeer<T> createPeer() {
     return new GeneratorPeerImpl<>();
   }
 
@@ -68,10 +57,10 @@ public interface DirectoryProjectGenerator<T> {
   @Nullable
   Icon getLogo();
 
-  void generateProject(@NotNull final Project project,
-                       @NotNull final VirtualFile baseDir,
-                       @NotNull final T settings,
-                       @NotNull final Module module);
+  void generateProject(@NotNull Project project,
+                       @NotNull VirtualFile baseDir,
+                       @NotNull T settings,
+                       @NotNull Module module);
 
   @NotNull
   ValidationResult validate(@NotNull String baseDirPath);

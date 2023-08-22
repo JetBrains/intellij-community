@@ -45,3 +45,5 @@ class Foo {
 
   def inject(x) {"cos($x) = ${Math.cos(x)}"}
 }
+
+record R(int x) {}

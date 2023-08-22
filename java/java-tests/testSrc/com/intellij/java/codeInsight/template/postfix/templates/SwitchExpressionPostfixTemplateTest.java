@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template.postfix.templates;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class SwitchExpressionPostfixTemplateTest extends PostfixTemplateTestCase {
@@ -9,12 +8,6 @@ public class SwitchExpressionPostfixTemplateTest extends PostfixTemplateTestCase
   @Override
   protected String getSuffix() {
     return "switch";
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
   }
 
   public void testIntExprInit() {

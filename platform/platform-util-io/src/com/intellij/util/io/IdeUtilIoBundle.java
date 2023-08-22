@@ -2,29 +2,23 @@
 package com.intellij.util.io;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public class IdeUtilIoBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.IdeUtilIoBundle";
-  private static final IdeUtilIoBundle INSTANCE = new IdeUtilIoBundle();
+public final class IdeUtilIoBundle {
+  private static final @NonNls String BUNDLE = "messages.IdeUtilIoBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(IdeUtilIoBundle.class, BUNDLE);
 
   private IdeUtilIoBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

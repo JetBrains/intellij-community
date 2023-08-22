@@ -12,19 +12,16 @@ class AndroidAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Arrays.asList("android.support.annotation.NonNull",
-                             "androidx.annotation.NonNull",
-                             "androidx.annotation.RecentlyNonNull",
-                             "com.android.annotations.NonNull");
-      case NULLABLE:
-        return Arrays.asList("android.support.annotation.Nullable",
-                             "androidx.annotation.Nullable",
-                             "androidx.annotation.RecentlyNullable",
-                             "com.android.annotations.Nullable");
-      default:
-        return Collections.emptyList();
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Arrays.asList("android.support.annotation.NonNull",
+                                     "androidx.annotation.NonNull",
+                                     "androidx.annotation.RecentlyNonNull",
+                                     "com.android.annotations.NonNull");
+      case NULLABLE -> Arrays.asList("android.support.annotation.Nullable",
+                                     "androidx.annotation.Nullable",
+                                     "androidx.annotation.RecentlyNullable",
+                                     "com.android.annotations.Nullable");
+      default -> Collections.emptyList();
+    };
   }
 }

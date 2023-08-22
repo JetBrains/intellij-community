@@ -2,9 +2,11 @@
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
 
-private class PopupInMainMenuActionGroup : NonTrivialActionGroup() {
-  override fun isPopup(place: String): Boolean {
-    return place == ActionPlaces.MAIN_MENU
+class PopupInMainMenuActionGroup : NonTrivialActionGroup() {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isPopupGroup = e.place == ActionPlaces.MAIN_MENU
   }
 }

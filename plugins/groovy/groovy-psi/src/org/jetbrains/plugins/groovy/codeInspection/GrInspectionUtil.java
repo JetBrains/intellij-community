@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author Max Medvedev
  */
-public class GrInspectionUtil {
+public final class GrInspectionUtil {
   public static boolean isNull(@NotNull GrExpression expression) {
     return "null".equals(expression.getText());
   }
@@ -33,14 +35,15 @@ public class GrInspectionUtil {
     return GroovyTokenTypes.mNOT_EQUAL == tokenType;
   }
 
-  public static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
+  @NotNull
+  public static HighlightInfo.Builder createAnnotationForRef(@NotNull GrReferenceElement ref,
                                                      @NotNull HighlightDisplayLevel displayLevel,
-                                                     @NotNull String message) {
+                                                     @NotNull @DetailedDescription String message) {
     PsiElement refNameElement = ref.getReferenceNameElement();
     assert refNameElement != null;
 
     if (displayLevel == HighlightDisplayLevel.ERROR) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message);
     }
 
     if (displayLevel == HighlightDisplayLevel.WEAK_WARNING) {
@@ -49,14 +52,14 @@ public class GrInspectionUtil {
 
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(infotype).range(refNameElement);
       builder.descriptionAndTooltip(message);
-      return builder.needsUpdateOnTyping(false).textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS).create();
+      return builder.needsUpdateOnTyping(false).textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS);
     }
 
     HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());
-    return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message).create();
+    return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message);
   }
 
-  public static void replaceExpression(GrExpression expression, String newExpression) {
+  public static void replaceExpression(GrExpression expression, @NlsSafe String newExpression) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
     final GrExpression newCall = factory.createExpressionFromText(newExpression, expression.getContext());
     expression.replaceWithExpression(newCall, true);

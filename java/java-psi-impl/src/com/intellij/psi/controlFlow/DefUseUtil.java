@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,16 +8,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Utility to find current variable value/where this value is read
+ */
 public final class DefUseUtil {
   private static final Logger LOG = Logger.getInstance(DefUseUtil.class);
 
@@ -30,10 +31,13 @@ public final class DefUseUtil {
     private final PsiElement myContext;
     private final boolean myIsRead;
 
-    public Info(@NotNull PsiVariable variable, @NotNull PsiElement context, boolean read) {
+    private final boolean myWriteOutsideDeclaration;
+
+    public Info(@NotNull PsiVariable variable, @NotNull PsiElement context, boolean read, boolean writeOutsideDeclaration) {
       myVariable = variable;
       myContext = context;
       myIsRead = read;
+      myWriteOutsideDeclaration = writeOutsideDeclaration;
     }
 
     @NotNull
@@ -48,6 +52,13 @@ public final class DefUseUtil {
 
     public boolean isRead() {
       return myIsRead;
+    }
+
+    /**
+     * @return true if this variable was written at least once (except declaration).
+     */
+    public boolean isWriteOutsideDeclaration() {
+      return myWriteOutsideDeclaration;
     }
   }
 
@@ -89,7 +100,9 @@ public final class DefUseUtil {
     }
 
     private void touch() {
-      if (myUsed == null) myUsed = new THashSet<>();
+      if (myUsed == null) {
+        myUsed = new HashSet<>();
+      }
     }
 
     void addUsedFrom(InstructionState state) {
@@ -122,14 +135,14 @@ public final class DefUseUtil {
   }
 
   @Nullable
-  public static List<Info> getUnusedDefs(PsiCodeBlock body, Set<? super PsiVariable> outUsedVariables) {
+  public static List<Info> getUnusedDefs(PsiElement body, Set<? super PsiVariable> outUsedVariables) {
     if (body == null) {
       return null;
     }
 
     ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy, false);
+      flow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.create(true, false, false));
     }
     catch (AnalysisCanceledException e) {
       return null;
@@ -139,8 +152,9 @@ public final class DefUseUtil {
       LOG.debug(flow.toString());
     }
 
-    Set<PsiVariable> assignedVariables = new THashSet<>();
-    Set<PsiVariable> readVariables = new THashSet<>();
+    Set<PsiVariable> assignedVariables = new HashSet<>();
+    Set<PsiVariable> assignedSeveralTimes = new HashSet<>();
+    Set<PsiVariable> readVariables = new HashSet<>();
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
       ProgressManager.checkCanceled();
@@ -150,7 +164,9 @@ public final class DefUseUtil {
         context = PsiTreeUtil.getParentOfType(context, PsiStatement.class, false);
         PsiVariable psiVariable = writeInstruction.variable;
         if (context != null && !(context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null)) {
-          assignedVariables.add(psiVariable);
+          if (!assignedVariables.add(psiVariable)) {
+            assignedSeveralTimes.add(psiVariable);
+          }
         }
       }
       else if (instruction instanceof ReadVariableInstruction) {
@@ -172,7 +188,7 @@ public final class DefUseUtil {
 
     BitSet usefulWrites = new BitSet(instructions.size());
 
-    Queue<InstructionState> queue = new Queue<>(8);
+    Deque<InstructionState> queue = new ArrayDeque<>(8);
 
     for (int i = states.length - 1; i >= 0; i--) {
       final InstructionState outerState = states[i];
@@ -188,7 +204,7 @@ public final class DefUseUtil {
 
       while (!queue.isEmpty()) {
         ProgressManager.checkCanceled();
-        InstructionState state = queue.pullFirst();
+        InstructionState state = queue.removeFirst();
         state.markVisited();
 
         InstructionKey key = state.getInstructionKey();
@@ -235,14 +251,14 @@ public final class DefUseUtil {
                                                                     PsiStatement.class, PsiAssignmentExpression.class,
                                                                     PsiUnaryExpression.class);
           PsiVariable psiVariable = writeInstruction.variable;
-          if (context != null && !(context instanceof PsiTryStatement)) {
+          if (context != null) {
             if (context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null) {
               if (!assignedVariables.contains(psiVariable)) {
-                unusedDefs.add(new Info(psiVariable, context, false));
+                unusedDefs.add(new Info(psiVariable, context, false, assignedSeveralTimes.contains(psiVariable)));
               }
             }
             else {
-              unusedDefs.add(new Info(psiVariable, context, readVariables.contains(psiVariable)));
+              unusedDefs.add(new Info(psiVariable, context, readVariables.contains(psiVariable), assignedSeveralTimes.contains(psiVariable)));
             }
           }
         }
@@ -252,14 +268,40 @@ public final class DefUseUtil {
     return unusedDefs;
   }
 
+  /**
+   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
+   * @param def        variable which value is to be defined
+   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
+   *                   
+   * @return variable {@code def} initializers which should be used when inlining {@code ref}
+   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
+   */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getDefs(body, def, ref, false);
   }
 
+  /**
+   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
+   * @param def        variable which value is to be defined
+   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
+   *                   
+   * @return variable {@code def} initializers which should be used when inlining {@code ref}
+   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
+   */
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
+     if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
+      final PsiElement defContainer = LambdaUtil.getContainingClassOrLambda(def);
+      PsiElement refContainer = LambdaUtil.getContainingClassOrLambda(ref);
+      while (defContainer != refContainer && refContainer != null) {
+        ref = refContainer;
+        refContainer = LambdaUtil.getContainingClassOrLambda(refContainer.getParent());
+      }
+    }
+
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
-        private final IntArrayList[] myBackwardTraces = getBackwardTraces(instructions);
+        final PsiManager psiManager = def.getManager();
+        private final IntList[] myBackwardTraces = getBackwardTraces(instructions);
 
         @Override
         protected int nNext(int index) {
@@ -280,22 +322,19 @@ public final class DefUseUtil {
         protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
             WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-            if (instructionW.variable == def) {
-
+            if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitReferenceExpression(PsiReferenceExpression ref) {
-                  if (PsiUtil.isAccessedForWriting(ref)) {
-                    if (ref.resolve() == def) {
-                      res.add(ref);
-                    }
+                public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
+                  if (PsiUtil.isAccessedForWriting(ref) && psiManager.areElementsEquivalent(ref.resolve(), def)) {
+                    res.add(ref);
                   }
                 }
 
                 @Override
-                public void visitVariable(PsiVariable var) {
-                  if (var == def && (var instanceof PsiParameter || var.hasInitializer())) {
+                public void visitVariable(@NotNull PsiVariable var) {
+                  if ((var instanceof PsiParameter || var.hasInitializer()) && psiManager.areElementsEquivalent(var, def)) {
                     res.add(var);
                   }
                 }
@@ -318,9 +357,13 @@ public final class DefUseUtil {
     return getRefs(body, def, ref, false);
   }
 
+  /**
+   * Returns variable {@code def} references which read assigned value {@code ref}
+   */
   public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
+        final PsiManager psiManager = def.getManager();
         @Override
         protected int nNext(int index) {
           return instructions.get(index).nNext();
@@ -340,13 +383,13 @@ public final class DefUseUtil {
         protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
-            if (instructionR.variable == def) {
+            if (psiManager.areElementsEquivalent(instructionR.variable, def)) {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitReferenceExpression(PsiReferenceExpression ref) {
-                  if (ref.resolve() == def) {
+                public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
+                  if (ref.isReferenceTo(def)) {
                     res.add(ref);
                   }
                 }
@@ -377,7 +420,7 @@ public final class DefUseUtil {
 
     RefsDefs(@NotNull PsiCodeBlock body) throws AnalysisCanceledException {
       this.body = body;
-      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy, false, false);
+      flow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.NO_CONST_EVALUATE);
       instructions = flow.getInstructions();
     }
 
@@ -406,12 +449,13 @@ public final class DefUseUtil {
           elem += 1;
         }
 
-        final Set<@NotNull PsiElement> res = new THashSet<>();
+        Set<@NotNull PsiElement> res = new HashSet<>();
         // hack: ControlFlow doesn't contains parameters initialization
         int startIndex = elem;
 
-        IntArrayList workQueue = new IntArrayList();
+        IntList workQueue = new IntArrayList();
         workQueue.add(startIndex);
+        PsiManager psiManager = body.getManager();
 
         while (!workQueue.isEmpty()) {
           int index = workQueue.removeInt(workQueue.size() - 1);
@@ -425,7 +469,7 @@ public final class DefUseUtil {
             processInstruction(res, instruction, index);
             if (instruction instanceof WriteVariableInstruction) {
               WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-              if (instructionW.variable == def) {
+              if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
                 continue;
               }
             }
@@ -447,7 +491,7 @@ public final class DefUseUtil {
                 final Instruction instruction = instructions.get(prev);
                 if (instruction instanceof WriteVariableInstruction) {
                   WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-                  if (instructionW.variable == def) {
+                  if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
                     continue;
                   }
                 }
@@ -466,8 +510,8 @@ public final class DefUseUtil {
   }
 
 
-  private static IntArrayList @NotNull [] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
-    final IntArrayList[] states = new IntArrayList[instructions.size()];
+  private static IntList @NotNull [] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
+    final IntList[] states = new IntList[instructions.size()];
     for (int i = 0; i < states.length; i++) {
       states[i] = new IntArrayList();
     }
@@ -531,7 +575,7 @@ public final class DefUseUtil {
     private final List<? extends Instruction> myInstructions;
 
     private InstructionStateWalker(@NotNull List<? extends Instruction> instructions) {
-      myStates = new THashMap<>(instructions.size());
+      myStates = new HashMap<>(instructions.size());
       myWalkThroughStack = new WalkThroughStack(instructions.size() / 2);
       myInstructions = instructions;
     }

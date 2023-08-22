@@ -1,30 +1,15 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.util.PathUtil;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomTarget;
@@ -86,7 +71,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     if (prefix == null) {
       return delegate;
     }
-    return new Iterator<String>() {
+    return new Iterator<>() {
       @Override
       public boolean hasNext() {
         return delegate.hasNext();
@@ -121,10 +106,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     }
 
     if (domTarget != null) {
-      final PsiElement psi = PomService.convertToPsi(domTarget);
-      if (psi != null) {
-        return psi;
-      }
+      return PomService.convertToPsi(domTarget);
     }
 
     final PsiFileSystemItem psiFile = getFile().getValue();
@@ -178,7 +160,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
           if (!file.isAbsolute()) {
             final String baseDir = getContextAntProject().getProjectBasedirPath();
             if (baseDir != null) {
-              locValue = PathUtil.getCanonicalPath(new File(baseDir, locValue).getPath());
+              locValue = FileUtil.toCanonicalPath(new File(baseDir, locValue).getPath());
             }
           }
           result = Collections.singletonMap(propertyName, FileUtil.toSystemDependentName(locValue));
@@ -217,19 +199,18 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         final String resource = getResource().getStringValue();
         if (resource != null) {
           final ClassLoader loader = getClassLoader();
-          if (loader != null) {
-            final InputStream stream = loader.getResourceAsStream(resource);
-            if (stream != null) {
-              try {
-                // todo: Remote file can be XmlPropertiesFile
-                final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream, StdFileTypes.PROPERTIES);
-                result = new HashMap<>();
-                for (final IProperty property : propFile.getProperties()) {
-                  result.put(property.getUnescapedKey(), property.getUnescapedValue());
-                }
+          final InputStream stream = loader.getResourceAsStream(resource);
+          if (stream != null) {
+            try {
+              // todo: Remote file can be XmlPropertiesFile
+              final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream,
+                                                                                                          PropertiesFileType.INSTANCE);
+              result = new HashMap<>();
+              for (final IProperty property : propFile.getProperties()) {
+                result.put(property.getUnescapedKey(), property.getUnescapedValue());
               }
-              catch (IOException ignored) {
-              }
+            }
+            catch (IOException ignored) {
             }
           }
         }
@@ -256,8 +237,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return prefix;
   }
 
-  @Nullable
-  private ClassLoader getClassLoader() {
+  private @NotNull ClassLoader getClassLoader() {
     ClassLoader loader = myCachedLoader;
     if (loader == null) {
       myCachedLoader = loader = CustomAntElementsRegistry.createClassLoader(CustomAntElementsRegistry.collectUrls(this), getContextAntProject());

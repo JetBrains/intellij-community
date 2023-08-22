@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,9 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-/**
- * @author yole
- */
+
 public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   private final PsiManagerImpl myManager;
 
@@ -55,7 +54,9 @@ public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   public boolean isPackage(@NotNull PsiDirectory directory) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
     VirtualFile virtualFile = directory.getVirtualFile();
-    return fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES) && fileIndex.getPackageNameByDirectory(virtualFile) != null;
+    PackageIndex packageIndex = PackageIndex.getInstance(myManager.getProject());
+    return fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES) 
+           && packageIndex.getPackageNameByDirectory(virtualFile) != null;
   }
 
   @Override

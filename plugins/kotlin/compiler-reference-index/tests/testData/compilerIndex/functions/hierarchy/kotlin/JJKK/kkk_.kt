@@ -1,0 +1,3 @@
+fun kkk() {
+    KKK().test()
+}

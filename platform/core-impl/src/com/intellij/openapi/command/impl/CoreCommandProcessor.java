@@ -1,28 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Stack;
 
 public class CoreCommandProcessor extends CommandProcessorEx {
   private static class CommandDescriptor implements CommandToken {
     public final @NotNull Runnable myCommand;
     public final Project myProject;
-    public String myName;
+    public @NlsContexts.Command String myName;
     public Object myGroupId;
     public final Document myDocument;
     final @NotNull UndoConfirmationPolicy myUndoConfirmationPolicy;
@@ -30,7 +32,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
     CommandDescriptor(@NotNull Runnable command,
                       Project project,
-                      String name,
+                      @NlsContexts.Command String name,
                       Object groupId,
                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                       boolean shouldRecordActionForActiveDocument,
@@ -60,6 +62,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   private final Stack<CommandDescriptor> myInterruptedCommands = new Stack<>();
   private final List<CommandListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myUndoTransparentCount;
+  private boolean myAllowMergeGlobalCommands;
 
   private final CommandListener eventPublisher;
 
@@ -144,11 +147,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
-    executeCommand(null, runnable, name, groupId);
-  }
-
-  @Override
   public void executeCommand(Project project, @NotNull Runnable runnable, String name, Object groupId) {
     executeCommand(project, runnable, name, groupId, UndoConfirmationPolicy.DEFAULT);
   }
@@ -163,8 +161,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                              final @NotNull Runnable command,
                              final String name,
                              final Object groupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy) {
-    executeCommand(project, command, name, groupId, confirmationPolicy, null);
+                             @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
+    executeCommand(project, command, name, groupId, undoConfirmationPolicy, null);
   }
 
   @Override
@@ -172,9 +170,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                              final @NotNull Runnable command,
                              final String name,
                              final Object groupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                              Document document) {
-    executeCommand(project, command, name, groupId, confirmationPolicy, true, document);
+    executeCommand(project, command, name, groupId, undoConfirmationPolicy, true, document);
   }
 
   @Override
@@ -182,29 +180,34 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                              @NotNull Runnable command,
                              @Nullable String name,
                              @Nullable Object groupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                              boolean shouldRecordCommandForActiveDocument) {
-    executeCommand(project, command, name, groupId, confirmationPolicy, shouldRecordCommandForActiveDocument, null);
+    executeCommand(project, command, name, groupId, undoConfirmationPolicy, shouldRecordCommandForActiveDocument, null);
   }
 
-  private void executeCommand(@Nullable Project project,
+  @Override
+  public void executeCommand(@Nullable Project project,
                               @NotNull Runnable command,
-                              @Nullable String name,
+                              @Nullable @NlsContexts.Command String name,
                               @Nullable Object groupId,
-                              @NotNull UndoConfirmationPolicy confirmationPolicy,
+                              @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                               boolean shouldRecordCommandForActiveDocument,
                               @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
-    application.assertIsWriteThread();
+    application.assertWriteIntentLockAcquired();
+
+    if (CommandLog.LOG.isDebugEnabled()) {
+      String currentCommandName;
+      if (myCurrentCommand != null) currentCommandName = myCurrentCommand.myName;
+      else currentCommandName = "<null>";
+      CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
+                           ", in command = " + currentCommandName +
+                           ", in transparent action = " + isUndoTransparentActionInProgress());
+    }
+
     if (project != null && project.isDisposed()) {
       CommandLog.LOG.error("Project "+project+" already disposed");
       return;
-    }
-
-    if (CommandLog.LOG.isDebugEnabled()) {
-      CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
-                           ", in command = " + (myCurrentCommand != null) +
-                           ", in transparent action = " + isUndoTransparentActionInProgress());
     }
 
     if (myCurrentCommand != null) {
@@ -212,7 +215,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       return;
     }
     Throwable throwable = null;
-    CommandDescriptor descriptor = new CommandDescriptor(command, project, name, groupId, confirmationPolicy,
+    CommandDescriptor descriptor = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy,
                                                          shouldRecordCommandForActiveDocument, document);
     try {
       myCurrentCommand = descriptor;
@@ -223,16 +226,19 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       throwable = th;
     }
     finally {
-      finishCommand(descriptor, throwable);
+      Throwable finalThrowable = throwable;
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        finishCommand(descriptor, finalThrowable);
+      });
     }
   }
 
   @Override
   public @Nullable CommandToken startCommand(final @Nullable Project project,
-                                             final @Nls String name,
+                                             final String name,
                                              final @Nullable Object groupId,
                                              final @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (project != null && project.isDisposed()) return null;
 
     if (CommandLog.LOG.isDebugEnabled()) {
@@ -255,13 +261,13 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     fireCommandFinished();
   }
 
   private void fireCommandFinished() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this, currentCommand.myCommand,
                                           currentCommand.myName,
@@ -278,11 +284,13 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       myCurrentCommand = null;
       publisher.commandFinished(event);
     }
+
+    CommandLog.LOG.debug("finishCommand: name = " + event.getCommandName() + ", groupId = " + event.getCommandGroupId());
   }
 
   @Override
   public void enterModal() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     myInterruptedCommands.push(currentCommand);
     if (currentCommand != null) {
@@ -292,7 +300,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void leaveModal() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
 
     myCurrentCommand = myInterruptedCommands.pop();
@@ -303,7 +311,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandName(String name) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandLog.LOG.assertTrue(currentCommand != null);
     currentCommand.myName = name;
@@ -311,7 +319,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandLog.LOG.assertTrue(currentCommand != null);
     currentCommand.myGroupId = groupId;
@@ -357,24 +365,44 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void removeCommandListener(@NotNull CommandListener listener) {
-    myListeners.remove(listener);
-  }
-
-  @Override
   public void runUndoTransparentAction(@NotNull Runnable action) {
     if (CommandLog.LOG.isDebugEnabled()) {
       CommandLog.LOG.debug("runUndoTransparentAction: " + action + ", in command = " + (myCurrentCommand != null) +
                            ", in transparent action = " + isUndoTransparentActionInProgress());
     }
-    if (myUndoTransparentCount++ == 0) eventPublisher.undoTransparentActionStarted();
+    if (myUndoTransparentCount++ == 0) {
+      eventPublisher.undoTransparentActionStarted();
+    }
     try {
       action.run();
     }
     finally {
-      if (myUndoTransparentCount == 1) eventPublisher.beforeUndoTransparentActionFinished();
-      if (--myUndoTransparentCount == 0) eventPublisher.undoTransparentActionFinished();
+      if (myUndoTransparentCount == 1) {
+        eventPublisher.beforeUndoTransparentActionFinished();
+      }
+      if (--myUndoTransparentCount == 0) {
+        eventPublisher.undoTransparentActionFinished();
+      }
     }
+  }
+
+  @Override
+  public final AutoCloseable withUndoTransparentAction() {
+    if (CommandLog.LOG.isDebugEnabled()) {
+      CommandLog.LOG.debug("withUndoTransparentAction in command = " + (myCurrentCommand != null) +
+                           ", in transparent action = " + isUndoTransparentActionInProgress());
+    }
+    if (myUndoTransparentCount++ == 0) {
+      eventPublisher.undoTransparentActionStarted();
+    }
+    return () -> {
+      if (myUndoTransparentCount == 1) {
+        eventPublisher.beforeUndoTransparentActionFinished();
+      }
+      if (--myUndoTransparentCount == 0) {
+        eventPublisher.undoTransparentActionFinished();
+      }
+    };
   }
 
   @Override
@@ -394,8 +422,29 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files) {
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public Boolean isMergeGlobalCommandsAllowed() {
+    return myAllowMergeGlobalCommands;
+  }
+
+  @Override
+  public void allowMergeGlobalCommands(@NotNull Runnable action) {
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    if (myAllowMergeGlobalCommands) {
+      action.run();
+    }
+
+    myAllowMergeGlobalCommands = true;
+    try {
+      action.run();
+    } finally {
+      myAllowMergeGlobalCommands = false;
+    }
+  }
+
   private void fireCommandStarted() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     CommandDescriptor currentCommand = myCurrentCommand;
     CommandEvent event = new CommandEvent(this,
                                           currentCommand.myCommand,

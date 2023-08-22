@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +27,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsProvider.EXTENSION_POINT_NAME;
 
-public class CodeStyleSettingsCodeFragmentFilter {
+public final class CodeStyleSettingsCodeFragmentFilter {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsCodeFragmentFilter.class);
 
   private final Project myProject;
@@ -47,8 +48,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
     myTextRangeMarker = myDocument.createRangeMarker(range.getStartOffset(), range.getEndOffset());
   }
 
-  @NotNull
-  public CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
+  public @NotNull CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
     Ref<CodeStyleSettingsToShow> settingsToShow = new Ref<>();
     CodeStyle.doWithTemporarySettings(myProject,
                                       CodeStyle.getSettings(myFile),
@@ -56,8 +56,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
     return settingsToShow.get();
   }
 
-  @NotNull
-  private CodeStyleSettingsToShow computeFieldsWithTempSettings(CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType[] types) {
+  private @NotNull CodeStyleSettingsToShow computeFieldsWithTempSettings(@NotNull CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType @NotNull [] types) {
     CommonCodeStyleSettings commonSettings = tempSettings.getCommonSettings(myProvider.getLanguage());
     CustomCodeStyleSettings customSettings = getCustomSettings(myProvider, tempSettings);
 
@@ -99,9 +98,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
     };
   }
 
-  @Nullable
-  private static CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
-                                                           CodeStyleSettings tempSettings) {
+  private static @Nullable CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
+                                                                     @NotNull CodeStyleSettings tempSettings) {
     CustomCodeStyleSettings fromLanguageProvider = getCustomSettingsFromProvider(languageProvider, tempSettings);
     if (fromLanguageProvider != null) {
       return fromLanguageProvider;
@@ -117,9 +115,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
     return null;
   }
 
-  @Nullable
-  private static CustomCodeStyleSettings getCustomSettingsFromProvider(@NotNull CodeStyleSettingsProvider languageProvider,
-                                                                       CodeStyleSettings tempSettings) {
+  private static @Nullable CustomCodeStyleSettings getCustomSettingsFromProvider(@NotNull CodeStyleSettingsProvider languageProvider,
+                                                                                 @NotNull CodeStyleSettings tempSettings) {
     CustomCodeStyleSettings modelSettings = languageProvider.createCustomSettings(tempSettings);
     return modelSettings != null ? tempSettings.getCustomSettings(modelSettings.getClass()) : null;
   }
@@ -141,14 +138,14 @@ public class CodeStyleSettingsCodeFragmentFilter {
     }
   }
 
-  private class FilterFieldsTask implements SequentialTaskWithFixedIterationsNumber {
+  private final class FilterFieldsTask implements SequentialTaskWithFixedIterationsNumber {
     private final Iterator<String> myIterator;
     private final int myTotalFieldsNumber;
     private final Collection<String> myAllFields;
 
     private List<String> myAffectingFields = new ArrayList<>();
     private final Object myCommonSettings;
-    @Nullable private final CustomCodeStyleSettings myCustomSettings;
+    private final @Nullable CustomCodeStyleSettings myCustomSettings;
 
     FilterFieldsTask(@NotNull CommonCodeStyleSettings commonSettings,
                      @Nullable CustomCodeStyleSettings customSettings,
@@ -252,7 +249,7 @@ interface SequentialTaskWithFixedIterationsNumber extends SequentialTask {
   int getTotalIterationsNumber();
 }
 
-class CompositeSequentialTask implements SequentialTask {
+final class CompositeSequentialTask implements SequentialTask {
   private final List<SequentialTaskWithFixedIterationsNumber> myUnfinishedTasks = new ArrayList<>();
   private SequentialTask myCurrentTask = null;
 
@@ -260,8 +257,8 @@ class CompositeSequentialTask implements SequentialTask {
   private int myTotalIterations = 0;
 
   private final SequentialModalProgressTask myProgressTask;
-  private String myProgressText;
-  private String myProgressText2;
+  private @NlsContexts.ProgressText String myProgressText;
+  private @NlsContexts.ProgressDetails String myProgressText2;
 
   CompositeSequentialTask(@NotNull SequentialModalProgressTask progressTask) {
     myProgressTask = progressTask;
@@ -272,7 +269,7 @@ class CompositeSequentialTask implements SequentialTask {
     myTotalIterations += task.getTotalIterationsNumber();
   }
 
-  public void setProgressText(@NotNull String progressText) {
+  public void setProgressText(@NotNull @NlsContexts.ProgressText String progressText) {
     myProgressText = progressText;
   }
 
@@ -323,7 +320,7 @@ class CompositeSequentialTask implements SequentialTask {
     }
   }
 
-  public void setProgressText2(String progressText2) {
+  public void setProgressText2(@NlsContexts.ProgressDetails String progressText2) {
     myProgressText2 = progressText2;
   }
 }

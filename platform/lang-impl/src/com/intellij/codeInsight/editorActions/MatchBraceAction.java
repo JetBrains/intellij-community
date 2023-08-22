@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler;
@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -21,29 +20,25 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Moves caret to the the matching brace:
- * - If caret is on the closing brace - moves in the beginning of the matching opening brace
- * - If caret is on the opening brace - moves to the end of the matching closing brace
- * - Otherwise moves from the caret position to the beginning of the file and finds first opening brace not closed before the caret position
- */
-public class MatchBraceAction extends EditorAction {
+ * Moves caret to the matching brace:
+ * <ul>
+ * <li>If caret is on the closing brace - moves in the beginning of the matching opening brace</li>
+ * <li>If caret is on the opening brace - moves to the end of the matching closing brace</li>
+ * <li>Otherwise moves from the caret position to the beginning of the file and finds first opening brace not closed before the caret position</li>
+ * </ul>
+ **/
+public final class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {
     super(new MyHandler());
   }
 
-  private static class MyHandler extends EditorActionHandler {
-    MyHandler() {
-      super(true);
-    }
-
+  private static final class MyHandler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file == null) return;
-
 
       int targetOffset = getClosestTargetOffset(editor, file);
 
@@ -53,7 +48,7 @@ public class MatchBraceAction extends EditorAction {
     }
 
     /**
-     * Attempts to find closest target offset for the caret. Uses {@link BraceMatcher} and {@link CodeBlockSupportHandler}
+     * Attempts to find the closest target offset for the caret. Uses {@link BraceMatcher} and {@link CodeBlockSupportHandler}
      *
      * @return target caret offset or -1 if uncomputable.
      */
@@ -64,7 +59,7 @@ public class MatchBraceAction extends EditorAction {
         return offsetFromBraceMatcher;
       }
 
-      final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+      final EditorHighlighter highlighter = editor.getHighlighter();
       int caretOffset = editor.getCaretModel().getOffset();
       HighlighterIterator iterator = highlighter.createIterator(caretOffset);
 
@@ -83,7 +78,7 @@ public class MatchBraceAction extends EditorAction {
      */
     private static int getOffsetFromBraceMatcher(@NotNull Editor editor, @NotNull PsiFile file) {
       BraceHighlightingAndNavigationContext matchingContext = BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, file);
-      return matchingContext != null ? matchingContext.navigationOffset : tryFindPreviousUnclosedOpeningBraceOffset(editor, file);
+      return matchingContext != null ? matchingContext.navigationOffset() : tryFindPreviousUnclosedOpeningBraceOffset(editor, file);
     }
 
     /**

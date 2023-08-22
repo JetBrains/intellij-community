@@ -17,29 +17,19 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 
 public class AllTodosTreeBuilder extends TodoTreeBuilder {
-  /**
-   * @deprecated To remove in 2020.1
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public AllTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-    this(tree, project);
-  }
 
-  public AllTodosTreeBuilder(JTree tree, Project project) {
+  public AllTodosTreeBuilder(@NotNull JTree tree,
+                             @NotNull Project project) {
     super(tree, project);
   }
 
   @Override
-  @NotNull
-  protected TodoTreeStructure createTreeStructure() {
+  protected @NotNull TodoTreeStructure createTreeStructure() {
     return new AllTodosTreeStructure(myProject);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -28,10 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author peter
- */
 public class MemberLookupHelper {
   private final PsiMember myMember;
   private final boolean myMergedOverloads;
@@ -70,9 +54,17 @@ public class MemberLookupHelper {
     final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 
     final String memberName = myMember.getName();
-    if (showClass && StringUtil.isNotEmpty(className)) {
+    boolean constructor = myMember instanceof PsiMethod && ((PsiMethod)myMember).isConstructor();
+    if (constructor) {
+      presentation.setItemText("new " + memberName);
+      if (myContainingClass != null && myContainingClass.getTypeParameters().length > 0) {
+        presentation.appendTailText("<>", false);
+      }
+    }
+    else if (showClass && StringUtil.isNotEmpty(className)) {
       presentation.setItemText(className + "." + memberName);
-    } else {
+    }
+    else {
       presentation.setItemText(memberName);
     }
 
@@ -87,26 +79,40 @@ public class MemberLookupHelper {
                             : "";
 
     presentation.appendTailText(params, false);
-    if (myShouldImport && StringUtil.isNotEmpty(className)) {
+    if (myShouldImport && !constructor && StringUtil.isNotEmpty(className)) {
       presentation.appendTailText(" in " + className + location, true);
     } else {
       presentation.appendTailText(location, true);
     }
 
-    PsiType declaredType = myMember instanceof PsiMethod ? ((PsiMethod)myMember).getReturnType() : ((PsiField)myMember).getType();
-    PsiType type = patchGetClass(substitutor.substitute(declaredType));
+    PsiType type = getDeclaredType(myMember, substitutor);
     if (type != null) {
-      presentation.setTypeText(substitutor.substitute(type).getPresentableText());
+      presentation.setTypeText(type.getPresentableText());
     }
   }
 
   @Nullable
-  private PsiType patchGetClass(@Nullable PsiType type) {
-    if (myMember instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)myMember) && type instanceof PsiClassType) {
+  static PsiType getDeclaredType(PsiMember member, PsiSubstitutor substitutor) {
+    if (member instanceof PsiField field) {
+      return substitutor.substitute(field.getType());
+    }
+    if (member instanceof PsiMethod method) {
+      if (method.isConstructor()) {
+        PsiClass aClass = Objects.requireNonNull(method.getContainingClass());
+        return JavaPsiFacade.getElementFactory(method.getProject()).createType(aClass, substitutor);
+      }
+      return patchGetClass(method, substitutor.substitute(method.getReturnType()));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType patchGetClass(@NotNull PsiMethod method, @Nullable PsiType type) {
+    if (PsiTypesUtil.isGetClass(method) && type instanceof PsiClassType) {
       PsiType arg = ContainerUtil.getFirstItem(Arrays.asList(((PsiClassType)type).getParameters()));
       PsiType bound = arg instanceof PsiWildcardType ? TypeConversionUtil.erasure(((PsiWildcardType)arg).getExtendsBound()) : null;
       if (bound != null) {
-        return PsiTypesUtil.createJavaLangClassType(myMember, bound, false);
+        return PsiTypesUtil.createJavaLangClassType(method, bound, false);
       }
     }
     return type;

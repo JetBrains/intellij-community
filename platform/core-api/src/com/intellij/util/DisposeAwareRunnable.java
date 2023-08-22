@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -26,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 
-/**
- * @author Sergey Evdokimov
- */
 public class DisposeAwareRunnable<T extends Runnable> extends WeakReference<Object> implements Runnable {
   protected final T myDelegate;
 
@@ -38,23 +21,19 @@ public class DisposeAwareRunnable<T extends Runnable> extends WeakReference<Obje
     assert disposable instanceof PsiElement || disposable instanceof ComponentManager : "Unknown type of "+disposable;
   }
 
-  @NotNull
-  public static Runnable create(@NotNull Runnable delegate, @Nullable PsiElement disposable) {
+  public static @NotNull Runnable create(@NotNull Runnable delegate, @Nullable PsiElement disposable) {
     return create(delegate, (Object)disposable);
   }
 
-  @NotNull
-  public static Runnable create(@NotNull Runnable delegate, @Nullable Project disposable) {
+  public static @NotNull Runnable create(@NotNull Runnable delegate, @Nullable Project disposable) {
     return create(delegate, (Object)disposable);
   }
 
-  @NotNull
-  public static Runnable create(@NotNull Runnable delegate, @Nullable Module disposable) {
+  public static @NotNull Runnable create(@NotNull Runnable delegate, @Nullable Module disposable) {
     return create(delegate, (Object)disposable);
   }
 
-  @NotNull
-  private static Runnable create(@NotNull Runnable delegate, @Nullable Object disposable) {
+  private static @NotNull Runnable create(@NotNull Runnable delegate, @Nullable Object disposable) {
     if (disposable == null) {
       return delegate;
     }
@@ -86,9 +65,8 @@ public class DisposeAwareRunnable<T extends Runnable> extends WeakReference<Obje
     myDelegate.run();
   }
 
-  private static class DumbAwareRunnable<T extends Runnable & DumbAware> extends DisposeAwareRunnable<T> implements DumbAware {
-    @NotNull
-    private static <T extends Runnable & DumbAware> DumbAwareRunnable<T> create(@NotNull T delegate, Object o) {
+  private static final class DumbAwareRunnable<T extends Runnable & DumbAware> extends DisposeAwareRunnable<T> implements DumbAware {
+    private static @NotNull <T extends Runnable & DumbAware> DumbAwareRunnable<T> create(@NotNull T delegate, Object o) {
       return new DumbAwareRunnable<>(delegate, o);
     }
     private DumbAwareRunnable(@NotNull T delegate, Object disposable) {
@@ -96,9 +74,8 @@ public class DisposeAwareRunnable<T extends Runnable> extends WeakReference<Obje
     }
   }
 
-  private static class PossiblyDumbAwareRunnable<T extends Runnable & PossiblyDumbAware> extends DisposeAwareRunnable<T> implements PossiblyDumbAware {
-    @NotNull
-    private static <T extends Runnable & PossiblyDumbAware> PossiblyDumbAwareRunnable<T> create(@NotNull T delegate, Object o) {
+  private static final class PossiblyDumbAwareRunnable<T extends Runnable & PossiblyDumbAware> extends DisposeAwareRunnable<T> implements PossiblyDumbAware {
+    private static @NotNull <T extends Runnable & PossiblyDumbAware> PossiblyDumbAwareRunnable<T> create(@NotNull T delegate, Object o) {
       return new PossiblyDumbAwareRunnable<>(delegate, o);
     }
     private PossiblyDumbAwareRunnable(T delegate, Object disposable) {

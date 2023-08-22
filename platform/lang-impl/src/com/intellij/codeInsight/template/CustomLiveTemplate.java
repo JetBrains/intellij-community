@@ -16,12 +16,10 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public interface CustomLiveTemplate {
   ExtensionPointName<CustomLiveTemplate> EP_NAME = ExtensionPointName.create("com.intellij.customLiveTemplate");
 
@@ -36,7 +34,7 @@ public interface CustomLiveTemplate {
 
   void wrap(@NotNull String selection, @NotNull CustomTemplateCallback callback);
 
-  @NotNull
+  @NotNull @NlsActions.ActionText
   String getTitle();
 
   char getShortcut();

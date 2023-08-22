@@ -10,7 +10,6 @@ import com.intellij.util.text.CharSequenceReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -64,17 +63,12 @@ public class TextTransferable implements Transferable {
 
   @Override
   public boolean isDataFlavorSupported(DataFlavor flavor) {
-    for (DataFlavor f : FLAVORS.getValue()) {
-      if (flavor.equals(f)) {
-        return true;
-      }
-    }
-    return false;
+    return FLAVORS.getValue().contains(flavor);
   }
 
   @Override
   public Object getTransferData(@NotNull DataFlavor flavor) throws UnsupportedFlavorException {
-    if (flavor.getMimeType().startsWith("text/html;")) {
+    if (flavor.getMimeType().startsWith("text/html;")) {  // NON-NLS
       return myHtmlContent.toString();
     }
     else if (flavor.equals(DataFlavor.plainTextFlavor)) {

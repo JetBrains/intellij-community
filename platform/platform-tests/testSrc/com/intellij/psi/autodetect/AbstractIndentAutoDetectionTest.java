@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.autodetect;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.*;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -31,6 +19,7 @@ import org.junit.Assert;
 
 import java.util.List;
 
+@SuppressWarnings("SameParameterValue")
 public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeInsightTestCase {
 
   @NotNull
@@ -73,7 +62,7 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
       setIndentOptions(defaultIndentOptions);
     }
 
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getFile());
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getVFile(), getEditor().getDocument());
     Assert.assertTrue("Tab usage not detected", options.USE_TAB_CHARACTER);
   }
 
@@ -82,13 +71,13 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
       setIndentOptions(defaultIndentOptions);
     }
 
-    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getFile());
+    CommonCodeStyleSettings.IndentOptions options = detectIndentOptions(getVFile(), getEditor().getDocument());
     Assert.assertFalse("Tab usage detected: ", options.USE_TAB_CHARACTER);
     Assert.assertEquals("Indent mismatch", expectedIndent, options.INDENT_SIZE);
   }
 
   private void setIndentOptions(@NotNull CommonCodeStyleSettings.IndentOptions defaultIndentOptions) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(getFile().getFileType());
     indentOptions.copyFrom(defaultIndentOptions);
   }
@@ -100,17 +89,18 @@ public abstract class AbstractIndentAutoDetectionTest extends LightPlatformCodeI
 
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(getFile());
     Assert.assertNotNull(builder);
-    
-    FormattingModel model = builder.createModel(getFile(), CodeStyleSettingsManager.getSettings(getProject()));
+
+    FormattingModel model =
+      builder.createModel(FormattingContext.create(getFile(), CodeStyle.getSettings(getProject())));
     List<LineIndentInfo> lines = new FormatterBasedLineIndentInfoBuilder(document, model.getRootBlock(), null).build();
-    
+
     IndentUsageStatistics statistics = new IndentUsageStatisticsImpl(lines);
     return statistics.getKMostUsedIndentInfo(0);
   }
 
   @NotNull
-  public static CommonCodeStyleSettings.IndentOptions detectIndentOptions(PsiFile file) {
-    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(file);
+  public CommonCodeStyleSettings.IndentOptions detectIndentOptions(@NotNull VirtualFile file, @NotNull Document document) {
+    IndentOptionsDetector detector = new IndentOptionsDetectorImpl(getProject(), file, document, new EmptyProgressIndicator());
     return detector.getIndentOptions();
   }
 }

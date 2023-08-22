@@ -1,24 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.group;
 
 import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.CodeStyleConfigurableWrapper;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleGroup;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
+public final class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
   private final CodeStyleGroup myGroup;
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSchemesConfigurable mySchemesConfigurable;
@@ -36,9 +39,19 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     return new CodeStyleGroupConfigurable();
   }
 
+  @Override
+  public @Nullable String getConfigurableDisplayName() {
+    return myGroup.getDisplayName();
+  }
+
+  @Override
+  public @Nullable Language getLanguage() {
+    return myGroup.getLanguage();
+  }
+
   @NotNull
   @Override
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings modelSettings) {
+  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleGroupConfigurable();
   }
 
@@ -46,12 +59,27 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     myChildProviders.add(provider);
   }
 
-  public class CodeStyleGroupConfigurable extends SearchableConfigurable.Parent.Abstract {
+  public final class CodeStyleGroupConfigurable extends SearchableConfigurable.Parent.Abstract
+    implements ConfigurableGroup, Configurable.NoScroll {
 
-    @Nls(capitalization = Nls.Capitalization.Title)
     @Override
-    public String getDisplayName() {
+    public @NonNls @NotNull String getId() {
+      return myGroup.getId();
+    }
+
+    @Override
+    public @NonNls String getHelpTopic() {
+      return myGroup.getHelpTopic();
+    }
+
+    @Override
+    public @NlsContexts.ConfigurableName String getDisplayName() {
       return myGroup.getDisplayName();
+    }
+
+    @Override
+    public @NlsContexts.DetailedDescription String getDescription() {
+      return myGroup.getDescription();
     }
 
     @Override
@@ -83,18 +111,6 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
         childConfigurables.add(wrapper);
       }
       return childConfigurables.toArray(new Configurable[0]);
-    }
-
-    @NotNull
-    @Override
-    public String getId() {
-      return myGroup.getId();
-    }
-
-    @Nullable
-    @Override
-    public String getHelpTopic() {
-      return myGroup.getHelpTopic();
     }
   }
 }

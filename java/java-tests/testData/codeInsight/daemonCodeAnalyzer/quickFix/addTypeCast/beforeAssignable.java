@@ -1,4 +1,4 @@
-// "Cast to 'java.lang.Noolean'" "false"
+// "Cast expression to 'java.lang.Noolean'" "false"
 class X {
     boolean foo() {return true;}
     static void bar() {

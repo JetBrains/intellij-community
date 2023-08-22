@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -30,8 +30,8 @@ import javax.swing.*;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
-public class ConsoleExecutionEditor implements Disposable {
-  private final EditorEx myConsoleEditor;
+public final class ConsoleExecutionEditor implements Disposable {
+  private final @NotNull EditorEx myConsoleEditor;
   private EditorEx myCurrentEditor;
   private final Document myEditorDocument;
   private final LanguageConsoleImpl.Helper myHelper;
@@ -54,7 +54,7 @@ public class ConsoleExecutionEditor implements Disposable {
 
     myBusConnection = getProject().getMessageBus().connect();
     // action shortcuts are not yet registered
-    ApplicationManager.getApplication().invokeLater(() -> installEditorFactoryListener(), getProject().getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> installEditorFactoryListener(), o -> Disposer.isDisposed(myBusConnection));
   }
 
   private final FocusChangeListener myFocusListener = new FocusChangeListener() {
@@ -64,10 +64,6 @@ public class ConsoleExecutionEditor implements Disposable {
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
         ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
       }
-    }
-
-    @Override
-    public void focusLost(@NotNull Editor editor) {
     }
   };
 
@@ -163,7 +159,7 @@ public class ConsoleExecutionEditor implements Disposable {
     FileEditorManagerListener fileEditorListener = new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (myConsoleEditor == null || !Comparing.equal(file, getVirtualFile())) {
+        if (!Comparing.equal(file, getVirtualFile())) {
           return;
         }
 

@@ -8,10 +8,7 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.resources.AntActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -65,6 +62,11 @@ public class RunTargetAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Nullable
   private static Pair<AntBuildFileBase, AntDomTarget> findAntTarget(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -79,10 +81,9 @@ public class RunTargetAction extends AnAction {
     }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (!(psiFile instanceof XmlFile)) {
+    if (!(psiFile instanceof XmlFile xmlFile)) {
       return null;
     }
-    final XmlFile xmlFile = (XmlFile)psiFile;
 
     final AntBuildFileBase antFile = AntConfigurationBase.getInstance(project).getAntBuildFile(xmlFile);
     if (antFile == null) {

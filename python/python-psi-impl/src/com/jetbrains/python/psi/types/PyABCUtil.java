@@ -20,10 +20,7 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
-public class PyABCUtil {
+public final class PyABCUtil {
   private PyABCUtil() {
   }
 
@@ -78,7 +75,7 @@ public class PyABCUtil {
       return isSized && hasIter && isContainer;
     }
     if (PyNames.ABC_MUTABLE_SET.equals(superClassName)) {
-      return isSized && hasIter && isContainer && 
+      return isSized && hasIter && isContainer &&
              hasMethod(subClass, "discard", inherited, context) &&
              hasMethod(subClass, "add", inherited, context);
     }
@@ -100,9 +97,6 @@ public class PyABCUtil {
     if (PyNames.AWAITABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.DUNDER_AWAIT, inherited, context);
     }
-    if (PyNames.BUILTIN_PATH_LIKE.equals(superClassName)) {
-      return hasMethod(subClass, PyNames.FSPATH, inherited, context);
-    }
     return false;
   }
 
@@ -111,13 +105,11 @@ public class PyABCUtil {
       // TODO: Convert abc types to structural types and check them properly
       return true;
     }
-    if (type instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)type;
+    if (type instanceof PyClassType classType) {
       final PyClass pyClass = classType.getPyClass();
       if (classType.isDefinition()) {
         final PyClassLikeType metaClassType = classType.getMetaClassType(context, true);
-        if (metaClassType instanceof PyClassType) {
-          final PyClassType metaClass = (PyClassType)metaClassType;
+        if (metaClassType instanceof PyClassType metaClass) {
           return isSubclass(metaClass.getPyClass(), superClassName, true, context);
         }
       }
@@ -126,15 +118,7 @@ public class PyABCUtil {
       }
     }
     if (type instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)type;
-      for (PyType m : unionType.getMembers()) {
-        if (m != null) {
-          if (isSubtype(m, superClassName, context)) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
     }
     return false;
   }

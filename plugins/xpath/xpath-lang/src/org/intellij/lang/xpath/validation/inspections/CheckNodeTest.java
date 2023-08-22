@@ -25,6 +25,7 @@ import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.psi.PrefixedName;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,7 @@ public class CheckNodeTest extends XPathInspection {
                                 }
                             }
                             if (!found) {
-                                registerProblem(contextProvider, prefixedName, nodeTest, "element");
+                                registerProblem(contextProvider, prefixedName, nodeTest, false);
                             }
                         }
                     } else if (nodeTest.getPrincipalType() == XPathNodeTest.PrincipalType.ATTRIBUTE) {
@@ -102,7 +103,7 @@ public class CheckNodeTest extends XPathInspection {
                                 }
                             }
                             if (!found) {
-                                registerProblem(contextProvider, prefixedName, nodeTest, "attribute");
+                                registerProblem(contextProvider, prefixedName, nodeTest, true);
                             }
                         }
                     }
@@ -110,23 +111,27 @@ public class CheckNodeTest extends XPathInspection {
             }
         }
 
-        private void registerProblem(ContextProvider contextProvider, PrefixedName prefixedName, XPathNodeTest nodeTest, String type) {
+        private void registerProblem(ContextProvider contextProvider, PrefixedName prefixedName, XPathNodeTest nodeTest, boolean attribute) {
             final QName qName = contextProvider.getQName(prefixedName, nodeTest);
             final String name;
             if (qName != null) {
                 final String pattern;
                 if (!"".equals(qName.getNamespaceURI())) {
-                    pattern = "''<b>{0}</b>'' (<i>{1}</i>)";
+                    pattern = "''{0}'' ({1})";
                 } else {
-                    pattern = "''<b>{0}</b>''";
+                    pattern = "''{0}''";
                 }
                 name = MessageFormat.format(pattern, qName.getLocalPart(), qName.getNamespaceURI());
             } else {
-                name = MessageFormat.format("''<b>{0}</b>''", prefixedName.getLocalName());
+                name = MessageFormat.format("''{0}''", prefixedName.getLocalName());
             }
 
             final LocalQuickFix[] fixes = contextProvider.getQuickFixFactory().createUnknownNodeTestFixes(nodeTest);
-            addProblem(myManager.createProblemDescriptor(nodeTest, "<html>Unknown " + type + " name " + name + "</html>", myOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+            addProblem(myManager.createProblemDescriptor(nodeTest,
+                                                         XPathBundle.message(attribute ? "inspection.message.html.unknown.attribute.name.html"
+                                                                                       : "inspection.message.html.unknown.element.name.html",
+                                                                             name),
+                                                         myOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
 
         private static boolean matches(@Nullable PrefixedName prefixedName,

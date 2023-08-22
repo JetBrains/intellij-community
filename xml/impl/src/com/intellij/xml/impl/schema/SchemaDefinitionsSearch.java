@@ -19,24 +19,15 @@ import com.intellij.xml.index.SchemaTypeInfo;
 import com.intellij.xml.index.SchemaTypeInheritanceIndex;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlUtil;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.BiFunction;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
+import java.util.function.BiFunction;
 
 public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
-    if (queryParameters instanceof XmlTag) {
-      final XmlTag xml = (XmlTag)queryParameters;
+    if (queryParameters instanceof XmlTag xml) {
       if (ReadAction.compute(() -> isTypeElement(xml))) {
         final Collection<SchemaTypeInfo> infos = ReadAction.compute(() -> gatherInheritors(xml));
 
@@ -157,7 +148,6 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     final XmlFile file = XmlUtil.getContainingFile(xml);
     if (file == null) return null;
     final Project project = file.getProject();
-    if (project == null) return null;
 
     final Set<SchemaTypeInfo> result = new HashSet<>();
     final ArrayDeque<SchemaTypeInfo> queue = new ArrayDeque<>();

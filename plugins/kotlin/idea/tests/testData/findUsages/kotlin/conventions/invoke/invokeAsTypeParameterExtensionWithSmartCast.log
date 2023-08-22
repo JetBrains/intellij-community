@@ -1,0 +1,3 @@
+Used plain search of invoke() in LocalSearchScope:
+    KtFile: invokeAsTypeParameterExtensionWithSmartCast.0.kt
+Used plain search of invoke() in whole search scope

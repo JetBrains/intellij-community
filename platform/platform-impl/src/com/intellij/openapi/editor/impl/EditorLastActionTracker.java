@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -26,17 +25,15 @@ public final class EditorLastActionTracker {
   private Editor myCurrentEditor;
   private Editor myLastEditor;
 
-  @NotNull
-  public static EditorLastActionTracker getInstance() {
-    return ServiceManager.getService(EditorLastActionTracker.class);
+  public static @NotNull EditorLastActionTracker getInstance() {
+    return ApplicationManager.getApplication().getService(EditorLastActionTracker.class);
   }
 
   /**
    * Returns the id of the previously invoked action or {@code null}, if no history exists yet, or last user activity was of
    * non-action type, like mouse clicking in editor or text typing, or previous action was invoked for a different editor.
    */
-  @Nullable
-  public String getLastActionId() {
+  public @Nullable String getLastActionId() {
     return myLastActionId;
   }
 
@@ -49,12 +46,11 @@ public final class EditorLastActionTracker {
     myLastEditor = null;
   }
 
-  @Nullable
-  private static EditorLastActionTracker getTrackerIfCreated() {
+  private static @Nullable EditorLastActionTracker getTrackerIfCreated() {
     return ApplicationManager.getApplication().getServiceIfCreated(EditorLastActionTracker.class);
   }
 
-  final static class MyEditorFactoryListener implements EditorFactoryListener {
+  static final class MyEditorFactoryListener implements EditorFactoryListener {
     @Override
     public void editorReleased(@NotNull EditorFactoryEvent event) {
       EditorLastActionTracker tracker = getInstance();
@@ -75,10 +71,10 @@ public final class EditorLastActionTracker {
     }
   }
 
-  final static class MyAnActionListener implements AnActionListener {
+  static final class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+      Editor editor = event.getData(CommonDataKeys.HOST_EDITOR);
       EditorLastActionTracker tracker = editor == null ? getTrackerIfCreated() : getInstance();
       if (tracker == null) {
         return;
@@ -91,7 +87,7 @@ public final class EditorLastActionTracker {
     }
 
     @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
       EditorLastActionTracker tracker = getInstance();
       tracker.myLastActionId = getActionId(action);
       tracker.myLastEditor = tracker.myCurrentEditor;
@@ -104,7 +100,7 @@ public final class EditorLastActionTracker {
     }
   }
 
-  final static class MyEditorMouseListener implements EditorMouseListener {
+  static final class MyEditorMouseListener implements EditorMouseListener {
     @Override
     public void mousePressed(@NotNull EditorMouseEvent e) {
       resetLastAction();

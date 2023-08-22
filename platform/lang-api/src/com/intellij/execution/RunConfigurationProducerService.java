@@ -17,13 +17,12 @@ package com.intellij.execution;
 
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -31,7 +30,7 @@ import java.util.Set;
  * subclasses of classes specified here will be ignored when looking for configuration producers.
  */
 @State(name = "RunConfigurationProducerService", storages = @Storage("runConfigurations.xml"))
-public class RunConfigurationProducerService implements PersistentStateComponent<RunConfigurationProducerService.State> {
+public final class RunConfigurationProducerService implements PersistentStateComponent<RunConfigurationProducerService.State> {
   private State myState = new State();
 
   @NotNull
@@ -45,13 +44,13 @@ public class RunConfigurationProducerService implements PersistentStateComponent
     myState = state;
   }
 
-  public static class State {
-    public Set<String> ignoredProducers = new THashSet<>();
+  public static final class State {
+    public Set<String> ignoredProducers = new HashSet<>();
   }
 
   @NotNull
   public static RunConfigurationProducerService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, RunConfigurationProducerService.class);
+    return project.getService(RunConfigurationProducerService.class);
   }
 
   public void addIgnoredProducer(@NotNull Class<? extends RunConfigurationProducer<?>> ignoredProducer) {

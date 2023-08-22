@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.application.runReadAction
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -54,7 +53,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       }
 
       if (oldestParent != null) {
-        for ((file, moduleQualifier) in pathToFileManager.parentToSuitableRoot.get(oldestParent)) {
+        for ((file, moduleQualifier) in pathToFileManager.parentToSuitableRoot.get(oldestParent)!!) {
           file.findFileByRelativePath(path)?.let {
             return PathInfo(null, it, file, moduleQualifier)
           }
@@ -116,41 +115,34 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
 
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
     return runReadAction {
-      val directoryIndex = DirectoryIndex.getInstance(project)
-      val info = directoryIndex.getInfoForFile(file)
+      val fileIndex = ProjectFileIndex.getInstance(project)
       // we serve excluded files
-      if (!info.isExcluded(file) && !info.isInProject(file)) {
+      val isInLibrary = fileIndex.isInLibrary(file)
+      if (!fileIndex.isInContent(file) && !isInLibrary && !fileIndex.isExcluded(file)) {
         // javadoc jars is "not under project", but actually is, so, let's check library or SDK
         if (file.fileSystem == JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
       }
       else {
-        var root = info.sourceRoot
+        var root = fileIndex.getSourceRootForFile(file)
         val isRootNameOptionalInPath: Boolean
-        val isLibrary: Boolean
         if (root == null) {
           isRootNameOptionalInPath = false
-          root = info.contentRoot
+          root = fileIndex.getContentRootForFile(file, false)
           if (root == null) {
-            root = info.libraryClassRoot
+            root = fileIndex.getClassRootForFile(file)
             if (root == null) {
               // https://youtrack.jetbrains.com/issue/WEB-20598
               return@runReadAction null
             }
-
-            isLibrary = true
-          }
-          else {
-            isLibrary = false
           }
         }
         else {
-          isLibrary = info.isInLibrarySource(file)
-          isRootNameOptionalInPath = !isLibrary
+          isRootNameOptionalInPath = !isInLibrary
         }
 
-        var module = info.module
-        if (isLibrary && module == null) {
-          for (entry in directoryIndex.getOrderEntries(info)) {
+        var module = fileIndex.getModuleForFile(file, false)
+        if (isInLibrary && module == null) {
+          for (entry in fileIndex.getOrderEntriesForFile(file)) {
             if (OrderEntryUtil.isModuleLibraryOrderEntry(entry)) {
               module = entry.ownerModule
               break
@@ -158,7 +150,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
           }
         }
 
-        PathInfo(null, file, root, getModuleNameQualifier(project, module), isLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
+        PathInfo(null, file, root, getModuleNameQualifier(project, module), isInLibrary, isRootNameOptionalInPath = isRootNameOptionalInPath)
       }
     }
   }
@@ -207,7 +199,7 @@ private fun findInModuleLibraries(path: String, module: Module, resolver: FileRe
     findInModuleLevelLibraries(module, it) { root, _ ->
       if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true, pathQuery = pathQuery) else null
     }
-  }.find { it != null }
+  }.firstOrNull { it != null }
 }
 
 private fun findInLibraries(project: Project, path: String, resolver: FileResolver, pathQuery: PathQuery): PathInfo? {
@@ -230,42 +222,48 @@ private fun getInfoForDocJar(file: VirtualFile, project: Project): PathInfo? {
   }
 }
 
-internal fun getModuleNameQualifier(project: Project, module: Module?): String? =
-  if (module != null && PlatformUtils.isIntelliJ() &&
-      !(module.name.equals(project.name, ignoreCase = true) || compareNameAndProjectBasePath(module.name, project))) module.name
+internal fun getModuleNameQualifier(project: Project, module: Module?): String? {
+  return if (module != null && PlatformUtils.isIntelliJ() &&
+             !(module.name.equals(project.name, ignoreCase = true) || compareNameAndProjectBasePath(module.name, project))) module.name
   else null
+}
 
-private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?, pathQuery: PathQuery) =
-  roots.asSequence().map { resolver.resolve(path, it, moduleName, pathQuery = pathQuery) }.find { it != null }
+private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?, pathQuery: PathQuery): PathInfo? {
+  return roots.asSequence()
+    .map { resolver.resolve(path, it, moduleName, pathQuery = pathQuery) }
+    .firstOrNull { it != null }
+}
 
 private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootType>, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
   fun findInLibraryTable(table: LibraryTable, rootType: OrderRootType) =
     table.libraryIterator.asSequence()
       .flatMap { it.getFiles(rootType).asSequence() }
       .map { fileProcessor(it, null) }
-      .find { it != null }
+      .firstOrNull { it != null }
 
   fun findInProjectSdkOrInAll(rootType: OrderRootType): PathInfo? {
-    val inSdkFinder = { sdk: Sdk -> sdk.rootProvider.getFiles(rootType).asSequence().map { fileProcessor(it, null) }.find { it != null } }
+    val inSdkFinder = { sdk: Sdk -> sdk.rootProvider.getFiles(rootType).asSequence().map { fileProcessor(it, null) }.firstOrNull { it != null } }
 
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
     return projectSdk?.let(inSdkFinder)
-           ?: ProjectJdkTable.getInstance().allJdks.asSequence().filter { it === projectSdk }.map { inSdkFinder(it) }.find { it != null }
+           ?: ProjectJdkTable.getInstance().allJdks.asSequence().filter { it === projectSdk }.map { inSdkFinder(it) }.firstOrNull { it != null }
   }
 
   return rootTypes.asSequence().map { rootType ->
     runReadAction {
       findInLibraryTable(LibraryTablesRegistrar.getInstance().getLibraryTable(project), rootType)
       ?: findInProjectSdkOrInAll(rootType)
-      ?: ModuleManager.getInstance(project).modules.asSequence().filter { !it.isDisposed }.map { findInModuleLevelLibraries(it, rootType, fileProcessor) }.find { it != null }
+      ?: ModuleManager.getInstance(project).modules.asSequence().filter { !it.isDisposed }.map { findInModuleLevelLibraries(it, rootType, fileProcessor) }.firstOrNull { it != null }
       ?: findInLibraryTable(LibraryTablesRegistrar.getInstance().libraryTable, rootType)
     }
   }.find { it != null }
 }
 
-private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? =
-  module.rootManager.orderEntries.asSequence()
-    .filter { it is LibraryOrderEntry && it.isModuleLevel }
-    .flatMap { it.getFiles(rootType).asSequence() }
+private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
+  return module.rootManager.orderEntries.asSequence()
+    .filterIsInstance<LibraryOrderEntry>()
+    .filter { it.isModuleLevel }
+    .flatMap { it.getRootFiles(rootType).asSequence() }
     .map { fileProcessor(it, module) }
-    .find { it != null }
+    .firstOrNull { it != null }
+}

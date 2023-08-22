@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -8,15 +8,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class IntentionsUIImpl extends IntentionsUI {
-
   private volatile IntentionHintComponent myLastIntentionHint;
 
-  public IntentionsUIImpl(Project project) {
+  public IntentionsUIImpl(@NotNull Project project) {
     super(project);
   }
 
@@ -25,18 +25,18 @@ public class IntentionsUIImpl extends IntentionsUI {
   }
 
   @Override
+  @RequiresEdt
   public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = cachedIntentions.getEditor();
-    if (editor == null) return;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) return;
-    if (!actionsChanged) return;
-
-    //IntentionHintComponent hint = myLastIntentionHint;
-    //if (hint != null && hint.getPopupUpdateResult(actionsChanged) == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
-    //  hint.recreate();
-    //  return;
-    //}
+    if (editor == null) {
+      return;
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) {
+      return;
+    }
+    if (!actionsChanged) {
+      return;
+    }
 
     Project project = cachedIntentions.getProject();
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
@@ -44,22 +44,33 @@ public class IntentionsUIImpl extends IntentionsUI {
     Point xy = editor.logicalPositionToXY(caretPos);
 
     hide();
-    if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false) &&
-        visibleArea.contains(xy) &&
-        editor.getSettings().isShowIntentionBulb() &&
-        editor.getCaretModel().getCaretCount() == 1 &&
-        cachedIntentions.showBulb()) {
+    if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)
+        && visibleArea.contains(xy)
+        && editor.getSettings().isShowIntentionBulb()
+        && editor.getCaretModel().getCaretCount() == 1
+        && cachedIntentions.showBulb()
+        // do not show bulb when the user explicitly ESCaped it away
+        && !DaemonListeners.getInstance(project).isEscapeJustPressed()) {
       myLastIntentionHint = IntentionHintComponent.showIntentionHint(project, cachedIntentions.getFile(), editor, false, cachedIntentions);
     }
   }
 
   @Override
+  @RequiresEdt
   public void hide() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionHintComponent hint = myLastIntentionHint;
     if (hint != null && !hint.isDisposed() && hint.isVisible()) {
       hint.hide();
     }
     myLastIntentionHint = null;
+  }
+
+  @Override
+  @RequiresEdt
+  public void hideForEditor(@NotNull Editor editor) {
+    IntentionHintComponent hint = myLastIntentionHint;
+    if (hint != null && hint.hideIfDisplayedForEditor(editor)) {
+      myLastIntentionHint = null;
+    }
   }
 }

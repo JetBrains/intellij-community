@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Any magic literal extension point should imlement this interface and be installed as extesnion point
+ * Any magic literal extension point should implement this interface and be installed as extension point
  * using {@link #EP_NAME}
  *
  * @author Ilya.Kazakevich

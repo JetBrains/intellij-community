@@ -27,9 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class PyChooseRequirementsDialog extends DialogWrapper {
   private final ElementsChooser<PyRequirement> myRequirementsChooser;
 
@@ -37,14 +34,14 @@ public class PyChooseRequirementsDialog extends DialogWrapper {
     super(project, false);
     setTitle(PyBundle.message("python.packaging.choose.packages.to.install"));
     setOKButtonText(PyBundle.message("python.packaging.install"));
-    myRequirementsChooser = new ElementsChooser<PyRequirement>(true) {
+    myRequirementsChooser = new ElementsChooser<>(true) {
       @Override
       public String getItemText(@NotNull PyRequirement requirement) {
         return requirement.getPresentableText();
       }
     };
     myRequirementsChooser.setElements(requirements, true);
-    myRequirementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<PyRequirement>() {
+    myRequirementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<>() {
       @Override
       public void elementMarkChanged(PyRequirement element, boolean isMarked) {
         setOKActionEnabled(!myRequirementsChooser.getMarkedElements().isEmpty());

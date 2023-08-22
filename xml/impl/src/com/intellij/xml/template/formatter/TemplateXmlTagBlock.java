@@ -20,10 +20,13 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.formatter.xml.XmlFormattingPolicy;
 import com.intellij.psi.formatter.xml.XmlTagBlock;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,14 +46,15 @@ public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheriting
   }
 
   @Override
-  protected XmlTagBlock createTagBlock(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
-   return myBuilder.createXmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
+  protected XmlTagBlock createTagBlock(@NotNull ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
+    return myBuilder.createXmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
   }
 
   @Override
-  protected final Block createSyntheticBlock(ArrayList<Block> localResult, Indent childrenIndent) {
+  protected final Block createSyntheticBlock(@NotNull ArrayList<Block> localResult, Indent childrenIndent) {
     try {
-      List<Block> merged = myBuilder.mergeWithTemplateBlocks(localResult, myXmlFormattingPolicy.getSettings(), myXmlFormattingPolicy, childrenIndent);
+      List<Block> merged =
+        myBuilder.mergeWithTemplateBlocks(localResult, myXmlFormattingPolicy.getSettings(), myXmlFormattingPolicy, childrenIndent);
       return myBuilder.createSyntheticBlock(merged, this, Indent.getNoneIndent(), myXmlFormattingPolicy, childrenIndent);
     }
     catch (FragmentedTemplateException e) {
@@ -60,8 +64,9 @@ public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheriting
 
 
   @Override
-  protected XmlBlock createSimpleChild(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
-    return myBuilder.createXmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null);
+  protected @NotNull XmlBlock createSimpleChild(@NotNull ASTNode child, @Nullable Indent indent,
+                                                @Nullable Wrap wrap, @Nullable Alignment alignment, @Nullable TextRange range) {
+    return myBuilder.createXmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, range);
   }
 
   @Override
@@ -78,7 +83,7 @@ public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheriting
   protected Indent getChildrenIndent() {
     return Indent.getIndent(myXmlFormattingPolicy.indentChildrenOf(getTag()) ? Indent.Type.NORMAL : Indent.Type.NONE, false, true);
   }
-  
+
   boolean isScriptBlock() {
     return HtmlUtil.isScriptTag(getTag());
   }

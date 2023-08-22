@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   private static @NonNls final String HELP_ID = "Reformat Code on Directory Dialog";
 
   private final Project myProject;
-  private final String  myText;
+  private final @NlsContexts.Label String  myText;
   private final boolean myEnableOnlyVCSChangedTextCb;
   private final LastRunReformatCodeOptionsProvider myLastRunOptions;
 

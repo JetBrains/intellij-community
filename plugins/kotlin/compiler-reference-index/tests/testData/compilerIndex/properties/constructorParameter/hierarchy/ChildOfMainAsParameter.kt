@@ -1,0 +1,1 @@
+class ChildOfMainAsParameter(override val prop: Int) : Main(4)

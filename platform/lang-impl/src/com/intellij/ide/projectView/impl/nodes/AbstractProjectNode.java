@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -57,6 +55,9 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
           OptionalLong firstDifference = StreamEx.zip(commonGroupsPath.subList(0, commonPartLen), path.subList(0, commonPartLen), String::equals).indexOf(false);
           if (firstDifference.isPresent()) {
             commonGroupsPath = commonGroupsPath.subList(0, (int)firstDifference.getAsLong());
+          }
+          else if (commonPartLen < commonGroupsPath.size()) {
+            commonGroupsPath = commonGroupsPath.subList(0, commonPartLen);
           }
         }
       }
@@ -130,5 +131,10 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   public boolean contains(@NotNull VirtualFile vFile) {
     assert myProject != null;
     return ProjectViewPane.canBeSelectedInProjectView(myProject, vFile);
+  }
+
+  @Override
+  public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+    return NodeSortOrder.PROJECT_ROOT;
   }
 }

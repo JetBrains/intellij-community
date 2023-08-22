@@ -19,44 +19,46 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStructure {
-
-  public TypeHierarchyTreeStructure(final Project project, final PsiClass aClass, String currentScopeType) {
+  public TypeHierarchyTreeStructure(@NotNull Project project, @NotNull PsiClass aClass, String currentScopeType) {
     super(project, buildHierarchyElement(project, aClass), currentScopeType);
     setBaseElement(myBaseDescriptor); //to set myRoot
   }
 
-  private static HierarchyNodeDescriptor buildHierarchyElement(final Project project, final PsiClass aClass) {
+  @NotNull
+  private static HierarchyNodeDescriptor buildHierarchyElement(@NotNull Project project, @NotNull PsiClass aClass) {
     HierarchyNodeDescriptor descriptor = null;
-    final PsiClass[] superClasses = createSuperClasses(aClass);
+    PsiClass[] superClasses = createSuperClasses(aClass);
     for(int i = superClasses.length - 1; i >= 0; i--){
-      final PsiClass superClass = superClasses[i];
-      final HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, superClass, false);
+      PsiClass superClass = superClasses[i];
+      HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, superClass, false);
       if (descriptor != null){
         descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
       }
       descriptor = newDescriptor;
     }
-    final HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, aClass, true);
+    HierarchyNodeDescriptor newDescriptor = new TypeHierarchyNodeDescriptor(project, descriptor, aClass, true);
     if (descriptor != null) {
       descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
     }
     return newDescriptor;
   }
 
-  private static PsiClass[] createSuperClasses(PsiClass aClass) {
+  @NotNull
+  private static PsiClass[] createSuperClasses(@NotNull PsiClass aClass) {
     if (!aClass.isValid()) return PsiClass.EMPTY_ARRAY;
     if (aClass.isInterface()) return PsiClass.EMPTY_ARRAY;
 
-    final ArrayList<PsiClass> superClasses = new ArrayList<>();
+    ArrayList<PsiClass> superClasses = new ArrayList<>();
     while (!CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      final PsiClass aClass1 = aClass;
-      final PsiClass[] superTypes = aClass1.getSupers();
+      PsiClass aClass1 = aClass;
+      PsiClass[] superTypes = aClass1.getSupers();
       PsiClass superType = null;
-      for (final PsiClass type : superTypes) {
+      for (PsiClass type : superTypes) {
         if (!type.isInterface()) {
           superType = type;
           break;

@@ -51,11 +51,12 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
       File file = new File(pathTokenizer.nextToken());
       if (!file.isAbsolute()) {
         if (basedirComputable == null) {
-          basedirComputable = new Computable<String>() {
+          basedirComputable = new Computable<>() {
             final String myBaseDir;
+
             {
               final AntDomProject antProject = getEffectiveAntProject(attribValue);
-              myBaseDir = antProject != null? antProject.getProjectBasedirPath() : null;
+              myBaseDir = antProject != null ? antProject.getProjectBasedirPath() : null;
             }
 
             @Override

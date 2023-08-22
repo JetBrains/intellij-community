@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -11,13 +11,16 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +32,7 @@ import static java.util.Collections.*;
 /**
  * @author Maxim.Mossienko
  */
-public class FileReferenceSet {
+public class FileReferenceSet implements FileReferenceSetParameters {
   private static final Logger LOG = Logger.getInstance(FileReferenceSet.class);
 
   private static final FileType[] EMPTY_FILE_TYPES = {};
@@ -112,15 +115,15 @@ public class FileReferenceSet {
    * This should be removed.
    * @deprecated use {@link FileReference#getContexts()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected Collection<PsiFileSystemItem> getExtraContexts() {
     return emptyList();
   }
 
-  public static FileReferenceSet createSet(@NotNull PsiElement element,
-                                           final boolean soft,
-                                           boolean endingSlashNotAllowed,
-                                           final boolean urlEncoded) {
+  public static @NotNull FileReferenceSet createSet(@NotNull PsiElement element,
+                                                    final boolean soft,
+                                                    boolean endingSlashNotAllowed,
+                                                    final boolean urlEncoded) {
 
     final TextRange range = ElementManipulators.getValueTextRange(element);
     int offset = range.getStartOffset();
@@ -297,7 +300,8 @@ public class FileReferenceSet {
   public Collection<PsiFileSystemItem> getDefaultContexts() {
     Collection<PsiFileSystemItem> result = myDefaultContexts;
     if (result == null) {
-      myDefaultContexts = result = computeDefaultContexts();
+      result = computeDefaultContexts();
+      myDefaultContexts = result;
     }
     return result;
   }
@@ -342,28 +346,31 @@ public class FileReferenceSet {
   @NotNull
   protected Collection<PsiFileSystemItem> getContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null) {
+    if (virtualFile != null && FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
-      final ArrayList<PsiFileSystemItem> list = new ArrayList<>();
+      final Collection<PsiFileSystemItem> result = new SmartList<>();
       final Project project = file.getProject();
-      boolean hasRealContexts = false;
+
+      CommonProcessors.CollectProcessor<PsiFileSystemItem> collector = new CommonProcessors.CollectProcessor<>(result);
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
-          if (!list.isEmpty() && helper.isFallback()) {
+          if (!result.isEmpty() && helper.isFallback()) {
             continue;
           }
-          Collection<PsiFileSystemItem> contexts = helper.getContexts(project, virtualFile);
-          for (PsiFileSystemItem context : contexts) {
-            list.add(context);
-            hasRealContexts |= !(context instanceof FileReferenceResolver);
+          if (!helper.processContexts(this, virtualFile, false, collector)) {
+            break;
           }
         }
       }
-      if (!list.isEmpty()) {
-        if (!hasRealContexts) {
-          list.addAll(getParentDirectoryContext());
+
+      if (!result.isEmpty()) {
+        if (!ContainerUtil.exists(result, el -> !(el instanceof FileReferenceResolver))) {
+          result.addAll(getParentDirectoryContext());
         }
-        return list;
+        return result
+          .stream()
+          .distinct()
+          .toList();
       }
       return getParentDirectoryContext();
     }
@@ -417,7 +424,7 @@ public class FileReferenceSet {
     return filterLocalFsContexts(targetContexts);
   }
 
-  private static Collection<FileTargetContext> filterLocalFsContexts(Collection<FileTargetContext> contexts) {
+  private static Collection<FileTargetContext> filterLocalFsContexts(Collection<? extends FileTargetContext> contexts) {
     return ContainerUtil.filter(contexts, c -> {
       VirtualFile file = c.getFileSystemItem().getVirtualFile();
       return file != null && c.getFileSystemItem().isDirectory() && file.isInLocalFileSystem();
@@ -450,7 +457,7 @@ public class FileReferenceSet {
       if (value != null) {
         Collection<FileTargetContext> roots;
         if (value instanceof TargetContextEvaluator) {
-          roots = ((TargetContextEvaluator)value).getTargetContexts(file);
+          roots = ((TargetContextEvaluator)value).getTargetContexts(this, file);
         }
         else {
           Collection<PsiFileSystemItem> items = value.fun(file);
@@ -487,8 +494,8 @@ public class FileReferenceSet {
     Set<FileTargetContext> list = new LinkedHashSet<>();
 
     Project project = originalFile.getProject();
-    boolean hasRealContexts = false;
 
+    CommonProcessors.CollectProcessor<FileTargetContext> processor = new CommonProcessors.CollectProcessor<>(list);
     FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
     for (FileReferenceHelper helper : helpers) {
       if (helper.isMine(project, virtualFile)) {
@@ -496,17 +503,14 @@ public class FileReferenceSet {
           continue;
         }
 
-        Collection<FileTargetContext> contexts = helper.getTargetContexts(project, virtualFile, absolutePathReference);
-
-        for (FileTargetContext context : contexts) {
-          list.add(context);
-          hasRealContexts |= !(context.getFileSystemItem() instanceof FileReferenceResolver);
+        if (!helper.processTargetContexts(this, virtualFile, processor)) {
+          break;
         }
       }
     }
 
     if (!list.isEmpty()) {
-      if (!hasRealContexts) {
+      if (!ContainerUtil.exists(list, el -> !(el.getFileSystemItem() instanceof FileReferenceResolver))) {
         for (PsiFileSystemItem item : getParentDirectoryContext()) {
           list.add(new FileTargetContext(item));
         }
@@ -516,14 +520,19 @@ public class FileReferenceSet {
     return toTargetContexts(getParentDirectoryContext());
   }
 
-  public String getPathString() {
+  @Override
+  public @NlsSafe @NotNull String getPathString() {
     return myPathString;
   }
 
+  @Override
   public boolean isAbsolutePathReference() {
     return myPathString.startsWith(getSeparatorString());
   }
 
+  /**
+   * @return true, if contexts from {@link FileContextProvider} can be used as the default
+   */
   protected boolean useIncludingFileAsContext() {
     return true;
   }
@@ -560,15 +569,18 @@ public class FileReferenceSet {
           if (root == null) {
             LOG.error("Helper " + helper + " produced a null root for " + file);
           }
+          else {
+            result.add(root);
+          }
         }
-        result.addAll(roots);
       }
     }
     return new ArrayList<>(result);
   }
 
   @NotNull
-  private static Collection<FileTargetContext> getTargetAbsoluteTopLevelContexts(@NotNull PsiFile file) {
+  private static Collection<FileTargetContext> getTargetAbsoluteTopLevelContexts(@NotNull FileReferenceSetParameters parameters,
+                                                                                 @NotNull PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return emptyList();
 
@@ -578,13 +590,13 @@ public class FileReferenceSet {
 
     Set<FileTargetContext> result = new LinkedHashSet<>();
     Project project = file.getProject();
+    CommonProcessors.CollectProcessor<FileTargetContext> processor = new CommonProcessors.CollectProcessor<>(result);
     for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       if (helper.isMine(project, virtualFile)) {
         if (helper.isFallback() && !result.isEmpty()) {
           continue;
         }
-        Collection<FileTargetContext> roots = helper.getTargetContexts(project, virtualFile, true);
-        result.addAll(roots);
+        if (!helper.processTargetContexts(parameters, virtualFile, processor)) break;
       }
     }
     return new ArrayList<>(result);
@@ -598,7 +610,7 @@ public class FileReferenceSet {
   @NotNull
   protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<? extends VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
-    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
+    return ContainerUtil.mapNotNull(files, file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
@@ -644,14 +656,14 @@ public class FileReferenceSet {
      * Returns target file locations for "Create File" quick fixes.
      */
     @NotNull
-    Collection<FileTargetContext> getTargetContexts(@NotNull PsiFile file);
+    Collection<FileTargetContext> getTargetContexts(@NotNull FileReferenceSetParameters parameters, @NotNull PsiFile file);
   }
 
   private static class AbsoluteTopLevelEvaluator implements Function<PsiFile, Collection<PsiFileSystemItem>>, TargetContextEvaluator {
     @Override
     @NotNull
-    public Collection<FileTargetContext> getTargetContexts(@NotNull PsiFile file) {
-      return getTargetAbsoluteTopLevelContexts(file);
+    public Collection<FileTargetContext> getTargetContexts(@NotNull FileReferenceSetParameters parameters, @NotNull PsiFile file) {
+      return getTargetAbsoluteTopLevelContexts(parameters, file);
     }
 
     @Override

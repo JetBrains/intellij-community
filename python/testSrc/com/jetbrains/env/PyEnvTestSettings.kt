@@ -28,7 +28,11 @@ internal data class PyEnvTestSettings(
   /**
    * Paths to all existing python SDKs
    */
-  val pythons: List<File> = foldersWithPythons.filter(File::exists).flatMap { it.listFiles().toList() } + additionalInterpreters,
+  val pythons: List<File> = foldersWithPythons
+    .filter(File::exists)
+    .flatMap { it.listFiles().toList() }
+    .filter { !it.name.startsWith('.') }
+    .plus(additionalInterpreters),
 
   /**
    * Enabled when launched with PyEnvTests configuration.
@@ -42,15 +46,7 @@ internal data class PyEnvTestSettings(
    */
   @get:JvmName("useRemoteSdk")
   val useRemoteSdk: Boolean = SystemProperties.getBooleanProperty("pycharm.run_remote", false)
-                              || PyTestEnvVars.PYCHARM_RUN_REMOTE.isSet(),
-
-  /**
-   * When enabled, only tests marked with "Staging" should run
-   */
-  @get:JvmName("isStagingMode")
-  val stagingMode: Boolean = SystemProperties.getBooleanProperty("pycharm.staging_env", false) ||
-                             PyTestEnvVars.PYCHARM_STAGING_ENV.isSet()
-) {
+                              || PyTestEnvVars.PYCHARM_RUN_REMOTE.isSet()) {
   /**
    * Configuration in readable format
    */
@@ -85,12 +81,8 @@ private enum class PyTestEnvVars(private val getVarName: (PyTestEnvVars) -> Stri
   /**
    * Only run remote-based tests
    */
-  PYCHARM_RUN_REMOTE,
+  PYCHARM_RUN_REMOTE;
 
-  /**
-   * Only run tests marked with staging
-   */
-  PYCHARM_STAGING_ENV;
 
   companion object {
     fun getEnvValues() = values().map { "$it : ${it.getValue()}" }

@@ -1,4 +1,4 @@
-// "Extract side effect" "true"
+// "Extract side effect" "true-preview"
 class Test {
   void test(int x) {
     i<caret>f(foo(x, 2)) {

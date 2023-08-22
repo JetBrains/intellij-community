@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class ArrangementRuleAliasDialog extends DialogWrapper {
+public final class ArrangementRuleAliasDialog extends DialogWrapper {
   private final ArrangementRuleAliasesListEditor myEditor;
   private boolean myModified;
 

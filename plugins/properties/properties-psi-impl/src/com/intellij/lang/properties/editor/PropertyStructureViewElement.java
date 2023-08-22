@@ -1,11 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -24,7 +23,6 @@ import java.util.function.BooleanSupplier;
 public class PropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private static final TextAttributesKey GROUP_KEY;
 
-  public static final String PROPERTY_GROUP_KEY_TEXT = "<property>";
   @NotNull
   private final IProperty myProperty;
   @NotNull
@@ -32,7 +30,7 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
   private String myPresentableName;
 
   static {
-    TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
+    TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PropertiesComponent.PROPERTY_KEY.getTextAttributesKey()).clone();
     groupKeyTextAttributes.setFontType(Font.ITALIC);
     GROUP_KEY = TextAttributesKey.createTextAttributesKey("GROUP_KEY", groupKeyTextAttributes);
   }
@@ -53,15 +51,13 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     return element.isValid() ? element : null;
   }
 
-  @NotNull
   @Override
-  public IProperty[] getProperties() {
+  public IProperty @NotNull [] getProperties() {
     return new IProperty[] {myProperty};
   }
 
-  @Nullable
   @Override
-  public PsiFile[] getFiles() {
+  public PsiFile @Nullable [] getFiles() {
     return null;
   }
 
@@ -102,12 +98,12 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
       public String getPresentableText() {
         IProperty property = getProperty();
         if (property == null) return null;
-        return getPresentableName() == null ? property.getName() : getPresentableName().isEmpty() ? PROPERTY_GROUP_KEY_TEXT : getPresentableName();
-      }
-
-      @Override
-      public String getLocationString() {
-        return null;
+        String presentableName = getPresentableName();
+        if (presentableName == null) {
+          return property.getName();
+        }
+        return !presentableName.isEmpty() ? presentableName 
+                                          : PropertiesBundle.message("structure.view.empty.property.presentation");
       }
 
       @Override
@@ -117,8 +113,9 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
 
       @Override
       public TextAttributes getTextAttributes(EditorColorsScheme colorsScheme) {
-        final TextAttributesKey baseAttrKey =
-          (getPresentableName() != null && getPresentableName().isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
+        final TextAttributesKey baseAttrKey = (getPresentableName() != null && getPresentableName().isEmpty())
+          ? GROUP_KEY
+          : PropertiesHighlighter.PropertiesComponent.PROPERTY_KEY.getTextAttributesKey();
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
         if (getPsiElement() != null) {
           TextAttributes highlightingAttributes = getErrorTextAttributes(colorsScheme);

@@ -14,14 +14,11 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-* @author peter
-*/
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
   private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<>();
   private final LookupElementWeigher myWeigher;
   private Ref<Comparable> myFirstWeight;
-  private boolean myPrimitive = true;
+  private volatile boolean myPrimitive = true;
   private int myPrefixChanges = -1;
 
   public CachingComparingClassifier(Classifier<LookupElement> next, LookupElementWeigher weigher) {
@@ -41,7 +38,9 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
 
   @Override
   public void removeElement(@NotNull LookupElement element, @NotNull ProcessingContext context) {
-    myWeights.remove(element);
+    synchronized (this) {
+      myWeights.remove(element);
+    }
     super.removeElement(element, context);
   }
 
@@ -56,8 +55,8 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
     return super.classify(source, context);
   }
 
-  private void checkPrefixChanged(ProcessingContext context) {
-    int actualPrefixChanges = context.get(CompletionLookupArranger.PREFIX_CHANGES).intValue();
+  private synchronized void checkPrefixChanged(ProcessingContext context) {
+    int actualPrefixChanges = context.get(CompletionLookupArranger.PREFIX_CHANGES);
     if (myWeigher.isPrefixDependent() && myPrefixChanges != actualPrefixChanges) {
       myPrefixChanges = actualPrefixChanges;
       myWeights.clear();
@@ -73,18 +72,20 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
 
   @Override
   public void addElement(@NotNull LookupElement t, @NotNull ProcessingContext context) {
-    Comparable weight = myWeigher.weigh(t, context.get(CompletionLookupArranger.WEIGHING_CONTEXT));
+    Comparable<?> weight = myWeigher.weigh(t, context.get(CompletionLookupArranger.WEIGHING_CONTEXT));
     if (weight instanceof ForceableComparable) {
       ((ForceableComparable)weight).force();
     }
-    if (!myWeigher.isPrefixDependent() && myPrimitive) {
-      if (myFirstWeight == null) {
-        myFirstWeight = Ref.create(weight);
-      } else if (!Comparing.equal(myFirstWeight.get(), weight)) {
-        myPrimitive = false;
+    synchronized (this) {
+      if (!myWeigher.isPrefixDependent() && myPrimitive) {
+        if (myFirstWeight == null) {
+          myFirstWeight = Ref.create(weight);
+        } else if (!Comparing.equal(myFirstWeight.get(), weight)) {
+          myPrimitive = false;
+        }
       }
+      myWeights.put(t, weight);
     }
-    myWeights.put(t, weight);
     super.addElement(t, context);
   }
 

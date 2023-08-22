@@ -42,6 +42,6 @@ public abstract class ClassesActionBase extends AnAction {
 
   @Nullable
   protected TypeInfo getSelectedClass(AnActionEvent e) {
-    return ActionUtil.getSelectedTypeInfo(e);
+    return DebuggerActionUtil.getSelectedTypeInfo(e);
   }
 }

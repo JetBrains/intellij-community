@@ -1,0 +1,413 @@
+Ancestor
+    Any changeset that can be reached by an unbroken chain of parent
+    changesets from a given changeset. More precisely, the ancestors
+    of a changeset can be defined by two properties: a parent of a
+    changeset is an ancestor, and a parent of an ancestor is an
+    ancestor. See also: 'Descendant'.
+
+Bookmark
+    Bookmarks are pointers to certain commits that move when
+    committing. They are similar to tags in that it is possible to use
+    bookmark names in all places where Mercurial expects a changeset
+    ID, e.g., with :hg:`update`. Unlike tags, bookmarks move along
+    when you make a commit.
+
+    Bookmarks can be renamed, copied and deleted. Bookmarks are local,
+    unless they are explicitly pushed or pulled between repositories.
+    Pushing and pulling bookmarks allow you to collaborate with others
+    on a branch without creating a named branch.
+
+Branch
+    (Noun) A child changeset that has been created from a parent that
+    is not a head. These are known as topological branches, see
+    'Branch, topological'. If a topological branch is named, it becomes
+    a named branch. If a topological branch is not named, it becomes
+    an anonymous branch. See 'Branch, anonymous' and 'Branch, named'.
+
+    Branches may be created when changes are pulled from or pushed to
+    a remote repository, since new heads may be created by these
+    operations. Note that the term branch can also be used informally
+    to describe a development process in which certain development is
+    done independently of other development. This is sometimes done
+    explicitly with a named branch, but it can also be done locally,
+    using bookmarks or clones and anonymous branches.
+
+    Example: "The experimental branch."
+
+    (Verb) The action of creating a child changeset which results in
+    its parent having more than one child.
+
+    Example: "I'm going to branch at X."
+
+Branch, anonymous
+    Every time a new child changeset is created from a parent that is not
+    a head and the name of the branch is not changed, a new anonymous
+    branch is created.
+
+Branch, closed
+    A named branch whose branch heads have all been closed.
+
+Branch, default
+    The branch assigned to a changeset when no name has previously been
+    assigned.
+
+Branch head
+    See 'Head, branch'.
+
+Branch, inactive
+    If a named branch has no topological heads, it is considered to be
+    inactive. As an example, a feature branch becomes inactive when it
+    is merged into the default branch. The :hg:`branches` command
+    shows inactive branches by default, though they can be hidden with
+    :hg:`branches --active`.
+
+    NOTE: this concept is deprecated because it is too implicit.
+    Branches should now be explicitly closed using :hg:`commit
+    --close-branch` when they are no longer needed.
+
+Branch, named
+    A collection of changesets which have the same branch name. By
+    default, children of a changeset in a named branch belong to the
+    same named branch. A child can be explicitly assigned to a
+    different branch. See :hg:`help branch`, :hg:`help branches` and
+    :hg:`commit --close-branch` for more information on managing
+    branches.
+
+    Named branches can be thought of as a kind of namespace, dividing
+    the collection of changesets that comprise the repository into a
+    collection of disjoint subsets. A named branch is not necessarily
+    a topological branch. If a new named branch is created from the
+    head of another named branch, or the default branch, but no
+    further changesets are added to that previous branch, then that
+    previous branch will be a branch in name only.
+
+Branch tip
+    See 'Tip, branch'.
+
+Branch, topological
+    Every time a new child changeset is created from a parent that is
+    not a head, a new topological branch is created. If a topological
+    branch is named, it becomes a named branch. If a topological
+    branch is not named, it becomes an anonymous branch of the
+    current, possibly default, branch.
+
+Changelog
+    A record of the changesets in the order in which they were added
+    to the repository. This includes details such as changeset id,
+    author, commit message, date, and list of changed files.
+
+Changeset
+    A snapshot of the state of the repository used to record a change.
+
+Changeset, child
+    The converse of parent changeset: if P is a parent of C, then C is
+    a child of P. There is no limit to the number of children that a
+    changeset may have.
+
+Changeset id
+    A SHA-1 hash that uniquely identifies a changeset. It may be
+    represented as either a "long" 40 hexadecimal digit string, or a
+    "short" 12 hexadecimal digit string.
+
+Changeset, merge
+    A changeset with two parents. This occurs when a merge is
+    committed.
+
+Changeset, parent
+    A revision upon which a child changeset is based. Specifically, a
+    parent changeset of a changeset C is a changeset whose node
+    immediately precedes C in the DAG. Changesets have at most two
+    parents.
+
+Checkout
+    (Noun) The working directory being updated to a specific
+    revision. This use should probably be avoided where possible, as
+    changeset is much more appropriate than checkout in this context.
+
+    Example: "I'm using checkout X."
+
+    (Verb) Updating the working directory to a specific changeset. See
+    :hg:`help update`.
+
+    Example: "I'm going to check out changeset X."
+
+Child changeset
+    See 'Changeset, child'.
+
+Close changeset
+    See 'Head, closed branch'.
+
+Closed branch
+    See 'Branch, closed'.
+
+Clone
+    (Noun) An entire or partial copy of a repository. The partial
+    clone must be in the form of a revision and its ancestors.
+
+    Example: "Is your clone up to date?"
+
+    (Verb) The process of creating a clone, using :hg:`clone`.
+
+    Example: "I'm going to clone the repository."
+
+Closed branch head
+    See 'Head, closed branch'.
+
+Commit
+    (Noun) A synonym for changeset.
+
+    Example: "Is the bug fixed in your recent commit?"
+
+    (Verb) The act of recording changes to a repository. When files
+    are committed in a working directory, Mercurial finds the
+    differences between the committed files and their parent
+    changeset, creating a new changeset in the repository.
+
+    Example: "You should commit those changes now."
+
+Cset
+    A common abbreviation of the term changeset.
+
+DAG
+    The repository of changesets of a distributed version control
+    system (DVCS) can be described as a directed acyclic graph (DAG),
+    consisting of nodes and edges, where nodes correspond to
+    changesets and edges imply a parent -> child relation. This graph
+    can be visualized by graphical tools such as :hg:`log --graph`. In
+    Mercurial, the DAG is limited by the requirement for children to
+    have at most two parents.
+
+Deprecated
+    Feature removed from documentation, but not scheduled for removal.
+
+Default branch
+    See 'Branch, default'.
+
+Descendant
+    Any changeset that can be reached by a chain of child changesets
+    from a given changeset. More precisely, the descendants of a
+    changeset can be defined by two properties: the child of a
+    changeset is a descendant, and the child of a descendant is a
+    descendant. See also: 'Ancestor'.
+
+Diff
+    (Noun) The difference between the contents and attributes of files
+    in two changesets or a changeset and the current working
+    directory. The difference is usually represented in a standard
+    form called a "diff" or "patch". The "git diff" format is used
+    when the changes include copies, renames, or changes to file
+    attributes, none of which can be represented/handled by classic
+    "diff" and "patch".
+
+    Example: "Did you see my correction in the diff?"
+
+    (Verb) Diffing two changesets is the action of creating a diff or
+    patch.
+
+    Example: "If you diff with changeset X, you will see what I mean."
+
+Directory, working
+    The working directory represents the state of the files tracked by
+    Mercurial, that will be recorded in the next commit. The working
+    directory initially corresponds to the snapshot at an existing
+    changeset, known as the parent of the working directory. See
+    'Parent, working directory'. The state may be modified by changes
+    to the files introduced manually or by a merge. The repository
+    metadata exists in the .hg directory inside the working directory.
+
+Draft
+    Changesets in the draft phase have not been shared with publishing
+    repositories and may thus be safely changed by history-modifying
+    extensions. See :hg:`help phases`.
+
+Experimental
+    Feature that may change or be removed at a later date.
+
+Graph
+    See DAG and :hg:`log --graph`.
+
+Head
+    The term 'head' may be used to refer to both a branch head or a
+    repository head, depending on the context. See 'Head, branch' and
+    'Head, repository' for specific definitions.
+
+    Heads are where development generally takes place and are the
+    usual targets for update and merge operations.
+
+Head, branch
+    A changeset with no descendants on the same named branch.
+
+Head, closed branch
+    A changeset that marks a head as no longer interesting. The closed
+    head is no longer listed by :hg:`heads`. A branch is considered
+    closed when all its heads are closed and consequently is not
+    listed by :hg:`branches`.
+
+    Closed heads can be re-opened by committing new changeset as the
+    child of the changeset that marks a head as closed.
+
+Head, repository
+    A topological head which has not been closed.
+
+Head, topological
+    A changeset with no children in the repository.
+
+History, immutable
+    Once committed, changesets cannot be altered.  Extensions which
+    appear to change history actually create new changesets that
+    replace existing ones, and then destroy the old changesets. Doing
+    so in public repositories can result in old changesets being
+    reintroduced to the repository.
+
+History, rewriting
+    The changesets in a repository are immutable. However, extensions
+    to Mercurial can be used to alter the repository, usually in such
+    a way as to preserve changeset contents.
+
+Immutable history
+    See 'History, immutable'.
+
+Merge changeset
+    See 'Changeset, merge'.
+
+Manifest
+    Each changeset has a manifest, which is the list of files that are
+    tracked by the changeset.
+
+Merge
+    Used to bring together divergent branches of work. When you update
+    to a changeset and then merge another changeset, you bring the
+    history of the latter changeset into your working directory. Once
+    conflicts are resolved (and marked), this merge may be committed
+    as a merge changeset, bringing two branches together in the DAG.
+
+Named branch
+    See 'Branch, named'.
+
+Null changeset
+    The empty changeset. It is the parent state of newly-initialized
+    repositories and repositories with no checked out revision. It is
+    thus the parent of root changesets and the effective ancestor when
+    merging unrelated changesets. Can be specified by the alias 'null'
+    or by the changeset ID '000000000000'.
+
+Parent
+    See 'Changeset, parent'.
+
+Parent changeset
+    See 'Changeset, parent'.
+
+Parent, working directory
+    The working directory parent reflects a virtual revision which is
+    the child of the changeset (or two changesets with an uncommitted
+    merge) shown by :hg:`parents`. This is changed with
+    :hg:`update`. Other commands to see the working directory parent
+    are :hg:`summary` and :hg:`id`. Can be specified by the alias ".".
+
+Patch
+    (Noun) The product of a diff operation.
+
+    Example: "I've sent you my patch."
+
+    (Verb) The process of using a patch file to transform one
+    changeset into another.
+
+    Example: "You will need to patch that revision."
+
+Phase
+    A per-changeset state tracking how the changeset has been or
+    should be shared. See :hg:`help phases`.
+
+Public
+    Changesets in the public phase have been shared with publishing
+    repositories and are therefore considered immutable. See :hg:`help
+    phases`.
+
+Pull
+    An operation in which changesets in a remote repository which are
+    not in the local repository are brought into the local
+    repository. Note that this operation without special arguments
+    only updates the repository, it does not update the files in the
+    working directory. See :hg:`help pull`.
+
+Push
+    An operation in which changesets in a local repository which are
+    not in a remote repository are sent to the remote repository. Note
+    that this operation only adds changesets which have been committed
+    locally to the remote repository. Uncommitted changes are not
+    sent. See :hg:`help push`.
+
+Repository
+    The metadata describing all recorded states of a collection of
+    files. Each recorded state is represented by a changeset. A
+    repository is usually (but not always) found in the ``.hg``
+    subdirectory of a working directory. Any recorded state can be
+    recreated by "updating" a working directory to a specific
+    changeset.
+
+Repository head
+    See 'Head, repository'.
+
+Revision
+    A state of the repository at some point in time. Earlier revisions
+    can be updated to by using :hg:`update`.  See also 'Revision
+    number'; See also 'Changeset'.
+
+Revision number
+    This integer uniquely identifies a changeset in a specific
+    repository. It represents the order in which changesets were added
+    to a repository, starting with revision number 0. Note that the
+    revision number may be different in each clone of a repository. To
+    identify changesets uniquely between different clones, see
+    'Changeset id'.
+
+Revlog
+    History storage mechanism used by Mercurial. It is a form of delta
+    encoding, with occasional full revision of data followed by delta
+    of each successive revision. It includes data and an index
+    pointing to the data.
+
+Rewriting history
+    See 'History, rewriting'.
+
+Root
+    A changeset that has only the null changeset as its parent. Most
+    repositories have only a single root changeset.
+
+Secret
+    Changesets in the secret phase may not be shared via push, pull,
+    or clone. See :hg:`help phases`.
+
+Tag
+    An alternative name given to a changeset. Tags can be used in all
+    places where Mercurial expects a changeset ID, e.g., with
+    :hg:`update`. The creation of a tag is stored in the history and
+    will thus automatically be shared with other using push and pull.
+
+Tip
+    The changeset with the highest revision number. It is the changeset
+    most recently added in a repository.
+
+Tip, branch
+    The head of a given branch with the highest revision number. When
+    a branch name is used as a revision identifier, it refers to the
+    branch tip. See also 'Branch, head'. Note that because revision
+    numbers may be different in different repository clones, the
+    branch tip may be different in different cloned repositories.
+
+Update
+    (Noun) Another synonym of changeset.
+
+    Example: "I've pushed an update."
+
+    (Verb) This term is usually used to describe updating the state of
+    the working directory to that of a specific changeset. See
+    :hg:`help update`.
+
+    Example: "You should update."
+
+Working directory
+    See 'Directory, working'.
+
+Working directory parent
+    See 'Parent, working directory'.

@@ -31,13 +31,6 @@ interface BreakpointManager {
   val regExpBreakpointSupported: Boolean
     get() = false
 
-  @Deprecated("use another overload")
-  fun setBreakpoint(target: BreakpointTarget,
-                    line: Int,
-                    condition: String? = null): Breakpoint {
-    throw UnsupportedOperationException()
-  }
-
   fun setBreakpoint(target: BreakpointTarget,
                     line: Int,
                     column: Int = Breakpoint.EMPTY_VALUE,

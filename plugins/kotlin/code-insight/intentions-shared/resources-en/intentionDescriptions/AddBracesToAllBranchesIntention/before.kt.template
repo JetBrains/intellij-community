@@ -1,0 +1,1 @@
+if (flag) return true else println("Flag is disabled")

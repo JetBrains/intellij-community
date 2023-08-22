@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
@@ -15,7 +16,6 @@ import java.awt.*;
 
 /**
  * This renderer is used both as PropertyRenderer and as cell renderer in the color chooser pane list.
- * @author yole
  */
 public class ColorRenderer extends ColoredListCellRenderer implements PropertyRenderer<ColorDescriptor> {
   private ColorDescriptor myColorDescriptor;
@@ -36,8 +36,8 @@ public class ColorRenderer extends ColoredListCellRenderer implements PropertyRe
     setIcon(AllIcons.Nodes.EmptyNode);
     setBackground(selected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground());
     if (myColorDescriptor != null) {
-      append(myColorDescriptor.toString(),
-             selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      @NlsSafe String fragment = myColorDescriptor.toString();
+      append(fragment, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
   }
 

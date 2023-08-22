@@ -15,6 +15,7 @@
  */
 package org.intellij.images.thumbnail.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -31,6 +32,11 @@ public class FilterImagesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(myFilter.getDisplayName());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

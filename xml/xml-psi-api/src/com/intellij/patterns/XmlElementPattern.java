@@ -22,9 +22,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPattern<T,Self>> extends PsiElementPattern<T,Self> {
   protected XmlElementPattern(final Class<T> aClass) {
     super(aClass);
@@ -36,7 +33,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
 
   public static class Capture extends XmlElementPattern<XmlElement, Capture> {
     Capture() {
-      super(new InitialPatternCondition<XmlElement>(XmlElement.class) {
+      super(new InitialPatternCondition<>(XmlElement.class) {
         @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlElement;
@@ -47,7 +44,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
 
   public static class XmlTextPattern extends XmlElementPattern<XmlText, XmlTextPattern> {
     XmlTextPattern() {
-      super(new InitialPatternCondition<XmlText>(XmlText.class) {
+      super(new InitialPatternCondition<>(XmlText.class) {
         @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlText;
@@ -58,7 +55,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
 
   public static class XmlEntityRefPattern extends XmlElementPattern<XmlEntityRef, XmlEntityRefPattern> {
     XmlEntityRefPattern() {
-      super(new InitialPatternCondition<XmlEntityRef>(XmlEntityRef.class) {
+      super(new InitialPatternCondition<>(XmlEntityRef.class) {
         @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlEntityRef;

@@ -42,4 +42,3 @@ PsiJavaFile:NewInExprList.java
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n')
     PsiJavaToken:RBRACE('}')
-    

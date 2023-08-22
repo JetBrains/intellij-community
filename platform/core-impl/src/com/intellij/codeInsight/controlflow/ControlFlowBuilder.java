@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.controlflow;
 
 import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +42,7 @@ public class ControlFlowBuilder {
     transparentInstructionCount = 0;
   }
 
-  @Nullable
-  public Instruction findInstructionByElement(final PsiElement element) {
+  public @Nullable Instruction findInstructionByElement(final PsiElement element) {
     for (int i = instructions.size() - 1; i >= 0; i--) {
       final Instruction instruction = instructions.get(i);
       if (element.equals(instruction.getElement())) {
@@ -55,16 +55,16 @@ public class ControlFlowBuilder {
   /**
    * @return "raw" current state of control flow
    */
-  @NotNull
-  public final ControlFlow getControlFlow() {
+  public final @NotNull ControlFlow getControlFlow() {
     return new ControlFlowImpl(instructions.toArray(Instruction.EMPTY_ARRAY));
   }
 
   /**
+   * Mutates instructions in place.
+   *
    * @return control flow without transparent instructions
    */
-  @NotNull
-  public final ControlFlow getCompleteControlFlow() {
+  public final @NotNull ControlFlow completeControlFlow() {
     if (transparentInstructionCount == 0) return getControlFlow();
 
     ArrayList<Instruction> result = new ArrayList<>(instructionCount);
@@ -101,13 +101,26 @@ public class ControlFlowBuilder {
     return new ControlFlowImpl(result.toArray(Instruction.EMPTY_ARRAY));
   }
 
+
+  /**
+   * Mutates instructions in place.
+   *
+   * @return control flow without transparent instructions
+   * @deprecated use {@link #completeControlFlow}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public final @NotNull ControlFlow getCompleteControlFlow() {
+    return completeControlFlow();
+  }
+
   /**
    * Adds edge between 2 edges
    *
    * @param beginInstruction Begin of new edge
    * @param endInstruction   End of new edge
    */
-  public void addEdge(@Nullable final Instruction beginInstruction, @Nullable final Instruction endInstruction) {
+  public void addEdge(final @Nullable Instruction beginInstruction, final @Nullable Instruction endInstruction) {
     if (beginInstruction == null || endInstruction == null) {
       return;
     }
@@ -120,7 +133,7 @@ public class ControlFlowBuilder {
    *
    * @param instruction new instruction
    */
-  public final void addNode(@NotNull final Instruction instruction) {
+  public final void addNode(final @NotNull Instruction instruction) {
     instructions.add(instruction);
     if (prevInstruction != null) {
       addEdge(prevInstruction, instruction);
@@ -156,7 +169,7 @@ public class ControlFlowBuilder {
    * @param pendingScope Scope for instruction / null if expected scope = exit point
    * @param instruction  "Last" pending instruction
    */
-  public void addPendingEdge(@Nullable final PsiElement pendingScope, @Nullable final Instruction instruction) {
+  public void addPendingEdge(final @Nullable PsiElement pendingScope, final @Nullable Instruction instruction) {
     if (instruction == null) {
       return;
     }
@@ -184,7 +197,7 @@ public class ControlFlowBuilder {
    *
    * @param instruction target instruction for pending edges
    */
-  public final void checkPending(@NotNull final Instruction instruction) {
+  public final void checkPending(final @NotNull Instruction instruction) {
     final PsiElement element = instruction.getElement();
     if (element == null) {
       // if element is null (fake element, we just process all pending)
@@ -219,8 +232,7 @@ public class ControlFlowBuilder {
    * @param element Element to create instruction for
    * @return new instruction
    */
-  @NotNull
-  public Instruction startNode(@Nullable final PsiElement element) {
+  public @NotNull Instruction startNode(final @Nullable PsiElement element) {
     final Instruction instruction = new InstructionImpl(this, element);
     addNodeAndCheckPending(instruction);
     return instruction;
@@ -234,8 +246,7 @@ public class ControlFlowBuilder {
    * @param markerName name for debug information
    * @return new transparent instruction
    */
-  @NotNull
-  public final TransparentInstruction startTransparentNode(@Nullable final PsiElement element, String markerName) {
+  public final @NotNull TransparentInstruction startTransparentNode(final @Nullable PsiElement element, String markerName) {
     final TransparentInstruction instruction = new TransparentInstructionImpl(this, element, markerName);
     addNodeAndCheckPending(instruction);
     return instruction;
@@ -254,10 +265,9 @@ public class ControlFlowBuilder {
     return instruction;
   }
 
-  @NotNull
-  public final ControlFlow build(@NotNull PsiElementVisitor visitor, @NotNull PsiElement element) {
+  public final @NotNull ControlFlow build(@NotNull PsiElementVisitor visitor, @NotNull PsiElement element) {
     visitFor(visitor, element);
-    return getCompleteControlFlow();
+    return completeControlFlow();
   }
 
   public final void visitFor(@NotNull PsiElementVisitor visitor, @NotNull PsiElement element) {

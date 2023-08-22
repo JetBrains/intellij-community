@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -11,6 +12,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,7 +37,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         final boolean assignmentCompatible = exprType == null || TypeConversionUtil.isAssignable(myT, exprType);
         if (!assignmentCompatible) {
           final PsiType type = myExpression.getType();
-          session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));
+          session.registerIncompatibleErrorMessage(
+            JavaPsiBundle.message("error.incompatible.type", type != null ? type.getPresentableText() : myExpression.getText(), session.getPresentableText(myT)));
         }
         else if (TypeCompatibilityConstraint.isUncheckedConversion(myT, exprType, session) && !JavaGenericsUtil.isReifiableType(myT)) {
           session.setErased();
@@ -53,7 +56,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
       }
 
-      if (exprType != null && exprType != PsiType.NULL) {
+      if (exprType != null && exprType != PsiTypes.nullType()) {
         if (exprType instanceof PsiDisjunctionType) {
           exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
         }
@@ -172,7 +175,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
         if (callSession.repeatInferencePhases()) {
 
-          if (PsiType.VOID.equals(targetType)) {
+          if (PsiTypes.voidType().equals(targetType)) {
             return callSession;
           }
 
@@ -189,9 +192,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
 
         //copy incompatible message if any
-        final List<String> messages = callSession.getIncompatibleErrorMessages();
+        final List<@Nls String> messages = callSession.getIncompatibleErrorMessages();
         if (messages != null) {
-          for (String message : messages) {
+          for (@Nls String message : messages) {
             session.registerIncompatibleErrorMessage(message);
           }
         }
@@ -199,7 +202,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       }
       else if (registerErrorOnFailure) {
         //keep a sign that an inference failed
-        session.registerIncompatibleErrorMessage("Failed to resolve argument");
+        session.registerIncompatibleErrorMessage(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument"));
         return null;
       }
     }
@@ -239,7 +242,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
                                             PsiType returnType,
                                             Set<? super InferenceVariable> result) {
     if (psiExpression instanceof PsiLambdaExpression) {
-      if (!PsiType.VOID.equals(returnType)) {
+      if (!PsiTypes.voidType().equals(returnType)) {
         final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)psiExpression);
         for (PsiExpression expression : returnExpressions) {
           final Set<InferenceVariable> resultInputVars = createSelfConstraint(returnType, expression).getInputVariables(session);

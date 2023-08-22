@@ -1,20 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RefactoringListenerProvider;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.InputRedirectAware;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -22,17 +19,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.run.configuration.PythonConfigurationFragmentedEditor;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PythonRunConfiguration extends AbstractPythonRunConfiguration
-  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider {
+  implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider, InputRedirectAware {
   public static final String SCRIPT_NAME = "SCRIPT_NAME";
   public static final String PARAMETERS = "PARAMETERS";
   public static final String MULTIPROCESS = "MULTIPROCESS";
@@ -41,6 +39,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String MODULE_MODE = "MODULE_MODE";
   public static final String REDIRECT_INPUT = "REDIRECT_INPUT";
   public static final String INPUT_FILE = "INPUT_FILE";
+  private static final Pattern QUALIFIED_NAME = Pattern.compile("^[\\p{javaJavaIdentifierPart}-.]*\\p{javaJavaIdentifierPart}$");
 
   private String myScriptName;
   private String myScriptParameters;
@@ -48,7 +47,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private boolean myEmulateTerminal = false;
   private boolean myModuleMode = false;
   @NotNull private String myInputFile = "";
-  private final Pattern myQualifiedNameRegex = Pattern.compile("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$");
   private boolean myRedirectInput = false;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
@@ -57,7 +55,15 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   }
 
   @Override
+  protected boolean isNewUiSupported() {
+    return true;
+  }
+
+  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+    if (Registry.is("python.new.run.config", false)) {
+      return new PythonConfigurationFragmentedEditor(this);
+    }
     return new PythonRunConfigurationEditor(this);
   }
 
@@ -75,7 +81,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
         PyBundle.message(isModuleMode() ? "runcfg.unittest.no_module_name" : "runcfg.unittest.no_script_name"));
     }
     else {
-      if (isModuleMode() && !myQualifiedNameRegex.matcher(myScriptName).matches()) {
+      if (isModuleMode() && !QUALIFIED_NAME.matcher(myScriptName).matches()) {
         throw new RuntimeConfigurationWarning(PyBundle.message("python.provide.a.qualified.name.of.a.module"));
       }
     }
@@ -162,6 +168,31 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   @Override
   public AbstractPythonRunConfigurationParams getBaseParams() {
     return this;
+  }
+
+  @Override
+  public @NotNull InputRedirectOptions getInputRedirectOptions() {
+    return new InputRedirectOptions() {
+      @Override
+      public boolean isRedirectInput() {
+        return PythonRunConfiguration.this.isRedirectInput();
+      }
+
+      @Override
+      public void setRedirectInput(boolean value) {
+        PythonRunConfiguration.this.setRedirectInput(value);
+      }
+
+      @Override
+      public @Nullable String getRedirectInputPath() {
+        return StringUtil.nullize(getInputFile());
+      }
+
+      @Override
+      public void setRedirectInputPath(String value) {
+        setInputFile(StringUtil.notNullize(value));
+      }
+    };
   }
 
   public static void copyParams(PythonRunConfigurationParams source, PythonRunConfigurationParams target) {

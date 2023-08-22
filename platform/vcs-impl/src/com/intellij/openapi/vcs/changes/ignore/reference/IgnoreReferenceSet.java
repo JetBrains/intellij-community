@@ -230,7 +230,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
   /**
    * Custom definition of {@link FileReference}.
    */
-  private class IgnoreReference extends FileReference {
+  private final class IgnoreReference extends FileReference {
 
     private IgnoreReference(@NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
       super(fileReferenceSet, range, index, text);
@@ -238,7 +238,6 @@ public class IgnoreReferenceSet extends FileReferenceSet {
 
     /**
      * Resolves reference to the filesystem.
-     *
      * @param text          entry
      * @param context       filesystem context
      * @param result        result references collection
@@ -246,7 +245,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
      */
     @Override
     protected void innerResolveInContext(@NotNull String text, @NotNull PsiFileSystemItem context,
-                                         @NotNull Collection<ResolveResult> result, boolean caseSensitive) {
+                                         @NotNull Collection<? super ResolveResult> result, boolean caseSensitive) {
       ProgressManager.checkCanceled();
       super.innerResolveInContext(text, context, result, caseSensitive);
 

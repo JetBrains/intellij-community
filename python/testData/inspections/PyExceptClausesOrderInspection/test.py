@@ -6,7 +6,7 @@ try:
     F().foo()
 except BaseException:
     print("BaseException")
-except <warning descr="'BaseException', superclass of exception class 'Exception', has already been caught">Exception</warning>:
+except <warning descr="'BaseException', superclass of the exception class 'Exception', has already been caught">Exception</warning>:
     print("Exception")
 
 try:

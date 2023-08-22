@@ -16,7 +16,8 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,10 +35,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class KeyChooserDialog extends DialogWrapper{
   private final PropertiesFile myBundle;
   private final String myBundleName;
@@ -81,7 +78,8 @@ public final class KeyChooserDialog extends DialogWrapper{
     myModel = new MyTableModel();
     myTable = new JBTable(myModel);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    new MySpeedSearch(myTable);
+    MySpeedSearch search = new MySpeedSearch(myTable);
+    search.setupListeners();
     myCenterPanel = ScrollPaneFactory.createScrollPane(myTable);
 
     myTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0), OK_ACTION);
@@ -115,8 +113,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     keyColumn.setMaxWidth(width);
     keyColumn.setMinWidth(width);
     final TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
-    if (defaultRenderer instanceof JComponent) {
-      final JComponent component = (JComponent)defaultRenderer;
+    if (defaultRenderer instanceof JComponent component) {
       component.putClientProperty("html.disable", Boolean.TRUE);
     }
     selectKey(keyToPreselect);
@@ -229,7 +226,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
 
     @Override
-    public Class getColumnClass(final int column) {
+    public Class<?> getColumnClass(final int column) {
       if(column == 0){
         return String.class;
       }
@@ -264,12 +261,12 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
   }
 
-  private class MySpeedSearch extends SpeedSearchBase<JTable> {
-    private TObjectIntHashMap<Object> myElements;
+  private final class MySpeedSearch extends SpeedSearchBase<JTable> {
+    private Object2IntMap<Object> myElements;
     private Object[] myElementsArray;
 
-    MySpeedSearch(final JTable component) {
-      super(component);
+    private MySpeedSearch(final JTable component) {
+      super(component, null);
     }
 
     @Override
@@ -285,7 +282,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     @Override
     public Object @NotNull [] getAllElements() {
       if (myElements == null) {
-        myElements = new TObjectIntHashMap<>();
+        myElements = new Object2IntOpenHashMap<>();
         myElementsArray = myPairs.toArray();
         for (int idx = 0; idx < myElementsArray.length; idx++) {
           Object element = myElementsArray[idx];
@@ -303,7 +300,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     @Override
     public void selectElement(final Object element, final String selectedText) {
-      final int index = myElements.get(element);
+      final int index = myElements.getInt(element);
       selectElementAt(getComponent().convertRowIndexToView(index));
     }
   }

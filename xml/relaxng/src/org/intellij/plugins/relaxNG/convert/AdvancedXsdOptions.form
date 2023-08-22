@@ -9,7 +9,7 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
-    <border type="none" title="W3C XML Schema Output"/>
+    <border type="none" title-resource-bundle="messages/RelaxngBundle" title-key="relaxng.convert-schema.advanced-options.xsd.border-title.w3c-xml-schema-output"/>
     <children>
       <vspacer id="bb5e1">
         <constraints>
@@ -22,8 +22,8 @@
         </constraints>
         <properties>
           <labelFor value="480bc"/>
-          <text value="&amp;any-process-contents"/>
-          <toolTipText value="Specifies the value for the processContents attribute of any elements. &#10;The default is skip (corresponding to RELAX NG semantics) unless the &#10;input format is dtd, in which case the default is strict (corresponding to &#10;DTD semantics). "/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.xsd.label.any-process-contents"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.xsd.tooltip.any-process-contents"/>
         </properties>
       </component>
       <component id="272a3" class="javax.swing.JLabel">
@@ -32,8 +32,8 @@
         </constraints>
         <properties>
           <labelFor value="6d96a"/>
-          <text value="a&amp;ny-attribute-process-contents"/>
-          <toolTipText value="Specifies the value for the processContents attribute of any Attribute &#10;elements. The default is skip (corresponding to RELAX NG semantics).  "/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.xsd.label.any-attribute-process-contents"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.xsd.tooltip.any-attribute-process-contents"/>
         </properties>
       </component>
       <component id="480bc" class="com.intellij.openapi.ui.ComboBox" binding="myAnyProcessContents">
@@ -65,8 +65,8 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;disable-abstract-elements"/>
-          <toolTipText value="Disables the use of abstract elements and subsitution groups &#10;in the generated XML Schema. This can also be controlled using &#10;an annotation attribute."/>
+          <text resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.xsd.checkbox.disable-abstract-elements"/>
+          <toolTipText resource-bundle="messages/RelaxngBundle" key="relaxng.convert-schema.advanced-options.xsd.tooltip.disable-abstract-elements"/>
         </properties>
       </component>
     </children>

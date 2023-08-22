@@ -12,7 +12,7 @@ import java.util.List;
 
 public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
   @Override
-  protected List<VcsException> processFiles(final AbstractVcs vcs, final List<FilePath> files) {
+  protected List<VcsException> processFiles(final AbstractVcs vcs, final List<? extends FilePath> files) {
     CheckinEnvironment environment = vcs.getCheckinEnvironment();
     if (environment == null) return Collections.emptyList();
     final List<VcsException> result = environment.scheduleMissingFileForDeletion(files);

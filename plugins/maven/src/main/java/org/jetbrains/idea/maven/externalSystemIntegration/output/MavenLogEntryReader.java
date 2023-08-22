@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +22,6 @@ public interface MavenLogEntryReader {
   /**
    * Read lines while predicate is true
    *
-   * @param logEntryPredicate
-   * @return
    */
   default List<MavenLogEntry> readWhile(Predicate<MavenLogEntry> logEntryPredicate) {
     List<MavenLogEntry> result = new SmartList<>();
@@ -42,8 +41,6 @@ public interface MavenLogEntryReader {
   /**
    * read first line which matches the predicate, other lines are ignored
    *
-   * @param logEntryPredicate
-   * @return
    */
   default MavenLogEntry findFirst(Predicate<MavenLogEntry> logEntryPredicate) {
     MavenLogEntry result;
@@ -90,6 +87,7 @@ public interface MavenLogEntryReader {
     }
 
     @NotNull
+    @NlsSafe
     public String getLine() {
       return myLine;
     }

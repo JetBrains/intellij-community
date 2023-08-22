@@ -40,7 +40,7 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
   public abstract Key<E> getTargetDataKey();
 
   @Override
-  public void importData(@NotNull Collection<DataNode<E>> toImport,
+  public void importData(@NotNull Collection<? extends DataNode<E>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -48,7 +48,7 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
 
   @NotNull
   @Override
-  public Computable<Collection<I>> computeOrphanData(@NotNull Collection<DataNode<E>> toImport,
+  public Computable<Collection<I>> computeOrphanData(@NotNull Collection<? extends DataNode<E>> toImport,
                                                      @NotNull ProjectData projectData,
                                                      @NotNull Project project,
                                                      @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -56,8 +56,8 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
   }
 
   @Override
-  public void removeData(@NotNull Computable<Collection<I>> toRemoveComputable,
-                         @NotNull Collection<DataNode<E>> toIgnore,
+  public void removeData(Computable<? extends Collection<? extends I>> toRemoveComputable,
+                         @NotNull Collection<? extends DataNode<E>> toIgnore,
                          @NotNull ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {

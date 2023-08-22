@@ -1,9 +1,9 @@
 public class A {
   private static final class Inner {
-      public final String str;
+      public final String string;
 
       public Inner(Integer param) {
-          str = param.toString();
+          string = param.toString();
      }
   }
 }

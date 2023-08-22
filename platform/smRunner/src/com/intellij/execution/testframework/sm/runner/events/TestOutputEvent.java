@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestOutputEvent extends TreeNodeEvent {
   private final String myText;
@@ -17,7 +18,14 @@ public class TestOutputEvent extends TreeNodeEvent {
   }
 
   public TestOutputEvent(@NotNull String testName, @NotNull String text, boolean stdOut) {
-    super(testName, null);
+    this(testName, null, text, stdOut);
+  }
+
+  public TestOutputEvent(@NotNull String testName,
+                         @Nullable String id, 
+                         @NotNull String text,
+                         boolean stdOut) {
+    super(testName, id);
     myText = text;
     myOutputType = stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR;
   }

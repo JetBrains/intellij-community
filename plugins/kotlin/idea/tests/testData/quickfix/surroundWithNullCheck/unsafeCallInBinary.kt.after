@@ -1,0 +1,8 @@
+// "Surround with null check" "true"
+
+fun foo(arg: Int?) {
+    if (arg != null) {
+        42 + arg.hashCode() - 13
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

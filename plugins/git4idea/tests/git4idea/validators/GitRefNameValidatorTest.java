@@ -42,7 +42,6 @@ public class GitRefNameValidatorTest {
         { "UNDERSCORED_WORD",  "new_branch"             },
         { "HIERARCHY",         "user/branch"            },
         { "HIERARCHY_2",       "user/branch/sub_branch" },
-        { "BEGINS_WITH_SLASH", "/branch"                }, // actual branch name will be with trimmed slash
         { "NON_CONS_DOTS",     "complex.branch.name"    },
         { "GERRIT_PATTERN",    "refs/for/master%topic=my-cool-feature,r=some-reviewer"},
         { "CONTAINS_MINUS",    "b-ranch"},
@@ -53,6 +52,7 @@ public class GitRefNameValidatorTest {
   private static Object[][] createInvalidData() {
       return new Object[][] {
         { "BEGIN_WITH_DOT",      ".branch"      },
+        { "BEGINS_WITH_SLASH",   "/branch"      },
         { "ONLY_DOT",            "."            },
         { "ENDS_WITH_SLASH",     "branch/"      },
         { "ENDS_WITH_DOT",       "branch."      },

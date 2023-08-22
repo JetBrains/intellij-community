@@ -14,7 +14,7 @@ import static com.intellij.patterns.PlatformPatterns.psiFile;
 public class TextMateCompletionContributor extends CompletionContributor implements DumbAware {
   public TextMateCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inFile(psiFile().withLanguage(TextMateLanguage.LANGUAGE)),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,

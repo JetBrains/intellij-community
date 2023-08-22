@@ -15,15 +15,13 @@
  */
 package com.intellij.pom;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ElementDescriptionLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class PomDescriptionProvider implements ElementDescriptionProvider{
   @Override
   @Nullable
@@ -35,5 +33,5 @@ public abstract class PomDescriptionProvider implements ElementDescriptionProvid
   }
 
   @Nullable
-  public abstract String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location);
+  public abstract @NlsSafe String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location);
 }

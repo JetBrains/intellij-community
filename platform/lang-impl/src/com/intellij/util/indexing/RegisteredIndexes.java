@@ -1,49 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class RegisteredIndexes {
-  private static final Logger LOG = Logger.getInstance(RegisteredIndexes.class);
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 
+public final class RegisteredIndexes {
   @NotNull
   private final FileDocumentManager myFileDocumentManager;
   @NotNull
   private final FileBasedIndexImpl myFileBasedIndex;
-
-  RegisteredIndexes(@NotNull FileDocumentManager fileDocumentManager,
-                    @NotNull FileBasedIndexImpl fileBasedIndex) {
-    myFileDocumentManager = fileDocumentManager;
-    myFileBasedIndex = fileBasedIndex;
-  }
+  @NotNull
+  private final Future<IndexConfiguration> myStateFuture;
 
   private final List<ID<?, ?>> myIndicesForDirectories = new SmartList<>();
 
-  private final Set<ID<?, ?>> myNotRequiringContentIndices = new THashSet<>();
-  private final Set<ID<?, ?>> myRequiringContentIndices = new THashSet<>();
-  private final Set<ID<?, ?>> myPsiDependentIndices = new THashSet<>();
-  private final Set<FileType> myNoLimitCheckTypes = new THashSet<>();
+  private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<>();
+  private final Set<ID<?, ?>> myRequiringContentIndices = new HashSet<>();
+  private final Set<FileType> myNoLimitCheckTypes = new HashSet<>();
 
   private volatile boolean myExtensionsRelatedDataWasLoaded;
 
   private volatile boolean myInitialized;
 
-  private Future<IndexConfiguration> myStateFuture;
   private volatile IndexConfiguration myState;
   private volatile Future<?> myAllIndicesInitializedFuture;
 
@@ -51,16 +47,17 @@ class RegisteredIndexes {
 
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
-  boolean performShutdown() {
-    return myShutdownPerformed.compareAndSet(false, true);
+  private volatile RequiredIndexesEvaluator myRequiredIndexesEvaluator;
+
+  RegisteredIndexes(@NotNull FileDocumentManager fileDocumentManager, @NotNull FileBasedIndexImpl fileBasedIndex) {
+    myFileDocumentManager = fileDocumentManager;
+    myFileBasedIndex = fileBasedIndex;
+    myStateFuture = IndexDataInitializer.submitGenesisTask(fileBasedIndex.coroutineScope,
+                                                           new FileBasedIndexDataInitialization(fileBasedIndex, this));
   }
 
-  void initializeIndexes(@NotNull Callable<IndexConfiguration> action) {
-    myStateFuture = IndexInfrastructure.submitGenesisTask(action);
-
-    if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
-      waitUntilIndicesAreInitialized();
-    }
+  boolean performShutdown() {
+    return myShutdownPerformed.compareAndSet(false, true);
   }
 
   void setState(@NotNull IndexConfiguration state) {
@@ -72,15 +69,13 @@ class RegisteredIndexes {
   }
 
   IndexConfiguration getConfigurationState() {
-    if (!myInitialized) {
-      //throw new IndexNotReadyException();
-      LOG.error("Unexpected initialization problem");
-    }
-
     IndexConfiguration state = myState; // memory barrier
     if (state == null) {
       try {
-        myState = state = myStateFuture.get();
+        myState = state = awaitWithCheckCanceled(myStateFuture);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
       }
       catch (Throwable t) {
         throw new RuntimeException(t);
@@ -90,19 +85,12 @@ class RegisteredIndexes {
   }
 
   void waitUntilAllIndicesAreInitialized() {
-    try {
-      waitUntilIndicesAreInitialized();
-      myAllIndicesInitializedFuture.get();
-    } catch (Throwable ignore) {}
+    waitUntilIndicesAreInitialized();
+    awaitWithCheckCanceled(myAllIndicesInitializedFuture);
   }
 
   void waitUntilIndicesAreInitialized() {
-    try {
-      myStateFuture.get();
-    }
-    catch (Throwable t) {
-      LOG.error(t);
-    }
+    awaitWithCheckCanceled((Future<?>)myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
@@ -111,11 +99,17 @@ class RegisteredIndexes {
 
   void markInitialized() {
     myInitialized = true;
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
+  }
+
+  void resetHints() {
+    myRequiredIndexesEvaluator = new RequiredIndexesEvaluator(this);
   }
 
   void ensureLoadedIndexesUpToDate() {
-    myAllIndicesInitializedFuture = IndexInfrastructure.submitGenesisTask(() -> {
+    myAllIndicesInitializedFuture = IndexDataInitializer.submitGenesisTask(myFileBasedIndex.coroutineScope, () -> {
       if (!myShutdownPerformed.get()) {
+        myFileBasedIndex.ensureStaleIdsDeleted();
         myFileBasedIndex.getChangedFilesCollector().ensureUpToDateAsync();
       }
       return null;
@@ -124,7 +118,13 @@ class RegisteredIndexes {
 
   void registerIndexExtension(@NotNull FileBasedIndexExtension<?, ?> extension) {
     ID<?, ?> name = extension.getName();
-    myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+    if (extension.dependsOnFileContent()) {
+      myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+    }
+
+    if (extension.getName() == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      return;
+    }
 
     if (!extension.dependsOnFileContent()) {
       if (extension.indexDirectories()) myIndicesForDirectories.add(name);
@@ -134,7 +134,6 @@ class RegisteredIndexes {
       myRequiringContentIndices.add(name);
     }
 
-    if (FileBasedIndexImpl.isPsiDependentIndex(extension)) myPsiDependentIndices.add(name);
     myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
   }
 
@@ -144,14 +143,14 @@ class RegisteredIndexes {
   }
 
   boolean areIndexesReady() {
-    return myStateFuture.isDone() && myAllIndicesInitializedFuture.isDone();
+    return myStateFuture.isDone() && myAllIndicesInitializedFuture != null && myAllIndicesInitializedFuture.isDone();
   }
 
   boolean isExtensionsDataLoaded() {
     return myExtensionsRelatedDataWasLoaded;
   }
 
-  boolean isInitialized() {
+  public boolean isInitialized() {
     return myInitialized;
   }
 
@@ -164,21 +163,13 @@ class RegisteredIndexes {
     return myNotRequiringContentIndices;
   }
 
-  boolean isNotRequiringContentIndex(@NotNull ID<?, ?> indexId) {
-    return myNotRequiringContentIndices.contains(indexId);
-  }
-
   @NotNull
   List<ID<?, ?>> getIndicesForDirectories() {
     return myIndicesForDirectories;
   }
 
-  Set<ID<?, ?>> getPsiDependentIndices() {
-    return myPsiDependentIndices;
-  }
-
-  boolean isPsiDependentIndex(@NotNull ID<?, ?> indexId) {
-    return myPsiDependentIndices.contains(indexId);
+  public boolean isContentDependentIndex(@NotNull ID<?, ?> indexId) {
+    return myRequiringContentIndices.contains(indexId);
   }
 
   UpdateTask<Document> getUnsavedDataUpdateTask(@NotNull ID<?, ?> indexId) {
@@ -196,5 +187,16 @@ class RegisteredIndexes {
     void doProcess(Document document, Project project) {
       myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
     }
+  }
+
+  @NotNull
+  List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
+    return myRequiredIndexesEvaluator.getRequiredIndexes(indexedFile);
+  }
+
+  @TestOnly
+  @NotNull
+  public Pair<List<ID<?, ?>>, List<ID<?, ?>>> getRequiredIndexesForFileType(@NotNull FileType fileType) {
+    return myRequiredIndexesEvaluator.getRequiredIndexesForFileType(fileType);
   }
 }

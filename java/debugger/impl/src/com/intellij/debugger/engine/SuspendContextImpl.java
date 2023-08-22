@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -6,6 +6,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -26,11 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/**
- * @author lex
- */
 public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext {
   private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
 
@@ -107,7 +106,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   protected abstract void resumeImpl();
 
-  protected void resume(){
+  void resume(boolean callResume) {
     assertNotResumed();
     if (isEvaluating()) {
       LOG.error("Resuming context while evaluating", ThreadDumper.dumpThreadsToString());
@@ -115,18 +114,19 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        // delay enable collection to speedup the resume
+        // delay enable collection to speed up the resume
         for (ObjectReference r : myKeptReferences) {
           myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection(r));
         }
         myKeptReferences.clear();
       }
 
-      for(SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
+      for (SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
         cmd.notifyCancelled();
       }
-
-      resumeImpl();
+      if (callResume) {
+        resumeImpl();
+      }
     }
     finally {
       myIsResumed = true;
@@ -198,16 +198,14 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   public boolean suspends(ThreadReferenceProxyImpl thread) {
     assertNotResumed();
-    if(isEvaluating()) {
+    if (isEvaluating()) {
       return false;
     }
-    switch(getSuspendPolicy()) {
-      case EventRequest.SUSPEND_ALL:
-        return !isExplicitlyResumed(thread);
-      case EventRequest.SUSPEND_EVENT_THREAD:
-        return thread == getThread();
-    }
-    return false;
+    return switch (getSuspendPolicy()) {
+      case EventRequest.SUSPEND_ALL -> !isExplicitlyResumed(thread);
+      case EventRequest.SUSPEND_EVENT_THREAD -> thread == getThread();
+      default -> false;
+    };
   }
 
   public boolean isEvaluating() {
@@ -284,34 +282,41 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        // add paused threads
         List<ThreadReferenceProxyImpl> pausedThreads =
-          StreamEx.of(((SuspendManagerImpl)myDebugProcess.getSuspendManager()).getPausedContexts())
+          StreamEx.of(myDebugProcess.getSuspendManager().getPausedContexts())
             .map(SuspendContextImpl::getThread)
             .nonNull()
             .toList();
-        if (!addThreads(pausedThreads, THREAD_NAME_COMPARATOR, false)) {
-          return;
-        }
-        // add all the rest
-        addThreads(getDebugProcess().getVirtualMachineProxy().allThreads(), THREADS_SUSPEND_AND_NAME_COMPARATOR, true);
+        // add paused threads first
+        CompletableFuture.completedFuture(pausedThreads)
+          .thenCompose(tds -> addThreads(tds, THREAD_NAME_COMPARATOR, false))
+          .thenCompose(res -> res
+                              ? getDebugProcess().getVirtualMachineProxy().allThreadsAsync()
+                              : CompletableFuture.completedFuture(Collections.emptyList()))
+          .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true))
+          .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
       }
 
-      boolean addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<? super JavaExecutionStack> comparator, boolean last) {
-        List<JavaExecutionStack> res = new ArrayList<>();
+      CompletableFuture<Boolean> addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<? super JavaExecutionStack> comparator, boolean last) {
+        List<CompletableFuture<JavaExecutionStack>> futures = new ArrayList<>();
         for (ThreadReferenceProxyImpl thread : threads) {
           if (container.isObsolete()) {
-            return false;
+            return CompletableFuture.completedFuture(false);
           }
           if (thread != null && myAddedThreads.add(thread)) {
-            res.add(new JavaExecutionStack(thread, myDebugProcess, thread == myThread));
+            futures.add(JavaExecutionStack.create(thread, myDebugProcess, thread == myThread));
           }
         }
-        if (res.size() > 1 && comparator != null) {
-          res.sort(comparator);
-        }
-        container.addExecutionStack(res, last);
-        return true;
+        return DebuggerUtilsAsync.reschedule(CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))).thenApply(__ -> {
+          if (!container.isObsolete()) {
+            StreamEx<JavaExecutionStack> stacks = StreamEx.of(futures).map(CompletableFuture::join);
+            if (comparator != null) {
+              stacks = stacks.sorted(comparator);
+            }
+            container.addExecutionStack(stacks.toList(), last);
+          }
+          return true;
+        });
       }
     });
   }

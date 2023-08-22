@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -28,13 +28,17 @@ import java.util.List;
  * User: zolotov
  */
 public interface SyntaxNodeDescriptor {
-  SyntaxNodeDescriptor EMPTY_NODE = new SyntaxNodeDescriptorImpl(null);
+  SyntaxNodeDescriptor EMPTY_NODE = new SyntaxNodeDescriptorImpl(null, null);
 
   @Nullable
   CharSequence getStringAttribute(@NotNull Constants.StringKey key);
 
+  boolean hasBackReference(@NotNull Constants.StringKey key);
+
   @Nullable
-  TIntObjectHashMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key);
+  Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key);
+
+  boolean hasBackReference(@NotNull Constants.CaptureKey key, int group);
 
   @NotNull
   List<SyntaxNodeDescriptor> getChildren();
@@ -46,9 +50,9 @@ public interface SyntaxNodeDescriptor {
   SyntaxNodeDescriptor findInRepository(int ruleId);
 
   /**
-   * @return scope name if node is root for language or empty string otherwise
+   * @return scope name if node is root for language or null otherwise
    */
-  @NotNull
+  @Nullable
   CharSequence getScopeName();
 
   @Nullable

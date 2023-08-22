@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.compiler.RecursiveFormNestingException;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -30,15 +31,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class XmlReader {
   private static final Logger LOG = Logger.getInstance(XmlReader.class);
 
@@ -61,8 +57,7 @@ public final class XmlReader {
     final RadComponent component;
     Class componentClass = null;
 
-    if (lwComponent instanceof LwNestedForm) {
-      LwNestedForm nestedForm = (LwNestedForm) lwComponent;
+    if (lwComponent instanceof LwNestedForm nestedForm) {
       boolean recursiveNesting = false;
       try {
         Utils.validateNestedFormLoop(nestedForm.getFormFileName(), new PsiNestedFormLoader(module.getModule()));
@@ -107,7 +102,7 @@ public final class XmlReader {
             }
           }
           catch (final Exception exc) {
-            @SuppressWarnings("UnresolvedPropertyKey") String errorDescription = MessageFormat.format(UIDesignerBundle.message("error.class.cannot.be.instantiated"), lwComponent.getComponentClassName());
+            String errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", lwComponent.getComponentClassName());
             final String message = FormEditingUtil.getExceptionMessage(exc);
             if (message != null) {
               errorDescription += ": " + message;
@@ -135,8 +130,7 @@ public final class XmlReader {
       else if (lwComponent instanceof LwToolBar) {
         component = new RadToolBar(module, componentClass, id);
       }
-      else if (lwComponent instanceof LwContainer) {
-        final LwContainer lwContainer = (LwContainer)lwComponent;
+      else if (lwComponent instanceof LwContainer lwContainer) {
         LayoutManager layout = lwContainer.getLayout();
         if (layout instanceof XYLayoutManager) {
           // replace stub layout with the real one
@@ -231,8 +225,7 @@ public final class XmlReader {
       }
     }
 
-    if (component instanceof RadRootContainer) {
-      final RadRootContainer radRootContainer = (RadRootContainer)component;
+    if (component instanceof RadRootContainer radRootContainer) {
       final LwRootContainer lwRootContainer = (LwRootContainer)lwComponent;
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());
@@ -259,7 +252,7 @@ public final class XmlReader {
 
   private static RadErrorComponent createErrorComponent(final ModuleProvider module, final String id, final LwComponent lwComponent, final ClassLoader loader) {
     final String componentClassName = lwComponent.getComponentClassName();
-    final String errorDescription = Utils.validateJComponentClass(loader, componentClassName, true);
+    final @NlsSafe String errorDescription = Utils.validateJComponentClass(loader, componentClassName, true);
     return RadErrorComponent.create(
       module,
       id,

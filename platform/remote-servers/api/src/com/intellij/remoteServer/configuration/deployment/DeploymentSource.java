@@ -15,6 +15,7 @@
  */
 package com.intellij.remoteServer.configuration.deployment;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ public interface DeploymentSource {
   String getFilePath();
 
   @NotNull
+  @NlsSafe
   String getPresentableName();
 
   @Nullable

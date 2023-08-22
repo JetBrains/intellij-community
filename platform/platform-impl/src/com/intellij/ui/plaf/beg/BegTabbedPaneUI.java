@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -11,7 +12,7 @@ import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.View;
 import java.awt.*;
 
-public class BegTabbedPaneUI extends MetalTabbedPaneUI {
+public final class BegTabbedPaneUI extends MetalTabbedPaneUI {
   private static final Color LIGHT = new Color(247, 243, 239);
   private static final Color DARK = new Color(189, 187, 182);
 
@@ -22,8 +23,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
   public void installUI(JComponent c) {
     super.installUI(c);
     Object clientProperty = UIUtil.getTabbedPanePaintContentBorder(c);
-    if (clientProperty instanceof Boolean) {
-      Boolean aBoolean = (Boolean)clientProperty;
+    if (clientProperty instanceof Boolean aBoolean) {
       myPaintContentBorder = aBoolean.booleanValue();
     }
   }
@@ -49,70 +49,61 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
   protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
     g.setColor(darkShadow);
     switch (tabPlacement) {
-      case TOP:
-        {
-          if (isSelected) {
-            // left
-            LinePainter2D.paint((Graphics2D)g, x, y + 1, x, y + h - 1);
-            // top
-            LinePainter2D.paint((Graphics2D)g, x + 1, y, x + w - 3, y);
-            // right
-            LinePainter2D.paint((Graphics2D)g, x + w - 2, y + 1, x + w - 2, y + h - 1);
-          }
-          else {
-            // left
-            LinePainter2D.paint((Graphics2D)g, x, y + 1, x, y + h - 1);
-            // top
-            LinePainter2D.paint((Graphics2D)g, x + 1, y, x + w - 3, y);
-            // right
-            LinePainter2D.paint((Graphics2D)g, x + w - 2, y + 1, x + w - 2, y + h - 1);
-          }
-          break;
-        }
-      case LEFT:
-        {
-          // top
-          LinePainter2D.paint((Graphics2D)g, x + 1, y + 1, x + w - 1, y + 1);
+      case TOP -> {
+        if (isSelected) {
           // left
-          LinePainter2D.paint((Graphics2D)g, x, y + 2, x, y + h - 2);
-          //bottom
-          LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 1, y + h - 1);
-          break;
-        }
-      case BOTTOM:
-        {
-          if (isSelected) {
-            // left
-            LinePainter2D.paint((Graphics2D)g, x, y, x, y + h - 2);
-            // bottom
-            LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 2, y + h - 1);
-            // right
-            LinePainter2D.paint((Graphics2D)g, x + w - 1, y, x + w - 1, y + h - 2);
-          }
-          else {
-            // left
-            LinePainter2D.paint((Graphics2D)g, x, y, x, y + h - 1);
-            // bottom
-            LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 3, y + h - 1);
-            // right
-            LinePainter2D.paint((Graphics2D)g, x + w - 2, y, x + w - 2, y + h - 1);
-          }
-          break;
-        }
-      case RIGHT:
-        {
+          LinePainter2D.paint((Graphics2D)g, x, y + 1, x, y + h - 1);
           // top
-          LinePainter2D.paint((Graphics2D)g, x, y + 1, x + w - 2, y + 1);
+          LinePainter2D.paint((Graphics2D)g, x + 1, y, x + w - 3, y);
           // right
-          LinePainter2D.paint((Graphics2D)g, x + w - 1, y + 2, x + w - 1, y + h - 2);
-          //bottom
-          LinePainter2D.paint((Graphics2D)g, x, y + h - 1, x + w - 2, y + h - 1);
-          break;
+          LinePainter2D.paint((Graphics2D)g, x + w - 2, y + 1, x + w - 2, y + h - 1);
         }
-      default:
-        {
-          throw new IllegalArgumentException("unknown tabPlacement: " + tabPlacement);
+        else {
+          // left
+          LinePainter2D.paint((Graphics2D)g, x, y + 1, x, y + h - 1);
+          // top
+          LinePainter2D.paint((Graphics2D)g, x + 1, y, x + w - 3, y);
+          // right
+          LinePainter2D.paint((Graphics2D)g, x + w - 2, y + 1, x + w - 2, y + h - 1);
         }
+      }
+      case LEFT -> {
+        // top
+        LinePainter2D.paint((Graphics2D)g, x + 1, y + 1, x + w - 1, y + 1);
+        // left
+        LinePainter2D.paint((Graphics2D)g, x, y + 2, x, y + h - 2);
+        //bottom
+        LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 1, y + h - 1);
+      }
+      case BOTTOM -> {
+        if (isSelected) {
+          // left
+          LinePainter2D.paint((Graphics2D)g, x, y, x, y + h - 2);
+          // bottom
+          LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 2, y + h - 1);
+          // right
+          LinePainter2D.paint((Graphics2D)g, x + w - 1, y, x + w - 1, y + h - 2);
+        }
+        else {
+          // left
+          LinePainter2D.paint((Graphics2D)g, x, y, x, y + h - 1);
+          // bottom
+          LinePainter2D.paint((Graphics2D)g, x + 1, y + h - 1, x + w - 3, y + h - 1);
+          // right
+          LinePainter2D.paint((Graphics2D)g, x + w - 2, y, x + w - 2, y + h - 1);
+        }
+      }
+      case RIGHT -> {
+        // top
+        LinePainter2D.paint((Graphics2D)g, x, y + 1, x + w - 2, y + 1);
+        // right
+        LinePainter2D.paint((Graphics2D)g, x + w - 1, y + 2, x + w - 1, y + h - 2);
+        //bottom
+        LinePainter2D.paint((Graphics2D)g, x, y + h - 1, x + w - 2, y + h - 1);
+      }
+      default -> {
+        throw new IllegalArgumentException("unknown tabPlacement: " + tabPlacement);
+      }
     }
   }
 
@@ -152,18 +143,11 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
       g.setColor(DARK);
     }
     switch (tabPlacement) {
-      case LEFT:
-        g.fillRect(x + 1, y + 2, w - 2, h - 3);
-        break;
-      case RIGHT:
-        g.fillRect(x, y + 2, w - 1, h - 3);
-        break;
-      case BOTTOM:
-        g.fillRect(x + 1, y, w - 3, h - 1);
-        break;
-      case TOP:
-      default:
-        g.fillRect(x + 1, y + 1, w - 2, h);
+      case LEFT -> g.fillRect(x + 1, y + 2, w - 2, h - 3);
+      case RIGHT -> g.fillRect(x, y + 2, w - 1, h - 3);
+      case BOTTOM -> g.fillRect(x + 1, y, w - 3, h - 1);
+      //case TOP,
+      default -> g.fillRect(x + 1, y + 1, w - 2, h);
     }
   }
 
@@ -354,7 +338,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
   private FontMetrics myLayoutMetrics = null;
 
   @Override
-  protected void layoutLabel(int tabPlacement, FontMetrics metrics, int tabIndex, String title, Icon icon, Rectangle tabRect,
+  protected void layoutLabel(int tabPlacement, FontMetrics metrics, int tabIndex, @NlsContexts.TabTitle String title, Icon icon, Rectangle tabRect,
                              Rectangle iconRect, Rectangle textRect, boolean isSelected) {
 
     metrics = (myLayoutMetrics != null)? myLayoutMetrics : metrics;

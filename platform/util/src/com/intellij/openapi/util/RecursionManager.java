@@ -1,15 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,13 +48,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * {@code A()->B()->C()->null} returns the same value as {@code A()->B()->C()->A()->B()->C()->null} etc. If your functions lack that quality
  * (e.g. if they add items to some list), you won't get stable caching results ever, and your code will produce unpredictable results
  * with hard-to-catch bugs. Therefore, please strive for idempotence.
- *
- * @author peter
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
-public class RecursionManager {
+public final class RecursionManager {
   private static final Logger LOG = Logger.getInstance(RecursionManager.class);
-  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(CalculationStack::new);
+  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(() -> new CalculationStack());
   private static final AtomicBoolean ourAssertOnPrevention = new AtomicBoolean();
   private static final AtomicBoolean ourAssertOnMissedCache = new AtomicBoolean();
 
@@ -67,27 +61,30 @@ public class RecursionManager {
    * This is same as {@link RecursionGuard#doPreventingRecursion(Object, boolean, Computable)},
    * without a need to bother to create {@link RecursionGuard}.
    */
-  @Nullable
-  public static <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
+  public static @Nullable <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
     return createGuard(computation.getClass().getName()).doPreventingRecursion(key, memoize, computation);
   }
 
   /**
    * @param id just some string to separate different recursion prevention policies from each other
-   * @return a helper object which allow you to perform reentrancy-safe computations and check whether caching will be safe.
+   * @return a helper object which allows you to perform reentrancy-safe computations and check whether caching will be safe.
    * Don't use it unless you need to call it from several places in the code, inspect the computation stack and/or prohibit result caching.
    */
-  @NotNull
-  public static <Key> RecursionGuard<Key> createGuard(@NonNls final String id) {
+  public static @NotNull <Key> RecursionGuard<Key> createGuard(final @NonNls String id) {
     return new RecursionGuard<Key>() {
       @Override
-      public <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
+      public <T, E extends Throwable> @Nullable T computePreventingRecursion(@NotNull Key key,
+                                                                             boolean memoize,
+                                                                             @NotNull ThrowableComputable<T, E> computation) throws E{
         MyKey realKey = new MyKey(id, key, true);
         final CalculationStack stack = ourStack.get();
 
         if (stack.checkReentrancy(realKey)) {
           if (ourAssertOnPrevention.get()) {
             throw new StackOverflowPreventedException("Endless recursion prevention occurred on " + key);
+          }
+          else if (LOG.isDebugEnabled()) {
+            LOG.debug(new StackOverflowPreventedException("Endless recursion prevention occurred on " + key));
           }
           return null;
         }
@@ -131,10 +128,9 @@ public class RecursionManager {
         }
       }
 
-      @NotNull
       @Override
-      public List<Key> currentStack() {
-        ArrayList<Key> result = new ArrayList<>();
+      public @NotNull List<Key> currentStack() {
+        List<Key> result = new ArrayList<>();
         for (MyKey pair : ourStack.get().progressMap.keySet()) {
           if (pair.guardId.equals(id)) {
             //noinspection unchecked
@@ -155,11 +151,23 @@ public class RecursionManager {
   }
 
   /**
+   * Clears the memoization cache for the current thread. This can be invoked when a side effect happens
+   * inside a {@link #doPreventingRecursion} call that may affect results of nested memoizing {@code doPreventingRecursion} calls,
+   * whose memoized results should not be reused on that point.<p></p>
+   *
+   * Please avoid this method at all cost and try to restructure your code to avoid side effects inside {@code doPreventingRecursion}.
+   */
+  @ApiStatus.Internal
+  public static void dropCurrentMemoizationCache() {
+    ourStack.get().intermediateCache.clear();
+  }
+
+  /**
    * Used in pair with {@link RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
    * not depending on anything incomplete due to recursive prevention policies.
    * A typical usage is this:
-   * {@code
-   *  RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
+   * <pre>{@code
+   *   RecursionGuard.StackStamp stamp = RecursionManager.createGuard("id").markStack();
    *
    *   Result result = doComputation();
    *
@@ -167,11 +175,10 @@ public class RecursionManager {
    *     cache(result);
    *   }
    *   return result;
-   * }
+   * }</pre>
    * @return an object representing the current stack state, managed by {@link RecursionManager}
    */
-  @NotNull
-  public static RecursionGuard.StackStamp markStack() {
+  public static @NotNull RecursionGuard.StackStamp markStack() {
     int stamp = ourStack.get().reentrancyCount;
     return new RecursionGuard.StackStamp() {
       @Override
@@ -187,7 +194,7 @@ public class RecursionManager {
   }
 
 
-  private static class MyKey {
+  private static final class MyKey {
     final String guardId;
     final Object userObject;
     private final int myHashCode;
@@ -225,13 +232,13 @@ public class RecursionManager {
     }
   }
 
-  private static class CalculationStack {
+  private static final class CalculationStack {
     private int reentrancyCount;
     private int depth;
     private int firstLoopStart = Integer.MAX_VALUE; // outermost recursion-prevented frame depth; memoized values are dropped on its change.
     private final LinkedHashMap<MyKey, StackFrame> progressMap = new LinkedHashMap<>();
-    private final Map<MyKey, Throwable> preventions = ContainerUtil.newIdentityTroveMap();
-    private final Map<MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
+    private final Map<MyKey, Throwable> preventions = new IdentityHashMap<>();
+    private final Map<@NotNull MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
     private int enters;
     private int exits;
 
@@ -267,11 +274,11 @@ public class RecursionManager {
       return frame;
     }
 
-    void memoize(MyKey key, @Nullable Object result, @NotNull Set<MyKey> preventionsInside) {
+    void memoize(@NotNull MyKey key, @Nullable Object result, @NotNull Set<MyKey> preventionsInside) {
       intermediateCache.put(key, new MemoizedValue(result, preventionsInside.toArray(new MyKey[0])));
     }
 
-    final void afterComputation(MyKey realKey, int sizeBefore, int sizeAfter) {
+    void afterComputation(MyKey realKey, int sizeBefore, int sizeAfter) {
       exits++;
       if (sizeAfter != progressMap.size()) {
         LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + realKey.userObject);
@@ -336,7 +343,7 @@ public class RecursionManager {
      * The ultimate goal is to get rid of all of them.
      * So, each rule should be accompanied by a reference to a tracker issue.
      * Don't add rules here without discussing them with someone else.
-     * Don't add rules for situation where caching prevention is expected, use {@link #disableMissedCacheAssertions} instead.
+     * Don't add rules for situations where caching prevention is expected, use {@link #disableMissedCacheAssertions} instead.
      */
     boolean isCurrentNonCachingStillTolerated() {
       return isCurrentNonCachingStillTolerated(new Throwable()) ||
@@ -349,20 +356,20 @@ public class RecursionManager {
     }
   }
 
-  private static final String[] toleratedFrames = {
+  private static final @NonNls String[] toleratedFrames = {
     "com.intellij.psi.impl.source.xml.XmlAttributeImpl.getDescriptor(", // IDEA-228451
+    "org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy.getAncestorsCaching(", // RUBY-25487
     "com.intellij.lang.aspectj.psi.impl.PsiInterTypeReferenceImpl.", // IDEA-228779
     "com.intellij.psi.impl.search.JavaDirectInheritorsSearcher.processConcurrentlyIfTooMany(", // IDEA-229003
 
     // WEB-42912
     "com.intellij.lang.javascript.psi.resolve.JSEvaluatorComplexityTracker.doRunTask(",
     "com.intellij.lang.javascript.ecmascript6.types.JSTypeSignatureChooser.chooseOverload(",
-    "com.intellij.lang.javascript.psi.resolve.JSTypeEvaluator.getElementType(",
+    "com.intellij.lang.javascript.psi.resolve.JSEvaluationCache.getElementType(",
     "com.intellij.lang.ecmascript6.psi.impl.ES6ImportSpecifierImpl.multiResolve(",
     "com.intellij.lang.javascript.psi.types.JSTypeBaseImpl.substitute(",
 
     // IDEA-228814
-    "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
     "com.intellij.psi.ThreadLocalTypes.performWithTypes(",
 
     // IDEA-212671
@@ -378,7 +385,7 @@ public class RecursionManager {
     "com.jetbrains.python.psi.impl.references.PyReferenceImpl.multiResolve(",
   };
 
-  private static class MemoizedValue {
+  private static final class MemoizedValue {
     final Object value;
     final MyKey[] dependencies;
 
@@ -388,14 +395,14 @@ public class RecursionManager {
     }
   }
 
-  private static class StackFrame {
+  private static final class StackFrame {
     int reentrancyStamp;
     @Nullable Set<MyKey> preventionsInside;
 
     void addPrevention(int stamp, MyKey prevented) {
       reentrancyStamp = stamp;
       if (preventionsInside == null) {
-        preventionsInside = new THashSet<>();
+        preventionsInside = new HashSet<>();
       }
       preventionsInside.add(prevented);
     }
@@ -429,7 +436,7 @@ public class RecursionManager {
 
   /**
    * Disables the effect of {@link #assertOnMissedCache}. Should be used as rarely as possible, ideally only in tests that check
-   * that stack isn't overflown on invalid code.
+   * that the stack isn't overflown on invalid code.
    */
   @TestOnly
   public static void disableMissedCacheAssertions(@NotNull Disposable parentDisposable) {
@@ -464,7 +471,7 @@ public class RecursionManager {
    * In this case, you may call {@link #disableMissedCacheAssertions} in the tests
    * which check such exotic situations.
    */
-  static class CachingPreventedException extends RuntimeException {
+  static final class CachingPreventedException extends RuntimeException {
     CachingPreventedException(Map<MyKey, Throwable> preventions) {
       super("Caching disabled due to recursion prevention, please get rid of cyclic dependencies. Preventions: " + new ArrayList<>(preventions.keySet()),
             ContainerUtil.getFirstItem(preventions.values()));

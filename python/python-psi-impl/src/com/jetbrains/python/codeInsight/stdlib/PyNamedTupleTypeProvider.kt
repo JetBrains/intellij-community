@@ -3,16 +3,15 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.QualifiedName
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
+import com.intellij.util.containers.mapSmartNotNull
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
+import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl
-import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.resolve.fromFoothold
-import com.jetbrains.python.psi.resolve.resolveTopLevelMember
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
@@ -39,17 +38,16 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return fieldTypeForTypingNTFunctionInheritor
     }
 
-    val namedTupleTypeForCallee = getNamedTupleTypeForCallee(referenceExpression, context)
-    if (namedTupleTypeForCallee != null) {
-      return namedTupleTypeForCallee
-    }
-
     val namedTupleReplaceType = getNamedTupleReplaceType(referenceExpression, context)
     if (namedTupleReplaceType != null) {
       return namedTupleReplaceType
     }
 
     return null
+  }
+
+  override fun prepareCalleeTypeForCall(type: PyType?, call: PyCallExpression, context: TypeEvalContext): Ref<PyCallableType?>? {
+    return if (type is PyNamedTupleType) Ref.create(type) else null
   }
 
   companion object {
@@ -69,30 +67,24 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return cls.getSuperClassTypes(context).any(isTypingNT)
     }
 
-    internal fun getNamedTupleTypeForResolvedCallee(referenceTarget: PsiElement,
-                                                    context: TypeEvalContext,
-                                                    anchor: PsiElement?): PyNamedTupleType? {
+    private fun getNamedTupleTypeForResolvedCallee(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): PyType? {
       return when {
         referenceTarget is PyFunction && anchor is PyCallExpression -> getNamedTupleFunctionType(referenceTarget, context, anchor)
         referenceTarget is PyTargetExpression -> getNamedTupleTypeForTarget(referenceTarget, context)
+        referenceTarget is PyClass && anchor is PyCallExpression -> getNamedTupleTypeForClass(referenceTarget, context, anchor)
+        referenceTarget is PyParameter && anchor is PyCallExpression && referenceTarget.isSelf -> {
+          PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
+            ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+            ?.let { method ->
+              method.containingClass?.let { getNamedTupleTypeForClass(it, context, anchor) }
+            }
+        }
         else -> null
       }
     }
 
-    internal fun getNamedTupleReplaceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): PyCallableType? {
-      if (referenceTarget is PyFunction &&
-          anchor is PyCallExpression &&
-          PyTypingTypeProvider.NAMEDTUPLE == referenceTarget.containingClass?.qualifiedName) {
-        val callee = anchor.callee as? PyReferenceExpression ?: return null
-        return getNamedTupleReplaceType(callee, context)
-      }
-
-      return null
-    }
-
     private fun getFieldTypeForNamedTupleAsTarget(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
-      val qualifierNTType = referenceExpression.qualifier?.let { context.getType(it) } as? PyNamedTupleType
-                            ?: return null
+      val qualifierNTType = referenceExpression.qualifier?.let { context.getType(it) } as? PyNamedTupleType ?: return null
       return qualifierNTType.fields[referenceExpression.name]?.type
     }
 
@@ -108,43 +100,6 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
           .map { it.type }
           .toList()
       )
-    }
-
-    private fun getNamedTupleTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyNamedTupleType? {
-      if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
-
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
-      val resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false)
-
-      for (element in PyUtil.filterTopPriorityResults(resolveResults)) {
-        if (element is PyTargetExpression) {
-          val result = getNamedTupleTypeForTarget(element, context)
-          if (result != null) {
-            return result
-          }
-        }
-
-        if (element is PyClass) {
-          val result = getNamedTupleTypeForTypingNTInheritorAsCallee(element, context)
-          if (result != null) {
-            return result
-          }
-        }
-
-        if (element is PyTypedElement) {
-          val type = context.getType(element)
-          if (type is PyClassLikeType) {
-            val superClassTypes = type.getSuperClassTypes(context)
-
-            val superNTType = superClassTypes.asSequence().filterIsInstance<PyNamedTupleType>().firstOrNull()
-            if (superNTType != null) {
-              return superNTType
-            }
-          }
-        }
-      }
-
-      return null
     }
 
     private fun getNamedTupleReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
@@ -177,73 +132,80 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return null
     }
 
-    private fun getNamedTupleFunctionType(function: PyFunction, context: TypeEvalContext, call: PyCallExpression): PyNamedTupleType? {
+    private fun getNamedTupleFunctionType(function: PyFunction, context: TypeEvalContext, call: PyCallExpression): PyType? {
       if (ArrayUtil.contains(function.qualifiedName, PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3) ||
           PyTypingTypeProvider.NAMEDTUPLE == PyUtil.turnConstructorIntoClass(function)?.qualifiedName) {
-        return getNamedTupleTypeFromAST(call, context, PyNamedTupleType.DefinitionLevel.NT_FUNCTION)
+        return if (context.maySwitchToAST(call)) {
+          val functionType = context.getType(function) as? PyCallableType ?: return null
+          val returnType = getNamedTupleTypeFromStub(call, PyNamedTupleStubImpl.create(call), context) ?: return null
+
+          PyCallableTypeImpl(
+            functionType.getParameters(context),
+            returnType,
+            functionType.callable,
+            functionType.modifier,
+            functionType.implicitOffset
+          )
+        }
+        else null
       }
 
       return null
     }
 
     private fun getNamedTupleTypeForTarget(target: PyTargetExpression, context: TypeEvalContext): PyNamedTupleType? {
-      val stub = target.stub
-
-      return if (stub != null) {
-        getNamedTupleTypeFromStub(target,
-                                  stub.getCustomStub(PyNamedTupleStub::class.java),
-                                  context,
-                                  PyNamedTupleType.DefinitionLevel.NEW_TYPE)
-      }
-      else getNamedTupleTypeFromAST(target, context, PyNamedTupleType.DefinitionLevel.NEW_TYPE)
+      return StubAwareComputation.on(target)
+        .withCustomStub { it.getCustomStub(PyNamedTupleStub::class.java) }
+        .overStub { getNamedTupleTypeFromStub(target, it, context) }
+        .withStubBuilder { PyNamedTupleStubImpl.create(it) }
+        .compute(context)
     }
 
-    private fun getNamedTupleTypeForTypingNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyNamedTupleType? {
-      if (isTypingNamedTupleDirectInheritor(cls, context)) {
+    private fun getNamedTupleTypeForClass(cls: PyClass, context: TypeEvalContext, call: PyCallExpression): PyType? {
+      return getNamedTupleTypeForNTInheritorAsCallee(cls, context)
+             ?: PyUnionType.union(
+               cls.multiFindInitOrNew(false, context).mapSmartNotNull { getNamedTupleFunctionType(it, context, call) }
+             )
+    }
+
+    private fun getNamedTupleTypeForNTInheritorAsCallee(cls: PyClass, context: TypeEvalContext): PyType? {
+      if (cls.findInitOrNew(false, context) != null) return null
+
+      val parameters = if (isTypingNamedTupleDirectInheritor(cls, context)) {
         val name = cls.name ?: return null
-        val typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(
-          PyTypingTypeProvider.NAMEDTUPLE), fromFoothold(cls))
-        val tupleClass = typingNT as? PyClass ?: return null
+        val tupleClass = PyPsiFacade.getInstance(cls.project).createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, cls) ?: return null
+        val namedTupleType = PyNamedTupleType(tupleClass, name, collectTypingNTInheritorFields(cls, context), true, true, cls)
 
-        return PyNamedTupleType(tupleClass,
-                                                               name,
-                                                               collectTypingNTInheritorFields(cls, context),
-                                                               PyNamedTupleType.DefinitionLevel.NEW_TYPE,
-                                                               true)
+        namedTupleType.getParameters(context)
+      }
+      else {
+        val superNTType = cls.getSuperClassTypes(context).firstOrNull(PyNamedTupleType::class.java::isInstance) ?: return null
+
+        superNTType.getParameters(context)
       }
 
-      return null
+      return PyCallableTypeImpl(parameters, cls.getType(context)?.toInstance())
     }
 
-    private fun getNamedTupleTypeFromStub(referenceTarget: PsiElement,
-                                          stub: PyNamedTupleStub?,
-                                          context: TypeEvalContext,
-                                          definitionLevel: PyNamedTupleType.DefinitionLevel): PyNamedTupleType? {
+    private fun getNamedTupleTypeFromStub(targetOrCall: PsiElement, stub: PyNamedTupleStub?, context: TypeEvalContext): PyNamedTupleType? {
       if (stub == null) return null
 
-      val typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(
-        PyTypingTypeProvider.NAMEDTUPLE), fromFoothold(referenceTarget))
-      val tupleClass = typingNT as? PyClass ?: return null
+      val tupleClass = PyPsiFacade
+                         .getInstance(targetOrCall.project)
+                         .createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, targetOrCall) ?: return null
       val fields = stub.fields
 
       return PyNamedTupleType(tupleClass,
-                                                             stub.name,
-                                                             parseNamedTupleFields(referenceTarget, fields, context),
-                                                             definitionLevel,
-                                                             fields.values.any { it.isPresent },
-                                                             referenceTarget as? PyTargetExpression)
+                              stub.name,
+                              parseNamedTupleFields(targetOrCall, fields, context),
+                              true,
+                              fields.values.any { it.isPresent },
+                              getDeclaration(targetOrCall))
     }
 
-    private fun getNamedTupleTypeFromAST(expression: PyTargetExpression,
-                                         context: TypeEvalContext,
-                                         definitionLevel: PyNamedTupleType.DefinitionLevel): PyNamedTupleType? {
-      return if (context.maySwitchToAST(expression)) {
-        getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), context, definitionLevel)
-      }
-      else null
-    }
-
-    private fun createTypedNamedTupleReplaceType(anchor: PsiElement, fields: ImmutableNTFields, qualifierType: PyClassLikeType): PyCallableType {
+    private fun createTypedNamedTupleReplaceType(anchor: PsiElement,
+                                                 fields: ImmutableNTFields,
+                                                 qualifierType: PyClassLikeType): PyCallableType {
       val parameters = mutableListOf<PyCallableParameter>()
       val resultType = qualifierType.toInstance()
       val elementGenerator = PyElementGenerator.getInstance(anchor.project)
@@ -326,15 +288,6 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return fields.stream().collect(toNTFields)
     }
 
-    private fun getNamedTupleTypeFromAST(expression: PyCallExpression,
-                                         context: TypeEvalContext,
-                                         definitionLevel: PyNamedTupleType.DefinitionLevel): PyNamedTupleType? {
-      return if (context.maySwitchToAST(expression)) {
-        getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), context, definitionLevel)
-      }
-      else null
-    }
-
     private fun parseNamedTupleFields(anchor: PsiElement, fields: Map<String, Optional<String>>, context: TypeEvalContext): NTFields {
       val result = NTFields()
       for ((name, type) in fields) {
@@ -350,6 +303,14 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
       val pyType = Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context))
       return PyNamedTupleType.FieldTypeAndDefaultValue(pyType, null)
+    }
+
+    private fun getDeclaration(referenceTarget: PsiElement): PyQualifiedNameOwner? {
+      return when (referenceTarget) {
+        is PyTargetExpression -> referenceTarget
+        is PyCallExpression -> (referenceTarget.parent as? PyAssignmentStatement)?.leftHandSideExpression as? PyTargetExpression
+        else -> null
+      }
     }
   }
 }

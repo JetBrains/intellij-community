@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
@@ -9,8 +10,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -37,8 +43,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void waitForSmartMode() {
-  }
+  public void waitForSmartMode() { }
 
   @Override
   public void queueTask(@NotNull DumbModeTask task) {
@@ -53,8 +58,7 @@ public class MockDumbService extends DumbService {
   public void cancelAllTasksAndWait() { }
 
   @Override
-  public void completeJustSubmittedTasks() {
-  }
+  public void completeJustSubmittedTasks() { }
 
   @Override
   public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
@@ -74,8 +78,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void showDumbModeActionBalloon(@NotNull String balloonText,
-                                        @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
+  public void showDumbModeActionBalloon(@NotNull String balloonText, @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
     throw new UnsupportedOperationException();
   }
 
@@ -85,8 +88,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void setAlternativeResolveEnabled(boolean enabled) {
-  }
+  public void setAlternativeResolveEnabled(boolean enabled) { }
 
   @Override
   public boolean isAlternativeResolveEnabled() {
@@ -99,8 +101,10 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public boolean isSuspendedDumbMode() {
-    return false;
+  public @Nullable Object suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName,
+                                                @NotNull Function1<? super Continuation<? super Unit>, ?> activity,
+                                                @NotNull Continuation<? super Unit> $completion) {
+    return activity.invoke($completion);
   }
 
   @Override
@@ -109,12 +113,17 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void smartInvokeLater(@NotNull final Runnable runnable) {
+  public void smartInvokeLater(final @NotNull Runnable runnable) {
     runnable.run();
   }
 
   @Override
-  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+  public void smartInvokeLater(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     runnable.run();
+  }
+
+  @Override
+  public AccessToken runWithWaitForSmartModeDisabled() {
+    return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 }

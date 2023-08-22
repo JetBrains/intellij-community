@@ -35,7 +35,7 @@ def start_rpc_server_and_make_client(host, port, server_service, client_service,
     server_socket.listen(1)
 
     t = threading.Thread(target=_rpc_server, args=(server_socket, server_service, client_service, server_handler_factory, proto_factory))
-    t.setDaemon(True)
+    t.daemon = True
     t.start()
 
     return server_socket

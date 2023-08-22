@@ -1,22 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.uiDesigner.GuiFormFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-/**
- * @author yole
- */
+
 public final class UIDesignerPaletteProvider implements PaletteItemProvider {
   @NonNls private static final String PROPERTY_GROUPS = "groups";
 
@@ -34,7 +32,7 @@ public final class UIDesignerPaletteProvider implements PaletteItemProvider {
 
   @Override
   public PaletteGroup[] getActiveGroups(VirtualFile vFile) {
-    if (FileTypeRegistry.getInstance().isFileOfType(vFile, StdFileTypes.GUI_DESIGNER_FORM)) {
+    if (FileTypeRegistry.getInstance().isFileOfType(vFile, GuiFormFileType.INSTANCE)) {
       Palette palette = Palette.getInstance(myProject);
       if (myListener == null) {
         myListener = new Palette.Listener() {

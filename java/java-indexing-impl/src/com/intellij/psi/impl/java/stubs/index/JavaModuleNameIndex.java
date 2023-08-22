@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -45,8 +45,16 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
     return JavaStubIndexKeys.MODULE_NAMES;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getModules(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiJavaModule> get(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return getModules(name, project, scope);
+  }
+
+  public Collection<PsiJavaModule> getModules(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope, true), PsiJavaModule.class);
     if (modules.size() > 1) {
       modules = filterVersions(project, modules);
@@ -123,7 +131,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
       manifest.putUserData(MULTI_RELEASE_KEY, value = new CachedValueImpl<>(() -> {
         Boolean result = Boolean.FALSE;
         try (InputStream stream = manifest.getInputStream()) {
-          result = Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(new Attributes.Name("Multi-Release")));
+          result = Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(Attributes.Name.MULTI_RELEASE));
         }
         catch (IOException ignored) { }
         return CachedValueProvider.Result.create(result, manifest);
@@ -134,7 +142,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
 
   private static int version(VirtualFile dir) {
     try {
-      return Integer.valueOf(dir.getName());
+      return Integer.parseInt(dir.getName());
     }
     catch (RuntimeException ignore) {
       return Integer.MIN_VALUE;

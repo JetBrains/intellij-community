@@ -47,6 +47,11 @@ public class TableTabAction extends ToggleAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return isSelected();
   }

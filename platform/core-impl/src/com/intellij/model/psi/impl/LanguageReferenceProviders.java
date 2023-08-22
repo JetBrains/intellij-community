@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.psi.PsiExternalReferenceHost;
-import com.intellij.model.psi.PsiSymbolReferenceProvider;
 import com.intellij.model.psi.PsiSymbolReferenceProviderBean;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,17 +23,11 @@ final class LanguageReferenceProviders {
   }
 
   @NotNull
-  List<PsiSymbolReferenceProvider> getProviders(@NotNull PsiExternalReferenceHost element) {
-    return ContainerUtil.map(byHostClass(element), PsiSymbolReferenceProviderBean::getInstance);
+  List<PsiSymbolReferenceProviderBean> byHostClass(@NotNull Class<? extends PsiExternalReferenceHost> aClass) {
+    return myBeansByHostClass.computeIfAbsent(aClass, this::byHostClassInner);
   }
 
-  @NotNull
-  private List<PsiSymbolReferenceProviderBean> byHostClass(@NotNull PsiExternalReferenceHost element) {
-    return myBeansByHostClass.computeIfAbsent(element.getClass(), this::byHostClassInner);
-  }
-
-  @NotNull
-  private List<PsiSymbolReferenceProviderBean> byHostClassInner(@NotNull Class<?> key) {
+  private @NotNull List<PsiSymbolReferenceProviderBean> byHostClassInner(@NotNull Class<?> key) {
     List<PsiSymbolReferenceProviderBean> result = new SmartList<>();
     for (PsiSymbolReferenceProviderBean bean : myBeans) {
       if (bean.getHostElementClass().isAssignableFrom(key)) {

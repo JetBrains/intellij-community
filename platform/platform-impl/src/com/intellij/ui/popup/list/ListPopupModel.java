@@ -1,12 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ObjectUtils;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,6 +22,7 @@ public class ListPopupModel<T> extends AbstractListModel<T> {
 
   private final List<T> myOriginalList;
   private final List<T> myFilteredList = new ArrayList<>();
+  private final IntList myIndices = new IntArrayList();
 
   private final ElementFilter<? super T> myFilter;
   private final ListPopupStep<T> myStep;
@@ -34,6 +38,14 @@ public class ListPopupModel<T> extends AbstractListModel<T> {
     mySpeedSearch = speedSearch;
     myOriginalList = new ArrayList<>(myStep.getValues());
     rebuildLists();
+  }
+
+  /**
+   * @param filteredIndex index of item in the currently filtered list
+   * @return index of the item in the original list
+   */
+  public int getOriginalIndex(int filteredIndex) {
+    return myIndices.getInt(filteredIndex);
   }
 
   public void syncModel() {
@@ -52,8 +64,7 @@ public class ListPopupModel<T> extends AbstractListModel<T> {
     }
   }
 
-  @Nullable
-  public T get(int i) {
+  public @Nullable T get(int i) {
     if (i >= 0 && i < myFilteredList.size()) {
       return myFilteredList.get(i);
     }
@@ -64,15 +75,18 @@ public class ListPopupModel<T> extends AbstractListModel<T> {
   private void rebuildLists() {
     myFilteredList.clear();
     mySeparators.clear();
+    myIndices.clear();
     myFullMatchIndex = -1;
     myStartsWithIndex = -1;
 
     ListSeparator lastSeparator = null;
-    for (T each : myOriginalList) {
+    for (int i = 0; i < myOriginalList.size(); i++) {
+      T each = myOriginalList.get(i);
       lastSeparator = ObjectUtils.chooseNotNull(myStep.getSeparatorAbove(each), lastSeparator);
 
       if (myFilter.shouldBeShowing(each)) {
         addToFiltered(each);
+        myIndices.add(i);
         if (lastSeparator != null) {
           mySeparators.put(each, lastSeparator);
           lastSeparator = null;
@@ -114,7 +128,7 @@ public class ListPopupModel<T> extends AbstractListModel<T> {
     return getSeparatorAbove(aValue) != null;
   }
 
-  public String getCaptionAboveOf(Object value) {
+  public @NlsContexts.Separator String getCaptionAboveOf(Object value) {
     ListSeparator separator = getSeparatorAbove(value);
     if (separator != null) {
       return separator.getText();

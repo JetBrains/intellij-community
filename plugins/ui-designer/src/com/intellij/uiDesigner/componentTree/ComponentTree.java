@@ -17,6 +17,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -56,10 +58,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ComponentTree extends Tree implements DataProvider {
   private static final Logger LOG = Logger.getInstance(ComponentTree.class);
 
@@ -99,10 +97,10 @@ public final class ComponentTree extends Tree implements DataProvider {
     TreeUtil.installActions(this);
 
     // Popup menu
-    PopupHandler.installPopupHandler(
+    PopupHandler.installPopupMenu(
       this,
-      (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP),
-      ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP, ActionManager.getInstance());
+      IdeActions.GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP,
+      ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP);
 
     // F2 should start inplace editing
     myStartInplaceEditingAction = new StartInplaceEditingAction(null);
@@ -168,8 +166,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       LOG.assertTrue(node != null);
       final Object userObject = node.getUserObject();
-      if (userObject instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)userObject;
+      if (userObject instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr != null && ptr.isValid()) {
           final RadComponent component = ptr.getComponent();
@@ -205,8 +202,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     final ArrayList<RadComponent> result = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
+      if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr != null && ptr.isValid()) {
           result.add(ptr.getComponent());
@@ -241,23 +237,34 @@ public final class ComponentTree extends Tree implements DataProvider {
       return elements.size() == 0 ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
     }
 
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
 
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       return myFormEditor;
     }
 
-    if (!CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return null;
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      RadComponent selectedComponent = getSelectedComponent();
+      if (selectedComponent == null) {
+        return null;
+      }
+      return (DataProvider)slowId -> getSlowData(selectedComponent, slowId);
     }
+    return null;
+  }
 
-    final RadComponent selectedComponent = getSelectedComponent();
-    if (selectedComponent == null) {
-      return null;
+  @Nullable
+  private Object getSlowData(@NotNull RadComponent selectedComponent, @NonNls String dataId) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      return getPsiFile(selectedComponent);
     }
+    return null;
+  }
 
+  @Nullable
+  private Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
     final String classToBind = myEditor.getRootContainer().getClassToBind();
     if (classToBind == null) {
       return null;
@@ -297,9 +304,9 @@ public final class ComponentTree extends Tree implements DataProvider {
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = node.getUserObject();
-      if (userObject instanceof NodeDescriptor && elementClass.isInstance(((NodeDescriptor) userObject).getElement())) {
+      if (userObject instanceof NodeDescriptor && elementClass.isInstance(((NodeDescriptor<?>) userObject).getElement())) {
         //noinspection unchecked
-        result.add((T)((NodeDescriptor) node.getUserObject()).getElement());
+        result.add((T)((NodeDescriptor<?>) node.getUserObject()).getElement());
       }
     }
     return result;
@@ -381,7 +388,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     @Override
     public void customizeCellRenderer(
-      final JTree tree,
+      final @NotNull JTree tree,
       final Object value,
       final boolean selected,
       final boolean expanded,
@@ -390,8 +397,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       final boolean hasFocus
     ) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-      if (node.getUserObject() instanceof ComponentPtrDescriptor) {
-        final ComponentPtrDescriptor descriptor = (ComponentPtrDescriptor)node.getUserObject();
+      if (node.getUserObject() instanceof ComponentPtrDescriptor descriptor) {
         final ComponentPtr ptr = descriptor.getElement();
         if (ptr == null) return;
         final RadComponent component = ptr.getComponent();
@@ -424,8 +430,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         else if (component instanceof RadHSpacer) {
           append(UIDesignerBundle.message("component.horizontal.spacer"), getAttribute(myClassAttributes, level));
         }
-        else if (component instanceof RadErrorComponent) {
-          final RadErrorComponent c = (RadErrorComponent)component;
+        else if (component instanceof RadErrorComponent c) {
           append(c.getErrorDescription(), getAttribute(myUnknownAttributes, level));
         }
         else if (component instanceof RadRootContainer) {
@@ -473,7 +478,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
       }
       else if (node.getUserObject() != null) {
-        final String fragment = node.getUserObject().toString();
+        final @NlsSafe String fragment = node.getUserObject().toString();
         if (fragment != null) {
           append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
@@ -587,21 +592,26 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      DeleteProvider baseProvider = myEditor == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
+      return baseProvider == null ? ActionUpdateThread.BGT : baseProvider.getActionUpdateThread();
+    }
+
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      if (myEditor != null) {
-        LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
-        if (suppressions != null) {
-          if (!myEditor.ensureEditable()) return;
-          for(LwInspectionSuppression suppression: suppressions) {
-            myEditor.getRootContainer().removeInspectionSuppression(suppression);
-          }
-          myEditor.refreshAndSave(true);
+      if (myEditor == null) return;
+      LwInspectionSuppression[] suppressions = LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.getData(dataContext);
+      if (suppressions != null) {
+        if (!myEditor.ensureEditable()) return;
+        for(LwInspectionSuppression suppression: suppressions) {
+          myEditor.getRootContainer().removeInspectionSuppression(suppression);
         }
-        else {
-          DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName());
-          if (baseProvider != null) {
-            baseProvider.deleteElement(dataContext);
-          }
+        myEditor.refreshAndSave(true);
+      }
+      else {
+        DeleteProvider baseProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
+        if (baseProvider != null) {
+          baseProvider.deleteElement(dataContext);
         }
       }
     }
@@ -613,7 +623,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (suppressions != null) {
           return true;
         }
-        DeleteProvider baseProvider = (DeleteProvider) myEditor.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName());
+        DeleteProvider baseProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
         if (baseProvider != null) {
           return baseProvider.canDeleteElement(dataContext);
         }

@@ -8,17 +8,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -30,9 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class CompletionVariantsProcessor extends VariantsProcessor {
 
   @NotNull
@@ -88,8 +87,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       if (element instanceof PyFunction) {
         cls = ((PyFunction)element).getContainingClass();
       }
-      else if (element instanceof PyTargetExpression) {
-        final PyTargetExpression expr = (PyTargetExpression)element;
+      else if (element instanceof PyTargetExpression expr) {
         if (expr.isQualified() || ScopeUtil.getScopeOwner(expr) instanceof PyClass) {
           cls = expr.getContainingClass();
         }
@@ -105,9 +103,10 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         source = cls.getName();
       }
       else if (myContext == null || !PyUtil.inSameFile(myContext, element)) {
-        final QualifiedName path = QualifiedNameFinder.findShortestImportableQName(PyPsiUtils.getFileSystemItem(element));
+        final PsiFileSystemItem fileSystemItem = PyPsiUtils.getFileSystemItem(element);
+        final QualifiedName path = QualifiedNameFinder.findShortestImportableQName(fileSystemItem);
         if (path != null) {
-          source = ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(path, null), path).toString();
+          source = ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(fileSystemItem, path, null), path).toString();
         }
       }
     }
@@ -166,7 +165,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   protected void addImportedElement(@NotNull String name, @NotNull PyElement element) {
     Icon icon = element.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
-    if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
+    if (icon == null) icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
     markAsProcessed(name);
     myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(icon)));
   }

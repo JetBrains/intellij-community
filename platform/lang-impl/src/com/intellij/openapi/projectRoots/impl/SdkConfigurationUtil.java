@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,10 +33,8 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
-public class SdkConfigurationUtil {
+
+public final class SdkConfigurationUtil {
   private static final Logger LOG = Logger.getInstance(SdkConfigurationUtil.class);
   private SdkConfigurationUtil() { }
 
@@ -45,25 +43,12 @@ public class SdkConfigurationUtil {
                                @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                SdkType @NotNull ... sdkTypes) {
-    createSdk(project, existingSdks, onSdkCreatedCallBack, createIfExists, true, sdkTypes);
-  }
-
-  public static void createSdk(@Nullable final Project project,
-                               Sdk @NotNull [] existingSdks,
-                               @NotNull NullableConsumer<? super Sdk> onSdkCreatedCallBack,
-                               final boolean createIfExists,
-                               final boolean followSymLinks,
-                               SdkType @NotNull ... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
       return;
     }
 
     FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
-    // XXX: Workaround for PY-21787 since the native macOS dialog always follows symlinks
-    if (!followSymLinks) {
-      descriptor.setForcedToUseIdeaFileChooser(true);
-    }
     VirtualFile suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
@@ -150,8 +135,17 @@ public class SdkConfigurationUtil {
                "customSdkSuggestedName=[" + customSdkSuggestedName + "]; " +
                "sdk=[" + sdk + "]", e);
       if (!silent) {
-        Messages.showErrorDialog(ProjectBundle.message("dialog.message.error.configuring.sdk.0.please.make.sure.that.1.is.a.valid.home.path.for.this.sdk.type", e.getMessage(),
-                                                       FileUtil.toSystemDependentName(homeDir.getPath())), ProjectBundle.message("dialog.title.error.configuring.sdk"));
+        ApplicationManager.getApplication().invokeLater(
+          () ->
+            Messages.showErrorDialog(
+              ProjectBundle.message(
+                "dialog.message.error.configuring.sdk.0.please.make.sure.that.1.is.a.valid.home.path.for.this.sdk.type",
+                e.getMessage(),
+                FileUtil.toSystemDependentName(homeDir.getPath())
+              ),
+              ProjectBundle.message("dialog.title.error.configuring.sdk")
+            )
+        );
       }
       return null;
     }
@@ -218,12 +212,8 @@ public class SdkConfigurationUtil {
   public static Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, SdkType @NotNull ... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
-    if (sdk != null) {
-      for (SdkType type : sdkTypes) {
-        if (sdk.getSdkType() == type) {
-          return sdk;
-        }
-      }
+    if (sdk != null && ArrayUtil.contains(sdk.getSdkType(), sdkTypes)) {
+      return sdk;
     }
     for (SdkType type : sdkTypes) {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
@@ -255,8 +245,9 @@ public class SdkConfigurationUtil {
    */
   @Nullable
   public static Sdk createAndAddSDK(@NotNull String path, @NotNull SdkType sdkType) {
-    VirtualFile sdkHome =
-      WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
+    VirtualFile sdkHome = WriteAction.compute(() -> {
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
+    });
     if (sdkHome != null) {
       final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
       if (newSdk != null) {
@@ -268,7 +259,7 @@ public class SdkConfigurationUtil {
   }
 
   @NotNull
-  public static String createUniqueSdkName(@NotNull SdkType type, String home, final Collection<? extends Sdk> sdks) {
+  public static String createUniqueSdkName(@NotNull SdkType type, @NotNull String home, final Collection<? extends Sdk> sdks) {
     return createUniqueSdkName(type.suggestSdkName(null, home), sdks);
   }
 
@@ -283,30 +274,28 @@ public class SdkConfigurationUtil {
     selectSdkHome(sdkType, null, consumer);
   }
 
-  public static void selectSdkHome(@NotNull final SdkType sdkType,
-                                   @Nullable Component component,
-                                   @NotNull final Consumer<? super String> consumer) {
-    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+  public static boolean selectSdkHomeForTests(@NotNull SdkType sdkType, @NotNull Consumer<? super String> consumer) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Sdk sdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(sdkType);
       if (sdk == null) throw new RuntimeException("No SDK of type " + sdkType + " found");
       consumer.consume(sdk.getHomePath());
-      return;
+      return true;
     }
+    return false;
+  }
+
+  public static void selectSdkHome(@NotNull final SdkType sdkType,
+                                   @Nullable Component component,
+                                   @NotNull final Consumer<? super String> consumer) {
+    if (selectSdkHomeForTests(sdkType, consumer)) return;
+
+    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
     // passing project instance here seems to be the right idea, but it would make the dialog
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
     FileChooser.chooseFiles(descriptor, null, component, getSuggestedSdkRoot(sdkType), chosen -> {
       final String path = chosen.get(0).getPath();
-      if (sdkType.isValidSdkHome(path)) {
-        consumer.consume(path);
-        return;
-      }
-
-      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-      if (sdkType.isValidSdkHome(adjustedPath)) {
-        consumer.consume(adjustedPath);
-      }
+      consumer.consume(path);
     });
   }
 
@@ -327,8 +316,7 @@ public class SdkConfigurationUtil {
     return result;
   }
 
-  @Nullable
-  private static Sdk findByPath(@NotNull SdkType sdkType, Sdk @NotNull [] sdks, @NotNull String sdkHome) {
+  public static @Nullable Sdk findByPath(@NotNull SdkType sdkType, Sdk @NotNull [] sdks, @NotNull String sdkHome) {
     for (Sdk sdk : sdks) {
       final String path = sdk.getHomePath();
       if (sdk.getSdkType() == sdkType && path != null &&

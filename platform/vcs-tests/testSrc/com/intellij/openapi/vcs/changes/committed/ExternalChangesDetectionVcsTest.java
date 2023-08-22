@@ -26,9 +26,6 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author irengrig
- */
 public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
@@ -39,7 +36,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private File myClientRoot;
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
       myTempDirTestFixture = fixtureFactory.createTempDirTestFixture();
@@ -63,7 +60,7 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       myVcsManager.unregisterVcs(myVcs);
       myVcs = null;

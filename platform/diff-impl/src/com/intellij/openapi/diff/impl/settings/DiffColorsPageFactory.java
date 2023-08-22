@@ -26,6 +26,7 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -57,16 +58,18 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
 
   @Override
   public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
-    TextDiffTypeFactory.TextDiffTypeImpl[] diffTypes = TextDiffTypeFactory.getInstance().getAllDiffTypes();
-    return ContainerUtil.map2Array(diffTypes, AttributesDescriptor.class, type -> 
-      new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.type.tag.prefix") + type.getName(), type.getKey()));
+    List<TextDiffTypeFactory.TextDiffTypeImpl> diffTypes = TextDiffTypeFactory.getAllDiffTypes();
+    return ContainerUtil.map2Array(diffTypes, AttributesDescriptor.class, type ->
+      new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.type.tag.prefix") + type.getName(),
+                               type.getKey()));
   }
 
   @Override
   public ColorDescriptor @NotNull [] getColorDescriptors() {
     List<ColorDescriptor> descriptors = new ArrayList<>();
 
-    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.background"), DiffLineSeparatorRenderer.BACKGROUND, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.wave.foreground"),
+                                        DiffLineSeparatorRenderer.FOREGROUND, ColorDescriptor.Kind.FOREGROUND));
 
     return descriptors.toArray(ColorDescriptor.EMPTY_ARRAY);
   }
@@ -88,6 +91,7 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
     return DisplayPriority.COMMON_SETTINGS;
   }
 
+  @Nls
   public static String getDiffGroup() {
     return ApplicationBundle.message("title.diff");
   }

@@ -1,14 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.util.ui.RegionPainter;
-import com.intellij.util.ui.TouchScrollUtil;
-import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,10 +29,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   /**
    * This key defines a region painter, which is used by the custom ScrollBarUI
    * to draw additional paintings (i.e. error stripes) on the scrollbar's track.
-   *
-   * @see UIUtil#putClientProperty
    */
   public static final Key<RegionPainter<Object>> TRACK = Key.create("JB_SCROLL_BAR_TRACK");
+
   /**
    * This constraint should be used to add a component that will be shown before the scrollbar's track.
    * Note that the previously added leading component will be removed.
@@ -49,7 +47,6 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   public static final String TRAILING = "JB_SCROLL_BAR_TRAILING_COMPONENT";
 
-  private static final double THRESHOLD = 1D + 1E-5D;
   private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
   private double myFractionalRemainder;
   private boolean wasPositiveDelta;
@@ -74,9 +71,11 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   protected void addImpl(Component component, Object name, int index) {
     Key<Component> key = LEADING.equals(name) ? DefaultScrollBarUI.LEADING : TRAILING.equals(name) ? DefaultScrollBarUI.TRAILING : null;
     if (key != null) {
-      Component old = ComponentUtil.getClientProperty(this, key);
-      ComponentUtil.putClientProperty(this, key, component);
-      if (old != null) remove(old);
+      Component old = ClientProperty.get(this, key);
+      ClientProperty.put(this, key, component);
+      if (old != null) {
+        remove(old);
+      }
     }
     super.addImpl(component, name, index);
   }
@@ -85,7 +84,13 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void updateUI() {
     ScrollBarUI ui = getUI();
     if (ui instanceof DefaultScrollBarUI) return;
-    setUI(createUI(this));
+    setUI(createUI(this, isThin()));
+  }
+
+  @SuppressWarnings("UnusedParameters")
+  @NotNull
+  public static ScrollBarUI createUI(JComponent c) {
+    return createUI(c, false);
   }
 
   /**
@@ -96,8 +101,14 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return a new instance of {@link ScrollBarUI}
    */
   @SuppressWarnings("UnusedParameters")
-  public static ScrollBarUI createUI(JComponent c) {
-    return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
+  @NotNull
+  public static ScrollBarUI createUI(JComponent c, boolean isThin) {
+    if (SystemInfo.isMac) {
+      return isThin ? new ThinMacScrollBarUI() : new MacScrollBarUI();
+    }
+    else {
+      return isThin ? new ThinScrollBarUI() : new DefaultScrollBarUI();
+    }
   }
 
   /**
@@ -126,6 +137,13 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void setUnitIncrement(int increment) {
     isUnitIncrementSet = true;
     super.setUnitIncrement(increment);
+  }
+
+  public void toggle(boolean isOn) {
+    ScrollBarUI ui = getUI();
+    if (ui instanceof DefaultScrollBarUI) {
+      ((DefaultScrollBarUI)ui).toggle(isOn);
+    }
   }
 
   /**
@@ -171,8 +189,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public void setValue(int value) {
     int delay = 0;
     Component parent = getParent();
-    if (parent instanceof JBScrollPane) {
-      JBScrollPane pane = (JBScrollPane)parent;
+    if (parent instanceof JBScrollPane pane) {
       JViewport viewport = pane.getViewport();
       if (viewport != null && ScrollSettings.isEligibleFor(viewport.getView()) && ScrollSettings.isInterpolationEligibleFor(this)) {
         delay = pane.getInitialDelay(getValueIsAdjusting());
@@ -243,8 +260,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
 
   private JViewport getViewport() {
     Component parent = getParent();
-    if (parent instanceof JScrollPane) {
-      JScrollPane pane = (JScrollPane)parent;
+    if (parent instanceof JScrollPane pane) {
       return pane.getViewport();
     }
     return null;
@@ -311,7 +327,6 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       int direction = rotation < 0 ? -1 : 1;
       int unitIncrement = getUnitIncrement(direction);
       double delta = unitIncrement * rotation * event.getScrollAmount();
-      if (-THRESHOLD > delta && delta > THRESHOLD) return delta;
       // When the scrolling speed is set to maximum, it's possible to scroll by more units than will fit in the visible area.
       // To make for more accurate low-speed scrolling, we limit scrolling to the block increment
       // if the wheel was only rotated one click.
@@ -319,6 +334,10 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       return boundDelta(-blockIncrement, blockIncrement, delta);
     }
     return Double.NaN;
+  }
+
+  public boolean isThin() {
+    return false;
   }
 
   private static final class Model extends DefaultBoundedRangeModel {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -9,11 +9,14 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.ui.UISettingsUtils;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.lang.Language;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -28,43 +31,40 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
-import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
@@ -72,16 +72,21 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
+import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
@@ -93,15 +98,15 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.openapi.util.text.StringUtil.isEmpty;
-import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.structuralsearch.plugin.ui.StructuralSearchDialogKeys.*;
+import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static java.awt.GridBagConstraints.*;
 
 /**
  * This dialog is used in two ways:
@@ -110,38 +115,22 @@ import static com.intellij.openapi.util.text.StringUtil.trimEnd;
  *
  * @author Bas Leijdekkers
  */
-public class StructuralSearchDialog extends DialogWrapper implements DocumentListener {
+public final class StructuralSearchDialog extends DialogWrapper implements DocumentListener {
   @NonNls private static final String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
   @NonNls private static final String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
 
-  @NonNls private static final String RECURSIVE_STATE = "structural.search.recursive";
-  @NonNls private static final String MATCH_CASE_STATE = "structural.search.match.case";
-  @NonNls private static final String SHORTEN_FQN_STATE = "structural.search.shorten.fqn";
-  @NonNls private static final String REFORMAT_STATE = "structural.search.reformat";
-  @NonNls private static final String USE_STATIC_IMPORT_STATE = "structural.search.use.static.import";
-  @NonNls private static final String FILTERS_VISIBLE_STATE = "structural.search.filters.visible";
-
-  public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
-  public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
-  public static final Key<Runnable> STRUCTURAL_SEARCH_ERROR_CALLBACK = Key.create("STRUCTURAL_SEARCH_ERROR_CALLBACK");
   private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
 
-  private final SearchContext mySearchContext;
-  Editor myEditor;
-  boolean myReplace;
-  Configuration myConfiguration;
-  @NonNls LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
-  Language myDialect = null;
-  PatternContext myPatternContext = null;
-  final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
+  private final @NotNull Project myProject;
+  private final @NotNull SearchContext mySearchContext;
+  private Editor myEditor;
+  private ReplaceConfiguration myConfiguration;
+  @Nullable @NonNls private LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
+  private Language myDialect;
+  private PatternContext myPatternContext;
+  private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
   private final DocumentListener myRestartHighlightingListener = new DocumentListener() {
-    final Runnable runnable = () -> ReadAction.nonBlocking(() -> {
-      addMatchHighlights();
-    })
-      .withDocumentsCommitted(getProject())
-      .expireWith(getDisposable())
-      .coalesceBy(this)
-      .submit(AppExecutorUtil.getAppExecutorService());
+    final Runnable runnable = () -> addMatchHighlights();
 
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
@@ -150,33 +139,41 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       myAlarm.addRequest(runnable, 100);
     }
   };
+  private boolean myChangedConfiguration;
 
   // ui management
   private final Alarm myAlarm;
-  private boolean myUseLastConfiguration;
+  private boolean myConfigurationLoaded;
+  private volatile boolean myPinned;
   private final boolean myEditConfigOnly;
-  private boolean myDoingOkAction;
+  private boolean myReplace;
 
   // components
-  JCheckBox myRecursive;
-  private JCheckBox myMatchCase;
-  private JCheckBox myShortenFQN; // replace
-  private JCheckBox myReformat; // replace
-  private JCheckBox myUseStaticImport; // replace
-  FileTypeSelector myFileTypesComboBox;
-  ActionToolbarImpl myOptionsToolbar;
-  EditorTextField mySearchCriteriaEdit;
-  EditorTextField myReplaceCriteriaEdit;
-  OnePixelSplitter mySearchEditorPanel;
+  private final FileTypeChooser myFileTypeChooser = new FileTypeChooser();
+  private ActionToolbarImpl myOptionsToolbar;
+  private EditorTextField mySearchCriteriaEdit;
+  private EditorTextField myReplaceCriteriaEdit;
+  private OnePixelSplitter mySearchEditorPanel;
+  private OnePixelSplitter myMainSplitter;
 
-  FilterPanel myFilterPanel;
+  private FilterPanel myFilterPanel;
+  private ExistingTemplatesComponent myExistingTemplatesComponent;
   private LinkComboBox myTargetComboBox;
   private ScopePanel myScopePanel;
   private JCheckBox myOpenInNewTab;
 
-  JComponent myReplacePanel;
+  private JComponent myReplacePanel;
+  private SwitchAction mySwitchAction;
+  private final ArrayList<JComponent> myComponentsWithEditorBackground = new ArrayList<>();
+  private JComponent mySearchWrapper;
+  private JBCheckBox myInjected;
+  private JBCheckBox myMatchCase;
+  private JComponent myReplaceWrapper;
+  private JBCheckBox myShortenFqn;
+  private JBCheckBox myStaticImport;
+  private JBCheckBox myReformat;
 
-  public StructuralSearchDialog(SearchContext searchContext, boolean replace) {
+  public StructuralSearchDialog(@NotNull SearchContext searchContext, boolean replace) {
     this(searchContext, replace, false);
   }
 
@@ -189,6 +186,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
     myReplace = replace;
     myEditConfigOnly = editConfigOnly;
+    myProject = searchContext.getProject();
     mySearchContext = searchContext;
     myEditor = searchContext.getEditor();
     addRestartHighlightingListenerToCurrentEditor();
@@ -215,7 +213,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         myAlarm.addRequest(runnable, 100);
       }
     };
-    final MessageBusConnection connection = getProject().getMessageBus().connect(getDisposable());
+    final MessageBusConnection connection = myProject.getMessageBus().connect(getDisposable());
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -223,17 +221,30 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         close(CANCEL_EXIT_CODE);
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
-      public void projectClosing(@NotNull Project project) {
+      public void appClosing() {
         close(CANCEL_EXIT_CODE);
       }
     });
-    myConfiguration = createConfiguration(null);
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        if (project == myProject) {
+          close(CANCEL_EXIT_CODE);
+        }
+      }
+    });
+    connection.subscribe(EditorColorsManager.TOPIC, uiSettings -> updateColors());
     setTitle(getDefaultTitle());
 
     init();
+    loadUIState();
+    if (!myConfigurationLoaded) {
+      myConfiguration = createConfiguration(null);
+    }
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    setValidationDelay(100);
   }
 
   private void addRestartHighlightingListenerToCurrentEditor() {
@@ -248,87 +259,64 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
   }
 
-  public void setUseLastConfiguration(boolean useLastConfiguration) {
-    myUseLastConfiguration = useLastConfiguration;
-  }
-
   private EditorTextField createEditor(boolean replace) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
-    final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
+    final Document document = UIUtil.createDocument(myProject, myFileType, myDialect, myPatternContext, "", profile);
     document.addDocumentListener(this, myDisposable);
     document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
     final EditorTextField textField = new MyEditorTextField(document, replace);
-    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    textField.setFont(scheme.getFont(EditorFontType.PLAIN));
+    textField.setFont(EditorFontType.getGlobalPlainFont().deriveFont(
+      UISettingsUtils.getInstance().getScaledEditorFontSize()
+    ));
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
+    myComponentsWithEditorBackground.add(textField);
     return textField;
   }
 
   @Override
   public void documentChanged(@NotNull final DocumentEvent event) {
-    initiateValidation();
+    initValidation();
+    if (!myChangedConfiguration) {
+      myExistingTemplatesComponent.templateChanged();
+    }
   }
 
-  void initiateValidation() {
-    if (myAlarm.isDisposed()) return;
-    myAlarm.cancelAllRequests();
-    myAlarm.addRequest(() -> {
-      final boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-        try {
-          final CompiledPattern compiledPattern = compilePattern();
-          checkReplacementPattern();
-          final JRootPane component = getRootPane();
-          if (component == null) {
-            return;
-          }
-          initializeFilterPanel();
-          if (compiledPattern != null) {
-            addMatchHighlights();
-          }
-          ApplicationManager.getApplication().invokeLater(() -> {
-            setSearchTargets(myConfiguration.getMatchOptions());
-            getOKAction().setEnabled(compiledPattern != null);
-          }, ModalityState.stateForComponent(component));
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (RuntimeException e) {
-          Logger.getInstance(StructuralSearchDialog.class).error(e);
-        }
-      });
-      if (!success) {
-        initiateValidation();
-      }
-    }, 100);
-  }
-
-  private void initializeFilterPanel() {
+  private void initializeFilterPanel(@Nullable CompiledPattern compiledPattern) {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
-    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, false, false);
+    final CompiledPattern finalCompiledPattern = compiledPattern == null
+                                                 ? PatternCompiler.compilePattern(myProject, matchOptions, false, false)
+                                                 : compiledPattern;
+    if (finalCompiledPattern == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (compiledPattern != null) {
-        SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
-        if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
-        myFilterPanel.setCompiledPattern(compiledPattern);
-      }
-      if (!myFilterPanel.isInitialized()) {
+      SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
+      if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
+      myFilterPanel.setCompiledPattern(finalCompiledPattern);
+      if (myFilterPanel.getVariable() == null) {
         myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
       }
-      myFilterPanel.setValid(compiledPattern != null);
     }, ModalityState.stateForComponent(myFilterPanel.getComponent()));
   }
 
-  private Configuration createConfiguration(Configuration template) {
-    if (myReplace) {
-      return (template == null) ? new ReplaceConfiguration(getUserDefined(), getUserDefined()) : new ReplaceConfiguration(template);
+  @NotNull
+  private ReplaceConfiguration createConfiguration(Configuration template) {
+    final ReplaceConfiguration result = template == null
+                                        ? new ReplaceConfiguration(SSRBundle.message("new.template.defaultname"),
+                                                                   SSRBundle.message("user.defined.category"))
+                                        : new ReplaceConfiguration(template);
+    if (!myEditConfigOnly) {
+      final MatchOptions matchOptions = result.getMatchOptions();
+      matchOptions.setSearchInjectedCode(myInjected.isSelected());
+      matchOptions.setCaseSensitiveMatch(myMatchCase.isSelected());
+
+      final ReplaceOptions replaceOptions = result.getReplaceOptions();
+      replaceOptions.setToShortenFQN(myShortenFqn.isSelected());
+      replaceOptions.setToUseStaticImport(myStaticImport.isSelected());
+      replaceOptions.setToReformatAccordingToStyle(myReformat.isSelected());
     }
-    else {
-      return (template == null) ? new SearchConfiguration(getUserDefined(), getUserDefined()) : new SearchConfiguration(template);
-    }
+    return result;
   }
 
   private void setTextFromContext() {
@@ -342,20 +330,33 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
         final String text = selectedText.trim();
         setTextForEditor(text.trim(), mySearchCriteriaEdit);
-        if (myReplace) {
-          setTextForEditor(text, myReplaceCriteriaEdit);
+        setTextForEditor(text, myReplaceCriteriaEdit);
+        myScopePanel.setScopesFromContext(null);
+        final Document document = editor.getDocument();
+        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        if (file != null) {
+          final PsiElement start = file.findElementAt(selectionModel.getSelectionStart());
+          final PsiElement end = file.findElementAt(selectionModel.getSelectionEnd() - 1);
+          final PsiElement element = (start == null || end == null || start.getContainingFile() != end.getContainingFile())
+                                     ? null
+                                     : PsiTreeUtil.findCommonParent(start, end);
+          final Language language = (element == null) ? file.getLanguage() : element.getLanguage();
+          myFileTypeChooser.setSelectedItem(language.getAssociatedFileType(), language, null);
+          if (language != file.getLanguage() && !myInjected.isSelected()) {
+            myInjected.doClick();
+          }
         }
-        myScopePanel.setScopesFromContext();
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
     }
 
-    final Configuration previousConfiguration = getProject().getUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION);
+    final Configuration previousConfiguration = myProject.getUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION);
     if (previousConfiguration != null) {
       loadConfiguration(previousConfiguration);
-    } else {
-      final Configuration configuration = ConfigurationManager.getInstance(getProject()).getMostRecentConfiguration();
+    }
+    else {
+      final Configuration configuration = ConfigurationManager.getInstance(myProject).getMostRecentConfiguration();
       if (configuration != null) {
         loadConfiguration(configuration);
       }
@@ -365,185 +366,87 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private void setTextForEditor(String text, EditorTextField editor) {
     editor.setText(text);
     editor.selectAll();
-    final Project project = getProject();
     final Document document = editor.getDocument();
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     documentManager.commitDocument(document);
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    WriteCommandAction.runWriteCommandAction(project, SSRBundle.message("command.name.adjust.line.indent"), "Structural Search",
-                                             () -> CodeStyleManager.getInstance(project)
+    WriteCommandAction.runWriteCommandAction(myProject, SSRBundle.message("command.name.adjust.line.indent"), "Structural Search",
+                                             () -> CodeStyleManager.getInstance(myProject)
                                                .adjustLineIndent(file, new TextRange(0, document.getTextLength())), file);
   }
 
   private void startSearching() {
     if (myReplace) {
-      new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
+      new ReplaceCommand(getConfiguration(), mySearchContext).startSearching();
     }
     else {
-      new SearchCommand(myConfiguration, mySearchContext).startSearching();
+      new SearchCommand(getConfiguration(), mySearchContext).startSearching();
     }
   }
 
   @NotNull
   @Nls
   @NlsContexts.DialogTitle
-  String getDefaultTitle() {
+  private String getDefaultTitle() {
     return myReplace ? SSRBundle.message("structural.replace.title") : SSRBundle.message("structural.search.title");
   }
 
   @Override
+  protected @NotNull DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
+  }
+
+  @Override
   protected JComponent createCenterPanel() {
-    mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
-    mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    mySearchCriteriaEdit = createEditor(false);
-    mySearchEditorPanel.setFirstComponent(mySearchCriteriaEdit);
-
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
-    wrapper.setBorder(IdeBorderFactory.createBorder(color));
-    wrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
-
+    final var searchPanel = createSearchPanel();
     myReplacePanel = createReplacePanel();
     myReplacePanel.setVisible(myReplace);
 
-    myScopePanel = new ScopePanel(getProject(), myDisposable);
+    myScopePanel = new ScopePanel(myProject, myDisposable);
     if (!myEditConfigOnly) {
-      myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
-      myScopePanel.setScopeConsumer(scope -> initiateValidation());
+      myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(myProject).getRecentDirectories());
+      myScopePanel.setScopeConsumer(scope -> {
+        if (myConfiguration != null) {
+          myConfiguration.getMatchOptions().setScope(scope);
+          initValidation();
+        }
+      });
     }
     else {
       myScopePanel.setVisible(false);
     }
 
-    myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
-    myFilterPanel.setConstraintChangedCallback(() -> initiateValidation());
-    myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
-    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+    final var centerConstraint = new GridBag()
+      .setDefaultFill(BOTH)
+      .setDefaultWeightX(1.0)
+      .setDefaultWeightY(1.0);
+    final JPanel centerPanel = new JPanel(new GridBagLayout());
+    centerPanel.add(searchPanel, centerConstraint.nextLine());
+    centerPanel.add(myReplacePanel, centerConstraint.nextLine());
+    centerPanel.add(myScopePanel, centerConstraint.nextLine().weighty(0.0));
 
-    final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
-    myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
-    myTargetComboBox.setItemConsumer(item -> {
-      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-      for (String name : matchOptions.getVariableConstraintNames()) {
-        matchOptions.getVariableConstraint(name).setPartOfSearchResults(name.equals(item));
-      }
-      initiateValidation();
-    });
+    myExistingTemplatesComponent = new ExistingTemplatesComponent(myProject, getContentPanel());
+    myExistingTemplatesComponent.onConfigurationSelected(this::loadConfiguration);
+    myExistingTemplatesComponent.setConfigurationProducer(() -> getConfiguration());
+    myExistingTemplatesComponent.setSearchEditorProducer(() -> mySearchCriteriaEdit);
+    myExistingTemplatesComponent.setExportRunnable(() -> exportToClipboard());
+    myExistingTemplatesComponent.setImportRunnable(() -> importFromClipboard());
+    myMainSplitter = new OnePixelSplitter(false, 0.2f);
+    myMainSplitter.setFirstComponent(myExistingTemplatesComponent.getTemplatesPanel());
+    myMainSplitter.setSecondComponent(centerPanel);
 
-    final JPanel centerPanel = new JPanel(null);
-    final GroupLayout layout = new GroupLayout(centerPanel);
-    centerPanel.setLayout(layout);
-    layout.setHorizontalGroup(
-      layout.createParallelGroup()
-        .addComponent(wrapper)
-        .addComponent(myReplacePanel)
-        .addComponent(myScopePanel)
-        .addGroup(layout.createSequentialGroup()
-                    .addComponent(searchTargetLabel)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 5, 5)
-                    .addComponent(myTargetComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        )
-    );
-    layout.setVerticalGroup(
-      layout.createSequentialGroup()
-        .addComponent(wrapper)
-        .addGap(8)
-        .addComponent(myReplacePanel)
-        .addComponent(myScopePanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        .addGap(16)
-        .addGroup(layout.createParallelGroup()
-                    .addComponent(searchTargetLabel)
-                    .addComponent(myTargetComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        )
-    );
-
-    return centerPanel;
+    updateColors();
+    updateOptions();
+    return myMainSplitter;
   }
 
-  private JComponent createReplacePanel() {
-    final JLabel label = new JLabel(SSRBundle.message("replacement.template.label"));
-    myShortenFQN = new JCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
-    myReformat = new JCheckBox(SSRBundle.message("reformat.checkbox"));
-    myUseStaticImport = new JCheckBox(SSRBundle.message("use.static.import.checkbox"));
+  private JPanel createSearchPanel() {
+    // 'Search template:' label
+    final JBLabel searchTemplateLabel = new JBLabel(SSRBundle.message("search.template"));
 
-    final OnePixelSplitter replaceEditorPanel = new OnePixelSplitter(false, 1.0f);
-    replaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    myReplaceCriteriaEdit = createEditor(true);
-    replaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
-
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
-    wrapper.setBorder(IdeBorderFactory.createBorder(color));
-    wrapper.add(replaceEditorPanel, BorderLayout.CENTER);
-
-    final JPanel replacePanel = new JPanel(null);
-    final GroupLayout layout = new GroupLayout(replacePanel);
-    replacePanel.setLayout(layout);
-    layout.setHorizontalGroup(
-      layout.createParallelGroup()
-        .addGroup(
-          layout.createSequentialGroup()
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 28, 28)
-            .addComponent(label)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, Integer.MAX_VALUE)
-            .addComponent(myShortenFQN)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 15, 15)
-            .addComponent(myReformat)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 15, 15)
-            .addComponent(myUseStaticImport)
-        )
-        .addComponent(wrapper)
-    );
-    layout.setVerticalGroup(
-      layout.createSequentialGroup().
-        addGroup(
-          layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-            .addComponent(label)
-            .addComponent(myShortenFQN)
-            .addComponent(myReformat)
-            .addComponent(myUseStaticImport)
-        )
-        .addGap(4)
-        .addComponent(wrapper)
-    );
-
-    return replacePanel;
-  }
-
-  @Nullable
-  @Override
-  protected JComponent createNorthPanel() {
-    final DefaultActionGroup historyActionGroup =
-      new DefaultActionGroup(new DumbAwareAction(SSRBundle.messagePointer("history.button"),
-                                                 SSRBundle.messagePointer("history.button.description"),
-                                                 AllIcons.Actions.SearchWithHistory) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          final Object source = e.getInputEvent().getSource();
-          if (!(source instanceof Component)) return;
-          JBPopupFactory.getInstance()
-            .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
-            .setRenderer(new ConfigurationCellRenderer())
-            .setItemChosenCallback(c -> loadConfiguration(c))
-            .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-            .createPopup()
-            .showUnderneathOf((Component)source);
-        }
-      });
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionToolbarImpl historyToolbar =
-      (ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, historyActionGroup, true);
-    historyToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    final JLabel label = new JLabel(SSRBundle.message("search.template"));
-    UIUtil.installCompleteMatchInfo(label, () -> myConfiguration, link -> showFilterPanel(link));
-
-    myRecursive = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
-    myRecursive.setVisible(!myReplace);
-    myRecursive.addActionListener(e -> initiateValidation());
-    myMatchCase = new JCheckBox(FindBundle.message("find.popup.case.sensitive"), true);
-    myMatchCase.addActionListener(e -> initiateValidation());
+    // File type chooser
     myFileType = UIUtil.detectFileType(mySearchContext);
     myDialect = myFileType.getLanguage();
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
@@ -553,89 +456,77 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         myPatternContext = contexts.get(0);
       }
     }
-    myFileTypesComboBox = new FileTypeSelector();
-    myFileTypesComboBox.setMinimumAndPreferredWidth(200);
-    myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myPatternContext);
-    myFileTypesComboBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          final FileTypeInfo item = myFileTypesComboBox.getSelectedItem();
-          if (item == null) return;
-          myFileType = item.getFileType();
-          myFilterPanel.setFileType(myFileType);
+    myFileTypeChooser.setSelectedItem(myFileType, myDialect, myPatternContext);
+    myFileTypeChooser.setFileTypeInfoConsumer(info -> {
+      myFileType = info.getFileType();
+      myDialect = info.getDialect();
+      myPatternContext = info.getContext();
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      matchOptions.setFileType(myFileType);
+      matchOptions.setDialect(myDialect);
+      matchOptions.setPatternContext(myPatternContext);
 
-          myDialect = item.getDialect();
-          myPatternContext = item.getContext();
-          final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
-          final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-          assert profile != null;
+      myOptionsToolbar.updateActionsImmediately();
+      myFilterPanel.setFileType(myFileType);
+      final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
+      final StructuralSearchProfile profile1 = StructuralSearchUtil.getProfileByFileType(myFileType);
 
-          final Document searchDocument =
-            UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile);
-          searchDocument.addDocumentListener(StructuralSearchDialog.this, myDisposable);
-          mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
-          searchDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
+      final Document searchDocument =
+        UIUtil.createDocument(myProject, myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile1);
+      searchDocument.addDocumentListener(this, myDisposable);
+      mySearchCriteriaEdit.setNewDocumentAndFileType((myFileType == null) ? PlainTextFileType.INSTANCE : myFileType, searchDocument);
+      searchDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
-          final Document replaceDocument =
-            UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile);
-          replaceDocument.addDocumentListener(StructuralSearchDialog.this, myDisposable);
-          myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
-          replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
+      final Document replaceDocument =
+        UIUtil.createDocument(myProject, myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile1);
+      replaceDocument.addDocumentListener(this, myDisposable);
+      myReplaceCriteriaEdit.setNewDocumentAndFileType((myFileType == null) ? PlainTextFileType.INSTANCE : myFileType, replaceDocument);
+      replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
 
-          initiateValidation();
-        }
-      }
+      updateOptions();
+      initValidation();
     });
-    final JLabel fileTypeLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
-    fileTypeLabel.setLabelFor(myFileTypesComboBox);
-    final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
-    templateActionGroup.add(
-      new DumbAwareAction(SSRBundle.message("save.template.text.button")) {
+    myFileTypeChooser.setUserActionFileTypeInfoConsumer(info -> {
+      myExistingTemplatesComponent.selectFileType(info.getFileType());
+    });
 
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
-        }
-      });
-    templateActionGroup.add(
-      new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), getProject());
-        }
-      });
-    templateActionGroup.addSeparator();
-    templateActionGroup.addAll(
-      new CopyConfigurationAction(),
-      new PasteConfigurationAction(),
-      new DumbAwareAction(SSRBundle.message("copy.existing.template.button")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          final SelectTemplateDialog dialog = new SelectTemplateDialog(getProject(), false, myReplace);
-          if (!dialog.showAndGet()) {
-            return;
-          }
-          final Configuration[] configurations = dialog.getSelectedConfigurations();
-          if (configurations.length == 1) {
-            loadConfiguration(configurations[0]);
-          }
-        }
-      },
-      Separator.getInstance(),
-      new SwitchAction()
-    );
+    // Existing templates action
+    final AnAction showTemplatesAction = new DumbAwareToggleAction(SSRBundle.message("templates.button"),
+                                                                   SSRBundle.message("templates.button.description"),
+                                                                   AllIcons.Actions.PreviewDetails) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
 
 
-    templateActionGroup.setPopup(true);
-    final Presentation presentation = templateActionGroup.getTemplatePresentation();
-    presentation.setIcon(AllIcons.General.Settings);
-    presentation.setText(SSRBundle.message("tools.button"));
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return isExistingTemplatesPanelVisible();
+      }
 
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        setExistingTemplatesPanelVisible(state);
+      }
+    };
 
+    // Filter action
+    final BadgeIconSupplier filterIcon = new BadgeIconSupplier(AllIcons.General.Filter);
     final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
                                                             SSRBundle.message("filter.button.description"),
-                                                            AllIcons.General.Filter) {
+                                                            filterIcon.getLiveIndicatorIcon(true)) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        final Presentation presentation = e.getPresentation();
+        presentation.setIcon(filterIcon.getLiveIndicatorIcon(myFilterPanel.hasVisibleFilter()));
+      }
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
@@ -647,41 +538,143 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         setFilterPanelVisible(state);
       }
     };
-    final DefaultActionGroup optionsActionGroup = new DefaultActionGroup(filterAction, templateActionGroup);
-    myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, optionsActionGroup, true);
+
+    // Filter panel
+    myFilterPanel = new FilterPanel(myProject, myFileType, getDisposable());
+    myFilterPanel.setConstraintChangedCallback(() -> initValidation());
+    myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
+
+    // Pin action
+    final DumbAwareToggleAction pinAction =
+      new DumbAwareToggleAction(SSRBundle.message("pin.button"), SSRBundle.message("pin.button.description"), AllIcons.General.Pin_tab) {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+
+        @Override
+        public boolean isSelected(@NotNull AnActionEvent e) {
+          return myPinned;
+        }
+
+        @Override
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
+          myPinned = state;
+        }
+      };
+
+    // Switch action
+    mySwitchAction = new SwitchAction();
+
+    final DefaultActionGroup optionsActionGroup =
+      new DefaultActionGroup(myFileTypeChooser, showTemplatesAction, filterAction, new Separator(), pinAction, mySwitchAction);
+    final ActionManager actionManager = ActionManager.getInstance();
+    myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
+    myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
+    myOptionsToolbar.setBorder(JBUI.Borders.empty(3));
 
-    final JPanel northPanel = new JPanel(null);
-    final GroupLayout layout = new GroupLayout(northPanel);
-    northPanel.setLayout(layout);
-    layout.setHonorsVisibility(true);
-    layout.setHorizontalGroup(
-      layout.createSequentialGroup()
-            .addComponent(historyToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addComponent(label)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, Integer.MAX_VALUE)
-            .addComponent(myRecursive)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 15, 15)
-            .addComponent(myMatchCase)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 15, 15)
-            .addComponent(fileTypeLabel)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 5, 5)
-            .addComponent(myFileTypesComboBox, 125, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addComponent(myOptionsToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-    );
-    layout.setVerticalGroup(
-      layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-            .addComponent(historyToolbar)
-            .addComponent(label)
-            .addComponent(myRecursive)
-            .addComponent(myMatchCase)
-            .addComponent(fileTypeLabel)
-            .addComponent(myFileTypesComboBox)
-            .addComponent(myOptionsToolbar)
-    );
+    // Search editor panel, 1st splitter element
+    final var searchEditorPanel = new JPanel(new GridBagLayout());
 
-    return northPanel;
+    // Search panel options
+    myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
+    myTargetComboBox.setItemConsumer(item -> {
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      for (String name : matchOptions.getVariableConstraintNames()) {
+        matchOptions.getVariableConstraint(name).setPartOfSearchResults(name.equals(item));
+      }
+      initValidation();
+    });
+    final String text = SSRBundle.message("search.target.label");
+    final JLabel searchTargetLabel = new JLabel(text);
+    myTargetComboBox.setLabel(searchTargetLabel);
+
+    myInjected = new JBCheckBox(SSRBundle.message("search.in.injected.checkbox"));
+    myInjected.setOpaque(false);
+    myInjected.addActionListener(e -> {
+      myConfiguration.getMatchOptions().setSearchInjectedCode(myInjected.isSelected());
+      initValidation();
+    });
+    myInjected.setVisible(!myEditConfigOnly);
+
+    myMatchCase = new JBCheckBox(FindBundle.message("find.popup.case.sensitive"));
+    myMatchCase.setOpaque(false);
+    myMatchCase.addActionListener(e -> {
+      myConfiguration.getMatchOptions().setCaseSensitiveMatch(myMatchCase.isSelected());
+      initValidation();
+    });
+
+    // Splitter
+    mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
+    mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+    mySearchCriteriaEdit = createEditor(false);
+    mySearchEditorPanel.setFirstComponent(searchEditorPanel);
+    myComponentsWithEditorBackground.add(searchEditorPanel);
+
+    // Wrapper
+    mySearchWrapper = new JPanel(new BorderLayout()); // needed for border
+    mySearchWrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
+
+    final var searchConstraint = new GridBag().setDefaultInsets(DEFAULT_VGAP, DEFAULT_HGAP, DEFAULT_VGAP, 0);
+    searchEditorPanel.add(mySearchCriteriaEdit, searchConstraint
+      .nextLine().fillCell().coverLine()
+      .weightx(1.0).weighty(1.0)
+      .emptyInsets());
+    searchEditorPanel.add(searchTargetLabel, searchConstraint.nextLine());
+    searchEditorPanel.add(myTargetComboBox, searchConstraint);
+    searchEditorPanel.add(myInjected, searchConstraint);
+    searchEditorPanel.add(myMatchCase, searchConstraint.anchor(WEST).insetRight(DEFAULT_HGAP));
+
+    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+    myComponentsWithEditorBackground.add(myFilterPanel.getTable());
+
+    final JPanel searchPanel = new JPanel(new GridBagLayout());
+    final var northConstraint = new GridBag().setDefaultWeightX(1.0);
+    searchPanel.add(searchTemplateLabel, northConstraint.nextLine().weightx(0.0).insets(JBInsets.create(0, DEFAULT_HGAP)));
+    searchPanel.add(myOptionsToolbar, northConstraint.anchor(EAST));
+    searchPanel.add(mySearchWrapper, northConstraint.nextLine().coverLine().fillCell().emptyInsets().weighty(1.0));
+    return searchPanel;
+  }
+
+  private @NotNull JComponent createReplacePanel() {
+    final JBLabel replacementTemplateLabel = new JBLabel(SSRBundle.message("replacement.template.label"));
+
+    myShortenFqn = new JBCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
+    myShortenFqn.setOpaque(false);
+    myShortenFqn.addActionListener(e -> myConfiguration.getReplaceOptions().setToShortenFQN(myShortenFqn.isSelected()));
+
+    myStaticImport = new JBCheckBox(SSRBundle.message("use.static.import.checkbox"));
+    myStaticImport.setOpaque(false);
+    myStaticImport.addActionListener(e -> myConfiguration.getReplaceOptions().setToUseStaticImport(myStaticImport.isSelected()));
+
+    myReformat = new JBCheckBox(SSRBundle.message("reformat.checkbox"));
+    myReformat.setOpaque(false);
+    myReformat.addActionListener(e -> myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(myReformat.isSelected()));
+
+    myReplaceCriteriaEdit = createEditor(true);
+    myReplaceWrapper = new JPanel(new GridBagLayout());
+    myComponentsWithEditorBackground.add(myReplaceWrapper);
+
+    final var wrapperConstraint = new GridBag().setDefaultInsets(10, 10, 10, 0);
+    myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.nextLine().emptyInsets().fillCell().coverLine().weightx(1.0).weighty(1.0));
+    myReplaceWrapper.add(myShortenFqn, wrapperConstraint.nextLine());
+    myReplaceWrapper.add(myStaticImport, wrapperConstraint);
+    myReplaceWrapper.add(myReformat, wrapperConstraint.weightx(1.0).anchor(WEST));
+
+    final JPanel replacePanel = new JPanel(new GridBagLayout());
+    final var replaceConstraint = new GridBag()
+      .setDefaultWeightX(1.0);
+    replacePanel.add(replacementTemplateLabel, replaceConstraint.nextLine().anchor(WEST).insets(16, DEFAULT_HGAP, 14, 0));
+    replacePanel.add(myReplaceWrapper, replaceConstraint.nextLine().fillCell().weighty(1.0));
+    return replacePanel;
+  }
+
+  private void updateOptions() {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    myShortenFqn.setVisible(profile != null && profile.supportsShortenFQNames());
+    myStaticImport.setVisible(profile != null && profile.supportsUseStaticImports());
   }
 
   @Nullable
@@ -696,16 +689,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     return panel;
   }
 
-  Project getProject() {
-    return mySearchContext.getProject();
-  }
-
   @Nullable
   @Override
   public Point getInitialLocation() {
     // handle dimension service manually to store dimensions correctly when switching between search/replace in the same dialog
     final DimensionService dimensionService = DimensionService.getInstance();
-    final Dimension size = dimensionService.getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, getProject());
+    final Dimension size = dimensionService.getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, myProject);
     if (size != null) {
       setSize(size.width, myEditConfigOnly ? size.height - myScopePanel.getPreferredSize().height : size.height);
     }
@@ -713,24 +702,21 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       pack();
       // set width from replace if search not available and vice versa
       final Dimension otherSize =
-        dimensionService.getSize(myReplace ? SEARCH_DIMENSION_SERVICE_KEY : REPLACE_DIMENSION_SERVICE_KEY, getProject());
+        dimensionService.getSize(myReplace ? SEARCH_DIMENSION_SERVICE_KEY : REPLACE_DIMENSION_SERVICE_KEY, myProject);
       if (otherSize != null) {
         setSize(otherSize.width, getSize().height);
       }
     }
     if (myEditConfigOnly) return super.getInitialLocation();
-    final Point location = dimensionService.getLocation(SEARCH_DIMENSION_SERVICE_KEY, getProject());
+    final Point location = dimensionService.getLocation(SEARCH_DIMENSION_SERVICE_KEY, myProject);
     return (location == null) ? super.getInitialLocation() : location;
   }
 
   @Override
   public void show() {
-    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
-    if (!myUseLastConfiguration) {
+    if (!myConfigurationLoaded) {
       setTextFromContext();
     }
-    final PropertiesComponent properties = PropertiesComponent.getInstance();
-    setFilterPanelVisible(properties.getBoolean(FILTERS_VISIBLE_STATE, true));
     super.show();
   }
 
@@ -739,11 +725,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       return;
     }
     final Document document = mySearchCriteriaEdit.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     assert psiFile != null;
-    final TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
+    final TemplateBuilder builder = StructuralSearchTemplateBuilder.getInstance().buildTemplate(psiFile);
+    if (builder == null) return;
     WriteCommandAction
-      .runWriteCommandAction(getProject(), SSRBundle.message("command.name.live.search.template.builder"), "Structural Search",
+      .runWriteCommandAction(myProject, SSRBundle.message("command.name.live.search.template.builder"), "Structural Search",
                              () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
 
@@ -760,153 +747,101 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   @Override
   protected void doOKAction() {
-    myDoingOkAction = true;
+    if (!getOKAction().isEnabled()) return;
+    if (!myPinned) close(OK_EXIT_CODE);
     removeMatchHighlights();
-    final CompiledPattern compiledPattern = compilePattern();
-    myDoingOkAction = false;
-    if (compiledPattern == null) return;
-
     myAlarm.cancelAllRequests();
     myConfiguration.removeUnusedVariables();
-    super.doOKAction();
     if (myEditConfigOnly) return;
 
     final SearchScope scope = myScopePanel.getScope();
-    if (scope instanceof GlobalSearchScopesCore.DirectoryScope) {
-      final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)scope;
-      FindInProjectSettings.getInstance(getProject()).addDirectory(directoryScope.getDirectory().getPresentableUrl());
+    if (scope instanceof GlobalSearchScopesCore.DirectoryScope directoryScope) {
+      FindInProjectSettings.getInstance(myProject).addDirectory(directoryScope.getDirectory().getPresentableUrl());
     }
 
-    final FindSettings findSettings = FindSettings.getInstance();
-    findSettings.setShowResultsInSeparateView(myOpenInNewTab.isSelected());
-
-    try {
-      ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
-      startSearching();
-    }
-    catch (MalformedPatternException ex) {
-      reportMessage(SSRBundle.message("this.pattern.is.malformed.message", ex.getMessage()), true, mySearchCriteriaEdit);
-    }
+    FindSettings.getInstance().setShowResultsInSeparateView(myOpenInNewTab.isSelected());
+    ConfigurationManager.getInstance(myProject).addHistoryConfiguration(getConfiguration());
+    startSearching();
   }
 
   public Configuration getConfiguration() {
     saveConfiguration();
-    return myConfiguration.copy();
+    //final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    //assert matchOptions.isCaseSensitiveMatch() == myMatchCase.isSelected();
+    //assert matchOptions.isSearchInjectedCode() == myInjected.isSelected();
+    //final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    //assert replaceOptions.isToReformatAccordingToStyle() == myReformat.isSelected();
+    //assert replaceOptions.isToUseStaticImport() == myStaticImport.isSelected();
+    //assert replaceOptions.isToShortenFQN() == myShortenFqn.isSelected();
+    return myReplace ? new ReplaceConfiguration(myConfiguration) : new SearchConfiguration(myConfiguration);
   }
 
-  private CompiledPattern compilePattern() {
-    final MatchOptions matchOptions = getConfiguration().getMatchOptions();
-    final Project project = getProject();
-    try {
-      final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true, !myEditConfigOnly);
-      reportMessage(null, false, mySearchCriteriaEdit);
-      return compiledPattern;
-    }
-    catch (MalformedPatternException e) {
-      removeMatchHighlights();
-      final String message = isEmpty(matchOptions.getSearchPattern())
-                             ? null
-                             : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
-      if (!e.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
-        reportMessage(message, true, mySearchCriteriaEdit);
-      }
-      return null;
-    }
-    catch (UnsupportedPatternException e) {
-      removeMatchHighlights();
-      reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), true, mySearchCriteriaEdit);
-      return null;
-    }
-    catch (NoMatchFoundException e) {
-      removeMatchHighlights();
-      reportMessage(e.getMessage(), false, myScopePanel);
-      return null;
-    }
-  }
-
-  private void checkReplacementPattern() {
-    if (!myReplace) {
+  private void removeMatchHighlights() {
+    if (myEditConfigOnly || myRangeHighlighters.isEmpty()) {
       return;
     }
-    try {
-      Replacer.checkReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
-      reportMessage(null, false, myReplaceCriteriaEdit);
-    }
-    catch (UnsupportedPatternException ex) {
-      reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
-    }
-    catch (MalformedPatternException ex) {
-      if (!ex.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
-        reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
-      }
-    }
-  }
-
-  void removeMatchHighlights() {
-    if (myEditConfigOnly) {
-      return;
-    }
-    // retrieval of editor needs to be outside of invokeLater(), otherwise the editor might have already changed.
+    // retrieval of editor needs to be outside invokeLater(), otherwise the editor might have already changed.
     final Editor editor = myEditor;
     if (editor == null) {
       return;
     }
     ApplicationManager.getApplication().invokeLater(() -> {
-      final Project project = getProject();
-      if (project.isDisposed()) {
-        return;
-      }
-      final HighlightManager highlightManager = HighlightManager.getInstance(project);
+      if (myProject.isDisposed()) return;
+      final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
       for (RangeHighlighter highlighter : myRangeHighlighters) {
         highlightManager.removeSegmentHighlighter(editor, highlighter);
       }
-      WindowManager.getInstance().getStatusBar(project).setInfo("");
+      WindowManager.getInstance().getStatusBar(myProject).setInfo("");
       myRangeHighlighters.clear();
     });
   }
 
-  void addMatchHighlights() {
-    if (myEditConfigOnly) {
-      return;
-    }
-    final Project project = getProject();
-    final Editor editor = myEditor;
-    if (editor == null) {
-      return;
-    }
-    final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) {
-      return;
-    }
-    final MatchOptions matchOptions = getConfiguration().getMatchOptions();
-    matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
-    final CollectingMatchResultSink sink = new CollectingMatchResultSink();
-    try {
-      new Matcher(project, matchOptions).findMatches(sink);
-      final List<MatchResult> matches = sink.getMatches();
-      removeMatchHighlights();
-      addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
-    }
-    catch (StructuralSearchException e) {
-      reportMessage(e.getMessage().replace(ScriptSupport.UUID, ""), true, mySearchCriteriaEdit);
-      removeMatchHighlights();
-    }
+  private void addMatchHighlights() {
+    if (myEditConfigOnly) return;
+    ReadAction.nonBlocking(() -> {
+        if (DumbService.isDumb(myProject)) {
+          // Search hits in the current editor are not shown when dumb.
+          return null;
+        }
+        final Editor editor = myEditor;
+        if (editor == null) {
+          return null;
+        }
+        final Document document = editor.getDocument();
+        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        if (file == null) {
+          return null;
+        }
+        final MatchOptions matchOptions = getConfiguration().getMatchOptions();
+        matchOptions.setScope(new LocalSearchScope(file, PredefinedSearchScopeProviderImpl.getCurrentFileScopeName()));
+        final CollectingMatchResultSink sink = new CollectingMatchResultSink();
+        try {
+          new Matcher(myProject, matchOptions).findMatches(sink);
+          final List<MatchResult> matches = sink.getMatches();
+          removeMatchHighlights();
+          addMatchHighlights(matches, editor, file, SSRBundle.message("status.bar.text.results.found.in.current.file", matches.size()));
+        }
+        catch (MalformedPatternException | UnsupportedPatternException e) {
+          reportMessage(e.getMessage().replace(ScriptSupport.UUID, ""), true, mySearchCriteriaEdit);
+          removeMatchHighlights();
+        }
+        return null;
+      })
+      .withDocumentsCommitted(myProject)
+      .expireWith(getDisposable())
+      .coalesceBy(this)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void addMatchHighlights(@NotNull List<MatchResult> matchResults,
+  private void addMatchHighlights(@NotNull List<? extends MatchResult> matchResults,
                                   @NotNull Editor editor,
                                   @NotNull PsiFile file,
-                                  @Nullable String statusBarText) {
+                                  @NlsContexts.StatusBarText @Nullable String statusBarText) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      final Project project = getProject();
-      if (project.isDisposed()) {
+      if (myProject.isDisposed()) {
         return;
       }
       if (!matchResults.isEmpty()) {
-        final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-        final TextAttributes textAttributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final HighlightManager highlightManager = HighlightManager.getInstance(project);
         for (MatchResult result : matchResults) {
           final PsiElement match = result.getMatch();
           if (match == null || match.getContainingFile() != file) continue;
@@ -930,38 +865,98 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
             start = range.getStartOffset();
             end = range.getEndOffset();
           }
-          highlightManager.addRangeHighlight(editor, start, end, textAttributes, false, myRangeHighlighters);
+          final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
+          highlightManager.addRangeHighlight(editor, start, end, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, myRangeHighlighters);
         }
-        HighlightHandlerBase.setupFindModel(project);
+        HighlightHandlerBase.setupFindModel(myProject);
       }
-      WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
+      WindowManager.getInstance().getStatusBar(myProject).setInfo(statusBarText);
     });
   }
 
-  Balloon myBalloon = null;
-  void reportMessage(@Nullable String message, boolean error, @NotNull JComponent component) {
+  @Override
+  protected boolean continuousValidation() {
+    return false;
+  }
+
+  @Override
+  protected @NotNull Alarm.ThreadToUse getValidationThreadToUse() {
+    return Alarm.ThreadToUse.POOLED_THREAD;
+  }
+
+  @Override
+  protected @NotNull List<ValidationInfo> doValidateAll() {
+    final JRootPane component = getRootPane();
+    if (component == null) {
+      return Collections.emptyList();
+    }
+    final List<ValidationInfo> errors = new SmartList<>();
+    saveConfiguration();
+    final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    try {
+      CompiledPattern compiledPattern = null;
+      try {
+        compiledPattern = PatternCompiler.compilePattern(myProject, matchOptions, true, !myEditConfigOnly && !myPerformAction);
+      }
+      catch (MalformedPatternException e) {
+        removeMatchHighlights();
+        if (!StringUtil.isEmptyOrSpaces(matchOptions.getSearchPattern())) {
+          final String message = e.getMessage();
+          errors.add(new ValidationInfo((message == null)
+                                        ? SSRBundle.message("this.pattern.is.malformed.message")
+                                        : message,
+                                        mySearchCriteriaEdit));
+        }
+      }
+      catch (UnsupportedPatternException | NoMatchFoundException e) {
+        removeMatchHighlights();
+        errors.add(new ValidationInfo(e.getMessage(), mySearchCriteriaEdit));
+      }
+      if (myReplace) {
+        try {
+          Replacer.checkReplacementPattern(myProject, myConfiguration.getReplaceOptions());
+        }
+        catch (UnsupportedPatternException | MalformedPatternException e) {
+          errors.add(new ValidationInfo(e.getMessage(), myReplaceCriteriaEdit));
+        }
+      }
+
+      initializeFilterPanel(compiledPattern);
+      if (compiledPattern != null) {
+        addMatchHighlights();
+      }
+      else {
+        errors.add(new ValidationInfo(""));
+      }
+      ApplicationManager.getApplication().invokeLater(() -> setSearchTargets(myConfiguration.getMatchOptions()),
+                                                      ModalityState.stateForComponent(component));
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (RuntimeException e) {
+      Logger.getInstance(StructuralSearchDialog.class).error(e);
+    }
+    return errors;
+  }
+
+  private Balloon myBalloon;
+  private void reportMessage(@NlsContexts.PopupContent @Nullable String message, boolean error, @NotNull JComponent component) {
     ApplicationManager.getApplication().invokeLater(() -> {
+      if (isDisposed()) return;
       if (myBalloon != null) myBalloon.hide();
-      component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
-      component.repaint();
 
       if (message == null) return;
       myBalloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(message, error ? MessageType.ERROR : MessageType.WARNING, null)
         .setHideOnFrameResize(false)
         .createBalloon();
-      if (component != myScopePanel) {
-        myBalloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
-      }
-      else {
-        myBalloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
-      }
-      myBalloon.showInCenterOf(component);
+      myBalloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
       Disposer.register(myDisposable, myBalloon);
     }, ModalityState.stateForComponent(component));
   }
 
-  void securityCheck() {
+  private void securityCheck() {
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     int scripts = 0;
     for (String name : matchOptions.getVariableConstraintNames()) {
@@ -969,44 +964,44 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (constraint.getScriptCodeConstraint().length() > 2) scripts++;
     }
     final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
-    if (replaceOptions != null) {
-      for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
-        if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
-      }
+    for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
+      if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
     }
     if (scripts > 0) {
-      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.WARNING)
-        .setTitle(SSRBundle.message("import.template.script.warning.title"))
-        .setContent(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName(), scripts))
-        .notify(mySearchContext.getProject());
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID)
+        .createNotification(
+          SSRBundle.message("import.template.script.warning.title"),
+          SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName(), scripts),
+          NotificationType.WARNING
+        )
+        .notify(myProject);
     }
   }
 
-  public void showFilterPanel(String variableName) {
-    myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-    setFilterPanelVisible(true);
-    myConfiguration.setCurrentVariableName(variableName);
-  }
-
-  void setFilterPanelVisible(boolean visible) {
-    if (visible) {
-      if (!myFilterPanel.isInitialized()) {
-        myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
-      }
-      if (!isFilterPanelVisible()) {
-        mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
-      }
+  private void setFilterPanelVisible(boolean visible) {
+    if (visible && myFilterPanel.getVariable() == null) {
+      myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
     }
-    else {
-      if (isFilterPanelVisible()) {
-        mySearchEditorPanel.setSecondComponent(null);
-        myConfiguration.setCurrentVariableName(null);
-      }
+    if (isFilterPanelVisible() != visible) {
+      mySearchEditorPanel.setSecondComponent(visible ? myFilterPanel.getComponent() : null);
     }
   }
 
-  boolean isFilterPanelVisible() {
+  private boolean isFilterPanelVisible() {
     return mySearchEditorPanel.getSecondComponent() != null;
+  }
+
+  private void setExistingTemplatesPanelVisible(boolean visible) {
+    if (visible) {
+      myMainSplitter.setFirstComponent(myExistingTemplatesComponent.getTemplatesPanel());
+    } else {
+        myMainSplitter.setFirstComponent(null);
+    }
+  }
+
+  private boolean isExistingTemplatesPanelVisible() {
+    return myMainSplitter.getFirstComponent() != null;
   }
 
   private void setSearchTargets(MatchOptions matchOptions) {
@@ -1015,27 +1010,23 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     names.remove(Configuration.CONTEXT_VAR_NAME);
     names.add(SSRBundle.message("complete.match.variable.name"));
     myTargetComboBox.setItems(names);
-    if (names.size() > 1) {
-      myTargetComboBox.setEnabled(true);
-      for (String name : names) {
-        final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
-        if (constraint != null && constraint.isPartOfSearchResults()) {
-          myTargetComboBox.setSelectedItem(name);
-          return;
-        }
+    myTargetComboBox.setEnabled(names.size() > 1);
+
+    for (@NlsSafe String name : names) {
+      final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
+      if (constraint != null && constraint.isPartOfSearchResults()) {
+        myTargetComboBox.setSelectedItem(name);
+        return;
       }
-      myTargetComboBox.setSelectedItem(SSRBundle.message("complete.match.variable.name"));
     }
-    else {
-      myTargetComboBox.setEnabled(false);
-    }
+    myTargetComboBox.setSelectedItem(SSRBundle.message("complete.match.variable.name"));
   }
 
   /**
    * @param text  the text to try and load a configuration from
    * @return {@code true}, if some configuration was found, even if it was broken or corrupted {@code false} otherwise.
    */
-  boolean loadConfiguration(String text) {
+  private boolean loadConfiguration(String text) {
     if (text == null) {
       return false;
     }
@@ -1043,6 +1034,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       final Configuration configuration = ConfigurationUtil.fromXml(text);
       if (configuration == null) {
         return false;
+      }
+      if (configuration instanceof ReplaceConfiguration && !myReplace) {
+        mySwitchAction.actionPerformed(
+          AnActionEvent.createFromAnAction(mySwitchAction, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
       }
       loadConfiguration(configuration);
       securityCheck();
@@ -1054,126 +1049,80 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   public void loadConfiguration(Configuration configuration) {
+    myConfigurationLoaded = true;
     myConfiguration = createConfiguration(configuration);
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-    setSearchTargets(matchOptions);
-    if (!myEditConfigOnly) {
-      myScopePanel.setScopesFromContext();
-      final SearchScope scope = matchOptions.getScope();
-      if (scope != null) myScopePanel.setScope(scope);
+    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    if (myEditConfigOnly) {
+      myMatchCase.setSelected(matchOptions.isCaseSensitiveMatch());
+      myInjected.setSelected(false);
+      myReformat.setSelected(replaceOptions.isToReformatAccordingToStyle());
+      myStaticImport.setSelected(replaceOptions.isToUseStaticImport());
+      myShortenFqn.setSelected(replaceOptions.isToShortenFQN());
     }
+    setSearchTargets(matchOptions);
 
-
-    myMatchCase.setSelected(matchOptions.isCaseSensitiveMatch());
-    myFileTypesComboBox.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
+    myFileTypeChooser.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
     final Editor searchEditor = mySearchCriteriaEdit.getEditor();
     if (searchEditor != null) {
       searchEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
-    UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
+    setEditorContent(false, matchOptions.getSearchPattern());
 
-    final PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (myReplace) {
-      final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
-      if (replaceEditor != null) {
-        replaceEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-      }
-      myRecursive.setSelected(false);
-      if (configuration instanceof ReplaceConfiguration) {
-        final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
-
-        UIUtil.setContent(myReplaceCriteriaEdit, replaceOptions.getReplacement());
-
-        myShortenFQN.setSelected(replaceOptions.isToShortenFQN());
-        myReformat.setSelected(replaceOptions.isToReformatAccordingToStyle());
-        myUseStaticImport.setSelected(replaceOptions.isToUseStaticImport());
-      }
-      else {
-        UIUtil.setContent(myReplaceCriteriaEdit, matchOptions.getSearchPattern());
-
-        myShortenFQN.setSelected(properties.getBoolean(SHORTEN_FQN_STATE));
-        myReformat.setSelected(properties.getBoolean(REFORMAT_STATE));
-        myUseStaticImport.setSelected(properties.getBoolean(USE_STATIC_IMPORT_STATE));
-      }
+    final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
+    if (replaceEditor != null) {
+      replaceEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
-    else {
-      if (configuration instanceof ReplaceConfiguration) {
-        myRecursive.setSelected(properties.getBoolean(RECURSIVE_STATE));
-      }
-    }
+    setEditorContent(true, replaceOptions.getReplacement());
+    updateOptions();
+  }
+
+  private void setEditorContent(boolean replace, String text) {
+    myChangedConfiguration = true;
+    UIUtil.setContent(replace ? myReplaceCriteriaEdit : mySearchCriteriaEdit, text);
+    myChangedConfiguration = false;
   }
 
   private void saveConfiguration() {
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
 
-    if (!myEditConfigOnly) {
+    if (myScopePanel.isVisible()) {
       final SearchScope scope = myScopePanel.getScope();
       final boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(scope.getDisplayName());
       // We need to reset search within hierarchy scope during online validation since the scope works with user participation
-      matchOptions.setScope(searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : scope);
+      matchOptions.setScope(searchWithinHierarchy && !myPerformAction ? GlobalSearchScope.projectScope(myProject) : scope);
     }
     else {
       matchOptions.setScope(null);
     }
-    matchOptions.setFileType(myFileType);
-    matchOptions.setDialect(myDialect);
-    matchOptions.setPatternContext(myPatternContext);
     matchOptions.setSearchPattern(getPattern(mySearchCriteriaEdit));
-    matchOptions.setCaseSensitiveMatch(myMatchCase.isSelected());
+    matchOptions.setRecursiveSearch(!myReplace);
 
-    if (myReplace) {
-      final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
-
-      replaceOptions.setReplacement(getPattern(myReplaceCriteriaEdit));
-      replaceOptions.setToShortenFQN(myShortenFQN.isSelected());
-      replaceOptions.setToReformatAccordingToStyle(myReformat.isSelected());
-      replaceOptions.setToUseStaticImport(myUseStaticImport.isSelected());
-      matchOptions.setRecursiveSearch(false);
-    }
-    else {
-      matchOptions.setRecursiveSearch(myRecursive.isSelected());
-    }
-
-    final PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (myReplace) {
-      properties.setValue(SHORTEN_FQN_STATE, myShortenFQN.isSelected());
-      properties.setValue(REFORMAT_STATE, myReformat.isSelected());
-      properties.setValue(USE_STATIC_IMPORT_STATE, myUseStaticImport.isSelected());
-    }
-    else {
-      properties.setValue(RECURSIVE_STATE, myRecursive.isSelected());
-      properties.setValue(MATCH_CASE_STATE, myMatchCase.isSelected());
-    }
+    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    replaceOptions.setReplacement(getPattern(myReplaceCriteriaEdit));
   }
 
   private String getPattern(EditorTextField textField) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-    assert profile != null;
-    final Document document = textField.getDocument();
-    final String pattern = ReadAction.compute(() -> {
-      final PsiFile file = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-      assert file != null;
-      return profile.getCodeFragmentText(file);
-    });
-    return pattern.isEmpty() ? textField.getText() : pattern;
-  }
-
-  @Nullable
-  @Override
-  protected final String getDimensionServiceKey() {
-    return null;
+    if (profile != null) {
+      final Document document = textField.getDocument();
+      final String pattern = ReadAction.nonBlocking(() -> {
+        final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        assert file != null;
+        return profile.getCodeFragmentText(file);
+      }).executeSynchronously();
+      return pattern.isEmpty() ? textField.getText() : pattern;
+    }
+    return textField.getText();
   }
 
   @Override
   public void dispose() {
-    getProject().putUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION, myConfiguration);
+    myProject.putUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION, myConfiguration);
+    storeDimensions();
 
-    if (myReplace) storeDimensions(REPLACE_DIMENSION_SERVICE_KEY, SEARCH_DIMENSION_SERVICE_KEY);
-    else storeDimensions(SEARCH_DIMENSION_SERVICE_KEY, REPLACE_DIMENSION_SERVICE_KEY);
-
-    final PropertiesComponent properties = PropertiesComponent.getInstance();
-    properties.setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
-    StructuralSearchPlugin.getInstance(getProject()).setDialog(null);
+    saveUIState();
+    StructuralSearchPlugin.getInstance(myProject).setDialog(null);
     myAlarm.cancelAllRequests();
     mySearchCriteriaEdit.removeNotify();
     myReplaceCriteriaEdit.removeNotify();
@@ -1181,26 +1130,111 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     super.dispose();
   }
 
-  private void storeDimensions(String key1, String key2) {
+  private void loadUIState() {
+    final UIState uiState = UIState.getInstance();
+    if (isFilterPanelVisible() != uiState.filtersVisible) {
+      mySearchEditorPanel.setSecondComponent(uiState.filtersVisible ? myFilterPanel.getComponent() : null);
+    }
+    setExistingTemplatesPanelVisible(uiState.existingTemplatesVisible);
+    myPinned = uiState.pinned;
+    myExistingTemplatesComponent.setTreeState(uiState.templatesTreeState);
+    if (!myEditConfigOnly) {
+      myInjected.setSelected(uiState.searchInjectedCode);
+      myMatchCase.setSelected(uiState.matchCase);
+      if (uiState.scopeDescriptor != null && uiState.scopeType != null) {
+        myScopePanel.setScope(Scopes.createScope(myProject, uiState.scopeDescriptor, uiState.scopeType));
+      }
+      myShortenFqn.setSelected(uiState.shortenFQNames);
+      myStaticImport.setSelected(uiState.useStaticImport);
+      myReformat.setSelected(uiState.reformat);
+    }
+  }
+
+  private void saveUIState() {
+    if (mySearchEditorPanel == null) return;
+    final UIState uiState = UIState.getInstance();
+    uiState.filtersVisible = isFilterPanelVisible();
+    uiState.existingTemplatesVisible = isExistingTemplatesPanelVisible();
+    uiState.pinned = myPinned;
+    uiState.templatesTreeState = myExistingTemplatesComponent.getTreeState();
+
+    if (!myEditConfigOnly) {
+      if (myInjected.isVisible()) {
+        uiState.searchInjectedCode = myInjected.isSelected();
+      }
+      uiState.matchCase = myMatchCase.isSelected();
+      if (myScopePanel.isVisible()) {
+        final SearchScope scope = myScopePanel.getScope();
+        uiState.scopeDescriptor = Scopes.getDescriptor(scope);
+        uiState.scopeType = Scopes.getType(scope);
+      }
+      if (myReplace) {
+        if (myShortenFqn.isVisible()) {
+          uiState.shortenFQNames = myShortenFqn.isSelected();
+        }
+        if (myStaticImport.isVisible()) {
+          uiState.useStaticImport = myStaticImport.isSelected();
+        }
+        uiState.reformat = myReformat.isSelected();
+      }
+    }
+  }
+
+  /**
+   * Handle own dimension service to store dimensions correctly when switching between search/replace in the same dialog
+   */
+  private void storeDimensions() {
     if (myEditConfigOnly) return; // don't store dimensions when editing structural search inspection patterns
-    // handle own dimension service to store dimensions correctly when switching between search/replace in the same dialog
-    final Dimension size = getSize();
-    final DimensionService dimensionService = DimensionService.getInstance();
+
+    final String key1 = myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY;
+    final String key2 = myReplace ? SEARCH_DIMENSION_SERVICE_KEY : REPLACE_DIMENSION_SERVICE_KEY;
     final Point location = getLocation();
     if (location.x < 0) location.x = 0;
     if (location.y < 0) location.y = 0;
-    dimensionService.setLocation(SEARCH_DIMENSION_SERVICE_KEY, location, getProject());
-    dimensionService.setSize(key1, size, getProject());
-    final Dimension otherSize = dimensionService.getSize(key2);
+    final DimensionService dimensionService = DimensionService.getInstance();
+    dimensionService.setLocation(SEARCH_DIMENSION_SERVICE_KEY, location, myProject);
+    final Dimension size = getSize();
+    dimensionService.setSize(key1, size, myProject);
+    final Dimension otherSize = dimensionService.getSize(key2, myProject);
     if (otherSize != null && otherSize.width != size.width) {
       otherSize.width = size.width;
-      dimensionService.setSize(key2, otherSize, getProject());
+      dimensionService.setSize(key2, otherSize, myProject);
     }
   }
 
   @Override
   protected String getHelpId() {
     return "find.structuredSearch";
+  }
+
+  private void updateColors() {
+    final var scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    myComponentsWithEditorBackground.forEach(component -> {
+      component.setBackground(scheme.getDefaultBackground());
+    });
+
+    final var borderTopBottom = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 1, 0, 1, 0);
+    if (myEditConfigOnly) {
+      final var borderTopOnly = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 1, 0, 0, 0);
+      if (mySearchWrapper != null) mySearchWrapper.setBorder(myReplace ? borderTopBottom : borderTopOnly);
+      if (myReplaceWrapper != null) myReplaceWrapper.setBorder(borderTopOnly);
+    } else {
+      if (mySearchWrapper != null) mySearchWrapper.setBorder(borderTopBottom);
+      if (myReplaceWrapper != null) myReplaceWrapper.setBorder(borderTopBottom);
+    }
+
+    myExistingTemplatesComponent.updateColors();
+  }
+
+  private void exportToClipboard() {
+    CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(getConfiguration())));
+  }
+
+  private void importFromClipboard() {
+    final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    if (!loadConfiguration(contents)) {
+      reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
+    }
   }
 
   private static class ErrorBorder implements Border {
@@ -1216,8 +1250,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (editorTextField == null) {
         return;
       }
-      final Object object = editorTextField.getClientProperty("JComponent.outline");
-      if ("error".equals(object) || "warning".equals(object)) {
+      DarculaUIUtil.Outline object = DarculaUIUtil.getOutline(editorTextField);
+      if (DarculaUIUtil.isWarningOrError(object)) {
         myErrorBorder.paintBorder(c, g, x, y, width, height);
       }
     }
@@ -1241,15 +1275,15 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      storeDimensions();
       myReplace = !myReplace;
       setTitle(getDefaultTitle());
       myReplacePanel.setVisible(myReplace);
-      myRecursive.setVisible(!myReplace);
       loadConfiguration(myConfiguration);
       final Dimension size =
-        DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY);
+        DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, e.getProject());
       if (size != null) {
-        setSize(getSize().width, size.height);
+        setSize(size.width, size.height);
       }
       else {
         pack();
@@ -1258,7 +1292,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
 
     private void init() {
-      getTemplatePresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
+      getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
       final ShortcutSet replaceShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet();
@@ -1267,75 +1301,49 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                       : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
       registerCustomShortcutSet(shortcutSet, getRootPane());
     }
-  }
 
-  private class CopyConfigurationAction extends AnAction implements DumbAware {
-
-    CopyConfigurationAction() {
-      super(SSRBundle.messagePointer("export.template.action"));
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
     }
 
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(myConfiguration)));
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
-  }
-
-  private class PasteConfigurationAction extends AnAction implements DumbAware {
-
-    PasteConfigurationAction() {
-      super(SSRBundle.messagePointer("import.template.action"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-      if (!loadConfiguration(contents)) {
-        reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
-      }
-    }
-  }
-
-  public static String getUserDefined() {
-    return SSRBundle.message("new.template.defaultname");
   }
 
   private class MyEditorTextField extends EditorTextField {
     private final boolean myReplace;
 
     MyEditorTextField(Document document, boolean replace) {
-      super(document, StructuralSearchDialog.this.getProject(), StructuralSearchDialog.this.myFileType, false, false);
+      super(document, myProject, myFileType, false, false);
       myReplace = replace;
     }
 
     @Override
-    protected EditorEx createEditor() {
+    protected @NotNull EditorEx createEditor() {
       final EditorEx editor = super.createEditor();
       editor.setHorizontalScrollbarVisible(true);
       editor.setVerticalScrollbarVisible(true);
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-      assert profile != null;
-      TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
-      SubstitutionShortInfoHandler.install(editor, variableName -> {
+      if (profile != null) {
+        TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
+      }
+      SubstitutionShortInfoHandler.install(editor, myFilterPanel, variableName -> {
         if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
           //noinspection AssignmentToLambdaParameter
-          variableName = trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
-          assert myConfiguration instanceof ReplaceConfiguration;
+          variableName = StringUtil.trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
+          assert myReplace;
           myFilterPanel.initFilters(UIUtil.getOrAddReplacementVariable(variableName, myConfiguration));
         }
         else{
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
         }
-        if (isFilterPanelVisible()) {
-          myConfiguration.setCurrentVariableName(variableName);
-        }
       }, myDisposable, myReplace);
       editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
       getDocument().putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
-        putClientProperty("JComponent.outline", "error");
-        repaint();
-        getOKAction().setEnabled(false);
-        removeMatchHighlights();
+        if (getClientProperty("JComponent.outline") == null) initValidation();
       });
 
       TextCompletionUtil.installCompletionHint(editor);

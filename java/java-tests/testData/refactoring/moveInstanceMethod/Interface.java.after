@@ -1,5 +1,5 @@
 interface Foreign {
-    default void foo(Test1 test1) {
+    default void foo (Test1 test1) {
         test1.field++;
     }
 }

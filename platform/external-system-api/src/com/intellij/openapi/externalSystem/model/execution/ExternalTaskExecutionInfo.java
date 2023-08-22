@@ -16,12 +16,11 @@
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Essentially this class is {@link ExternalSystemTaskExecutionSettings} plus auxiliary information like execution type (run/debug etc).
- * 
- * @author Denis Zhdanov
  */
 public class ExternalTaskExecutionInfo {
   
@@ -60,7 +59,7 @@ public class ExternalTaskExecutionInfo {
     myExecutorId = executorId;
   }
 
-  public String getDescription() {
+  public @Nls String getDescription() {
     return StringUtil.join(mySettings.getTaskDescriptions(), "\n");
   }
 

@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-/**
- * @author peter
- */
 public abstract class CommentMacro extends MacroBase {
   private final Function<? super Commenter, String> myCommenterFunction;
 

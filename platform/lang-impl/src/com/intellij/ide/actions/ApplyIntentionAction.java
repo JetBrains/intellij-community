@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -17,18 +18,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApplyIntentionAction extends AnAction {
+public final class ApplyIntentionAction extends AnAction {
 
   private final IntentionAction myAction;
   private final Editor myEditor;
   private final PsiFile myFile;
 
-  public ApplyIntentionAction(final HighlightInfo.IntentionActionDescriptor descriptor, String text, Editor editor, PsiFile file) {
+  public ApplyIntentionAction(final HighlightInfo.IntentionActionDescriptor descriptor, @NlsActions.ActionText String text, Editor editor, PsiFile file) {
     this(descriptor.getAction(), text, editor, file);
   }
 
-  public ApplyIntentionAction(final IntentionAction action, String text, Editor editor, PsiFile file) {
-    super(text);
+  public ApplyIntentionAction(final IntentionAction action, @NlsActions.ActionText String text, Editor editor, PsiFile file) {
+    super("");
     getTemplatePresentation().setText(text, false);
     myAction = action;
     myEditor = editor;

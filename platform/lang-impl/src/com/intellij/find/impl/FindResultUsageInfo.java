@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindManager;
@@ -30,7 +16,7 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-public class FindResultUsageInfo extends UsageInfo {
+final class FindResultUsageInfo extends UsageInfo {
   private final FindManager myFindManager;
   private final FindModel myFindModel;
   private final SmartPsiFileRange myAnchor;
@@ -40,13 +26,12 @@ public class FindResultUsageInfo extends UsageInfo {
 
   private static final Key<Long> DOCUMENT_TIMESTAMP_KEY = Key.create("FindResultUsageInfo.DOCUMENT_TIMESTAMP_KEY");
 
-  public FindResultUsageInfo(@NotNull FindManager finder,
+  FindResultUsageInfo(@NotNull FindManager finder,
                              @NotNull PsiFile file,
                              int offset,
                              @NotNull FindModel findModel,
                              @NotNull FindResult result) {
     super(file, result.getStartOffset(), result.getEndOffset());
-
     myFindManager = finder;
     myFindModel = findModel;
 
@@ -67,9 +52,12 @@ public class FindResultUsageInfo extends UsageInfo {
 
   @Override
   public boolean isValid() {
-    if (!super.isValid()) return false;
+    if (!super.isValid()) {
+      return false;
+    }
 
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getPsiFile());
+    PsiFile psiFile = getPsiFile();
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
     if (document == null) {
       myCachedResult = null;
       return false;
@@ -88,7 +76,7 @@ public class FindResultUsageInfo extends UsageInfo {
       return false;
     }
 
-    VirtualFile file = getPsiFile().getVirtualFile();
+    VirtualFile file = psiFile.getVirtualFile();
     if (isFileOrBinary) {
       myCachedResult = file.isValid();
       return myCachedResult;
@@ -130,5 +118,10 @@ public class FindResultUsageInfo extends UsageInfo {
 
   private PsiFile getPsiFile() {
     return (PsiFile)getElement();
+  }
+
+  @Override
+  public String toString() {
+    return "FindResultUsageInfo: myFindModel=" + myFindModel + " in " + getSmartPointer() +"; segment="+getSegment();
   }
 }

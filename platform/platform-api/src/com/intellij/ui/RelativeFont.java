@@ -1,7 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -14,6 +19,8 @@ import static java.util.Locale.ENGLISH;
  */
 public final class RelativeFont implements PropertyChangeListener {
   private static final float MULTIPLIER = 1.09f; // based on the default sizes: 10, 11, 12, 13, 14
+  private static final float MINIMUM_FONT_SIZE = 1.0f;
+
   public static final RelativeFont NORMAL = new RelativeFont(null, null, null);
   public static final RelativeFont PLAIN = NORMAL.style(Font.PLAIN);
   public static final RelativeFont BOLD = NORMAL.style(Font.BOLD);
@@ -28,11 +35,17 @@ public final class RelativeFont implements PropertyChangeListener {
   private final String myFamily;
   private final Integer myStyle;
   private final Float mySize;
+  private final float myMinimumSize;
 
-  private RelativeFont(String family, Integer style, Float size) {
+  private RelativeFont(String family, Integer style, Float size, Float minimumSize) {
     myFamily = family;
     myStyle = style;
     mySize = size;
+    myMinimumSize = minimumSize;
+  }
+
+  private RelativeFont(String family, Integer style, Float size) {
+    this(family, style, size, MINIMUM_FONT_SIZE);
   }
 
   /**
@@ -65,6 +78,38 @@ public final class RelativeFont implements PropertyChangeListener {
   public RelativeFont small() {
     float size = mySize == null ? 1f : mySize;
     return new RelativeFont(myFamily, myStyle, size / MULTIPLIER);
+  }
+
+  /**
+   * @return an instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
+   * over the current instance.
+   */
+  public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset) {
+    return fromResource(propertyName, defaultOffset, MINIMUM_FONT_SIZE);
+  }
+
+  /**
+   * @return an instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
+   * over the current instance. Use custom minimum font size limit.
+   */
+  public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset, float minSize) {
+    int offset = JBUI.getInt(propertyName, defaultOffset);
+    return offset == 0 ? this : scale(offset, minSize);
+  }
+
+  /**
+   * @see #scale(int, float)
+   */
+  public RelativeFont scale(int offset) {
+    return scale(offset, MINIMUM_FONT_SIZE);
+  }
+
+  /**
+   * Returns an instance that represents larger (>0) or smaller (<0) font over the current instance
+   */
+  public RelativeFont scale(int offset, float minSize) {
+    float multiplier = (float)Math.pow(MULTIPLIER, offset);
+    return new RelativeFont(myFamily, myStyle, mySize != null ? mySize * multiplier : multiplier, minSize);
   }
 
   /**
@@ -110,27 +155,36 @@ public final class RelativeFont implements PropertyChangeListener {
    * @return a new font, or the specified one if a change is not needed
    */
   public Font derive(Font font) {
-    if (font != null) {
-      if (null != myFamily && !myFamily.equals(font.getFamily(ENGLISH))) {
-        int style = null != myStyle ? myStyle : font.getStyle();
-        font = new Font(myFamily, style, font.getSize());
-      }
-      else if (null != myStyle && myStyle != font.getStyle()) {
-        return mySize != null
-               ? font.deriveFont(myStyle, mySize * font.getSize2D())
-               : font.deriveFont(myStyle);
-      }
-      if (mySize != null) {
-        return font.deriveFont(mySize * font.getSize2D());
-      }
+    if (font == null) return null;
+
+    boolean isSizeConsidered = false;
+    boolean isOriginalFontUIResource = font instanceof UIResource;
+
+    if (null != myFamily && !myFamily.equals(font.getFamily(ENGLISH))) {
+      int style = null != myStyle ? myStyle : font.getStyle();
+      font = new Font(myFamily, style, font.getSize());
     }
+    else if (null != myStyle && myStyle != font.getStyle()) {
+      isSizeConsidered = true;
+      font = mySize != null
+             ? font.deriveFont(myStyle, Math.max(mySize * font.getSize2D(), myMinimumSize))
+             : font.deriveFont(myStyle);
+    }
+
+    if (mySize != null && !isSizeConsidered) {
+      font = font.deriveFont(Math.max(mySize * font.getSize2D(), myMinimumSize));
+    }
+
+    if (font != null && isOriginalFontUIResource && !(font instanceof UIResource)) {
+      font = new FontUIResource(font);
+    }
+
     return font;
   }
 
   @Override
   public void propertyChange(PropertyChangeEvent event) {
-    if (!(event.getNewValue() instanceof MyFont) && (event.getSource() instanceof Component) && PROPERTY.equals(event.getPropertyName())) {
-      Component component = (Component)event.getSource();
+    if (!(event.getNewValue() instanceof MyFont) && (event.getSource() instanceof Component component) && PROPERTY.equals(event.getPropertyName())) {
       Font font = derive(event.getNewValue() instanceof Font ? (Font)event.getNewValue() : component.getFont());
       if (font != null) {
         component.setFont(new MyFont(font));

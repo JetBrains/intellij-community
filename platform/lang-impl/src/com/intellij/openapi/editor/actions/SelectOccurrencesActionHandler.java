@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.impl.EditorLastActionTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -24,8 +23,7 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
   private static final Key<Boolean> NOT_FOUND = Key.create("select.next.occurence.not.found");
   private static final Key<Boolean> WHOLE_WORDS = Key.create("select.next.occurence.whole.words");
 
-  private static final Set<String> SELECT_ACTIONS = ContainerUtil
-    .set(IdeActions.ACTION_SELECT_NEXT_OCCURENCE, IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE, IdeActions.ACTION_FIND_NEXT,
+  private static final Set<String> SELECT_ACTIONS = Set.of(IdeActions.ACTION_SELECT_NEXT_OCCURENCE, IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE, IdeActions.ACTION_FIND_NEXT,
          IdeActions.ACTION_FIND_PREVIOUS);
 
   protected static void setSelection(Editor editor, Caret caret, TextRange selectionRange) {
@@ -76,7 +74,7 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
 
   protected static boolean isRepeatedActionInvocation() {
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
-    return SELECT_ACTIONS.contains(lastActionId);
+    return lastActionId != null && SELECT_ACTIONS.contains(lastActionId);
   }
 
   protected static FindModel getFindModel(String text, boolean wholeWords) {

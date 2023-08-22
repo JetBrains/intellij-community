@@ -1,4 +1,4 @@
-// "Replace 'stream().forEach()' with 'ifPresent()'" "true"
+// "Replace 'stream().forEach()' with 'ifPresent()'" "true-preview"
 
 import java.util.Optional;
 

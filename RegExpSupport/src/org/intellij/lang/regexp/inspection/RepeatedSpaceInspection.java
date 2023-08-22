@@ -51,7 +51,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
         next = next.getNextSibling();
       }
       if (count > 1) {
-        final String message = count + " consecutive spaces in RegExp";
+        final String message = RegExpBundle.message("inspection.warning.consecutive.spaces.in.regexp", count);
         final int offset = aChar.getStartOffsetInParent();
         myHolder.registerProblem(parent, new TextRange(offset, offset + length), message, new RepeatedSpaceFix(count));
       }
@@ -79,10 +79,9 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
     }
 
     private static boolean isSpace(PsiElement element) {
-      if (!(element instanceof RegExpChar)) {
+      if (!(element instanceof RegExpChar aChar)) {
         return false;
       }
-      final RegExpChar aChar = (RegExpChar)element;
       return aChar.getType() == RegExpChar.Type.CHAR && aChar.getValue() == ' ';
     }
   }

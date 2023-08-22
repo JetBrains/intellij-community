@@ -10,10 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
-public class ClassContextFilter {
+public final class ClassContextFilter {
 
   public static ContextFilter fromClassPattern(ElementPattern pattern) {
     return (descriptor, ctx) -> {
@@ -40,7 +37,7 @@ public class ClassContextFilter {
     }
 
     PsiType myType = getCachedType(typeText, placeFile);
-    if (checked == PsiType.NULL) return myType == PsiType.NULL;
+    if (checked == PsiTypes.nullType()) return myType == PsiTypes.nullType();
     return TypesUtil.isAssignableByMethodCallConversion(myType, checked, placeFile);
   }
 

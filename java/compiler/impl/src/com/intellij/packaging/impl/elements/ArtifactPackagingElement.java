@@ -12,7 +12,13 @@ import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.java.workspace.entities.ArtifactId;
+import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity;
 import com.intellij.util.xmlb.annotations.Attribute;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,6 +107,27 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     return myArtifactPointer != null ? myArtifactPointer.getArtifactName() : null;
   }
 
+  @Override
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
+                                        @NotNull EntitySource source,
+                                        @NotNull Project project) {
+    WorkspaceEntity existingEntity = getExistingEntity(diff);
+    if (existingEntity != null) return existingEntity;
+
+    ArtifactId id;
+    if (this.myArtifactPointer != null) {
+      id = new ArtifactId(this.myArtifactPointer.getArtifactName());
+    }
+    else {
+      id = null;
+    }
+    ArtifactOutputPackagingElementEntity entity = diff.addEntity(ArtifactOutputPackagingElementEntity.create(source, entityBuilder -> {
+      entityBuilder.setArtifact(id);
+      return Unit.INSTANCE;
+    }));
+    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
+    return entity;
+  }
 
   public static class ArtifactPackagingElementState {
     private String myArtifactName;

@@ -20,16 +20,17 @@ import com.intellij.diff.merge.MergeModelBase;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
-import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -120,8 +121,9 @@ class ApplyPatchChange {
     MarkupModelEx markupModel = patchEditor.getMarkupModel();
     TextRange textRange = DiffUtil.getLinesRange(document, line1, line2);
 
-    RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                   HighlighterLayer.LAST, null, HighlighterTargetArea.LINES_IN_RANGE);
+    RangeHighlighter highlighter = markupModel
+      .addRangeHighlighter(null, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.LAST,
+                           HighlighterTargetArea.LINES_IN_RANGE);
 
     highlighter.setLineMarkerRenderer(new MyGutterRenderer(line1, line2, color, tooltip));
 
@@ -201,31 +203,22 @@ class ApplyPatchChange {
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   private String getStatusText() {
-    switch (myStatus) {
-      case ALREADY_APPLIED:
-        return VcsBundle.message("patch.apply.already.applied.status");
-      case EXACTLY_APPLIED:
-        return VcsBundle.message("patch.apply.automatically.applied.status");
-      case NOT_APPLIED:
-        return VcsBundle.message("patch.apply.not.applied.status");
-      default:
-        throw new IllegalStateException();
-    }
+    return VcsBundle.message(switch (myStatus) {
+      case ALREADY_APPLIED -> "patch.apply.already.applied.status";
+      case EXACTLY_APPLIED -> "patch.apply.automatically.applied.status";
+      case NOT_APPLIED -> "patch.apply.not.applied.status";
+    });
   }
 
   @NotNull
   private Color getStatusColor() {
-    switch (myStatus) {
-      case ALREADY_APPLIED:
-        return JBColor.YELLOW.darker();
-      case EXACTLY_APPLIED:
-        return new JBColor(new Color(0, 180, 5), new Color(0, 147, 5));
-      case NOT_APPLIED:
-        return JBColor.RED.darker();
-      default:
-        throw new IllegalStateException();
-    }
+    return switch (myStatus) {
+      case ALREADY_APPLIED -> JBColor.YELLOW.darker();
+      case EXACTLY_APPLIED -> new JBColor(new Color(0, 180, 5), new Color(0, 147, 5));
+      case NOT_APPLIED -> JBColor.RED.darker();
+    };
   }
 
   //
@@ -272,7 +265,7 @@ class ApplyPatchChange {
   }
 
   @Nullable
-  private static GutterIconRenderer createIconRenderer(@NotNull final String text,
+  private static GutterIconRenderer createIconRenderer(@NotNull @NlsContexts.Tooltip String text,
                                                        @NotNull final Icon icon,
                                                        @NotNull final Runnable perform) {
     final String tooltipText = DiffUtil.createTooltipText(text, null);
@@ -322,9 +315,9 @@ class ApplyPatchChange {
     private final int myLine1;
     private final int myLine2;
     private final Color myColor;
-    private final String myTooltip;
+    private final @NlsContexts.Tooltip String myTooltip;
 
-    MyGutterRenderer(int line1, int line2, Color color, String tooltip) {
+    MyGutterRenderer(int line1, int line2, Color color, @NlsContexts.Tooltip String tooltip) {
       myLine1 = line1;
       myLine2 = line2;
       myColor = color;
@@ -333,7 +326,7 @@ class ApplyPatchChange {
 
     @Override
     public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-      LineStatusMarkerRenderer.paintSimpleRange(g, editor, myLine1, myLine2, myColor);
+      LineStatusMarkerDrawUtil.paintSimpleRange(g, editor, myLine1, myLine2, myColor);
     }
 
     @Override
@@ -343,12 +336,15 @@ class ApplyPatchChange {
 
     @Override
     public boolean canDoAction(@NotNull MouseEvent e) {
-      return LineStatusMarkerRenderer.isInsideMarkerArea(e);
+      return LineStatusMarkerDrawUtil.isInsideMarkerArea(e);
     }
 
     @Override
     public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
-      if (getResultRange() != null) myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
+      if (getResultRange() != null) {
+        e.consume();
+        myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
+      }
     }
 
     @NotNull

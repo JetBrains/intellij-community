@@ -22,7 +22,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="&amp;Create source root:"/>
+          <text resource-bundle="messages/JavaUiBundle" key="checkbox.create.source.root"/>
         </properties>
       </component>
     </children>

@@ -17,37 +17,35 @@ package org.intellij.lang.xpath;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsSafe;
 import icons.XpathIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Locale;
 
 public final class XPathFileType extends LanguageFileType {
-
     public static final XPathFileType XPATH = new XPathFileType(new XPathLanguage());
     public static final XPathFileType XPATH2 = new XPathFileType(new XPath2Language());
 
+    @SuppressWarnings("NonDefaultConstructor")
     private XPathFileType(Language language) {
         super(language);
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull @NlsSafe String getName() {
         return getLanguage().getID();
     }
 
     @Override
-    @NotNull
-    public String getDescription() {
-        return "XPath";
+    public @NotNull String getDescription() {
+        return getName();
     }
 
     @Override
-    @NotNull
-    public String getDefaultExtension() {
-        return StringUtil.toLowerCase(getLanguage().getID());
+    public @NotNull String getDefaultExtension() {
+        return getLanguage().getID().toLowerCase(Locale.ENGLISH);
     }
 
     @Override

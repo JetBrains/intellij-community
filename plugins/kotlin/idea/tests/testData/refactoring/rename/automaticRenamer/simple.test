@@ -1,0 +1,6 @@
+{
+  "type": "KOTLIN_CLASS",
+  "classId": "/Foo",
+  "newName": "Bar",
+  "mainFile": "main.kt"
+}

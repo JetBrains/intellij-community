@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,6 +8,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,13 +29,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 @SkipSlowTestLocally
 public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
+    Disposer.setDebugMode(false);
     super.setUp();
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
   }
@@ -55,7 +54,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testRandomActivity() {
@@ -64,13 +63,14 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaPreviewIntentionPolicy()),
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
                                     new StripTestDataMarkup(file),
-                                    new DeleteRange(file));
+                                    new DeleteRange(file),
+                                    new IntroduceVariableActionOnFile(file));
     PropertyChecker
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject());
+    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE);
   }
 
   public void testPreserveComments() {
@@ -144,7 +144,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     ));
   }
 
-  private static class InsertTypeCastCommand extends ActionOnFile {
+  private static final class InsertTypeCastCommand extends ActionOnFile {
     private InsertTypeCastCommand(PsiFile file) {
       super(file);
     }
@@ -162,7 +162,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
         PsiElement expr = env.generateValue(Generator.sampledFrom(elementsToWrap).noShrink(), null);
         if (!(expr instanceof PsiExpression)) return;
         PsiType type = ((PsiExpression)expr).getType();
-        if (type == null || !PsiTypesUtil.isDenotableType(type, expr)) return; //accept cast in expression statement
+        if (type == null || type instanceof PsiDisjunctionType || !PsiTypesUtil.isDenotableType(type, expr)) return; //accept cast in expression statement
         env.logMessage("Inserting cast '" +
                        StringUtil.escapeStringCharacters("(" + type.getCanonicalText() + ")") +
                        "' at " +

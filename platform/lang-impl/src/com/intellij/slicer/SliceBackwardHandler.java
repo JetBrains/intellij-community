@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -11,25 +11,22 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.util.List;
 
-class SliceBackwardHandler extends SliceHandler {
+final class SliceBackwardHandler extends SliceHandler {
   SliceBackwardHandler() {
     super(true);
   }
 
   @Override
-  public SliceAnalysisParams askForParams(PsiElement element,
-                                          SliceManager.StoredSettingsBean storedSettingsBean,
-                                          String dialogTitle) {
+  public SliceAnalysisParams askForParams(@NotNull PsiElement element,
+                                          @NotNull SliceManager.StoredSettingsBean storedSettingsBean,
+                                          @NotNull String dialogTitle) {
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
 
@@ -40,25 +37,18 @@ class SliceBackwardHandler extends SliceHandler {
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(myProject, analysisScope, module, element);
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
     boolean supportFilter = provider.supportValueFilters(element);
-    class BackwardHandlerDialog extends BaseAnalysisActionDialog {
-      JBTextField field;
+    final class BackwardHandlerDialog extends BaseAnalysisActionDialog {
+      private SliceBackwardAdditionalUi myUi;
       
-      BackwardHandlerDialog() {
-        super(dialogTitle, "Analyze scope", myProject, items, analysisUIOptions, true);
+      private BackwardHandlerDialog() {
+        super(dialogTitle, LangBundle.message("separator.analyze.scope"), myProject, items, analysisUIOptions, true);
       }
 
       @Override
-      protected @Nullable JComponent getAdditionalActionSettings(Project project) {
+      protected @Nullable JComponent getAdditionalActionSettings(@NotNull Project project) {
         if (!supportFilter) return null;
-        JPanel panel = new JPanel(new GridBagLayout());
-        JBLabel label = new JBLabel(LangBundle.message("label.filter.value") + " ");
-        panel.add(label);
-        field = new JBTextField();
-        Dimension size = field.getPreferredSize();
-        size.width = 400;
-        field.setPreferredSize(size);
-        panel.add(field);
-        label.setLabelFor(field);
+        myUi = new SliceBackwardAdditionalUi();
+        final JTextField field = myUi.getField();
         field.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
           protected void textChanged(@NotNull DocumentEvent e) {
@@ -71,10 +61,12 @@ class SliceBackwardHandler extends SliceHandler {
             }
           }
         });
-        return panel;
+        return myUi.getPanel();
       }
 
       private @Nullable SliceValueFilter getFilter() throws SliceFilterParseException {
+        if (myUi == null) return null;
+        final JTextField field = myUi.getField();
         String text = field.getText().trim();
         if (!text.isEmpty()) {
           return provider.parseFilter(element, text);

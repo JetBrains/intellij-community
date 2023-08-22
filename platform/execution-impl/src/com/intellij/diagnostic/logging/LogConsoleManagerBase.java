@@ -1,30 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable {
   private final Project myProject;
-  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new THashMap<>();
+  private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<>();
   private final GlobalSearchScope mySearchScope;
 
   protected LogConsoleManagerBase(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
@@ -33,12 +35,13 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
   }
 
   @Override
-  public void addLogConsole(@NotNull final String name,
+  public void addLogConsole(@NlsContexts.TabTitle @NotNull final String name,
                             @NotNull final String path,
                             @NotNull Charset charset,
                             final long skippedContent,
                             @NotNull RunConfigurationBase runConfiguration) {
-    doAddLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false, mySearchScope) {
+    boolean useBuildInActions = UIExperiment.isNewDebuggerUIEnabled();
+    doAddLogConsole(new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, useBuildInActions, mySearchScope) {
       @Override
       public boolean isActive() {
         return isConsoleActive(path);
@@ -48,7 +51,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
 
   private void doAddLogConsole(@NotNull final LogConsoleBase log, String id, Icon icon, @Nullable RunProfile runProfile) {
     if (runProfile instanceof RunConfigurationBase) {
-      ((RunConfigurationBase)runProfile).customizeLogConsole(log);
+      ((RunConfigurationBase<?>)runProfile).customizeLogConsole(log);
     }
     log.attachStopLogConsoleTrackingListener(getProcessHandler());
     addAdditionalTabComponent(log, id, icon);

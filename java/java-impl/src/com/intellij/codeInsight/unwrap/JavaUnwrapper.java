@@ -3,10 +3,11 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 
 public abstract class JavaUnwrapper extends AbstractUnwrapper<JavaUnwrapper.Context> {
 
-  public JavaUnwrapper(String description) {
+  public JavaUnwrapper(@Nls String description) {
     super(description);
   }
 

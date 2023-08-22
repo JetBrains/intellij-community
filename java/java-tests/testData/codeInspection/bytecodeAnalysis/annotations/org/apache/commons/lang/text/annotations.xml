@@ -1169,6 +1169,7 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

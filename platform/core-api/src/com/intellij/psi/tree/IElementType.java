@@ -1,17 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,8 +24,6 @@ import java.util.stream.Stream;
  * @see com.intellij.lang.ASTNode#getElementType()
  */
 public class IElementType {
-  private static final Logger LOG = Logger.getInstance(IElementType.class);
-
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   public static final ArrayFactory<IElementType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new IElementType[count];
 
@@ -43,8 +39,7 @@ public class IElementType {
 
   private static short size; // guarded by lock
   private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
-  private static final Object lock = new String("registry lock");
+  @SuppressWarnings("StringOperationCanBeSimplified") private static final @NonNls Object lock = new String("registry lock");
 
   static {
     IElementType[] init = new IElementType[137];
@@ -62,33 +57,30 @@ public class IElementType {
     }
   }
 
-  public static void unregisterElementTypes(@NotNull ClassLoader loader) {
+  public static void unregisterElementTypes(@NotNull ClassLoader loader, @NotNull PluginDescriptor pluginDescriptor) {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
       if (type != null && type.getClass().getClassLoader() == loader) {
-        ourRegistry[i] = new TombstoneElementType("tombstone of " + type.myDebugName);
+        ourRegistry[i] = TombstoneElementType.create(type, pluginDescriptor);
       }
     }
   }
 
-  public static void unregisterElementTypes(@NotNull Language language) {
+  public static void unregisterElementTypes(@NotNull Language language, @NotNull PluginDescriptor pluginDescriptor) {
     if (language == Language.ANY) {
       throw new IllegalArgumentException("Trying to unregister Language.ANY");
     }
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
       if (type != null && type.getLanguage().equals(language)) {
-        ourRegistry[i] = new TombstoneElementType("tombstone of " + type.myDebugName);
+        ourRegistry[i] = TombstoneElementType.create(type, pluginDescriptor);
       }
     }
   }
 
   private final short myIndex;
-  @NonNls
-  @NotNull
-  private final String myDebugName;
-  @NotNull
-  private final Language myLanguage;
+  private final @NonNls @NotNull String myDebugName;
+  private final @NotNull Language myLanguage;
 
   /**
    * Creates and registers a new element type for the specified language.
@@ -100,12 +92,12 @@ public class IElementType {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
-      LoadingState.COMPONENTS_LOADED.checkOccurred();
+      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
     }
   }
 
   /**
-   * Allows to construct element types for some temporary purposes without registering them.
+   * Allows constructing element types for some temporary purposes without registering them.
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
@@ -117,10 +109,11 @@ public class IElementType {
         myIndex = size++;
         if (myIndex >= MAX_INDEXED_TYPES) {
           Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
-          Map.Entry<Language, List<IElementType>> max = byLang.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).get();
+          Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
           List<IElementType> types = max.getValue();
-          LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
-                    " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));
+          Logger.getInstance(IElementType.class)
+            .error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
+                   " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));
         }
         IElementType[] newRegistry =
           myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
@@ -139,8 +132,7 @@ public class IElementType {
    *
    * @return the associated language.
    */
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
@@ -161,6 +153,15 @@ public class IElementType {
 
   @Override
   public String toString() {
+    return getDebugName();
+  }
+
+  /**
+   * Don't use it directly. Override or call {@link IElementType#toString()}.
+   * Note, it should be used only for testing and logging purposes.
+   */
+  @ApiStatus.Internal
+  public @NonNls @NotNull String getDebugName() {
     return myDebugName;
   }
 
@@ -200,7 +201,7 @@ public class IElementType {
     // volatile read; array always grows, never shrinks, never overwritten
     IElementType type = ourRegistry[idx];
     if (type instanceof TombstoneElementType) {
-      throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type.myDebugName);
+      throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type);
     }
     return type;
   }
@@ -238,9 +239,12 @@ public class IElementType {
     return matches.toArray(new IElementType[0]);
   }
 
-  public static class TombstoneElementType extends IElementType {
-    public TombstoneElementType(@NotNull String debugName) {
+  private static final class TombstoneElementType extends IElementType {
+    private TombstoneElementType(@NotNull @NonNls String debugName) {
       super(debugName, Language.ANY);
+    }
+    private static TombstoneElementType create(@NotNull IElementType type, @NotNull PluginDescriptor pluginDescriptor) {
+      return new TombstoneElementType("tombstone of " + type +" ("+type.getClass()+") belonged to unloaded "+pluginDescriptor);
     }
   }
 }

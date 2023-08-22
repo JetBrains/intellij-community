@@ -1,0 +1,12 @@
+query($projectId: ID!, $branch: String!, $pageSize: Int = 100, $cursor: String) {
+  project(fullPath: $projectId) {
+    mergeRequests(sourceBranches: [$branch], after: $cursor, first: $pageSize) {
+      nodes {
+        iid
+      }
+      pageInfo {
+        ...pageInfo
+      }
+    }
+  }
+}

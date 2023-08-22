@@ -15,6 +15,7 @@
  */
 package com.intellij.framework;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ public interface FrameworkOrGroup {
   String getId();
 
   @NotNull
-  String getPresentableName();
+  @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName();
 
   @NotNull
   Icon getIcon();

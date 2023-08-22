@@ -6,6 +6,7 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -20,47 +21,21 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.inspections.quickfix.PyUpdatePropertySignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallable;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.PyDecoratorList;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyKnownDecoratorUtil;
-import com.jetbrains.python.psi.PyLambdaExpression;
-import com.jetbrains.python.psi.PyNoneLiteralExpression;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.PyRaiseStatement;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyReturnStatement;
-import com.jetbrains.python.psi.PySubscriptionExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyTypedElement;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.PyYieldExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.PyCallableParameter;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
- * User: dcheryasov
  */
 public class PyPropertyDefinitionInspection extends PyInspection {
 
@@ -69,7 +44,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
@@ -79,9 +54,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     private PyFunction myOneParamFunction;
     private PyFunction myTwoParamFunction; // arglist with two args, 'self' and 'value'
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
-      PsiFile psiFile = session.getFile();
+    public Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
+      PsiFile psiFile = holder.getFile();
       // save us continuous checks for level, module, stc
       myLevel = LanguageLevel.forElement(psiFile);
       // string classes
@@ -104,12 +79,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
 
     @Override
-    public void visitPyFile(PyFile node) {
-      super.visitPyFile(node);
-    }
-
-    @Override
-    public void visitPyClass(final PyClass node) {
+    public void visitPyClass(final @NotNull PyClass node) {
       super.visitPyClass(node);
       // check property() and @property
       node.scanProperties(property -> {
@@ -200,7 +170,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       super.visitPyFunction(node);
       // check @foo.setter and @foo.deleter
       PyClass cls = node.getContainingClass();
@@ -293,7 +263,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (cls != null && cls.isSubclass("type", myTypeEvalContext)) return;
       if (parameters.length > 0 && !PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
-          parameters[0], PyPsiBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
+          parameters[0], PyPsiBundle.message("INSP.property.cannot.be.deleted", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
           null,
           new RenameParameterQuickFix(PyNames.CANONICAL_SELF));
       }
@@ -302,9 +272,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     private void checkReturnValueAllowed(@NotNull PyCallable callable,
                                          @NotNull PsiElement beingChecked,
                                          boolean allowed,
-                                         @NotNull String message) {
-      if (callable instanceof PyFunction) {
-        final PyFunction function = (PyFunction)callable;
+                                         @NotNull @InspectionMessage String message) {
+      if (callable instanceof PyFunction function) {
 
         if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
           return;

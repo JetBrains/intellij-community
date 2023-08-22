@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author dsl
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class Src15RepositoryUseTest extends JavaPsiTestCase {
   @Override
@@ -108,13 +105,12 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
     final PsiImportStaticStatement classReference1 = importStaticStatements[1];
     final PsiClass element1 = classReference1.resolveTargetClass();
     assertNotNull(element1);
-    assertTrue(element1 instanceof PsiClass);
+
     assertEquals("java.util.Arrays", element1.getQualifiedName());
 
     final PsiImportStaticStatement classReference3 = importStaticStatements[3];
     final PsiClass element3 = classReference3.resolveTargetClass();
     assertNotNull(element3);
-    assertTrue(element3 instanceof PsiClass);
     assertEquals("java.util.Arrays", element3.getQualifiedName());
 
     if (okToLoadTree) {
@@ -271,7 +267,7 @@ public class Src15RepositoryUseTest extends JavaPsiTestCase {
 
     assertEquals("public static final int A1 = 10;", fields[3].getText());
     enumClass.accept(new JavaRecursiveElementWalkingVisitor(){
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitExpression(expression);
       }
     });

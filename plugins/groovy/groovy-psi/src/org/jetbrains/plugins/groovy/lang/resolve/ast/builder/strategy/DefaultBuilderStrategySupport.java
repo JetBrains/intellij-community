@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -42,7 +29,7 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
     new DefaultBuilderStrategyHandler(context).doProcess();
   }
 
-  private static class DefaultBuilderStrategyHandler {
+  private static final class DefaultBuilderStrategyHandler {
 
     private final @NotNull TransformationContext myContext;
     private final @NotNull GrTypeDefinition myContainingClass;
@@ -80,7 +67,7 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
       );
 
       for (PsiVariable field : setters) {
-        LightMethodBuilder setter = createFieldSetter(builderClass, field, annotation);
+        LightMethodBuilder setter = createFieldSetter(builderClass, field, annotation, myContext);
         builderClass.addMethod(setter);
       }
 
@@ -129,6 +116,7 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
       myContext.addInnerClass(builderClass);
     }
 
+    @NlsSafe
     @NotNull
     private static String getBuilderMethodName(@NotNull PsiAnnotation annotation) {
       final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderMethodName");
@@ -136,10 +124,11 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
     }
   }
 
+  @NlsSafe
   @NotNull
   public static String getBuilderClassName(@NotNull PsiAnnotation annotation, @NotNull GrTypeDefinition clazz) {
     final String builderClassName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderClassName");
-    return builderClassName == null ? String.format("%s%s", clazz.getName(), "Builder") : builderClassName;
+    return builderClassName == null ? clazz.getName() + "Builder" : builderClassName;
   }
 
   @NotNull
@@ -153,9 +142,10 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
   @NotNull
   public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass,
                                                      @NotNull PsiVariable field,
-                                                     @NotNull PsiAnnotation annotation) {
+                                                     @NotNull PsiAnnotation annotation,
+                                                     @NotNull TransformationContext context) {
     String name = Objects.requireNonNull(field.getName());
-    return createFieldSetter(builderClass, name, field.getType(), annotation, field);
+    return createFieldSetter(builderClass, name, field.getType(), annotation, field, context);
   }
 
   @NotNull
@@ -163,12 +153,13 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
                                                      @NotNull String name,
                                                      @NotNull PsiType type,
                                                      @NotNull PsiAnnotation annotation,
-                                                     @NotNull PsiElement navigationElement) {
+                                                     @NotNull PsiElement navigationElement,
+                                                     @NotNull TransformationContext context) {
     final LightMethodBuilder fieldSetter = new LightMethodBuilder(builderClass.getManager(), getFieldMethodName(annotation, name));
     fieldSetter.addModifier(PsiModifier.PUBLIC);
     fieldSetter.addParameter(name, type);
     fieldSetter.setContainingClass(builderClass);
-    fieldSetter.setMethodReturnType(JavaPsiFacade.getElementFactory(builderClass.getProject()).createType(builderClass));
+    fieldSetter.setMethodReturnType(context.eraseClassType(JavaPsiFacade.getElementFactory(builderClass.getProject()).createType(builderClass, PsiSubstitutor.EMPTY)));
     fieldSetter.setNavigationElement(navigationElement);
     fieldSetter.setOriginInfo(ORIGIN_INFO);
     return fieldSetter;

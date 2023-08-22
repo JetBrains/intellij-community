@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,8 +21,6 @@ public final class DocumentUtil {
    * @param executeInBulk  {@code true} to force given document to be in bulk mode when given task is executed;
    *                       {@code false} to force given document to be <b>not</b> in bulk mode when given task is executed
    * @param task           task to execute
-   *
-   * @see Document#setInBulkUpdate(boolean)
    */
   public static void executeInBulk(@NotNull Document document, final boolean executeInBulk, @NotNull Runnable task) {
     if (executeInBulk == document.isInBulkUpdate()) {
@@ -44,16 +28,22 @@ public final class DocumentUtil {
       return;
     }
 
+    //noinspection deprecation
     document.setInBulkUpdate(executeInBulk);
     try {
       task.run();
     }
     finally {
+      //noinspection deprecation
       document.setInBulkUpdate(!executeInBulk);
     }
   }
 
-  public static void writeInRunUndoTransparentAction(@NotNull final Runnable runnable) {
+  public static void executeInBulk(@NotNull Document document, @NotNull Runnable task) {
+    executeInBulk(document, true, task);
+  }
+
+  public static void writeInRunUndoTransparentAction(final @NotNull Runnable runnable) {
     CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(runnable));
   }
 
@@ -78,6 +68,12 @@ public final class DocumentUtil {
     return offset >= 0 && offset <= document.getTextLength();
   }
 
+  public static boolean isValidLine(int line, @NotNull Document document) {
+    if (line < 0) return false;
+    int lineCount = document.getLineCount();
+    return lineCount == 0 ? line == 0 : line < lineCount;
+  }
+
   public static int getLineStartOffset(int offset, @NotNull Document document) {
     if (offset < 0 || offset > document.getTextLength()) {
       return offset;
@@ -94,8 +90,7 @@ public final class DocumentUtil {
     return document.getLineEndOffset(lineNumber);
   }
 
-  @NotNull
-  public static TextRange getLineTextRange(@NotNull Document document, int line) {
+  public static @NotNull TextRange getLineTextRange(@NotNull Document document, int line) {
     return TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
   }
 
@@ -123,10 +118,20 @@ public final class DocumentUtil {
     return isSurrogatePair(document, offset - 1);
   }
 
+  /**
+   * Equivalent to {@code (offset - 1)} except that the result never ends up in the middle of a surrogate pair.
+   * Make sure to <b>check that the returned offset is not negative</b> because this method
+   * doesn't perform the range check for you (passing an invalid offset is fine though).
+   */
   public static int getPreviousCodePointOffset(@NotNull Document document, int offset) {
     return offset - (isSurrogatePair(document, offset - 2) ? 2 : 1);
   }
 
+  /**
+   * Equivalent to {@code (offset + 1)} except that the result never ends up in the middle of a surrogate pair.
+   * Make sure to <b>check that the returned offset is not beyond the document text length</b> because this method
+   * doesn't perform the range check for you (passing an invalid offset is fine though).
+   */
   public static int getNextCodePointOffset(@NotNull Document document, int offset) {
     return offset + (isSurrogatePair(document, offset) ? 2 : 1);
   }
@@ -166,5 +171,25 @@ public final class DocumentUtil {
       result--;
     }
     return document.getCharsSequence().subSequence(lineOffset, lineOffset + Math.max(result, 0));
+  }
+
+  public static int calculateOffset(@NotNull Document document, int line, int column, int tabSize) {
+    int offset;
+    if (0 <= line && line < document.getLineCount()) {
+      final int lineStart = document.getLineStartOffset(line);
+      final int lineEnd = document.getLineEndOffset(line);
+      final CharSequence docText = document.getCharsSequence();
+
+      offset = lineStart;
+      int col = 0;
+      while (offset < lineEnd && col < column) {
+        col += docText.charAt(offset) == '\t' ? tabSize : 1;
+        offset++;
+      }
+    }
+    else {
+      offset = document.getTextLength();
+    }
+    return offset;
   }
 }

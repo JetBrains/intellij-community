@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,15 +15,16 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -56,7 +43,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private static final Icon NODE_ICON_STATISTICS = ICON_16;
   private static final Icon NODE_ICON_SIMPLE = ICON_16;
   private static final Icon NODE_ICON_DEFAULT = ICON_16;
-  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS();
+  private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
 
   private final List<ExecutionNode> myChildrenList = new ArrayList<>(); // Accessed from the async model thread only.
   private List<ExecutionNode> myVisibleChildrenList = null;  // Accessed from the async model thread only.
@@ -66,20 +53,17 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private final ExecutionNode myParentNode;
   private volatile long startTime;
   private volatile long endTime;
-  @Nullable
-  private String myTitle;
-  @Nullable
-  private String myHint;
-  @Nullable
-  private volatile EventResult myResult;
+  private @Nullable @BuildEventsNls.Title String myTitle;
+  private @Nullable @BuildEventsNls.Hint String myHint;
+  private final @NotNull HintData myHintData;
+  private volatile @Nullable EventResult myResult;
   private final boolean myAutoExpandNode;
   private final Supplier<Boolean> myIsCorrectThread;
-  @Nullable
-  private volatile Navigatable myNavigatable;
-  @Nullable
-  private volatile NullableLazyValue<Icon> myPreferredIconValue;
-  @Nullable
-  private Predicate<ExecutionNode> myFilter;
+  private volatile @Nullable Navigatable myNavigatable;
+  private volatile @Nullable NullableLazyValue<Icon> myPreferredIconValue;
+  private Predicate<? super ExecutionNode> myFilter;
+  private boolean myAlwaysLeaf;
+  private boolean myAlwaysVisible;
 
   public ExecutionNode(Project aProject, ExecutionNode parentNode, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
     super(aProject, parentNode);
@@ -87,10 +71,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     myParentNode = parentNode;
     myAutoExpandNode = isAutoExpandNode;
     myIsCorrectThread = isCorrectThread;
+    myHintData = new HintData();
   }
 
   private boolean nodeIsVisible(ExecutionNode node) {
-    return myFilter == null || myFilter.test(node);
+    return node.myAlwaysVisible || myFilter == null || myFilter.test(node);
   }
 
   @Override
@@ -103,7 +88,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
       presentation.addText(myTitle + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
-    String hint = getCurrentHint();
+    String hint = myHintData.getCurrentHint(this);
     boolean isNotEmptyName = StringUtil.isNotEmpty(myName);
     if (isNotEmptyName && myTitle != null || hint != null) {
       presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -114,6 +99,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
       }
       presentation.addText(hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
+  }
+
+  @ApiStatus.Internal
+  void applyFrom(@NotNull BuildEventPresentationData buildEventPresentationData) {
+    myAlwaysVisible = true;
+    setIconProvider(() -> buildEventPresentationData.getNodeIcon());
   }
 
   @Override
@@ -132,12 +123,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myTitle;
   }
 
-  public void setTitle(@Nullable String title) {
+  public void setTitle(@BuildEventsNls.Title @Nullable String title) {
     assert myIsCorrectThread.get();
     myTitle = title;
   }
 
-  public void setHint(@Nullable String hint) {
+  public void setHint(@BuildEventsNls.Hint @Nullable String hint) {
     assert myIsCorrectThread.get();
     myHint = hint;
   }
@@ -167,19 +158,17 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
 
   // Note: invoked from the EDT.
   @Nullable
-  public String getDuration() {
+  public @Nls String getDuration() {
     if (startTime == endTime) return null;
     if (isRunning()) {
-      final long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
-      String durationText = StringUtil.formatDurationApproximate(duration);
-      int index = durationText.indexOf("s ");
-      if (index != -1) {
-        durationText = durationText.substring(0, index + 1);
+      long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
+      if (duration > 1000) {
+        duration -= duration % 1000;
       }
-      return durationText;
+      return NlsMessages.formatDurationApproximate(duration);
     }
     else {
-      return isSkipped(myResult) ? null : StringUtil.formatDuration(endTime - startTime);
+      return isSkipped(myResult) ? null : NlsMessages.formatDuration(endTime - startTime);
     }
   }
 
@@ -199,9 +188,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public ExecutionNode setEndTime(long endTime) {
+    return setEndTime(endTime, true);
+  }
+  @Nullable
+  @ApiStatus.Internal
+  ExecutionNode setEndTime(long endTime, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     this.endTime = endTime;
-    return reapplyParentFilterIfRequired(null);
+    return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
   }
 
   private ExecutionNode reapplyParentFilterIfRequired(@Nullable ExecutionNode result) {
@@ -209,10 +203,10 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     if (myParentNode != null) {
       List<ExecutionNode> parentVisibleChildrenList = myParentNode.myVisibleChildrenList;
       if (parentVisibleChildrenList != null) {
-        Predicate<ExecutionNode> filter = myParentNode.myFilter;
-        if (filter != null) {
+        Predicate<? super ExecutionNode> filter = myParentNode.myFilter;
+        if (myAlwaysVisible || filter != null) {
           boolean wasPresent = parentVisibleChildrenList.contains(this);
-          boolean shouldBePresent = filter.test(this);
+          boolean shouldBePresent = myAlwaysVisible || filter.test(this);
           if (shouldBePresent != wasPresent) {
             if (shouldBePresent) {
               myParentNode.maybeReapplyFilter();
@@ -233,12 +227,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   public List<ExecutionNode> getChildList() {
     assert myIsCorrectThread.get();
     List<ExecutionNode> visibleList = myVisibleChildrenList;
-    if (visibleList != null) {
-      return visibleList;
-    }
-    else {
-      return myChildrenList;
-    }
+    return Objects.requireNonNullElse(visibleList, myChildrenList);
   }
 
   @Nullable
@@ -251,13 +240,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return this;
   }
 
-  @Nullable
-  public Predicate<ExecutionNode> getFilter() {
+  public Predicate<? super ExecutionNode> getFilter() {
     assert myIsCorrectThread.get();
     return myFilter;
   }
 
-  public void setFilter(@Nullable Predicate<ExecutionNode> filter) {
+  public void setFilter(@Nullable Predicate<? super ExecutionNode> filter) {
     assert myIsCorrectThread.get();
     myFilter = filter;
     for (ExecutionNode node : myChildrenList) {
@@ -308,13 +296,28 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public ExecutionNode setResult(@Nullable EventResult result) {
+    return setResult(result, true);
+  }
+
+  @ApiStatus.Internal
+  ExecutionNode setResult(@Nullable EventResult result, boolean reapplyParentFilterIfRequired) {
     assert myIsCorrectThread.get();
     myResult = result;
-    return reapplyParentFilterIfRequired(null);
+    return reapplyParentFilterIfRequired ? reapplyParentFilterIfRequired(null) : null;
   }
 
   public boolean isAutoExpandNode() {
     return myAutoExpandNode;
+  }
+
+  @ApiStatus.Experimental
+  public boolean isAlwaysLeaf() {
+    return myAlwaysLeaf;
+  }
+
+  @ApiStatus.Experimental
+  public void setAlwaysLeaf(boolean alwaysLeaf) {
+    myAlwaysLeaf = alwaysLeaf;
   }
 
   public void setNavigatable(@Nullable Navigatable navigatable) {
@@ -339,8 +342,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return Collections.emptyList();
   }
 
-  public void setIconProvider(Supplier<? extends Icon> iconProvider) {
-    myPreferredIconValue = new NullableLazyValue<Icon>() {
+  public void setIconProvider(@NotNull Supplier<? extends Icon> iconProvider) {
+    myPreferredIconValue = new NullableLazyValue<>() {
       @Nullable
       @Override
       protected Icon compute() {
@@ -371,31 +374,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   @ApiStatus.Experimental
   ExecutionNode findFirstChild(@NotNull Predicate<? super ExecutionNode> filter) {
     assert myIsCorrectThread.get();
+    //noinspection SSBasedInspection
     return myChildrenList.stream().filter(filter).findFirst().orElse(null);
-  }
-
-  private String getCurrentHint() {
-    assert myIsCorrectThread.get();
-    String hint = myHint;
-    int warnings = myWarnings.get();
-    int errors = myErrors.get();
-    if (warnings > 0 || errors > 0) {
-      if (hint == null) {
-        hint = "";
-      }
-      ExecutionNode parent = getParent();
-      hint += parent == null || parent.getParent() == null ? (isRunning() ? "  " : " with ") : " ";
-      if (errors > 0) {
-        hint += (errors + " " + StringUtil.pluralize("error", errors));
-        if (warnings > 0) {
-          hint += ", ";
-        }
-      }
-      if (warnings > 0) {
-        hint += (warnings + " " + StringUtil.pluralize("warning", warnings));
-      }
-    }
-    return hint;
   }
 
   private Icon getCurrentIcon() {
@@ -427,6 +407,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     if (result == null) {
       return NODE_ICON_RUNNING;
     }
+
+    if (result instanceof MessageEventResult) {
+      return getIcon(((MessageEventResult) result).getKind());
+    }
+
     if (isFailed(result)) {
       return NODE_ICON_ERROR;
     }
@@ -437,18 +422,63 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   private static Icon getIcon(MessageEvent.Kind kind) {
-    switch (kind) {
-      case ERROR:
-        return NODE_ICON_ERROR;
-      case WARNING:
-        return NODE_ICON_WARNING;
-      case INFO:
-        return NODE_ICON_INFO;
-      case STATISTICS:
-        return NODE_ICON_STATISTICS;
-      case SIMPLE:
-        return NODE_ICON_SIMPLE;
+    return switch (kind) {
+      case ERROR -> NODE_ICON_ERROR;
+      case WARNING -> NODE_ICON_WARNING;
+      case INFO -> NODE_ICON_INFO;
+      case STATISTICS -> NODE_ICON_STATISTICS;
+      case SIMPLE -> NODE_ICON_SIMPLE;
+    };
+  }
+
+  static private final class HintData {
+    private int myErrors;
+    private int myWarnings;
+    private boolean isRunning;
+    private @Nullable @BuildEventsNls.Hint String myHint;
+    private @Nullable @BuildEventsNls.Hint String myCurrentHint;
+
+    private @BuildEventsNls.Hint String getCurrentHint(@NotNull ExecutionNode node) {
+      if (!idUpToDate(node)) {
+        myHint = node.myHint;
+        myErrors = node.myErrors.get();
+        myWarnings = node.myWarnings.get();
+        isRunning = node.isRunning();
+        myCurrentHint = calculateCurrentHint(node);
+      }
+      return myCurrentHint;
     }
-    return NODE_ICON_DEFAULT;
+
+    private boolean idUpToDate(@NotNull ExecutionNode node) {
+      if (!Objects.equals(myHint, node.myHint)) return false;
+      if (myErrors != node.myErrors.get()) return false;
+      if (myWarnings != node.myWarnings.get()) return false;
+      if (isRunning != node.isRunning()) return false;
+      return true;
+    }
+
+    private @BuildEventsNls.Hint String calculateCurrentHint(@NotNull ExecutionNode node) {
+      assert node.myIsCorrectThread.get();
+      if (myWarnings > 0 || myErrors > 0) {
+        String errorHint = myErrors > 0 ? LangBundle.message("build.event.message.errors", myErrors) : "";
+        String warningHint = myWarnings > 0 ? LangBundle.message("build.event.message.warnings", myWarnings) : "";
+        String issuesHint = !errorHint.isEmpty() && !warningHint.isEmpty() ? errorHint + ", " + warningHint : errorHint + warningHint;
+        ExecutionNode parent = node.getParent();
+        if (parent == null || parent.getParent() == null) {
+          if (node.isRunning()) {
+            return StringUtil.notNullize(myHint) + "  " + issuesHint;
+          }
+          else {
+            return LangBundle.message("build.event.message.with", StringUtil.notNullize(myHint), issuesHint);
+          }
+        }
+        else {
+          return StringUtil.notNullize(myHint) + " " + issuesHint;
+        }
+      }
+      else {
+        return myHint;
+      }
+    }
   }
 }

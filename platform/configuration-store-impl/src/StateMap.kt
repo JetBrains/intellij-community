@@ -1,36 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.ArrayUtil
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SystemProperties
-import com.intellij.util.isEmpty
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import net.jpountz.lz4.LZ4FrameInputStream
-import net.jpountz.lz4.LZ4FrameOutputStream
 import org.jdom.Element
 import java.io.ByteArrayInputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
 
-fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
+private fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  LZ4FrameOutputStream(byteOut, LZ4FrameOutputStream.BLOCKSIZE.SIZE_256KB).use {
+  byteOut.use {
     serializeElementToBinary(state, it)
   }
   return byteOut
 }
 
 private fun unarchiveState(state: ByteArray): Element {
-  return LZ4FrameInputStream(ByteArrayInputStream(state)).use {
+  return ByteArrayInputStream(state).use {
     deserializeElementFromBinary(it)
   }
 }
 
-fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
+private fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
   val newBytes: ByteArray
   if (newState is Element) {
     val byteOut = archiveState(newState)
@@ -38,7 +35,7 @@ fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteAr
       return null
     }
 
-    newBytes = ArrayUtil.realloc(byteOut.internalBuffer, byteOut.size())
+    newBytes = byteOut.toByteArray()
   }
   else {
     newBytes = newState as ByteArray
@@ -57,26 +54,26 @@ fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteAr
       throw IllegalStateException("$key serialization error - serialized are different, but unserialized are equal")
     }
     else if (logChangedComponents) {
-      LOG.info("$key ${StringUtil.repeat("=", 80 - key.length)}\nBefore:\n$before\nAfter:\n$after")
+      LOG.info("$key ${"=".repeat(80 - key.length)}\nBefore:\n$before\nAfter:\n$after")
     }
   }
   return newBytes
 }
 
-fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element? {
-  if (state is Element) {
-    return state.clone()
+private fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>? = null): Element? {
+  return if (state is Element) {
+    state.clone()
   }
   else {
-    return newLiveStates?.get(key) ?: (state as? ByteArray)?.let(::unarchiveState)
+    newLiveStates?.get(key) ?: (state as? ByteArray)?.let(::unarchiveState)
   }
 }
 
-class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
-  override fun toString(): String = if (this == EMPTY) "EMPTY" else states.toString()
+class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any>) {
+  override fun toString() = if (this == EMPTY) "EMPTY" else states.toString()
 
   companion object {
-    val EMPTY: StateMap = StateMap(ArrayUtil.EMPTY_STRING_ARRAY, AtomicReferenceArray(0))
+    internal val EMPTY = StateMap(ArrayUtilRt.EMPTY_STRING_ARRAY, AtomicReferenceArray(0))
 
     fun fromMap(map: Map<String, Any>): StateMap {
       if (map.isEmpty()) {
@@ -88,7 +85,7 @@ class StateMap private constructor(private val names: Array<String>, private val
         Arrays.sort(names)
       }
 
-      val states = AtomicReferenceArray<Any?>(names.size)
+      val states = AtomicReferenceArray<Any>(names.size)
       for (i in names.indices) {
         states.set(i, map[names[i]])
       }
@@ -97,7 +94,7 @@ class StateMap private constructor(private val names: Array<String>, private val
   }
 
   fun toMutableMap(): MutableMap<String, Any> {
-    val map = Object2ObjectOpenHashMap<String, Any>(names.size)
+    val map = HashMap<String, Any>(names.size)
     for (i in names.indices) {
       map.put(names[i], states.get(i))
     }
@@ -143,16 +140,25 @@ class StateMap private constructor(private val names: Array<String>, private val
   }
 
   fun getState(key: String, archive: Boolean = false): Element? {
-    val index = Arrays.binarySearch(names, key)
+    val index = names.binarySearch(key)
     if (index < 0) {
       return null
     }
 
-    val prev = states.getAndUpdate(index) { state ->
-      when {
-        archive && state is Element -> archiveState(state).toByteArray()
-        !archive && state is ByteArray -> unarchiveState(state)
-        else -> state
+    val prev = if (archive) {
+      states.getAndUpdate(index) { state ->
+        when (state) {
+          is Element -> archiveState(state).toByteArray()
+          else -> state
+        }
+      }
+    }
+    else {
+      states.updateAndGet(index) { state ->
+        when (state) {
+          is ByteArray -> unarchiveState(state)
+          else -> state
+        }
       }
     }
     return prev as? Element
@@ -170,7 +176,7 @@ class StateMap private constructor(private val names: Array<String>, private val
 
 fun setStateAndCloneIfNeeded(key: String, newState: Element?, oldStates: StateMap, newLiveStates: MutableMap<String, Element>? = null): MutableMap<String, Any>? {
   val oldState = oldStates.get(key)
-  if (newState == null || newState.isEmpty()) {
+  if (newState == null || JDOMUtil.isEmpty(newState)) {
     if (oldState == null) {
       return null
     }
@@ -203,8 +209,8 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
     states.remove(key)
     return true
   }
-  val newStateInterned = JDOMUtil.internElement(newState)
-  newLiveStates?.put(key, newStateInterned)
+
+  newLiveStates?.put(key, newState)
 
   val oldState = states.get(key)
 
@@ -218,7 +224,7 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
     newBytes = getNewByteIfDiffers(key, newState, oldState as ByteArray) ?: return false
   }
 
-  states.put(key, newBytes ?: newStateInterned)
+  states.put(key, newBytes ?: JDOMUtil.internElement(newState))
   return true
 }
 

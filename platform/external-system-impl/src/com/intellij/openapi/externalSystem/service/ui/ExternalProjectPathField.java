@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -45,12 +46,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalProjectPathField extends ComponentWithBrowseButton<ExternalProjectPathField.MyPathAndProjectButtonPanel>
   implements TextAccessor
 {
@@ -63,7 +61,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   public ExternalProjectPathField(@NotNull Project project,
                                   @NotNull ProjectSystemId externalSystemId,
                                   @NotNull FileChooserDescriptor descriptor,
-                                  @NotNull String fileChooserTitle)
+                                  @NotNull @DialogTitle String fileChooserTitle)
   {
     super(createPanel(project, externalSystemId), new MyBrowseListener(descriptor, fileChooserTitle, project));
     ActionListener[] listeners = getButton().getActionListeners();
@@ -98,8 +96,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
             Object lastPathComponent = path.getLastPathComponent();
             if (lastPathComponent instanceof ExternalSystemNode) {
               Object e1 = ((ExternalSystemNode)lastPathComponent).getDescriptor().getElement();
-              if (e1 instanceof ExternalProjectPojo) {
-                ExternalProjectPojo pojo = (ExternalProjectPojo)e1;
+              if (e1 instanceof ExternalProjectPojo pojo) {
                 textField.setText(pojo.getPath());
                 Editor editor = textField.getEditor();
                 if (editor != null) {
@@ -113,7 +110,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
         JBPopup popup = new PopupChooserBuilder(tree)
           .setTitle(ExternalSystemBundle.message("run.configuration.title.choose.registered.project", externalSystemId.getReadableName()))
           .setResizable(true)
-          .setItemChoosenCallback(treeSelectionCallback)
+          .setItemChosenCallback(treeSelectionCallback)
           .setAutoselectOnMouseMove(true)
           .setCloseOnEnter(false)
           .createPopup();
@@ -237,7 +234,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     private EditorTextField myPathField;
 
     MyBrowseListener(@NotNull final FileChooserDescriptor descriptor,
-                     @NotNull final String fileChooserTitle,
+                     @NotNull @DialogTitle final String fileChooserTitle,
                      @NotNull final Project project)
     {
       descriptor.setTitle(fileChooserTitle);

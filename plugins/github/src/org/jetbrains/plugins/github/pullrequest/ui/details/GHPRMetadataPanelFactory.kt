@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.codereview.Avatar
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
@@ -10,24 +12,22 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.component.LabeledListPanelHandle
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
-                               private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory) {
+class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
+                               private val avatarIconsProvider: GHAvatarIconsProvider) {
 
   private val panel = JPanel(null)
-  private val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, panel)
 
   fun create(): JComponent {
     val reviewersHandle = ReviewersListPanelHandle()
@@ -56,12 +56,10 @@ class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
 
     override fun getItemComponent(item: GHPullRequestRequestedReviewer) = createUserLabel(item)
 
-    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>>? {
-      return GithubUIUtil
-        .showChooserPopup(GithubBundle.message("pull.request.reviewers"), parentComponent, { list ->
-          val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
-          GithubUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider)
-        }, model.reviewers, model.loadPotentialReviewers())
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>> {
+      return GHUIUtil
+        .showChooserPopup(parentComponent, GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
+                          model.reviewers, model.loadPotentialReviewers())
     }
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
@@ -78,18 +76,17 @@ class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
 
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
-    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>>? = GithubUIUtil
-      .showChooserPopup(GithubBundle.message("pull.request.assignees"), parentComponent, { list ->
-        val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
-        GithubUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
-      }, model.assignees, model.loadPotentialAssignees())
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>> = GHUIUtil
+      .showChooserPopup(parentComponent, GHUIUtil.SelectionPresenters.Users(avatarIconsProvider),
+                        model.assignees, model.loadPotentialAssignees())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
       model.adjustAssignees(indicator, delta)
   }
 
   private fun createUserLabel(user: GHPullRequestRequestedReviewer) = JLabel(user.shortName,
-                                                                             avatarIconsProvider.getIcon(user.avatarUrl),
+                                                                             avatarIconsProvider.getIcon(user.avatarUrl,
+                                                                                                         Avatar.Sizes.BASE),
                                                                              SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }
@@ -103,22 +100,21 @@ class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
 
     override fun getItemComponent(item: GHLabel) = createLabelLabel(item)
 
-    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>>? =
-      GithubUIUtil.showChooserPopup(GithubBundle.message("pull.request.labels"), parentComponent,
-                                    { GithubUIUtil.SelectionListCellRenderer.Labels() },
-                                    model.labels, model.loadAssignableLabels())
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>> =
+      GHUIUtil.showChooserPopup(parentComponent, GHUIUtil.SelectionPresenters.Labels(),
+                                model.labels, model.loadAssignableLabels())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =
       model.adjustLabels(indicator, delta)
   }
 
-  private fun createLabelLabel(label: GHLabel) = Wrapper(GithubUIUtil.createIssueLabelLabel(label)).apply {
+  private fun createLabelLabel(label: GHLabel) = Wrapper(GHUIUtil.createIssueLabelLabel(label)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP + 1, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP + 2, UIUtil.DEFAULT_HGAP / 2)
   }
 
   companion object {
     private fun addListPanel(panel: JPanel, handle: LabeledListPanelHandle<*>) {
-      panel.add(handle.label, CC().alignY("top"))
+      panel.add(handle.label, CC().alignY("top").width(":${handle.preferredLabelWidth}px:"))
       panel.add(handle.panel, CC().minWidth("0").growX().pushX().wrap())
     }
   }

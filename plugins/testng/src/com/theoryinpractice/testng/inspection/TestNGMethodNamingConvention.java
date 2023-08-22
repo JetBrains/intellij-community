@@ -18,6 +18,7 @@ package com.theoryinpractice.testng.inspection;
 import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiMethod;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
 /**
@@ -26,7 +27,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 public class TestNGMethodNamingConvention extends NamingConvention<PsiMethod> {
   @Override
   public String getElementDescription() {
-    return "TestNG test";
+    return TestngBundle.message("checkbox.testng.test");
   }
 
 

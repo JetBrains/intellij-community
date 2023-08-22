@@ -30,6 +30,7 @@ public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtur
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    myFixture.addClass("package com.intellij.ui.components; public class JBList {}");
     myFixture.enableInspections(new UnusedDeclarationInspectionBase(true));
   }
 

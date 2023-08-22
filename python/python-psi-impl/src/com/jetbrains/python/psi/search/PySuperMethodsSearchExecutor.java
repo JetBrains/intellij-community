@@ -8,9 +8,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final PySuperMethodsSearch.SearchParameters queryParameters,
@@ -23,21 +21,20 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
       for (PyClass superClass : containingClass.getAncestorClasses(context)) {
         PyFunction superMethod = superClass.findMethodByName(name, false, context);
 
-        if (superMethod != null) {
-          final Property property = func.getProperty();
-          final Property superProperty = superMethod.getProperty();
-          if (property != null && superProperty != null) {
-            final AccessDirection direction = PyUtil.getPropertyAccessDirection(func);
-            final PyCallable callable = superProperty.getByDirection(direction).valueOrNull();
-            superMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
-          }
+        final Property property = func.getProperty();
+        final Property superProperty = superMethod == null ? null : superMethod.getProperty();
+        if (property != null && superProperty != null) {
+          final AccessDirection direction = PyUtil.getPropertyAccessDirection(func);
+          final PyCallable callable = superProperty.getByDirection(direction).valueOrNull();
+          superMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
+        }
 
+        if (superMethod != null) {
           boolean consumerWantsMore = consumer.process(superMethod);
           if (!queryParameters.isDeepSearch() || !consumerWantsMore) {
             return false;
           }
         }
-
       }
     }
     return true;

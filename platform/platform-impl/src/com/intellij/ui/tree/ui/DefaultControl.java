@@ -1,22 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import javax.swing.Icon;
+import javax.swing.*;
+import java.awt.*;
 
 public final class DefaultControl implements Control {
-  private final Icon expandedDefault = UIUtil.getTreeExpandedIcon();
-  private final Icon collapsedDefault = UIUtil.getTreeCollapsedIcon();
-  private final Icon expandedSelected = UIUtil.getTreeSelectedExpandedIcon();
-  private final Icon collapsedSelected = UIUtil.getTreeSelectedCollapsedIcon();
+  private final Icon expandedDefault;
+  private final Icon collapsedDefault;
+  private final Icon expandedSelected;
+  private final Icon collapsedSelected;
 
-  @NotNull
+  public DefaultControl(@NotNull Icon expandedDefault, @NotNull Icon collapsedDefault,
+                        @NotNull Icon expandedSelected, @NotNull Icon collapsedSelected) {
+    this.expandedDefault = expandedDefault;
+    this.collapsedDefault = collapsedDefault;
+    this.expandedSelected = expandedSelected;
+    this.collapsedSelected = collapsedSelected;
+  }
+
+  public DefaultControl() {
+    expandedDefault = UIUtil.getTreeExpandedIcon();
+    collapsedDefault = UIUtil.getTreeCollapsedIcon();
+    expandedSelected = UIUtil.getTreeSelectedExpandedIcon();
+    collapsedSelected = UIUtil.getTreeSelectedCollapsedIcon();
+  }
+
   @Override
-  public Icon getIcon(boolean expanded, boolean selected) {
+  public @NotNull Icon getIcon(boolean expanded, boolean selected) {
     return !selected
            ? expanded ? expandedDefault : collapsedDefault
            : expanded ? expandedSelected : collapsedSelected;

@@ -13,10 +13,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>{
   private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);
 
@@ -34,7 +30,6 @@ final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>
     }
 
     final Rectangle rowRect = myComponent.getCellRect(selectedRow, 0, true);
-    LOG.assertTrue(rowRect != null);
     final Rectangle visibleRect = myComponent.getVisibleRect();
     if(visibleRect.intersects(rowRect)){
       return visibleRect.intersection(rowRect);

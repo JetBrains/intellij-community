@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -11,6 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.CredentialsType;
 import com.intellij.remote.RemoteSdkAdditionalData;
@@ -26,6 +29,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -41,7 +45,7 @@ import java.awt.event.ComponentListener;
 import java.util.List;
 import java.util.*;
 
-abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> extends JPanel implements RemoteSdkEditorForm, Disposable {
+public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> extends JPanel implements RemoteSdkEditorForm, Disposable {
   private JPanel myMainPanel;
   private JBLabel myInterpreterPathLabel;
   protected TextFieldWithBrowseButton myInterpreterPathField;
@@ -61,25 +65,22 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   private boolean myNameVisible;
 
   private final Project myProject;
-  @NotNull
-  private final RemoteSdkEditorContainer myParentContainer;
+  private final @NotNull RemoteSdkEditorContainer myParentContainer;
   private final Runnable myValidator;
 
-  @NotNull
-  private final BundleAccessor myBundleAccessor;
+  private final @NotNull BundleAccessor myBundleAccessor;
   private boolean myTempFilesPathVisible;
 
   private CredentialsType myConnectionType;
   private final Map<CredentialsType, TypeHandler> myCredentialsType2Handler;
   private final Set<CredentialsType> myUnsupportedConnectionTypes = new HashSet<>();
 
-  @NotNull
-  private final SdkScopeController mySdkScopeController;
+  private final @NotNull SdkScopeController mySdkScopeController;
 
   public CreateRemoteSdkForm(@Nullable Project project,
                              @NotNull RemoteSdkEditorContainer parentContainer,
                              @Nullable Runnable validator,
-                             @NotNull final BundleAccessor bundleAccessor) {
+                             final @NotNull BundleAccessor bundleAccessor) {
     this(project, parentContainer, ApplicationOnlySdkScopeController.INSTANCE, validator, bundleAccessor);
   }
 
@@ -87,7 +88,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
                              @NotNull RemoteSdkEditorContainer parentContainer,
                              @NotNull SdkScopeController sdkScopeController,
                              @Nullable Runnable validator,
-                             @NotNull final BundleAccessor bundleAccessor) {
+                             final @NotNull BundleAccessor bundleAccessor) {
     super(new BorderLayout());
     myProject = project;
     myParentContainer = parentContainer;
@@ -117,7 +118,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     myTypesPanel.setLayout(new ResizingCardLayout());
 
-    myCredentialsType2Handler = new HashMap<>();
+    myCredentialsType2Handler = new LinkedHashMap<>();
 
     installExtendedTypes(project);
     installRadioListeners(myCredentialsType2Handler.values());
@@ -133,16 +134,16 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       myRunAsRootViaSudoPanel.setVisible(false);
     }
 
-    // select the first credentials type for the start
-    Iterator<TypeHandler> iterator = myCredentialsType2Handler.values().iterator();
-    if (iterator.hasNext()) {
-      iterator.next().getRadioButton().setSelected(true);
+    TypeHandler handlerToSelect = getCredentialsTypeHandlerToSelect();
+    if (handlerToSelect != null) {
+      handlerToSelect.getRadioButton().setSelected(true);
     }
 
     radioSelected(true);
   }
 
-  public void showBrowsePathsDialog(@NotNull TextFieldWithBrowseButton textFieldWithBrowseButton, @NotNull String dialogTitle) {
+  public void showBrowsePathsDialog(@NotNull TextFieldWithBrowseButton textFieldWithBrowseButton,
+                                    @NlsContexts.DialogTitle @NotNull String dialogTitle) {
     if (myConnectionType instanceof PathsBrowserDialogProvider) {
       ((PathsBrowserDialogProvider)myConnectionType).showPathsBrowserDialog(
         myProject, textFieldWithBrowseButton.getTextField(),
@@ -156,7 +157,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     myRadioPanel.setVisible(false);
   }
 
-  private void installRadioListeners(@NotNull final Collection<TypeHandler> values) {
+  private void installRadioListeners(final @NotNull Collection<? extends TypeHandler> values) {
     ActionListener l = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -169,51 +170,55 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   }
 
   private void installExtendedTypes(@Nullable Project project) {
-    List<CredentialsType<?>> types = CredentialsManager.getInstance().getAllTypes();
+    List<CredentialsType<?>> types = new ArrayList<>(CredentialsManager.getInstance().getAllTypes());
     types.sort(Comparator.comparing(CredentialsType::getWeight));
-    for (final CredentialsType<?> type : types) {
-      CredentialsEditorProvider editorProvider = ObjectUtils.tryCast(type, CredentialsEditorProvider.class);
-      if (editorProvider != null) {
-        final List<CredentialsLanguageContribution> contributions = getContributions();
-        if (!contributions.isEmpty()) {
-          for (CredentialsLanguageContribution contribution : contributions) {
-            if (contribution.getType() == type && editorProvider.isAvailable(contribution)) {
-              final CredentialsEditor<?> editor = editorProvider.createEditor(project, contribution, this);
+    for (CredentialsType<?> type : types) {
+      CredentialsEditorProvider editorProvider = type instanceof CredentialsEditorProvider ? (CredentialsEditorProvider)type : null;
+      if (editorProvider == null) {
+        continue;
+      }
 
-              trackEditorLabelsColumn(editor);
+      List<CredentialsLanguageContribution> contributions = getContributions();
+      if (contributions.isEmpty()) {
+        continue;
+      }
 
-              JBRadioButton typeButton = new JBRadioButton(editor.getName());
-              myTypeButtonGroup.add(typeButton);
-              myRadioPanel.add(typeButton);
+      for (CredentialsLanguageContribution contribution : contributions) {
+        if (contribution.getType() != type || !editorProvider.isAvailable(contribution)) {
+          continue;
+        }
 
-              final JPanel editorMainPanel = editor.getMainPanel();
-              myTypesPanel.add(editorMainPanel, type.getName());
+        final CredentialsEditor<?> editor = editorProvider.createEditor(project, contribution, this);
 
-              myCredentialsType2Handler.put(type,
-                                            new TypeHandlerEx(typeButton,
-                                                              editorMainPanel,
-                                                              editorProvider.getDefaultInterpreterPath(myBundleAccessor),
-                                                              type,
-                                                              editor));
-              // set initial connection type
-              if (myConnectionType == null) {
-                myConnectionType = type;
-              }
-            }
-          }
+        trackEditorLabelsColumn(editor);
+
+        JBRadioButton typeButton = new JBRadioButton(editor.getName());
+        myTypeButtonGroup.add(typeButton);
+        myRadioPanel.add(typeButton);
+
+        final JPanel editorMainPanel = editor.getMainPanel();
+        myTypesPanel.add(editorMainPanel, type.getName());
+
+        myCredentialsType2Handler.put(type,
+                                      new TypeHandlerEx(typeButton,
+                                                        editorMainPanel,
+                                                        editorProvider.getDefaultInterpreterPath(myBundleAccessor),
+                                                        type,
+                                                        editor));
+        // set initial connection type
+        if (myConnectionType == null) {
+          myConnectionType = type;
         }
       }
     }
   }
 
-  @NotNull
-  protected List<CredentialsLanguageContribution> getContributions() {
+  protected @NotNull List<CredentialsLanguageContribution> getContributions() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public final SdkScopeController getSdkScopeController() {
+  public final @NotNull SdkScopeController getSdkScopeController() {
     return mySdkScopeController;
   }
 
@@ -272,14 +277,12 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
   // TODO: (next) may propose to start DockerMachine - somewhere
 
-  @NotNull
-  public final RemoteSdkCredentials computeSdkCredentials() throws ExecutionException, InterruptedException {
+  public final @NotNull RemoteSdkCredentials computeSdkCredentials() throws ExecutionException, InterruptedException {
     final T sdkData = createSdkDataInner();
     return sdkData.getRemoteSdkCredentials(myProject, true);
   }
 
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     if (myNameVisible) {
       return myNameField;
     }
@@ -307,6 +310,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     //  ArrayUtil.mergeArrays(cases, exCases.toArray(new CredentialsCase[exCases.size()]))
     //}
 
+    saveSelectedRadio(myConnectionType);
     myConnectionType.saveCredentials(
       sdkData,
       new CaseCollector() {
@@ -322,8 +326,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return sdkData;
   }
 
-  @NotNull
-  abstract protected T doCreateSdkData(@NotNull String interpreterPath);
+  protected abstract @NotNull T doCreateSdkData(@NotNull String interpreterPath);
 
   private void setNameVisible(boolean visible) {
     myNameField.setVisible(visible);
@@ -401,8 +404,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return myHelpersPathField.getText();
   }
 
-  @Nullable
-  public ValidationInfo validateRemoteInterpreter() {
+  public @Nullable ValidationInfo validateRemoteInterpreter() {
     TypeHandler typeHandler = myCredentialsType2Handler.get(getSelectedType());
     if (StringUtil.isEmpty(getInterpreterPath())) {
       return new ValidationInfo(
@@ -417,8 +419,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return typeHandler.validate();
   }
 
-  @Nullable
-  public String getSdkName() {
+  public @Nullable String getSdkName() {
     if (myNameVisible) {
       return myNameField.getText().trim();
     }
@@ -431,7 +432,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     myHelpersPathField.setText(data.getHelpersPath());
   }
 
-  public void updateHelpersPath(String helpersPath) {
+  public void updateHelpersPath(@NlsSafe String helpersPath) {
     myHelpersPathField.setText(helpersPath);
   }
 
@@ -440,12 +441,11 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return myCredentialsType2Handler.get(connectionType).getRadioButton().isSelected(); // TODO: may encapsutate
   }
 
-  public String getValidationError() {
+  public @NlsContexts.DialogMessage String getValidationError() {
     return myStatusPanel.getError();
   }
 
-  @Nullable
-  public String validateFinal() {
+  public @NlsContexts.DialogMessage @Nullable String validateFinal() {
     return myCredentialsType2Handler.get(myConnectionType).validateFinal();
   }
 
@@ -454,15 +454,13 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     // Disposable is the marker interface for CreateRemoteSdkForm
   }
 
-  @NotNull
   @Override
-  public final Disposable getDisposable() {
+  public final @NotNull Disposable getDisposable() {
     return this;
   }
 
-  @NotNull
   @Override
-  public final BundleAccessor getBundleAccessor() {
+  public final @NotNull BundleAccessor getBundleAccessor() {
     return myBundleAccessor;
   }
 
@@ -473,22 +471,22 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     void onSelected();
 
-    @Nullable String getInterpreterPath();
+    @NlsSafe @Nullable String getInterpreterPath();
 
     void setInterpreterPath(@Nullable String interpreterPath);
 
     @Nullable ValidationInfo validate();
 
-    @Nullable String validateFinal();
+    @NlsContexts.DialogMessage @Nullable String validateFinal();
 
     boolean isBrowsingAvailable();
   }
 
-  private static class UnsupportedCredentialsTypeHandler implements TypeHandler {
-    @NotNull private final JBRadioButton myTypeButton;
-    @NotNull private final JPanel myPanel;
+  private static final class UnsupportedCredentialsTypeHandler implements TypeHandler {
+    private final @NotNull JBRadioButton myTypeButton;
+    private final @NotNull JPanel myPanel;
 
-    private UnsupportedCredentialsTypeHandler(@Nullable String credentialsTypeName) {
+    private UnsupportedCredentialsTypeHandler(@NlsContexts.RadioButton @Nullable String credentialsTypeName) {
       myTypeButton = new JBRadioButton(credentialsTypeName);
       myPanel = new JPanel(new BorderLayout());
       String errorMessage = ExecutionBundle.message("remote.interpreter.cannot.load.interpreter.message", credentialsTypeName);
@@ -520,15 +518,13 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     public void onSelected() {
     }
 
-    @Nullable
     @Override
-    public ValidationInfo validate() {
+    public @Nullable ValidationInfo validate() {
       return null;
     }
 
-    @Nullable
     @Override
-    public String validateFinal() {
+    public @NlsContexts.DialogMessage @Nullable String validateFinal() {
       return null;
     }
 
@@ -540,13 +536,13 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
   private class TypeHandlerEx implements TypeHandler {
 
-    @NotNull private final JBRadioButton myRadioButton;
-    @NotNull private final JPanel myPanel;
+    private final @NotNull JBRadioButton myRadioButton;
+    private final @NotNull JPanel myPanel;
 
     private @Nullable String myInterpreterPath;
 
-    @NotNull private final CredentialsType<?> myType;
-    @NotNull private final CredentialsEditor<?> myEditor;
+    private final @NotNull CredentialsType<?> myType;
+    private final @NotNull CredentialsEditor<?> myEditor;
 
     TypeHandlerEx(@NotNull JBRadioButton radioButton,
                   @NotNull JPanel panel,
@@ -560,8 +556,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       myEditor = editor;
     }
 
-    @NotNull
-    public CredentialsEditor getEditor() {
+    public @NotNull CredentialsEditor getEditor() {
       return myEditor;
     }
 
@@ -572,14 +567,12 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     }
 
     @Override
-    @NotNull
-    public JPanel getContentComponent() {
+    public @NotNull JPanel getContentComponent() {
       return myPanel;
     }
 
     @Override
-    @NotNull
-    public JBRadioButton getRadioButton() {
+    public @NotNull JBRadioButton getRadioButton() {
       return myRadioButton;
     }
 
@@ -589,25 +582,21 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     }
 
     @Override
-    @Nullable
-    public String getInterpreterPath() {
+    public @Nullable String getInterpreterPath() {
       return myInterpreterPath;
     }
 
-    @Nullable
     @Override
-    public ValidationInfo validate() {
+    public @Nullable ValidationInfo validate() {
       return myEditor.validate();
     }
 
-    @Nullable
     @Override
-    public String validateFinal() {
+    public @NlsContexts.DialogMessage @Nullable String validateFinal() {
       return myEditor.validateFinal(() -> createSdkDataInner(), helpersPath -> updateHelpersPath(helpersPath));
     }
 
-    @NotNull
-    public CredentialsType<?> getType() {
+    public @NotNull CredentialsType<?> getType() {
       return myType;
     }
 
@@ -644,26 +633,22 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     protected abstract void processEx(CredentialsEditor editor, Object credentials);
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
-  @NotNull
   @Override
-  public final RemoteSdkEditorContainer getParentContainer() {
+  public final @NotNull RemoteSdkEditorContainer getParentContainer() {
     return myParentContainer;
   }
 
-  @NotNull
   @Override
-  public StatusPanel getStatusPanel() {
+  public @NotNull StatusPanel getStatusPanel() {
     return myStatusPanel;
   }
 
-  @Nullable
   @Override
-  public Runnable getValidator() {
+  public @Nullable Runnable getValidator() {
     return myValidator;
   }
 
@@ -766,15 +751,12 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     }
   }
 
-  @NotNull
-  private final CredentialsEditorLabelsColumnTracker myLabelsColumnTracker = new CredentialsEditorLabelsColumnTracker();
+  private final @NotNull CredentialsEditorLabelsColumnTracker myLabelsColumnTracker = new CredentialsEditorLabelsColumnTracker();
 
   private class CredentialsEditorLabelsColumnTracker implements ComponentListener, AncestorListener {
-    @NotNull
-    private final Set<JBLabel> myVisibleLabelsColumn = new HashSet<>();
+    private final @NotNull Set<JBLabel> myVisibleLabelsColumn = new HashSet<>();
 
-    @Nullable
-    private JBLabel myAnchoredLabel;
+    private @Nullable JBLabel myAnchoredLabel;
 
     @Override
     public void componentResized(ComponentEvent e) { /* do nothing */ }
@@ -842,5 +824,38 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
         }
       }
     }
+  }
+
+  @TestOnly
+  public void setInterpreterPath(@NlsSafe @NotNull String interpreterPath) {
+    myInterpreterPathField.setText(interpreterPath);
+  }
+
+  private void saveSelectedRadio(@NotNull CredentialsType<?> credentialsType) {
+    getPropertiesComponent().setValue(getCredentialsTypePersistenceKey(), credentialsType.getName());
+  }
+
+  private @NotNull PropertiesComponent getPropertiesComponent() {
+    return myProject == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(myProject);
+  }
+
+  private @Nullable TypeHandler getCredentialsTypeHandlerToSelect() {
+    String credentialsTypeName = getPropertiesComponent().getValue(getCredentialsTypePersistenceKey());
+    if (credentialsTypeName != null) {
+      for (Map.Entry<CredentialsType, TypeHandler> entry : myCredentialsType2Handler.entrySet()) {
+        if (entry.getKey().getName().equals(credentialsTypeName)) {
+          return entry.getValue();
+        }
+      }
+    }
+    Iterator<TypeHandler> iterator = myCredentialsType2Handler.values().iterator();
+    if (iterator.hasNext()) {
+      return iterator.next();
+    }
+    return null;
+  }
+
+  private @NonNls @NotNull String getCredentialsTypePersistenceKey() {
+    return "credentialsType " + getClass().getName();
   }
 }

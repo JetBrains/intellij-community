@@ -1,18 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.exists
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
+import com.intellij.openapi.Disposable
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
-import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 
-interface StatisticsEventLogWriter {
+interface StatisticsEventLogWriter : Disposable {
   fun log(logEvent: LogEvent)
 
   fun getActiveFile(): EventLogFile?
@@ -25,99 +24,67 @@ interface StatisticsEventLogWriter {
 }
 
 class StatisticsEventLogFileWriter(private val recorderId: String,
-                                   private val maxFileSize: String,
+                                   private val loggerProvider: StatisticsEventLoggerProvider,
+                                   maxFileSizeInBytes: Int,
                                    isEap: Boolean,
                                    prefix: String) : StatisticsEventLogWriter {
-  private var fileAppender: StatisticsEventLogFileAppender? = null
-
-  private val eventLogger: Logger = Logger.getLogger("event.logger.$recorderId")
+  private var logger: EventLogFileWriter? = null
+    get() {
+      return if (loggerProvider.isRecordEnabled()) field else null
+    }
+    set(value) {
+      field?.close()
+      field = value
+    }
 
   init {
-    eventLogger.level = Level.INFO
-    eventLogger.additivity = false
-
-    val pattern = PatternLayout("%m\n")
     try {
       val dir = getEventLogDir()
-      fileAppender = StatisticsEventLogFileAppender.create(pattern, dir, prefix, isEap)
-      fileAppender?.let { appender ->
-        appender.setMaxFileSize(maxFileSize)
-        eventLogger.addAppender(appender)
+      val buildType = if (isEap) EventLogBuildType.EAP else EventLogBuildType.RELEASE
+      val logFilePathProvider = { directory: Path -> EventLogFile.create(directory, buildType, prefix).file }
+      val fileEventLoggerLogger = EventLogFileWriter(dir, maxFileSizeInBytes, logFilePathProvider)
+      logger = fileEventLoggerLogger
+      if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(
+          { (if (loggerProvider.isRecordEnabled()) fileEventLoggerLogger.flush ())  }, 10, TimeUnit.SECONDS)
       }
     }
     catch (e: IOException) {
       System.err.println("Unable to initialize logging for feature usage: " + e.localizedMessage)
     }
-
-    moveLogsFromLegacyDirectories()
-  }
-
-  private fun moveLogsFromLegacyDirectories() {
-    val systemPath = Paths.get(PathManager.getSystemPath())
-    val newEventLogDir = getBaseEventLogDir()
-
-    val oldFusLogs = systemPath.resolve("event-log")
-    if (oldFusLogs.exists()) {
-      copyDirContent(oldFusLogs.toFile(), newEventLogDir.resolve("FUS").toFile())
-      deleteDirectory(oldFusLogs)
-    }
-
-    val oldPluginsLogs = systemPath.resolve("plugins-event-log")
-    if (oldPluginsLogs.exists()) {
-      val pluginLogDirectories = oldPluginsLogs.toFile().listFiles()
-      if (pluginLogDirectories != null) {
-        for (pluginsDirectory in pluginLogDirectories) {
-          copyDirContent(pluginsDirectory, newEventLogDir.resolve(pluginsDirectory.name).toFile())
-        }
-        deleteDirectory(oldPluginsLogs)
-      }
-    }
-  }
-
-  private fun deleteDirectory(path: Path) {
-    try {
-      FileUtil.delete(path)
-    }
-    catch (ignored: IOException) {
-    }
-  }
-
-  private fun copyDirContent(fromDir: File, toDir: File) {
-    try {
-      FileUtil.copyDirContent(fromDir, toDir)
-    }
-    catch (ignored: IOException) {
-    }
   }
 
   private fun getEventLogDir(): Path {
-    return getBaseEventLogDir().resolve(recorderId)
+    return EventLogConfiguration.getInstance().getEventLogDataPath().resolve("logs").resolve(recorderId)
   }
 
   override fun log(logEvent: LogEvent) {
-    eventLogger.info(LogEventSerializer.toString(logEvent))
+    logger?.log(LogEventSerializer.toString(logEvent))
   }
 
   override fun getActiveFile(): EventLogFile? {
-    val activeLog = fileAppender?.activeLogName ?: return null
+    val activeLog = logger?.getActiveLogName() ?: return null
     return EventLogFile(File(File(getEventLogDir().toUri()), activeLog))
   }
 
   override fun getLogFilesProvider(): EventLogFilesProvider {
-    return DefaultEventLogFilesProvider(getEventLogDir()) { fileAppender?.activeLogName }
+    return DefaultEventLogFilesProvider(getEventLogDir()) { logger?.getActiveLogName() }
   }
 
   override fun cleanup() {
-    fileAppender?.cleanUp()
+    logger?.cleanUp()
   }
 
   override fun rollOver() {
-    fileAppender?.rollOver()
+    logger?.rollOver()
   }
 
-  companion object {
-    private fun getBaseEventLogDir(): Path {
-      return EventLogConfiguration.getEventLogDataPath().resolve("logs")
+  override fun dispose() {
+    val closeFuture = AppExecutorUtil.getAppExecutorService().submit {
+      logger = null
     }
+    Runtime.getRuntime().addShutdownHook(Thread {
+      closeFuture.get(500, TimeUnit.MILLISECONDS)
+    })
   }
 }

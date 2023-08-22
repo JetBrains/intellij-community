@@ -1,23 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ListActions;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,28 +28,44 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class NewRecentProjectPanel extends RecentProjectPanel {
+
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {
-    super(parentDisposable);
-    setBorder(null);
-    setBackground(FlatWelcomeFrame.getProjectsBackground());
+    this(parentDisposable, true);
+  }
+
+  public NewRecentProjectPanel(@NotNull Disposable parentDisposable, boolean withSpeedSearch) {
+    super(parentDisposable, withSpeedSearch);
+    setBorder(JBUI.Borders.empty());
     JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
     if (scrollPane != null) {
-      scrollPane.setBackground(FlatWelcomeFrame.getProjectsBackground());
       JBDimension size = JBUI.size(300, 460);
       scrollPane.setSize(size);
       scrollPane.setMinimumSize(size);
       scrollPane.setPreferredSize(size);
     }
+    setBackground(WelcomeScreenUIManager.getProjectsBackground());
+  }
+
+  @Override
+  public void setBackground(Color bg) {
+    super.setBackground(bg);
+    JScrollPane scrollPane = UIUtil.findComponentOfType(this, JScrollPane.class);
+    if (scrollPane != null) {
+      scrollPane.setBackground(bg);
+    }
     ListWithFilter panel = UIUtil.findComponentOfType(this, ListWithFilter.class);
     if (panel != null) {
-      panel.setBackground(FlatWelcomeFrame.getProjectsBackground());
+      panel.setBackground(bg);
+    }
+    if (myList != null) {
+      myList.setBackground(bg);
     }
   }
 
@@ -66,10 +85,10 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   }
 
   @Override
-  protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
-    final JBList list = super.createList(recentProjectActions, size);
+  protected JBList<AnAction> createList(AnAction[] recentProjectActions, Dimension size) {
+    final JBList<AnAction> list = super.createList(recentProjectActions, size);
 
-    list.setBackground(FlatWelcomeFrame.getProjectsBackground());
+    list.setBackground(getBackground());
     list.getActionMap().put(ListActions.Right.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -82,9 +101,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         if (group != null) {
           if (!group.isExpanded()) {
             group.setExpanded(true);
-            ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
             int index = list.getSelectedIndex();
-            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
             list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
           }
         } else {
@@ -113,22 +130,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         if (group != null && group.isExpanded()) {
           group.setExpanded(false);
           int index = list.getSelectedIndex();
-          ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
-          RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
           list.setSelectedIndex(index);
-        }
-      }
-    });
-    list.addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        final int index = list.locationToIndex(new Point(x, y));
-        if (index != -1 && Arrays.binarySearch(list.getSelectedIndices(), index) < 0) {
-          list.setSelectedIndex(index);
-        }
-        final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup");
-        if (group != null) {
-          ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).getComponent().show(comp, x, y);
         }
       }
     });
@@ -149,7 +151,6 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       private void initConstraints () {
         nameCell = new GridBagConstraints();
         pathCell = new GridBagConstraints();
-        GridBagConstraints closeButtonCell = new GridBagConstraints();
 
         nameCell.gridx = 0;
         nameCell.gridy = 0;
@@ -158,32 +159,21 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         nameCell.anchor = GridBagConstraints.FIRST_LINE_START;
         nameCell.insets = JBUI.insets(6, 5, 1, 5);
 
-
-
         pathCell.gridx = 0;
         pathCell.gridy = 1;
 
         pathCell.insets = JBUI.insets(1, 5, 6, 5);
         pathCell.anchor = GridBagConstraints.LAST_LINE_START;
-
-
-        closeButtonCell.gridx = 1;
-        closeButtonCell.gridy = 0;
-        closeButtonCell.anchor = GridBagConstraints.FIRST_LINE_END;
-        closeButtonCell.insets = JBUI.insets(7, 7, 7, 7);
-        closeButtonCell.gridheight = 2;
-
-        //closeButtonCell.anchor = GridBagConstraints.WEST;
       }
 
       @Override
       protected Color getListBackground(boolean isSelected, boolean hasFocus) {
-        return isSelected ? FlatWelcomeFrame.getListSelectionColor(hasFocus) : FlatWelcomeFrame.getProjectsBackground();
+        return isSelected ? WelcomeScreenUIManager.getProjectsSelectionBackground(hasFocus) : NewRecentProjectPanel.this.getBackground();
       }
 
       @Override
       protected Color getListForeground(boolean isSelected, boolean hasFocus) {
-        return UIUtil.getListForeground(isSelected && hasFocus, true);
+        return  WelcomeScreenUIManager.getProjectsSelectionForeground(isSelected, hasFocus);
       }
 
       @Override
@@ -205,9 +195,9 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         final Color fore = getListForeground(selected, list.hasFocus());
         final Color back = getListBackground(selected, list.hasFocus());
         final JLabel name = new JLabel();
-        final JLabel path = new JLabel();
+        final JLabel path = ComponentPanelBuilder.createNonWrappingCommentComponent("");
         name.setForeground(fore);
-        path.setForeground(selected ? fore : UIUtil.getInactiveTextColor());
+        path.setForeground(NamedColorUtil.getInactiveTextColor());
 
         setBackground(back);
 
@@ -229,7 +219,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               }
             }
 
-            setBorder(JBUI.Borders.empty(5, 7));
+            setBorder(JBUI.Borders.empty(8, 7));
             if (isInsideGroup) {
               add(spacer, BorderLayout.WEST);
             }
@@ -242,15 +232,16 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               add(name);
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
-              name.setText(((ReopenProjectAction)value).getProjectName());
+              name.setText(((ReopenProjectAction)value).getProjectNameToDisplay());
               final String realPath = PathUtil.toSystemDependentName(((ReopenProjectAction)value).getProjectPath());
               int i = isInsideGroup ? 80 : 60;
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUIScale.scale(i)));
               if (!realPath.equals(path.getText())) {
                 projectsWithLongPaths.add((ReopenProjectAction)value);
               }
-              if (!isPathValid((((ReopenProjectAction)value).getProjectPath()))) {
-                path.setForeground(ColorUtil.mix(path.getForeground(), JBColor.red, .5));
+              boolean isValid = !isPathValid((((ReopenProjectAction)value).getProjectPath()));
+              if (isValid) {
+                name.setForeground(NamedColorUtil.getInactiveTextColor());
               }
               p.add(name, BorderLayout.NORTH);
               p.add(path, BorderLayout.SOUTH);
@@ -258,23 +249,27 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
               String projectPath = ((ReopenProjectAction)value).getProjectPath();
               RecentProjectsManagerBase recentProjectsManage = RecentProjectsManagerBase.getInstanceEx();
-              Icon icon = recentProjectsManage.getProjectIcon(projectPath, StartupUiUtil.isUnderDarcula());
-              if (icon == null) {
-                if (StartupUiUtil.isUnderDarcula()) {
-                  //No dark icon for this project
-                  icon = recentProjectsManage.getProjectIcon(projectPath, false);
-                }
-              }
-              if (icon == null) {
-                icon = EmptyIcon.ICON_16;
-              }
-
+              Icon icon = recentProjectsManage.getProjectIcon(projectPath, true);
               final JLabel projectIcon = new JLabel("", icon, SwingConstants.LEFT) {
                 @Override
                 protected void paintComponent(Graphics g) {
-                  getIcon().paintIcon(this, g, 0, (getHeight() - getIcon().getIconHeight()) / 2);
+                  Icon icon = isEnabled() ? getIcon() : getDisabledIcon();
+                  icon.paintIcon(this, g, 0, 0);
                 }
               };
+              ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                // IconUtil.desaturate eagerly evaluates `icon` which
+                // may take unbound amount of time on a network share
+                Icon disabledIcon = IconUtil.desaturate(icon);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  if (projectIcon.isValid()) {
+                    projectIcon.setDisabledIcon(disabledIcon);
+                  }
+                }, ModalityState.any());
+              });
+              if (isValid) {
+                projectIcon.setEnabled(false);
+              }
               projectIcon.setBorder(JBUI.Borders.emptyRight(8));
               projectIcon.setVerticalAlignment(SwingConstants.CENTER);
               final NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -286,18 +281,31 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             AccessibleContextUtil.setCombinedDescription(this, name, " - ", path);
           }
 
+          private Icon getGray(Icon icon) {
+            final int w = icon.getIconWidth();
+            final int h = icon.getIconHeight();
+            GraphicsEnvironment ge =
+              GraphicsEnvironment.getLocalGraphicsEnvironment();
+            GraphicsDevice gd = ge.getDefaultScreenDevice();
+            GraphicsConfiguration gc = gd.getDefaultConfiguration();
+            BufferedImage image = gc.createCompatibleImage(w, h);
+            Graphics2D g2d = image.createGraphics();
+            icon.paintIcon(null, g2d, 0, 0);
+            Image gray = GrayFilter.createDisabledImage(image);
+            return new ImageIcon(gray);
+          }
+
           @Override
           public Dimension getPreferredSize() {
-            return new Dimension(super.getPreferredSize().width, JBUIScale.scale(44));
+            return new Dimension(super.getPreferredSize().width, JBUIScale.scale(value instanceof ProjectGroupActionGroup ? 32 : 50));
           }
         };
       }
     };
   }
 
-  @Nullable
   @Override
-  protected JPanel createTitle() {
+  protected @Nullable JPanel createTitle() {
     return null;
   }
 }

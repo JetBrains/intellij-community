@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -14,14 +15,15 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -51,7 +53,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private final ChooseByNamePopup myOldPopup;
   private ActionMap myActionMap;
   private InputMap myInputMap;
-  private String myAdText;
+  private @NlsContexts.PopupAdvertisement String myAdText;
   private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList, this);
 
   protected ChooseByNamePopup(@Nullable final Project project,
@@ -67,9 +69,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
     myMayRequestCurrentWindow = mayRequestOpenInCurrentWindow;
-    myAdText = myMayRequestCurrentWindow ? "Press " +
-                                           KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK)) +
-                                           " to open in current window" : null;
+    myAdText = myMayRequestCurrentWindow ? LangBundle.message("popup.advertisement.press.to.open.in.current.window",
+                                                              KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK)))
+                                         : null;
   }
 
   public String getEnteredText() {
@@ -324,7 +326,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
-                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
                                                                                 "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
@@ -426,11 +428,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myActionMap.put(aActionName, aAction);
   }
 
+  @NlsContexts.PopupAdvertisement
   public String getAdText() {
     return myAdText;
   }
 
-  public void setAdText(final String adText) {
+  public void setAdText(final @NlsContexts.PopupAdvertisement String adText) {
     myAdText = adText;
   }
 
@@ -468,9 +471,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   @NotNull
   @TestOnly
   public List<Object> calcPopupElements(@NotNull String text, boolean checkboxState) {
-    List<Object> elements = ContainerUtil.newArrayList("empty");
+    List<Object> elements = new SmartList<>("empty");
     Semaphore semaphore = new Semaphore(1);
-    scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, SelectMostRelevant.INSTANCE, set -> {
+    scheduleCalcElements(text, checkboxState, ModalityState.nonModal(), SelectMostRelevant.INSTANCE, set -> {
       elements.clear();
       elements.addAll(set);
       semaphore.up();

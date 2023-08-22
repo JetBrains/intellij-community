@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static org.jetbrains.plugins.groovy.util.ThrowingTransformation.disableTransformations
 
-/**
- * @author ven
- */
 class ResolvePropertyTest extends GroovyResolveTestCase {
   final String basePath = TestUtils.testDataPath + "resolve/property/"
 
@@ -1459,5 +1456,31 @@ class A { public static someStaticField = 42 }
 def a = A // class instance
 a.<caret>someStaticField
 ''', GrField
+  }
+
+  void 'test gpath in array'() {
+    resolveByText """
+class A {
+    int foo
+    A(int x) { foo = x }
+}
+
+A[] ai = [new A(1), new A(2)].toArray()
+
+println(ai.fo<caret>o)
+""", GrAccessorMethod
+  }
+
+  void 'test gpath in array 2'() {
+    resolveByText """
+class A {
+    int length
+    A(int x) { length = x }
+}
+
+A[] ai = [new A(1), new A(2)].toArray()
+
+println(ai.len<caret>gth)
+""", GrField
   }
 }

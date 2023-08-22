@@ -42,6 +42,6 @@ public interface IdePopupEventDispatcher {
   }
 
   /** @deprecated use {@link IdePopupEventDispatcher#setRestoreFocusSilently()} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setRestoreFocusSilentely() {}
 }

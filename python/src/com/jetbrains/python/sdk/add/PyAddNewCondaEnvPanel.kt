@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
@@ -11,9 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
@@ -21,36 +19,34 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.associateWithModule
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.createSdkByGenerateTask
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
-import java.io.File
 import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
 
-/**
- * @author vlan
- */
-class PyAddNewCondaEnvPanel(private val project: Project?,
-                            private val module: Module?,
-                            private val existingSdks: List<Sdk>,
-                            newProjectPath: String?,
-                            context: UserDataHolder) : PyAddNewEnvPanel() {
+open class PyAddNewCondaEnvPanel(
+  private val project: Project?,
+  private val module: Module?,
+  private val existingSdks: List<Sdk>,
+  newProjectPath: String?
+) : PyAddNewEnvPanel() {
   override val envName: String = "Conda"
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
 
   private val languageLevelsField: JComboBox<String>
   private val condaPathField = TextFieldWithBrowseButton().apply {
-    val path = PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH ?: PyCondaPackageService.getSystemCondaExecutable()
+    val path = PyCondaPackageService.getCondaExecutable(null)
     path?.let {
       text = it
     }
@@ -62,7 +58,8 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
       }
     })
   }
-  private val pathField = TextFieldWithBrowseButton().apply {
+
+  protected val pathField = TextFieldWithBrowseButton().apply {
     addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.conda.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
@@ -77,8 +74,8 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
   init {
     layout = BorderLayout()
 
-    // https://docs.conda.io/projects/conda/en/latest/user-guide/install/
-    val supportedLanguageLevels = LanguageLevel.SUPPORTED_LEVELS.asReversed().filter { it != LanguageLevel.PYTHON39 }.map { it.toString() }
+    val supportedLanguageLevels = condaSupportedLanguages
+      .map { it.toPythonVersion() }
 
     languageLevelsField = ComboBox(supportedLanguageLevels.toTypedArray()).apply {
       selectedItem = if (itemCount > 0) getItemAt(0) else null
@@ -90,6 +87,13 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
 
     updatePathField()
 
+    @Suppress("LeakingThis")
+    layoutComponents()
+  }
+
+  protected open fun layoutComponents() {
+    layout = BorderLayout()
+
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent(PyBundle.message("sdk.create.venv.conda.dialog.label.location"), pathField)
       .addLabeledComponent(PyBundle.message("sdk.create.venv.conda.dialog.label.python.version"), languageLevelsField)
@@ -100,7 +104,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    listOfNotNull(validateAnacondaPath(), validateEnvironmentDirectoryLocation(pathField))
+    emptyList() // Pre target validation is not supported
 
   override fun getOrCreateSdk(): Sdk? {
     val condaPath = condaPathField.text
@@ -116,8 +120,19 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     if (!shared) {
       sdk.associateWithModule(module, newProjectPath)
     }
-    PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH = condaPath
+    PyCondaPackageService.onCondaEnvCreated(condaPath)
+    project.excludeInnerVirtualEnv(sdk)
+    // Old conda created, convert to new
+    fixPythonCondaSdk(sdk, sdk.getOrCreateAdditionalData(), condaPath)
     return sdk
+  }
+
+  override fun getStatisticInfo(): InterpreterStatisticsInfo? {
+      return InterpreterStatisticsInfo(InterpreterType.CONDAVENV,
+                                       InterpreterTarget.LOCAL,
+                                       false,
+                                       makeSharedField.isSelected,
+                                       false)
   }
 
   override fun addChangeListener(listener: Runnable) {
@@ -134,18 +149,6 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     val baseDir = defaultBaseDir ?: "${SystemProperties.getUserHome()}/.conda/envs"
     val dirName = PathUtil.getFileName(projectBasePath ?: "untitled")
     pathField.text = FileUtil.toSystemDependentName("$baseDir/$dirName")
-  }
-
-  private fun validateAnacondaPath(): ValidationInfo? {
-    val text = condaPathField.text
-    val file = File(text)
-    val message = when {
-      StringUtil.isEmptyOrSpaces(text) -> "Conda executable path is empty"
-      !file.exists() -> "Conda executable not found"
-      !file.isFile || !file.canExecute() -> "Conda executable path is not an executable file"
-      else -> return null
-    }
-    return ValidationInfo(message)
   }
 
   private val defaultBaseDir: String?

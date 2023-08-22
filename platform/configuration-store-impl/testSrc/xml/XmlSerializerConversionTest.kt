@@ -24,7 +24,7 @@ internal class XmlSerializerConversionTest {
       <option name="bar" />
     </bean>""", bean)
 
-    bean.foo = Ref.create<String>()
+    bean.foo = Ref.create()
     bean.bar = Ref.create("testValue2")
     testSerializer("""
     <bean foo="">
@@ -40,7 +40,7 @@ internal class XmlSerializerConversionTest {
     bean.foo = Ref.create("testValue")
     testSerializer("""<bean foo="testValue" />""", bean, SkipDefaultsSerializationFilter())
 
-    bean.foo = Ref.create<String>()
+    bean.foo = Ref.create()
     bean.bar = Ref.create("testValue2")
     testSerializer("""
     <bean foo="">

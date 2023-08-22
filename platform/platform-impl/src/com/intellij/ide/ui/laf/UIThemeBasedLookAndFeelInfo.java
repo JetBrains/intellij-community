@@ -1,44 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.util.SVGLoader;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
-  private static final String RELAUNCH_PROPERTY = "UITheme.relaunch";
 
-  private final UITheme myTheme;
+  private final @NotNull UITheme myTheme;
   private boolean myInitialised;
 
-  public UIThemeBasedLookAndFeelInfo(UITheme theme) {
-    super(theme.getName(), theme.isDark() ? DarculaLaf.class.getName() : IntelliJLaf.class.getName());
+  public UIThemeBasedLookAndFeelInfo(@NotNull UITheme theme) {
+    super(theme.getDisplayName(), (theme.isDark() ? DarculaLaf.class : IntelliJLaf.class).getName());
     myTheme = theme;
   }
 
-  public UITheme getTheme() {
+  public final @NotNull UITheme getTheme() {
     return myTheme;
   }
 
@@ -48,6 +49,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);
     }
+    SVGLoader.setSelectionColorPatcherProvider(myTheme.getSelectionColorPatcher());
 
     SVGLoader.SvgElementColorPatcherProvider colorPatcher = myTheme.getColorPatcher();
     if (colorPatcher != null) {
@@ -61,79 +63,74 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     myInitialised = true;
   }
 
-  public boolean isInitialised() {
+  public final boolean isInitialised() {
     return myInitialised;
   }
 
+  protected @Nullable InputStream getResourceAsStream(@NotNull String path) {
+    return myTheme.getProviderClassLoader().getResourceAsStream(path);
+  }
+
   protected void installEditorScheme() {
-    String name = myTheme.getEditorSchemeName();
-    if (name != null) {
-      EditorColorsManager cm = EditorColorsManager.getInstance();
-      EditorColorsScheme scheme = cm.getScheme(name);
-      if (scheme != null) {
-        cm.setGlobalScheme(scheme);
+    EditorColorsScheme scheme = LafManager.getInstance().getPreviousSchemeForLaf(this);
+    EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
+    if (scheme == null) {
+      String name = myTheme.getEditorSchemeName();
+      if (name != null) {
+        scheme = editorColorManager.getScheme(name);
       }
     }
-    else { // Offer a new Theme based EditorColorScheme for the first time after update.
-      ApplicationManager.getApplication().invokeLater(() -> {
-        String themeName = myTheme.getEditorSchemeName();
-        if (StringUtil.isNotEmpty(themeName)) {
-          EditorColorsManager cm = EditorColorsManager.getInstance();
-          EditorColorsScheme globalScheme = cm.getGlobalScheme();
-          PropertiesComponent properties = PropertiesComponent.getInstance();
 
-          EditorColorsScheme baseScheme = cm.getScheme(SchemeManager.getBaseName(globalScheme));
-
-          if (!properties.getBoolean(RELAUNCH_PROPERTY) &&
-              !SchemeManager.getBaseName(globalScheme).equals(themeName) &&
-              EditorColorsScheme.DEFAULT_SCHEME_NAME.equals(baseScheme.getName())) { // is default based
-            EditorColorsScheme scheme = cm.getScheme(themeName);
-            if (scheme != null) {
-              cm.setGlobalScheme(scheme);
-            }
-          }
-          properties.setValue(RELAUNCH_PROPERTY, true);
-        }
-      });
+    if (scheme != null) {
+      editorColorManager.setGlobalScheme(scheme);
     }
   }
 
   private void installBackgroundImage() {
+    boolean installed = installBackgroundImage(myTheme.getBackground(), IdeBackgroundUtil.EDITOR_PROP);
+    installed = installBackgroundImage(myTheme.getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP) || installed;
+    if (installed) {
+      IdeBackgroundUtil.repaintAllWindows();
+    }
+  }
+
+  private boolean installBackgroundImage(@Nullable Map<String, Object> backgroundProps,
+                                         @NotNull @NonNls String bgImageProperty) {
+    Object path = backgroundProps == null ? null : backgroundProps.get("image");
+    return path instanceof String &&
+           installBackgroundImage(backgroundProps, bgImageProperty, (String)path);
+  }
+
+  private boolean installBackgroundImage(@NotNull Map<String, Object> backgroundProps,
+                                         @NotNull @NonNls String bgImageProperty,
+                                         @NotNull @NonNls String path) {
     try {
-      Map<String, Object> background = myTheme.getBackground();
-      if (background != null) {
-        Object path = background.get("image");
-        if (path instanceof String) {
-          File tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.toString().substring(((String)path).lastIndexOf(".")), true);
-          URL resource = myTheme.getProviderClassLoader().getResource((String)path);
-          if (resource != null) {
-            try (InputStream input = myTheme.getProviderClassLoader().getResourceAsStream((String)path)) {
-              try (FileOutputStream output = new FileOutputStream(tmpImage)) {
-                FileUtil.copy(input, output);
-              }
-            }
-
-            String image = tmpImage.getPath();
-            Object transparency = background.get("transparency");
-            String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
-            String fill = parseEnumValue(background.get("fill"), IdeBackgroundUtil.Fill.SCALE);
-            String anchor = parseEnumValue(background.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
-
-            String spec = StringUtil.join(new String[]{image, alpha, fill, anchor}, ",");
-            String currentSpec = PropertiesComponent.getInstance().getValue(IdeBackgroundUtil.EDITOR_PROP);
-            PropertiesComponent.getInstance().setValue("old." + IdeBackgroundUtil.EDITOR_PROP, currentSpec);
-
-            PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, spec);
-            IdeBackgroundUtil.repaintAllWindows();
-          }
-          else {
-            throw new IllegalArgumentException("Can't load background: " + path);
-          }
-        }
+      Path tmpImage = FileUtil.createTempFile("ijBackgroundImage", path.substring(path.lastIndexOf(".")), true).toPath();
+      InputStream stream = getResourceAsStream(path);
+      if (stream == null) {
+        throw new IllegalArgumentException("Can't load background: " + path);
       }
+
+      try (stream) {
+        Files.copy(stream, tmpImage, StandardCopyOption.REPLACE_EXISTING);
+      }
+
+      Object transparency = backgroundProps.get("transparency");
+      String alpha = String.valueOf(transparency instanceof Integer ? (int)transparency : 15);
+      String fill = parseEnumValue(backgroundProps.get("fill"), IdeBackgroundUtil.Fill.SCALE);
+      String anchor = parseEnumValue(backgroundProps.get("anchor"), IdeBackgroundUtil.Anchor.CENTER);
+
+      String spec = String.join(",", tmpImage.toString(), alpha, fill, anchor);
+      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+      String currentSpec = propertyComponent.getValue(bgImageProperty);
+      propertyComponent.setValue("old." + bgImageProperty, currentSpec);
+      propertyComponent.setValue(bgImageProperty, spec);
+
+      return true;
     }
     catch (IOException e) {
       Logger.getInstance(getClass()).error(e);
+      return false;
     }
   }
 
@@ -156,15 +153,23 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     }
     SVGLoader.setColorPatcherProvider(null);
 
+    unsetBackgroundProperties(IdeBackgroundUtil.EDITOR_PROP);
+    unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);
+
+    myInitialised = false;
+  }
+
+  private void unsetBackgroundProperties(String backgroundPropertyKey) {
     PropertiesComponent propertyManager = PropertiesComponent.getInstance();
-    String value = propertyManager.getValue("old." + IdeBackgroundUtil.EDITOR_PROP);
-    propertyManager.unsetValue("old." + IdeBackgroundUtil.EDITOR_PROP);
+    String value = propertyManager.getValue("old." + backgroundPropertyKey);
+    propertyManager.unsetValue("old." + backgroundPropertyKey);
     if (value == null) {
       if (myTheme.getBackground() != null) {
-        propertyManager.unsetValue(IdeBackgroundUtil.EDITOR_PROP);
+        propertyManager.unsetValue(backgroundPropertyKey);
       }
-    } else {
-      propertyManager.setValue(IdeBackgroundUtil.EDITOR_PROP, value);
+    }
+    else {
+      propertyManager.setValue(backgroundPropertyKey, value);
     }
   }
 }

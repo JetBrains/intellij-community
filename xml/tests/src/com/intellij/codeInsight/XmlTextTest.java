@@ -4,7 +4,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiFileFactory;
@@ -21,7 +20,7 @@ public class XmlTextTest extends LightJavaCodeInsightTestCase {
       @Language("XML")
       String xml = "<root>0123456789</root>";
       XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
-                                            .createFileFromText("foo.xml", StdFileTypes.XML, xml, 1, true, false);
+                                            .createFileFromText("foo.xml", XmlFileType.INSTANCE, xml, 1, true, false);
       XmlTag root = file.getDocument().getRootTag();
       final XmlText text1 = root.getValue().getTextElements()[0];
 
@@ -80,11 +79,12 @@ public class XmlTextTest extends LightJavaCodeInsightTestCase {
 
   public void testXmlAttributeEscaperCalculatesDisplayToPhysicalCorrectlyInPresenseOfXmlEntities() {
     @Language("HTML")
-    String xml = "<!DOCTYPE html>\n" +
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\"\n" +
-                 "\txmlns:th=\"http://www.thymeleaf.org\">\n" +
-                 "  <td style=\"text-align: right\" th:utext=\"'&euro; ' + ${{item.netPrice}}\">XXX</td>\n" +
-                 "</html>";
+    String xml = """
+      <!DOCTYPE html>
+      <html xmlns="http://www.w3.org/1999/xhtml"
+      \txmlns:th="http://www.thymeleaf.org">
+        <td style="text-align: right" th:utext="'&euro; ' + ${{item.netPrice}}">XXX</td>
+      </html>""";
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("foo.xml", XmlFileType.INSTANCE, xml);
     XmlTag root = file.getDocument().getRootTag();
     XmlTag tag = root.findFirstSubTag("td");

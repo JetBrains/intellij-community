@@ -39,7 +39,7 @@ public class PyScriptTestProcessRunner<CONF_T extends AbstractPythonRunConfigura
   extends PyAbstractTestProcessRunner<CONF_T> {
 
   /**
-   * Prepent script name with it if you use python test qname but not script name
+   * Prepend script name with it if you use python test qname but not script name
    */
   public static final String TEST_TARGET_PREFIX = "test:";
   @NotNull

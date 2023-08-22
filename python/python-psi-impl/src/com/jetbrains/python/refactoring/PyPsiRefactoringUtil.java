@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyPsiRefactoringUtil {
+public final class PyPsiRefactoringUtil {
   /**
    * Adds element to statement list to the correct place according to its dependencies.
    *
@@ -221,7 +222,7 @@ public class PyPsiRefactoringUtil {
     if (PyBuiltinCache.getInstance(element).isBuiltin(element)) return false;
     final PsiFileSystemItem elementSource = element instanceof PsiDirectory ? (PsiFileSystemItem)element : element.getContainingFile();
     final PsiFile file = anchor.getContainingFile();
-    if (elementSource == file) return false;
+    if (elementSource == file || elementSource == file.getOriginalFile()) return false;
     final QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(element, anchor);
     if (qname == null || !isValidQualifiedName(qname)) {
       return false;
@@ -233,9 +234,13 @@ public class PyPsiRefactoringUtil {
       containingQName = qname.removeLastComponent();
       importedName = qname.getLastComponent();
     }
-    else {
+    // See PyClassRefactoringUtil.DynamicNamedElement
+    else if (PyUtil.isTopLevel(element) || element instanceof LightElement) {
       containingQName = qname;
       importedName = getOriginalName(element);
+    }
+    else {
+      return false;
     }
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, elementSource);
     if (preferFromImport && !containingQName.getComponents().isEmpty() || !importingModuleOrPackage) {
@@ -380,5 +385,10 @@ public class PyPsiRefactoringUtil {
     }
 
     addSuperClassExpressions(project, clazz, superClassNames, null);
+  }
+
+  public static boolean shouldCopyAnnotations(@NotNull PsiElement copiedElement, @NotNull PsiFile destFile) {
+    return !LanguageLevel.forElement(copiedElement).isPython2() &&
+           (!PyiUtil.isInsideStub(copiedElement) || PyiUtil.isPyiFileOfPackage(destFile));
   }
 }

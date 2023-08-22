@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.IdeBundle;
+import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,18 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-public class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
-
-  public static final ThreadLocal<Boolean> FORMATTING_CANCELLED_FLAG = ThreadLocal.withInitial(() -> false);
+public final class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
 
   private static final double MAX_PROGRESS_VALUE = 1;
   private static final double TOTAL_WEIGHT =
     Arrays.stream(FormattingStateId.values()).mapToDouble(FormattingStateId::getProgressWeight).sum();
-
-  private final ConcurrentMap<EventType, Collection<Runnable>> myCallbacks = new ConcurrentHashMap<>();
 
   private final WeakReference<VirtualFile> myFile;
   private final WeakReference<Document>    myDocument;
@@ -49,22 +43,21 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     myFile = new WeakReference<>(file.getVirtualFile());
     myDocument = new WeakReference<>(document);
     myFileTextLength = file.getTextLength();
-    addCallback(EventType.CANCEL, new MyCancelCallback());
   }
 
-  private static @NotNull String getTitle(@NotNull PsiFile file) {
+  private static @NotNull @NlsContexts.DialogTitle String getTitle(@NotNull PsiFile file) {
     VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
     if (virtualFile == null) {
-      return CodeInsightBundle.message("reformat.progress.common.text");
+      return CodeStyleBundle.message("reformat.progress.common.text");
     }
     else {
-      return CodeInsightBundle.message("reformat.progress.file.with.known.name.text", virtualFile.getName());
+      return CodeStyleBundle.message("reformat.progress.file.with.known.name.text", virtualFile.getName());
     }
   }
 
   @Override
   protected void prepare(final @NotNull SequentialTask task) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
       Document document = myDocument.get();
       if (document != null) {
         myDocumentModificationStampBefore = document.getModificationStamp();
@@ -74,41 +67,14 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
   }
 
   @Override
-  public boolean addCallback(@NotNull EventType eventType, @NotNull Runnable callback) {
-    return getCallbacks(eventType).add(callback);
-  }
-
-  @Override
-  public void onSuccess() {
-    for (Runnable callback : getCallbacks(EventType.SUCCESS)) {
-      callback.run();
-    }
-  }
-
-  @Override
   public void onCancel() {
-    for (Runnable callback : getCallbacks(EventType.CANCEL)) {
-      callback.run();
-    }
+    cancelled();
   }
 
   @Override
   public void onThrowable(@NotNull Throwable error) {
     super.onThrowable(error);
-    for (Runnable callback : getCallbacks(EventType.CANCEL)) {
-      callback.run();
-    }
-  }
-
-  private Collection<Runnable> getCallbacks(@NotNull EventType eventType) {
-    Collection<Runnable> result = myCallbacks.get(eventType);
-    if (result == null) {
-      Collection<Runnable> candidate = myCallbacks.putIfAbsent(eventType, result = ContainerUtil.newConcurrentSet());
-      if (candidate != null) {
-        result = candidate;
-      }
-    }
-    return result;
+    cancelled();
   }
 
   @Override
@@ -125,7 +91,7 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
   public void beforeApplyingFormatChanges(@NotNull Collection<LeafBlockWrapper> modifiedBlocks) {
     myBlocksToModifyNumber = modifiedBlocks.size();
     updateTextIfNecessary(FormattingStateId.APPLYING_CHANGES);
-    setCancelText(IdeBundle.message("action.stop"));
+    setCancelText(CodeStyleBundle.message("action.stop"));
   }
 
   @Override
@@ -167,24 +133,22 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     }
   }
 
-  private class MyCancelCallback implements Runnable {
-    @Override
-    public void run() {
-      FORMATTING_CANCELLED_FLAG.set(true);
-      VirtualFile file = myFile.get();
-      Document document = myDocument.get();
-      if (file == null || document == null || myDocumentModificationStampBefore < 0) {
-        return;
-      }
-      FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-      if (editor == null) {
-        return;
-      }
+  @Override
+  public void cancelled() {
+    CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.set(true);
+    VirtualFile file = myFile.get();
+    Document document = myDocument.get();
+    if (file == null || document == null || myDocumentModificationStampBefore < 0) {
+      return;
+    }
+    FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
+    if (editor == null) {
+      return;
+    }
 
-      UndoManager manager = UndoManager.getInstance(myProject);
-      while (manager.isUndoAvailable(editor) && document.getModificationStamp() != myDocumentModificationStampBefore) {
-        manager.undo(editor);
-      }
+    UndoManager manager = UndoManager.getInstance(myProject);
+    while (manager.isUndoAvailable(editor) && document.getModificationStamp() != myDocumentModificationStampBefore) {
+      manager.undo(editor);
     }
   }
 }

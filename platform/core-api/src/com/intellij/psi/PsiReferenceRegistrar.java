@@ -9,14 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Allows to register reference providers for specific locations.
+ * Allows registering reference providers for specific locations.
  * <p>
  * The locations are described by {@link ElementPattern}s. If a pattern matches some PSI element, then the corresponding
  * {@link PsiReferenceProvider#getReferencesByElement(PsiElement, com.intellij.util.ProcessingContext)} is executed, from
  * which one can return the references whose {@link PsiReference#getElement()} is the same as the first parameter of
  * {@link PsiReferenceProvider#getReferencesByElement(PsiElement, com.intellij.util.ProcessingContext)}.
- *
- * @author peter
  */
 public abstract class PsiReferenceRegistrar implements UserDataHolder {
 

@@ -1,20 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LayoutCodeDialog extends DialogWrapper {
+public final class LayoutCodeDialog extends DialogWrapper {
   private final PsiFile myFile;
   private final boolean myTextSelected;
   private final String myHelpId;
@@ -28,9 +31,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   private JRadioButton myOnlyVCSChangedTextRb;
   private JRadioButton mySelectedTextRadioButton;
   private JRadioButton myWholeFileRadioButton;
-  private JPanel myActionsPanel;
-  private JPanel myScopePanel;
-  private JLabel myOptionalLabel;
+  private JBCheckBox myDoNotKeepLineBreaks;
 
   public LayoutCodeDialog(@NotNull Project project, @NotNull PsiFile file, boolean textSelected, String helpId) {
     super(project, true);
@@ -105,22 +106,26 @@ public class LayoutCodeDialog extends DialogWrapper {
 
     myApplyCodeCleanup.setSelected(myLastRunOptions.getLastCodeCleanup());
 
-    myOptionalLabel.setVisible(canOptimizeImports || canRearrangeCode);
+    boolean keepLineBreaks = CodeStyle.getLanguageSettings(myFile).KEEP_LINE_BREAKS;
+    myDoNotKeepLineBreaks.setVisible(keepLineBreaks);
+    if (keepLineBreaks) {
+      myDoNotKeepLineBreaks.setSelected(myLastRunOptions.isDoNotKeepLineBreaks());
+    }
   }
 
   @Nullable
-  private String getChangesNotAvailableHint() {
+  private @NlsContexts.Tooltip String getChangesNotAvailableHint() {
     if (!VcsFacade.getInstance().isFileUnderVcs(myFile)) {
-      return "File not under VCS root";
+      return CodeInsightBundle.message("tooltip.file.not.under.vcs.root");
     }
     else if (!VcsFacade.getInstance().hasChanges(myFile)) {
-      return "File was not changed since last revision";
+      return CodeInsightBundle.message("tooltip.file.was.not.changed.since.last.revision");
     }
     return null;
   }
 
   private void saveCurrentConfiguration() {
-    if (myOptimizeImportsCb.isEnabled()) {
+    if (myOptimizeImportsCb.isEnabled() && myOptimizeImportsCb.isVisible()) {
       myLastRunOptions.saveOptimizeImportsState(myRunOptions.isOptimizeImports());
     }
     if (myRearrangeCodeCb.isEnabled()) {
@@ -132,6 +137,9 @@ public class LayoutCodeDialog extends DialogWrapper {
 
     if (!mySelectedTextRadioButton.isSelected() && myOnlyVCSChangedTextRb.isEnabled()) {
       myLastRunOptions.saveProcessVcsChangedTextState(myOnlyVCSChangedTextRb.isSelected());
+    }
+    if (myDoNotKeepLineBreaks.isVisible()) {
+      myLastRunOptions.setDoNotKeepLineBreaks(myDoNotKeepLineBreaks.isSelected());
     }
   }
 
@@ -161,6 +169,11 @@ public class LayoutCodeDialog extends DialogWrapper {
       @Override
       public boolean isCodeCleanup() {
         return myApplyCodeCleanup.isEnabled() && myApplyCodeCleanup.isSelected();
+      }
+
+      @Override
+      public boolean doNotKeepLineBreaks() {
+        return myDoNotKeepLineBreaks.isEnabled() && myDoNotKeepLineBreaks.isSelected();
       }
     };
   }

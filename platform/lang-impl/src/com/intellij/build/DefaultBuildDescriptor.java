@@ -15,6 +15,7 @@
  */
 package com.intellij.build;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -23,9 +24,9 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,38 +42,49 @@ import java.util.function.Supplier;
 public class DefaultBuildDescriptor implements BuildDescriptor {
 
   private final Object myId;
-  private final String myTitle;
+
+  private final Object myGroupId;
+  private final @BuildEventsNls.Title String myTitle;
   private final String myWorkingDir;
   private final long myStartTime;
 
-  private boolean myActivateToolWindowWhenAdded;
+  private boolean myActivateToolWindowWhenAdded = false;
   private boolean myActivateToolWindowWhenFailed = true;
+  private @NotNull ThreeState myNavigateToError = ThreeState.UNSURE;
   private boolean myAutoFocusContent = false;
 
   private final @NotNull List<AnAction> myActions = new SmartList<>();
   private final @NotNull List<AnAction> myRestartActions = new SmartList<>();
   private final @NotNull List<Filter> myExecutionFilters = new SmartList<>();
-  private final @NotNull List<Function<ExecutionNode, AnAction>> myContextActions = new SmartList<>();
+  private final @NotNull List<Function<? super ExecutionNode, ? extends AnAction>> myContextActions = new SmartList<>();
 
   private @Nullable BuildProcessHandler myProcessHandler;
-  private @Nullable Consumer<ConsoleView> myAttachedConsoleConsumer;
+  private Consumer<? super ConsoleView> myAttachedConsoleConsumer;
   private @Nullable ExecutionEnvironment myExecutionEnvironment;
-  private @Nullable Supplier<RunContentDescriptor> myContentDescriptorSupplier;
+  private Supplier<? extends RunContentDescriptor> myContentDescriptorSupplier;
 
   public DefaultBuildDescriptor(@NotNull Object id,
-                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                @NotNull @BuildEventsNls.Title String title,
+                                @NotNull String workingDir,
+                                long startTime) {
+    this(id, null, title, workingDir, startTime);
+  }
+
+  public DefaultBuildDescriptor(@NotNull Object id,
+                                @Nullable Object groupId,
+                                @NotNull @BuildEventsNls.Title String title,
                                 @NotNull String workingDir,
                                 long startTime) {
     myId = id;
+    myGroupId = groupId;
     myTitle = title;
     myWorkingDir = workingDir;
     myStartTime = startTime;
   }
 
-  public DefaultBuildDescriptor(@Nullable @NotNull BuildDescriptor descriptor) {
-    this(descriptor.getId(), descriptor.getTitle(), descriptor.getWorkingDir(), descriptor.getStartTime());
-    if (descriptor instanceof DefaultBuildDescriptor) {
-      DefaultBuildDescriptor defaultBuildDescriptor = (DefaultBuildDescriptor)descriptor;
+  public DefaultBuildDescriptor(@NotNull BuildDescriptor descriptor) {
+    this(descriptor.getId(), descriptor.getGroupId(), descriptor.getTitle(), descriptor.getWorkingDir(), descriptor.getStartTime());
+    if (descriptor instanceof DefaultBuildDescriptor defaultBuildDescriptor) {
       myActivateToolWindowWhenAdded = defaultBuildDescriptor.myActivateToolWindowWhenAdded;
       myActivateToolWindowWhenFailed = defaultBuildDescriptor.myActivateToolWindowWhenFailed;
       myAutoFocusContent = defaultBuildDescriptor.myAutoFocusContent;
@@ -93,6 +105,11 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   @Override
   public Object getId() {
     return myId;
+  }
+
+  @Override
+  public Object getGroupId() {
+    return myGroupId;
   }
 
   @NotNull
@@ -152,6 +169,20 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     myActivateToolWindowWhenFailed = activateToolWindowWhenFailed;
   }
 
+  /**
+   * If result is {@link ThreeState#YES} then IDEA has to navigate to error in file if that exists;
+   * <p>If result is {@link ThreeState#NO} then IDEA must not navigate to errors in any case.
+   * <p>If result is {@link ThreeState#UNSURE} then
+   * it means that this value should be got from {@link BuildWorkspaceConfiguration#isShowFirstErrorInEditor()};
+   */
+  public @NotNull ThreeState isNavigateToError() {
+    return myNavigateToError;
+  }
+
+  public void setNavigateToError(@NotNull ThreeState navigateToError) {
+    myNavigateToError = navigateToError;
+  }
+
   public boolean isAutoFocusContent() {
     return myAutoFocusContent;
   }
@@ -171,18 +202,23 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @Nullable
-  public Supplier<RunContentDescriptor> getContentDescriptorSupplier() {
+  public Supplier<? extends RunContentDescriptor> getContentDescriptorSupplier() {
     return myContentDescriptorSupplier;
   }
 
-  @Nullable
-  public Consumer<ConsoleView> getAttachedConsoleConsumer() {
+  public Consumer<? super ConsoleView> getAttachedConsoleConsumer() {
     return myAttachedConsoleConsumer;
   }
 
   @ApiStatus.Experimental
   public DefaultBuildDescriptor withAction(@NotNull AnAction action) {
     myActions.add(action);
+    return this;
+  }
+
+  @ApiStatus.Experimental
+  public DefaultBuildDescriptor withActions(AnAction @NotNull ... actions) {
+    myActions.addAll(Arrays.asList(actions));
     return this;
   }
 
@@ -199,7 +235,7 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @ApiStatus.Experimental
-  public DefaultBuildDescriptor withContextAction(Function<ExecutionNode, AnAction> contextAction) {
+  public DefaultBuildDescriptor withContextAction(Function<? super ExecutionNode, ? extends AnAction> contextAction) {
     myContextActions.add(contextAction);
     return this;
   }
@@ -218,13 +254,13 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
     return this;
   }
 
-  public DefaultBuildDescriptor withContentDescriptor(Supplier<RunContentDescriptor> contentDescriptorSupplier) {
+  public DefaultBuildDescriptor withContentDescriptor(Supplier<? extends RunContentDescriptor> contentDescriptorSupplier) {
     myContentDescriptorSupplier = contentDescriptorSupplier;
     return this;
   }
 
   public DefaultBuildDescriptor withProcessHandler(@Nullable BuildProcessHandler processHandler,
-                                                   @Nullable Consumer<ConsoleView> attachedConsoleConsumer) {
+                                                   @Nullable Consumer<? super ConsoleView> attachedConsoleConsumer) {
     myProcessHandler = processHandler;
     myAttachedConsoleConsumer = attachedConsoleConsumer;
     return this;

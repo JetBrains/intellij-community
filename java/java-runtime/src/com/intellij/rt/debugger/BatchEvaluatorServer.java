@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.rt.debugger;
 
@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class BatchEvaluatorServer {
+public final class BatchEvaluatorServer {
   /**
    * Serialize result in one String to avoid multiple getValue commands from the resulting array
    */

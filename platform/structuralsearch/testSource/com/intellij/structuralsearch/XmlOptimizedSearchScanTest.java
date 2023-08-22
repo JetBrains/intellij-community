@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.HtmlFileType;
 
 /**
  * @author Bas Leijdekkers
@@ -24,11 +24,12 @@ public class XmlOptimizedSearchScanTest extends StructuralSearchTestCase {
   }
 
   public void testElementsThatAreNotWords() {
-    doTest("<TextView\n" +
-           "\t\tandroid:id=\"@+id/text\"\n" +
-           "\t\tandroid:layout_width=\"wrap_content\"\n" +
-           "\t\tandroid:fontFamily=\"sans-serif-medium\"\n" +
-           "\t\tandroid:layout_height=\"wrap_content\" />",
+    doTest("""
+             <TextView
+             \t\tandroid:id="@+id/text"
+             \t\tandroid:layout_width="wrap_content"
+             \t\tandroid:fontFamily="sans-serif-medium"
+             \t\tandroid:layout_height="wrap_content" />""",
            "[in code:TextView][in code:android][in code:id][in code:text][in code:layout_width][in code:wrap_content]" +
            "[in code:fontFamily][in code:medium][in code:serif][in code:sans][in code:layout_height]");
 
@@ -37,6 +38,6 @@ public class XmlOptimizedSearchScanTest extends StructuralSearchTestCase {
   }
 
   private void doTest(String query, String plan) {
-    assertEquals(plan, getSearchPlan(query, StdFileTypes.HTML));
+    assertEquals(plan, getSearchPlan(query, HtmlFileType.INSTANCE));
   }
 }

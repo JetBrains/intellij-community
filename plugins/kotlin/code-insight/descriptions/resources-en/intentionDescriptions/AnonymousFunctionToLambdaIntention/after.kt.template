@@ -1,0 +1,7 @@
+fun calculate(f: () -> Int) {
+    f()
+}
+
+fun main(args: String) {
+    calculate { 1 }
+}

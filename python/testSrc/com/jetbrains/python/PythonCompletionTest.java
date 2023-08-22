@@ -3,9 +3,10 @@ package com.jetbrains.python;
 
 import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture;
 import com.jetbrains.python.fixtures.PythonPlatformCodeInsightTestFixture;
+import com.jetbrains.python.psi.LanguageLevel;
 
 public class PythonCompletionTest extends PythonCommonCompletionTest {
-  private final PythonCommonCodeInsightTestFixture myBackingFixture = new PythonPlatformCodeInsightTestFixture();
+  private final PythonCommonCodeInsightTestFixture myBackingFixture = new PythonPlatformCodeInsightTestFixture(LanguageLevel.PYTHON27);
 
   @Override
   protected PythonCommonCodeInsightTestFixture getFixture() {

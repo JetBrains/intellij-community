@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -24,29 +25,30 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BorderProperty extends Property<RadContainer, BorderType> {
   @NonNls public static final String NAME = "border";
 
   private final Project myProject;
   private final Property[] myChildren;
 
-  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = new NotNullLazyValue<PropertyRenderer<BorderType>>() {
-    @NotNull
-    @Override
-    protected PropertyRenderer<BorderType> compute() {
-      return new LabelPropertyRenderer<BorderType>() {
-        @Override
-        protected void customize(@NotNull final BorderType value) {
-          setText(value.getName());
-        }
-      };
-    }
-  };
+  // Converting this anonymous class to lambda causes javac 11 failure (should compile fine in later javac)
+  // suppression can be removed when we migrate to newer Java
+  @SuppressWarnings("Convert2Lambda")
+  private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = NotNullLazyValue.lazy(
+    new Supplier<>() {
+      @Override
+      public PropertyRenderer<BorderType> get() {
+        return new LabelPropertyRenderer<>() {
+          @Override
+          protected void customize(@NotNull final BorderType value) {
+            @NlsSafe String name = value.getName();
+            setText(name);
+          }
+        };
+      }
+    });
 
   public BorderProperty(final Project project) {
     super(null, NAME);

@@ -42,8 +42,6 @@ class GradleCommandLineOptionsProviderTest {
     assertNotNull(options.getOption("no-rebuild"))
 
     // Environment options
-    assertEquals("build-file", options.getOption("b").longOpt)
-    assertEquals("settings-file", options.getOption("c").longOpt)
     assertEquals("gradle-user-home", options.getOption("g").longOpt)
     assertEquals("project-dir", options.getOption("p").longOpt)
     assertTrue(options.getOption("project-cache-dir").hasArg())
@@ -59,5 +57,15 @@ class GradleCommandLineOptionsProviderTest {
     // These options does not supported via tooling API.
     assertNull(options.getOption("help"))
     assertNull(options.getOption("version"))
+  }
+
+  @Test
+  fun `test deprecated and unsupported options`() {
+    val options = GradleCommandLineOptionsProvider.UNSUPPORTED_OPTIONS
+
+    assertEquals("help", options.getOption("h").longOpt)
+    assertEquals("version", options.getOption("v").longOpt)
+    assertEquals("build-file", options.getOption("b").longOpt)
+    assertEquals("settings-file", options.getOption("c").longOpt)
   }
 }

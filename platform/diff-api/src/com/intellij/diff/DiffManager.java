@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,22 +41,22 @@ import java.awt.*;
 public abstract class DiffManager {
   @NotNull
   public static DiffManager getInstance() {
-    return ServiceManager.getService(DiffManager.class);
+    return ApplicationManager.getApplication().getService(DiffManager.class);
   }
 
   /**
    * @see com.intellij.diff.requests.SimpleDiffRequest
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequest request);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints);
 
   /**
    * @see com.intellij.diff.chains.SimpleDiffRequestChain
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints);
 
   /**
@@ -79,6 +65,6 @@ public abstract class DiffManager {
   @NotNull
   public abstract DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showMerge(@Nullable Project project, @NotNull MergeRequest request);
 }

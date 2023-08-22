@@ -1,12 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.ui.tree.render.CompoundTypeRenderer;
+import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.ui.Splitter;
@@ -159,11 +160,11 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     final ArrayList<NodeRenderer> elementsToSelect = new ArrayList<>(1);
     rendererConfiguration.iterateRenderers(renderer -> {
       final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
-    myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
-    if (elementsToSelect.size() == 0) {
-      elementsToSelect.add(clonedRenderer);
-    }
-    return true;
+      myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
+      if (elementsToSelect.isEmpty()) {
+        elementsToSelect.add(clonedRenderer);
+      }
+      return true;
     });
     myRendererChooser.selectElements(elementsToSelect);
     updateCurrentRenderer(elementsToSelect);
@@ -178,7 +179,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   private class AddAction implements AnActionButtonRunnable {
     @Override
     public void run(AnActionButton button) {
-      NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundTypeRenderer.UNIQUE_ID);
+      NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundReferenceRenderer.UNIQUE_ID);
       renderer.setEnabled(true);
       addRenderer(renderer);
     }
@@ -210,6 +211,11 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
       super.updateButton(e);
       e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class MoveAction implements AnActionButtonRunnable {
@@ -225,7 +231,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
       if (selectedRow < 0) {
         return;
       }
-      int newRow = selectedRow + (myMoveUp? -1 : 1);
+      int newRow = selectedRow + (myMoveUp ? -1 : 1);
       if (newRow < 0) {
         newRow = myRendererChooser.getElementCount() - 1;
       }

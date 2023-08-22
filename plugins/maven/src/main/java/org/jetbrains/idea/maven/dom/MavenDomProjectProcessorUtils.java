@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,7 +26,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MavenDomProjectProcessorUtils {
+public final class MavenDomProjectProcessorUtils {
+
+  public static final String DEFAULT_RELATIVE_PATH = "../pom.xml";
+
   private MavenDomProjectProcessorUtils() {
   }
 
@@ -104,8 +92,8 @@ public class MavenDomProjectProcessorUtils {
   public static MavenDomProjectModel findParent(@NotNull MavenDomParent mavenDomParent, Project project) {
     if (!DomUtil.hasXml(mavenDomParent)) return null;
 
-    MavenId id = new MavenId(mavenDomParent.getGroupId().getStringValue(), mavenDomParent.getArtifactId().getStringValue(),
-                             mavenDomParent.getVersion().getStringValue());
+    MavenId id = new MavenId(mavenDomParent.getGroupId().getValue(), mavenDomParent.getArtifactId().getValue(),
+                             mavenDomParent.getVersion().getValue());
     MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(id);
 
     return mavenProject != null ? MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile()) : null;
@@ -115,7 +103,7 @@ public class MavenDomProjectProcessorUtils {
   public static XmlTag searchProperty(@NotNull final String propertyName,
                                       @NotNull MavenDomProjectModel projectDom,
                                       @NotNull final Project project) {
-    SearchProcessor<XmlTag, MavenDomProperties> searchProcessor = new SearchProcessor<XmlTag, MavenDomProperties>() {
+    SearchProcessor<XmlTag, MavenDomProperties> searchProcessor = new SearchProcessor<>() {
       @Override
       protected XmlTag find(MavenDomProperties element) {
         return findProperty(element, propertyName);
@@ -299,7 +287,7 @@ public class MavenDomProjectProcessorUtils {
     final MavenDomProjectModel model = plugin.getParentOfType(MavenDomProjectModel.class, false);
     if (model == null) return null;
 
-    SearchProcessor<MavenDomPlugin, MavenDomPlugins> processor = new SearchProcessor<MavenDomPlugin, MavenDomPlugins>() {
+    SearchProcessor<MavenDomPlugin, MavenDomPlugins> processor = new SearchProcessor<>() {
       @Override
       protected MavenDomPlugin find(MavenDomPlugins mavenDomPlugins) {
         if (model.equals(mavenDomPlugins.getParentOfType(MavenDomProjectModel.class, true))) {
@@ -325,6 +313,22 @@ public class MavenDomProjectProcessorUtils {
     return processor.myResult;
   }
 
+  public static boolean processPluginsInPluginManagement(@NotNull MavenDomProjectModel projectDom,
+                                                         @NotNull final Processor<? super MavenDomPlugin> processor,
+                                                         @NotNull final Project project) {
+
+    Processor<MavenDomPlugins> managedPluginsListProcessor = plugins -> {
+      for (MavenDomPlugin domPlugin : plugins.getPlugins()) {
+        if (processor.process(domPlugin)) return true;
+      }
+      return false;
+    };
+
+    Function<MavenDomProjectModelBase, MavenDomPlugins> domFunction =
+      mavenDomProfile -> mavenDomProfile.getBuild().getPluginManagement().getPlugins();
+
+    return process(projectDom, managedPluginsListProcessor, project, domFunction, domFunction);
+  }
 
   private static boolean processDependencyRecurrently(@NotNull final Processor<? super MavenDomDependency> processor,
                                                       @NotNull MavenDomDependency domDependency,
@@ -392,7 +396,7 @@ public class MavenDomProjectProcessorUtils {
   }
 
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
-                                    @NotNull final Processor<T> processor,
+                                    @NotNull final Processor<? super T> processor,
                                     @NotNull final Project project,
                                     @NotNull final Function<? super MavenDomProfile , T> domProfileFunction,
                                     @NotNull final Function<? super MavenDomProjectModel, T> projectDomFunction) {
@@ -402,7 +406,7 @@ public class MavenDomProjectProcessorUtils {
 
 
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
-                                    @NotNull final Processor<T> processor,
+                                    @NotNull final Processor<? super T> processor,
                                     @NotNull final Project project,
                                     @NotNull final Function<? super MavenDomProfile, T> domProfileFunction,
                                     @NotNull final Function<? super MavenDomProjectModel, T> projectDomFunction,
@@ -419,7 +423,7 @@ public class MavenDomProjectProcessorUtils {
   }
 
   private static <T> boolean processParentProjectFile(MavenDomProjectModel projectDom,
-                                                      final Processor<T> processor,
+                                                      final Processor<? super T> processor,
                                                       final Project project,
                                                       final Function<? super MavenDomProfile, T> domProfileFunction,
                                                       final Function<? super MavenDomProjectModel, T> projectDomFunction,
@@ -512,6 +516,7 @@ public class MavenDomProjectProcessorUtils {
     private final MavenProjectsManager myManager;
 
     public DomParentProjectFileProcessor(MavenProjectsManager manager) {
+      super(manager.getProject());
       myManager = manager;
     }
 
@@ -530,7 +535,7 @@ public class MavenDomProjectProcessorUtils {
         String parentArtifactId = parent.getArtifactId().getStringValue();
         String parentVersion = parent.getVersion().getStringValue();
         String parentRelativePath = parent.getRelativePath().getStringValue();
-        if (StringUtil.isEmptyOrSpaces(parentRelativePath)) parentRelativePath = "../pom.xml";
+        if (parentRelativePath == null) parentRelativePath = DEFAULT_RELATIVE_PATH;
         MavenId parentId = new MavenId(parentGroupId, parentArtifactId, parentVersion);
         parentDesc = new MavenParentDesc(parentId, parentRelativePath);
       }

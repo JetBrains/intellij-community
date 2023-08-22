@@ -1,33 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author irengrig
- */
 public abstract class MoreAction extends DumbAwareAction implements CustomComponentAction {
-  public static final String LOAD_MORE = "Load more";
   protected final JLabel myLabel;
   private final JPanel myPanel;
   private boolean myEnabled;
   private boolean myVisible;
   private final JButton myLoadMoreBtn;
 
-  protected MoreAction() {
-    this(LOAD_MORE);
-  }
-
-  protected MoreAction(final String name) {
+  protected MoreAction(@NlsContexts.Button @NotNull String name) {
     myPanel = new JPanel();
     final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
     myPanel.setLayout(layout);
@@ -36,7 +30,7 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myLoadMoreBtn.addActionListener(__ -> perform());
     myPanel.add(myLoadMoreBtn);
     myLabel = new JLabel(CommonBundle.getLoadingTreeNodeText());
-    myLabel.setForeground(UIUtil.getInactiveTextColor());
+    myLabel.setForeground(NamedColorUtil.getInactiveTextColor());
     myLabel.setBorder(JBUI.Borders.empty(1, 3, 1, 1));
     myPanel.add(myLabel);
   }
@@ -51,6 +45,11 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myEnabled = enabled;
     myLoadMoreBtn.setVisible(myEnabled);
     myLabel.setVisible(! myEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

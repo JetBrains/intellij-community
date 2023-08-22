@@ -20,7 +20,7 @@ public class ClassFileDependenciesAnalyzer {
 
   @NotNull
   public Set<String> collectDependencies(String className, ClassReader classReader) {
-    ClassFileRepr classFileRepr = new ClassfileAnalyzer(myContext).analyze(myContext.get(className), classReader);
+    ClassFileRepr classFileRepr = new ClassfileAnalyzer(myContext).analyze(myContext.get(className), classReader, false);
     if (classFileRepr == null) return Collections.emptySet();
     final int classNameId = classFileRepr.name;
     Set<String> classDependencies = new LinkedHashSet<>();
@@ -31,5 +31,9 @@ public class ClassFileDependenciesAnalyzer {
       }
     }
     return classDependencies;
+  }
+
+  public void close() {
+    myContext.close();
   }
 }

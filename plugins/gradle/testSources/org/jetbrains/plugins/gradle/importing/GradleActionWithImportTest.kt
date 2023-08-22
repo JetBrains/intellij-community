@@ -1,15 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.tooling.BuildController
 import org.gradle.tooling.GradleConnectionException
-import org.gradle.tooling.model.Model
-import org.gradle.tooling.model.gradle.GradleBuild
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -29,10 +25,10 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { TestProjectResolverExtension.cleanup() })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { TestProjectResolverExtension.cleanup() },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   @Test
@@ -136,21 +132,6 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
   }
 }
 
-class TestModelProvider : ProjectImportModelProvider {
-  override fun populateBuildModels(controller: BuildController,
-                                   buildModel: GradleBuild,
-                                   consumer: ProjectImportModelProvider.BuildModelConsumer) {
-    controller.findModel(Object::class.java)
-  }
-
-  override fun populateProjectModels(controller: BuildController,
-                                     module: Model,
-                                     modelConsumer: ProjectImportModelProvider.ProjectModelConsumer) {
-  }
-}
-
-
-
 class TestProjectResolverExtension : AbstractProjectResolverExtension() {
   val buildFinished = CompletableFuture<Boolean>()
 
@@ -162,13 +143,9 @@ class TestProjectResolverExtension : AbstractProjectResolverExtension() {
     buildFinished.complete(true)
   }
 
-  override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {
-    return TestModelProvider()
-  }
-
-  override fun requiresTaskRunning(): Boolean {
-    return true
-  }
+  override fun getModelProviders() = listOf(
+    TestBuildObjectModelProvider()
+  )
 
   companion object {
     private val extensions: MutableMap<String, TestProjectResolverExtension> = mutableMapOf()

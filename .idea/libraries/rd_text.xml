@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="rd-text" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2023.3.2-preview2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.2-preview2/rd-text-2023.3.2-preview2.jar">
+          <sha256sum>da206fe85b1c4cc3060b363ae173647356598c20f141551be6b654b8b3d3ea43</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.2-preview2/rd-text-2023.3.2-preview2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.2-preview2/rd-text-2023.3.2-preview2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.2-preview2/rd-text-2023.3.2-preview2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

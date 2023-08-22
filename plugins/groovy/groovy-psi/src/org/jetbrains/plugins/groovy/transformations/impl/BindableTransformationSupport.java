@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -19,10 +21,10 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DOCUMENTATIO
 
 public class BindableTransformationSupport implements AstTransformationSupport {
 
-  private static final String BINDABLE_FQN = "groovy.beans.Bindable";
-  private static final String PCL_FQN = "java.beans.PropertyChangeListener";
-  private static final String PCS_FQN = "java.beans.PropertyChangeSupport";
-  public static final String ORIGIN_INFO = "via @Bindable";
+  @NlsSafe private static final String BINDABLE_FQN = "groovy.beans.Bindable";
+  @NlsSafe private static final String PCL_FQN = "java.beans.PropertyChangeListener";
+  @NlsSafe private static final String PCS_FQN = "java.beans.PropertyChangeSupport";
+  @NonNls public static final String ORIGIN_INFO = "via @Bindable";
 
   private static boolean isApplicable(@NotNull GrTypeDefinition clazz) {
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, true, BINDABLE_FQN);
@@ -55,33 +57,33 @@ public class BindableTransformationSupport implements AstTransformationSupport {
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "addPropertyChangeListener")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("listener", pclType)
     );
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "addPropertyChangeListener")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("name", stringType)
         .addParameter("listener", pclType)
     );
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "removePropertyChangeListener")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("listener", pclType)
     );
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "removePropertyChangeListener")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("name", stringType)
         .addParameter("listener", pclType)
     );
 
     methods.add(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "firePropertyChange")
-        .setMethodReturnType(PsiType.VOID)
+        .setMethodReturnType(PsiTypes.voidType())
         .addParameter("name", stringType)
         .addParameter("oldValue", objectType)
         .addParameter("newValue", objectType)

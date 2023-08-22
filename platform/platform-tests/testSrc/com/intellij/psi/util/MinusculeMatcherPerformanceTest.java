@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,9 +15,6 @@ import java.util.List;
 
 import static com.intellij.psi.util.NameUtilMatchingTest.*;
 
-/**
- * @author peter
- */
 public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testPerformance() {
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
@@ -33,14 +28,14 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
       nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matching", 5_500, () -> {
+    PlatformTestUtil.startPerformanceTest("Matching", 4_000, () -> {
       for (int i = 0; i < 100_000; i++) {
         for (MinusculeMatcher matcher : matching) {
-          Assert.assertTrue(matcher.toString(), matcher.matches(longName));
+          Assert.assertTrue(matcher.matches(longName));
           matcher.matchingDegree(longName);
         }
         for (MinusculeMatcher matcher : nonMatching) {
-          Assert.assertFalse(matcher.toString(), matcher.matches(longName));
+          Assert.assertFalse(matcher.matches(longName));
         }
       }
     }).assertTiming();

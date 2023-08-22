@@ -12,21 +12,22 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.Arrays;
+import java.nio.file.Path;
 import java.util.List;
 
 public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements ModuleFixtureBuilder<T> {
@@ -77,9 +78,9 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
 
   @NotNull
   protected Module createModule() {
-    final Project project = myFixtureBuilder.getFixture().getProject();
+    Project project = myFixtureBuilder.getFixture().getProject();
     Assert.assertNotNull(project);
-    final String moduleFilePath = PathUtil.getParentPath(project.getBasePath()) + "/" + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    Path moduleFilePath = ((ProjectStoreOwner)project).getComponentStore().getProjectBasePath().getParent().resolve(getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION);
     return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleTypeProducer.produce().getId());
   }
 
@@ -108,10 +109,12 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   @NotNull
   Module buildModule() {
     Module[] module = new Module[1];
-    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myFixtureBuilder.getFixture().getProject()).mergeRootsChangesDuring(() -> {
-      module[0] = createModule();
-      initModule(module[0]);
-    }));
+    WriteAction.run(() -> {
+      ProjectRootManagerEx.getInstanceEx(myFixtureBuilder.getFixture().getProject()).mergeRootsChangesDuring(() -> {
+        module[0] = createModule();
+        initModule(module[0]);
+      });
+    });
     return module[0];
   }
 
@@ -126,7 +129,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
         final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
         for (String sourceRoot: mySourceRoots) {
-          String s = StringUtil.trimTrailing(contentRoot + "/" + sourceRoot, '/');
+          String s = UriUtil.trimTrailingSlashes(contentRoot + "/" + sourceRoot);
 
           VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
           if (vf == null) {
@@ -137,7 +140,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
           if (vf != null) {
             VirtualFile finalVf = vf;
 
-            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> finalVf.equals(folder.getFile()))) {
+            if (!ContainerUtil.exists(contentEntry.getSourceFolders(), folder -> finalVf.equals(folder.getFile()))) {
               contentEntry.addSourceFolder(finalVf, false);
             }
           }
@@ -145,7 +148,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
             // files are not created yet
 
             String url = VfsUtilCore.pathToUrl(s);
-            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> url.equals(folder.getUrl()))) {
+            if (!ContainerUtil.exists(contentEntry.getSourceFolders(), folder -> url.equals(folder.getUrl()))) {
               contentEntry.addSourceFolder(url, false);
             }
           }

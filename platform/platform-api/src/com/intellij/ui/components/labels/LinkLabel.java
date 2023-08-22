@@ -1,18 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +24,14 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * A {@link JLabel}-based link that does not support mnemonics.
+ * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
  * @author kir
+ * @see <a href="https://jetbrains.github.io/ui/controls/link/">IJ Platform UI Guidelines | Link</a>
  */
 public class LinkLabel<T> extends JLabel {
   protected boolean myUnderline;
@@ -33,7 +39,7 @@ public class LinkLabel<T> extends JLabel {
   private LinkListener<T> myLinkListener;
   private T myLinkData;
 
-  private static final Set<String> ourVisitedLinks = new THashSet<>();
+  private static final Set<String> ourVisitedLinks = new HashSet<>();
 
   private boolean myIsLinkActive;
 
@@ -44,27 +50,58 @@ public class LinkLabel<T> extends JLabel {
   private boolean myClickIsBeingProcessed;
   protected boolean myPaintUnderline = true;
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * Note that this constructor sets inappropriate icon.
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   */
   public LinkLabel() {
     this("", AllIcons.Ide.Link);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon) {
     this(text, icon, null, null, null);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener) {
     this(text, icon, aListener, null, null);
   }
 
+  /**
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
+   */
+  @Deprecated
   @NotNull
   public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
     return new LinkLabel<>(text, null, action == null ? null : (__, ___) -> action.run(), null, null);
   }
 
+  /**
+   * Creates a {@link JLabel}-based link that does not support mnemonics.
+   * Prefer using {@link com.intellij.ui.components.ActionLink} instead.
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   */
   public LinkLabel(@NlsContexts.LinkLabel String text, @Nullable Icon icon, @Nullable LinkListener<T> aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
+  /**
+   * @see <a href="https://jetbrains.github.io/ui/controls/link/">UI Guidelines</a>
+   * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
+   */
+  @Deprecated
   public LinkLabel(@NlsContexts.LinkLabel String text,
                    @Nullable Icon icon,
                    @Nullable LinkListener<T> aListener,
@@ -165,9 +202,11 @@ public class LinkLabel<T> extends JLabel {
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
       }
 
-      if (isFocusOwner()) {
-        g.setColor(UIUtil.getTreeSelectionBorderColor());
-        UIUtil.drawLabelDottedRectangle(this, g, getTextBounds());
+      if (g instanceof Graphics2D && isFocusOwner()) {
+        g.setColor(JBUI.CurrentTheme.Link.FOCUSED_BORDER_COLOR);
+        Rectangle bounds = getTextBounds();
+        int round = Registry.intValue("ide.link.button.focus.round.arc", 4);
+        RectanglePainter.DRAW.paint((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, JBUI.scale(round));
       }
     }
   }
@@ -260,7 +299,7 @@ public class LinkLabel<T> extends JLabel {
     repaint();
   }
 
-  protected String getStatusBarText() {
+  protected @NlsContexts.StatusBarText String getStatusBarText() {
     return getToolTipText();
   }
 
@@ -272,8 +311,8 @@ public class LinkLabel<T> extends JLabel {
     setActive(false);
   }
 
-  private static void setStatusBarText(String statusBarText) {
-    if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
+  private static void setStatusBarText(@NlsContexts.StatusBarText String statusBarText) {
+    if (ApplicationManager.getApplication() == null || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       StatusBar.Info.set(statusBarText, project);
@@ -281,19 +320,19 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected Color getVisited() {
-    return JBUI.CurrentTheme.Link.linkVisitedColor();
+    return JBUI.CurrentTheme.Link.Foreground.VISITED;
   }
 
   protected Color getActive() {
-    return JBUI.CurrentTheme.Link.linkPressedColor();
+    return JBUI.CurrentTheme.Link.Foreground.PRESSED;
   }
 
   protected Color getNormal() {
-    return JBUI.CurrentTheme.Link.linkColor();
+    return JBUI.CurrentTheme.Link.Foreground.ENABLED;
   }
 
   protected Color getHover() {
-    return JBUI.CurrentTheme.Link.linkHoverColor();
+    return JBUI.CurrentTheme.Link.Foreground.HOVERED;
   }
 
   public void entered(MouseEvent e) {
@@ -313,6 +352,7 @@ public class LinkLabel<T> extends JLabel {
     public void mousePressed(MouseEvent e) {
       if (isEnabled() && isInClickableArea(e.getPoint())) {
         setActive(true);
+        e.consume();
       }
     }
 
@@ -320,6 +360,7 @@ public class LinkLabel<T> extends JLabel {
     public void mouseReleased(MouseEvent e) {
       if (isEnabled() && myIsLinkActive && isInClickableArea(e.getPoint())) {
         doClick(e);
+        e.consume();
       }
       setActive(false);
     }

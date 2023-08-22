@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.execution;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.TextCopyProvider;
@@ -13,6 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -20,9 +20,10 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.*;
 
 public final class TreeView implements AntOutputView, OccurenceNavigator {
@@ -88,15 +87,6 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     myTree.updateUI();
     myTree.setLargeModel(true);
 
-    myTree.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myTree), false);
-        }
-      }
-    });
-
     myTree.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
@@ -105,16 +95,16 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     });
 
     EditSourceOnDoubleClickHandler.install(myTree);
+    EditSourceOnEnterKeyHandler.install(myTree);
 
     myAutoScrollToSourceHandler.install(myTree);
 
     myOccurenceNavigatorSupport = new OccurenceNavigatorSupport(myTree) {
       @Override
       protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
-        if (!(node instanceof MessageNode)) {
+        if (!(node instanceof MessageNode messageNode)) {
           return null;
         }
-        MessageNode messageNode = (MessageNode)node;
         AntBuildMessageView.MessageType type = messageNode.getType();
 
         if (type != AntBuildMessageView.MessageType.MESSAGE && type != AntBuildMessageView.MessageType.ERROR) {
@@ -222,13 +212,13 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   @Override
-  public void addJavacMessage(AntMessage message, String url) {
-    final String builder = printMessage(message, url);
-    addJavacMessageImpl(message.withText(builder + message.getText()));
+  public void addJavacMessage(AntMessage message, @NlsSafe String url) {
+    final String messagePrefix = printMessage(message, url);
+    addJavacMessageImpl(message.withText(messagePrefix + message.getText()));
   }
 
   @NotNull
-  static String printMessage(@NotNull AntMessage message, String url) {
+  static @NlsSafe String printMessage(@NotNull AntMessage message, @NlsSafe String url) {
     final StringBuilder builder = new StringBuilder();
     final VirtualFile file = message.getFile();
     if (message.getLine() > 0) {
@@ -383,22 +373,29 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   @Override
   @Nullable
-  public Object getData(@NotNull String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      final MessageNode item = getSelectedItem();
+      return item != null? (DataProvider)id -> getSlowData(id, item) : null;
+    }
+    return null;
+  }
+
+  @Nullable
+  private Object getSlowData(@NonNls @NotNull String dataId, @NotNull final MessageNode item) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      MessageNode item = getSelectedItem();
-      if (item == null) return null;
       if (isValid(item.getFile())) {
         return PsiNavigationSupport.getInstance().createNavigatable(myProject, item.getFile(), item.getOffset());
       }
       if (item.getType() == AntBuildMessageView.MessageType.TARGET) {
         final Navigatable descriptor = getDescriptorForTargetNode(item);
-        if (descriptor != null && (descriptor.canNavigate())) {
+        if (descriptor != null && descriptor.canNavigate()) {
           return descriptor;
         }
       }
       if (item.getType() == AntBuildMessageView.MessageType.TASK) {
         final Navigatable descriptor = getDescriptorForTaskNode(item);
-        if (descriptor != null && (descriptor.canNavigate())) {
+        if (descriptor != null && descriptor.canNavigate()) {
           return descriptor;
         }
       }
@@ -420,8 +417,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     if (text == null || text.length == 0) return null;
     final String taskName = text[0];
     final TreeNode parentNode = node.getParent();
-    if (!(parentNode instanceof MessageNode)) return null;
-    final MessageNode messageNode = (MessageNode)parentNode;
+    if (!(parentNode instanceof MessageNode messageNode)) return null;
     if (messageNode.getType() != AntBuildMessageView.MessageType.TARGET) return null;
     final BuildTask task = ((AntBuildModelBase)myBuildFile.getModel()).findTask(messageNode.getText()[0], taskName);
     return (task == null) ? null : task.getOpenFileDescriptor();
@@ -432,7 +428,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   @Override
-  public void finishBuild(String messageText) {
+  public void finishBuild(@Nls String messageText) {
     collapseTargets();
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
     myStatusNode = new DefaultMutableTreeNode(messageText);
@@ -510,8 +506,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
     Object[] paths = path.getPath();
     for (Object o : paths) {
-      if (o instanceof MessageNode) {
-        MessageNode messageNode = (MessageNode)o;
+      if (o instanceof MessageNode messageNode) {
         AntBuildMessageView.MessageType type = messageNode.getType();
         if (type == AntBuildMessageView.MessageType.TARGET) {
           selection.mySelectedTarget = messageNode.getText()[0];
@@ -531,8 +526,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
     for (int i = 0; i < root.getChildCount(); i++) {
       TreeNode node = root.getChildAt(i);
-      if (node instanceof MessageNode) {
-        MessageNode messageNode = (MessageNode)node;
+      if (node instanceof MessageNode messageNode) {
         String[] text = messageNode.getText();
         if (text.length == 0) continue;
         if (Objects.equals(treeSelection.mySelectedTarget, text[0])) {
@@ -614,13 +608,17 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new TextCopyProvider() {
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
+
           @Nullable
           @Override
           public Collection<String> getTextLinesToCopy() {
             TreePath selection = getSelectionPath();
             Object value = selection == null ? null : selection.getLastPathComponent();
-            if (value instanceof MessageNode) {
-              MessageNode messageNode = ((MessageNode)value);
+            if (value instanceof MessageNode messageNode) {
               return Arrays.asList(messageNode.getText());
             }
             return value == null ? null : Collections.singleton(value.toString());

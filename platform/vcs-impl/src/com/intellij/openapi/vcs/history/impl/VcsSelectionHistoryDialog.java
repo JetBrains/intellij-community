@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.CommonBundle;
@@ -25,6 +25,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
@@ -37,14 +39,20 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IntPair;
+import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -55,7 +63,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -122,7 +129,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
                                    @NotNull AbstractVcs vcs,
                                    int selectionStart,
                                    int selectionEnd,
-                                   @NotNull String title) {
+                                   @NotNull @NlsContexts.DialogTitle String title) {
     super(project, "VCS.FileHistoryDialog");
 
     myProject = project;
@@ -162,7 +169,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
           revision = myList.getItems().get(myList.getSelectedRow());
-          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, Objects.requireNonNull(revision.getCommitMessage()));
+          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, StringUtil.notNullize(revision.getCommitMessage()));
           myComments.setText(message);
           myComments.setCaretPosition(0);
         }
@@ -179,6 +186,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myList.getSelectionModel().addListSelectionListener(selectionListener);
 
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+    myChangesOnlyCheckBox.setBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP));
     myChangesOnlyCheckBox.setSelected(configuration.SHOW_ONLY_CHANGED_IN_SELECTION_DIFF);
     myChangesOnlyCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -188,8 +196,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       }
     });
 
-    ActionGroup popupActions = (ActionGroup)ActionManager.getInstance().getAction("VcsSelectionHistoryDialog.Popup");
-    PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myList, "VcsSelectionHistoryDialog.Popup", ActionPlaces.UPDATE_POPUP);
 
     setTitle(title);
     setComponent(mySplitter);
@@ -206,25 +213,22 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
       @Override
       protected void notifyUpdate(boolean shouldFlush) {
-        myUpdateQueue.queue(new Update(this) {
-          @Override
-          public void run() {
-            updateStatusPanel();
-            updateRevisionsList();
-          }
-        });
+        myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, this, () -> {
+          updateStatusPanel();
+          updateRevisionsList();
+        }));
         if (shouldFlush) {
           runOnEdt(() -> myUpdateQueue.flush());
         }
       }
 
       private void runOnEdt(@NotNull Runnable task) {
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.stateForComponent(mySplitter), () -> {
           VcsSelectionHistoryDialog dialog = VcsSelectionHistoryDialog.this;
           if (!dialog.isDisposed() && dialog.getFrame().isShowing()) {
             task.run();
           }
-        }, ModalityState.stateForComponent(mySplitter));
+        });
       }
     };
     myBlockLoader.start(this);
@@ -239,7 +243,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     return VcsBundle.message("selection.history.can.not.load.message") + (e != null ? ": " + e.getLocalizedMessage() : "");
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void updateRevisionsList() {
     if (myIsDuringUpdate) return;
     try {
@@ -257,7 +261,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
         ColumnInfo[] additionalColumns = components.getColumns();
         myListModel = new ListTableModel<>(ArrayUtil.mergeArrays(myDefaultColumns, additionalColumns, ColumnInfo[]::new));
         myListModel.setSortable(false);
-        myList.setModel(myListModel);
+        myList.setModelAndUpdateColumns(myListModel);
 
         mySelectedRevisionListener = components.getRevisionListener();
         myDetailsPanel.setContent(components.getDetailsComponent());
@@ -301,7 +305,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
                        : CommonBundle.getLoadingTreeNodeText();
       int totalRevisions = data.getRevisions().size();
       if (totalRevisions != 0) {
-        message += String.format(" (%s/%s)", data.myBlocks.size(), totalRevisions);
+        message += String.format(" (%s/%s)", data.myBlocks.size(), totalRevisions); //NON-NLS
       }
       myStatusLabel.setText(XmlStringUtil.wrapInHtml(message));
 
@@ -401,7 +405,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   }
 
   @Nullable
-  private static String createDiffContentTitle(int index, @NotNull BlockData data) {
+  private static @NlsContexts.Label String createDiffContentTitle(int index, @NotNull BlockData data) {
     if (index >= data.getRevisions().size()) return null;
     return VcsBundle.message("diff.content.title.revision.number", data.getRevisions().get(index).getRevisionNumber());
   }
@@ -439,6 +443,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     separatorPanel.add(statusPanel, BorderLayout.EAST);
 
     tablePanel.add(separatorPanel, BorderLayout.NORTH);
+    tablePanel.setBorder(JBUI.Borders.empty(0, 16, UIUtil.DEFAULT_VGAP, 16));
 
     splitter.setFirstComponent(tablePanel);
     splitter.setSecondComponent(createComments());
@@ -448,6 +453,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   private JComponent createComments() {
     JPanel panel = new JPanel(new BorderLayout(4, 4));
+    panel.setBorder(JBUI.Borders.empty(0, 16, 16, 16));
     panel.add(new JLabel(VcsBundle.message("selection.history.commit.message.label")), BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
 
@@ -479,7 +485,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     else if (VcsDataKeys.VCS.is(dataId)) {
       return myActiveVcs.getKeyInstanceMethod();
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return notNull(myVcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
     }
     return null;
@@ -582,10 +588,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       });
     }
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     protected abstract void notifyError(@NotNull VcsException e);
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     protected abstract void notifyUpdate(boolean shouldFlush);
 
     @NotNull
@@ -602,7 +608,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     private String loadContents(@NotNull VcsFileRevision revision) throws VcsException {
       try {
         byte[] bytes = revision.loadContent();
-        if (bytes == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
+        if (bytes == null) {
+          throw new VcsException(VcsBundle.message("history.failed.to.load.content.for.revision.0",
+                                                   revision.getRevisionNumber().asString()));
+        }
         return new String(bytes, myFile.getCharset());
       }
       catch (IOException e) {
@@ -666,6 +675,11 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
   public static class MyDiffAction implements AnActionExtensionProvider {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isActive(@NotNull AnActionEvent e) {
       return e.getData(SELECTION_HISTORY_DIALOG_KEY) != null;
     }
@@ -707,6 +721,11 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   }
 
   public static class MyDiffAfterWithLocalAction implements AnActionExtensionProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public boolean isActive(@NotNull AnActionEvent e) {
       return e.getData(SELECTION_HISTORY_DIALOG_KEY) != null;

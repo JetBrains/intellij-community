@@ -4,7 +4,6 @@ package com.jetbrains.python.packaging;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,11 +16,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.io.RequestBuilder;
 import com.intellij.webcore.packaging.RepoPackage;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.packaging.repository.PyPackageRepositories;
+import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +33,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -58,7 +53,7 @@ public class PyPIPackageUtil {
    * @see #getPackageVersionsFromAdditionalRepositories(String)
    */
   private final LoadingCache<String, List<String>> myAdditionalPackagesReleases = CacheBuilder.newBuilder().build(
-    new CacheLoader<String, List<String>>() {
+    new CacheLoader<>() {
       @Override
       public List<String> load(@NotNull String key) throws Exception {
         LOG.debug("Searching for versions of package '" + key + "' in additional repositories");
@@ -86,7 +81,7 @@ public class PyPIPackageUtil {
    * Contains cached packages taken from additional repositories.
    */
   protected final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
-    new CacheLoader<String, List<RepoPackage>>() {
+    new CacheLoader<>() {
       @Override
       public List<RepoPackage> load(@NotNull String key) throws Exception {
         return getPackagesFromAdditionalRepository(key);
@@ -99,7 +94,7 @@ public class PyPIPackageUtil {
    * @see #refreshAndGetPackageDetailsFromPyPI(String, boolean)
    */
   private final LoadingCache<String, PackageDetails> myPackageToDetails = CacheBuilder.newBuilder().build(
-    new CacheLoader<String, PackageDetails>() {
+    new CacheLoader<>() {
       @Override
       public PackageDetails load(@NotNull String key) throws Exception {
         LOG.debug("Fetching details for the package '" + key + "' on PyPI");
@@ -134,15 +129,34 @@ public class PyPIPackageUtil {
   }
 
   public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) throws IOException {
+    var failedToConnect = new ArrayList<String>();
     if (alwaysRefresh) {
       for (String url : repositories) {
-        myAdditionalPackages.refresh(url);
+        try {
+          myAdditionalPackages.refresh(url);
+        }
+        catch (Exception e) {
+          LOG.error("Error connecting to " + url, e);
+          failedToConnect.add(url);
+          ApplicationManager.getApplication().getService(PyPackageRepositories.class).markInvalid(url);
+        }
       }
     }
     else {
       for (String url : repositories) {
-        getCachedValueOrRethrowIO(myAdditionalPackages, url);
+        try {
+          getCachedValueOrRethrowIO(myAdditionalPackages, url);
+        }
+        catch (Exception e) {
+          LOG.warn("Error connecting to " + url, e);
+          failedToConnect.add(url);
+          ApplicationManager.getApplication().getService(PyPackageRepositories.class).markInvalid(url);
+        }
       }
+    }
+    if (!failedToConnect.isEmpty()) {
+      PyPackageService packageService = ApplicationManager.getApplication().getService(PyPackageService.class);
+      failedToConnect.forEach(repo -> packageService.removeRepository(repo));
     }
   }
 
@@ -174,7 +188,7 @@ public class PyPIPackageUtil {
     return getCachedValueOrRethrowIO(myPackageToDetails, packageName);
   }
 
-  public void usePackageReleases(@NotNull String packageName, @NotNull CatchingConsumer<List<String>, Exception> callback) {
+  public void usePackageReleases(@NotNull String packageName, @NotNull CatchingConsumer<? super List<String>, ? super Exception> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         final List<String> releasesFromSimpleIndex = getPackageVersionsFromAdditionalRepositories(packageName);
@@ -208,6 +222,7 @@ public class PyPIPackageUtil {
   private String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
     LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName, true);
+    if (project.isDisposed()) return null;
     return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
 
@@ -240,7 +255,7 @@ public class PyPIPackageUtil {
   @Nullable
   public String fetchLatestPackageVersion(@NotNull Project project, @NotNull String packageName) throws IOException {
     String version = null;
-    // Package is on PyPI not a, say, some system package on Ubuntu
+    // Package is on PyPI, not, say, some system package on Ubuntu
     if (PyPIPackageCache.getInstance().containsPackage(packageName)) {
       version = getLatestPackageVersionFromPyPI(project, packageName);
     }
@@ -254,7 +269,7 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  private static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl,
+  public static List<String> parsePackageVersionsFromArchives(@NotNull String archivesUrl,
                                                                @NotNull String packageName) throws IOException {
     return HttpRequests.request(archivesUrl).userAgent(getUserAgent()).connect(request -> {
       final List<String> versions = new ArrayList<>();
@@ -298,11 +313,11 @@ public class PyPIPackageUtil {
     }
     final String packageNameWithUnderscores = packageName.replace('-', '_');
     final String suffix;
-    if (withoutExtension.startsWith(packageName)) {
-      suffix = StringUtil.trimStart(withoutExtension, packageName);
+    if (StringUtil.startsWithIgnoreCase(withoutExtension, packageName)) {
+      suffix = withoutExtension.substring(packageName.length());
     }
-    else if (withoutExtension.startsWith(packageNameWithUnderscores)) {
-      suffix = StringUtil.trimStart(withoutExtension, packageNameWithUnderscores);
+    else if (StringUtil.startsWithIgnoreCase(withoutExtension, packageNameWithUnderscores)) {
+      suffix = withoutExtension.substring(packageNameWithUnderscores.length());
     }
     else {
       return null;
@@ -319,13 +334,20 @@ public class PyPIPackageUtil {
     final PyPackageService service = PyPackageService.getInstance();
     if (service.PYPI_REMOVED) return;
     PyPIPackageCache.reload(parsePyPIListFromWeb(PYPI_LIST_URL));
-    service.LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
   @NotNull
-  private static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
-    LOG.debug("Fetching index of all packages available on " + url);
-    return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
+  public static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
+    LOG.info("Fetching index of all packages available on " + url);
+    RequestBuilder builder = HttpRequests.request(url).userAgent(getUserAgent());
+
+    PyPackageRepositories service = ApplicationManager.getApplication().getService(PyPackageRepositories.class);
+    service.getRepositories().stream()
+      .filter(repo -> url.equals(repo.getRepositoryUrl()))
+      .findFirst()
+      .ifPresent(repository -> PyPackageRepositoryUtil.withBasicAuthorization(builder, repository));
+
+    return builder.connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();
       new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
@@ -339,7 +361,11 @@ public class PyPIPackageUtil {
         @Override
         public void handleText(char @NotNull [] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
-            packages.add(String.valueOf(data));
+            String packageName = String.valueOf(data);
+            if (packageName.endsWith("/")) {
+              packageName = packageName.substring(0, packageName.indexOf("/"));
+            }
+            packages.add(packageName);
           }
         }
 
@@ -388,7 +414,12 @@ public class PyPIPackageUtil {
       private String homePage = "";
       @SerializedName("summary")
       private String summary = "";
-
+      @SerializedName("description")
+      private String description = "";
+      @SerializedName("description_content_type")
+      private String descriptionContentType = "";
+      @SerializedName("project_urls")
+      private Map<String, String>  projectUrls = Collections.emptyMap();
 
       @NotNull
       public String getVersion() {
@@ -414,6 +445,21 @@ public class PyPIPackageUtil {
       public String getSummary() {
         return StringUtil.notNullize(summary);
       }
+
+      @NotNull
+      public String getDescription() {
+        return StringUtil.notNullize(description);
+      }
+
+      @NotNull
+      public String getDescriptionContentType() {
+        return StringUtil.notNullize(descriptionContentType);
+      }
+
+      @NotNull
+      public Map<String, String> getProjectUrls() {
+        return ContainerUtil.notNullize(projectUrls);
+      }
     }
 
     @SerializedName("info")
@@ -432,7 +478,7 @@ public class PyPIPackageUtil {
     }
 
     private static boolean isNotBrokenRelease(Object o) {
-      return !(o instanceof List) || !((List)o).isEmpty();
+      return !(o instanceof List) || !((List<?>)o).isEmpty();
     }
   }
 }

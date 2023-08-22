@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorProcessor;
 
 import java.beans.Introspector;
@@ -37,10 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ilyas
- */
-public class GroovyPropertyUtils {
+public final class GroovyPropertyUtils {
   private static final Logger LOG = Logger.getInstance(GroovyPropertyUtils.class);
 
   public static final String IS_PREFIX = "is";
@@ -81,7 +77,7 @@ public class GroovyPropertyUtils {
       final GrExpression fromText = GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText("this", context);
       return findPropertySetter(fromText.getType(), propertyName, context);
     }
-    final AccessorProcessor processor = new AccessorProcessor(propertyName, PropertyKind.SETTER, (List<? extends Argument>)null, context);
+    final AccessorProcessor processor = new AccessorProcessor(propertyName, PropertyKind.SETTER, null, context);
     ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
     return PsiImplUtil.extractUniqueElement(processor.getResults().toArray(GroovyResolveResult.EMPTY_ARRAY));
   }
@@ -202,7 +198,7 @@ public class GroovyPropertyUtils {
     if (method.getName().startsWith(IS_PREFIX) && !booleanReturnType) {
       return false;
     }
-    if (PsiType.VOID.equals(method.getReturnType())) return false;
+    if (PsiTypes.voidType().equals(method.getReturnType())) return false;
     if (propertyName == null) return true;
 
     final String byGetter = getPropertyNameByGetter(method);
@@ -311,6 +307,10 @@ public class GroovyPropertyUtils {
 
   public static String getGetterNameNonBoolean(@NotNull String name) {
     return getAccessorName(GET_PREFIX, name);
+  }
+
+  public static String getGetterNameForRecordField(@NotNull String name) {
+    return name;
   }
 
   public static String getGetterNameBoolean(@NotNull String name) {
@@ -511,7 +511,7 @@ public class GroovyPropertyUtils {
 
     final PsiClass containingClass = field.getContainingClass();
     try {
-      GrMethod setMethod = factory.createMethod(setName, PsiType.VOID);
+      GrMethod setMethod = factory.createMethod(setName, PsiTypes.voidType());
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       final PsiType type = field instanceof GrField ? ((GrField)field).getDeclaredType() : field.getType();
       GrParameter param = factory.createParameter(parameterName, type);
@@ -563,6 +563,6 @@ public class GroovyPropertyUtils {
   }
 
   private static boolean isBooleanOrBoxed(PsiType type) {
-    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
+    return PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type));
   }
 }

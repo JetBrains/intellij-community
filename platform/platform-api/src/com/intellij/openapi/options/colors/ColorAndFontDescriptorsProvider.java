@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines interface for extending set of text/color descriptors operated by color schemes. 
- * 
- * @author Denis Zhdanov
  */
 public interface ColorAndFontDescriptorsProvider {
 
@@ -35,7 +33,7 @@ public interface ColorAndFontDescriptorsProvider {
    * all highlighting attributes (font type, background color, foreground color, error stripe color and
    * effects).
    *
-   * @return the list of attribute descriptors.
+   * @return the array of attribute descriptors.
    */
   AttributesDescriptor @NotNull [] getAttributeDescriptors();
 
@@ -44,7 +42,7 @@ public interface ColorAndFontDescriptorsProvider {
    * instances for which colors are specified in the page. For such color keys, the user can
    * choose only the background or foreground color.
    *
-   * @return the list of color descriptors.
+   * @return the array of color descriptors.
    */
   ColorDescriptor @NotNull [] getColorDescriptors();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -19,6 +19,5 @@ public abstract class DirectInputDataDiffBuilder<Key, Value> extends InputDataDi
   /**
    * @return keys stored for a corresponding {@link InputDataDiffBuilder#myInputId}
    */
-  @NotNull
-  public abstract Collection<Key> getKeys();
+  public abstract @NotNull Collection<Key> getKeys();
 }

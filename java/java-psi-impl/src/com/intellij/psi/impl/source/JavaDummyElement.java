@@ -33,16 +33,16 @@ public class JavaDummyElement extends FileElement {
   private final boolean myConsumeAll;
   private Throwable myParserError;
 
-  public JavaDummyElement(@Nullable final CharSequence text,
-                          @NotNull final JavaParserUtil.ParserWrapper parser,
-                          @NotNull final LanguageLevel level) {
+  public JavaDummyElement(@Nullable CharSequence text,
+                          @NotNull JavaParserUtil.ParserWrapper parser,
+                          @NotNull LanguageLevel level) {
     this(text, parser, level, false);
   }
 
-  public JavaDummyElement(@Nullable final CharSequence text,
-                          @NotNull final JavaParserUtil.ParserWrapper parser,
-                          @NotNull final LanguageLevel level,
-                          final boolean consumeAll) {
+  public JavaDummyElement(@Nullable CharSequence text,
+                          @NotNull JavaParserUtil.ParserWrapper parser,
+                          @NotNull LanguageLevel level,
+                          boolean consumeAll) {
     super(JavaElementType.DUMMY_ELEMENT, text);
     myParser = parser;
     myLanguageLevel = level;

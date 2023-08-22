@@ -50,7 +50,7 @@ internal fun JvmClass.toJavaClassOrNull(): PsiClass? {
   return null
 }
 
-internal val visibilityModifiers = setOf(
+internal val visibilityModifiers: Set<JvmModifier> = setOf(
   JvmModifier.PUBLIC,
   JvmModifier.PROTECTED,
   JvmModifier.PACKAGE_LOCAL,
@@ -83,10 +83,10 @@ internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
   return JvmPsiConversionHelper.getInstance(project).convertSubstitutor(this)
 }
 
-internal fun PsiType.toExpectedType() = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailType.NONE)
+internal fun PsiType.toExpectedType(): ExpectedTypeInfo = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailType.NONE)
 
 internal fun List<ExpectedTypeInfo>.orObject(context: PsiElement): List<ExpectedTypeInfo> {
-  if (isEmpty() || get(0).type == PsiType.VOID) {
+  if (isEmpty() || get(0).type == PsiTypes.voidType()) {
     return listOf(PsiType.getJavaLangObject(context.manager, context.resolveScope).toExpectedType())
   }
   return this

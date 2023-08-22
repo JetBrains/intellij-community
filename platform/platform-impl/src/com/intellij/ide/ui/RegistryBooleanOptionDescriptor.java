@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Changeable;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ import javax.swing.*;
 public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription implements Changeable {
   protected final String myKey;
 
-  public RegistryBooleanOptionDescriptor(String option, String registryKey) {
+  public RegistryBooleanOptionDescriptor(@NlsContexts.Label String option, String registryKey) {
     super(option, null);
     myKey = registryKey;
   }
@@ -65,7 +66,7 @@ public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription im
     }
 
     if (result == Messages.OK) {
-      ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.nonModal());
     }
   }
 }

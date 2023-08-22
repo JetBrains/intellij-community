@@ -2,26 +2,23 @@
 
 package com.intellij.history.integration.ui.actions;
 
-import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 public class ShowSelectionHistoryAction extends ShowHistoryAction {
   @Override
-  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
-    VcsSelection sel = Objects.requireNonNull(getSelection(e));
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
+    VirtualFile f = Objects.requireNonNull(getFile(e));
+    VcsSelection sel = Objects.requireNonNull(VcsSelectionUtil.getSelection(this, e));
 
     int from = sel.getSelectionStartLineNumber();
     int to = sel.getSelectionEndLineNumber();
@@ -30,28 +27,20 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   }
 
   @Override
-  protected String getText(@NotNull AnActionEvent e) {
-    VcsSelection sel = getSelection(e);
-    return sel == null ? super.getText(e) : sel.getActionName();
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
-    if (getSelection(e) == null) {
+    super.update(e);
+
+    VcsSelection selection = VcsSelectionUtil.getSelection(this, e);
+    if (selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
-    else {
-      super.update(e);
+    else if (!e.getPlace().equals(ActionPlaces.ACTION_SEARCH)) {
+      e.getPresentation().setText(selection.getActionName());
     }
   }
 
   @Override
-  protected boolean isEnabled(@NotNull LocalHistoryFacade vcs, @NotNull IdeaGateway gw, @Nullable VirtualFile f, @NotNull AnActionEvent e) {
-    return super.isEnabled(vcs, gw, f, e) && !Objects.requireNonNull(f).isDirectory() && getSelection(e) != null;
-  }
-
-  @Nullable
-  private static VcsSelection getSelection(@NotNull AnActionEvent e) {
-    return VcsSelectionUtil.getSelection(VcsContextWrapper.createCachedInstanceOn(e));
+  protected boolean isEnabled(@NotNull IdeaGateway gw, @NotNull VirtualFile f) {
+    return super.isEnabled(gw, f) && !f.isDirectory();
   }
 }

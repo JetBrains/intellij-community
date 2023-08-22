@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -21,7 +20,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -44,10 +43,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
 
+import java.util.function.IntConsumer;
+
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
+public final class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
   private static final Logger LOG = Logger.getInstance(GroovyIntroduceParameterMethodUsagesProcessor.class);
 
   private static boolean isGroovyUsage(UsageInfo usage) {
@@ -126,7 +127,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       removeParamsFromUnresolvedCall(callExpression, data);
     }
     else {
-      removeParametersFromCall(actualArgs, data.getParametersToRemove());
+      removeParametersFromCall(actualArgs, data.getParameterListToRemove());
     }
 
     if (argList.getAllArguments().length == 0 && callExpression.hasClosureArguments()) {
@@ -148,11 +149,13 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     return anchor;
   }
 
-  private static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs,final TIntArrayList parametersToRemove) {
-    parametersToRemove.forEach(paramNum -> {
+  private static void removeParametersFromCall(final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs, IntList parametersToRemove) {
+    parametersToRemove.forEach((IntConsumer)paramNum -> {
       try {
         final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
-        if (actualArg == null) return true;
+        if (actualArg == null) {
+          return;
+        }
         for (PsiElement arg : actualArg.args) {
           arg.delete();
         }
@@ -160,7 +163,6 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
     });
   }
 
@@ -185,7 +187,9 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       hasNamedArgs = false;
     }
 
-    data.getParametersToRemove().forEachDescending(paramNum -> {
+    IntList parameterListToRemove = data.getParameterListToRemove();
+    for (int i = parameterListToRemove.size() - 1; i >= 0; i--) {
+      int paramNum = parameterListToRemove.getInt(i);
       try {
         if (paramNum == 0 && hasNamedArgs) {
           for (GrNamedArgument namedArgument : namedArguments) {
@@ -205,20 +209,20 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
-    });
+    }
   }
 
   @Override
   public boolean processChangeMethodSignature(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!(usage.getElement() instanceof GrMethod) || !isGroovyUsage(usage)) return true;
-    GrMethod method = (GrMethod)usage.getElement();
+    if (!(usage.getElement() instanceof GrMethod method) || !isGroovyUsage(usage)) return true;
 
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(data.getParameterName(), method.getBlock());
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(method);
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    data.getParametersToRemove().forEachDescending(paramNum -> {
+    IntList parameterListToRemove = data.getParameterListToRemove();
+    for (int i = parameterListToRemove.size() - 1; i >= 0; i--) {
+      int paramNum = parameterListToRemove.getInt(i);
       try {
         PsiParameter param = parameters[paramNum];
         PsiDocTag tag = javaDocHelper.getTagForParameter(param);
@@ -230,8 +234,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
-    });
+    }
 
     addParameter(method, javaDocHelper, data.getForcedType(), data.getParameterName(), data.isDeclareFinal(), data.getProject());
 
@@ -251,7 +254,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
     final String typeText =
-      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL || PsiType.VOID.equals(forcedType)
+      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiTypes.nullType() || PsiTypes.voidType().equals(forcedType)
       ? null
       : forcedType.getCanonicalText();
 
@@ -287,8 +290,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
   @Override
   public boolean processAddDefaultConstructor(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) {
-    if (!(usage.getElement() instanceof PsiClass) || !isGroovyUsage(usage)) return true;
-    PsiClass aClass = (PsiClass)usage.getElement();
+    if (!(usage.getElement() instanceof PsiClass aClass) || !isGroovyUsage(usage)) return true;
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(data.getProject());
     GrMethod constructor =
       factory.createConstructorFromText(aClass.getName(), ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY, "{}");
@@ -300,8 +302,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
   @Override
   public boolean processAddSuperCall(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!(usage.getElement() instanceof GrMethod) || !isGroovyUsage(usage)) return true;
-    GrMethod constructor = (GrMethod)usage.getElement();
+    if (!(usage.getElement() instanceof GrMethod constructor) || !isGroovyUsage(usage)) return true;
 
     if (!constructor.isConstructor()) return true;
 

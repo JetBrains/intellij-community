@@ -1,19 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
-public class ActiveWindowsWatcher {
+public final class ActiveWindowsWatcher {
+  private static final LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
 
-  private final static LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
-
-  public static boolean isTheCurrentWindowOnTheActivatedList(@NotNull Window w) {
+  public static boolean isTheCurrentWindowOnTheActivatedList(Window w) {
     updateActivatedWindowSet();
     return activatedWindows.contains(w);
   }
@@ -26,7 +29,14 @@ public class ActiveWindowsWatcher {
   public static void updateActivatedWindowSet() {
     for (Iterator<Window> iter = activatedWindows.iterator(); iter.hasNext(); ) {
       Window window = iter.next();
-      if (!window.isVisible() || ComponentUtil.isMinimized(window) || AppUIUtil.isInFullscreen(window)) {
+      if (!window.isFocusableWindow() ||
+          !window.isVisible() ||
+          ComponentUtil.isMinimized(window) ||
+          AppUIUtil.isInFullScreen(window) ||
+          (window instanceof Frame && ((Frame) window).isUndecorated()) ||
+          (window instanceof Dialog && ((Dialog) window).isUndecorated()) ||
+           UIUtil.isSimpleWindow(window)
+      ) {
         iter.remove();
       }
     }
@@ -34,9 +44,8 @@ public class ActiveWindowsWatcher {
   }
 
   public static Window nextWindowAfter (@NotNull Window w) {
-    assert activatedWindows.contains(w);
 
-    Window[] windows = activatedWindows.toArray(new Window[0]);
+    Window[] windows = getWindows(w);
 
     if (w.equals(windows[windows.length - 1])) {
       return windows[0];
@@ -54,7 +63,7 @@ public class ActiveWindowsWatcher {
   public static Window nextWindowBefore (@NotNull Window w) {
     assert activatedWindows.contains(w);
 
-    Window[] windows = activatedWindows.toArray(new Window[0]);
+    Window[] windows = getWindows(w);
 
     if (w.equals(windows[0])) {
       return windows[windows.length - 1];
@@ -67,5 +76,15 @@ public class ActiveWindowsWatcher {
     }
 
     throw new IllegalArgumentException("The window after "  + w.getName() +  " has not been found");
+  }
+
+  private static Window @NotNull [] getWindows(@NotNull Window w) {
+    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm && activatedWindows.size() > 1) {
+      return activatedWindows.stream()
+        .filter(window -> window == w || Foundation.invoke(MacUtil.getWindowFromJavaWindow(window), "isOnActiveSpace").booleanValue())
+        .toArray(Window[]::new);
+    }
+
+    return activatedWindows.toArray(new Window[0]);
   }
 }

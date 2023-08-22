@@ -18,16 +18,14 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.JavaCompletionUtil
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.*
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PairFunction
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
@@ -54,6 +52,19 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
     assert !myFixture.complete(CompletionType.BASIC, 2)
     myFixture.checkResult(text)
+  }
+
+  @NeedsIndex.Full
+  void testPreferClassOverPackage() {
+    myFixture.addClass("package Xyz; public class Xyz {}")
+
+    def text = "Xy<caret>"
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, null, true, true)
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
+    def elements = myFixture.completeBasic()
+    assert elements.length == 2
+    assert elements[0].getPsiElement() instanceof PsiClass
+    assert elements[1].getPsiElement() instanceof PsiPackage
   }
 
   void "test no constants in reference code fragment"() throws Throwable {
@@ -90,9 +101,10 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     assert myFixture.lookupElementStrings[0..1] == ['boolean', 'byte']
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testQualifierCastingInExpressionCodeFragment() throws Throwable {
     final ctxText = "class Bar {{ Object o; o=null }}"
-    final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)
+    final ctxFile = createLightFile(JavaFileType.INSTANCE, ctxText)
     final context = ctxFile.findElementAt(ctxText.indexOf("o="))
     assert context
 
@@ -102,12 +114,13 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResult("o instanceof String && ((String) o).substring(<caret>)")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoGenericQualifierCastingWithRuntimeType() throws Throwable {
     final ctxText = "import java.util.*; class Bar {{ Map<Integer,Integer> map = new HashMap<Integer,Integer>(); map=null; }}"
-    final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)
+    final ctxFile = createLightFile(JavaFileType.INSTANCE, ctxText)
     final context = ctxFile.findElementAt(ctxText.indexOf("map="))
     assert context
-    
+
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("map.entry<caret>", context, null, true)
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
     myFixture.file.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, new PairFunction<PsiExpression, CompletionParameters, PsiType>() {
@@ -142,6 +155,7 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     assert !myFixture.lookupElementStrings.contains('class')
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test annotation context"() {
     def ctxFile = myFixture.addClass("class Class { void foo(int context) { @Anno int a; } }").containingFile
     def context = ctxFile.findElementAt(ctxFile.text.indexOf('Anno'))
@@ -151,6 +165,7 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     assert myFixture.lookupElementStrings.contains('context')
   }
 
+  @NeedsIndex.Full
   void "test proximity ordering in scratch-like file"() {
     def barField = myFixture.addClass('package bar; public class Field {}')
     def fooField = myFixture.addClass('package foo; public class Field {}')
@@ -163,6 +178,7 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     assert barField == items[1].object
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test package default class in code fragment"() {
     myFixture.addClass "class ABCD {}"
     PsiJavaCodeReferenceCodeFragment fragment =
@@ -173,6 +189,7 @@ class FragmentCompletionTest extends LightJavaCodeInsightFixtureTestCase {
     assert myFixture.lookupElements.find { (it.lookupString == "ABCD") } != null
   }
 
+  @NeedsIndex.Full
   void "test qualified class in code fragment"() {
     myFixture.addClass "package foo; public class Foo1 {}"
     PsiJavaCodeReferenceCodeFragment fragment =

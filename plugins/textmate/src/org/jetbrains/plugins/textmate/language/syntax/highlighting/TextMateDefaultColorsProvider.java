@@ -7,8 +7,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.awt.*;
 import java.util.Map;
@@ -28,43 +26,43 @@ public final class TextMateDefaultColorsProvider {
     "markup.heading",
     new TextAttributes(null, null, null, EffectType.BOLD_LINE_UNDERSCORE, Font.PLAIN));
 
-  private final Map<CharSequence, TextAttributesKey> DEFAULT_HIGHLIGHTING_RULES = ContainerUtil.newHashMap(
-    Pair.create("markup.bold", BOLD),
-    Pair.create("markup.italic", ITALIC),
-    Pair.create("markup.underline", UNDERLINE),
-    Pair.create("markup.heading", HEADING),
-    Pair.create("markup.changed", DiffColors.DIFF_MODIFIED),
-    Pair.create("markup.inserted", DiffColors.DIFF_INSERTED),
-    Pair.create("markup.deleted", DiffColors.DIFF_DELETED),
-    Pair.create("comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
-    Pair.create("comment.line", DefaultLanguageHighlighterColors.LINE_COMMENT),
-    Pair.create("comment.block", DefaultLanguageHighlighterColors.BLOCK_COMMENT),
-    Pair.create("comment.documentation", DefaultLanguageHighlighterColors.DOC_COMMENT),
-    Pair.create("constant", DefaultLanguageHighlighterColors.CONSTANT),
-    Pair.create("constant.number", DefaultLanguageHighlighterColors.NUMBER),
-    Pair.create("constant.numeric", DefaultLanguageHighlighterColors.NUMBER),
-    Pair.create("constant.character.escape", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE),
-    Pair.create("constant.character.entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY),
-    Pair.create("invalid", HighlighterColors.BAD_CHARACTER),
-    Pair.create("invalid.deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES),
-    Pair.create("keyword", DefaultLanguageHighlighterColors.KEYWORD),
-    Pair.create("keyword.operator", DefaultLanguageHighlighterColors.OPERATION_SIGN),
-    Pair.create("storage", DefaultLanguageHighlighterColors.KEYWORD),
-    Pair.create("storage.type", DefaultLanguageHighlighterColors.KEYWORD),
-    Pair.create("string", DefaultLanguageHighlighterColors.STRING),
-    Pair.create("variable", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
-    Pair.create("variable.parameter", DefaultLanguageHighlighterColors.PARAMETER),
-    Pair.create("entity", DefaultLanguageHighlighterColors.IDENTIFIER),
-    Pair.create("entity.name", DefaultLanguageHighlighterColors.CLASS_NAME),
-    Pair.create("entity.name.class", DefaultLanguageHighlighterColors.CLASS_NAME),
-    Pair.create("entity.name.function", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
-    Pair.create("entity.other.attribute-name", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE),
-    Pair.create("punctuation", DefaultLanguageHighlighterColors.DOT),
-    Pair.create("punctuation.definition.tag", DefaultLanguageHighlighterColors.MARKUP_TAG),
-    Pair.create("support.function", DefaultLanguageHighlighterColors.FUNCTION_CALL),
-    Pair.create("support.type", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL),
-    Pair.create("meta.tag", DefaultLanguageHighlighterColors.METADATA),
-    Pair.create("text source", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
+  private final Map<CharSequence, TextAttributesKey> DEFAULT_HIGHLIGHTING_RULES = Map.ofEntries(
+    Map.entry("markup.bold", BOLD),
+    Map.entry("markup.italic", ITALIC),
+    Map.entry("markup.underline", UNDERLINE),
+    Map.entry("markup.heading", HEADING),
+    Map.entry("markup.changed", DiffColors.DIFF_MODIFIED),
+    Map.entry("markup.inserted", DiffColors.DIFF_INSERTED),
+    Map.entry("markup.deleted", DiffColors.DIFF_DELETED),
+    Map.entry("comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
+    Map.entry("comment.line", DefaultLanguageHighlighterColors.LINE_COMMENT),
+    Map.entry("comment.block", DefaultLanguageHighlighterColors.BLOCK_COMMENT),
+    Map.entry("comment.documentation", DefaultLanguageHighlighterColors.DOC_COMMENT),
+    Map.entry("constant", DefaultLanguageHighlighterColors.CONSTANT),
+    Map.entry("constant.number", DefaultLanguageHighlighterColors.NUMBER),
+    Map.entry("constant.numeric", DefaultLanguageHighlighterColors.NUMBER),
+    Map.entry("constant.character.escape", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE),
+    Map.entry("constant.character.entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY),
+    Map.entry("invalid", HighlighterColors.BAD_CHARACTER),
+    Map.entry("invalid.deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES),
+    Map.entry("keyword", DefaultLanguageHighlighterColors.KEYWORD),
+    Map.entry("keyword.operator", DefaultLanguageHighlighterColors.OPERATION_SIGN),
+    Map.entry("storage", DefaultLanguageHighlighterColors.KEYWORD),
+    Map.entry("storage.type", DefaultLanguageHighlighterColors.KEYWORD),
+    Map.entry("string", DefaultLanguageHighlighterColors.STRING),
+    Map.entry("variable", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
+    Map.entry("variable.parameter", DefaultLanguageHighlighterColors.PARAMETER),
+    Map.entry("entity", DefaultLanguageHighlighterColors.IDENTIFIER),
+    Map.entry("entity.name", DefaultLanguageHighlighterColors.CLASS_NAME),
+    Map.entry("entity.name.class", DefaultLanguageHighlighterColors.CLASS_NAME),
+    Map.entry("entity.name.function", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+    Map.entry("entity.other.attribute-name", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE),
+    Map.entry("punctuation", DefaultLanguageHighlighterColors.DOT),
+    Map.entry("punctuation.definition.tag", DefaultLanguageHighlighterColors.MARKUP_TAG),
+    Map.entry("support.function", DefaultLanguageHighlighterColors.FUNCTION_CALL),
+    Map.entry("support.type", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL),
+    Map.entry("meta.tag", DefaultLanguageHighlighterColors.METADATA),
+    Map.entry("text source", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
   );
 
   public Set<CharSequence> getAllDefaultKeys() {

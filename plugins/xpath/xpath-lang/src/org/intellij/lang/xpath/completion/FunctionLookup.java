@@ -18,8 +18,10 @@ package org.intellij.lang.xpath.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import icons.XpathIcons;
-import java.util.Objects;
 import org.intellij.lang.xpath.context.functions.Function;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class FunctionLookup extends AbstractLookup {
   private final String type;
@@ -36,7 +38,7 @@ public class FunctionLookup extends AbstractLookup {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
     presentation.setTypeText(type);
     presentation.setIcon(XpathIcons.Function);

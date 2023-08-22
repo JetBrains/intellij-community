@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.codeinsight;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementVisitor;
 import com.intellij.json.psi.JsonObject;
@@ -30,6 +17,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -44,15 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * @author Mikhail Golubev
- */
 public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
   private static final String COMMENT = "$comment";
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     boolean isSchemaFile = JsonSchemaService.isSchemaFile(holder.getFile());
     return new JsonElementVisitor() {
       @Override
@@ -61,23 +46,33 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
         for (JsonProperty property : o.getPropertyList()) {
           keys.putValue(property.getName(), property.getNameElement());
         }
-        for (Map.Entry<String, Collection<PsiElement>> entry : keys.entrySet()) {
-          final Collection<PsiElement> sameNamedKeys = entry.getValue();
-          final String entryKey = entry.getKey();
-          if (sameNamedKeys.size() > 1 && (!isSchemaFile || !COMMENT.equalsIgnoreCase(entryKey))) {
-            for (PsiElement element : sameNamedKeys) {
-              holder.registerProblem(element, JsonBundle.message("inspection.duplicate.keys.msg.duplicate.keys", entryKey),
-                                     new NavigateToDuplicatesFix(sameNamedKeys, element, entryKey));
-            }
-          }
-        }
+        visitKeys(keys, isSchemaFile, holder);
       }
     };
   }
 
-  private static class NavigateToDuplicatesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    @NotNull private final Collection<SmartPsiElementPointer> mySameNamedKeys;
-    @NotNull private final String myEntryKey;
+  protected static void visitKeys(MultiMap<String, PsiElement> keys, boolean isSchemaFile, @NotNull ProblemsHolder holder) {
+    for (Map.Entry<String, Collection<PsiElement>> entry : keys.entrySet()) {
+      final Collection<PsiElement> sameNamedKeys = entry.getValue();
+      final String entryKey = entry.getKey();
+      if (sameNamedKeys.size() > 1 && (!isSchemaFile || !COMMENT.equalsIgnoreCase(entryKey))) {
+        for (PsiElement element : sameNamedKeys) {
+          holder.registerProblem(element, JsonBundle.message("inspection.duplicate.keys.msg.duplicate.keys", entryKey),
+                                 getNavigateToDuplicatesFix(sameNamedKeys, element, entryKey));
+        }
+      }
+    }
+  }
+
+  protected static @NotNull NavigateToDuplicatesFix getNavigateToDuplicatesFix(Collection<PsiElement> sameNamedKeys,
+                                                                               PsiElement element,
+                                                                               String entryKey) {
+    return new NavigateToDuplicatesFix(sameNamedKeys, element, entryKey);
+  }
+
+  private static final class NavigateToDuplicatesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+    private final @NotNull Collection<SmartPsiElementPointer<PsiElement>> mySameNamedKeys;
+    private final @NotNull String myEntryKey;
 
     private NavigateToDuplicatesFix(@NotNull Collection<PsiElement> sameNamedKeys, @NotNull PsiElement element, @NotNull String entryKey) {
       super(element);
@@ -85,17 +80,24 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
       myEntryKey = entryKey;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return JsonBundle.message("navigate.to.duplicates");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return getText();
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+      return IntentionPreviewInfo.EMPTY;
     }
 
     @Override
@@ -107,7 +109,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
       if (editor == null) return;
 
       if (mySameNamedKeys.size() == 2) {
-        final Iterator<SmartPsiElementPointer> iterator = mySameNamedKeys.iterator();
+        final Iterator<SmartPsiElementPointer<PsiElement>> iterator = mySameNamedKeys.iterator();
         final PsiElement next = iterator.next().getElement();
         PsiElement toNavigate = next != startElement ? next : iterator.next().getElement();
         if (toNavigate == null) return;
@@ -116,36 +118,35 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
       else {
         final List<PsiElement> allElements =
           mySameNamedKeys.stream().map(k -> k.getElement()).filter(k -> k != startElement).collect(Collectors.toList());
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiElement>(JsonBundle.message("navigate.to.duplicates.header", myEntryKey), allElements) {
-          @NotNull
-          @Override
-          public Icon getIconFor(PsiElement aValue) {
-            return AllIcons.Nodes.Property;
-          }
+        JBPopupFactory.getInstance().createListPopup(
+          new BaseListPopupStep<>(JsonBundle.message("navigate.to.duplicates.header", myEntryKey), allElements) {
+            @Override
+            public @NotNull Icon getIconFor(PsiElement aValue) {
+              return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
+            }
 
-          @NotNull
-          @Override
-          public String getTextFor(PsiElement value) {
-            return JsonBundle.message("navigate.to.duplicates.desc", myEntryKey, editor.getDocument().getLineNumber(value.getTextOffset()));
-          }
+            @Override
+            public @NotNull String getTextFor(PsiElement value) {
+              return JsonBundle
+                .message("navigate.to.duplicates.desc", myEntryKey, editor.getDocument().getLineNumber(value.getTextOffset()));
+            }
 
-          @Override
-          public int getDefaultOptionIndex() {
-            return 0;
-          }
+            @Override
+            public int getDefaultOptionIndex() {
+              return 0;
+            }
 
-          @Nullable
-          @Override
-          public PopupStep onChosen(PsiElement selectedValue, boolean finalChoice) {
-            navigateTo(editor, selectedValue);
-            return PopupStep.FINAL_CHOICE;
-          }
+            @Override
+            public @Nullable PopupStep<?> onChosen(PsiElement selectedValue, boolean finalChoice) {
+              navigateTo(editor, selectedValue);
+              return PopupStep.FINAL_CHOICE;
+            }
 
-          @Override
-          public boolean isSpeedSearchEnabled() {
-            return true;
-          }
-        }).showInBestPositionFor(editor);
+            @Override
+            public boolean isSpeedSearchEnabled() {
+              return true;
+            }
+          }).showInBestPositionFor(editor);
       }
     }
 

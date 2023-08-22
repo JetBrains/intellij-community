@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -10,15 +11,14 @@ import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InplaceEditingLayer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class AbstractGuiEditorAction extends AnAction implements DumbAware {
   private final boolean myModifying;
 
@@ -60,6 +60,11 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
   protected abstract void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e);
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public final void update(@NotNull AnActionEvent e) {
     GuiEditor editor = FormEditingUtil.getEditorFromContext(e.getDataContext());
     if (editor == null) {
@@ -76,7 +81,7 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
   }
 
   @Nullable
-  protected String getCommandName() {
+  protected @Nls String getCommandName() {
     return null;
   }
 }

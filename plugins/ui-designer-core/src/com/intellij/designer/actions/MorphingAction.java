@@ -15,11 +15,13 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.PaletteItem;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -46,6 +48,11 @@ public class MorphingAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     PaletteItem paletteItem = myTarget.getPaletteItem();
     e.getPresentation().setEnabled(paletteItem == null || paletteItem.isEnabled());
@@ -64,7 +71,7 @@ public class MorphingAction extends AnAction {
       }
 
       myArea.setSelection(newComponents);
-    }, "Run Morphing action", true);
+    }, DesignerBundle.message("run.morphing.action"), true);
   }
 
   public static void fill(DesignerEditorPanel designer, DefaultActionGroup group, EditableArea area) {
@@ -91,7 +98,7 @@ public class MorphingAction extends AnAction {
       return;
     }
 
-    DefaultActionGroup morphingGroup = DefaultActionGroup.createPopupGroup(() -> "Morphing");
+    DefaultActionGroup morphingGroup = DefaultActionGroup.createPopupGroup(() -> DesignerBundle.message("action.morphing.text"));
     for (MetaModel morphingModel : models) {
       morphingGroup.add(new MorphingAction(designer, area, selection, morphingModel));
     }

@@ -1,13 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ImplicitToStringSearch extends ExtensibleQueryFactory<PsiExpression, ImplicitToStringSearch.SearchParameters> {
+public final class ImplicitToStringSearch extends ExtensibleQueryFactory<PsiExpression, ImplicitToStringSearch.SearchParameters> {
   public static final ImplicitToStringSearch INSTANCE = new ImplicitToStringSearch();
 
   public static class SearchParameters {
@@ -31,17 +30,14 @@ public class ImplicitToStringSearch extends ExtensibleQueryFactory<PsiExpression
     }
   }
 
-  public static Query<PsiExpression> search(@NotNull PsiMethod targetMethod, @NotNull SearchScope scope) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(targetMethod, scope),
-                                             ContainerUtil.canonicalStrategy(),
-                                             SmartPointerManager::createPointer);
+  public static @NotNull Query<PsiExpression> search(@NotNull PsiMethod targetMethod, @NotNull SearchScope scope) {
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(targetMethod, scope), SmartPointerManager::createPointer);
   }
 
   public static boolean isToStringMethod(@NotNull PsiElement element) {
-    if (!(element instanceof PsiMethod)) {
+    if (!(element instanceof PsiMethod method)) {
       return false;
     }
-    PsiMethod method = (PsiMethod)element;
     if (!"toString".equals(method.getName())) {
       return false;
     }

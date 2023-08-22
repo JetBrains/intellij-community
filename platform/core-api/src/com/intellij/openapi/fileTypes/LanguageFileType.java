@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,18 +44,12 @@ public abstract class LanguageFileType implements FileType {
    * Returns the language used in the files of the type.
    * @return The language instance.
    */
-  @NotNull
-  public final Language getLanguage() {
+  public final @NotNull Language getLanguage() {
     return myLanguage;
   }
 
   @Override
   public final boolean isBinary() {
-    return false;
-  }
-
-  @Override
-  public boolean isReadOnly() {
     return false;
   }
 
@@ -64,11 +59,6 @@ public abstract class LanguageFileType implements FileType {
    */
   public boolean isSecondary() {
     return mySecondary;
-  }
-
-  @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    return null;
   }
 
   /**
@@ -91,5 +81,10 @@ public abstract class LanguageFileType implements FileType {
 
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
     return extractCharsetFromFileContent(project, file, content.toString());
+  }
+
+  @Override
+  public @Nls @NotNull String getDisplayName() {
+    return myLanguage.getDisplayName();
   }
 }

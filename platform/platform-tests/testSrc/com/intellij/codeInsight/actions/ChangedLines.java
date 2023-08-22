@@ -31,8 +31,7 @@ public class ChangedLines {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof ChangedLines) {
-      ChangedLines line = (ChangedLines)obj;
+    if (obj instanceof ChangedLines line) {
       return from == line.from && to == line.to;
     }
 

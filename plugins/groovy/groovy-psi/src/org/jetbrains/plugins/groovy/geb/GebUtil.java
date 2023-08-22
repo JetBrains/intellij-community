@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.*;
@@ -22,10 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GebUtil {
+public final class GebUtil {
 
   public static boolean contributeMembersInsideTest(PsiScopeProcessor processor,
                                                     PsiElement place,
@@ -64,8 +61,7 @@ public class GebUtil {
     PsiType objectType = PsiType.getJavaLangObject(pageOrModuleClass.getManager(), pageOrModuleClass.getResolveScope());
 
     for (PsiElement e = initializer.getFirstChild(); e != null; e = e.getNextSibling()) {
-      if (e instanceof GrMethodCall) {
-        GrMethodCall methodCall = (GrMethodCall)e;
+      if (e instanceof GrMethodCall methodCall) {
 
         GrExpression invokedExpression = methodCall.getInvokedExpression();
         if (!(invokedExpression instanceof GrReferenceExpression)) continue;

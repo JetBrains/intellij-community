@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.openapi.ui.ValidationInfo;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -15,7 +13,7 @@ import java.util.regex.Pattern;
 
 import static kotlin.text.StringsKt.removePrefix;
 
-public class CloneDvcsValidationUtils {
+public final class CloneDvcsValidationUtils {
   /**
    * The pattern for SSH URL-s in form [user@]host:path
    */
@@ -38,16 +36,16 @@ public class CloneDvcsValidationUtils {
       if (!directoryPath.toFile().exists()) {
         Files.createDirectories(directoryPath);
       }
-      else if (!directoryPath.toFile().isDirectory() || !Files.isWritable(directoryPath)) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
+      else if (!directoryPath.toFile().isDirectory()) {
+        return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.access")).withOKEnabled();
       }
       return null;
     }
     catch (InvalidPathException e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
+      return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.invalid"));
     }
     catch (Exception e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access")).withOKEnabled();
+      return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.access")).withOKEnabled();
     }
   }
 
@@ -57,7 +55,7 @@ public class CloneDvcsValidationUtils {
    * @return null if destination directory is OK.
    */
   @Nullable
-  public static ValidationInfo checkDirectory(String directoryPath, JTextField component) {
+  public static ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JComponent component) {
     if (directoryPath.length() == 0) {
       return new ValidationInfo("");
     }
@@ -68,16 +66,24 @@ public class CloneDvcsValidationUtils {
         return null;
       }
       else if (!path.toFile().isDirectory()) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.not.directory"), component);
+        return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.not.directory"), component);
       }
       else if (!isDirectoryEmpty(path)) {
         return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.exists"), component);
       }
     }
     catch (InvalidPathException | IOException e) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"), component);
+      return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.invalid"), component);
     }
     return null;
+  }
+
+  /**
+   * @deprecated use a more general method above
+   */
+  @Deprecated
+  public static @Nullable ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JTextField component) {
+    return checkDirectory(directoryPath, (JComponent) component);
   }
 
   private static boolean isDirectoryEmpty(@NotNull Path directory) throws IOException {
@@ -93,7 +99,7 @@ public class CloneDvcsValidationUtils {
   @Nullable
   public static ValidationInfo checkRepositoryURL(JComponent component, String repository) {
     if (repository.length() == 0) {
-      return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.empty"), component);
+      return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.empty"), component);
     }
 
     repository = sanitizeCloneUrl(repository);
@@ -119,7 +125,7 @@ public class CloneDvcsValidationUtils {
 
       if (path.toFile().exists()) {
         if (!path.toFile().isDirectory()) {
-          return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.not.directory"), component);
+          return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.not.directory"), component);
         }
         return null;
       }
@@ -128,7 +134,7 @@ public class CloneDvcsValidationUtils {
       // do nothing
     }
 
-    return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.invalid"), component);
+    return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.invalid"), component);
   }
 
   @NotNull

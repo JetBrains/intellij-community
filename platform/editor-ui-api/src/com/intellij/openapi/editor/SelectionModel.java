@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
  * Most of the methods here exist for compatibility reasons, corresponding functionality is also provided by {@link CaretModel} now.
  * <p>
  * In editors supporting multiple carets, each caret has its own associated selection range. Unless mentioned explicitly, methods of this
- * interface operate on the current caret (see {@link CaretModel#runForEachCaret(CaretAction)}), or 'primary' caret if current caret 
- * is not defined. 
+ * interface operate on the current caret (see {@link CaretModel#runForEachCaret(CaretAction)}), or 'primary' caret if current caret
+ * is not defined.
  *
  * @see Editor#getSelectionModel()
  * @see CaretModel
@@ -40,8 +41,7 @@ public interface SelectionModel {
   /**
    * @return    object that encapsulates information about visual position of selected text start if any
    */
-  @Nullable
-  default VisualPosition getSelectionStartPosition() {
+  default @Nullable VisualPosition getSelectionStartPosition() {
     return getEditor().getCaretModel().getCurrentCaret().getSelectionStartPosition();
   }
 
@@ -58,8 +58,7 @@ public interface SelectionModel {
   /**
    * @return    object that encapsulates information about visual position of selected text end if any;
    */
-  @Nullable
-  default VisualPosition getSelectionEndPosition() {
+  default @Nullable VisualPosition getSelectionEndPosition() {
     return getEditor().getCaretModel().getCurrentCaret().getSelectionEndPosition();
   }
 
@@ -68,8 +67,7 @@ public interface SelectionModel {
    *
    * @return the selected text, or {@code null} if there is currently no selection.
    */
-  @Nullable
-  default String getSelectedText() {
+  default @Nullable @NlsSafe String getSelectedText() {
     return getSelectedText(false);
   }
 
@@ -77,8 +75,7 @@ public interface SelectionModel {
    * If {@code allCarets} is {@code true}, returns the concatenation of selections for all carets, or {@code null} if there
    * are no selections. If {@code allCarets} is {@code false}, works just like {@link #getSelectedText}.
    */
-  @Nullable
-  default String getSelectedText(boolean allCarets) {
+  default @Nullable @NlsSafe String getSelectedText(boolean allCarets) {
     if (allCarets && getEditor().getCaretModel().supportsMultipleCarets()) {
       final StringBuilder buf = new StringBuilder();
       String separator = "";
@@ -112,8 +109,7 @@ public interface SelectionModel {
   /**
    * @return    object that encapsulates information about visual position from which the user started to extend the selection if any
    */
-  @Nullable
-  default VisualPosition getLeadSelectionPosition() {
+  default @Nullable VisualPosition getLeadSelectionPosition() {
     return getEditor().getCaretModel().getCurrentCaret().getLeadSelectionPosition();
   }
 
@@ -259,6 +255,9 @@ public interface SelectionModel {
 
   /**
    * Creates a multi-caret selection for the rectangular block of text with specified start and end positions.
+   * <p>
+   * If the number of carets to be created is larger than {@link CaretModel#getMaxCaretCount()}, the resulting block will be smaller than
+   * requested. Editor might display a user-visible notification in such a case.
    *
    * @param blockStart the start of the rectangle to select.
    * @param blockEnd   the end of the rectangle to select.

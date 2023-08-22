@@ -1,155 +1,129 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
+import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
-import com.intellij.codeInsight.actions.ReaderMode.READ_ONLY_FILES
-import com.intellij.codeInsight.actions.ReaderMode.UNMODIFIED_MODULE_FILES
+import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.psi.codeStyle.CodeStyleScheme
+import com.intellij.psi.codeStyle.CodeStyleSchemes
+import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.util.PlatformUtils
 
-class ReaderModeConfigurable(val project: Project) : BoundSearchableConfigurable(LangBundle.message("configurable.reader.mode"), "READER_MODE_HELP") {
-  private val settings get() = ReaderModeSettings.instance(project)
+internal class ReaderModeConfigurable(private val project: Project) : BoundSearchableConfigurable(
+  LangBundle.message("configurable.reader.mode"), "settings.reader.mode", "editor.reader.mode") {
+  private val settings get() = ReaderModeSettings.getInstance(project)
 
-  private val cdBreadcrumbs get() = CheckboxDescriptor(LangBundle.message("checkbox.breadcrumbs"), settings::showBreadcrumbs)
+  private val cdVisualFormatting
+    get() = CheckboxDescriptor(LangBundle.message("checkbox.reader.mode.show.visual.formatting.layer"), settings::enableVisualFormatting)
   private val cdInlays get() = CheckboxDescriptor(LangBundle.message("checkbox.inlays"), settings::showInlaysHints)
   private val cdRenderedDocs get() = CheckboxDescriptor(LangBundle.message("checkbox.rendered.docs"), settings::showRenderedDocs)
   private val cdLigatures get() = CheckboxDescriptor(LangBundle.message("checkbox.ligatures"), settings::showLigatures)
   private val cdLineSpacing get() = CheckboxDescriptor(LangBundle.message("checkbox.line.spacing"), settings::increaseLineSpacing)
-  private val cdWarnings get() = CheckboxDescriptor(LangBundle.message("checkbox.hide.warnings"), settings::hideWarnings)
-  private val cdEnabled get() = CheckboxDescriptor(LangBundle.message("checkbox.reader.mode.enabled"), settings::enabled)
+  private val cdWarnings get() = CheckboxDescriptor(LangBundle.message("checkbox.hide.warnings"), settings::showWarnings)
+  private val cdEnabled get() = CheckboxDescriptor(LangBundle.message("checkbox.reader.mode.toggle"), settings::enabled)
 
   override fun createPanel(): DialogPanel {
     return panel {
-      lateinit var enabled: CellBuilder<JBCheckBox>
+      lateinit var enabled: Cell<JBCheckBox>
       row {
-        enabled = checkBox(cdEnabled)
+        enabled = checkBox(cdEnabled).comment("")
+          .comment(LangBundle.message("checkbox.reader.mode.toggle.comment"))
       }
-      titledRow(LangBundle.message("titled.border.mode")) {
-        row {
-          radioButton(LangBundle.message("radio.reader.mode.readonly"),
-                      { return@radioButton settings.mode == READ_ONLY_FILES },
-                      { settings.mode = READ_ONLY_FILES })
-            .enableIf(enabled.selected)
+      indent {
+        buttonsGroup(LangBundle.message("titled.border.reader.mode.settings")) {
+          row {
+            val renderedDocs = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
+            checkBox(cdRenderedDocs).enabled(!renderedDocs)
+
+            if (renderedDocs) {
+              comment(LangBundle.message("checkbox.reader.mode.go.to.global.settings")) {
+                goToGlobalSettings("editor.preferences.appearance")
+              }
+            }
+          }
+          row {
+            checkBox(cdWarnings)
+          }
+          row {
+            val useLigatures = EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures()
+            checkBox(cdLigatures).enabled(!useLigatures)
+
+            if (useLigatures) {
+              comment(LangBundle.message("checkbox.reader.mode.go.to.global.settings")) {
+                goToGlobalSettings("editor.preferences.fonts.default")
+              }
+            }
+          }
+          row {
+            checkBox(cdLineSpacing)
+            comment(LangBundle.message("checkbox.reader.mode.line.height.comment"))
+          }.enabledIf(enabled.selected)
+          row {
+            checkBox(cdInlays).visible(PlatformUtils.isIntelliJ())
+          }
         }
+        lateinit var visualFormattingEnabled: Cell<JBCheckBox>
         row {
-          radioButton(LangBundle.message("radio.reader.unmodified.modules"),
-                      { return@radioButton settings.mode == UNMODIFIED_MODULE_FILES },
-                      { settings.mode = UNMODIFIED_MODULE_FILES })
-            .enableIf(enabled.selected)
+          visualFormattingEnabled = checkBox(cdVisualFormatting)
         }
-      }.enableIf(enabled.selected)
-      titledRow(LangBundle.message("titled.border.reader.mode.settings")) {
-        row {
-          checkBox(cdBreadcrumbs).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdRenderedDocs).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdLigatures).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdLineSpacing).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdInlays).enableIf(enabled.selected)
-        }
-        row {
-          checkBox(cdWarnings).enableIf(enabled.selected)
-        }
-      }.enableIf(enabled.selected)
+        buttonsGroup(indent = true) {
+          row {
+            radioButton("", true).apply {
+              onReset {
+                component.text = (LangBundle.message("radio.reader.mode.use.active.scheme.visual.formatting",
+                                                     getCurrentCodeStyleSchemeName(project)))
+              }
+            }
+            // ensure label is updated when active code style scheme changes
+            val listener = { e: CodeStyleSettingsChangeEvent -> if (e.virtualFile == null) reset() }
+            CodeStyleSettingsManager.getInstance(project).subscribe(listener, disposable!!)
+          }
+          row {
+            val radio = radioButton(LangBundle.message("radio.reader.mode.choose.visual.formatting.scheme"), false)
+              .gap(RightGap.SMALL)
+            val combo = VisualFormattingSchemesCombo(project)
+            cell(combo)
+              .onReset { combo.onReset(settings) }
+              .onIsModified { combo.onIsModified(settings) }
+              .onApply { combo.onApply(settings) }
+              .enabledIf(radio.selected)
+          }
+        }.bind(settings::useActiveSchemeForVisualFormatting)
+          .enabledIf(visualFormattingEnabled.selected)
+      }.enabledIf(enabled.selected)
     }
   }
 
   override fun apply() {
     super.apply()
-    project.messageBus.syncPublisher(READER_MODE_TOPIC).modeChanged(project)
+    project.messageBus.syncPublisher(ReaderModeSettingsListener.TOPIC).modeChanged(project)
+  }
+
+  private fun goToGlobalSettings(configurableID: String) {
+    DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+      context?.let { dataContext ->
+        Settings.KEY.getData(dataContext)?.let { settings ->
+          settings.select(settings.find(configurableID))
+          ReaderModeStatsCollector.logSeeAlsoNavigation()
+        }
+      }
+    }
   }
 }
 
-enum class ReaderMode {
-  READ_ONLY_FILES, UNMODIFIED_MODULE_FILES
-}
-
-@State(name = "ReaderModeSettings", storages = [Storage("editor.xml")])
-class ReaderModeSettings : PersistentStateComponent<ReaderModeSettings.State> {
-  companion object {
-    @JvmStatic
-    fun instance(project: Project): ReaderModeSettings {
-      return ServiceManager.getService(project, ReaderModeSettings::class.java)
-    }
+private fun getCurrentCodeStyleSchemeName(project: Project) =
+  CodeStyleSettingsManager.getInstance(project).run {
+    if (USE_PER_PROJECT_SETTINGS) CodeStyleScheme.PROJECT_SCHEME_NAME
+    else CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).displayName
   }
-
-  private var myState = State()
-
-  data class State(
-    var showBreadcrumbs: Boolean = true,
-    var showLigatures: Boolean = true,
-    var increaseLineSpacing: Boolean = true,
-    var showRenderedDocs: Boolean = true,
-    var showInlayHints: Boolean = true,
-    var hideWarnings: Boolean = true,
-    var enabled: Boolean = true,
-    var mode: ReaderMode = READ_ONLY_FILES
-  )
-
-  var showBreadcrumbs: Boolean
-    get() = state.showBreadcrumbs
-    set(value) {
-      state.showBreadcrumbs = value
-    }
-
-  var showLigatures: Boolean
-    get() = state.showLigatures
-    set(value) {
-      state.showLigatures = value
-    }
-
-  var increaseLineSpacing: Boolean
-    get() = state.showLigatures
-    set(value) {
-      state.showLigatures = value
-    }
-
-  var showInlaysHints: Boolean
-    get() = state.showInlayHints
-    set(value) {
-      state.showInlayHints = value
-    }
-
-  var showRenderedDocs: Boolean
-    get() = state.showRenderedDocs
-    set(value) {
-      state.showRenderedDocs = value
-    }
-
-  var hideWarnings: Boolean
-    get() = state.hideWarnings
-    set(value) {
-      state.hideWarnings = value
-    }
-
-  var enabled: Boolean
-    get() = state.enabled
-    set(value) {
-      state.enabled = value
-    }
-
-  var mode: ReaderMode
-    get() = state.mode
-    set(value) {
-      state.mode = value
-    }
-
-  override fun getState(): State = run { return myState }
-  override fun loadState(state: State) = run { myState = state }
-}

@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// SUGGESTED_NAMES: s, getS
+fun test() {
+    val s = s()
+}
+
+private fun s() = J.notNull()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -19,36 +19,36 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware {
+public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware {
   private XmlElement myElement;
   private XmlFile myDescriptorFile;
 
   private static final SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl> myCachedDeclsCache = new
-    SimpleFieldCache<CachedValue<Map<String, XmlElementDescriptor>>, XmlNSDescriptorImpl>() {
-    @Override
-    protected final CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
-      return xmlNSDescriptor.doBuildDeclarationMap();
-    }
+    SimpleFieldCache<>() {
+      @Override
+      protected CachedValue<Map<String, XmlElementDescriptor>> compute(final XmlNSDescriptorImpl xmlNSDescriptor) {
+        return xmlNSDescriptor.doBuildDeclarationMap();
+      }
 
-    @Override
-    protected final CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
-      return xmlNSDescriptor.myCachedDecls;
-    }
+      @Override
+      protected CachedValue<Map<String, XmlElementDescriptor>> getValue(final XmlNSDescriptorImpl xmlNSDescriptor) {
+        return xmlNSDescriptor.myCachedDecls;
+      }
 
-    @Override
-    protected final void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue, final XmlNSDescriptorImpl xmlNSDescriptor) {
-      xmlNSDescriptor.myCachedDecls = cachedValue;
-    }
-  };
+      @Override
+      protected void putValue(final CachedValue<Map<String, XmlElementDescriptor>> cachedValue,
+                              final XmlNSDescriptorImpl xmlNSDescriptor) {
+        xmlNSDescriptor.myCachedDecls = cachedValue;
+      }
+    };
 
   private volatile CachedValue<Map<String, XmlElementDescriptor>> myCachedDecls;
-  private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<XmlElementDecl>() {
+  private static final XmlUtil.DuplicationInfoProvider<XmlElementDecl> XML_ELEMENT_DECL_PROVIDER = new XmlUtil.DuplicationInfoProvider<>() {
     @Override
     public String getName(@NotNull final XmlElementDecl psiElement) {
       return psiElement.getName();
@@ -89,7 +89,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       final List<XmlElementDecl> result = new ArrayList<>();
       myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
       final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<>((int)(result.size() * 1.5));
-      Set<PsiFile> dependencies = new THashSet<>(1);
+      Set<PsiFile> dependencies = new HashSet<>(1);
       dependencies.add(myDescriptorFile);
 
       for (final XmlElementDecl xmlElementDecl : result) {
@@ -138,7 +138,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return getElements();
   }
 
-  public final XmlElementDescriptor getElementDescriptor(String name){
+  public XmlElementDescriptor getElementDescriptor(String name){
     return buildDeclarationMap().get(name);
   }
 

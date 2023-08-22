@@ -1,55 +1,54 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author peter
- */
 public class AsyncExecutionServiceImpl extends AsyncExecutionService {
-  private static long ourWriteActionCounter = 0;
+  private static final AtomicLong ourWriteActionCounter = new AtomicLong();
 
   public AsyncExecutionServiceImpl() {
     Application app = ApplicationManager.getApplication();
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionStarted(@NotNull Object action) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourWriteActionCounter++;
+        ourWriteActionCounter.incrementAndGet();
       }
     }, app);
   }
 
-  @NotNull
+  /**
+   * @deprecated use coroutines and their cancellation mechanism instead
+   */
+  @Deprecated(forRemoval = true)
   @Override
-  protected ExpirableExecutor createExecutor(@NotNull Executor executor) {
+  protected @NotNull ExpirableExecutor createExecutor(@NotNull Executor executor) {
     return new ExpirableExecutorImpl(executor);
   }
 
-  @NotNull
   @Override
-  protected AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
+  protected @NotNull AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
     return new AppUIExecutorImpl(modalityState, ExecutionThread.EDT);
   }
 
-  @NotNull
   @Override
-  protected AppUIExecutor createWriteThreadExecutor(@NotNull ModalityState modalityState) {
+  protected @NotNull AppUIExecutor createWriteThreadExecutor(@NotNull ModalityState modalityState) {
     return new AppUIExecutorImpl(modalityState, ExecutionThread.WT);
   }
 
-  @NotNull
   @Override
-  public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<T> computation) {
+  public @NotNull <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<? extends T> computation) {
     return new NonBlockingReadActionImpl<>(computation);
   }
 
-  static long getWriteActionCounter() {
+  @ApiStatus.Internal
+  public static long getWriteActionCounter() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return ourWriteActionCounter;
+    return ourWriteActionCounter.get();
   }
 }

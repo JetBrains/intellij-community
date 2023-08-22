@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -7,23 +7,21 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
-public class LookupOffsets implements DocumentListener {
+public final class LookupOffsets implements DocumentListener {
   @NotNull private String myAdditionalPrefix = "";
 
   private boolean myStableStart;
   @Nullable private Supplier<String> myStartMarkerDisposeInfo = null;
   @NotNull private RangeMarker myLookupStartMarker;
   private int myRemovedPrefix;
-  private final RangeMarker myLookupOriginalStartMarker;
+  private RangeMarker myLookupOriginalStartMarker;
   private final Editor myEditor;
 
   public LookupOffsets(Editor editor) {
@@ -36,6 +34,24 @@ public class LookupOffsets implements DocumentListener {
 
   @Override
   public void documentChanged(@NotNull DocumentEvent e) {
+    if (!myLookupStartMarker.isValid()) {
+      // in the scenario of concurrent document modifications by many remote clients (CWM) there may be a situation
+      // when one client (or host) has created a lookup and the another client immediately deleted a text under the offset
+      // so the range marker became invalid because it's out of the document bounds
+      // here we try to recreate the range marker recalculating the start offset within the new document bounds
+      int start = calculateStartOffset(0, true);
+      myLookupStartMarker.dispose();
+      myLookupStartMarker = createLeftGreedyMarker(start);
+      myStartMarkerDisposeInfo = null;
+    }
+
+    if (!myLookupOriginalStartMarker.isValid()) {
+      // the original marker shouldn't take into account myAdditionalPrefix and myRemovedPrefix values
+      int start = calculateStartOffset(0, false);
+      myLookupOriginalStartMarker.dispose();
+      myLookupOriginalStartMarker = createLeftGreedyMarker(start);
+    }
+    // capture the trace in the case when range marker is still invalid by some reasons
     if (myStartMarkerDisposeInfo == null && !myLookupStartMarker.isValid()) {
       Throwable throwable = new Throwable();
       String eString = e.toString();
@@ -91,8 +107,7 @@ public class LookupOffsets implements DocumentListener {
       }
     }
 
-    int start = getPivotOffset() - minPrefixLength - myAdditionalPrefix.length() + myRemovedPrefix;
-    start = Math.max(Math.min(start, myEditor.getDocument().getTextLength()), 0);
+    int start = calculateStartOffset(minPrefixLength, true);
     if (myLookupStartMarker.isValid() && myLookupStartMarker.getStartOffset() == start && myLookupStartMarker.getEndOffset() == start) {
       return;
     }
@@ -100,6 +115,15 @@ public class LookupOffsets implements DocumentListener {
     myLookupStartMarker.dispose();
     myLookupStartMarker = createLeftGreedyMarker(start);
     myStartMarkerDisposeInfo = null;
+  }
+
+  private int calculateStartOffset(int minLookupItemPrefixLength, boolean considerPrefixes) {
+    int start = getPivotOffset() - minLookupItemPrefixLength;
+    if (considerPrefixes) {
+      start = start - myAdditionalPrefix.length() + myRemovedPrefix;
+    }
+    start = MathUtil.clamp(start, 0, myEditor.getDocument().getTextLength());
+    return start;
   }
 
   int getLookupStart(@Nullable Throwable disposeTrace) {

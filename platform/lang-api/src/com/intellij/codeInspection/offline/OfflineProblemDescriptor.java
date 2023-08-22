@@ -18,8 +18,10 @@ package com.intellij.codeInspection.offline;
 
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -28,17 +30,18 @@ import java.util.Objects;
 public class OfflineProblemDescriptor {
   public String myType;
   public String myFQName;
-  public String myDescription;
+  public @InspectionMessage String myDescription;
   public List<String> myHints;
   public int myProblemIndex;
   public int myLine;
+  public int myOffset;
   public String myModuleName;
 
   public String getType() {
     return myType;
   }
 
-  public void setType(final String type) {
+  public void setType(String type) {
     myType = type;
   }
 
@@ -46,15 +49,15 @@ public class OfflineProblemDescriptor {
     return myFQName;
   }
 
-  public void setFQName(final String FQName) {
+  public void setFQName(String FQName) {
     myFQName = FQName;                              
   }
 
-  public String getDescription() {
+  public @InspectionMessage String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(final String description) {
+  public void setDescription(@InspectionMessage String description) {
     myDescription = description;
   }
 
@@ -62,7 +65,7 @@ public class OfflineProblemDescriptor {
     return myHints;
   }
 
-  public void setHints(final List<String> hints) {
+  public void setHints(List<String> hints) {
     myHints = hints;
   }
 
@@ -70,7 +73,7 @@ public class OfflineProblemDescriptor {
     return myProblemIndex;
   }
 
-  public void setProblemIndex(final int problemIndex) {
+  public void setProblemIndex(int problemIndex) {
     myProblemIndex = problemIndex;
   }
 
@@ -78,20 +81,28 @@ public class OfflineProblemDescriptor {
     return myLine;
   }
 
-  public void setLine(final int line) {
+  public void setLine(int line) {
     myLine = line;
   }
 
+  public void setOffset(int offset) {
+    myOffset = offset;
+  }
+
+  public int getOffset() {
+    return myOffset;
+  }
+
   @Nullable
-  public RefEntity getRefElement(final RefManager refManager) {
+  public RefEntity getRefElement(@NotNull RefManager refManager) {
     return ReadAction.compute(() -> refManager.getProject().isDisposed() ? null : refManager.getReference(myType, myFQName));
   }
 
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final OfflineProblemDescriptor that = (OfflineProblemDescriptor)o;
+    OfflineProblemDescriptor that = (OfflineProblemDescriptor)o;
 
     if (myLine != that.myLine) return false;
     if (myProblemIndex != that.myProblemIndex) return false;
@@ -106,7 +117,7 @@ public class OfflineProblemDescriptor {
 
   public int hashCode() {
     int result;
-    result = (myType != null ? myType.hashCode() : 0);
+    result = Objects.hashCode(myType);
     result = 31 * result + (myFQName != null ? myFQName.hashCode() : 0);
     result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
     result = 31 * result + (myHints != null ? myHints.hashCode() : 0);
@@ -116,7 +127,7 @@ public class OfflineProblemDescriptor {
     return result;
   }
 
-  public void setModule(final String moduleName) {
+  public void setModule(String moduleName) {
     myModuleName = moduleName;
   }
 
@@ -128,7 +139,8 @@ public class OfflineProblemDescriptor {
   public String toString() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myFQName;
-    } else {
+    }
+    else {
       return myDescription;
     }
   }

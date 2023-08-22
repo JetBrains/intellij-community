@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,10 +14,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author: db
- */
-class DependencyContext implements NamingContext {
+final class DependencyContext implements NamingContext {
   private final static String STRING_TABLE_NAME = "strings.tab";
   private final PersistentStringEnumerator myEnumerator;
 
@@ -37,8 +34,9 @@ class DependencyContext implements NamingContext {
      return r;
    }
 
-  TypeRepr.AbstractType getType(final TypeRepr.AbstractType t) {
-    final TypeRepr.AbstractType r = myTypeMap.get(t);
+  <T extends TypeRepr.AbstractType> T getType(final T t) {
+    //noinspection unchecked
+    final T r = (T)myTypeMap.get(t);
 
     if (r != null) {
       return r;
@@ -103,7 +101,7 @@ class DependencyContext implements NamingContext {
   }
 
   public LoggerWrapper<Integer> getLogger(final Logger log) {
-    return new LoggerWrapper<Integer>() {
+    return new LoggerWrapper<>() {
       @Override
       public boolean isDebugEnabled() {
         return log.isDebugEnabled();
@@ -118,7 +116,7 @@ class DependencyContext implements NamingContext {
 
       @Override
       public void debug(String comment, String t) {
-        if (isDebugEnabled()){
+        if (isDebugEnabled()) {
           log.debug(comment + t);
         }
       }

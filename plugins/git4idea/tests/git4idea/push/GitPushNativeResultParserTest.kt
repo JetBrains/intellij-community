@@ -71,6 +71,13 @@ class GitPushNativeResultParserTest {
   }
 
   @Test
+  fun successUpToCommit() {
+    val output = " \t4915ba17cc8b718d58ae77dd25018fccdce322d6:refs/heads/master\t3e62822..4915ba1"
+    val results = parse(listOf(STANDARD_PREFIX, TARGET_PREFIX, output, SUCCESS_SUFFIX))
+    assertSingleResult(SUCCESS, "4915ba17cc8b718d58ae77dd25018fccdce322d6", "3e62822..4915ba1", null, results)
+  }
+
+  @Test
   fun rejected() {
     val output = "!\trefs/heads/master:refs/heads/master\t[rejected] (non-fast-forward)"
     val results = parse(listOf(STANDARD_PREFIX, TARGET_PREFIX, output, REJECT_SUFFIX))
@@ -118,6 +125,16 @@ class GitPushNativeResultParserTest {
     val results = parse(listOf(*output))
     assertEquals(2, results.size)
     assertResult(SUCCESS, "refs/heads/master", "7aabf91..d8369de", null, results[0])
+    assertResult(NEW_REF, "refs/tags/some_tag", null, null, results[1])
+  }
+
+  @Test
+  fun withTagsUptoCommit() {
+    val output = arrayOf(" \t4915ba17cc8b718d58ae77dd25018fccdce322d6:refs/heads/abranch\t3e62822..4915ba1",
+      "*\trefs/tags/some_tag:refs/tags/some_tag\t[new tag]")
+    val results = parse(listOf(*output))
+    assertEquals(2, results.size)
+    assertResult(SUCCESS, "4915ba17cc8b718d58ae77dd25018fccdce322d6", "3e62822..4915ba1", null, results[0])
     assertResult(NEW_REF, "refs/tags/some_tag", null, null, results[1])
   }
 

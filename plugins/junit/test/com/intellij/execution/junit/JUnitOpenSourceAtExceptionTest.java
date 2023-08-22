@@ -23,24 +23,26 @@ public class JUnitOpenSourceAtExceptionTest extends LightJavaCodeInsightFixtureT
   }
 
   public void testStackTraceParseerAcceptsJavaStacktrace() {
-    myFixture.addClass("abstract class ATest extends junit.framework.TestCase {" +
-                       "  public void testMe() {\n" +
-                       "    int i = 0;\n" +
-                       "    int j = 0;\n" +
-                       "    int k = 0;\n" +
-                       "    fail();\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         abstract class ATest extends junit.framework.TestCase {  public void testMe() {
+                             int i = 0;
+                             int j = 0;
+                             int k = 0;
+                             fail();
+                           }
+                         }""");
     myFixture.addClass("public class ChildTest extends ATest {}");
 
     final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest/testMe");
-    testProxy.setTestFailed("failure", "\tat junit.framework.Assert.fail(Assert.java:57)\n" +
-                                       "\tat junit.framework.Assert.failNotEquals(Assert.java:329)\n" +
-                                       "\tat junit.framework.Assert.assertEquals(Assert.java:78)\n" +
-                                       "\tat junit.framework.Assert.assertEquals(Assert.java:234)\n" +
-                                       "\tat junit.framework.Assert.assertEquals(Assert.java:241)\n" +
-                                       "\tat junit.framework.TestCase.assertEquals(TestCase.java:409)\n" +
-                                       "\tat ATest.testMe(Dummy.java:6)\n", true);
+    testProxy.setTestFailed("failure", """
+      \tat junit.framework.Assert.fail(Assert.java:57)
+      \tat junit.framework.Assert.failNotEquals(Assert.java:329)
+      \tat junit.framework.Assert.assertEquals(Assert.java:78)
+      \tat junit.framework.Assert.assertEquals(Assert.java:234)
+      \tat junit.framework.Assert.assertEquals(Assert.java:241)
+      \tat junit.framework.TestCase.assertEquals(TestCase.java:409)
+      \tat ATest.testMe(Dummy.java:6)
+      """, true);
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     testProxy.setLocator(JavaTestLocator.INSTANCE);

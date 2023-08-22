@@ -14,14 +14,15 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +110,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), null);
     File jarFile = new File(getJarPath());
     if (!jarFile.exists()) {
-      throw new RuntimeConfigurationWarning("JAR file '" + jarFile.getAbsolutePath() + "' doesn't exist");
+      throw new RuntimeConfigurationWarning(JavaCompilerBundle.message("dialog.message.jar.file.doesn.t.exist", jarFile.getAbsolutePath()));
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
@@ -122,7 +123,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   @Nullable
   @Override
   public GlobalSearchScope getSearchScope() {
-    return GlobalSearchScopes.executionScope(Arrays.asList(getModules()));
+    return ExecutionSearchScopes.executionScope(Arrays.asList(getModules()));
   }
 
   @Nullable

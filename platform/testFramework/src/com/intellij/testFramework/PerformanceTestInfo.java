@@ -3,42 +3,72 @@ package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.Scope;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.io.StorageLockContext;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttribute;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpanSimple;
+
+
 public class PerformanceTestInfo {
-  private final ThrowableRunnable<?> test; // runnable to measure
+
+  private static class IterationStatus {
+    private final IterationResult iterationResult;
+    private final boolean passed;
+    private final String message;
+
+    private IterationStatus(@NotNull IterationResult iterationResult,
+                            boolean passed,
+                            @NotNull String logMessage) {
+      this.iterationResult = iterationResult;
+      this.passed = passed;
+      this.message = logMessage;
+    }
+  }
+
+  private final ThrowableComputable<Integer, ?> test; // runnable to measure; returns actual input size
   private final int expectedMs;           // millis the test is expected to run
+  private final int expectedInputSize;    // size of input the test is expected to process;
   private ThrowableRunnable<?> setup;      // to run before each test
   private int usedReferenceCpuCores = 1;
-  private int attempts = 4;             // number of retries if performance failed
-  private boolean waitForJit;
+  private int maxRetries = 4;             // number of retries if performance failed
   private final String what;         // to print on fail
-  private boolean adjustForIO = false;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
+  private boolean adjustForIO;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
   private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
   private boolean useLegacyScaling;
+  private int warmupIterations = Integer.MIN_VALUE;
+  @NotNull
+  private final IJTracer tracer;
 
   static {
     // to use JobSchedulerImpl.getJobPoolParallelism() in tests which don't init application
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
   }
 
-  PerformanceTestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {
+  PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedMs, int expectedInputSize, @NotNull String what) {
     this.test = test;
     this.expectedMs = expectedMs;
+    this.expectedInputSize = expectedInputSize;
     assert expectedMs > 0 : "Expected must be > 0. Was: " + expectedMs;
+    assert expectedInputSize > 0 : "Expected input size must be > 0. Was: " + expectedInputSize;
     this.what = what;
+    this.tracer = TelemetryManager.getInstance().getTracer(new Scope("performanceUnitTests", null));
   }
 
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo setup(@NotNull ThrowableRunnable setup) {
+  public PerformanceTestInfo setup(@NotNull ThrowableRunnable<?> setup) {
     assert this.setup == null;
     this.setup = setup;
     return this;
@@ -73,13 +103,19 @@ public class PerformanceTestInfo {
 
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo attempts(int attempts) {
-    this.attempts = attempts;
+    this.maxRetries = attempts;
     return this;
   }
 
+  /**
+   * Runs the payload {@code iterations} times before starting measuring the time.
+   * By default, iterations == 0 (in which case we don't run warmup passes at all)
+   */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo reattemptUntilJitSettlesDown() {
-    this.waitForJit = true;
+  public PerformanceTestInfo warmupIterations(int iterations) {
+    assert warmupIterations == Integer.MIN_VALUE : "Already called warmupIterations()";
+    assert iterations >= 1 : "invalid argument: " + iterations + "; must be >= 1";
+    warmupIterations = iterations;
     return this;
   }
 
@@ -98,92 +134,142 @@ public class PerformanceTestInfo {
   public void assertTiming() {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
-    if (waitForJit) {
-      attempts = 100;
-      updateJitUsage();
-    }
+    updateJitUsage();
 
-    if (attempts == 1) {
+    if (maxRetries == 1) {
       //noinspection CallToSystemGC
       System.gc();
     }
+    int initialMaxRetries = maxRetries;
 
-    boolean testShouldPass = false;
-    String logMessage;
-
-    while (true) {
-      attempts--;
-      CpuUsageData data;
+    runWithSpanSimple(tracer, what, () -> {
       try {
-        if (setup != null) setup.run();
-        PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
-        data = CpuUsageData.measureCpuUsage(test);
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+          AtomicInteger actualInputSize;
+
+          if (setup != null) setup.run();
+          PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
+          actualInputSize = new AtomicInteger(expectedInputSize);
+          if (warmupIterations != Integer.MIN_VALUE) {
+            for (int i = 0; i < warmupIterations; i++) {
+              test.compute();
+            }
+          }
+
+          IterationStatus status =
+            computeWithSpanAttribute(tracer, "Attempt: " + attempt, "Attempt status", (st) -> String.valueOf(st.passed), () -> {
+              CpuUsageData currentData;
+              try {
+                currentData = CpuUsageData.measureCpuUsage(() -> actualInputSize.set(test.compute()));
+              }
+              catch (Throwable e) {
+                ExceptionUtil.rethrowUnchecked(e);
+                throw new RuntimeException(e);
+              }
+              int actualUsedCpuCores = usedReferenceCpuCores < 8
+                                       ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores)
+                                       : JobSchedulerImpl.getJobPoolParallelism();
+              int expectedOnMyMachine = getExpectedTimeOnThisMachine(actualInputSize.get(), actualUsedCpuCores);
+              IterationResult iterationResult = currentData.getIterationResult(expectedOnMyMachine);
+
+              boolean passed = iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
+              String message =
+                formatMessage(currentData, expectedOnMyMachine, actualInputSize.get(), actualUsedCpuCores, iterationResult,
+                              initialMaxRetries);
+              return new IterationStatus(iterationResult, passed, message);
+            });
+
+          boolean testPassed = status.passed;
+          String logMessage = status.message;
+          IterationResult iterationResult = status.iterationResult;
+
+          if (testPassed) {
+            TeamCityLogger.info(logMessage);
+            System.out.println("\nSUCCESS: " + logMessage);
+            return;
+          }
+          TeamCityLogger.warning(logMessage, null);
+          if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+            System.out.println("\nWARNING: " + logMessage);
+          }
+
+          JitUsageResult jitUsage = updateJitUsage();
+          if (attempt == maxRetries) {
+            throw new AssertionFailedError(logMessage);
+          }
+          if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) &&
+              attempt < initialMaxRetries + 30 &&
+              maxRetries != 1) {
+            // completely ignore this attempt (by incrementing maxRetries) and retry (but do no more than 30 extra retries caused by JIT)
+            maxRetries++;
+          }
+          String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" +
+                     (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
+          TeamCityLogger.warning(s, null);
+          if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+            System.out.println(s);
+          }
+          //noinspection CallToSystemGC
+          System.gc();
+          StorageLockContext.forceDirectMemoryCache();
+        }
       }
       catch (Throwable throwable) {
         ExceptionUtil.rethrowUnchecked(throwable);
         throw new RuntimeException(throwable);
       }
-
-      int expectedOnMyMachine = getExpectedTimeOnThisMachine();
-      IterationResult iterationResult = data.durationMs < expectedOnMyMachine ? IterationResult.acceptable :
-                                        // Allow 10% more in case of test machine is busy.
-                                        data.durationMs < expectedOnMyMachine * 1.1 ? IterationResult.borderline :
-                                        IterationResult.slow;
-
-      testShouldPass |= iterationResult != IterationResult.slow;
-
-      logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
-
-      if (iterationResult == IterationResult.acceptable) {
-        TeamCityLogger.info(logMessage);
-        System.out.println("\nSUCCESS: " + logMessage);
-      }
-      else {
-        TeamCityLogger.warning(logMessage, null);
-        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-          System.out.println("\nWARNING: " + logMessage);
-        }
-      }
-
-      if (iterationResult == IterationResult.acceptable) {
-        return;
-      }
-      if (attempts == 0 || waitForJit && updateJitUsage() == JitUsageResult.definitelyLow) {
-        if (testShouldPass) return;
-        throw new AssertionFailedError(logMessage);
-      }
-
-      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
-      TeamCityLogger.warning(s, null);
-      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-        System.out.println(s);
-      }
-      //noinspection CallToSystemGC
-      System.gc();
-    }
+    });
   }
 
-  private String formatMessage(CpuUsageData data, int expectedOnMyMachine, IterationResult iterationResult) {
+  private @NotNull String formatMessage(@NotNull CpuUsageData data,
+                                        int expectedOnMyMachine,
+                                        int actualInputSize,
+                                        int actualUsedCpuCores,
+                                        @NotNull IterationResult iterationResult,
+                                        int initialMaxRetries) {
     long duration = data.durationMs;
     int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-    String colorCode = iterationResult == IterationResult.acceptable ? "32;1m" : // green
-                       iterationResult == IterationResult.borderline ? "33;1m" : // yellow
+    String colorCode = iterationResult == IterationResult.ACCEPTABLE ? "32;1m" : // green
+                       iterationResult == IterationResult.BORDERLINE ? "33;1m" : // yellow
                        "31;1m"; // red
-    return String.format(
-      "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
-      "\n  Expected: %sms (%s)" +
-      "\n  Actual:   %sms (%s)" +
-      "\n  Timings:  %s" +
-      "\n  Threads:  %s" +
-      "\n  GC stats: %s" +
-      "\n  Process:  %s",
-      what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
-      expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
-      duration, StringUtil.formatDuration(duration),
-      Timings.getStatistics(),
-      data.getThreadStats(),
-      data.getGcStats(),
-      data.getProcessCpuStats());
+    return
+      what +
+      " took \u001B[" +
+      colorCode +
+      Math.abs(percentage) +
+      "% " +
+      (percentage > 0 ? "more" : "less") +
+      " time\u001B[0m than expected" +
+      (iterationResult == IterationResult.DISTRACTED && initialMaxRetries != 1
+       ? " (but JIT compilation took too long, will retry anyway)"
+       : "") +
+      "\n  Expected: " +
+      expectedOnMyMachine +
+      "ms" +
+      (expectedOnMyMachine < 1000 ? "" : " (" + StringUtil.formatDuration(expectedOnMyMachine) + ")") +
+      "\n  Actual:   " +
+      duration +
+      "ms" +
+      (duration < 1000 ? "" : " (" + StringUtil.formatDuration(duration) + ")") +
+      (expectedInputSize != actualInputSize ? "\n  (Expected time was adjusted accordingly to input size: expected " +
+                                              expectedInputSize +
+                                              ", actual " +
+                                              actualInputSize +
+                                              ".)" : "") +
+      (usedReferenceCpuCores != actualUsedCpuCores ?
+       "\n  (Expected time was adjusted accordingly to number of available CPU cores: reference CPU has " +
+       usedReferenceCpuCores +
+       ", actual value is " +
+       actualUsedCpuCores +
+       ".)" : "") +
+      "\n  Timings:  " +
+      Timings.getStatistics() +
+      "\n  Threads:  " +
+      data.getThreadStats() +
+      "\n  GC stats: " +
+      data.getGcStats() +
+      "\n  Process:  " +
+      data.getProcessCpuStats();
   }
 
   private long lastJitUsage;
@@ -197,35 +283,38 @@ public class PerformanceTestInfo {
     if (lastJitStamp >= 0) {
       if (elapsedMillis >= 3_000) {
         if (jitNow - lastJitUsage <= elapsedMillis / 10) {
-          return JitUsageResult.definitelyLow;
+          return JitUsageResult.DEFINITELY_LOW;
         }
-      } else {
+      }
+      else {
         // don't update stamps too frequently,
         // because JIT times are quite discrete: they only change after a compilation is finished,
         // and some compilations take a second or even more
-        return JitUsageResult.unclear;
+        return JitUsageResult.UNCLEAR;
       }
     }
 
     lastJitStamp = timeNow;
     lastJitUsage = jitNow;
 
-    return JitUsageResult.unclear;
+    return JitUsageResult.UNCLEAR;
   }
 
-  private enum JitUsageResult {definitelyLow, unclear}
+  private enum JitUsageResult {DEFINITELY_LOW, UNCLEAR}
 
-  private enum IterationResult { acceptable, borderline, slow }
+  enum IterationResult {
+    ACCEPTABLE, // test was completed within specified range
+    BORDERLINE, // test barely managed to complete within specified range
+    SLOW,       // test was too slow
+    DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g., JIT or GC)
+  }
 
-  private int getExpectedTimeOnThisMachine() {
-    int expectedOnMyMachine = expectedMs;
+  private int getExpectedTimeOnThisMachine(int actualInputSize, int actualUsedCpuCores) {
+    int expectedOnMyMachine = (int)(((long)expectedMs) * actualInputSize / expectedInputSize);
     if (adjustForCPU) {
-      int coreCountUsedHere = usedReferenceCpuCores < 8
-                              ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores)
-                              : JobSchedulerImpl.getJobPoolParallelism();
       expectedOnMyMachine *= usedReferenceCpuCores;
       expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.REFERENCE_CPU_TIMING, useLegacyScaling);
-      expectedOnMyMachine /= coreCountUsedHere;
+      expectedOnMyMachine /= actualUsedCpuCores;
     }
     if (adjustForIO) {
       expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.REFERENCE_IO_TIMING, useLegacyScaling);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -20,7 +21,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
+public final class SurroundWithTemplateHandler implements CodeInsightActionHandler {
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
@@ -45,9 +51,10 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  public static List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<Character> usedMnemonicsSet) {
-    List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);
-    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true);
+  public static List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<? super Character> usedMnemonicsSet) {
+    TemplateActionContext templateActionContext = TemplateActionContext.surrounding(file, editor);
+    List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext);
+    List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
     if (templates.isEmpty() && customTemplates.isEmpty()) {
       return Collections.emptyList();
     }
@@ -56,7 +63,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
 
     for (TemplateImpl template : templates) {
       group.add(new InvokeTemplateAction(template, editor, file.getProject(), usedMnemonicsSet,
-                                 () -> SurroundWithLogger.logTemplate(template, file.getLanguage(), file.getProject())));
+                                         () -> SurroundWithLogger.logTemplate(template, file.getLanguage(), file.getProject())));
     }
 
     for (CustomLiveTemplate customTemplate : customTemplates) {

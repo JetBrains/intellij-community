@@ -22,7 +22,7 @@ public final class JBSwingUtilities {
   /**
    * @deprecated Use {@link SwingUtilities#isLeftMouseButton}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isLeftMouseButton(MouseEvent anEvent) {
     return SwingUtilities.isLeftMouseButton(anEvent);
   }
@@ -30,7 +30,7 @@ public final class JBSwingUtilities {
   /**
    * @deprecated Use {@link SwingUtilities#isRightMouseButton}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isRightMouseButton(MouseEvent anEvent) {
     return SwingUtilities.isRightMouseButton(anEvent);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.Executor;
@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.compiler.CompileContext;
@@ -15,6 +16,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 public class BuildAndRestartConsoleAction extends AnAction {
 
@@ -29,12 +31,21 @@ public class BuildAndRestartConsoleAction extends AnAction {
                                       @NotNull Executor executor,
                                       @NotNull RunContentDescriptor contentDescriptor,
                                       @NotNull Consumer<? super Module> restarter) {
-    super("Build and Restart", "Build module '" + module.getName() + "' and restart", AllIcons.Actions.Restart);
+    super(
+      GroovyBundle.message("action.build.restart.text"),
+      GroovyBundle.message("action.build.module.restart.description", module.getName()),
+      AllIcons.Actions.Restart
+    );
     myModule = module;
     myProject = project;
     myExecutor = executor;
     myContentDescriptor = contentDescriptor;
     myRestarter = restarter;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

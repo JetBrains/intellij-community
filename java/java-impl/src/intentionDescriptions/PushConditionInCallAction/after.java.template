@@ -1,9 +1,0 @@
-class X {
-  void bar(boolean b) {
-    String str = foo(b ? "true": "false");
-  }
-
-  String foo(String p) {
-    return p;
-  }
-}

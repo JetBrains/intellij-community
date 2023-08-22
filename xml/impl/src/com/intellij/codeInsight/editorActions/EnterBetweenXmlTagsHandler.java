@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset, @NotNull final Ref<Integer> caretAdvance,
+  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset, final @NotNull Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     
@@ -58,7 +57,7 @@ public class EnterBetweenXmlTagsHandler extends EnterHandlerDelegateAdapter {
     CharSequence chars = editor.getDocument().getCharsSequence();
     if (chars.charAt(offset - 1) != '>') return false;
 
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     if (iterator.getTokenType() != XmlTokenType.XML_TAG_END) return false;
     

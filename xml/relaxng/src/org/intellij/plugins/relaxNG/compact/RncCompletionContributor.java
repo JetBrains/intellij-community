@@ -50,7 +50,7 @@ public class RncCompletionContributor extends CompletionContributor {
 
 
   public RncCompletionContributor() {
-    CompletionProvider<CompletionParameters> provider = new CompletionProvider<CompletionParameters>() {
+    CompletionProvider<CompletionParameters> provider = new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,

@@ -106,16 +106,11 @@ public abstract class TaskManager {
   /**
    * @deprecated use {@link TaskManager#addTaskListener(TaskListener, Disposable)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addTaskListener(TaskListener listener);
 
   public abstract void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable);
 
-  /**
-   * @deprecated use {@link TaskManager#addTaskListener(TaskListener, Disposable)}
-   */
-  @Deprecated
-  public abstract void removeTaskListener(TaskListener listener);
   // repositories management
 
   public abstract TaskRepository[] getAllRepositories();

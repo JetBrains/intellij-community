@@ -1,16 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api;
 
+import com.intellij.collaboration.api.ServerPath;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import git4idea.remote.hosting.GitHostingUrlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubParseException;
-import org.jetbrains.plugins.github.util.GithubUrlUtil;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +23,7 @@ import java.util.regex.Pattern;
  * Github server reference allowing to specify custom port and path to instance
  */
 @Tag("server")
-public class GithubServerPath {
+public final class GithubServerPath implements ServerPath {
   public static final String DEFAULT_HOST = "github.com";
   public static final GithubServerPath DEFAULT_SERVER = new GithubServerPath(DEFAULT_HOST);
   private static final String API_PREFIX = "api.";
@@ -74,9 +78,12 @@ public class GithubServerPath {
     return mySuffix;
   }
 
+  /**
+   * @deprecated use an util method directly
+   */
+  @Deprecated
   public boolean matches(@NotNull String gitRemoteUrl) {
-    String url = GithubUrlUtil.removePort(GithubUrlUtil.removeProtocolPrefix(gitRemoteUrl));
-    return StringUtil.startsWithIgnoreCase(url, myHost + StringUtil.notNullize(mySuffix));
+    return GitHostingUrlUtil.match(toURI(), gitRemoteUrl);
   }
 
   // 1 - schema, 2 - host, 4 - port, 5 - path
@@ -114,7 +121,15 @@ public class GithubServerPath {
 
   @NotNull
   public String toUrl() {
-    return getSchemaUrlPart() + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
+    return toUrl(true);
+  }
+
+  @NotNull
+  public String toUrl(boolean showSchema) {
+    StringBuilder builder = new StringBuilder();
+    if (showSchema) builder.append(getSchemaUrlPart());
+    builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
+    return builder.toString();
   }
 
   @NotNull
@@ -142,11 +157,23 @@ public class GithubServerPath {
     return builder.toString();
   }
 
+  @Override
+  public @NotNull URI toURI() {
+    int port = getPort() == null ? -1 : getPort();
+    try {
+      return new URI(getSchema(), null, getHost(), port, getSuffix(), null, null);
+    }
+    catch (URISyntaxException e) {
+      // shouldn't happen, because we pre-validate the data
+      throw new RuntimeException(e);
+    }
+  }
+
   public boolean isGithubDotCom() {
     return myHost.equalsIgnoreCase(DEFAULT_HOST);
   }
 
-  public String toString() {
+  public @NlsSafe @NotNull String toString() {
     String schema = myUseHttp != null ? getSchemaUrlPart() : "";
     return schema + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
   }
@@ -161,12 +188,16 @@ public class GithubServerPath {
     return getSchema() + URLUtil.SCHEME_SEPARATOR;
   }
 
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object o) {
+    return equals(o, false);
+  }
+
+  public boolean equals(Object o, boolean ignoreProtocol) {
     if (this == o) return true;
-    if (!(o instanceof GithubServerPath)) return false;
-    GithubServerPath path = (GithubServerPath)o;
-    return Objects.equals(myUseHttp, path.myUseHttp) &&
+    if (!(o instanceof GithubServerPath path)) return false;
+    return (ignoreProtocol || Objects.equals(myUseHttp, path.myUseHttp)) &&
            Objects.equals(myHost, path.myHost) &&
            Objects.equals(myPort, path.myPort) &&
            Objects.equals(mySuffix, path.mySuffix);
@@ -174,6 +205,6 @@ public class GithubServerPath {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myUseHttp, myHost, myPort, mySuffix);
+    return Objects.hash(myHost, myPort, mySuffix);
   }
 }

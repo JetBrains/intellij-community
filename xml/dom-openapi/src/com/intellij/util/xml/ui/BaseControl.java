@@ -30,9 +30,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.lang.reflect.InvocationTargetException;
 
-/**
- * @author peter
- */
 public abstract class BaseControl<Bound extends JComponent, T> extends DomUIControl implements Highlightable {
   private static final Logger LOG = Logger.getInstance(BaseControl.class);
   public static final Color ERROR_BACKGROUND = new Color(255,204,204);

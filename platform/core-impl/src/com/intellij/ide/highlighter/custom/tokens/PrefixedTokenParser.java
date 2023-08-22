@@ -18,9 +18,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 
 import com.intellij.psi.tree.IElementType;
 
-/**
- * @author dsl
- */
 public abstract class PrefixedTokenParser extends TokenParser {
   private final char[] myPrefix;
   private final IElementType myTokenType;

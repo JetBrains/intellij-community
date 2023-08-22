@@ -17,6 +17,7 @@ package com.intellij.execution.filters;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class PatternHyperlinkFormat {
@@ -24,31 +25,52 @@ public class PatternHyperlinkFormat {
   private final boolean myZeroBasedLineNumbering;
   private final boolean myZeroBasedColumnNumbering;
   private final PatternHyperlinkPart[] myLinkParts;
+  private final List<String> myRequiredOrderedSubstrings;
 
   public PatternHyperlinkFormat(@NotNull Pattern pattern,
                                 boolean zeroBasedLineNumbering,
                                 boolean zeroBasedColumnNumbering,
                                 PatternHyperlinkPart @NotNull ... linkParts) {
+    this(pattern, zeroBasedLineNumbering, zeroBasedColumnNumbering, List.of(), linkParts);
+  }
+
+  public PatternHyperlinkFormat(@NotNull Pattern pattern,
+                                boolean zeroBasedLineNumbering,
+                                boolean zeroBasedColumnNumbering,
+                                @NotNull List<String> requiredOrderedSubstrings,
+                                PatternHyperlinkPart @NotNull ... linkParts) {
     myPattern = pattern;
     myZeroBasedLineNumbering = zeroBasedLineNumbering;
     myZeroBasedColumnNumbering = zeroBasedColumnNumbering;
+    myRequiredOrderedSubstrings = List.copyOf(requiredOrderedSubstrings);
     myLinkParts = linkParts;
   }
 
-  @NotNull
-  public Pattern getPattern() {
+  @NotNull Pattern getPattern() {
     return myPattern;
   }
 
-  public boolean isZeroBasedLineNumbering() {
+  boolean isZeroBasedLineNumbering() {
     return myZeroBasedLineNumbering;
   }
 
-  public boolean isZeroBasedColumnNumbering() {
+  boolean isZeroBasedColumnNumbering() {
     return myZeroBasedColumnNumbering;
   }
 
-  public PatternHyperlinkPart @NotNull [] getLinkParts() {
+  PatternHyperlinkPart @NotNull [] getLinkParts() {
     return myLinkParts;
+  }
+
+  boolean matchRequiredSubstrings(@NotNull String line) {
+    int ind = 0;
+    for (String required : myRequiredOrderedSubstrings) {
+      int nextInd = line.indexOf(required, ind);
+      if (nextInd < 0) {
+        return false;
+      }
+      ind = nextInd + required.length();
+    }
+    return true;
   }
 }

@@ -14,8 +14,10 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -50,10 +52,10 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
       throw new RuntimeConfigurationError(ExecutionBundle.message("no.main.class.specified.error.text"));
     }
     if (getScratchFileUrl() == null) {
-      throw new RuntimeConfigurationError("No scratch file associated with configuration");
+      throw new RuntimeConfigurationError(JavaCompilerBundle.message("error.no.scratch.file.associated.with.configuration"));
     }
     if (getScratchVirtualFile() == null) {
-      throw new RuntimeConfigurationError("Associated scratch file not found");
+      throw new RuntimeConfigurationError(JavaCompilerBundle.message("error.associated.scratch.file.not.found"));
     }
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), getConfigurationModule().getModule());
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
@@ -61,7 +63,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
 
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-    final JavaCommandLineState state = new JavaApplicationCommandLineState<JavaScratchConfiguration>(this, env) {
+    final JavaCommandLineState state = new JavaApplicationCommandLineState<>(this, env) {
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         final JavaParameters params = super.createJavaParameters();
@@ -132,12 +134,24 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
   @Nullable
   public VirtualFile getScratchVirtualFile() {
     final String url = getScratchFileUrl();
-    return url == null? null : VirtualFileManager.getInstance().findFileByUrl(url);
+    return url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
   @NotNull
   @Override
   protected JavaScratchConfigurationOptions getOptions() {
     return (JavaScratchConfigurationOptions)super.getOptions();
+  }
+
+  @Nullable
+  @Override
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultTargetName() {
+    return null;
   }
 }

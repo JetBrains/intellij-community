@@ -4,7 +4,9 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefFile;
@@ -22,7 +24,9 @@ public class BatchModeInspectionTest extends LightJavaCodeInsightFixtureTestCase
   public void testEnsureReferencesAreRemoved() {
     PsiClass aClass = myFixture.addClass("class Foo {public void bar(int i){}}");
     Project project = myFixture.getProject();
-    RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), InspectionManager.getInstance(project).createNewGlobalContext());
+    GlobalInspectionContext context = InspectionManager.getInstance(project).createNewGlobalContext();
+    ((GlobalInspectionContextBase)context).initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), context);
     refManager.findAllDeclarations();
     List<RefElement> sortedElements = refManager.getSortedElements();
 
@@ -41,8 +45,10 @@ public class BatchModeInspectionTest extends LightJavaCodeInsightFixtureTestCase
     PsiClass aClass = myFixture.addClass("class Foo {}");
     myFixture.addFileToProject("Bar.groovy", "class Bar { void m() { new Foo(); }}");
     Project project = myFixture.getProject();
+    GlobalInspectionContext context = InspectionManager.getInstance(project).createNewGlobalContext();
+    ((GlobalInspectionContextBase)context).initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     RefManagerImpl refManager =
-      new RefManagerImpl(project, new AnalysisScope(project), InspectionManager.getInstance(project).createNewGlobalContext());
+      new RefManagerImpl(project, new AnalysisScope(project), context);
     refManager.findAllDeclarations();
 
     RefElement refClass = refManager.getReference(aClass);

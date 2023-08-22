@@ -1,28 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.DefaultBuildDescriptor;
+import com.intellij.build.FilePosition;
 import com.intellij.build.events.*;
+import com.intellij.build.events.impl.FileMessageEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Logger;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.SelfDescribing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,36 +34,24 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.build.events.MessageEvent.Kind.ERROR;
 import static com.intellij.build.events.MessageEvent.Kind.WARNING;
 import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
+public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
   protected ExternalSystemTaskId myTaskId;
 
-  public interface ThrowingRunnable {
-    void run() throws Throwable;
+  public static  void failOnWarns(ThrowableRunnable<Throwable> runnable) throws Throwable {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
+        fail(message + t);
+        return false;
+      }
+    }, runnable);
   }
 
-
-  public static  void failOnWarns(ThrowingRunnable runnable) throws Throwable {
-    LoggedErrorProcessor oldInstance = LoggedErrorProcessor.getInstance();
-    try {
-      LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
-        @Override
-        public void processWarn(String message, Throwable t, @NotNull Logger logger) {
-          super.processWarn(message, t, logger);
-          fail(message + t);
-        }
-      });
-      runnable.run();
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(oldInstance);
-    }
-  }
-
-  @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -68,7 +59,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
   }
 
   protected static String @NotNull [] fromFile(String resource) throws IOException {
-    try (InputStream stream = ResourceUtil.getResourceAsStream(MavenBuildToolLogTestUtils.class, "", resource);
+    try (InputStream stream = ResourceUtil.getResourceAsStream(MavenBuildToolLogTestUtils.class.getClassLoader(), "", resource);
          Scanner scanner = new Scanner(stream)) {
       List<String> result = new ArrayList<>();
       while (scanner.hasNextLine()) {
@@ -89,7 +80,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     private boolean mySkipOutput = false;
 
     public TestCaseBuilder withLines(String... lines) {
-      List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
+      List<String> joinedAndSplitted = List.of(StringUtil.join(lines, "\n").split("\n"));
       myLines.addAll(joinedAndSplitted);
       return this;
     }
@@ -204,10 +195,11 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
 
     private List<BuildEvent> collect() {
+      MavenRunConfiguration configuration =
+        (MavenRunConfiguration)new MavenRunConfigurationType.MavenRunConfigurationFactory(MavenRunConfigurationType.getInstance())
+          .createTemplateConfiguration(getProject());
       CollectConsumer collectConsumer = new CollectConsumer();
-      MavenLogOutputParser parser =
-        new MavenLogOutputParser(myTaskId, myParsers);
-
+      MavenLogOutputParser parser = new MavenLogOutputParser(configuration, myTaskId, myParsers);
 
       collectConsumer.accept(new StartBuildEventImpl(
         new DefaultBuildDescriptor(myTaskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));
@@ -318,7 +310,8 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
     @Override
     public void describeTo(@NotNull Description description) {
-      description.appendText("Expected FileMessageEventImpl \"" + myMessage + "\" at " + myFileName + ":" + myLine + ":" + myColumn);
+      description.appendText("Expected \n" + new FileMessageEventImpl("EXECUTE_TASK:0", ERROR, "Error", myMessage, myMessage,
+                                                                      new FilePosition(new File(myFileName), myLine,myColumn)));
     }
   }
 
@@ -353,7 +346,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       throw new UnsupportedOperationException();
     }
 
-    public String getCurrentLine() { // FIXME-ank: made public (should be private)
+    private String getCurrentLine() {
       if (myPosition >= myLines.size() || myPosition < 0) {
         return null;
       }

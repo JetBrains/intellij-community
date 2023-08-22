@@ -20,7 +20,7 @@
         <properties>
           <focusable value="false"/>
           <requestFocusEnabled value="true"/>
-          <text value="&amp;Move to another class"/>
+          <text resource-bundle="messages/GroovyRefactoringBundle" key="inplace.introduce.constant.move.checkbox"/>
         </properties>
       </component>
       <component id="3e5fd" class="javax.swing.JComponent" binding="myPreview" custom-create="true">

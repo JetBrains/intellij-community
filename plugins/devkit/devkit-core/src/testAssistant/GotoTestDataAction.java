@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.io.File;
@@ -32,7 +33,7 @@ class GotoTestDataAction extends AnAction implements Comparable {
   private final Project myProject;
 
   GotoTestDataAction(String filePath, Project project, Icon icon) {
-    super("Go to " + FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getPresentableName(new File(filePath), 50), null, icon);
+    super(DevKitBundle.message("testdata.goto.test.data.action.text", FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getPresentableName(new File(filePath), 50)), null, icon);
     myFilePath = filePath;
     myProject = project;
   }

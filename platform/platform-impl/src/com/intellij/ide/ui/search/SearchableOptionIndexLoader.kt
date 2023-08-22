@@ -1,19 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ResourceUtil
-import com.intellij.util.text.ByteArrayCharSequence
-import com.intellij.util.text.CharSequenceHashingStrategy
-import gnu.trove.THashMap
-import gnu.trove.THashSet
-import java.net.URL
+import com.intellij.util.containers.CollectionFactory
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache: MutableSet<String> = HashSet()
-  val storage = THashMap<CharSequence, LongArray>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE)
-  val identifierTable = IndexedCharsInterner()
+  val storage: MutableMap<CharSequence, LongArray> = CollectionFactory.createCharSequenceMap(20, 0.9f, true)
+  val identifierTable: IndexedCharsInterner = IndexedCharsInterner()
 
   override fun addOptions(text: String,
                           path: String?,
@@ -33,9 +29,9 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
     }
   }
 
-  fun computeHighlightOptionToSynonym(searchableOptions: MutableSet<URL>): Map<Pair<String, String>, MutableSet<String>> {
-    for (url in searchableOptions) {
-      val root = JDOMUtil.load(url)
+  fun computeHighlightOptionToSynonym(): Map<Pair<String, String>, MutableSet<String>> {
+    val fileNameFilter = { it: String -> it.endsWith(SearchableOptionsRegistrar.getSearchableOptionsXmlName())}
+    SearchableOptionsRegistrarImpl.processSearchableOptions(fileNameFilter) { _, root ->
       for (configurable in root.getChildren("configurable")) {
         val id = configurable.getAttributeValue("id") ?: continue
         val groupName = configurable.getAttributeValue("configurable_name")
@@ -47,13 +43,12 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
         }
       }
     }
-
     return loadSynonyms()
   }
 
-  private fun loadSynonyms(): MutableMap<Pair<String, String>, MutableSet<String>> {
-    val result = THashMap<Pair<String, String>, MutableSet<String>>()
-    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java, "/search/", "synonyms.xml"))
+  private fun loadSynonyms(): Map<Pair<String, String>, MutableSet<String>> {
+    val result = HashMap<Pair<String, String>, MutableSet<String>>()
+    val root = JDOMUtil.load(ResourceUtil.getResourceAsStream(SearchableOptionsRegistrar::class.java.classLoader, "/search/", "synonyms.xml"))
     val cache = HashSet<String>()
     for (configurable in root.getChildren("configurable")) {
       val id = configurable.getAttributeValue("id") ?: continue
@@ -78,7 +73,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
           for (word in cache) {
             putOptionWithHelpId(word, id, groupName, synonym, null)
           }
-          result.getOrPut(Pair(option, id)) { THashSet() }.add(synonym)
+          result.computeIfAbsent(Pair(option, id)) { HashSet() }.add(synonym)
         }
       }
     }
@@ -103,6 +98,6 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
     else if (configs.indexOf(packed) == -1) {
       configs = ArrayUtil.append(configs, packed)
     }
-    storage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs)
+    storage.put(option, configs!!)
   }
 }

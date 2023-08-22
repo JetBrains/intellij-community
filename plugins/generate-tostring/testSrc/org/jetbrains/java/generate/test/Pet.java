@@ -20,6 +20,7 @@ import java.util.Date;
 /**
  * To be used for testing.
  */
+@SuppressWarnings("unused")
 public class Pet {
 
     private String name;

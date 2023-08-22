@@ -1,4 +1,4 @@
-// "Replace 'stream().toArray()' with 'toArray()'" "true"
+// "Replace 'stream().toArray()' with 'toArray()'" "true-preview"
 
 import java.util.*;
 

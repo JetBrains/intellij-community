@@ -1,16 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit4;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.idea.Bombed;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
-import java.util.Calendar;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
      ModuleRootModificationUtil.updateModel(myModule,
                                            model -> model.addContentEntry(getTestContentRoot()).addSourceFolder(getTestContentRoot() + "/test1", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.8.1"), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
   }
 
@@ -81,7 +82,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
       dataContext.put(LangDataKeys.PSI_ELEMENT_ARRAY, elements);
       dataContext.put(CommonDataKeys.PROJECT, myProject);
-      ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext);
+      ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
       assertNotNull(fromContext);
 
       RunConfiguration configuration = fromContext.getConfiguration().getConfiguration();
@@ -144,6 +145,84 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertSize(1, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
   }
 
+  public void testNestedClassInAbstractOuterSingleInheritorMethod() throws Exception {
+    JUnitConfiguration configuration = new JUnitConfiguration("name", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.MAIN_CLASS_NAME = "nested.FirstConcreteTest$NestedTests";
+    data.METHOD_NAME = "myTest";
+    data.TEST_OBJECT = JUnitConfiguration.TEST_METHOD;
+    configuration.setModule(getModule());
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertTrue(systemOutput.contains("-junit5"));
+
+    assertEquals("The FirstConcreteTest was run!", StringUtil.join(processOutput.out, ""));
+    assertEmpty(processOutput.err);
+    assertEquals(systemOutput, 1, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
+  }
+  
+  public void testNestedClassInAbstractOuterSingleClass() throws Exception {
+    JUnitConfiguration configuration = new JUnitConfiguration("name", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.MAIN_CLASS_NAME = "nested.FirstConcreteTest$NestedTests";
+    data.TEST_OBJECT = JUnitConfiguration.TEST_CLASS;
+    configuration.setModule(getModule());
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertTrue(systemOutput.contains("-junit5"));
+
+    assertEquals("The FirstConcreteTest was run!Method myTest1 of FirstConcreteTest was run!", StringUtil.join(processOutput.out, ""));
+    assertEmpty(processOutput.err);
+    assertEquals(systemOutput, 2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
+  }
+  
+  public void testNestedClassInAbstractOuterPatternWithInheritorMethod() throws Exception {
+    JUnitConfiguration configuration = new JUnitConfiguration("name", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    LinkedHashSet<@NlsSafe String> pattern = new LinkedHashSet<>();
+    data.setPatterns(pattern);
+    pattern.add("nested.FirstConcreteTest$NestedTests,myTest");
+    pattern.add("nested.SecondConcreteTest$NestedTests,myTest");
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    configuration.setModule(getModule());
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertTrue(systemOutput.contains("-junit5"));
+
+    assertEquals("The FirstConcreteTest was run!The SecondConcreteTest was run!", StringUtil.join(processOutput.out, ""));
+    assertEmpty(processOutput.err);
+    assertEquals(systemOutput, 2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
+  }
+
+  public void testNestedClassInAbstractOuterPatternClasses() throws Exception {
+    JUnitConfiguration configuration = new JUnitConfiguration("name", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    LinkedHashSet<@NlsSafe String> pattern = new LinkedHashSet<>();
+    data.setPatterns(pattern);
+    pattern.add("nested.FirstConcreteTest$NestedTests");
+    pattern.add("nested.SecondConcreteTest$NestedTests");
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    configuration.setModule(getModule());
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertTrue(systemOutput.contains("-junit5"));
+
+    assertEquals("The FirstConcreteTest was run!" +
+                 "Method myTest1 of FirstConcreteTest was run!" +
+                 "The SecondConcreteTest was run!" +
+                 "Method myTest1 of SecondConcreteTest was run!", StringUtil.join(processOutput.out, ""));
+    assertEmpty(processOutput.err);
+    assertEquals(systemOutput, 4, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
+  }
+
 
   public void testRunClass() throws Exception {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("mixed.v5.MyTest5", GlobalSearchScope.projectScope(myProject));
@@ -180,7 +259,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertEmpty(processOutput.out);
     //ensure warning is ignored if started on java 11
-    processOutput.err.remove("Warning: Nashorn engine is planned to be removed from a future JDK release\n");
+    processOutput.err.remove("Warning: Nashorn engine is planned to be removed from a future JDK release");
     assertEmpty(processOutput.err);
     List<TestIgnored> ignoredTests = processOutput.messages.stream()
       .filter(TestIgnored.class::isInstance)
@@ -200,8 +279,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
   }
 
-  @Bombed(month = Calendar.AUGUST, day = 31, user = "Timur Yuldashev", description = "IDEA-174534")
-  public void testRunSpecificDisabledTestClass() throws Exception {
+  public void _testRunSpecificDisabledTestClass() throws Exception {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("disabled.DisabledClass", GlobalSearchScope.projectScope(myProject));
     RunConfiguration configuration = createConfiguration(aClass);
     ProcessOutput processOutput = doStartTestsProcess(configuration);
@@ -273,6 +351,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       .collect(Collectors.toList());
     assertSize(1, ignoredTests);
 
+    processOutputMethod.err.remove("Warning: Nashorn engine is planned to be removed from a future JDK release");
     assertNoIgnored(processOutputMethod);
 
     //assuming only suiteTreeNode/start/ignore/finish events

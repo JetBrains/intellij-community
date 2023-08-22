@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion.builder
 
 import groovy.transform.CompileStatic
@@ -22,7 +8,7 @@ import org.jetbrains.plugins.groovy.completion.CompletionResult
 class GrSimpleBuilderStrategyTest extends GrBuilderTransformationCompletionTestBase {
 
   void 'test no prefix'() {
-    doVariantableTest('''
+    doCompletionTest('''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -38,7 +24,7 @@ class Pojo {
 new Pojo().<caret>
 ''', 'setName', 'setDynamic', 'setCounter', 'method')
 
-    doVariantableTest('''
+    doCompletionTest('''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -56,7 +42,7 @@ new Pojo().<caret>
   }
 
   void 'test empty prefix'() {
-    doVariantableTest('''
+    doCompletionTest('''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -74,7 +60,7 @@ new Pojo().<caret>
   }
 
   void 'test custom prefix'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -92,7 +78,7 @@ new Pojo().<caret>
   }
 
   void 'test null prefix'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -110,7 +96,7 @@ new Pojo().<caret>
   }
 
   void 'test spaces prefix'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -128,7 +114,7 @@ new Pojo().<caret>
   }
 
   void 'test next setter'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -146,7 +132,7 @@ new Pojo().setName("Janet").<caret>
   }
 
   void 'test one more setter further'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -164,7 +150,7 @@ new Pojo().setName("Janet").setCounter(35).<caret>
   }
 
   void 'test next setter with prefix'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -182,7 +168,7 @@ new Pojo().lolName("Janet").<caret>
   }
 
   void 'test one more setter further with prefix'() {
-    doVariantableTest '''
+    doCompletionTest '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -200,7 +186,7 @@ new Pojo().lolName("Janet").lolCounter(35).<caret>
   }
 
   void 'test return type with include super'() {
-    doVariantableTest('''
+    doCompletionTest('''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
 
@@ -214,6 +200,6 @@ class Pojo {
 }
 
 new Pojo().setName().<caret>
-''', CompletionResult.notContain,'setDynamic', 'setCounter')
+''', CompletionResult.notContain, 'setDynamic', 'setCounter')
   }
 }

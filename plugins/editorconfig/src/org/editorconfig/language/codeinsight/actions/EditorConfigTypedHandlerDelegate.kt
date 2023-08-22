@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.impl.TypedActionImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
@@ -54,10 +55,6 @@ class EditorConfigTypedHandlerDelegate : TypedHandlerDelegate() {
     return Result.CONTINUE
   }
 
-
-  private fun findEnclosableHeader(element: PsiElement): EditorConfigHeader? {
-    val header = element.getParentOfType<EditorConfigHeader>() ?: return null
-    if (header.patternEnumerationList.isNotEmpty()) return null
-    return header
-  }
+  private fun findEnclosableHeader(element: PsiElement): EditorConfigHeader? =
+    element.getParentOfType<EditorConfigHeader>(false, EditorConfigEnumerationPattern::class.java)
 }

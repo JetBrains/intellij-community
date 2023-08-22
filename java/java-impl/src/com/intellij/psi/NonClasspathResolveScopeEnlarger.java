@@ -12,12 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class NonClasspathResolveScopeEnlarger extends ResolveScopeEnlarger {
   @Override
-  public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, Project project) {
+  public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return null;
     }

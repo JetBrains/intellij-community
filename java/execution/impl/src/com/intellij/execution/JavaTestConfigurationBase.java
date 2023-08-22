@@ -1,16 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.LanguageRuntimeType;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
-import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -19,18 +13,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider,
-             TargetEnvironmentAwareRunProfile {
-  private ShortenCommandLine myShortenCommandLine = null;
+public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
+  implements RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
 
+  private ShortenCommandLine myShortenCommandLine = null;
   private boolean myUseModulePath = true;
-  private static final String USE_CLASS_PATH_ONLY = "useClassPathOnly";
+  private static final @NonNls String USE_CLASS_PATH_ONLY = "useClassPathOnly";
 
   public JavaTestConfigurationBase(String name,
                                    @NotNull JavaRunConfigurationModule configurationModule,
@@ -48,9 +42,11 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
 
   public abstract void beClassConfiguration(PsiClass aClass);
 
+  public void withNestedClass(PsiClass aClass) {}
+
   public abstract boolean isConfiguredByElement(PsiElement element);
 
-  public abstract String getTestType();
+  public abstract @NonNls String getTestType();
 
   public String prepareParameterizedParameter(String paramSetName) {
     return paramSetName;
@@ -77,14 +73,17 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
+    Element mode = element.getChild("shortenClasspath");
+    setShortenCommandLine(mode != null ? ShortenCommandLine.valueOf(mode.getAttributeValue("name")) : null);
     myUseModulePath = element.getChild(USE_CLASS_PATH_ONLY) == null;
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
+    if (myShortenCommandLine != null) {
+      element.addContent(new Element("shortenClasspath").setAttribute("name", myShortenCommandLine.name()));
+    }
     if (!myUseModulePath) {
       element.addContent(new Element(USE_CLASS_PATH_ONLY));
     }
@@ -97,27 +96,4 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   public void setUseModulePath(boolean useModulePath) {
     myUseModulePath = useModulePath;
   }
-
-  @Override
-  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
-    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
-  }
-
-  @Nullable
-  @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
-    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
-  }
-
-  @Nullable
-  @Override
-  public String getDefaultTargetName() {
-    return getOptions().getRemoteTarget();
-  }
-
-  @Override
-  public void setDefaultTargetName(@Nullable String targetName) {
-    getOptions().setRemoteTarget(targetName);
-  }
-
 }

@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -28,15 +15,15 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public class MockPsiManager extends PsiManagerEx {
+public final /* not final for Android Studio tests */ class MockPsiManager extends PsiManagerEx {
   private final Project myProject;
-  private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<>();
+  private final Map<VirtualFile,PsiDirectory> myDirectories = new HashMap<>();
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
 
@@ -110,6 +97,11 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
+  public <T> T runInBatchFilesMode(@NotNull Computable<T> runnable) {
+    return null;
+  }
+
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return null;
   }
@@ -139,6 +131,11 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   @Override
+  public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return null;
+  }
+
+  @Override
   public boolean isBatchFilesProcessingMode() {
     return false;
   }
@@ -156,19 +153,6 @@ public class MockPsiManager extends PsiManagerEx {
   @Override
   public void afterChange(boolean isPhysical) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {
-  }
-
-  @Override
-  public void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable) {
-  }
-
-  @Override
-  public void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable) {
-    throw new UnsupportedOperationException("Method registerRunnableToRunAfterAnyChange is not yet implemented in " + getClass().getName());
   }
 
   @Override

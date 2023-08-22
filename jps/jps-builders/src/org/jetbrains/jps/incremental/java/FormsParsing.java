@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.Utils;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,28 +16,32 @@ import java.util.Properties;
 /**
  * @author Eugene Zhuravlev
  */
-public class FormsParsing {
+public final class FormsParsing {
   private static final Logger LOG = Logger.getInstance(FormsParsing.class);
   private static final String FORM_TAG = "form";
 
   private FormsParsing() {
   }
 
-  public static String readBoundClassName(File formFile) throws IOException {
+  public static String readBoundClassName(File formFile) throws IOException, AlienFormFileException {
     try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(formFile))) {
       final Ref<String> result = new Ref<>(null);
+      final Ref<Boolean> isAlien = new Ref<>(Boolean.FALSE);
       parse(in, new IXMLBuilderAdapter() {
         @Override
-        public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
-          throws Exception {
+        public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
           if (!FORM_TAG.equalsIgnoreCase(elemName)) {
+            stop();
+          }
+          boolean alien = !Utils.FORM_NAMESPACE.equalsIgnoreCase(nsURI);
+          if (alien) {
+            isAlien.set(Boolean.TRUE);
             stop();
           }
         }
 
         @Override
-        public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type)
-          throws Exception {
+        public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
           if (UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS.equals(key)) {
             result.set(value);
             stop();
@@ -47,6 +53,9 @@ public class FormsParsing {
           stop();
         }
       });
+      if (isAlien.get()) {
+        throw new AlienFormFileException();
+      }
       return result.get();
     }
   }

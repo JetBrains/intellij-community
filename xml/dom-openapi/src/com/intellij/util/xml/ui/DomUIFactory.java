@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -37,25 +24,16 @@ import javax.swing.table.TableCellEditor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public abstract class DomUIFactory {
-
-  public final static ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.dom.uiControlsProvider");
-
+  public static final ExtensionPointName<Consumer<DomUIFactory>> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.dom.uiControlsProvider");
   public static final Method GET_VALUE_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getValue");
   public static final Method SET_VALUE_METHOD = findMethod(GenericDomValue.class, "setValue");
-  public static Method GET_STRING_METHOD = ReflectionUtil.getMethod(GenericDomValue.class, "getStringValue");
-  public static Method SET_STRING_METHOD = findMethod(GenericDomValue.class, "setStringValue");
 
-  @NotNull
-  public static DomUIControl<GenericDomValue> createControl(GenericDomValue element) {
+  public static @NotNull DomUIControl<GenericDomValue> createControl(GenericDomValue element) {
     return createControl(element, false);
   }
 
-  @NotNull
-  public static DomUIControl<GenericDomValue> createControl(GenericDomValue element, boolean commitOnEveryChange) {
+  public static @NotNull DomUIControl<GenericDomValue> createControl(GenericDomValue element, boolean commitOnEveryChange) {
     return createGenericValueControl(DomUtil.getGenericValueParameter(element.getDomElementType()), element, commitOnEveryChange);
   }
 
@@ -68,10 +46,9 @@ public abstract class DomUIFactory {
       new DomCollectionWrapper<>(parent, parent.getGenericInfo().getCollectionChildDescription("description")), commitOnEveryChange);
   }
 
-  @NotNull
-  private static BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
+  private static @NotNull BaseControl createGenericValueControl(final Type type, final GenericDomValue<?> element, boolean commitOnEveryChange) {
     final DomStringWrapper stringWrapper = new DomStringWrapper(element);
-    final Class rawType = ReflectionUtil.getRawType(type);
+    final Class rawType = ClassUtil.getRawType(type);
     if (type instanceof Class && Enum.class.isAssignableFrom(rawType)) {
       return new ComboControl(stringWrapper, rawType);
     }
@@ -98,8 +75,7 @@ public abstract class DomUIFactory {
     return getDomUIFactory().createTextControl(stringWrapper, commitOnEveryChange);
   }
 
-  @Nullable
-  public static Method findMethod(Class clazz, @NonNls String methodName) {
+  public static @Nullable Method findMethod(Class clazz, @NonNls String methodName) {
     for (Method method : ReflectionUtil.getClassPublicMethods(clazz)) {
       if (methodName.equals(method.getName())) {
         return method;
@@ -110,6 +86,7 @@ public abstract class DomUIFactory {
 
   protected abstract TableCellEditor createCellEditor(DomElement element, Class type);
 
+  @NotNull
   public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();
 
   public abstract void setupErrorOutdatingUserActivityWatcher(CommittablePanel panel, DomElement... elements);
@@ -120,19 +97,14 @@ public abstract class DomUIFactory {
 
   public abstract void registerCustomCellEditor(@NotNull Class aClass, Function<DomElement, TableCellEditor> creator);
 
-  @Nullable
-  public abstract BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);
+  public abstract @Nullable BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange);
 
   public static BaseControl createTextControl(GenericDomValue value, final boolean commitOnEveryChange) {
     return getDomUIFactory().createTextControl(new DomStringWrapper(value), commitOnEveryChange);
   }
 
-  public static BaseControl createTextControl(DomWrapper<String> wrapper) {
-    return getDomUIFactory().createTextControl(wrapper, false);
-  }
-
   public static DomUIFactory getDomUIFactory() {
-    return ServiceManager.getService(DomUIFactory.class);
+    return ApplicationManager.getApplication().getService(DomUIFactory.class);
   }
 
   public DomUIControl createCollectionControl(DomElement element, DomCollectionChildDescription description) {
@@ -155,15 +127,6 @@ public abstract class DomUIFactory {
 
     return new StringColumnInfo(presentableName);
   }
-
-  /**
-   * Adds an error-checking square that is usually found in the top-right ange of a text editor
-   * to the specified CaptionComponent.
-   * @param captionComponent The component to add error panel to
-   * @param elements DOM elements that will be error-checked
-   * @return captionComponent
-   */
-  public abstract CaptionComponent addErrorPanel(CaptionComponent captionComponent, DomElement... elements);
 
   public abstract BackgroundEditorHighlighter createDomHighlighter(Project project, PerspectiveFileEditor editor, DomElement element);
 

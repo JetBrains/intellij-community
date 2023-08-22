@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.core.CoreBundle;
@@ -18,7 +18,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -28,13 +32,14 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.IconWithToolTip;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -55,8 +60,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public VirtualFile getVirtualFile() {
+  public @NotNull VirtualFile getVirtualFile() {
     return myFile;
   }
 
@@ -71,26 +75,22 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return Language.ANY;
   }
 
   @Override
-  @NotNull
-  public PsiManager getManager() {
+  public @NotNull PsiManager getManager() {
     return myManager;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myFile.getName();
   }
 
   @Override
-  @NotNull
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
 
     try {
@@ -175,7 +175,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  public boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
     checkValid();
 
     for (VirtualFile vFile : myFile.getChildren()) {
@@ -201,7 +201,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     checkValid();
 
     VirtualFile[] files = myFile.getChildren();
-    final ArrayList<PsiElement> children = new ArrayList<>(files.length);
+    ArrayList<PsiElement> children = new ArrayList<>(files.length);
     processChildren(element -> {
       children.add(element);
       return true;
@@ -287,8 +287,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException {
     checkCreateSubdirectory(name);
 
     try {
@@ -312,8 +311,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
-  @NotNull
-  public PsiFile createFile(@NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiFile createFile(@NotNull String name) throws IncorrectOperationException {
     checkCreateFile(name);
 
     try {
@@ -323,23 +321,22 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       return psiFile;
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.toString());
+      throw new IncorrectOperationException(e);
     }
   }
 
   @Override
-  @NotNull
-  public PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException {
+  public @NotNull PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException {
     checkCreateFile(newName);
 
-    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
     if (document != null) {
       FileDocumentManager.getInstance().saveDocument(document);
     }
 
-    final VirtualFile parent = getVirtualFile();
+    VirtualFile parent = getVirtualFile();
     try {
-      final VirtualFile vFile = originalFile.getVirtualFile();
+      VirtualFile vFile = originalFile.getVirtualFile();
       if (vFile == null) throw new IncorrectOperationException("Cannot copy non-physical file: " + originalFile);
 
       VirtualFile copyVFile;
@@ -348,14 +345,14 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       }
       else if (vFile instanceof LightVirtualFile) {
         copyVFile = parent.createChildData(this, newName);
-        copyVFile.setBinaryContent(originalFile.getText().getBytes(copyVFile.getCharset()));
+        copyVFile.setBinaryContent(vFile.contentsToByteArray());
       }
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
       if (UPDATE_ADDED_FILE_KEY.get(this, true)) {
         DumbService.getInstance(getProject()).completeJustSubmittedTasks();
-        final PsiFile copyPsi = findCopy(copyVFile, vFile);
+        PsiFile copyPsi = findCopy(copyVFile, vFile);
         UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(copyPsi));
         return copyPsi;
       }
@@ -366,9 +363,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
-  @NotNull
-  private PsiFile findCopy(VirtualFile copyVFile, VirtualFile vFile) {
-    final PsiFile copyPsi = myManager.findFile(copyVFile);
+  private @NotNull PsiFile findCopy(VirtualFile copyVFile, VirtualFile vFile) {
+    PsiFile copyPsi = myManager.findFile(copyVFile);
     if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
     return copyPsi;
   }
@@ -401,16 +397,18 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
       try {
         VirtualFile newVFile;
-        final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myManager.getProject());
         if (originalFile instanceof PsiFileImpl) {
           newVFile = myFile.createChildData(myManager, originalFile.getName());
           String text = originalFile.getText();
-          final PsiFile psiFile = getManager().findFile(newVFile);
-          final Document document = psiFile == null ? null : psiDocumentManager.getDocument(psiFile);
-          final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+          PsiFile psiFile = getManager().findFile(newVFile);
+          Document document = psiFile == null ? null : psiFile.getViewProvider().getDocument();
+          FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
           if (document != null) {
             document.setText(text);
-            fileDocumentManager.saveDocument(document);
+            if (psiFile.isPhysical()) {
+              fileDocumentManager.saveDocument(document);
+            }
+            PsiDocumentManager.getInstance(getProject()).commitDocument(document);
           }
           else {
             String lineSeparator = fileDocumentManager.getLineSeparator(newVFile, getProject());
@@ -431,7 +429,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
             newVFile = VfsUtilCore.copyFile(null, originalFile.getVirtualFile(), myFile);
           }
         }
-        psiDocumentManager.commitAllDocuments();
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile == null) throw new IncorrectOperationException("Could not find file " + newVFile);
@@ -451,7 +448,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkWritable(this);
     if (element instanceof PsiDirectory || element instanceof PsiFile) {
       String name = ((PsiFileSystemItem)element).getName();
-      boolean caseSensitive = getVirtualFile().getFileSystem().isCaseSensitive();
+      boolean caseSensitive = getVirtualFile().isCaseSensitive();
       VirtualFile existing = ContainerUtil.find(getVirtualFile().getChildren(),
                                                 item -> Comparing.strEqual(item.getName(), name, caseSensitive));
       if (existing != null) {
@@ -522,17 +519,22 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   @Override
+  public @Nullable NavigationRequest navigationRequest() {
+    return NavigationRequest.directoryNavigationRequest(this);
+  }
+
+  @Override
   public void navigate(boolean requestFocus) {
     PsiNavigationSupport.getInstance().navigateToDirectory(this, requestFocus);
   }
 
   @Override
-  protected Icon getElementIcon(final int flags) {
-    return IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
+  protected Icon getElementIcon(int flags) {
+    return IconManager.getInstance().tooltipOnlyIfComposite(IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder));
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     info.put("fileName", getName());
   }
 

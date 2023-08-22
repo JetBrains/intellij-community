@@ -15,11 +15,11 @@ Boolean getSchedule2() {
 }
 
 boolean getSchedule3(boolean cronExpression) {
-  return <warning descr="'cronExpression ? true : false' can be simplified to 'cronExpression'">cronExpression ? true : false</warning>
+  return <warning descr="Trivial conditional expression">cronExpression ? true : false</warning>
 }
 
 boolean getSchedule4(Boolean cronExpression) {
-  return <warning descr="'cronExpression ? true : false' can be simplified to 'cronExpression'">cronExpression ? true : false</warning>
+  return <warning descr="Trivial conditional expression">cronExpression ? true : false</warning>
 }
 
 

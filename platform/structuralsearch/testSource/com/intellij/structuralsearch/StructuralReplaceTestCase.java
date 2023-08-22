@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 
@@ -18,9 +19,6 @@ public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    setLanguageLevel(LanguageLevel.JDK_1_4);
-
     options = new ReplaceOptions();
   }
 
@@ -46,8 +44,9 @@ public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
       matchOptions.setScope(new LocalSearchScope(getFile()));
     }
     matchOptions.fillSearchCriteria(what);
-    final String message = StructuralSearchTestCase.checkApplicableConstraints(matchOptions, getProject());
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, true, false);
+    final String message = StructuralSearchTestCase.checkApplicableConstraints(matchOptions, compiledPattern);
     assertNull(message, message);
-    return Replacer.testReplace(in, what, by, this.options, getProject(), sourceIsFile);
+    return Replacer.testReplace(in, what, by, options, getProject(), sourceIsFile);
   }
 }

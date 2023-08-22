@@ -15,59 +15,47 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.naming;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.RefactoringQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringFactory;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 
 public class RenameFix extends GroovyFix implements RefactoringQuickFix {
 
-  private final String targetName;
-
   public RenameFix() {
     super();
-    targetName = null;
-  }
-
-  public RenameFix(@NonNls String targetName) {
-    super();
-    this.targetName = targetName;
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    if (targetName == null) {
-      return "Rename";
-    } else {
-      return "Rename to " + targetName;
-    }
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    final PsiElement element = previewDescriptor.getPsiElement();
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (psiClass == null) return IntentionPreviewInfo.EMPTY;
+    String textBefore = psiClass.getText();
+    psiClass.setName("NewCustomName");
+    String textAfter = psiClass.getText();
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, textBefore, textAfter);
   }
 
-  @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Rename";
+    return GroovyBundle.message("intention.family.name.rename");
   }
 
   @Override
   public void doFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (targetName == null) {
-      doFix(element);
-    }
-    else {
-      final PsiElement elementToRename = element.getParent();
-      RefactoringFactory.getInstance(project).createRename(elementToRename, targetName).run();
-    }
+    doFix(element);
   }
 
   @NotNull

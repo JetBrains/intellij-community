@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cyclicDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -38,8 +38,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
-  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
+public final class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
+  private static final Set<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
 
   private final HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
   private final MyTree myLeftTree = new MyTree();
@@ -128,11 +128,8 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     result.add(node);
     for (int i = 0; i < node.getChildCount(); i++){
       final TreeNode child = node.getChildAt(i);
-      if (child instanceof PackageNode){
-        final PackageNode packNode = (PackageNode)child;
-        if (!result.contains(packNode)){
-          getPackageNodesHierarchy(packNode, result);
-        }
+      if (child instanceof PackageNode packNode && !result.contains(packNode)) {
+        getPackageNodesHierarchy(packNode, result);
       }
     }
   }
@@ -207,11 +204,9 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     EditSourceOnDoubleClickHandler.install(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(), ActionManager.getInstance());
-
-
+    PopupHandler.installPopupMenu(tree, createTreePopupActions(), "CyclicDependenciesPopup");
   }
 
   private void updateLeftTreeModel() {
@@ -347,7 +342,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   @Nullable
   @NonNls
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "dependency.viewer.tool.window";
     }
     return null;
@@ -375,8 +370,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
         node = (PackageDependenciesNode)value;
         if (myLeftTree && !mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES) {
           final PsiElement element = node.getPsiElement();
-          if (element instanceof PsiPackage) {
-            final PsiPackage aPackage = (PsiPackage)element;
+          if (element instanceof PsiPackage aPackage) {
             final Set<List<PsiPackage>> packageDependencies = myDependencies.get(aPackage);
             if (packageDependencies != null && !packageDependencies.isEmpty()) {
                 attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
@@ -412,6 +406,11 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_FILES;
     }
@@ -425,10 +424,15 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   private final class HideOutOfCyclePackagesAction extends ToggleAction {
-    @NonNls static final String SHOW_PACKAGES_FROM_CYCLES_ONLY = "Hide packages without cyclic dependencies";
 
     HideOutOfCyclePackagesAction() {
-      super(SHOW_PACKAGES_FROM_CYCLES_ONLY, SHOW_PACKAGES_FROM_CYCLES_ONLY, AllIcons.General.Filter);
+      super(JavaBundle.message("hide.out.of.cyclic.packages.action.text"),
+            JavaBundle.message("hide.out.of.cyclic.packages.action.description"), AllIcons.General.Filter);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -451,6 +455,11 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_GROUP_BY_SCOPE_TYPE;
     }
@@ -467,6 +476,11 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     RerunAction(JComponent comp) {
       super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

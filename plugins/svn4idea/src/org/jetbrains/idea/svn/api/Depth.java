@@ -1,12 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.XmlEnumValue;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public enum Depth {
 
@@ -20,20 +24,30 @@ public enum Depth {
   @NotNull private static final Map<String, Depth> ourAllDepths = new HashMap<>();
 
   static {
-    for (Depth action : Depth.values()) {
+    for (Depth action : values()) {
       register(action);
     }
   }
 
-  @NotNull private final String myName;
+  private final @NonNls @NotNull String myName;
 
-  Depth(@NotNull String name) {
+  Depth(@NonNls @NotNull String name) {
     myName = name;
   }
 
-  @NotNull
-  public String getName() {
+  public @NonNls @NotNull String getName() {
     return myName;
+  }
+
+  public @Nls @NotNull String getDisplayName() {
+    return message(switch (this) {
+      case INFINITY -> "label.depth.infinity";
+      case IMMEDIATES -> "label.depth.immediates";
+      case FILES -> "label.depth.files";
+      case EMPTY -> "label.depth.empty";
+      case EXCLUDE -> "label.depth.exclude";
+      default -> "label.depth.unknown";
+    });
   }
 
   @Override
@@ -46,7 +60,7 @@ public enum Depth {
   }
 
   @NotNull
-  public static Depth from(@NotNull String depthName) {
+  public static Depth from(@NonNls @NotNull String depthName) {
     Depth result = ourAllDepths.get(depthName);
 
     if (result == null) {

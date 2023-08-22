@@ -55,7 +55,7 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
     }
 
     final String tooltip = myData.toString() + (myData.getDescription() != null ? "<br>" + myData.getDescription() : "");
-    setNameAndTooltip(getName(), tooltip, hint);
+    setNameAndTooltip(presentation, getName(), tooltip, hint);
   }
 
   @NotNull
@@ -70,7 +70,7 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
       myChildNodes.addAll(childModules);
     }
     //noinspection unchecked
-    myChildNodes.addAll((Collection<? extends ExternalSystemNode<?>>)super.doBuildChildren());
+    myChildNodes.addAll(super.doBuildChildren());
     myChildNodes.add(myRunConfigurationsNode);
     return myChildNodes;
   }

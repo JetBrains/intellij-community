@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,12 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PySuperClassAttributesCompletionContributor extends CompletionContributor {
+public class PySuperClassAttributesCompletionContributor extends CompletionContributor implements DumbAware {
   public PySuperClassAttributesCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement()
              .withParents(PyReferenceExpression.class, PyExpressionStatement.class, PyStatementList.class, PyClass.class),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,

@@ -41,7 +41,7 @@ public class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements Lo
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final XmlTag tag = getElement();
     if (tag == null || !tag.isValid()) return Collections.emptyList();
-    return ContainerUtil.map2List(tag.getSubTags(), HtmlTagTreeElement::new);
+    return ContainerUtil.map(tag.getSubTags(), HtmlTagTreeElement::new);
   }
 
   @Override
@@ -113,8 +113,7 @@ public class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements Lo
     return buf;
   }
 
-  @Nullable
-  private static String shortenTextIfLong(@NotNull StringBuilder text) {
+  private static @NotNull String shortenTextIfLong(@NotNull StringBuilder text) {
     if (text.length() <= MAX_TEXT_LENGTH) {
       return text.toString();
     }

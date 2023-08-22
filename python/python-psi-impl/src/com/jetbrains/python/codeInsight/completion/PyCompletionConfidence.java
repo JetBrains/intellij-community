@@ -31,9 +31,7 @@ import java.util.Objects;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyCompletionConfidence extends CompletionConfidence {
 
   @NotNull

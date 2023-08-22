@@ -1,0 +1,14 @@
+fun foo(s: String): String {
+    when (s) {
+        "a" -> {
+            return "a"
+        }
+        "b" -> {
+            return "b"
+        }
+        "c" -> {
+            return "c"
+        }
+        else -> return "d"
+    }
+}

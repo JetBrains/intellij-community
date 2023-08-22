@@ -1,4 +1,4 @@
-// "Unroll loop" "true"
+// "Unroll loop" "true-preview"
 class Test {
   void test() {
       if (!(Math.random() > 0.5)) {
@@ -12,7 +12,7 @@ class Test {
                   }
               }
           }
-      }
+      }//Comment
   }
 
   void foo(boolean b) {}

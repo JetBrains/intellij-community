@@ -1,30 +1,34 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 
 class GHPROpenPullRequestTimelineAction
-  : DumbAwareAction(GithubBundle.messagePointer("pull.request.view.conversations.action"),
+  : DumbAwareAction(CollaborationToolsBundle.messagePointer("review.details.view.timeline.action"),
                     GithubBundle.messagePointer("pull.request.view.conversations.action.description"),
                     null) {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
-    val dataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    val actionDataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    e.presentation.isEnabled = e.project != null && dataContext != null && actionDataContext != null
+    val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
+    val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+
+    e.presentation.isEnabled = vm != null && (selection != null || dataProvider != null)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val dataContext = e.getRequiredData(GHPRActionKeys.DATA_CONTEXT)
-    val actionDataContext = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
+    val vm = e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
+    val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    val file = GHPRVirtualFile(dataContext, actionDataContext.pullRequestDetails)
-    FileEditorManager.getInstance(project).openFile(file, true)
+    val pullRequest = selection?.prId ?: dataProvider!!.id
+
+    vm.openPullRequestTimeline(pullRequest, true)
   }
 }

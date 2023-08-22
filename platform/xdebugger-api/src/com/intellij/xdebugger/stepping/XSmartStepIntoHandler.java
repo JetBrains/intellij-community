@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.stepping;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -44,7 +45,7 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
   }
 
   /**
-   * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSuspendContext)}
+   * Resume execution and call {@link XDebugSession#positionReached(XSuspendContext)}
    * when {@code variant} function/method is reached
    * @param variant selected variant
    */
@@ -67,5 +68,5 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
    * @return title for popup which will be shown to select method/function
    * @param position current position
    */
-  public abstract String getPopupTitle(@NotNull XSourcePosition position);
+  public abstract @NlsContexts.PopupTitle String getPopupTitle(@NotNull XSourcePosition position);
 }

@@ -1,27 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
+import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import java.io.File;
+import java.nio.charset.Charset;
 
 import static com.intellij.openapi.vcs.FileStatus.IGNORED;
 import static com.intellij.openapi.vcs.FileStatus.UNKNOWN;
@@ -30,7 +34,7 @@ import static com.intellij.vcsUtil.VcsUtil.isFileUnderVcs;
 /**
  * <p>{@link VcsUtil} extension that needs access to the {@code intellij.platform.vcs.impl} module.</p>
  */
-public class VcsImplUtil {
+public final class VcsImplUtil {
 
   private static final Logger LOG = Logger.getInstance(VcsImplUtil.class);
 
@@ -42,24 +46,15 @@ public class VcsImplUtil {
    * @param message information message
    * @param title   Dialog title
    */
-  public static void showErrorMessage(final Project project, final String message, final String title) {
+  public static void showErrorMessage(final Project project, @DialogMessage String message, @DialogTitle String title) {
     Runnable task = () -> Messages.showErrorDialog(project, message, title);
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(task, null, project);
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
-    VirtualFile projectDir = project.getBaseDir();
-
-    String repositoryPath = root.getPresentableUrl();
-    if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
-      if (relativePath != null) {
-        repositoryPath = relativePath;
-      }
-    }
-
-    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+    return VcsUtil.getShortVcsRootName(project, root);
   }
 
   @Nullable
@@ -69,10 +64,13 @@ public class VcsImplUtil {
 
   @Nullable
   public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project, @NotNull VcsKey vcsKey) {
-    IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
-      .filter((provider) -> provider.getSupportedVcs().equals(vcsKey))
-      .findFirst()
-      .orElse(null);
+    IgnoredFileContentProvider ignoreContentProvider = null;
+    for (IgnoredFileContentProvider provider : IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.getExtensionList(project)) {
+      if (provider.getSupportedVcs().equals(vcsKey)) {
+        ignoreContentProvider = provider;
+        break;
+      }
+    }
 
     if (ignoreContentProvider == null) {
       LOG.debug("Cannot get ignore content provider for vcs " + vcsKey.getName());
@@ -96,7 +94,7 @@ public class VcsImplUtil {
   private static void generateIgnoreFile(@NotNull Project project,
                                          @NotNull AbstractVcs vcs,
                                          @NotNull VirtualFile ignoreFileRoot, boolean notify) {
-    IgnoredFileGenerator ignoredFileGenerator = ServiceManager.getService(project, IgnoredFileGenerator.class);
+    IgnoredFileGenerator ignoredFileGenerator = project.getService(IgnoredFileGenerator.class);
     if (ignoredFileGenerator == null) {
       LOG.debug("Cannot find ignore file ignoredFileGenerator for " + vcs.getName() + " VCS");
       return;
@@ -104,7 +102,7 @@ public class VcsImplUtil {
     ignoredFileGenerator.generateFile(ignoreFileRoot, vcs, notify);
   }
 
-  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {
+  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull String filePath) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file == null) return false;
     FileStatus fileStatus = changeListManager.getStatus(file);
@@ -116,9 +114,15 @@ public class VcsImplUtil {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return false;
       @SystemIndependent String projectFilePath = project.getProjectFilePath();
-      ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+      ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
       return !changeListManager.isInUpdate()
              && (projectFilePath != null && isFileSharedInVcs(project, changeListManager, projectFilePath));
     });
+  }
+
+  @NotNull
+  public static String loadTextFromBytes(@Nullable Project project, byte @NotNull [] bytes, @NotNull FilePath filePath) {
+    Charset charset = DiffContentFactoryImpl.guessCharset(project, bytes, filePath);
+    return CharsetToolkit.decodeString(bytes, charset);
   }
 }

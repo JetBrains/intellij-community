@@ -12,20 +12,29 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
+/**
+ * Test methods have format: <testname>_<suffix>.
+ * Suffix is used to distinguish tests with the same `before` and `after` states but with different insertion (with and without indent).
+ */
 public abstract class YAMLPasteTest extends BasePlatformTestCase {
-  private static final String ZERO_INDENT_SAMPLE = "key1:\n" +
-                                                   "  subKey: val1\n" +
-                                                   "\n" +
-                                                   "key2: val2";
+  private static final String ZERO_INDENT_SAMPLE = """
+    key1:
+      subKey: val1
 
-  private static final String INDENTED_SAMPLE = "  key1:\n" +
-                                                "    subKey: val1\n" +
-                                                "\n" +
-                                                "  key2: val2";
+    key2: val2""";
 
-  private static final String EMPTY_LINES_SAMPLE = "\n" +
-                                                   "\n" +
-                                                   "\n";
+  private static final String INDENTED_SAMPLE = """
+      key1:
+        subKey: val1
+
+      key2: val2\
+    """;
+
+  private static final String EMPTY_LINES_SAMPLE = """
+
+
+
+    """;
 
   private final int myReformatOnPaste;
 
@@ -99,6 +108,38 @@ public abstract class YAMLPasteTest extends BasePlatformTestCase {
 
   public void testPasteWithReplace_indented() {
     doInsertTest(INDENTED_SAMPLE);
+  }
+
+  public void testPasteAsPlainAfterValue() {
+    doTest("\n" + ZERO_INDENT_SAMPLE);
+  }
+
+  public void testPasteAsPlainInsideValue() {
+    doTest("\n" + ZERO_INDENT_SAMPLE);
+  }
+
+  public void testPasteValueBeforeKey_zeroIndent() {
+    doTest(ZERO_INDENT_SAMPLE + "\n");
+  }
+
+  public void testPasteValueBeforeKey_indented() {
+    doTest(INDENTED_SAMPLE + "\n");
+  }
+
+  public void testPasteValueInsideIndent_zeroIndent() {
+    doTest(ZERO_INDENT_SAMPLE + "\n");
+  }
+
+  public void testPasteValueInsideIndent_indented() {
+    doTest(INDENTED_SAMPLE + "\n");
+  }
+
+  public void testPasteValueBeforeComment_zeroIndent() {
+    doTest(ZERO_INDENT_SAMPLE);
+  }
+
+  public void testPasteValueBeforeComment_indented() {
+    doTest(INDENTED_SAMPLE);
   }
 
   private void doTest(@NotNull String insert) {

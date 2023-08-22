@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
@@ -23,7 +23,7 @@ import java.util.EventObject;
 /**
  * @author Vladislav.Soroka
  */
-public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEditor, MouseMotionListener {
+public final class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEditor, MouseMotionListener {
 
   public static void install(Tree tree) {
     NewErrorTreeEditor treeEditor = new NewErrorTreeEditor(tree);
@@ -61,8 +61,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
   @Override
   public Component getTreeCellEditorComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row) {
     final ErrorTreeElement element = getElement(value);
-    if (element instanceof EditableMessageElement) {
-      EditableMessageElement editableMessageElement = (EditableMessageElement)element;
+    if (element instanceof EditableMessageElement editableMessageElement) {
       final CustomizeColoredTreeCellRenderer leftSelfRenderer = editableMessageElement.getLeftSelfRenderer();
       final TreeCellEditor rightSelfEditor = editableMessageElement.getRightSelfEditor();
       myColoredTreeCellRenderer.setCurrentCallback(leftSelfRenderer);
@@ -99,8 +98,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
     }
   }
 
-  @Nullable
-  private static ErrorTreeElement getElement(@Nullable Object value) {
+  private static @Nullable ErrorTreeElement getElement(@Nullable Object value) {
     if (!(value instanceof DefaultMutableTreeNode)) return null;
     final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
     if (!(userObject instanceof ErrorTreeNodeDescriptor)) return null;

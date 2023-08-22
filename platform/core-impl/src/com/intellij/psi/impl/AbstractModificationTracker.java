@@ -17,13 +17,16 @@ package com.intellij.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
- * @deprecated see {@link com.intellij.psi.util.PsiModificationTracker#getOutOfCodeBlockModificationTracker()}
+ * @deprecated it's better to avoid processing PSI changes at all, see {@link com.intellij.psi.PsiTreeChangeEvent} for more details; if you
+ * really need this, implement {@link PsiTreeChangePreprocessor} directly.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public abstract class AbstractModificationTracker implements PsiTreeChangePreprocessor {
   private final PsiManagerImpl myPsiManager;
   private PsiModificationTrackerImpl myModificationTracker;
@@ -44,7 +47,7 @@ public abstract class AbstractModificationTracker implements PsiTreeChangePrepro
   }
 
   @Override
-  public void treeChanged(@NotNull final PsiTreeChangeEventImpl event) {
+  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     boolean changedInsideCodeBlock = false;
 
     switch (event.getCode()) {
@@ -87,7 +90,7 @@ public abstract class AbstractModificationTracker implements PsiTreeChangePrepro
     }
   }
 
-  protected void processOutOfCodeBlockModification(final PsiTreeChangeEventImpl event) {
+  protected void processOutOfCodeBlockModification(PsiTreeChangeEventImpl event) {
     myModificationTracker.incOutOfCodeBlockModificationCounter();
   }
 }

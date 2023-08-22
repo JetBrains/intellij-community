@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 /**
  * @author Max Medvedev
  */
-public class ApplicationStatementUtil {
+public final class ApplicationStatementUtil {
 
   public static GrExpression convertToMethodCallExpression(GrExpression expr) {
     final Project project = expr.getProject();

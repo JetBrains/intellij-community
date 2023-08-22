@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -155,10 +155,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     // TODO: Additionally SvnRepositoryLocation could possibly be refactored to always contain FilePath (or similar local item)
     // TODO: So here we could get repository url without performing remote svn command
 
-    Url rootUrl = SvnUtil.getRepositoryRoot(myVcs, svnLocation.toSvnUrl());
+    Url url = svnLocation.toSvnUrl();
+    Url rootUrl = SvnUtil.getRepositoryRoot(myVcs, url);
 
     if (rootUrl == null) {
-      throw new SvnBindException("Could not resolve repository root url for " + svnLocation);
+      throw new SvnBindException(message("error.can.not.find.repository.root.for.url", url.toDecodedString()));
     }
 
     return rootUrl;

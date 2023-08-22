@@ -1,20 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.stubs.ShareableStubTreeSerializer;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.THashMap;
+import com.intellij.util.gist.GistManager;
+import com.intellij.util.gist.VirtualFileGist;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
+import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
@@ -41,7 +46,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * @author Max Medvedev
  */
-public class GrTraitUtil {
+public final class GrTraitUtil {
   private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);
   private static final PsiTypeMapper ID_MAPPER = new PsiTypeMapper() {
     @Override
@@ -74,7 +79,7 @@ public class GrTraitUtil {
         }
         return true;
       });
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -99,15 +104,13 @@ public class GrTraitUtil {
     return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ||
            aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0) ||
            getDefaultMethods(aClass).length != 0;
-
   }
 
   public static GrMethod[] getDefaultMethods(@Nullable PsiClass aClass) {
-    if ( !(aClass instanceof GrTypeDefinition) || !aClass.isInterface()) return GrMethod.EMPTY_ARRAY;
-    GrTypeDefinition grTypeDefinition = (GrTypeDefinition) aClass;
+    if (!(aClass instanceof GrTypeDefinition grTypeDefinition) || !aClass.isInterface()) return GrMethod.EMPTY_ARRAY;
     return Arrays.stream(grTypeDefinition.getCodeMethods())
-                 .filter(m -> m.getModifierList().hasExplicitModifier(PsiModifier.DEFAULT))
-                 .toArray(GrMethod[]::new);
+      .filter(m -> m.getModifierList().hasExplicitModifier(PsiModifier.DEFAULT))
+      .toArray(GrMethod[]::new);
   }
 
   @NotNull
@@ -169,7 +172,7 @@ public class GrTraitUtil {
     final PsiTypeParameter[] traitTypeParameters = trait.getTypeParameters();
     if (traitTypeParameters.length == 0) return ID_MAPPER;
 
-    final Map<String, PsiTypeParameter> substitutionMap = new THashMap<>();
+    final Map<String, PsiTypeParameter> substitutionMap = new HashMap<>();
     for (PsiTypeParameter parameter : traitTypeParameters) {
       substitutionMap.put(parameter.getName(), parameter);
     }
@@ -217,10 +220,10 @@ public class GrTraitUtil {
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
     if (helperFile == null) return;
 
-    Map<Integer, Collection<TraitFieldDescriptor>> data =
-      FileBasedIndex.getInstance().getFileData(GroovyTraitFieldsFileIndex.INDEX_ID, helperFile, trait.getProject());
-    Collection<TraitFieldDescriptor> values = ContainerUtil.getFirstItem(data.values(), Collections.emptyList());
-    values.forEach(descriptor -> result.add(createTraitField(descriptor, trait)));
+    Collection<TraitFieldDescriptor> values = GROOVY_TRAIT_FIELDS_GIST.getFileData(trait.getProject(), helperFile);
+    if (values != null) {
+      values.forEach(descriptor -> result.add(createTraitField(descriptor, trait)));
+    }
   }
 
   private static GrLightField createTraitField(TraitFieldDescriptor descriptor, PsiClass trait) {
@@ -235,4 +238,28 @@ public class GrTraitUtil {
     }
     return field;
   }
+
+  private static final VirtualFileGist<Collection<TraitFieldDescriptor>> GROOVY_TRAIT_FIELDS_GIST =
+    GistManager.getInstance().newVirtualFileGist("GROOVY_TRAIT_FIELDS", 1, new GroovyTraitFieldsFileIndex(), (project, file) -> {
+      try {
+        return GroovyTraitFieldsFileIndex.index(file.contentsToByteArray());
+      }
+      catch (IOException e) {
+        return List.of();
+      }
+    });
+
+  public static final VirtualFileGist<ByteArraySequence> GROOVY_TRAIT_METHODS_GIST =
+    GistManager.getInstance().newVirtualFileGist("GROOVY_TRAIT_METHODS", 1, new GroovyTraitMethodsFileIndex().getValueExternalizer(), (project, file) -> {
+      try {
+        @Nullable PsiJavaFileStub stub = GroovyTraitMethodsFileIndex.index(file, file.contentsToByteArray());
+        if (stub == null) return null;
+        BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
+        new ShareableStubTreeSerializer().serialize(stub, buffer);
+        return buffer.toByteArraySequence();
+      }
+      catch (IOException e) {
+        return ByteArraySequence.EMPTY;
+      }
+    });
 }

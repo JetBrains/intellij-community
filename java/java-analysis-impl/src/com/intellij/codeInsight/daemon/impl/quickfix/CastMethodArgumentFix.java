@@ -1,51 +1,31 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class CastMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
-  private final String myText;
-
+public final class CastMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
   private CastMethodArgumentFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
-    myText = myArgList.getExpressionCount() == 1
-             ? QuickFixBundle.message("cast.single.parameter.text", JavaHighlightUtil.formatType(myToType))
-             : QuickFixBundle.message("cast.parameter.text", myIndex + 1, JavaHighlightUtil.formatType(myToType));
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    return myText;
+  @NotNull String getText(@NotNull PsiExpressionList list) {
+    String role = list.getExpressionCount() == 1
+                  ? QuickFixBundle.message("fix.expression.role.argument")
+                  : QuickFixBundle.message("fix.expression.role.nth.argument", myIndex + 1);
+    return QuickFixBundle.message("add.typecast.cast.text", myToType.getPresentableText(), role);
   }
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {
     @Override
-    public CastMethodArgumentFix createFix(final PsiExpressionList list, final int i, final PsiType toType) {
-      return new CastMethodArgumentFix(list, i, toType, this);
+    public IntentionAction createFix(final PsiExpressionList list, final int i, final PsiType toType) {
+      return new CastMethodArgumentFix(list, i, toType, this).asIntention();
     }
 
     @Override
@@ -65,7 +45,7 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
         if (parameterType == null) return false;
       }
       if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
-        if (PsiType.NULL.equals(exprType)) {
+        if (PsiTypes.nullType().equals(exprType)) {
           return true;
         }
         parameterType = PsiPrimitiveType.getUnboxedType(parameterType);
@@ -78,12 +58,6 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
       return parameterType instanceof PsiEllipsisType &&
              areTypesConvertible(exprType, ((PsiEllipsisType)parameterType).getComponentType(), context);
     }
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CastMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
-                                     myArgumentFixerActionFactory);
   }
 
   public static final ArgumentFixerActionFactory REGISTRAR = new MyFixerActionFactory();

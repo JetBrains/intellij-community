@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.RunDashboardServiceViewContributor;
@@ -7,7 +7,9 @@ import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.execution.services.ServiceViewContributor;
 import com.intellij.execution.services.ServiceViewOptions;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -16,24 +18,31 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 abstract class RunDashboardGroupingRuleToggleAction extends ToggleAction implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     ServiceViewOptions viewOptions = e.getData(ServiceViewActionUtils.OPTIONS_KEY);
+    Presentation presentation = e.getPresentation();
     if (viewOptions != null && !viewOptions.isGroupByServiceGroups()) {
-      e.getPresentation().setEnabledAndVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
     Set<ServiceViewContributor> contributors = e.getData(ServiceViewActionUtils.CONTRIBUTORS_KEY);
     if (contributors != null) {
       for (ServiceViewContributor contributor : contributors) {
         if (contributor instanceof RunDashboardServiceViewContributor) {
-          e.getPresentation().setEnabledAndVisible(true);
+          presentation.setEnabledAndVisible(true);
           return;
         }
       }
     }
-    e.getPresentation().setEnabledAndVisible(false);
+    presentation.setEnabledAndVisible(false);
   }
 
   @Override
@@ -54,6 +63,5 @@ abstract class RunDashboardGroupingRuleToggleAction extends ToggleAction impleme
       ServiceEventListener.ServiceEvent.createResetEvent(RunDashboardServiceViewContributor.class));
   }
 
-  @NotNull
-  protected abstract String getRuleName();
+  protected abstract @NotNull String getRuleName();
 }

@@ -15,17 +15,20 @@
  */
 package org.jetbrains.jps.model.module.impl;
 
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 
-public class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
+public final class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
   public static final JpsElementChildRole<JpsLibraryReference>
     LIBRARY_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("library reference");
 
+  private volatile Ref<JpsLibrary> myCachedLibrary = null;
+  
   public JpsLibraryDependencyImpl(final JpsLibraryReference reference) {
     super();
     myContainer.setChild(LIBRARY_REFERENCE_CHILD_ROLE, reference);
@@ -43,7 +46,12 @@ public class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibrar
 
   @Override
   public JpsLibrary getLibrary() {
-    return getLibraryReference().resolve();
+    Ref<JpsLibrary> libRef = myCachedLibrary;
+    if (libRef == null) {
+      libRef = new Ref<>(getLibraryReference().resolve());
+      myCachedLibrary = libRef;
+    }
+    return libRef.get();
   }
 
   @NotNull

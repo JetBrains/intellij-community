@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
@@ -13,21 +12,26 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class UsageViewManager {
   public static UsageViewManager getInstance (Project project) {
-    return ServiceManager.getService(project, UsageViewManager.class);
+    return project.getService(UsageViewManager.class);
   }
 
-  @NotNull
-  public abstract UsageView createUsageView(UsageTarget @NotNull [] targets, Usage @NotNull [] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
+  public abstract @NotNull UsageView createUsageView(UsageTarget @NotNull [] targets,
+                                                     Usage @NotNull [] usages,
+                                                     @NotNull UsageViewPresentation presentation,
+                                                     @Nullable Factory<? extends UsageSearcher> usageSearcherFactory);
 
-  @NotNull
-  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory);
+  public abstract @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                                Usage @NotNull [] foundUsages,
+                                                @NotNull UsageViewPresentation presentation,
+                                                @Nullable Factory<? extends UsageSearcher> factory);
 
-  @NotNull
-  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation);
+  public abstract @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                                Usage @NotNull [] foundUsages,
+                                                @NotNull UsageViewPresentation presentation);
 
   @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                                @NotNull Factory<UsageSearcher> searcherFactory,
+                                                @NotNull Factory<? extends UsageSearcher> searcherFactory,
                                                 boolean showPanelIfOnlyOneUsage,
                                                 boolean showNotFoundMessage,
                                                 @NotNull UsageViewPresentation presentation,
@@ -39,7 +43,7 @@ public abstract class UsageViewManager {
   }
 
   public abstract void searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                           @NotNull Factory<UsageSearcher> searcherFactory,
+                                           @NotNull Factory<? extends UsageSearcher> searcherFactory,
                                            @NotNull FindUsagesProcessPresentation processPresentation,
                                            @NotNull UsageViewPresentation presentation,
                                            @Nullable UsageViewStateListener listener);

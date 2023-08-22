@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +23,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,26 +34,33 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
 
-public class EditorFragmentComponent extends JPanel {
+public final class EditorFragmentComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance(EditorFragmentComponent.class);
   private static final Key<WeakReference<LightweightHint>> CURRENT_HINT = Key.create("EditorFragmentComponent.currentHint");
   private static final int LINE_BORDER_THICKNESS = 1;
   private static final int EMPTY_BORDER_THICKNESS = 2;
+  private final EditorEx myEditor;
+  private final int myStartLine;
+  private final int myEndLine;
+  private final boolean myShowFolding;
+  private final boolean myShowGutter;
 
-  private EditorFragmentComponent(Component component, EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
+  private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     editor.setPurePaintingMode(true);
     try {
-      doInit(component, editor, startLine, endLine, showFolding, showGutter);
+      doInit(editor, startLine, endLine, showFolding, showGutter);
     }
     finally {
       editor.setPurePaintingMode(false);
     }
+    myEditor = editor;
+    myStartLine = startLine;
+    myEndLine = endLine;
+    myShowFolding = showFolding;
+    myShowGutter = showGutter;
   }
 
-  private void doInit(Component anchorComponent, EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
-    boolean newRendering = editor instanceof EditorImpl;
-    int savedScrollOffset = newRendering ? 0 : editor.getScrollingModel().getHorizontalScrollOffset();
-
+  private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
     if (!showFolding) {
@@ -68,26 +75,22 @@ public class EditorFragmentComponent extends JPanel {
     try {
       Document doc = editor.getDocument();
       int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(Math.max(0, endLine - 1)) : doc.getTextLength();
-      int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
+      int widthAdjustment = EditorUtil.getSpaceWidth(Font.PLAIN, editor);
       textImageWidth = Math.min(
         editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
         getWidthLimit(editor)
       );
 
-      Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
-      Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
-      int y1 = p1.y;
-      int y2 = p2.y;
-      textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
+      int startVisualLine = editor.logicalToVisualPosition(new LogicalPosition(startLine, 0)).line;
+      int endVisualLine = editor.logicalToVisualPosition(new LogicalPosition(Math.max(endLine, startLine + 1), 0)).line;
+      int y1 = editor.visualLineToY(startVisualLine);
+      // as endLine is exclusive (not shown), we should also exclude block inlays associated with it
+      int y2 = editor.visualLineToY(endVisualLine) - EditorUtil.getInlaysHeight(editor, endVisualLine, true);
+      textImageHeight = y2 <= y1 ? editor.getLineHeight() : y2 - y1;
       LOG.assertTrue(textImageHeight > 0,
-                     "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
+                     "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; y1:" + y1 + "; y2:" + y2);
 
-      if (savedScrollOffset > 0) {
-        editor.getScrollingModel().scrollHorizontally(0);
-      }
-
-      textImage = UIUtil.createImage(anchorComponent == null ? editor.getContentComponent() : anchorComponent,
-                                     textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+      textImage = UIUtil.createImage(editor.getContentComponent(), textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
       Graphics textGraphics = textImage.getGraphics();
       EditorUIUtil.setupAntialiasing(textGraphics);
 
@@ -125,10 +128,6 @@ public class EditorFragmentComponent extends JPanel {
       }
     }
 
-    if (savedScrollOffset > 0) {
-      editor.getScrollingModel().scrollHorizontally(savedScrollOffset);
-    }
-
     JComponent component = new JComponent() {
       @Override
       public Dimension getPreferredSize() {
@@ -153,6 +152,31 @@ public class EditorFragmentComponent extends JPanel {
     setBorder(createEditorFragmentBorder(editor));
   }
 
+  @ApiStatus.Internal
+  public EditorEx getEditor() {
+    return myEditor;
+  }
+
+  @ApiStatus.Internal
+  public int getStartLine() {
+    return myStartLine;
+  }
+
+  @ApiStatus.Internal
+  public int getEndLine() {
+    return myEndLine;
+  }
+
+  @ApiStatus.Internal
+  public boolean showFolding() {
+    return myShowFolding;
+  }
+
+  @ApiStatus.Internal
+  public boolean showGutter() {
+    return myShowGutter;
+  }
+
   private static int getWidthLimit(@NotNull Editor editor) {
     Component component = editor.getComponent();
     int screenWidth = ScreenUtil.getScreenRectangle(component).width;
@@ -164,14 +188,12 @@ public class EditorFragmentComponent extends JPanel {
   /**
    * @param y {@code y} coordinate in layered pane coordinate system.
    */
-  @Nullable
-  static LightweightHint showEditorFragmentHintAt(Editor editor,
+  static @Nullable LightweightHint showEditorFragmentHintAt(Editor editor,
                                                   TextRange range,
                                                   int y,
                                                   boolean showUpward,
                                                   boolean showFolding,
                                                   boolean hideByAnyKey,
-                                                  boolean hideByScrolling,
                                                   boolean useCaretRowBackground) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     Document document = editor.getDocument();
@@ -196,7 +218,7 @@ public class EditorFragmentComponent extends JPanel {
       startLine++;
     }
 
-    int endLine = Math.min(document.getLineNumber(range.getEndOffset()) + 1, document.getLineCount() - 1);
+    int endLine = document.getLineNumber(range.getEndOffset()) + 1;
 
     if (startLine >= endLine) return null;
 
@@ -217,8 +239,9 @@ public class EditorFragmentComponent extends JPanel {
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManager.HIDE_BY_ANY_KEY : 0) |
-                                                                      (hideByScrolling ? HintManager.HIDE_BY_SCROLLING : 0) |
-                                                                      HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_MOUSEOVER,
+                                                                      HintManager.HIDE_BY_SCROLLING |
+                                                                      HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                      HintManager.HIDE_BY_MOUSEOVER,
                                                      0, false, new HintHint(editor, p));
     editor.putUserData(CURRENT_HINT, new WeakReference<>(hint));
     return hint;
@@ -236,33 +259,18 @@ public class EditorFragmentComponent extends JPanel {
                                                                        int endLine,
                                                                        boolean showFolding, boolean showGutter,
                                                                        boolean useCaretRowBackground) {
-    return createEditorFragmentComponent(null, editor, startLine, endLine, showFolding, showGutter, useCaretRowBackground);
-  }
-
-  /**
-   * @param component Should be provided if editor is not currently displayable.
-   *                  Makes for correct rendering on multi-monitor configurations.
-   */
-  private static EditorFragmentComponent createEditorFragmentComponent(Component component,
-                                                                       Editor editor,
-                                                                       int startLine,
-                                                                       int endLine,
-                                                                       boolean showFolding, boolean showGutter,
-                                                                       boolean useCaretRowBackground) {
     final EditorEx editorEx = (EditorEx)editor;
     final Color old = editorEx.getBackgroundColor();
     Color backColor = getBackgroundColor(editor, useCaretRowBackground);
     editorEx.setBackgroundColor(backColor);
-    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(component, editorEx, startLine, endLine,
-                                                                            showFolding, showGutter);
+    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine, showFolding, showGutter);
     fragmentComponent.setBackground(backColor);
 
     editorEx.setBackgroundColor(old);
     return fragmentComponent;
   }
 
-  @Nullable
-  public static LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
+  public static @Nullable LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
     if (!(editor instanceof EditorEx)) return null;
     JRootPane rootPane = editor.getComponent().getRootPane();
     if (rootPane == null) return null;
@@ -273,27 +281,28 @@ public class EditorFragmentComponent extends JPanel {
     int yRelative = overhang > 0 && overhang < lineHeight ?
                     lineHeight - overhang + JBUIScale.scale(LINE_BORDER_THICKNESS + EMPTY_BORDER_THICKNESS) : 0;
     Point point = SwingUtilities.convertPoint(((EditorEx)editor).getScrollPane().getViewport(), -2, yRelative, layeredPane);
-    return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, true, false);
+    return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, false);
   }
 
-  public static Color getBackgroundColor(Editor editor){
+  @NotNull
+  public static Color getBackgroundColor(@NotNull Editor editor){
     return getBackgroundColor(editor, true);
   }
 
-  public static Color getBackgroundColor(Editor editor, boolean useCaretRowBackground){
+  @NotNull
+  public static Color getBackgroundColor(@NotNull Editor editor, boolean useCaretRowBackground){
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
     if (!useCaretRowBackground || color == null){
-      color = colorsScheme.getDefaultBackground();
+      color = editor instanceof EditorEx ? ((EditorEx)editor).getBackgroundColor() : colorsScheme.getDefaultBackground();
     }
     return color;
   }
 
-  @NotNull
-  public static CompoundBorder createEditorFragmentBorder(@NotNull Editor editor) {
+  public static @NotNull CompoundBorder createEditorFragmentBorder(@NotNull Editor editor) {
     Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
     Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
-    Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
+    Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS);
     return BorderFactory.createCompoundBorder(outsideBorder, insideBorder);
   }
 

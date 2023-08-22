@@ -1,0 +1,8 @@
+// FIR_IDENTICAL
+enum class Foo {
+    ;
+
+    override fun toString(): String {
+        <selection><caret>return super.toString()</selection>
+    }
+}

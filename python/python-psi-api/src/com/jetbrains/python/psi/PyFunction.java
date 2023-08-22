@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
@@ -17,12 +17,10 @@ import java.util.List;
 
 /**
  * Function declaration in source (the {@code def} and everything within).
- *
- * @author yole
  */
-public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyStatement, PyCallable,
-                                    PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement, PyStatementListContainer,
-                                    PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
+public interface PyFunction extends StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyCompoundStatement,
+                                    PyDecoratable, PyCallable, PyStatementListContainer, PyPossibleClassMember,
+                                    ScopeOwner, PyDocStringOwner, PyTypeCommentOwner, PyAnnotationOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyFunction[count];

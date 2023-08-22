@@ -1,16 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +23,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-class ServiceViewSourceScrollHelper {
+final class ServiceViewSourceScrollHelper {
   private static final String AUTO_SCROLL_TO_SOURCE_PROPERTY = "service.view.auto.scroll.to.source";
   private static final String AUTO_SCROLL_FROM_SOURCE_PROPERTY = "service.view.auto.scroll.from.source";
 
@@ -41,8 +37,7 @@ class ServiceViewSourceScrollHelper {
     ServiceViewAutoScrollFromSourceHandler fromSourceHandler = new ServiceViewAutoScrollFromSourceHandler(project, toolWindow);
     fromSourceHandler.install();
     DefaultActionGroup additionalGearActions = new DefaultActionGroup(toSourceHandler.createToggleAction(),
-                                                                      fromSourceHandler.createToggleAction(),
-                                                                      Separator.getInstance());
+                                                                      fromSourceHandler.createToggleAction());
     List<AnAction> additionalProviderActions = ServiceViewActionProvider.getInstance().getAdditionalGearActions();
     for (AnAction action : additionalProviderActions) {
       additionalGearActions.add(action);
@@ -55,7 +50,7 @@ class ServiceViewSourceScrollHelper {
     return PropertiesComponent.getInstance(project).getBoolean(AUTO_SCROLL_FROM_SOURCE_PROPERTY, PlatformUtils.isDataGrip());
   }
 
-  private static class ServiceViewAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
+  private static final class ServiceViewAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     private final Project myProject;
 
     ServiceViewAutoScrollToSourceHandler(@NotNull Project project) {
@@ -73,7 +68,7 @@ class ServiceViewSourceScrollHelper {
     }
   }
 
-  private static class ServiceViewAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
+  private static final class ServiceViewAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
     ServiceViewAutoScrollFromSourceHandler(@NotNull Project project, @NotNull ToolWindow toolWindow) {
       super(project, toolWindow.getComponent(), toolWindow.getContentManager());
     }
@@ -94,7 +89,7 @@ class ServiceViewSourceScrollHelper {
     }
 
     private Promise<Void> select(@NotNull FileEditor editor) {
-      VirtualFile virtualFile = FileEditorManagerEx.getInstanceEx(myProject).getFile(editor);
+      VirtualFile virtualFile = editor.getFile();
       if (virtualFile == null) {
         return Promises.rejectedPromise("Virtual file is null");
       }
@@ -102,7 +97,7 @@ class ServiceViewSourceScrollHelper {
     }
   }
 
-  private static class ScrollFromEditorAction extends DumbAwareAction {
+  private static final class ScrollFromEditorAction extends DumbAwareAction {
     private final ServiceViewAutoScrollFromSourceHandler myScrollFromHandler;
 
     ScrollFromEditorAction(ServiceViewAutoScrollFromSourceHandler scrollFromHandler) {
@@ -123,6 +118,11 @@ class ServiceViewSourceScrollHelper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
@@ -132,7 +132,7 @@ class ServiceViewSourceScrollHelper {
       select(Arrays.asList(editors).iterator());
     }
 
-    private void select(Iterator<FileEditor> editors) {
+    private void select(Iterator<? extends FileEditor> editors) {
       if (!editors.hasNext()) return;
 
       FileEditor editor = editors.next();

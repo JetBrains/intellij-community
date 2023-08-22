@@ -46,7 +46,7 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
     MarkupModel model = DocumentMarkupModel.forDocument(myFixture.getEditor().getDocument(), getProject(), false);
     RangeHighlighter[] highlighters = model.getAllHighlighters();
     assertThat(highlighters).hasSize(1);
-    TextAttributes attributes = highlighters[0].getTextAttributes();
+    TextAttributes attributes = highlighters[0].getTextAttributes(scheme);
     assertThat(attributes).isNotNull();
     assertThat(attributes.getBackgroundColor()).isNull();
     assertThat(attributes.getForegroundColor()).isNull();
@@ -55,9 +55,63 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
   public void testPersistentHighlighterUpdateOnPartialDocumentUpdate() {
     Document document = new DocumentImpl("line0\nline1\nline2");
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-    RangeHighlighterEx highlighter = model.addPersistentLineHighlighter(2, 0, null);
+    RangeHighlighterEx highlighter = model.addPersistentLineHighlighter(null, 2, 0);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(document.getLineStartOffset(1), document.getTextLength()));
     assertFalse(highlighter.isValid());
+  }
+
+  public void testUpdateOfPersistentAndNormalHighlightersIsIndependent() {
+    Document document = new DocumentImpl("\n\n\n\n\n");
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter h = model.addLineHighlighter(2, 0, null);
+    model.addPersistentLineHighlighter(2, 0, null);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(1, 4));
+    assertFalse(h.isValid());
+  }
+
+  public void testCorrectUpdateOfPersistentHighlighterAfterFarAwayChange() {
+    Document document = new DocumentImpl("\n\n\n");
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter h = model.addPersistentLineHighlighter(null, 2, 0);
+    assertTrue(h.isValid());
+    assertEquals(2, h.getStartOffset());
+    assertEquals(2, h.getEndOffset());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(0, 1));
+    assertTrue(h.isValid());
+    assertEquals(1, h.getStartOffset());
+    assertEquals(1, h.getEndOffset());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, 2, " \n\n "));
+    assertTrue(h.isValid());
+    assertEquals(2, h.getStartOffset());
+    assertEquals(2, h.getEndOffset());
+  }
+
+  public void testAnotherIdenticalPersistentHighlighterDoesntChangeUpdate() {
+    Document document = new DocumentImpl("\n\n\n");
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter h1 = model.addPersistentLineHighlighter(null, 2, 0);
+    RangeHighlighter h2 = model.addPersistentLineHighlighter(null, 2, 0);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(1, 2));
+    assertTrue(h1.isValid());
+    assertEquals(1, h1.getStartOffset());
+    assertEquals(1, h1.getEndOffset());
+    assertTrue(h2.isValid());
+    assertEquals(1, h2.getStartOffset());
+    assertEquals(1, h2.getEndOffset());
+
+    h2.dispose();
+    assertTrue(h1.isValid());
+    assertEquals(1, h1.getStartOffset());
+    assertEquals(1, h1.getEndOffset());
+    assertFalse(h2.isValid());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, 2, " \n\n "));
+    assertTrue(h1.isValid());
+    assertEquals(2, h1.getStartOffset());
+    assertEquals(2, h1.getEndOffset());
   }
 
   public static class TestAnnotator implements Annotator {

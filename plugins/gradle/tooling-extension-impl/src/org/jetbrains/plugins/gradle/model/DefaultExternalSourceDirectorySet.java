@@ -25,22 +25,22 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
   private boolean inheritedCompilerOutput;
 
   public DefaultExternalSourceDirectorySet() {
-    srcDirs = new HashSet<File>(0);
-    filters = new ArrayList<DefaultExternalFilter>(0);
-    gradleOutputDirs = new ArrayList<File>(0);
+    srcDirs = new HashSet<>(0);
+    filters = new ArrayList<>(0);
+    gradleOutputDirs = new ArrayList<>(0);
     patterns = new FilePatternSetImpl();
   }
 
   public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
     name = sourceDirectorySet.getName();
-    srcDirs = new HashSet<File>(sourceDirectorySet.getSrcDirs());
+    srcDirs = new HashSet<>(sourceDirectorySet.getSrcDirs());
     outputDir = sourceDirectorySet.getOutputDir();
-    gradleOutputDirs = new ArrayList<File>(sourceDirectorySet.getGradleOutputDirs());
+    gradleOutputDirs = new ArrayList<>(sourceDirectorySet.getGradleOutputDirs());
 
     patterns = new FilePatternSetImpl(sourceDirectorySet.getIncludes(),
                                       sourceDirectorySet.getExcludes());
 
-    filters = new ArrayList<DefaultExternalFilter>(sourceDirectorySet.getFilters().size());
+    filters = new ArrayList<>(sourceDirectorySet.getFilters().size());
     for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
       filters.add(new DefaultExternalFilter(filter));
     }

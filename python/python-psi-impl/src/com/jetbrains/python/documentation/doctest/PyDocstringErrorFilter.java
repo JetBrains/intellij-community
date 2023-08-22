@@ -18,7 +18,6 @@ package com.jetbrains.python.documentation.doctest;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +30,6 @@ public class PyDocstringErrorFilter extends HighlightErrorFilter {
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     final PsiFile file = element.getContainingFile();
-    return !(file instanceof PyDocstringFile) || PyTypingTypeProvider.isInAnnotationOrTypeComment(element);
+    return !(file instanceof PyDocstringFile);
   }
 }

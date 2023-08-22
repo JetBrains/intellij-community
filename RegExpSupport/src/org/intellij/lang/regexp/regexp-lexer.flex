@@ -1,17 +1,16 @@
-/* It's an automatically generated code. Do not modify it. */
+/* This is automatically generated code. Do not modify it. */
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
-
 import com.intellij.util.containers.IntArrayList;
+
 import java.util.EnumSet;
 
-import static java.lang.Boolean.*;
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static org.intellij.lang.regexp.RegExpCapability.*;
-
-@SuppressWarnings("ALL")
 %%
 
 %class _RegExLexer
@@ -44,6 +43,8 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     private boolean allowOneHexCharEscape;
     private boolean allowMysqlBracketExpressions;
     private boolean allowPcreBackReferences;
+    private boolean allowPcreConditions;
+    private boolean allowPcreNumberedGroupRef;
     private int maxOctal = 0777;
     private int minOctalDigits = 1;
     private boolean whitespaceInClass;
@@ -65,6 +66,8 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
       this.allowTransformationEscapes = capabilities.contains(TRANSFORMATION_ESCAPES);
       this.allowMysqlBracketExpressions = capabilities.contains(MYSQL_BRACKET_EXPRESSIONS);
       this.allowPcreBackReferences = capabilities.contains(PCRE_BACK_REFERENCES);
+      this.allowPcreNumberedGroupRef = capabilities.contains(PCRE_NUMBERED_GROUP_REF);
+      this.allowPcreConditions = capabilities.contains(PCRE_CONDITIONS);
       if (capabilities.contains(MAX_OCTAL_177)) {
         maxOctal = 0177;
       }
@@ -109,21 +112,24 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
 %xstate QUANTIFIER
 %xstate NON_QUANTIFIER
 %xstate NEGATED_CLASS
-%xstate QUOTED_CLASS1
+%xstate QUOTED_CLASS
 %xstate CLASS1
-%state CLASS2
-%state PROP
-%state NAMED
 %xstate OPTIONS
 %xstate COMMENT
 %xstate NAMED_GROUP
 %xstate QUOTED_NAMED_GROUP
 %xstate PY_NAMED_GROUP_REF
-%xstate PY_COND_REF
+%xstate PCRE_NUMBERED_GROUP
 %xstate BRACKET_EXPRESSION
 %xstate MYSQL_CHAR_EXPRESSION
 %xstate MYSQL_CHAR_EQ_EXPRESSION
 %xstate EMBRACED_HEX
+
+%state CONDITIONAL1
+%state CONDITIONAL2
+%state CLASS2
+%state PROP
+%state NAMED
 
 DOT="."
 LPAREN="("
@@ -142,7 +148,7 @@ MYSQL_CHAR_NAME=[:letter:](-|[:letter:])*[:digit:]?
 ANY=[^]
 
 META1 = {ESCAPE} | {LBRACKET}
-META2= {DOT} | "$" | "?" | "*" | "+" | "|" | "^" | {LBRACE} | {LPAREN} | {RPAREN}
+META2 = {DOT} | "$" | "?" | "*" | "+" | "|" | "^" | {LBRACE} | {LPAREN} | {RPAREN}
 
 CONTROL="t" | "n" | "r" | "f" | "a" | "e"
 BOUNDARY="b" | "b{g}"| "B" | "A" | "z" | "Z" | "G" | "K"
@@ -153,6 +159,9 @@ PROP="p" | "P"
 TRANSFORMATION= "l" | "L" | "U" | "E"
 
 HEX_CHAR=[0-9a-fA-F]
+
+PCRE_DEFINE=DEFINE
+PCRE_VERSION=VERSION>?=\d*[.]?\d{0,2}
 
 /* 999 back references should be enough for everybody */
 BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
@@ -253,6 +262,7 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
 
   {ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != TRUE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {RBRACKET}          { return (allowDanglingMetacharacters == FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {ESCAPE}  {META2}             { return RegExpTT.ESC_CHARACTER; }
 }
 {ESCAPE}  {META1}             { return RegExpTT.ESC_CHARACTER; }
@@ -334,14 +344,14 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   "^"  { yybegin(CLASS1); return RegExpTT.CARET; }
 }
 
-<QUOTED_CLASS1> {
+<QUOTED_CLASS> {
   "\\E"              { yypopstate(); return RegExpTT.QUOTE_END; }
   {ANY}              { states.set(states.size() - 1, CLASS2); return RegExpTT.CHARACTER; }
 }
 
 <CLASS1> {
   {ESCAPE} "^"               { yybegin(CLASS2); return RegExpTT.ESC_CHARACTER; }
-  {ESCAPE} "Q"               { yypushstate(QUOTED_CLASS1); return RegExpTT.QUOTE_BEGIN; }
+  {ESCAPE} "Q"               { yypushstate(QUOTED_CLASS); return RegExpTT.QUOTE_BEGIN; }
   {ESCAPE} {RBRACKET}        { yybegin(CLASS2); return allowEmptyCharacterClass ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
   {RBRACKET}                 { if (allowEmptyCharacterClass) { yypopstate(); return RegExpTT.CLASS_END; } yybegin(CLASS2); return RegExpTT.CHARACTER; }
   {LBRACKET} / ":"           { yybegin(CLASS2); if (allowPosixBracketExpressions) { yypushback(1); } else if (allowNestedCharacterClasses) { yypushstate(CLASS1); return RegExpTT.CLASS_BEGIN; } else { return RegExpTT.CHARACTER; } }
@@ -433,13 +443,19 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
   "(?P<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.PYTHON_NAMED_GROUP; }
   "(?P=" { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF; }
-  "(?("  { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF; }
-  "(?&" { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
+  "(?" / "("  { yybegin(CONDITIONAL1); return RegExpTT.CONDITIONAL; }
+  "(?&"  { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
   "(?P>" { yybegin(NAMED_GROUP); return RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF; }
   "(?|"  {  return RegExpTT.PCRE_BRANCH_RESET; }
 
   "(?<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP; }
   "(?'" { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
+
+  "(?"[+-]?{BACK_REFERENCES_GROUP}")" { if (allowPcreNumberedGroupRef) {
+                                          yybegin(PCRE_NUMBERED_GROUP);
+                                          return RegExpTT.PCRE_NUMBERED_GROUP_REF;
+                                        }
+                                        else { yypushback(yylength() - 2); yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }}
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }
@@ -472,9 +488,28 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }
 
-<PY_COND_REF> {
+<PCRE_NUMBERED_GROUP> {
+  [:digit:]+              { return RegExpTT.NUMBER; }
+  {ANY}                   { yybegin(YYINITIAL); yypushback(1); }
+}
+
+<CONDITIONAL1> {
+  "(?="             { yybegin(YYINITIAL); return RegExpTT.POS_LOOKAHEAD; }
+  "(?!"             { yybegin(YYINITIAL); return RegExpTT.NEG_LOOKAHEAD; }
+  "(?<="            { yybegin(YYINITIAL); return RegExpTT.POS_LOOKBEHIND; }
+  "(?<!"            { yybegin(YYINITIAL); return RegExpTT.NEG_LOOKBEHIND; }
+  "('"              { yybegin(CONDITIONAL2); return RegExpTT.QUOTED_CONDITION_BEGIN; }
+  "(<"              { yybegin(CONDITIONAL2); return RegExpTT.ANGLE_BRACKET_CONDITION_BEGIN; }
+  "("               { yybegin(CONDITIONAL2); return RegExpTT.GROUP_BEGIN; }
+}
+
+<CONDITIONAL2> {
+  {PCRE_DEFINE}     { return allowPcreConditions ? RegExpTT.PCRE_DEFINE : RegExpTT.NAME; }
+  {PCRE_VERSION}    { return allowPcreConditions ? RegExpTT.PCRE_VERSION : RegExpTT.NAME; }
   {GROUP_NAME}      { return RegExpTT.NAME; }
   [:digit:]+        { return RegExpTT.NUMBER; }
+  "')"              { yybegin(YYINITIAL); return RegExpTT.QUOTED_CONDITION_END; }
+  ">)"              { yybegin(YYINITIAL); return RegExpTT.ANGLE_BRACKET_CONDITION_END; }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
   {ANY}             { yybegin(YYINITIAL); yypushback(1); }
 }

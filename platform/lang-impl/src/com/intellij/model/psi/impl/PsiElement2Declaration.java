@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.Symbol;
@@ -13,7 +13,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class PsiElement2Declaration implements PsiSymbolDeclaration {
+final class PsiElement2Declaration implements PsiSymbolDeclaration {
 
   private final PsiElement myTargetElement;
   private final PsiElement myDeclaringElement;
@@ -39,7 +39,7 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
 
   @NotNull
   @Override
-  public TextRange getDeclarationRange() {
+  public TextRange getRangeInDeclaringElement() {
     return myDeclarationRange;
   }
 
@@ -96,8 +96,7 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
 
   @Nullable
   private static TextRange getDeclarationRangeFromPom(@NotNull PomTarget target, @NotNull PsiElement declaringElement) {
-    if (target instanceof PsiDeclaredTarget) {
-      PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+    if (target instanceof PsiDeclaredTarget declaredTarget) {
       TextRange nameIdentifierRange = declaredTarget.getNameIdentifierRange();
       if (nameIdentifierRange != null) {
         PsiElement navigationElement = declaredTarget.getNavigationElement();
@@ -160,5 +159,13 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
   @NotNull
   private static TextRange rangeOf(@NotNull PsiElement element) {
     return TextRange.from(0, element.getTextLength());
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+      "PsiElement2Declaration(targetElement=%s, declaringElement=%s, declarationRange=%s)",
+      myTargetElement, myDeclaringElement, myDeclarationRange
+    );
   }
 }

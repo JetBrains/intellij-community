@@ -2,14 +2,13 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public class IndexableSetContributorModificationTracker extends SimpleModificationTracker {
   public static IndexableSetContributorModificationTracker getInstance() {
-    return ServiceManager.getService(IndexableSetContributorModificationTracker.class);
+    return ApplicationManager.getApplication().getService(IndexableSetContributorModificationTracker.class);
   }
 
   public IndexableSetContributorModificationTracker() {

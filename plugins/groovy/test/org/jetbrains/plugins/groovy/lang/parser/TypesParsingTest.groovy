@@ -1,9 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser
 
-/**
- * @author peter
- */
 class TypesParsingTest extends GroovyParsingTestCase {
   @Override
   String getBasePath() {
@@ -94,6 +91,8 @@ class TypesParsingTest extends GroovyParsingTestCase {
 
   void testIncompleteConstructor() { doTest() }
 
+  void _testWeak_keyword_type1() { doTest() }
+
   void testmembers$identifierOnly() { doTest() }
 
   void testmembers$capitalIdentifierOnly() { doTest() }
@@ -141,4 +140,22 @@ class TypesParsingTest extends GroovyParsingTestCase {
   void testmembers$identifierAndLeftParen() { doTest() }
 
   void testmembers$constructorAfterInnerClass() { doTest() }
+
+  void testmembers$varField1() throws Throwable { doTest() }
+
+  void testmembers$varField2() throws Throwable { doTest() }
+
+  void testmembers$varField3() throws Throwable { doTest() }
+
+  void testmembers$varField4() throws Throwable { doTest() }
+
+  void testmembers$varField5() throws Throwable { doTest() }
+
+  void testmembers$varField6() throws Throwable { doTest() }
+
+  void testmembers$varField7() throws Throwable { doTest() }
+
+  void testmembers$varField8() throws Throwable { doTest() }
+
+  void testLowercaseTypeElement() throws Throwable { doTest() }
 }

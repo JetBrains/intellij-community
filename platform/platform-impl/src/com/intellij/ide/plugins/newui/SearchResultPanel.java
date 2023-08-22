@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,21 +24,26 @@ public abstract class SearchResultPanel {
 
   protected final PluginsGroupComponent myPanel;
   private JScrollBar myVerticalScrollBar;
-  private PluginsGroup myGroup = new PluginsGroup(IdeBundle.message("title.search.results"));
+  private PluginsGroup myGroup;
   private String myQuery;
   private AtomicBoolean myRunQuery;
   private boolean myEmpty = true;
+  private boolean isMarketplace;
 
   protected Runnable myPostFillGroupCallback;
 
   public SearchResultPanel(@Nullable SearchPopupController controller,
                            @NotNull PluginsGroupComponent panel,
+                           boolean isMarketplace,
                            int tabIndex,
                            int backTabIndex) {
     this.controller = controller;
     myPanel = panel;
     this.tabIndex = tabIndex;
     this.backTabIndex = backTabIndex;
+    this.isMarketplace = isMarketplace;
+    myGroup = new PluginsGroup(IdeBundle.message("title.search.results"),
+                               isMarketplace ? PluginsGroupType.SEARCH : PluginsGroupType.SEARCH_INSTALLED);
 
     setEmptyText("");
 
@@ -46,18 +52,15 @@ public abstract class SearchResultPanel {
     }
   }
 
-  @NotNull
-  public PluginsGroupComponent getPanel() {
+  public @NotNull PluginsGroupComponent getPanel() {
     return myPanel;
   }
 
-  @NotNull
-  public PluginsGroup getGroup() {
+  public @NotNull PluginsGroup getGroup() {
     return myGroup;
   }
 
-  @NotNull
-  public JComponent createScrollPane() {
+  public @NotNull JComponent createScrollPane() {
     JBScrollPane pane = new JBScrollPane(myPanel);
     pane.setBorder(JBUI.Borders.empty());
     if (isProgressMode()) {
@@ -66,8 +69,7 @@ public abstract class SearchResultPanel {
     return pane;
   }
 
-  @NotNull
-  public JComponent createVScrollPane() {
+  public @NotNull JComponent createVScrollPane() {
     JBScrollPane pane = (JBScrollPane)createScrollPane();
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -87,8 +89,7 @@ public abstract class SearchResultPanel {
     myQuery = "";
   }
 
-  @NotNull
-  public String getQuery() {
+  public @NotNull String getQuery() {
     return StringUtil.defaultIfEmpty(myQuery, "");
   }
 
@@ -138,9 +139,13 @@ public abstract class SearchResultPanel {
 
           if (!myGroup.descriptors.isEmpty()) {
             myGroup.titleWithCount();
-            PluginLogo.startBatchMode();
-            myPanel.addLazyGroup(myGroup, myVerticalScrollBar, 100, this::fullRepaint);
-            PluginLogo.endBatchMode();
+            try {
+              PluginLogo.startBatchMode();
+              myPanel.addLazyGroup(myGroup, myVerticalScrollBar, 100, this::fullRepaint);
+            }
+            finally {
+              PluginLogo.endBatchMode();
+            }
           }
 
           myPanel.initialSelection(false);
@@ -192,12 +197,13 @@ public abstract class SearchResultPanel {
     return myPanel instanceof PluginsGroupComponentWithProgress;
   }
 
-  private void removeGroup() {
+  public void removeGroup() {
     if (myGroup.ui != null) {
       myPanel.removeGroup(myGroup);
       fullRepaint();
     }
-    myGroup = new PluginsGroup(IdeBundle.message("title.search.results"));
+    myGroup = new PluginsGroup(IdeBundle.message("title.search.results"),
+                               isMarketplace ? PluginsGroupType.SEARCH : PluginsGroupType.SEARCH_INSTALLED);
   }
 
   public void fullRepaint() {

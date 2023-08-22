@@ -14,15 +14,11 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class PySplitIfIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.split.if");
+    return PyPsiBundle.message("INTN.NAME.split.if");
   }
 
   @Override
@@ -63,7 +59,7 @@ public class PySplitIfIntention extends PyBaseIntentionAction {
     if (!(parent instanceof PyIfPart)) {
       return false;
     }
-    setText(PyPsiBundle.message("INTN.split.if.text"));
+    setText(PyPsiBundle.message("INTN.split.if"));
     return true;
   }
 

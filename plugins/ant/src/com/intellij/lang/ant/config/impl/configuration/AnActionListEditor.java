@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollingUtil;
 
@@ -42,7 +43,7 @@ public class AnActionListEditor<T> extends JPanel {
   public void addAddAction(final Factory<? extends T> newItemFactory) {
     ReorderableListController<T>.AddActionDescription description = myForm.getListActionsBuilder().addAddAction(
       AntBundle.message("add.action.name"), newItemFactory, true);
-    description.addPostHandler(new ReorderableListController.ActionNotification<T>() {
+    description.addPostHandler(new ReorderableListController.ActionNotification<>() {
       @Override
       public void afterActionPerformed(T value) {
         myAdded.add(value);
@@ -51,9 +52,9 @@ public class AnActionListEditor<T> extends JPanel {
     description.setShowText(true);
   }
 
-  public void addRemoveButtonForAnt(final Condition<? super T> removeCondition, String actionName) {
+  public void addRemoveButtonForAnt(final Condition<? super T> removeCondition, @NlsActions.ActionText String actionName) {
     final ReorderableListController<T>.RemoveActionDescription description = myForm.getListActionsBuilder().addRemoveAction(actionName);
-    description.addPostHandler(new ReorderableListController.ActionNotification<List<T>>() {
+    description.addPostHandler(new ReorderableListController.ActionNotification<>() {
       @Override
       public void afterActionPerformed(List<T> list) {
         for (T item : list) {
@@ -85,14 +86,14 @@ public class AnActionListEditor<T> extends JPanel {
   }
 
   public T getSelectedItem() {
-    return (T)myForm.myList.getSelectedValue();
+    return myForm.myList.getSelectedValue();
   }
 
   public void setSelection(T item) {
     myForm.select(item);
   }
 
-  public JList getList() {
+  public JList<T> getList() {
     return myForm.myList;
   }
 
@@ -105,7 +106,7 @@ public class AnActionListEditor<T> extends JPanel {
   }
 
   public void setItems(Collection<? extends T> items) {
-    DefaultListModel model = myForm.getListModel();
+    DefaultListModel<T> model = myForm.getListModel();
     model.removeAllElements();
     for (T item : items) {
       model.addElement(item);
@@ -125,15 +126,11 @@ public class AnActionListEditor<T> extends JPanel {
   private static class Form <T> {
     private JComponent myWholePanel;
     private JPanel myActionsPlace;
-    private JList myList;
+    private JList<T> myList;
     private final ReorderableListToolbar<T> myListController;
 
     Form() {
-      myList.setModel(new DefaultListModel());
-      if (ApplicationManager.getApplication() == null) {
-        myListController = new ReorderableListToolbar<>(myList);
-        return;  // Preview mode
-      }
+      myList.setModel(new DefaultListModel<>());
       myListController = new ReorderableListToolbar<>(myList);
     }
 
@@ -147,8 +144,8 @@ public class AnActionListEditor<T> extends JPanel {
       return myListController;
     }
 
-    private DefaultListModel getListModel() {
-      return (DefaultListModel)myList.getModel();
+    private DefaultListModel<T> getListModel() {
+      return (DefaultListModel<T>)myList.getModel();
     }
 
     public void select(T item) {
@@ -161,7 +158,7 @@ public class AnActionListEditor<T> extends JPanel {
     }
 
     public void updateItem(T item) {
-      DefaultListModel model = getListModel();
+      DefaultListModel<T> model = getListModel();
       model.setElementAt(item, model.indexOf(item));
     }
   }

@@ -11,7 +11,6 @@ import com.intellij.psi.search.TodoPattern;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author irengrig
  * moved from PsiSearchHelperImpl
  */
 public class TodoItemsCreator {
@@ -30,7 +29,7 @@ public class TodoItemsCreator {
 
   @NotNull
   private TodoPattern mapPattern(@NotNull IndexPattern pattern) {
-    for(TodoPattern todoPattern: myTodoPatterns) {
+    for (TodoPattern todoPattern : myTodoPatterns) {
       if (todoPattern.getIndexPattern() == pattern) {
         return todoPattern;
       }

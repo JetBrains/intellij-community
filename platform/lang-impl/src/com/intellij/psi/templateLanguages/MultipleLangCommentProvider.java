@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,9 +30,10 @@ import org.jetbrains.annotations.Nullable;
 public interface MultipleLangCommentProvider {
   ExtensionPointName<MultipleLangCommentProvider> EP_NAME = ExtensionPointName.create("com.intellij.multiLangCommenter");
 
-  @Nullable
-  Commenter getLineCommenter(PsiFile file, Editor editor,
-                             Language lineStartLanguage, Language lineEndLanguage);
+  @Nullable Commenter getLineCommenter(@NotNull PsiFile file,
+                                       @NotNull Editor editor,
+                                       @NotNull Language lineStartLanguage,
+                                       @NotNull Language lineEndLanguage);
 
-  boolean canProcess(PsiFile file, FileViewProvider viewProvider);
+  boolean canProcess(@NotNull PsiFile file, @NotNull FileViewProvider viewProvider);
 }

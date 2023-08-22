@@ -1,0 +1,4 @@
+// FIR_COMPARISON
+fun foo() {
+    val s = "foo.txt"
+}

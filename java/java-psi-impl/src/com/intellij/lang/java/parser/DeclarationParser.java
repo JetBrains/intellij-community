@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
@@ -33,6 +34,8 @@ public class DeclarationParser {
     JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.THROWS_KEYWORD);
   private static final TokenSet PARAM_LIST_STOPPERS = TokenSet.create(
     JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW);
+  private static final TokenSet METHOD_PARAM_LIST_STOPPERS = TokenSet.create(
+    JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW, JavaTokenType.SEMICOLON);
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT, JavaTokenType.VAR_KEYWORD));
   private static final TokenSet RESOURCE_EXPRESSIONS = TokenSet.create(
@@ -71,12 +74,11 @@ public class DeclarationParser {
         return null;
       }
       final IElementType afterIdent = builder.lookAhead(2);
-      // No parser recovery for local records without < or ( to support for light stubs
+      // No parser recovery for local records without < or ( to support light stubs
       // (look at com.intellij.psi.impl.source.JavaLightStubBuilder.CodeBlockVisitor.visit)
       if (context == Context.CODE_BLOCK && afterIdent != JavaTokenType.LPARENTH && afterIdent != JavaTokenType.LT) {
         // skipping record kw and identifier
-        builder.advanceLexer();
-        builder.advanceLexer();
+        PsiBuilderUtil.advance(builder, 2);
         error(builder, JavaPsiBundle.message("expected.lt.or.lparen"));
         declaration.drop();
         return null;
@@ -103,6 +105,13 @@ public class DeclarationParser {
 
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
+        PsiKeyword.PERMITS.equals(builder.getTokenText())) {
+      builder.remapCurrentToken(JavaTokenType.PERMITS_KEYWORD);
+    }
+    if (builder.getTokenType() == JavaTokenType.PERMITS_KEYWORD) {
+      refParser.parseReferenceList(builder, JavaTokenType.PERMITS_KEYWORD, JavaElementType.PERMITS_LIST, JavaTokenType.COMMA);
+    }
 
     if (builder.getTokenType() != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
@@ -166,7 +175,15 @@ public class DeclarationParser {
 
       first = false;
 
-      if (!expect(builder, JavaTokenType.COMMA) &&
+      int commaCount = 0;
+      while (builder.getTokenType() == JavaTokenType.COMMA) {
+        if (commaCount > 0) {
+          error(builder, JavaPsiBundle.message("expected.identifier"));
+        }
+        builder.advanceLexer();
+        commaCount++;
+      }
+      if (commaCount == 0 &&
           builder.getTokenType() != null &&
           builder.getTokenType() != JavaTokenType.SEMICOLON) {
         error(builder, JavaPsiBundle.message("expected.comma.or.semicolon"));
@@ -247,14 +264,14 @@ public class DeclarationParser {
   }
 
   @Nullable
-  public PsiBuilder.Marker parse(final PsiBuilder builder, final Context context) {
+  public PsiBuilder.Marker parse(final @NotNull PsiBuilder builder, final Context context) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType == null) return null;
 
     if (tokenType == JavaTokenType.LBRACE) {
       if (context == Context.FILE || context == Context.CODE_BLOCK) return null;
     }
-    else if (!isRecordToken(builder, tokenType)) {
+    else if (!isRecordToken(builder, tokenType) && !isSealedToken(builder, tokenType) && !isNonSealedToken(builder, tokenType)) {
       if (TYPE_START.contains(tokenType) && tokenType != JavaTokenType.AT) {
         if (context == Context.FILE) return null;
       }
@@ -409,9 +426,33 @@ public class DeclarationParser {
   }
 
   static boolean isRecordToken(PsiBuilder builder, IElementType tokenType) {
-    return tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
-           builder.lookAhead(1) == JavaTokenType.IDENTIFIER &&
-           getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_14_PREVIEW);
+    if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
+        builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
+      LanguageLevel level = getLanguageLevel(builder);
+      return level.isAtLeast(LanguageLevel.JDK_16);
+    }
+    return false;
+  }
+
+  private static boolean isSealedToken(PsiBuilder builder, IElementType tokenType) {
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) &&
+           tokenType == JavaTokenType.IDENTIFIER &&
+           PsiKeyword.SEALED.equals(builder.getTokenText());
+  }
+
+  private static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
+    if (!getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17) ||
+        tokenType != JavaTokenType.IDENTIFIER ||
+        !"non".equals(builder.getTokenText()) ||
+        builder.lookAhead(1) != JavaTokenType.MINUS ||
+        builder.lookAhead(2) != JavaTokenType.IDENTIFIER) {
+      return false;
+    }
+    PsiBuilder.Marker maybeNonSealed = builder.mark();
+    PsiBuilderUtil.advance(builder, 2);
+    boolean isNonSealed = PsiKeyword.SEALED.equals(builder.getTokenText());
+    maybeNonSealed.rollbackTo();
+    return isNonSealed;
   }
 
   @NotNull
@@ -425,9 +466,19 @@ public class DeclarationParser {
     boolean isEmpty = true;
 
     while (true) {
-      final IElementType tokenType = builder.getTokenType();
+      IElementType tokenType = builder.getTokenType();
       if (tokenType == null) break;
-      if (modifiers.contains(tokenType)) {
+      if (isSealedToken(builder, tokenType)) {
+        builder.remapCurrentToken(JavaTokenType.SEALED_KEYWORD);
+        tokenType = JavaTokenType.SEALED_KEYWORD;
+      }
+      if (isNonSealedToken(builder, tokenType)) {
+        PsiBuilder.Marker nonSealed = builder.mark();
+        PsiBuilderUtil.advance(builder, 3);
+        nonSealed.collapse(JavaTokenType.NON_SEALED_KEYWORD);
+        isEmpty = false;
+      }
+      else if (modifiers.contains(tokenType)) {
         builder.advanceLexer();
         isEmpty = false;
       }
@@ -518,6 +569,13 @@ public class DeclarationParser {
       }
       return JavaElementType.PARAMETER_LIST;
     }
+
+    TokenSet getStopperTypes() {
+      if (this == METHOD) {
+        return METHOD_PARAM_LIST_STOPPERS;
+      }
+      return PARAM_LIST_STOPPERS;
+    }
   }
 
   private void parseElementList(PsiBuilder builder, ListType type) {
@@ -537,7 +595,7 @@ public class DeclarationParser {
     boolean noElements = true;
     while (true) {
       final IElementType tokenType = builder.getTokenType();
-      if (tokenType == null || PARAM_LIST_STOPPERS.contains(tokenType)) {
+      if (tokenType == null || type.getStopperTypes().contains(tokenType)) {
         final boolean noLastElement = !delimiterExpected && (!noElements && !resources || noElements && resources);
         if (noLastElement) {
           final String key = lambda ? "expected.parameter" : "expected.identifier.or.type";
@@ -698,7 +756,7 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       if (type == JavaElementType.PARAMETER || type == JavaElementType.RECORD_COMPONENT) {
-        eatBrackets(builder, typeInfo != null && typeInfo.isVarArg ? "expected.rparen" : null);
+        eatBrackets(builder, null);
         done(param, type);
         return param;
       }

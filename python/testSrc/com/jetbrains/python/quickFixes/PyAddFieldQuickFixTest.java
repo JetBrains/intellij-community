@@ -20,28 +20,31 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/AddFieldQuickFixTest/")
 public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddClassField() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "FIELD", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "FIELD", "A"));
   }
 
   public void testAddFieldFromMethod() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "y", "A"));
   }
 
   public void testAddFieldFromInstance() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "y", "A"));
   }
 
   public void testAddFieldAddConstructor() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class,
+                   PyPsiBundle.message("QFIX.add.field.to.class", "x", "B"),
+                   LanguageLevel.PYTHON27);
   }
 
   public void testAddFieldNewConstructor() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "x", "B"));
   }
 
   public void testFromUnusedParameter() {  // PY-1398
@@ -57,4 +60,8 @@ public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
     doQuickFixTest(PyUnusedLocalInspection.class, "Add field 'foo' to class A");
   }
 
+  // PY-21284
+  public void testAddFieldAddConstructorWithTypeAnnotation() {
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, "Add field 'param' to class DerivedClass");
+  }
 }

@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class CompletionConfidenceEP extends LanguageExtensionPoint<CompletionConfidence> {
   private static final LanguageExtension<CompletionConfidence> INSTANCE = new CompletionExtension<>("com.intellij.completion.confidence");
 

@@ -38,8 +38,7 @@ class GroovyClosurePattern : GroovyExpressionPattern<GrClosableBlock, GroovyClos
 
   companion object {
     private fun getCall(closure: GrClosableBlock): GrCall? {
-      val parent = closure.parent
-      when (parent) {
+      when (val parent = closure.parent) {
         is GrCall -> {
           return if (closure in parent.closureArguments) parent else null
         }

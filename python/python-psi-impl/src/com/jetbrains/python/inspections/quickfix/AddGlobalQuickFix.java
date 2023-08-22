@@ -22,8 +22,7 @@ public class AddGlobalQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement problemElt = descriptor.getPsiElement();
-    if (problemElt instanceof PyReferenceExpression) {
-      final PyReferenceExpression expression = (PyReferenceExpression)problemElt;
+    if (problemElt instanceof PyReferenceExpression expression) {
       final String name = expression.getReferencedName();
       final ScopeOwner owner = PsiTreeUtil.getParentOfType(problemElt, ScopeOwner.class);
       assert owner instanceof PyClass || owner instanceof PyFunction : "Add global quickfix is available only inside class or function, but applied for " + owner;
@@ -36,7 +35,7 @@ public class AddGlobalQuickFix implements LocalQuickFix {
           }
         }
         @Override
-        public void visitPyGlobalStatement(final PyGlobalStatement node) {
+        public void visitPyGlobalStatement(final @NotNull PyGlobalStatement node) {
           if (!added.get()){
             node.addGlobal(name);
             added.set(true);

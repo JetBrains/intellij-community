@@ -28,6 +28,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
@@ -154,6 +155,30 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
   public PsiExpression @NotNull [] getOperands() {
     PsiExpression rOperand = getROperand();
     return rOperand == null ? new PsiExpression[]{getLOperand()} : new PsiExpression[]{getLOperand(), rOperand};
+  }
+
+  @Override
+  public void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
+    checkPersistentElementRemoval(first, last);
+    super.deleteChildRange(first, last);
+  }
+
+  private void checkPersistentElementRemoval(PsiElement first, PsiElement last) {
+    boolean inside = false;
+    for (ASTNode node = getFirstChildNode(); node != null; node = node.getTreeNext()) {
+      if (node.getPsi() == first) {
+        inside = true;
+      }
+      if (inside) {
+        int role = getChildRole(node);
+        if (role == ChildRole.OPERATION_SIGN || role == ChildRole.LOPERAND) {
+          LOG.error("Unable to remove child with role " + role + "(" + node.getElementType() + ")");
+        }
+      }
+      if (node.getPsi() == last) {
+        inside = false;
+      }
+    }
   }
 }
 

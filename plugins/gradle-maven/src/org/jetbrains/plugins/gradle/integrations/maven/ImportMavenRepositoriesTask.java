@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +18,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenSearchIndex;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -39,8 +39,7 @@ import java.util.stream.Collectors;
 /**
  * @author Vladislav.Soroka
  */
-class ImportMavenRepositoriesTask {
-
+final class ImportMavenRepositoriesTask {
   @NotNull
   private final MavenRemoteRepository mavenCentralRemoteRepository;
 
@@ -52,11 +51,13 @@ class ImportMavenRepositoriesTask {
   }
 
   void schedule() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     ReadAction.nonBlocking(this::performTask).inSmartMode(myProject).submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void performTask() {
+  void performTask() {
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final List<PsiFile> psiFileList = new ArrayList<>();
 
@@ -84,8 +85,7 @@ class ImportMavenRepositoriesTask {
     final Set<MavenRemoteRepository> mavenRemoteRepositories = ReadAction.compute(() -> {
       Set<MavenRemoteRepository> myRemoteRepositories = new HashSet<>();
       for (PsiFile psiFile : psiFiles) {
-        List<GrClosableBlock> repositoriesBlocks = new ArrayList<>();
-        repositoriesBlocks.addAll(findClosableBlocks(psiFile, "repositories"));
+        List<GrClosableBlock> repositoriesBlocks = new ArrayList<>(findClosableBlocks(psiFile, "repositories"));
 
         for (GrClosableBlock closableBlock : findClosableBlocks(psiFile, "buildscript", "subprojects", "allprojects", "project",
                                                                 "configure")) {
@@ -104,7 +104,7 @@ class ImportMavenRepositoriesTask {
     // register imported maven repository URLs but do not force to download the index
     // the index can be downloaded and/or updated later using Maven Configuration UI (Settings -> Build, Execution, Deployment -> Build tools -> Maven -> Repositories)
     MavenRepositoriesHolder.getInstance(myProject).update(mavenRemoteRepositories);
-    MavenProjectIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(indexes -> {
+    MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(indexes -> {
       if (myProject.isDisposed()) return;
 
       List<String> repositoriesWithEmptyIndex = indexes.stream()

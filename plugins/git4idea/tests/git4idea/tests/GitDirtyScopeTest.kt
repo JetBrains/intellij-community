@@ -8,8 +8,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.BaseChangeListsTest
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener
+import com.intellij.openapi.vcs.impl.FileStatusManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.DocumentUtil
@@ -21,6 +23,7 @@ import org.junit.Assume.assumeFalse
 class GitDirtyScopeTest : GitSingleRepoTest() {
   private lateinit var dirtyScopeManager: VcsDirtyScopeManager
   private lateinit var fileDocumentManager: FileDocumentManager
+  private lateinit var fileStatusManager: FileStatusManagerImpl
   private lateinit var undoManager: UndoManager
 
   override fun setUp() {
@@ -29,6 +32,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
     fileDocumentManager = FileDocumentManager.getInstance()
     undoManager = UndoManager.getInstance(project)
+    fileStatusManager = FileStatusManager.getInstance(project) as FileStatusManagerImpl
   }
 
   fun testRevertingUnsavedChanges() {
@@ -39,6 +43,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     changeListManager.waitUntilRefreshed()
 
     editDocument(file, "new content")
+    fileStatusManager.waitFor()
     changeListManager.waitUntilRefreshed()
 
     assertChanges {
@@ -46,6 +51,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     }
 
     editDocument(file, "initial")
+    fileStatusManager.waitFor()
     changeListManager.waitUntilRefreshed()
 
     assertChanges {
@@ -53,6 +59,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     }
 
     saveDocument(file) // Usually, should be triggered by LST
+    fileStatusManager.waitFor()
     changeListManager.waitUntilRefreshed()
 
     assertNoChanges()
@@ -66,18 +73,21 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     changeListManager.waitUntilRefreshed()
 
     editDocument(file, "new content")
-    changeListManager.waitUntilRefreshed()
+    fileStatusManager.waitFor() // processModifiedDocument -> fileDirty
+    changeListManager.waitUntilRefreshed() // refresh from git
 
     assertChanges {
       modified("file.txt")
     }
 
     undoChanges(file)
-    changeListManager.waitUntilRefreshed()
+    fileStatusManager.waitFor() // processModifiedDocument -> fileDirty
+    changeListManager.waitUntilRefreshed() // refresh from git
 
     assertNoChanges()
 
     editDocument(file, "new content")
+    fileStatusManager.waitFor()
     changeListManager.waitUntilRefreshed()
 
     assertChanges {
@@ -93,6 +103,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     changeListManager.waitUntilRefreshed()
 
     editDocument(file, "new content")
+    fileStatusManager.waitFor()
     changeListManager.waitUntilRefreshed()
 
     assertChanges {
@@ -101,6 +112,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertFalse(isDirtyPath(file))
 
     editDocument(file, "new better content")
+    fileStatusManager.waitFor()
 
     assertFalse(isDirtyPath(file))
   }
@@ -122,7 +134,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertFalse(isDirtyPath(file))
 
     writeAction {
-      DocumentUtil.executeInBulk(file.document, true) {
+      DocumentUtil.executeInBulk(file.document) {
         // do nothing
       }
     }
@@ -161,6 +173,42 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     }
     assertFalse(isDirtyPath(file))
   }
+
+  fun testCaseOnlyDirectoryRename() {
+    assumeFalse(SystemInfo.isFileSystemCaseSensitive)
+
+    val dir = repo.root.createDir("dir")
+    val file = dir.createFile("file.txt", "initial")
+    git("add .")
+    commit("initial")
+
+    editDocument(file, "initial")
+    saveDocument(file)
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+
+    changeListManager.forceStopInTestMode()
+
+    writeAction {
+      dir.delete(this)
+      val newDir = repo.root.createDir("DIR")
+      newDir.createFile("file.txt", "initial")
+    }
+    dirtyScopeManager.dirDirtyRecursively(VcsUtil.getFilePath(repo.root, "DHq")) // hash code collisions
+    dirtyScopeManager.dirDirtyRecursively(VcsUtil.getFilePath(repo.root, "djS"))
+    git("add .")
+    VcsDirtyScopeVfsListener.getInstance(project).waitForAsyncTaskCompletion()
+
+    changeListManager.forceGoInTestMode()
+    changeListManager.waitUntilRefreshed()
+
+    assertChanges {
+      rename("dir/file.txt", "DIR/file.txt")
+    }
+    assertFalse(isDirtyPath(file))
+  }
+
 
   private fun editDocument(file: VirtualFile, newContent: String) {
     runInEdtAndWait {

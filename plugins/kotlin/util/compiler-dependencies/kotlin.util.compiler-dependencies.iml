@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlinc.kotlin-dist" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-stdlib-minimal-for-test" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-ir" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-cli" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="library" name="kotlinc.incremental-compilation-impl-tests" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-build-common-tests" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-jps-plugin-classpath" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-gradle-statistics" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-script-runtime" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-jvm" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
+    <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
+    <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api-impl-base" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api-impl-base-tests" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api-fir-tests" level="project" />
+    <orderEntry type="library" name="kotlinc.symbol-light-classes" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.allopen-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.noarg-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.assignment-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.android-extensions-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.parcelize-compiler-plugin" level="project" />
+    <orderEntry type="library" name="kotlinc.lombok-compiler-plugin" level="project" />
+  </component>
+</module>

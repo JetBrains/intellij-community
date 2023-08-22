@@ -21,7 +21,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlElement;
@@ -69,7 +68,7 @@ public class TagNameReference implements PsiReference {
 
     int colon = getPrefixIndex(nameElement.getText()) + 1;
     if (myStartTagFlag) {
-      final int parentOffset = ((TreeElement)nameElement).getStartOffsetInParent();
+      final int parentOffset = nameElement.getStartOffsetInParent();
       return new TextRange(parentOffset + colon, parentOffset + nameElement.getTextLength());
     }
     else {
@@ -152,8 +151,7 @@ public class TagNameReference implements PsiReference {
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiMetaData metaData = null;
 
-    if (element instanceof PsiMetaOwner){
-      final PsiMetaOwner owner = (PsiMetaOwner)element;
+    if (element instanceof PsiMetaOwner owner){
       metaData = owner.getMetaData();
 
       if (metaData instanceof XmlElementDescriptor){

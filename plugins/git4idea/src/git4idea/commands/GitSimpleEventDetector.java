@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -39,16 +40,17 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
     BRANCH_NOT_FULLY_MERGED("is not fully merged"),
     MERGE_CONFLICT("Automatic merge failed; fix conflicts and then commit the result"),
     MERGE_CONFLICT_ON_UNSTASH("conflict"),
+    INDEX_CONFLICT_ON_UNSTASH("conflicts in index"),
     ALREADY_UP_TO_DATE("Already up-to-date", "Already up to date"),
     INVALID_REFERENCE("invalid reference:");
 
     private final List<String> myDetectionStrings;
 
-    Event(String @NotNull ... detectionStrings) {
+    Event(@NonNls String @NotNull ... detectionStrings) {
       myDetectionStrings = Arrays.asList(detectionStrings);
     }
 
-    boolean matches(@NotNull String line) {
+    boolean matches(@NotNull @NonNls String line) {
       return ContainerUtil.exists(myDetectionStrings, s -> StringUtil.containsIgnoreCase(line, s));
     }
   }

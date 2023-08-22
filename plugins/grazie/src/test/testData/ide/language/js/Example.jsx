@@ -10,11 +10,11 @@ const user = {
 const element = (
     <h1>
         { (a, b) -> a + "it <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>" + user  }
-        it <warning descr="IT_VBZ">are</warning> bad,
+        First sentence. it <warning descr="IT_VBZ">are</warning> bad,
         <p>
             it is <TYPO descr="Typo: In word 'frend'">frend</TYPO> of human
         </p>
 
-        It <warning descr="I_MOVING">working</warning> for <warning descr="MUCH_COUNTABLE">much</warning> warnings, {formatName(user)}!
+        <warning descr="PRP_VBG">It working</warning> for <warning descr="MUCH_COUNTABLE">much</warning> warnings, {formatName(user)}!
     </h1>
 );

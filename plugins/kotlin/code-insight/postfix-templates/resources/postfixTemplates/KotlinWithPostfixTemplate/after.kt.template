@@ -1,0 +1,5 @@
+fun test(context: Context) {
+    with(context) {
+
+    }
+}

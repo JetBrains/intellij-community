@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.FilenameFilter;
 import java.util.List;
 
 /**
@@ -18,7 +19,7 @@ import java.util.List;
  * <p>
  * Options can be customized via {@link FileChooserDescriptor}.
  */
-public class FileChooser {
+public final class FileChooser {
   private static final Logger LOG = Logger.getInstance(FileChooser.class);
 
   /**
@@ -134,5 +135,17 @@ public class FileChooser {
                                 @NotNull final Consumer<? super VirtualFile> callback) {
     LOG.assertTrue(!descriptor.isChooseMultiple());
     chooseFiles(descriptor, project, parent, toSelect, files -> callback.consume(files.get(0)));
+  }
+
+  public static @NotNull FilenameFilter safeInvokeFilter(@NotNull FilenameFilter filter, boolean defaultValue) {
+    return (dir, name) -> {
+      try {
+        return filter.accept(dir, name);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        return defaultValue;
+      }
+    };
   }
 }

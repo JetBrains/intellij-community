@@ -1,251 +1,197 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.panels.VerticalBox;
-import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
 
-public class ProcessPopup  {
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-  private final VerticalBox myProcessBox = new VerticalBox();
+final class ProcessPopup {
+  public static final Key<ProgressPanel> KEY = new Key<>("ProgressPanel");
+  private static final String DIMENSION_SERVICE_KEY = "ProcessPopupWindow";
 
   private final InfoAndProgressPanel myProgressPanel;
-
+  private final JPanel myIndicatorPanel;
+  private final JScrollPane myContentPanel;
   private JBPopup myPopup;
+  private boolean myPopupVisible;
 
-  private JPanel myActiveFocusedContent;
-  private JComponent myActiveContentComponent;
-
-  private final JLabel myInactiveContentComponent;
-
-  private final Wrapper myRootContent = new Wrapper();
-
-  private final Set<InlineProgressIndicator> myIndicators = new HashSet<>();
-
-  public ProcessPopup(final InfoAndProgressPanel progressPanel) {
+  ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
 
-    buildActiveContent();
-    myInactiveContentComponent = new JLabel(IdeBundle.message("progress.window.empty.text"), null, JLabel.CENTER) {
-      @Override
-      public Dimension getPreferredSize() {
-        return getEmptyPreferredSize();
+    myIndicatorPanel = new JBPanelWithEmptyText(new VerticalLayout(0)).withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
+    myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
+    myIndicatorPanel.setFocusable(true);
+    if (ExperimentalUI.isNewUI()) {
+      myIndicatorPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+    }
+
+    myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+    updateContentUI();
+  }
+
+  public void addIndicator(@NotNull InlineProgressIndicator indicator) {
+    JComponent component = indicator.getComponent();
+    if (myIndicatorPanel.getComponentCount() == 0) {
+      hideSeparator(component);
+    }
+    if (ExperimentalUI.isNewUI()) {
+      component.setOpaque(false);
+    }
+    myIndicatorPanel.add(component);
+    revalidateAll();
+  }
+
+  public void removeIndicator(@NotNull InlineProgressIndicator indicator) {
+    JComponent component = indicator.getComponent();
+    int index = myIndicatorPanel.getComponentZOrder(component);
+    if (index == -1) {
+      return;
+    }
+    myIndicatorPanel.remove(component);
+    if (index == 0 && myIndicatorPanel.getComponentCount() > 0) {
+      hideSeparator(myIndicatorPanel.getComponent(0));
+    }
+    revalidateAll();
+  }
+
+  private @NotNull Rectangle calculateBounds() {
+    JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
+
+    Dimension contentSize = myContentPanel.getPreferredSize();
+    int contentWidth = Math.max(contentSize.width, JBUI.scale(300));
+    int contentHeight = Math.max(contentSize.height, JBUI.scale(100));
+
+    int titleHeight = 0;
+    if (myPopup instanceof AbstractPopup) {
+      titleHeight = ((AbstractPopup)myPopup).getHeaderPreferredSize().height;
+    }
+
+    Rectangle frameBounds = frame.getBounds();
+    int fullHeight = frameBounds.height - titleHeight;
+
+    boolean isEmpty = myIndicatorPanel.getComponentCount() == 0;
+    int width = Math.max(frameBounds.width / 4, contentWidth);
+    int height = Math.min(isEmpty ? frameBounds.height / 4 : fullHeight, contentHeight);
+
+    int x = frameBounds.x + frameBounds.width - width - JBUI.scale(20);
+    int y = frameBounds.y + frameBounds.height - height;
+
+    if (height != fullHeight) {
+      y -= JBUI.scale(10);
+    }
+
+    StatusBarEx sb = (StatusBarEx)((IdeFrame)frame).getStatusBar();
+    if (sb != null && sb.isVisible()) {
+      int statusBarHeight = sb.getSize().height;
+      if (height == fullHeight) {
+        height -= statusBarHeight + JBUI.scale(10);
       }
-    };
-    myInactiveContentComponent.setFocusable(true);
-
-    switchToPassive();
-  }
-
-  public void addIndicator(InlineProgressIndicator indicator) {
-    myIndicators.add(indicator);
-
-    myProcessBox.add(indicator.getComponent());
-    myProcessBox.add(Box.createVerticalStrut(4));
-
-    swithToActive();
-
-    revalidateAll();
-  }
-
-  public void removeIndicator(InlineProgressIndicator indicator) {
-    if (indicator.getComponent().getParent() != myProcessBox) return;
-
-    removeExtraSeparator(indicator);
-    myProcessBox.remove(indicator.getComponent());
-
-    myIndicators.remove(indicator);
-    switchToPassive();
-
-    revalidateAll();
-  }
-
-  private void swithToActive() {
-    if (myActiveContentComponent.getParent() == null && myIndicators.size() > 0) {
-      myRootContent.removeAll();
-      myRootContent.setContent(myActiveContentComponent);
-    }
-  }
-
-  private void switchToPassive() {
-    if (myInactiveContentComponent.getParent() == null && myIndicators.size() == 0) {
-      myRootContent.removeAll();
-      myRootContent.setContent(myInactiveContentComponent);
-    }
-  }
-
-  private void removeExtraSeparator(final InlineProgressIndicator indicator) {
-    final Component[] all = myProcessBox.getComponents();
-    final int index = ArrayUtil.indexOf(all, indicator.getComponent());
-    if (index == -1) return;
-
-
-    if (index == 0 && all.length > 1) {
-      myProcessBox.remove(1);
-    } else if (all.length > 2 && index < all.length - 1) {
-      myProcessBox.remove(index + 1);
+      else {
+        y -= statusBarHeight;
+      }
     }
 
-    myProcessBox.remove(indicator.getComponent());
+    y -= titleHeight;
+
+    return new Rectangle(x, y, width, height);
   }
 
   public void show(boolean requestFocus) {
-    JComponent toFocus = myRootContent.getTargetComponent() == myActiveContentComponent ? myActiveFocusedContent : myInactiveContentComponent;
+    updateContentUI();
 
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myRootContent, toFocus);
+    createPopup(myContentPanel, myIndicatorPanel, requestFocus);
+
+    ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(LafManagerListener.TOPIC, source -> updateContentUI());
+
+    Rectangle popupBounds = calculateBounds();
+    myContentPanel.setPreferredSize(popupBounds.getSize());
+    myPopupVisible = true;
+    myPopup.showInScreenCoordinates(myProgressPanel.getComponent$intellij_platform_ide_impl().getRootPane(), popupBounds.getLocation());
+  }
+
+  public boolean isShowing() {
+    return myPopupVisible;
+  }
+
+  public void hide() {
+    if (myPopup != null) {
+      myPopupVisible = false;
+      myPopup.cancel();
+      myPopup = null;
+      myContentPanel.setPreferredSize(null);
+    }
+  }
+
+  private void revalidateAll() {
+    myContentPanel.doLayout();
+    myContentPanel.revalidate();
+    myContentPanel.repaint();
+  }
+
+  private void updateContentUI() {
+    IJSwingUtilities.updateComponentTreeUI(myContentPanel);
+    myContentPanel.getViewport().setBackground(myIndicatorPanel.getBackground());
+    myContentPanel.setBorder(null);
+  }
+
+  private static void hideSeparator(@NotNull Component component) {
+    ProgressPanel panel = ClientProperty.get(component, KEY);
+    if (panel != null) {
+      panel.setSeparatorEnabled(false);
+    }
+  }
+
+  private void createPopup(@NotNull JComponent content, @NotNull JComponent focus, boolean requestFocus) {
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(content, focus);
     builder.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         myProgressPanel.hideProcessPopup();
       }
     });
+
+    builder.setNormalWindowLevel(true);
     builder.setMovable(true);
     builder.setResizable(true);
     builder.setTitle(IdeBundle.message("progress.window.title"));
-    builder.setDimensionServiceKey(null, "ProcessPopupWindow", true);
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
-    builder.setLocateByContent(true);
-
-    builder.setCancelButton(new MinimizeButton("Hide"));
-
-    JFrame frame = (JFrame)UIUtil.findUltimateParent(myProgressPanel);
-
-    updateContentUI();
-    myActiveContentComponent.setBorder(null);
-    if (frame != null) {
-      Dimension contentSize = myRootContent.getPreferredSize();
-      Rectangle bounds = frame.getBounds();
-      int width = Math.max(bounds.width / 4, contentSize.width);
-      int height = Math.min(bounds.height / 4, contentSize.height);
-
-      int x = (int)(bounds.getMaxX() - width);
-      int y = (int)(bounds.getMaxY() - height);
-      myPopup = builder.addUserData("SIMPLE_WINDOW").createPopup();
-      myPopup.getContent().putClientProperty(AbstractPopup.FIRST_TIME_SIZE, new JBDimension(400, 0));
-
-      StatusBarEx sb = (StatusBarEx)((IdeFrame)frame).getStatusBar();
-      if (sb.isVisible()) {
-        y -= sb.getSize().height;
-      }
-
-      myPopup.showInScreenCoordinates(myProgressPanel.getRootPane(), new Point(x - 5, y - 5));
-    } else {
-      myPopup = builder.createPopup();
-      myPopup.showInCenterOf(myProgressPanel.getRootPane());
+    builder.setMinSize(new JBDimension(300, 100));
+    Component frame = ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
+    Project project = null;
+    if (frame instanceof IdeFrame ideFrame) {
+      project = ideFrame.getProject();
     }
+    builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
+    builder.setLocateWithinScreenBounds(false);
+
+    builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
+
+    myPopup = builder.createPopup();
   }
-
-  private void buildActiveContent() {
-    myActiveFocusedContent = new ActiveContent();
-
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(myProcessBox, BorderLayout.NORTH);
-
-    myActiveFocusedContent.add(wrapper, BorderLayout.CENTER);
-
-    myActiveContentComponent = new JBScrollPane(myActiveFocusedContent) {
-      @Override
-      public Dimension getPreferredSize() {
-        if (myProcessBox.getComponentCount() > 0) {
-          return super.getPreferredSize();
-        } else {
-          return getEmptyPreferredSize();
-        }
-      }
-    };
-    updateContentUI();
-  }
-
-  private void updateContentUI() {
-    if (myActiveContentComponent == null || myActiveFocusedContent == null) return;
-    IJSwingUtilities.updateComponentTreeUI(myActiveContentComponent);
-    if (myActiveContentComponent instanceof JScrollPane) {
-      ((JScrollPane)myActiveContentComponent).getViewport().setBackground(myActiveFocusedContent.getBackground());
-    }
-    myActiveContentComponent.setBorder(null);
-
-  }
-
-  private static Dimension getEmptyPreferredSize() {
-    final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
-    size.width *= 0.3d;
-    size.height *= 0.3d;
-    return size;
-  }
-
-  public void hide() {
-    if (myPopup != null) {
-      final JBPopup popup = myPopup;
-      myPopup = null;
-      popup.cancel();
-    }
-  }
-
-  public boolean isShowing() {
-    return myPopup != null;
-  }
-
-
-  private static class ActiveContent extends JPanel implements Scrollable {
-
-    private final JLabel myLabel = new JLabel("XXX");
-
-    ActiveContent() {
-      super(new BorderLayout());
-      setBorder(DialogWrapper.createDefaultBorder());
-      setFocusable(true);
-    }
-
-
-    @Override
-    public Dimension getPreferredScrollableViewportSize() {
-      return getPreferredSize();
-    }
-
-    @Override
-    public int getScrollableUnitIncrement(final Rectangle visibleRect, final int orientation, final int direction) {
-      return myLabel.getPreferredSize().height;
-    }
-
-    @Override
-    public int getScrollableBlockIncrement(final Rectangle visibleRect, final int orientation, final int direction) {
-      return myLabel.getPreferredSize().height;
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportWidth() {
-      return true;
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportHeight() {
-      return false;
-    }
-  }
-
-  private void revalidateAll() {
-    myRootContent.revalidate();
-    myRootContent.repaint();
-  }
-
 }

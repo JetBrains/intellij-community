@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
   private PostfixTemplate myTemplate;
 
   public PostfixTemplateMetaData(@NotNull PostfixTemplate template) {
-    super(template.getClass().getClassLoader(), template.getClass().getSimpleName());
+    super(template.getClass().getClassLoader(), template.getClass().getSimpleName(), false);
     myTemplate = template;
   }
 
@@ -59,7 +60,7 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
     return decorateTextDescriptorWithKey(before, key);
   }
 
-  static TextDescriptor @NotNull [] decorateTextDescriptorWithKey(TextDescriptor[] before, @NotNull String key) {
+  static TextDescriptor @NotNull [] decorateTextDescriptorWithKey(TextDescriptor[] before, @NotNull @NlsSafe String key) {
     List<TextDescriptor> list = new ArrayList<>(before.length);
     for (final TextDescriptor descriptor : before) {
       list.add(new TextDescriptor() {

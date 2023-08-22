@@ -1,4 +1,4 @@
-// "Replace with 'peek'" "true"
+// "Replace with 'peek'" "true-preview"
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;

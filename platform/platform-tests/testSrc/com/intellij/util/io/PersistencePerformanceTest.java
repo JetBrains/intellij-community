@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
-import com.intellij.util.indexing.caches.IndexUpdateRunner;
+import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
+import com.intellij.util.indexing.diagnostic.ScanningType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -58,7 +61,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile(tempDirectory, "persistent", "map" + i));
       myMaps.add(map);
     }
-    PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
+    StorageLockContext storageLockContext = new StorageLockContext();
     myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum").toPath(), storageLockContext);
   }
 
@@ -105,8 +108,10 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
-      new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, UnindexedFilesUpdater.getNumberOfIndexingThreads())
-        .indexFiles(getProject(), files, new EmptyProgressIndicator());
+      new IndexUpdateRunner(index, UnindexedFilesUpdater.getNumberOfIndexingThreads())
+        .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
+                    new EmptyProgressIndicator(), new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL),
+                    new ProjectDumbIndexingHistoryImpl(getProject()));
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());
@@ -146,7 +151,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
 
   @NotNull
   private static PersistentHashMap<String, Record> createMap(File file) throws IOException {
-    return new PersistentHashMap<>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
+    return new PersistentHashMap<>(file, new EnumeratorStringDescriptor(), new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Record value) throws IOException {
         out.writeInt(value.magnitude);

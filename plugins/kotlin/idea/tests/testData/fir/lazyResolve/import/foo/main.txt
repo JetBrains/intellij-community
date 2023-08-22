@@ -1,0 +1,4 @@
+FILE: main.kt
+    public? final? [RAW_FIR] fun foofoo(): Int {
+        ^foofoo barbar#()
+    }

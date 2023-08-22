@@ -1,50 +1,34 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.io.PagePool;
-import com.intellij.util.io.RandomAccessDataFile;
+import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.StorageLockContext;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
-class DataTable implements Disposable, Forceable {
+final class DataTable implements IDataTable {
   private static final Logger LOG = Logger.getInstance(DataTable.class);
 
   private static final int HEADER_SIZE = 32;
   private static final int DIRTY_MAGIC = 0x12ad34e4;
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
 
-  private final RandomAccessDataFile myFile;
+  private final PagedFileStorage myFile;
   private volatile int myWasteSize;
 
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_WASTE_SIZE_OFFSET = 4;
-  private boolean myIsDirty = false;
+  private volatile boolean myIsDirty;
 
-  DataTable(final File filePath, final PagePool pool) throws IOException {
-    myFile = new RandomAccessDataFile(filePath, pool);
+  DataTable(@NotNull Path filePath,
+            @NotNull StorageLockContext context) throws IOException {
+    myFile = new PagedFileStorage(filePath, context, 8 * 1024, false, false);
+    myFile.lockWrite();
+    try {
     if (myFile.length() == 0) {
       markDirty();
     }
@@ -52,34 +36,43 @@ class DataTable implements Disposable, Forceable {
       readInHeader(filePath);
     }
   }
-
-  public boolean isCompactNecessary() {
-    return ((double)myWasteSize)/myFile.length() > 0.25 && myWasteSize > 3 * FileUtilRt.MEGABYTE;
+    finally {
+      myFile.unlockWrite();
+    }
   }
 
-  private void readInHeader(File filePath) throws IOException {
+  @Override
+  public boolean isCompactNecessary() {
+    return ((double)myWasteSize) / myFile.length() > 0.25 && myWasteSize > 3 * FileUtilRt.MEGABYTE;
+  }
+
+  private void readInHeader(@NotNull Path filePath) throws IOException {
     int magic = myFile.getInt(HEADER_MAGIC_OFFSET);
     if (magic != SAFELY_CLOSED_MAGIC) {
-      myFile.dispose();
+        myFile.close();
       throw new IOException("Records table for '" + filePath + "' haven't been closed correctly. Rebuild required.");
     }
     myWasteSize = myFile.getInt(HEADER_WASTE_SIZE_OFFSET);
   }
 
-  public void readBytes(long address, byte[] bytes) {
-    myFile.get(address, bytes, 0, bytes.length);
+  @Override
+  public void readBytes(long address, byte[] bytes) throws IOException {
+    myFile.get(address, bytes, 0, bytes.length, true);
   }
 
-  public void writeBytes(long address, byte[] bytes) {
+  @Override
+  public void writeBytes(long address, byte[] bytes) throws IOException {
     writeBytes(address, bytes, 0, bytes.length);
   }
 
-  public void writeBytes(long address, byte[] bytes, int off, int len) {
+  @Override
+  public void writeBytes(long address, byte[] bytes, int off, int len) throws IOException {
     markDirty();
     myFile.put(address, bytes, off, len);
   }
 
-  public long allocateSpace(int len) {
+  @Override
+  public long allocateSpace(int len) throws IOException {
     final long result = Math.max(myFile.length(), HEADER_SIZE);
 
     // Fill them in so we won't give out wrong address from allocateSpace() next time if they still not finished writing to allocated page
@@ -87,12 +80,13 @@ class DataTable implements Disposable, Forceable {
     writeBytes(newLength - 1, new byte[]{0});
     long actualLength = myFile.length();
     if (actualLength != newLength) {
-      LOG.error("Failed to resize the storage at: " + myFile.getFile() + ". Required: " + newLength + ", actual: " + actualLength);
+      LOG.error("Failed to resize the storage at: " + myFile + ". Required: " + newLength + ", actual: " + actualLength);
     }
     return result;
   }
 
-  public void reclaimSpace(int len) {
+  @Override
+  public void reclaimSpace(int len) throws IOException {
     if (len > 0) {
       markDirty();
       myWasteSize += len;
@@ -100,26 +94,15 @@ class DataTable implements Disposable, Forceable {
   }
 
   @Override
-  public void dispose() {
-    if (!myFile.isDisposed()) {
-      markClean();
-      myFile.dispose();
-    }
+  public void close() throws IOException {
+    markClean();
+    myFile.close();
   }
 
   @Override
-  public void force() {
+  public void force() throws IOException {
     markClean();
     myFile.force();
-  }
-
-  public boolean flushSome(int maxPages) {
-    myFile.flushSomePages(maxPages);
-    if (!myFile.isDirty()) {
-      force();
-      return true;
-    }
-    return false;
   }
 
   @Override
@@ -127,29 +110,31 @@ class DataTable implements Disposable, Forceable {
     return myIsDirty || myFile.isDirty();
   }
 
-  private void markClean() {
+  private void markClean() throws IOException {
     if (myIsDirty) {
       myIsDirty = false;
       fillInHeader(SAFELY_CLOSED_MAGIC, myWasteSize);
     }
   }
 
-  private void markDirty() {
+  private void markDirty() throws IOException {
     if (!myIsDirty) {
       myIsDirty = true;
       fillInHeader(DIRTY_MAGIC, 0);
     }
   }
 
-  private void fillInHeader(int magic, int wasteSize) {
+  private void fillInHeader(int magic, int wasteSize) throws IOException {
     myFile.putInt(HEADER_MAGIC_OFFSET, magic);
     myFile.putInt(HEADER_WASTE_SIZE_OFFSET, wasteSize);
   }
 
+  @Override
   public int getWaste() {
     return myWasteSize;
   }
 
+  @Override
   public long getFileSize() {
     return myFile.length();
   }

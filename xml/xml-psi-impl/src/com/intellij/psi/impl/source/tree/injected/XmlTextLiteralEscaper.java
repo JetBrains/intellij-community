@@ -20,9 +20,6 @@ import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.impl.source.xml.XmlTextImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
-*/
 public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
   public XmlTextLiteralEscaper(@NotNull XmlTextImpl xmlText) {
     super(xmlText);

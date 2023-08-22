@@ -1,19 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EmptyConsumer;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,30 +27,24 @@ import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Objects;
 
 import static com.intellij.notification.impl.NotificationsManagerImpl.BORDER_COLOR;
 import static com.intellij.notification.impl.NotificationsManagerImpl.FILL_COLOR;
 
-/**
- * @author Alexander Lobas
- */
 public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
-  private static final String TYPE_KEY = "Type";
+  public static final Topic<BalloonNotificationListener> BALLOON_NOTIFICATION_TOPIC =
+    Topic.create("balloon notification changed", BalloonNotificationListener.class);
+  protected static final String TYPE_KEY = "Type";
 
-  private final Consumer<? super List<NotificationType>> myListener;
-  private final Computable<? extends Point> myButtonLocation;
+  protected @Nullable Component myLayoutBaseComponent;
   private BalloonImpl myPopupBalloon;
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
-  private boolean myVisible;
+  protected boolean myVisible;
+  protected Runnable hideListener;
 
-  public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent,
-                                  @NotNull Insets insets,
-                                  @NotNull Consumer<? super List<NotificationType>> listener,
-                                  @NotNull Computable<? extends Point> buttonLocation) {
+  public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     super(parent, insets);
-    myListener = listener;
-    myButtonLocation = buttonLocation;
   }
 
   @Override
@@ -61,12 +57,14 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   @Override
-  public void add(@NotNull Balloon balloon, @Nullable Object layoutData) {
-    if (layoutData instanceof BalloonLayoutData && ((BalloonLayoutData)layoutData).welcomeScreen) {
-      addToPopup((BalloonImpl)balloon, (BalloonLayoutData)layoutData);
+  public void add(@NotNull Balloon newBalloon, @Nullable Object layoutData) {
+    if (layoutData instanceof BalloonLayoutData
+        && ((BalloonLayoutData)layoutData).welcomeScreen
+        && newBalloon instanceof BalloonImpl) {
+      addToPopup((BalloonImpl)newBalloon, (BalloonLayoutData)layoutData);
     }
     else {
-      super.add(balloon, layoutData);
+      super.add(newBalloon, layoutData);
     }
   }
 
@@ -94,18 +92,21 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       });
 
       myPopupBalloon =
-        new BalloonImpl(pane, BORDER_COLOR, JBUI.emptyInsets(), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
+        new BalloonImpl(pane, BORDER_COLOR, JBInsets.emptyInsets(), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
                         null, false, 0, 0, 0, 0, false, null, null, false, false, true, null, false, null, -1);
       myPopupBalloon.setAnimationEnabled(false);
-      myPopupBalloon.setShadowBorderProvider(
-        new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
-      myPopupBalloon.setHideListener(() -> myPopupBalloon.getComponent().setVisible(false));
+      myPopupBalloon.setShadowBorderProvider(new NotificationBalloonRoundShadowBorderProvider(FILL_COLOR, BORDER_COLOR));
+      myPopupBalloon.setHideListener(() -> {
+        if (hideListener != null) {
+          hideListener.run();
+        }
+        myPopupBalloon.getComponent().setVisible(false);
+      });
       myPopupBalloon.setActionProvider(new BalloonImpl.ActionProvider() {
         private BalloonImpl.ActionButton myAction;
 
-        @NotNull
         @Override
-        public List<BalloonImpl.ActionButton> createActions() {
+        public @NotNull List<BalloonImpl.ActionButton> createActions() {
           myAction = myPopupBalloon.new ActionButton(AllIcons.Ide.Notification.Close, null, null, EmptyConsumer.getInstance());
           return Collections.singletonList(myAction);
         }
@@ -122,12 +123,12 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     Disposer.register(balloon, new Disposable() {
       @Override
       public void dispose() {
-        myBalloons.remove(balloon);
+        balloons.remove(balloon);
         myBalloonPanel.remove(balloon.getContent());
         updatePopup();
       }
     });
-    myBalloons.add(balloon);
+    balloons.add(balloon);
 
     updatePopup();
   }
@@ -138,7 +139,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       myPopupBalloon.getComponent().setVisible(true);
     }
     else {
-      myPopupBalloon.show(myLayeredPane);
+      myPopupBalloon.show(layeredPane);
       myVisible = true;
     }
   }
@@ -150,21 +151,43 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     }
   }
 
+  public void setHideListener(Runnable hideListener) {
+    this.hideListener = hideListener;
+  }
+
   private void layoutPopup() {
-    Dimension layeredSize = myLayeredPane.getSize();
+    if (myLayoutBaseComponent == null || myPopupBalloon == null) {
+      // if no component set - use default location on the LayeredPane
+      if (myPopupBalloon != null) {
+        myPopupBalloon.setBounds(null);
+      }
+      return;
+    }
+
+    Dimension layeredSize = Objects.requireNonNull(layeredPane).getSize();
     Dimension size = new Dimension(myPopupBalloon.getPreferredSize());
-    Point location = myButtonLocation.compute();
-    int x = layeredSize.width - size.width - 5;
+    Point location = SwingUtilities.convertPoint(myLayoutBaseComponent, 0, 0, layeredPane);
+    int x = layeredSize.width - size.width;
     int fullHeight = location.y;
 
     if (x > location.x) {
-      x = location.x - 20;
+      x = Math.max(location.x - 20, 0);
     }
     if (size.height > fullHeight) {
       size.height = fullHeight;
     }
 
-    myPopupBalloon.setBounds(new Rectangle(x, fullHeight - size.height, size.width, size.height));
+    int locationX = x;
+    int locationY = fullHeight - size.height;
+
+    if (ShadowJava2DPainter.Companion.enabled()) {
+      locationX -= JBUI.scale(10);
+      if (size.height < fullHeight) {
+        locationY -= JBUI.scale(5);
+      }
+    }
+
+    myPopupBalloon.setBounds(new Rectangle(locationX, locationY, size.width, size.height));
   }
 
   private void updatePopup() {
@@ -173,7 +196,8 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     for (int i = 0; i < count; i++) {
       types.add((NotificationType)((JComponent)myBalloonPanel.getComponent(i)).getClientProperty(TYPE_KEY));
     }
-    myListener.accept(types);
+
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(BALLOON_NOTIFICATION_TOPIC).notificationsChanged(types);
 
     if (myVisible) {
       if (count == 0) {
@@ -183,6 +207,18 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
         layoutPopup();
       }
     }
+  }
+
+  public @Nullable Component getLocationComponent() {
+    return myLayoutBaseComponent;
+  }
+
+  public void setLocationComponent(@Nullable Component component) {
+    myLayoutBaseComponent = component;
+  }
+
+  public interface BalloonNotificationListener {
+    void notificationsChanged(List<NotificationType> types);
   }
 
   private static class BalloonPanel extends NonOpaquePanel {
@@ -234,7 +270,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
         int x2 = getWidth() - JBUIScale.scale(16);
         int y = 0;
 
-        g.setColor(new JBColor(0xD0D0D0, 0x717375));
+        g.setColor(JBColor.namedColor("Notification.WelcomeScreen.separatorColor", new JBColor(0xD0D0D0, 0x717375)));
 
         for (int i = 0; i < count; i++) {
           Dimension size = getComponent(i).getPreferredSize();

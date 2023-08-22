@@ -12,9 +12,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleConfigurable extends AbstractExternalSystemConfigurable<GradleProjectSettings, GradleSettingsListener, GradleSettings> {
 
   public static final String DISPLAY_NAME = GradleConstants.SYSTEM_ID.getReadableName();

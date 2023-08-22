@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -13,8 +13,6 @@ import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.Icon;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.psi.PsiNameHelper.getShortClassName;
@@ -47,14 +45,6 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     String description = ElementDescriptionUtil.getElementDescription(e, UsageViewShortNameLocation.INSTANCE);
     String suffix = e instanceof PsiParameterListOwner? "()" : null;
     return suffix != null ? description + suffix : description;
-  }
-
-  @Nullable
-  @Override
-  public Icon getElementIcon(@NotNull PsiElement element) {
-    return Registry.is("editor.breadcrumbs.java.icon")
-           ? element.getIcon(0)
-           : null;
   }
 
   @Nullable
@@ -111,8 +101,7 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     sb.append(")");
   }
 
-  @NotNull
-  private static String getTypeText(@Nullable PsiType type, boolean isDumb) {
+  private static @NotNull @NlsSafe String getTypeText(@Nullable PsiType type, boolean isDumb) {
     // todo PsiTypeVisitor ?
     String result;
     if (type == null) result = "";

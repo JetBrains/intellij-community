@@ -1,21 +1,25 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collections;
 
 class TestTags extends TestObject {
@@ -31,7 +35,7 @@ class TestTags extends TestObject {
       getConfiguration(), getConfiguration().getProject(), getConfiguration().getConfigurationModule().getModule());
     final String tags = getConfiguration().getPersistentData().getTags();
     if (StringUtil.isEmptyOrSpaces(tags)) {
-      throw new RuntimeConfigurationError("Tags are not specified");
+      throw new RuntimeConfigurationError(JUnitBundle.message("tags.are.not.specified.error.message"));
     }
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     if (getSourceScope() == null) {
@@ -71,12 +75,12 @@ class TestTags extends TestObject {
   }
 
   private static void invalidTagException(String tag) throws RuntimeConfigurationWarning {
-    throw new RuntimeConfigurationWarning("Tag name [" + tag + "] must be syntactically valid");
+    throw new RuntimeConfigurationWarning(JUnitBundle.message("tag.name.0.must.be.syntactically.valid.warning", tag));
   }
 
   @Override
   public String suggestActionName() {
-    return "Tests of " + getConfiguration().getPersistentData().getCategory();
+    return JUnitBundle.message("action.text.test.tags", getConfiguration().getPersistentData().getTags());
   }
 
   @Override
@@ -91,13 +95,26 @@ class TestTags extends TestObject {
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
-    //tags written automatically inside
-    addClassesListToJavaParameters(Collections.emptyList(), s -> "", "", true, javaParameters);
+    JUnitConfiguration configuration = getConfiguration();
+    Module module = configuration.getConfigurationModule().getModule();
+    createTempFiles(javaParameters);
+    if (module != null && configuration.getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
+      try {
+        ReadAction.run(() -> JUnitStarter.printClassesList(composeDirectoryFilter(module), "", configuration.getPersistentData().getTags().replaceAll(" ", ""), "", myTempFile));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    else {
+      //tags written automatically inside
+      ReadAction.run(() -> addClassesListToJavaParameters(Collections.emptyList(), s -> "", "", false, javaParameters));
+    }
     return javaParameters;
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(final PsiElement element) {
     return null;
   }
 }

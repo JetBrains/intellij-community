@@ -15,17 +15,13 @@
  */
 package org.intellij.lang.xpath.xslt.psi;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
 
 public abstract class XsltElementFactory {
     public static XsltElementFactory getInstance() {
-        return ServiceManager.getService(XsltElementFactory.class);
+      return ApplicationManager.getApplication().getService(XsltElementFactory.class);
     }
 
     public abstract <T extends XsltElement> T wrapElement(XmlTag target, Class<T> clazz);
-
-    /** @deprecated */
-    @Deprecated
-    public abstract <T extends XsltElement> T wrapElement(XmlTag target);
 }

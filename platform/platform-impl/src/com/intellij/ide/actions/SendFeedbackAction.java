@@ -1,34 +1,40 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.FeedbackDescriptionProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import com.intellij.platform.ide.customization.FeedbackReporter;
 import com.intellij.ui.LicensingFacade;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
     boolean isSupportedOS = SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows;
-    if (info != null && info.getFeedbackUrl() != null && isSupportedOS) {
-      String feedbackSite = getFeedbackHost(info.getFeedbackUrl(), info.getCompanyName());
+    FeedbackReporter feedbackReporter = ExternalProductResourceUrls.getInstance().getFeedbackReporter();
+    if (feedbackReporter != null && isSupportedOS) {
+      String feedbackSite = feedbackReporter.getDestinationDescription();
       e.getPresentation().setDescription(ActionsBundle.messagePointer("action.SendFeedback.detailed.description", feedbackSite));
       e.getPresentation().setEnabledAndVisible(true);
     }
@@ -37,26 +43,53 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     }
   }
 
-  private static String getFeedbackHost(String feedbackUrl, String companyName) {
-    Pattern uriPattern = Pattern.compile("[^:/?#]+://(?:www\\.)?([^/?#]*).*", Pattern.DOTALL);
-    Matcher matcher = uriPattern.matcher(feedbackUrl);
-    return matcher.matches() ? matcher.group(1) : companyName;
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    submit(e.getProject());
+    FeedbackReporter feedbackReporter = ExternalProductResourceUrls.getInstance().getFeedbackReporter();
+    if (feedbackReporter != null) {
+      boolean formShown = feedbackReporter.showFeedbackForm(e.getProject(), false);
+      if (!formShown) {
+        submit(e.getProject());
+      }
+    }
   }
 
   public static void submit(@Nullable Project project) {
-    submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("reportProblemAction.progress.title.submitting")) {
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        openFeedbackPageInBrowser(project, getDescription(project));
+      }
+    });
   }
 
+  /**
+   * @deprecated use {@link FeedbackDescriptionProvider} extension point to provide additional data to description used by the default
+   * 'Send Feedback' action instead of implementing your own action and calling this method.
+   */
+  @Deprecated(forRemoval = true)
   public static void submit(@Nullable Project project, @NotNull String description) {
-    submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
+    openFeedbackPageInBrowser(project, description);
   }
 
-  static void submit(@Nullable Project project, @NotNull String urlTemplate, @NotNull String description) {
+  private static void openFeedbackPageInBrowser(@Nullable Project project, @NotNull String description) {
+    FeedbackReporter feedbackReporter = ExternalProductResourceUrls.getInstance().getFeedbackReporter();
+    if (feedbackReporter == null) return;
+    BrowserUtil.browse(feedbackReporter.feedbackFormUrl(description).toExternalForm(), project);
+  }
+
+  /**
+   * @deprecated use {@link FeedbackDescriptionProvider} extension point to provide additional data to description used by the default 
+   * 'Send Feedback' action instead of implementing your own action and calling this method.
+   */
+  @Deprecated
+  public static void submit(@Nullable Project project, @NotNull String urlTemplate, @NotNull String description) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();
     LicensingFacade la = LicensingFacade.getInstance();
@@ -69,15 +102,8 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     BrowserUtil.browse(url, project);
   }
 
-  /** @deprecated use {@link #getDescription(Project)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull String getDescription() {
-    return getDescription(null);
-  }
-
   public static @NotNull String getDescription(@Nullable Project project) {
-    StringBuilder sb = new StringBuilder("\n\n");
+    @NonNls StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
     sb.append("JRE ");
@@ -110,8 +136,9 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       for (int i = 0; i < devices.length; i++) {
         if (i > 0) sb.append(", ");
         GraphicsDevice device = devices[i];
-        Rectangle bounds = device.getDefaultConfiguration().getBounds();
-        sb.append(bounds.width).append("x").append(bounds.height);
+        DisplayMode displayMode = device.getDisplayMode();
+        float scale = JBUIScale.sysScale(device.getDefaultConfiguration());
+        sb.append(displayMode.getWidth() * scale).append("x").append(displayMode.getHeight() * scale);
       }
       if (UIUtil.isRetina()) {
         sb.append(SystemInfo.isMac ? "; Retina" : "; HiDPI");

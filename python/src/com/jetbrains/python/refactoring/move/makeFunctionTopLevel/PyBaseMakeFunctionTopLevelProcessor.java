@@ -41,9 +41,9 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +67,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     myFunction = targetFunction;
     myDestinationPath = destinationPath;
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myProject, targetFunction.getContainingFile());
-    myResolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    myResolveContext = PyResolveContext.defaultContext(typeEvalContext);
     myGenerator = PyElementGenerator.getInstance(myProject);
     mySourceFile = myFunction.getContainingFile();
   }
@@ -105,10 +105,10 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    final PyFile targetFile = PyRefactoringUtil.getOrCreateFile(myDestinationPath, myProject);
+    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
-        PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", myFunction.getName()));
+        PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));
     }
     if (importsRequired(usages, targetFile)) {
       PyMoveRefactoringUtil.checkValidImportableFile(targetFile, targetFile.getVirtualFile());
@@ -162,7 +162,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   @NotNull
-  protected abstract String getRefactoringName();
+  protected abstract @Nls String getRefactoringName();
 
   @NotNull
   protected abstract List<String> collectNewParameterNames();
@@ -214,8 +214,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(owner);
     final AnalysisResult result = new AnalysisResult();
     for (Instruction instruction : controlFlow.getInstructions()) {
-      if (instruction instanceof ReadWriteInstruction) {
-        final ReadWriteInstruction readWriteInstruction = (ReadWriteInstruction)instruction;
+      if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         final PsiElement element = readWriteInstruction.getElement();
         if (element == null) {
           continue;

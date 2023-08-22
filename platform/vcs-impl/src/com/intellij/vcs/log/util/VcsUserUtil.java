@@ -1,35 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsUser;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class VcsUserUtil {
-  @NotNull private static final Pattern NAME_PATTERN = Pattern.compile("(\\w+)[\\W_](\\w+)");
+public final class VcsUserUtil {
+  @NotNull private static final Pattern NAME_PATTERN = Pattern.compile("(\\w+)[\\p{Punct}\\s](\\w+)");
   @NotNull private static final Pattern PRINTABLE_ASCII_PATTERN = Pattern.compile("[ -~]*");
 
   @NotNull
+  @NlsSafe
   public static String toExactString(@NotNull VcsUser user) {
     return getString(user.getName(), user.getEmail());
   }
@@ -46,11 +34,13 @@ public class VcsUserUtil {
   }
 
   @NotNull
+  @NlsSafe
   public static String getShortPresentation(@NotNull VcsUser user) {
     return getName(user);
   }
 
   @NotNull
+  @NlsSafe
   private static String getName(@NotNull VcsUser user) {
     return getUserName(user.getName(), user.getEmail());
   }
@@ -77,7 +67,9 @@ public class VcsUserUtil {
   public static String getNameInStandardForm(@NotNull String name) {
     Couple<String> firstAndLastName = getFirstAndLastName(name);
     if (firstAndLastName != null) {
-      return StringUtil.toLowerCase(firstAndLastName.first) + " " + StringUtil.toLowerCase(firstAndLastName.second); // synonyms detection is currently english-only
+      return StringUtil.toLowerCase(firstAndLastName.first) +
+             " " +
+             StringUtil.toLowerCase(firstAndLastName.second); // synonyms detection is currently english-only
     }
     return nameToLowerCase(name);
   }
@@ -109,14 +101,16 @@ public class VcsUserUtil {
     return StringUtil.toLowerCase(email);
   }
 
-  public static class VcsUserHashingStrategy implements TObjectHashingStrategy<VcsUser> {
+  public static class VcsUserHashingStrategy implements Hash.Strategy<VcsUser> {
     @Override
-    public int computeHashCode(VcsUser user) {
-      return getNameInStandardForm(getName(user)).hashCode();
+    public int hashCode(@Nullable VcsUser user) {
+      return user != null ? getNameInStandardForm(getName(user)).hashCode() : 0;
     }
 
     @Override
-    public boolean equals(VcsUser user1, VcsUser user2) {
+    public boolean equals(@Nullable VcsUser user1, @Nullable VcsUser user2) {
+      if (user1 == user2) return true;
+      if (user1 == null || user2 == null) return false;
       return isSamePerson(user1, user2);
     }
   }

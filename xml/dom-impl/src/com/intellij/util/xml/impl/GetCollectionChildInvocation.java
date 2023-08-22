@@ -15,9 +15,6 @@
  */
 package com.intellij.util.xml.impl;
 
-/**
- * @author peter
- */
 public class GetCollectionChildInvocation implements Invocation {
   private final CollectionChildDescriptionImpl myDescription;
 

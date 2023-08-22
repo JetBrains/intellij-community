@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -34,7 +34,7 @@ public class IndentTest extends LightIdeaTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/formatter/indent";
 
   private CommonCodeStyleSettings getJavaSettings() {
-    return  CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    return  CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
   public void testSCR3681() throws Exception {
@@ -137,7 +137,7 @@ public class IndentTest extends LightIdeaTestCase {
         CodeStyleManager.getInstance(getProject()).reformat(file);
       }
       catch (IncorrectOperationException e) {
-        assertTrue(false);
+        throw new AssertionError(e);
       }
     }), null, null);
 
@@ -150,7 +150,7 @@ public class IndentTest extends LightIdeaTestCase {
     assertEquals(textAfter, fileText);
   }
 
-  private String loadFile(String name) throws Exception {
+  private static String loadFile(String name) throws Exception {
     String fullName = BASE_PATH + File.separatorChar + name;
     String text = FileUtil.loadFile(new File(fullName));
     text = StringUtil.convertLineSeparators(text);

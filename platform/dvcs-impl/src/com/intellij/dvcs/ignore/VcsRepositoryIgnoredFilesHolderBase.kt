@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.EventDispatcher
@@ -52,22 +52,13 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     listeners.addListener(listener, this)
   }
 
-  override fun addFiles(files: Collection<FilePath>) {
-    SET_LOCK.write { ignoredSet.addAll(files) }
-  }
-
-  override fun addFile(file: FilePath) {
-    SET_LOCK.write { ignoredSet.add(file) }
-  }
-
   override fun isInUpdateMode() = inUpdateMode.get()
 
   override fun getIgnoredFilePaths(): Set<FilePath> = SET_LOCK.read { ignoredSet.toHashSet() }
 
-  override fun containsFile(file: FilePath) =
-    SET_LOCK.read { isUnder(repositoryRootPath, ignoredSet, file) }
-
-  override fun getSize() = SET_LOCK.read { ignoredSet.size }
+  override fun containsFile(file: FilePath): Boolean {
+    return SET_LOCK.read { isUnder(repositoryRootPath, ignoredSet, file) }
+  }
 
   override fun dispose() {
     SET_LOCK.write {
@@ -84,8 +75,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       unprocessedFiles.removeAll(filesToCheck)
     }
     //if the files already unversioned, there is no need to check it for ignore
-    val unversioned = ChangeListManagerImpl.getInstanceImpl(repository.project).unversionedFilesPaths
-    filesToCheck.removeAll(unversioned)
+    val unversioned = ChangeListManager.getInstance(repository.project).unversionedFilesPaths
+    unversioned.forEach(filesToCheck::remove)
 
     if (filesToCheck.isNotEmpty()) {
       removeIgnoredFiles(filesToCheck)
@@ -98,6 +89,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
     val affectedFiles = events
       .flatMap(::getAffectedFilePaths)
+      .asSequence()
       .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
       .toList()
 
@@ -106,24 +98,26 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  fun setupListeners() =
+  fun setupListeners() {
     runReadAction {
       if (repository.project.isDisposed) return@runReadAction
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
       repository.project.messageBus.connect(this).subscribe(ChangeListListener.TOPIC, this)
     }
+  }
 
   @Throws(VcsException::class)
   protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<FilePath>
 
-  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<FilePath> =
-    try {
+  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<FilePath> {
+    return try {
       requestIgnored(paths)
     }
     catch (e: VcsException) {
       LOG.warn("Cannot request ignored: ", e)
       emptySet()
     }
+  }
 
   protected abstract fun scanTurnedOff(): Boolean
 
@@ -139,8 +133,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun removeIgnoredFiles(filePaths: Collection<FilePath>): List<FilePath> {
-    val removedIgnoredFilePaths = arrayListOf<FilePath>()
+  override fun removeIgnoredFiles(filePaths: Collection<FilePath>): Collection<FilePath> {
+    val removedIgnoredFilePaths = hashSetOf<FilePath>()
     val filePathsSet = filePaths.toHashSet()
     val ignored = SET_LOCK.read { ignoredSet.toHashSet() }
 
@@ -180,11 +174,13 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private class MyUpdate(val repository: Repository,
                          val isFullRescan: Boolean,
                          val action: () -> Unit)
-    : DisposableUpdate(repository, ComparableObject.Impl(repository, isFullRescan)) {
+    : DisposableUpdate(repository, ComparableObject.Impl(MyUpdate::class.java, repository, isFullRescan)) {
 
-    override fun canEat(update: Update) = update is MyUpdate &&
-                                          update.repository == repository &&
-                                          isFullRescan
+    override fun canEat(update: Update): Boolean {
+      return update is MyUpdate &&
+             update.repository == repository &&
+             isFullRescan
+    }
 
     override fun doRun() = action()
   }
@@ -197,7 +193,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     return ignored.toSet()
   }
 
-  private fun addNotContainedIgnores(ignored: Collection<FilePath>) =
+  private fun addNotContainedIgnores(ignored: Collection<FilePath>) {
     SET_LOCK.write {
       ignored.forEach { ignored ->
         if (!isUnder(repositoryRootPath, ignoredSet, ignored)) {
@@ -205,6 +201,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
         }
       }
     }
+  }
 
   private fun doRescan(): Set<FilePath> {
     val ignored = tryRequestIgnored().filterByRepository(repository)
@@ -216,8 +213,9 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     return ignored.toSet()
   }
 
-  private fun <REPOSITORY> Set<FilePath>.filterByRepository(repository: REPOSITORY) =
-    filter { repositoryManager.getRepositoryForFileQuick(it) == repository }
+  private fun <REPOSITORY> Set<FilePath>.filterByRepository(repository: REPOSITORY): List<FilePath> {
+    return filter { repositoryManager.getRepositoryForFileQuick(it) == repository }
+  }
 
   private fun fireUpdateStarted() {
     listeners.multicaster.updateStarted()
@@ -229,7 +227,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   @TestOnly
   inner class Waiter : VcsIgnoredHolderUpdateListener {
-
     private val awaitLatch = CountDownLatch(1)
 
     init {

@@ -1,0 +1,1 @@
+class Mai<caret>nClass

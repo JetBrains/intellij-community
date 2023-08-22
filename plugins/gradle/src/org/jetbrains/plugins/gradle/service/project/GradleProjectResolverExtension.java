@@ -25,7 +25,6 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
-import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.IntermediateResultHandler;
 import org.gradle.tooling.model.BuildModel;
@@ -48,7 +47,7 @@ import java.util.*;
  * Every extension is expected to have a no-args constructor because they are used at external process and we need a simple way
  * to instantiate it.
  *
- * @author Denis Zhdanov, Vladislav Soroka
+ * @author Vladislav Soroka
  * @see GradleManager#enhanceRemoteProcessing(SimpleJavaParameters)   sample enhanceParameters() implementation
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer {
@@ -62,16 +61,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   @Nullable
   GradleProjectResolverExtension getNext();
-
-  /**
-   * @deprecated is not used anymore
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  default ProjectData createProject() {
-    throw new UnsupportedOperationException();
-  }
 
   void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject);
 
@@ -116,34 +105,16 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @NotNull
   Set<Class<?>> getExtraProjectModelClasses();
 
-  /**
-   * Allows to request gradle tooling models after "sync" tasks are run
-   *
-   * @see BuildActionExecuter.Builder#buildFinished(org.gradle.tooling.BuildAction, org.gradle.tooling.IntermediateResultHandler)
-   */
-  @Nullable
-  default ProjectImportModelProvider getModelProvider() {return null;}
+  @NotNull
+  Set<Class<?>> getExtraBuildModelClasses();
 
-  /**
-   * Allows to request gradle tooling models after gradle projects are loaded and before "sync" tasks are run.
-   * This can be used to setup "sync" tasks for the import
-   *
-   * @see BuildActionExecuter.Builder#projectsLoaded(org.gradle.tooling.BuildAction, org.gradle.tooling.IntermediateResultHandler)
-   */
   @Nullable
-  default ProjectImportModelProvider getProjectsLoadedModelProvider() {return null;}
+  default ProjectImportModelProvider getModelProvider() { return null; }
 
-  /**
-   * @return whether or not this resolver requires Gradle task running infrastructure to be initialized, if any of the resolvers which are
-   * used by the resolution return true then the {@link org.gradle.tooling.BuildActionExecuter} will have
-   * {@link org.gradle.tooling.BuildActionExecuter#forTasks(String...)} called with an empty list. This will allow
-   * any tasks that are scheduled by Gradle plugin in the model builders to be run.
-   *
-   * @deprecated not required anymore
-   */
-  @Deprecated
-  default boolean requiresTaskRunning() {
-    return false;
+  @NotNull
+  default List<ProjectImportModelProvider> getModelProviders() {
+    ProjectImportModelProvider provider = getModelProvider();
+    return provider == null ? Collections.emptyList() : List.of(provider);
   }
 
   /**
@@ -156,7 +127,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   /**
    * add target types to be used in the polymorphic containers
-   * @return
    */
   default Set<Class<?>> getTargetTypes() {
     return Collections.emptySet();
@@ -187,7 +157,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * tooling api.
    *
    * @param models obtained after projects loaded phase
-   * @see #getProjectsLoadedModelProvider()
+   * @see #getProjectsLoadedModelProviders()
    */
   default void projectsLoaded(@Nullable ModelsHolder<BuildModel, ProjectModel> models) {}
 
@@ -214,18 +184,26 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   String JVM_PARAMETERS_SETUP_KEY = "JVM_PARAMETERS_SETUP";
 
   // flag that shows if tasks will be treated as tests invocation by the IDE (e.g., test events are expected)
-  String TEST_EXECUTION_EXPECTED_KEY = "TEST_EXECUTION_EXPECTED";
+  String IS_RUN_AS_TEST_KEY = "IS_RUN_AS_TEST";
+
+  // Test events will be produces by TAPI and there is no need for console reporting
+  String IS_BUILT_IN_TEST_EVENTS_USED_KEY = "IS_BUILT_IN_TEST_EVENTS_USED";
 
   // port for callbacks which Gradle tasks communicate to IDE
   String DEBUG_DISPATCH_PORT_KEY = "DEBUG_DISPATCH_PORT";
 
+  // address for callbacks which Gradle tasks communicate to IDE
+  String DEBUG_DISPATCH_ADDR_KEY = "DEBUG_DISPATCH_ADDR";
+
   // options passed from project to Gradle
   String DEBUG_OPTIONS_KEY = "DEBUG_OPTIONS";
+
+  // for Gradle version specific init scripts
+  String GRADLE_VERSION = "GRADLE_VERSION";
 
   /**
    * Allows extension to contribute to init script
    * @param taskNames gradle task names to be executed
-   * @param jvmParametersSetup jvm configuration that will be applied to Gradle jvm
    * @param initScriptConsumer consumer of init script text. Must be called to add script txt
    * @param parameters storage for passing optional named parameters
    */

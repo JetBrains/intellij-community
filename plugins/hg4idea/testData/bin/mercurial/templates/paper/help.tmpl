@@ -1,0 +1,34 @@
+{header}
+<title>Help: {topic}</title>
+</head>
+<body>
+
+<div class="container">
+<div class="menu">
+<div class="logo">
+<a href="{logourl}">
+<img src="{staticurl|urlescape}{logoimg}" alt="mercurial" /></a>
+</div>
+<ul>
+<li><a href="{url|urlescape}shortlog{sessionvars%urlparameter}">log</a></li>
+<li><a href="{url|urlescape}graph{sessionvars%urlparameter}">graph</a></li>
+<li><a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a></li>
+<li><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a></li>
+<li><a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a></li>
+</ul>
+<ul>
+ <li class="active"><a href="{url|urlescape}help{sessionvars%urlparameter}">help</a></li>
+</ul>
+</div>
+
+<div class="main">
+<h2 class="breadcrumb"><a href="/">Mercurial</a> {pathdef%breadcrumb}</h2>
+<h3>Help: {topic}</h3>
+{searchform}
+<div id="doc">
+{rstdoc(doc, "html")}
+</div>
+</div>
+</div>
+
+{footer}

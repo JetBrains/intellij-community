@@ -53,7 +53,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
    *                                    under the {@link #getRootPath() content root}
    */
   public void storePath(@NotNull ExternalSystemSourceType type, @NotNull String path, @Nullable String packagePrefix) throws IllegalArgumentException {
-    if (FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
+    if (FileUtil.isAncestor(getRootPath(), path, false)) {
       Collection<SourceRoot> paths = data.get(type);
       if (paths == null) {
         data.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
@@ -121,8 +121,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SourceRoot)) return false;
-      SourceRoot root = (SourceRoot)o;
+      if (!(o instanceof SourceRoot root)) return false;
       if (packagePrefix != null ? !packagePrefix.equals(root.packagePrefix) : root.packagePrefix != null) return false;
       if (!path.equals(root.path)) return false;
       return true;

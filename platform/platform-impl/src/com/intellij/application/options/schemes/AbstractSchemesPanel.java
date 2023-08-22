@@ -1,23 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,13 +94,11 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     return null;
   }
 
-  @Nullable
-  protected JComponent createBottomComponent() {
+  protected @Nullable JComponent createBottomComponent() {
     return null;
   }
 
-  @NotNull
-  private JPanel createControlsPanel() {
+  private @NotNull JPanel createControlsPanel() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
     String label = getComboBoxLabel();
@@ -107,7 +109,9 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
-    myToolbar = createToolbar();
+    ActionToolbar toolbar = createToolbar();
+    toolbar.setTargetComponent(mySchemesCombo.getComponent());
+    myToolbar = toolbar.getComponent();
     controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
     controlsPanel.add(myToolbar);
     controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
@@ -122,18 +126,17 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     return controlsPanel;
   }
 
-  @NotNull
-  private JComponent createToolbar() {
+  private @NotNull ActionToolbar createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowSchemesActionsListAction(myActions));
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SchemesPanelToolbar", group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
     Dimension maxSize = toolbarComponent.getMaximumSize();
     toolbarComponent.setMaximumSize(JBUI.size(22, maxSize.height));
     toolbarComponent.setBorder(JBUI.Borders.empty(3));
-    return toolbarComponent;
+    return toolbar;
   }
 
   public final JComponent getToolbar() {
@@ -145,8 +148,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    * @return Scheme actions associated with the panel.
    * @see AbstractSchemeActions
    */
-  @NotNull
-  protected abstract AbstractSchemeActions<T> createSchemeActions();
+  protected abstract @NotNull AbstractSchemeActions<T> createSchemeActions();
   
   public final T getSelectedScheme() {
     return mySchemesCombo.getSelectedScheme();
@@ -189,12 +191,12 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.cancelEdit();
   }
 
-  public final void showInfo(@NotNull String message, @NotNull MessageType messageType) {
+  public final void showInfo(@NotNull @Nls String message, @NotNull MessageType messageType) {
     myToolbar.setVisible(false);
     showMessage(message, messageType);
   }
 
-  protected abstract void showMessage(@Nullable String message, @NotNull MessageType messageType);
+  protected abstract void showMessage(@NlsContexts.Label @Nullable String message, @NotNull MessageType messageType);
 
   final void clearInfo() {
     myToolbar.setVisible(true);
@@ -203,24 +205,20 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   protected abstract void clearMessage();
 
-  @NotNull
-  public final AbstractSchemeActions<T> getActions() {
+  public final @NotNull AbstractSchemeActions<T> getActions() {
     return myActions;
   }
 
-  @NotNull
-  protected abstract InfoComponent createInfoComponent();
+  protected abstract @NotNull InfoComponent createInfoComponent();
 
   /**
    * @return a string label to place before the combobox or {@code null} if it is not needed
    */
-  @Nullable
-  protected String getComboBoxLabel() {
+  protected @Nullable @NlsContexts.Label String getComboBoxLabel() {
     return getSchemeTypeName() + ":";
   }
 
-  @NotNull
-  protected String getSchemeTypeName() {
+  protected @NotNull @Nls String getSchemeTypeName() {
     return ApplicationBundle.message("editbox.scheme.type.name");
   }
 
@@ -228,8 +226,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    * @return Schemes model implementation.
    * @see SchemesModel
    */
-  @NotNull
-  public abstract SchemesModel<T> getModel();
+  public abstract @NotNull SchemesModel<T> getModel();
 
   /**
    * Must be called when any settings are changed.
@@ -264,7 +261,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   public abstract boolean useBoldForNonRemovableSchemes();
 
-  public void showStatus(@NotNull String message, @NotNull MessageType messageType) {
+  public void showStatus(@NotNull @NlsContexts.PopupContent String message, @NotNull MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
                                     messageType.getPopupBackground(), null);
@@ -272,10 +269,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final Balloon balloon = balloonBuilder.createBalloon();
     Point pointOnComponent = new Point(myToolbar.getWidth() / 4, myToolbar.getHeight() / 4);
     balloon.show(new RelativePoint(myToolbar, pointOnComponent), Balloon.Position.above);
-    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
+    Disposer.register(ApplicationManager.getApplication(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends DefaultActionGroup {
+  private static class ShowSchemesActionsListAction extends NonTrivialActionGroup implements DumbAware {
     private final AbstractSchemeActions<?> mySchemeActions;
 
     ShowSchemesActionsListAction(AbstractSchemeActions<?> schemeActions) {
@@ -284,24 +281,18 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.AbstractSchemesPanel.text"));
       getTemplatePresentation().setDescription(IdeBundle.messagePointer("action.presentation.AbstractSchemesPanel.description"));
+      getTemplatePresentation().setPerformGroup(true);
     }
 
     @Override
-    public boolean isDumbAware() {
-      return true;
-    }
-
-    @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      return mySchemeActions.getActions().toArray(EMPTY_ARRAY);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      DefaultActionGroup group = new DefaultActionGroup();
-      group.addAll(mySchemeActions.getActions());
       ListPopup popup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, group, e.getDataContext(), true, null, Integer.MAX_VALUE);
+        createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
       HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
       Component component = e.getInputEvent().getComponent();
@@ -314,7 +305,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
   }
 
-  protected static void showMessage(@Nullable String message,
+  protected static void showMessage(@NlsContexts.Label @Nullable String message,
                                     @NotNull MessageType messageType,
                                     @NotNull JLabel infoComponent) {
     infoComponent.setText(message);

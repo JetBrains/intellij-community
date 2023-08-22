@@ -25,9 +25,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyNoneLiteralExpressionImpl extends PyElementImpl implements PyNoneLiteralExpression {
   public PyNoneLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);

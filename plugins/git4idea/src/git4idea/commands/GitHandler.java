@@ -1,20 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
+import com.intellij.openapi.vcs.VcsEnvCustomizer;
+import com.intellij.openapi.vcs.VcsEnvCustomizer.VcsExecutableContext;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
@@ -22,6 +28,8 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitExecutable;
+import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +53,7 @@ public abstract class GitHandler {
   private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
 
   private final Project myProject;
-  @NotNull private final String myPathToExecutable;
+  @NotNull protected final GitExecutable myExecutable;
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
@@ -62,8 +70,7 @@ public abstract class GitHandler {
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   protected boolean mySilent; // if true, the command execution is not logged in version control view
 
-  private boolean myWithLowPriority;
-  private boolean myWithNoTty;
+  private final GitExecutableContext myExecutableContext;
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
@@ -75,17 +82,15 @@ public abstract class GitHandler {
    * @param directory a process directory
    * @param command   a command to execute
    */
-  protected GitHandler(@NotNull Project project,
+  protected GitHandler(@Nullable Project project,
                        @NotNull File directory,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
     this(project,
          directory,
-         GitExecutableManager.getInstance().getPathToGit(project),
+         GitExecutableManager.getInstance().getExecutable(project),
          command,
          configParameters);
-    myProgressParameterAllowed =
-      GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(project);
   }
 
   /**
@@ -95,35 +100,34 @@ public abstract class GitHandler {
    * @param vcsRoot a process directory
    * @param command a command to execute
    */
-  protected GitHandler(@NotNull Project project,
+  protected GitHandler(@Nullable Project project,
                        @NotNull VirtualFile vcsRoot,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
-    this(project, VfsUtil.virtualToIoFile(vcsRoot), command, configParameters);
+    this(project, VfsUtilCore.virtualToIoFile(vcsRoot), command, configParameters);
   }
 
   /**
-   * A constructor for handler that can be run without project association
+   * A constructor for handler that can be run without project association.
    *
    * @param project          optional project
    * @param directory        working directory
-   * @param pathToExecutable path to git executable
+   * @param executable       git executable
    * @param command          git command to execute
    * @param configParameters list of config parameters to use for this git execution
    */
   protected GitHandler(@Nullable Project project,
                        @NotNull File directory,
-                       @NotNull String pathToExecutable,
+                       @NotNull GitExecutable executable,
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
     myProject = project;
-    myVcs = project != null ? GitVcs.getInstance(project) : null;
-    myPathToExecutable = pathToExecutable;
+    myExecutable = executable;
     myCommand = command;
 
     myCommandLine = new GeneralCommandLine()
       .withWorkDirectory(directory)
-      .withExePath(myPathToExecutable)
+      .withExePath(executable.getExePath())
       .withCharset(StandardCharsets.UTF_8);
 
     for (String parameter : getConfigParameters(project, configParameters)) {
@@ -133,18 +137,31 @@ public abstract class GitHandler {
 
     myStdoutSuppressed = true;
     mySilent = myCommand.lockingPolicy() != GitCommand.LockingPolicy.WRITE;
+
+    GitVcs gitVcs = myProject != null ? GitVcs.getInstance(myProject) : null;
+    VirtualFile root = VfsUtil.findFileByIoFile(directory, true);
+    VcsEnvCustomizer.ExecutableType executableType = myExecutable instanceof GitExecutable.Wsl
+                                                     ? VcsEnvCustomizer.ExecutableType.WSL
+                                                     : VcsEnvCustomizer.ExecutableType.LOCAL;
+    myExecutableContext = new GitExecutableContext(gitVcs, root, executableType);
   }
 
   @NotNull
-  private static List<String> getConfigParameters(@Nullable Project project, @NotNull List<String> requestedConfigParameters) {
+  private static List<@NonNls String> getConfigParameters(@Nullable Project project,
+                                                          @NotNull List<@NonNls String> requestedConfigParameters) {
     if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(project)) {
       return Collections.emptyList();
     }
 
-    List<String> toPass = new ArrayList<>();
+    List<@NonNls String> toPass = new ArrayList<>();
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      toPass.add("protocol.file.allow=always");
+    }
+
     return toPass;
   }
 
@@ -163,9 +180,13 @@ public abstract class GitHandler {
     return myCommandLine.getWorkDirectory();
   }
 
+  public VcsExecutableContext getExecutableContext() {
+    return myExecutableContext;
+  }
+
   @NotNull
-  String getExecutablePath() {
-    return myPathToExecutable;
+  public GitExecutable getExecutable() {
+    return myExecutable;
   }
 
   @NotNull
@@ -181,40 +202,40 @@ public abstract class GitHandler {
    * Execute process with lower priority
    */
   public void withLowPriority() {
-    myWithLowPriority = true;
+    myExecutableContext.withLowPriority(true);
   }
 
   /**
    * Detach git process from IDE TTY session
    */
   public void withNoTty() {
-    myWithNoTty = true;
+    myExecutableContext.withNoTty(true);
   }
 
   public void addParameters(@NonNls String @NotNull ... parameters) {
     addParameters(Arrays.asList(parameters));
   }
 
-  public void addParameters(@NotNull List<String> parameters) {
+  public void addParameters(@NotNull List<@NonNls String> parameters) {
     for (String parameter : parameters) {
       myCommandLine.addParameter(escapeParameterIfNeeded(parameter));
     }
   }
 
   @NotNull
-  private String escapeParameterIfNeeded(@NotNull String parameter) {
+  private String escapeParameterIfNeeded(@NotNull @NonNls String parameter) {
     if (escapeNeeded(parameter)) {
       return parameter.replaceAll("\\^", "^^^^");
     }
     return parameter;
   }
 
-  private boolean escapeNeeded(@NotNull String parameter) {
+  private boolean escapeNeeded(@NotNull @NonNls String parameter) {
     return SystemInfo.isWindows && isCmd() && parameter.contains("^");
   }
 
   private boolean isCmd() {
-    return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd");
+    return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd"); //NON-NLS
   }
 
   public void addRelativePaths(FilePath @NotNull ... parameters) {
@@ -234,7 +255,7 @@ public abstract class GitHandler {
   }
 
   public void addAbsoluteFile(@NotNull File file) {
-    myCommandLine.addParameter(file.getAbsolutePath());
+    myCommandLine.addParameter(myExecutable.convertFilePath(file));
   }
 
   /**
@@ -258,8 +279,14 @@ public abstract class GitHandler {
   /**
    * @return a command line with full path to executable replace to "git"
    */
+  @NlsSafe
   public String printableCommandLine() {
-    return unescapeCommandLine(myCommandLine.getCommandLineString("git"));
+    if (getExecutable().isLocal()) {
+      return unescapeCommandLine(myCommandLine.getCommandLineString("git")); //NON-NLS
+    }
+    else {
+      return unescapeCommandLine(myCommandLine.getCommandLineString(null));
+    }
   }
 
   @NotNull
@@ -346,11 +373,21 @@ public abstract class GitHandler {
    * @param name  the variable name
    * @param value the variable value
    */
-  public void addCustomEnvironmentVariable(String name, String value) {
+  public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @Nullable @NonNls String value) {
     myCustomEnv.put(name, value);
   }
 
-  public boolean containsCustomEnvironmentVariable(@NotNull String key) {
+  /**
+   * Use {@link #getExecutable()} and {@link GitExecutable#convertFilePath(File)}
+   *
+   * @deprecated Do not use, each ENV may have its own escaping rules.
+   */
+  @Deprecated
+  public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @NotNull File file) {
+    myCustomEnv.put(name, myExecutable.convertFilePath(file));
+  }
+
+  public boolean containsCustomEnvironmentVariable(@NotNull @NonNls String key) {
     return myCustomEnv.containsKey(key);
   }
 
@@ -403,14 +440,15 @@ public abstract class GitHandler {
   }
 
   private void start() {
+    if (myProject != null && !myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+      throw new IllegalStateException("Shouldn't be possible to run a Git command in the safe mode");
+    }
+
     if (isStarted()) {
       throw new IllegalStateException("The process has been already started");
     }
 
     try {
-      if (myWithLowPriority) ExecUtil.setupLowPriorityExecution(myCommandLine);
-      if (myWithNoTty) ExecUtil.setupNoTtyExecution(myCommandLine);
-
       myStartTime = System.currentTimeMillis();
       String logDirectoryPath = myProject != null
                                 ? GitImplBase.stringifyWorkingDir(myProject.getBasePath(), myCommandLine.getWorkDirectory())
@@ -423,6 +461,10 @@ public abstract class GitHandler {
       }
 
       prepareEnvironment();
+      myExecutable.patchCommandLine(this, myCommandLine, myExecutableContext);
+
+      OUTPUT_LOG.debug(String.format("%s %% %s started: %s", getCommand(), this.hashCode(), myCommandLine));
+
       // start process
       myProcess = startProcess();
       startHandlingStreams();
@@ -441,9 +483,21 @@ public abstract class GitHandler {
   private void prepareEnvironment() {
     Map<String, String> executionEnvironment = myCommandLine.getEnvironment();
     executionEnvironment.clear();
-    executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
+    if (myExecutable.isLocal()) {
+      executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
+    }
     executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
     executionEnvironment.putAll(myCustomEnv);
+    executionEnvironment.put(GitCommand.IJ_HANDLER_MARKER_ENV, "true");
+
+    // customizers take read locks, which could not be acquired under potemkin progress
+    if (!(ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress)) {
+      VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
+        customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, myExecutableContext);
+      });
+
+      executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer
+    }
   }
 
   protected abstract Process startProcess() throws ExecutionException;
@@ -464,9 +518,6 @@ public abstract class GitHandler {
   }
 
   //region deprecated stuff
-  //Used by Gitflow in GitInitLineHandler.onTextAvailable
-  @Deprecated
-  protected final GitVcs myVcs;
   @Deprecated
   private Integer myExitCode; // exit code or null if exit code is not yet available
   @Deprecated
@@ -474,30 +525,13 @@ public abstract class GitHandler {
   @Deprecated
   private static final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
-  private boolean myProgressParameterAllowed = false;
-  @Deprecated
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<>());
-
-  /**
-   * Adds "--progress" parameter. Usable for long operations, such as clone or fetch.
-   *
-   * @return is "--progress" parameter supported by this version of Git.
-   * @deprecated use {@link #addParameters}
-   */
-  @Deprecated
-  public boolean addProgressParameter() {
-    if (myProgressParameterAllowed) {
-      addParameters("--progress");
-      return true;
-    }
-    return false;
-  }
 
   /**
    * @return exit code for process if it is available
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int getExitCode() {
     if (myExitCode == null) {
       return -1;
@@ -542,7 +576,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * @param postStartAction
    * @deprecated remove together with {@link GitHandlerUtil}
    */
   @Deprecated
@@ -584,7 +617,7 @@ public abstract class GitHandler {
    * @return unmodifiable list of errors.
    * @deprecated remove together with {@link GitHandlerUtil} and {@link GitTask}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<VcsException> errors() {
     return Collections.unmodifiableList(myErrors);
   }

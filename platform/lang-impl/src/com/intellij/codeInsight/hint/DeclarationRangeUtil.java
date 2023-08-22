@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.util.MixinExtension;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.MixinEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DeclarationRangeUtil {
+public final class DeclarationRangeUtil {
+  private static final ExtensionPointName<MixinEP<DeclarationRangeHandler<PsiElement>>> EP_NAME = new ExtensionPointName<>("com.intellij.declarationRangeHandler");
+
   @NotNull
   public static TextRange getDeclarationRange(@NotNull PsiElement container) {
     TextRange textRange = getPossibleDeclarationAtRange(container);
@@ -30,10 +18,12 @@ public class DeclarationRangeUtil {
     return textRange;
   }
 
-  @Nullable
-  public static TextRange getPossibleDeclarationAtRange(@NotNull PsiElement container) {
-    DeclarationRangeHandler handler = MixinExtension.getInstance(DeclarationRangeHandler.EP_NAME, container);
-    //noinspection unchecked
-    return handler != null ? handler.getDeclarationRange(container) : null;
+  public static @Nullable TextRange getPossibleDeclarationAtRange(@NotNull PsiElement container) {
+    for (MixinEP<DeclarationRangeHandler<PsiElement>> ep: EP_NAME.getIterable()) {
+      if (ep.getKey().isInstance(container)) {
+        return ep.getInstance().getDeclarationRange(container);
+      }
+    }
+    return null;
   }
 }

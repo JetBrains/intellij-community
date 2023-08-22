@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.test
 
 import com.intellij.notification.NotificationType
@@ -7,15 +7,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
-import org.jetbrains.plugins.github.api.GHRepositoryPath
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.api.GithubApiRequests
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubRepo
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.util.concurrent.ThreadLocalRandom
 
@@ -24,20 +24,20 @@ import java.util.concurrent.ThreadLocalRandom
  * The base class for JUnit platform tests of the github plugin.<br></br>
  * Extend this test to write a test on GitHub which has the following features/limitations:
  *
- *  * This is a "platform test case", which means that IDEA [almost] production platform is set up before the test starts.
+ *  * This is a "platform test case", which means that IDEA "almost" production platform is set up before the test starts.
  *  * Project base directory is the root of everything.
  *
  *
  * All tests inherited from this class are required to have a token to access the Github server.
  * They are set up in Environment variables: <br></br>
- * `idea.test.github.host<br></br>
- * idea.test.github.token1<br></br> // token test user
- * idea.test.github.token2` // token user with configured test repositories
+ * `idea_test_github_host<br></br>
+ * idea_test_github_token1<br></br> // token test user
+ * idea_test_github_token2` // token user with configured test repositories
  *
  */
 abstract class GithubTest : GitPlatformTest() {
 
-  private lateinit var authenticationManager: GithubAuthenticationManager
+  private lateinit var accountManager: GHAccountManager
 
   private lateinit var organisation: String
   protected lateinit var mainAccount: AccountData
@@ -50,27 +50,26 @@ abstract class GithubTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    val host = System.getenv("idea.test.github.host")
-    val token1 = System.getenv("idea.test.github.token1")
-    val token2 = System.getenv("idea.test.github.token2")
+    val host = GithubServerPath.from(System.getenv("idea_test_github_host") ?: System.getenv("idea.test.github.host"))
+    val token1 = System.getenv("idea_test_github_token1") ?: System.getenv("idea.test.github.token1")
+    val token2 = System.getenv("idea_test_github_token2") ?: System.getenv("idea.test.github.token2")
 
-    assertNotNull(host)
     assertNotNull(token1)
     assertNotNull(token2)
 
-    authenticationManager = service()
+    accountManager = service()
 
-    organisation = System.getenv("idea.test.github.org")
+    organisation = System.getenv("idea_test_github_org") ?: System.getenv("idea.test.github.org")
     assertNotNull(organisation)
     mainAccount = createAccountData(host, token1)
     secondaryAccount = createAccountData(host, token2)
     setCurrentAccount(mainAccount)
   }
 
-  private fun createAccountData(host: String, token: String): AccountData {
-    val executorManager = service<GithubApiRequestExecutorManager>()
-    val account = authenticationManager.registerAccount("token", host, token)
-    val executor = executorManager.getExecutor(account)
+  private fun createAccountData(host: GithubServerPath, token: String): AccountData {
+    val account = GHAccountManager.createAccount("token", host)
+    runBlocking { accountManager.updateAccount(account, token) }
+    val executor = service<GithubApiRequestExecutor.Factory>().create(token)
     val username = executor.execute(GithubApiRequests.CurrentUser.get(account.server)).login
 
     return AccountData(token, account, username, executor)
@@ -78,13 +77,13 @@ abstract class GithubTest : GitPlatformTest() {
 
   @Throws(Exception::class)
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) })
-      .append(ThrowableRunnable { deleteRepos(mainAccount, mainRepos) })
-      .append(ThrowableRunnable { setCurrentAccount(null) })
-      .append(ThrowableRunnable { if (::authenticationManager.isInitialized) authenticationManager.clearAccounts() })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) },
+      ThrowableRunnable { deleteRepos(mainAccount, mainRepos) },
+      ThrowableRunnable { setCurrentAccount(null) },
+      ThrowableRunnable { if (::accountManager.isInitialized) runBlocking { accountManager.updateAccounts(emptyMap()) } },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   override fun getDebugLogCategories(): Collection<String> {
@@ -92,7 +91,7 @@ abstract class GithubTest : GitPlatformTest() {
   }
 
   protected open fun setCurrentAccount(accountData: AccountData?) {
-    authenticationManager.setDefaultAccount(myProject, accountData?.account)
+    GHAccountsUtil.setDefaultAccount(myProject, accountData?.account)
   }
 
   protected fun createUserRepo(account: AccountData, autoInit: Boolean = false): GithubRepo {
@@ -146,7 +145,11 @@ abstract class GithubTest : GitPlatformTest() {
   private fun deleteRepos(account: AccountData, repos: Collection<String>) {
     setCurrentAccount(account)
     for (repo in repos) {
-      account.executor.execute(GithubApiRequests.Repos.delete(repo))
+      retry(LOG, true) {
+        account.executor.execute(GithubApiRequests.Repos.delete(repo))
+        val info = account.executor.execute(GithubApiRequests.Repos.get(repo))
+        check(info == null) { "Repository still exists" }
+      }
     }
   }
 
@@ -175,7 +178,11 @@ abstract class GithubTest : GitPlatformTest() {
     assertEquals("Notification has wrong type", type, actualNotification.type)
   }
 
-  override fun runInDispatchThread() = true
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+    runInEdtAndWait {
+      super.runTestRunnable(testRunnable)
+    }
+  }
 
   protected data class AccountData(val token: String,
                                    val account: GithubAccount,
@@ -185,14 +192,20 @@ abstract class GithubTest : GitPlatformTest() {
   companion object {
     private const val RETRIES = 3
 
-    internal fun retry(LOG: Logger, action: () -> Unit) {
+    internal fun retry(LOG: Logger, exception: Boolean = true, action: () -> Unit) {
       for (i in 1..RETRIES) {
         try {
           LOG.debug("Attempt #$i")
           return action()
         }
         catch (e: Throwable) {
-          if (i == RETRIES) throw e
+          if (i == RETRIES) {
+            if (exception) throw e
+            else {
+              LOG.error(e)
+              return
+            }
+          }
           Thread.sleep(1000L)
         }
       }

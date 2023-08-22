@@ -1,20 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -45,7 +45,7 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 /**
  * @author Pavel Fatin
  */
-class ImmediatePainter {
+final class ImmediatePainter {
   private static final Logger LOG = Logger.getInstance(ImmediatePainter.class);
   private static final int DEBUG_PAUSE_DURATION = 1000;
 
@@ -104,7 +104,8 @@ class ImmediatePainter {
            !isInVirtualSpace(editor, caret) &&
            !isInsertion(document, caret.getOffset()) &&
            !caret.isAtRtlLocation() &&
-           !caret.isAtBidiRunBoundary();
+           !caret.isAtBidiRunBoundary() &&
+           noBorderEffectPainted(editor, caret);
   }
 
   private static boolean isInVirtualSpace(final Editor editor, final Caret caret) {
@@ -113,6 +114,16 @@ class ImmediatePainter {
 
   private static boolean isInsertion(final Document document, final int offset) {
     return offset < document.getTextLength() && document.getCharsSequence().charAt(offset) != '\n';
+  }
+
+  private static boolean noBorderEffectPainted(EditorEx editor, Caret caret) {
+    int offset = caret.getOffset();
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    return editor.getMarkupModel().processRangeHighlightersOverlappingWith(offset, offset, h -> {
+      TextAttributes attrs = h.getTextAttributes(colorsScheme);
+      return attrs == null || !attrs.hasEffects() ||
+             TextAttributesEffectsBuilder.create(attrs).getEffectDescriptor(TextAttributesEffectsBuilder.EffectSlot.FRAME_SLOT) == null;
+    });
   }
 
   private void paintImmediately(final Graphics2D g, final int offset, final char c2) {
@@ -166,12 +177,14 @@ class ImmediatePainter {
     final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,
                                                              caretWidth, lineHeight + topOverhang + bottomOverhang);
 
+    final float rectangle2Start = (float)PaintUtil.alignToInt(p2x, g, PaintUtil.RoundingMode.FLOOR);
+    final float rectangle2End = (float)PaintUtil.alignToInt(p2x + width2 + caretWidth - caretShift, g, PaintUtil.RoundingMode.CEIL);
     final Rectangle2D rectangle1 = new Rectangle2D.Float(p2x - width1, p2y, width1, lineHeight);
-    final Rectangle2D rectangle2 = new Rectangle2D.Float(p2x, p2y, width2 + caretWidth - caretShift, lineHeight);
+    final Rectangle2D rectangle2 = new Rectangle2D.Float(rectangle2Start, p2y, rectangle2End - rectangle2Start, lineHeight);
 
     final Consumer<Graphics2D> painter = graphics -> {
       EditorUIUtil.setupAntialiasing(graphics);
-      graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, editor.myFractionalMetricsHintValue);
+      graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
 
       fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
@@ -188,6 +201,11 @@ class ImmediatePainter {
                                                    g, PaintUtil.RoundingMode.FLOOR);
     float clipEndX = (float)PaintUtil.alignToInt(p2x + width2 - caretShift + caretWidth,
                                                  g, PaintUtil.RoundingMode.CEIL);
+    if (clipEndX > editor.getContentComponent().getWidth()) {
+      // we cannot paint beyond component bounds (this will go beyond dev clip in graphics anyway)
+      return;
+    }
+
     g.setClip(new Rectangle2D.Float(clipStartX, p2y, clipEndX - clipStartX, lineHeight));
     // at the moment, lines in editor are not aligned to dev pixel grid along Y axis, when fractional scale is used,
     // so double buffering is disabled (as it might not produce the same result as direct painting, and will case text jitter)
@@ -317,7 +335,7 @@ class ImmediatePainter {
                                        final TextAttributes attributes,
                                        final List<? extends RangeHighlighterEx> highlighters) {
     if (highlighters.size() > 1) {
-      ContainerUtil.quickSort(highlighters, IterationState.BY_LAYER_THEN_ATTRIBUTES);
+      ContainerUtil.quickSort(highlighters, IterationState.createByLayerThenByAttributesComparator(editor.getColorsScheme()));
     }
 
     TextAttributes syntax = attributes;
@@ -328,7 +346,7 @@ class ImmediatePainter {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = highlighters.get(i);
-      if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
+      if (highlighter.getTextAttributes(editor.getColorsScheme()) == TextAttributes.ERASE_MARKER) {
         syntax = null;
       }
     }
@@ -349,7 +367,7 @@ class ImmediatePainter {
         syntax = null;
       }
 
-      TextAttributes textAttributes = highlighter.getTextAttributes();
+      TextAttributes textAttributes = highlighter.getTextAttributes(editor.getColorsScheme());
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
         cachedAttributes.add(textAttributes);
       }

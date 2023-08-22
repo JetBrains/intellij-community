@@ -1,13 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.toolbar.floating
 
+import org.jetbrains.annotations.NonNls
+
 class DefaultFloatingToolbarProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
 
-  override val priority = 0
-
-  override val autoHideable = true
+  override val autoHideable: Boolean = true
 
   companion object {
-    const val ACTION_GROUP = "EditorContextBarMenu"
+    @NonNls
+    const val ACTION_GROUP: String = "EditorContextBarMenu"
   }
 }

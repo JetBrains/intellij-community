@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -17,18 +17,17 @@ public class IdeFocusManagerHeadless extends IdeFocusManager { // FIXME-ank: rev
   public static final IdeFocusManagerHeadless INSTANCE = new IdeFocusManagerHeadless();
 
   @Override
-  @NotNull
-  public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
+  public @NotNull ActionCallback requestFocus(final @NotNull Component c, final boolean forced) {
     return ActionCallback.DONE;
   }
 
   @Override
-  public JComponent getFocusTargetFor(@NotNull final JComponent comp) {
+  public JComponent getFocusTargetFor(final @NotNull JComponent comp) {
     return null;
   }
 
   @Override
-  public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+  public void doWhenFocusSettlesDown(final @NotNull Runnable runnable) {
     runnable.run();
   }
 
@@ -55,10 +54,6 @@ public class IdeFocusManagerHeadless extends IdeFocusManager { // FIXME-ank: rev
   }
 
   @Override
-  public void setTypeaheadEnabled(boolean enabled) {
-  }
-
-  @Override
   public Component getFocusOwner() {
     return null;
   }
@@ -78,9 +73,8 @@ public class IdeFocusManagerHeadless extends IdeFocusManager { // FIXME-ank: rev
     return null;
   }
 
-  @Nullable
   @Override
-  public Window getLastFocusedIdeWindow() {
+  public @Nullable Window getLastFocusedIdeWindow() {
     return null;
   }
 

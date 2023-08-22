@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -197,8 +198,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
         myChildren.add(child);
         myChildrenLoadState = oldState;
       }
-      else if (child instanceof SimpleTextNode) {
-        SimpleTextNode node = (SimpleTextNode)child;
+      else if (child instanceof SimpleTextNode node) {
         myChildren.add(new SimpleTextNode(node.getText(), node.isError()));
         myChildrenLoadState = oldState;
       }
@@ -207,7 +207,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     myModel.reload(this);
   }
 
-  public void setErrorNode(@NotNull String text) {
+  public void setErrorNode(@NlsContexts.Label @NotNull String text) {
     myChildren.clear();
     myChildren.add(new SimpleTextNode(text, true));
     myChildrenLoadState = NodeLoadState.ERROR;
@@ -235,7 +235,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     new SubTreeWalker(this, function).execute();
   }
 
-  private static class SubTreeWalker {
+  private static final class SubTreeWalker {
 
     @NotNull private final RepositoryTreeNode myNode;
     @NotNull private final NotNullFunction<RepositoryTreeNode, Object> myFunction;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -23,6 +9,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
@@ -76,7 +63,7 @@ public class NewColorAndFontPanel extends JPanel {
 
     previewPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
-      public void selectionInPreviewChanged(@NotNull final String typeToSelect) {
+      public void selectionInPreviewChanged(final @NotNull String typeToSelect) {
         optionsPanel.selectOption(typeToSelect);
       }
     });
@@ -90,7 +77,7 @@ public class NewColorAndFontPanel extends JPanel {
       }
 
       @Override
-      public void selectedOptionChanged(@NotNull final Object selected) {
+      public void selectedOptionChanged(final @NotNull Object selected) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
           myPreviewPanel.blinkSelectedHighlightType(selected);
         }
@@ -99,7 +86,7 @@ public class NewColorAndFontPanel extends JPanel {
     });
     mySchemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
-      public void schemeChanged(@NotNull final Object source) {
+      public void schemeChanged(final @NotNull Object source) {
         myOptionsPanel.updateOptionsList();
         myPreviewPanel.updateView();
       }
@@ -126,8 +113,7 @@ public class NewColorAndFontPanel extends JPanel {
     myOptionsPanel.selectOption(typeToSelect);
   }
 
-  @NotNull
-  public Set<String> processListOptions() {
+  public @NotNull Set<String> processListOptions() {
     if (myOptionList == null) {
       return myOptionsPanel.processListOptions();
     }
@@ -183,7 +169,7 @@ public class NewColorAndFontPanel extends JPanel {
     return mySettingsPage;
   }
   
-  public void setEmptyText(@NotNull String text, @NotNull String details) {
+  public void setEmptyText(@NotNull @NlsContexts.StatusText String text, @NotNull @NlsContexts.PopupContent String details) {
     myOptionsPanel.setEmptyText(text, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -192,7 +178,7 @@ public class NewColorAndFontPanel extends JPanel {
     });
   }
 
-  private void notifyAtSchemePanel(@NotNull String message) {
+  private void notifyAtSchemePanel(@NotNull @NlsContexts.PopupContent String message) {
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     Balloon balloon = popupFactory
       .createHtmlTextBalloonBuilder(message, MessageType.INFO, null)

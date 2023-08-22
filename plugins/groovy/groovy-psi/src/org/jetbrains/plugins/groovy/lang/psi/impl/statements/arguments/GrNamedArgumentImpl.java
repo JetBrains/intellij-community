@@ -14,9 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrNamedArgumentImpl extends GroovyPsiElementImpl implements GrNamedArgument {
 
   public GrNamedArgumentImpl(@NotNull ASTNode node) {
@@ -36,7 +33,7 @@ public class GrNamedArgumentImpl extends GroovyPsiElementImpl implements GrNamed
   @Override
   @Nullable
   public GrArgumentLabel getLabel() {
-    return (GrArgumentLabel)findChildByType(GroovyElementTypes.ARGUMENT_LABEL);
+    return findChildByType(GroovyElementTypes.ARGUMENT_LABEL);
   }
 
 

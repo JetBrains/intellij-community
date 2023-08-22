@@ -16,14 +16,13 @@
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents {@link TaskData} at the ide side. Is required purely for IJ serialization because {@link TaskData} has only final
  * fields which are initialized at constructor and ide serialization is not capable to handle such scenario properly.
- * 
- * @author Denis Zhdanov
  */
 public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   
@@ -50,7 +49,7 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   }
   
   @NotNull
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -59,7 +58,7 @@ public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   }
 
   @Nullable
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return myDescription;
   }
 

@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
-import static java.lang.String.format;
 
 public class SubjectLimitInspection extends BaseCommitMessageInspection {
 
@@ -37,8 +36,9 @@ public class SubjectLimitInspection extends BaseCommitMessageInspection {
                                                      @NotNull Document document,
                                                      @NotNull InspectionManager manager,
                                                      boolean isOnTheFly) {
+    String problemText = VcsBundle.message("commit.message.inspection.message.subject.should.not.exceed.characters", RIGHT_MARGIN);
     ProblemDescriptor descriptor = checkRightMargin(file, document, manager, isOnTheFly, 0, RIGHT_MARGIN,
-                                                    format("Subject should not exceed %d characters", RIGHT_MARGIN));
+                                                    problemText);
 
     return descriptor != null ? ar(descriptor) : null;
   }

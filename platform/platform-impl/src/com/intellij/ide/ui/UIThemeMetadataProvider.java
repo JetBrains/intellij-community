@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,9 +16,8 @@ import java.io.IOException;
  * Provides additional metadata for UI theme customization.
  * See <a href="https://www.jetbrains.org/intellij/sdk/docs/reference_guide/ui_themes/themes_metadata.html">Exposing Theme Metadata</a>.
  */
-public class UIThemeMetadataProvider implements PluginAware {
-
-  private PluginDescriptor myPluginDescriptor;
+public final class UIThemeMetadataProvider implements PluginAware {
+  private PluginDescriptor pluginDescriptor;
 
   /**
    * Path to {@code *.themeMetadata.json} file.
@@ -26,14 +26,13 @@ public class UIThemeMetadataProvider implements PluginAware {
   @RequiredElement
   public String path;
 
-  @Nullable
-  public UIThemeMetadata loadMetadata() {
+  public @Nullable UIThemeMetadata loadMetadata() {
     try {
-      ClassLoader loader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
-      return UIThemeMetadata.loadFromJson(loader.getResourceAsStream(path), myPluginDescriptor.getPluginId());
+      ClassLoader loader = pluginDescriptor != null ? pluginDescriptor.getClassLoader() : getClass().getClassLoader();
+      return UIThemeMetadata.loadFromJson(loader.getResourceAsStream(StringUtil.trimStart(path, "/")), pluginDescriptor.getPluginId());
     }
     catch (IOException e) {
-      final String pluginId = myPluginDescriptor != null ? myPluginDescriptor.getPluginId().getIdString() : "(none)";
+      String pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId().getIdString() : "(none)";
       Logger.getInstance(getClass()).error("error loading UIThemeMetadata '" + path + "', pluginId=" + pluginId, e);
       return null;
     }
@@ -41,6 +40,6 @@ public class UIThemeMetadataProvider implements PluginAware {
 
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
-    myPluginDescriptor = pluginDescriptor;
+    this.pluginDescriptor = pluginDescriptor;
   }
 }

@@ -17,33 +17,35 @@
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaPredicateConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.IterableStreamConversionRule"/>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
-       <category>Java/Concurrency</category>
+      <bundleName>messages.JavaBundle</bundleName>
+       <categoryKey>intention.category.concurrency</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToThreadLocalIntention</className>
-      <category>Java/Concurrency</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.concurrency</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.refactoring.typeMigration.intentions.ChangeClassParametersIntention</className>
-      <category>Java/Declaration</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertAtomicToLongAdderIntention</className>
-      <category>Java/Concurrency</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.concurrency</categoryKey>
     </intentionAction>
 
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Guava"
-                     groupBundle="messages.InspectionsBundle"
-                     groupName="Java 8" enabledByDefault="true" level="WARNING"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" 
+                     language="JAVA" shortName="Guava" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.GuavaInspection"
-                     displayName="Guava's functional primitives can be replaced by Java"/>
-
-    <localInspection groupPath="Java" language="JAVA" shortName="MigrateAssertToMatcherAssert"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.intellij.refactoring.typeMigration.inspections.MigrateAssertToMatcherAssertInspection"
-                     displayName="Assertion expression can be replaced with 'assertThat' method call"/>
-
+                     bundle="messages.TypeMigrationBundle" key="inspection.guava.name"/>
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention$ConvertNonFinalLocalToAtomicFix"/>
   </extensions>
 </idea-plugin>

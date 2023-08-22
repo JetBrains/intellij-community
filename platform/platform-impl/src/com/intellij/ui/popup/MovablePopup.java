@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,6 +12,7 @@ import java.awt.*;
 import java.awt.event.HierarchyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Field;
 
 public class MovablePopup {
   private final HierarchyListener myListener = event -> setVisible(false);
@@ -29,6 +32,7 @@ public class MovablePopup {
   private Container myView;
   private boolean myAlwaysOnTop;
   private boolean myHeavyWeight;
+  private boolean myTransparent;
   private boolean myWindowFocusable;
   private boolean myWindowShadow;
 
@@ -75,6 +79,16 @@ public class MovablePopup {
   public void setHeavyWeight(boolean value) {
     if (myHeavyWeight != value) {
       myHeavyWeight = value;
+      disposeAndUpdate(true);
+    }
+  }
+
+  /**
+   * Sets whether this popup should be a transparent window, false by default
+   */
+  public void setTransparent(boolean transparent) {
+    if (myTransparent != transparent) {
+      myTransparent = transparent;
       disposeAndUpdate(true);
     }
   }
@@ -165,7 +179,7 @@ public class MovablePopup {
       if (owner != null) {
         owner.addWindowFocusListener(myWindowFocusAdapter);
         if (myHeavyWeight) {
-          Window view = new JWindow(owner);
+          JWindow view = new JWindow(owner);
           view.setType(Window.Type.POPUP);
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
@@ -173,6 +187,15 @@ public class MovablePopup {
           view.setAutoRequestFocus(false);
           view.setFocusable(false);
           view.setFocusableWindowState(false);
+          if (myTransparent && SystemInfoRt.isMac) {
+            try {
+              Field field = JRootPane.class.getDeclaredField("useTrueDoubleBuffering");
+              field.setAccessible(true);
+              field.set(view.getRootPane(), false);
+            }
+            catch (NoSuchFieldException| IllegalAccessException ignore) {
+            }
+          }
           myView = view;
         }
         else if (owner instanceof RootPaneContainer) {
@@ -193,7 +216,7 @@ public class MovablePopup {
           SwingUtilities.convertPointFromScreen(location, parent);
           myViewBounds.setLocation(location);
         }
-        myView.setBackground(UIUtil.getLabelBackground());
+        myView.setBackground(myTransparent ? Gray.TRANSPARENT : UIUtil.getLabelBackground());
         myView.setBounds(myViewBounds);
         myView.setVisible(true);
         myViewBounds = null;
@@ -268,8 +291,7 @@ public class MovablePopup {
   }
 
   private static JRootPane getRootPane(Window window) {
-    if (window instanceof RootPaneContainer) {
-      RootPaneContainer container = (RootPaneContainer)window;
+    if (window instanceof RootPaneContainer container) {
       return container.getRootPane();
     }
     return null;

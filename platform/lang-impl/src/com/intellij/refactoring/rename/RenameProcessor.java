@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
-import com.intellij.analysis.AnalysisBundle;
-import com.intellij.core.CoreBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -25,18 +23,17 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
@@ -54,6 +51,9 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(RenameProcessor.class);
 
@@ -66,7 +66,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private boolean mySearchTextOccurrences;
   protected boolean myForceShowPreview;
 
-  private String myCommandName;
+  private @Command String myCommandName;
 
   private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
   private final List<AutomaticRenamerFactory> myRenamerFactories = new ArrayList<>();
@@ -90,14 +90,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     super(project, refactoringScope, null);
     myPrimaryElement = element;
 
-    assertNonCompileElement(element);
+    RenameUtil.assertNonCompileElement(element);
 
     mySearchInComments = isSearchInComments;
     mySearchTextOccurrences = isSearchTextOccurrences;
 
     setNewName(newName);
 
-    logScopeStatistics("started");
+    logScopeStatistics(RenameUsagesCollector.started);
   }
 
   public Set<PsiElement> getElements() {
@@ -143,7 +143,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   @Override
   public boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
 
     RenameUtil.addConflictDescriptions(usagesIn, conflicts);
     RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts, myAllRenames);
@@ -158,7 +158,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
         return true;
       }
-      ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
+      ConflictsDialogBase conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
       if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;
@@ -181,7 +181,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
       if (!renames.isEmpty()) {
         for (PsiElement element : renames.keySet()) {
-          assertNonCompileElement(element);
+          RenameUtil.assertNonCompileElement(element);
         }
         myAllRenames.putAll(renames);
         final Runnable runnable = () -> {
@@ -204,10 +204,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     try {
       for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
         Map.Entry<PsiElement, String> entry = iterator.next();
-        if (entry.getKey() instanceof PsiFile) {
-          final PsiFile file = (PsiFile)entry.getKey();
+        if (entry.getKey() instanceof PsiFile file) {
           final PsiDirectory containingDirectory = file.getContainingDirectory();
-          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(), "Rename")) {
+          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(),
+                                                           RefactoringBundle.message("command.name.rename"))) {
             iterator.remove();
             continue;
           }
@@ -232,10 +232,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement);
   }
 
-  public static void assertNonCompileElement(PsiElement element) {
-    LOG.assertTrue(!(element instanceof PsiCompiledElement), element);
-  }
-
   private boolean findRenamedVariables(final List<UsageInfo> variableUsages) {
     for (Iterator<AutomaticRenamer> iterator = myRenamers.iterator(); iterator.hasNext(); ) {
       AutomaticRenamer automaticVariableRenamer = iterator.next();
@@ -255,6 +251,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean showAutomaticRenamingDialog(AutomaticRenamer automaticVariableRenamer) {
+    if (!RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG) return false;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (PsiNamedElement element : automaticVariableRenamer.getElements()) {
         automaticVariableRenamer.setRename(element, automaticVariableRenamer.getNewName(element));
@@ -266,7 +263,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void addElement(@NotNull PsiElement element, @NotNull String newName) {
-    assertNonCompileElement(element);
+    RenameUtil.assertNonCompileElement(element);
     myAllRenames.put(element, newName);
   }
 
@@ -369,11 +366,18 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   @Override
   public void performRefactoring(UsageInfo @NotNull [] usages) {
-    logScopeStatistics("executed");
+    logScopeStatistics(RenameUsagesCollector.executed);
 
     List<Runnable> postRenameCallbacks = new ArrayList<>();
 
-    final MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usages);
+    MultiMap<RefactoringElementListener, SmartPsiElementPointer<PsiElement>> renameEvents = MultiMap.createLinked();
+
+    List<UsageInfo> usagesList = Arrays.asList(usages);
+    MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usagesList);
+
+    NonCodeUsageInfo[] nonCodeUsages =
+      ContainerUtil.filterIsInstance(usagesList, NonCodeUsageInfo.class).toArray(new NonCodeUsageInfo[0]);
+
     for (final PsiElement element : myAllRenames.keySet()) {
       if (!element.isValid()) {
         LOG.error(new PsiInvalidElementAccessException(element));
@@ -384,9 +388,21 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
       final RenamePsiElementProcessor renamePsiElementProcessor = RenamePsiElementProcessor.forElement(element);
       Runnable postRenameCallback = renamePsiElementProcessor.getPostRenameCallback(element, newName, elementListener);
-      final Collection<UsageInfo> infos = classified.get(element);
+      Collection<UsageInfo> infos = classified.get(element);
       try {
-        RenameUtil.doRename(element, newName, infos.toArray(UsageInfo.EMPTY_ARRAY), myProject, elementListener);
+        RenameUtil.registerUndoableRename(element, elementListener);
+        renamePsiElementProcessor.renameElement(element, newName, infos.toArray(UsageInfo.EMPTY_ARRAY), new RefactoringElementListener() {
+          @Override
+          public void elementMoved(@NotNull PsiElement newElement) {
+            throw new UnsupportedOperationException();
+          }
+
+          @Override
+          public void elementRenamed(@NotNull PsiElement newElement) {
+            if (!newElement.isValid()) return;
+            renameEvents.putValue(elementListener, SmartPointerManager.createPointer(newElement));
+          }
+        });
       }
       catch (final IncorrectOperationException e) {
         RenameUtil.showErrorMessage(e, element, myProject);
@@ -397,17 +413,27 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    myNonCodeUsages = nonCodeUsages;
+
+    afterRename(postRenameCallbacks, renameEvents);
+  }
+
+  private void afterRename(List<? extends Runnable> postRenameCallbacks,
+                           MultiMap<RefactoringElementListener, SmartPsiElementPointer<PsiElement>> renameEvents) {
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    for (Map.Entry<RefactoringElementListener, Collection<SmartPsiElementPointer<PsiElement>>> entry : renameEvents.entrySet()) {
+      for (SmartPsiElementPointer<PsiElement> pointer : entry.getValue()) {
+        PsiElement element = pointer.getElement();
+        if (element != null) {
+          entry.getKey().elementRenamed(element);
+        }
+      }
+    }
+
     for (Runnable runnable : postRenameCallbacks) {
       runnable.run();
     }
 
-    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
-    for (UsageInfo usage : usages) {
-      if (usage instanceof NonCodeUsageInfo) {
-        nonCodeUsages.add((NonCodeUsageInfo)usage);
-      }
-    }
-    myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
     if (!mySkippedUsages.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -423,7 +449,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
             };
             statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, listener);
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.nonModal());
       }
     }
   }
@@ -439,12 +465,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return myCommandName;
   }
 
-  public static MultiMap<PsiElement, UsageInfo> classifyUsages(Collection<? extends PsiElement> elements, UsageInfo[] usages) {
+  public static MultiMap<PsiElement, UsageInfo> classifyUsages(Collection<? extends PsiElement> elements, Collection<? extends UsageInfo> usages) {
     final MultiMap<PsiElement, UsageInfo> result = new MultiMap<>();
     for (UsageInfo usage : usages) {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);
-      if (usage.getReference() instanceof LightElement) {
-        continue; //filter out implicit references (e.g. from derived class to super class' default constructor)
+      if (shouldSkip(usage)) {
+        continue;
       }
       MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
       if (usage instanceof RelatedUsageInfo) {
@@ -468,6 +494,11 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
+  //filter out implicit references (e.g. from derived class to super class' default constructor)
+  private static boolean shouldSkip(UsageInfo usage) {
+    return usage.getReference() instanceof LightElement;
+  }
+
   public Collection<String> getNewNames() {
     return myAllRenames.values();
   }
@@ -488,54 +519,49 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return mySearchTextOccurrences;
   }
 
-  public void setCommandName(final String commandName) {
+  public void setCommandName(@Command String commandName) {
     myCommandName = commandName;
   }
-  
-  private void logScopeStatistics(String eventId) {
+
+  private void logScopeStatistics(VarargEventId eventId) {
     Class<? extends RenamePsiElementProcessor> renameProcessor = RenamePsiElementProcessor.forElement(myPrimaryElement).getClass();
-    FUCounterUsageLogger.getInstance().logEvent(
+    eventId.log(
       myProject,
-      "rename.refactoring",
-      eventId,
-      new FeatureUsageData()
-        .addData("scope_type", getStatisticsCompatibleScopeName())
-        .addData("search_in_comments", isSearchInComments())
-        .addData("search_in_text_occurrences", isSearchTextOccurrences())
-        .addData("rename_processor", PluginInfoDetectorKt.getPluginInfo(renameProcessor).isSafeToReport()
-                                     ? renameProcessor.getName()
-                                     : "third.party")
-        .addLanguage(myPrimaryElement.getLanguage())
+      RenameUsagesCollector.scopeType.with(getStatisticsCompatibleScopeName()),
+      RenameUsagesCollector.searchInComments.with(isSearchInComments()),
+      RenameUsagesCollector.searchInTextOccurrences.with(isSearchTextOccurrences()),
+      RenameUsagesCollector.renameProcessor.with(renameProcessor),
+      EventFields.Language.with(myPrimaryElement.getLanguage())
     );
   }
 
-  private String getStatisticsCompatibleScopeName() {
+  private RenameScopeType getStatisticsCompatibleScopeName() {
     String displayName = myRefactoringScope.getDisplayName();
-    if (displayName.equals(CoreBundle.message("psi.search.scope.project"))) {
-      return "project";
+    if (displayName.equals(ProjectScope.getProjectFilesScopeName())) {
+      return RenameScopeType.Project;
     }
 
-    if (displayName.equals(AnalysisBundle.message("psi.search.scope.test.files"))) {
-      return "tests";
+    if (displayName.equals(GlobalSearchScopesCore.getProjectTestFilesScopeName())) {
+      return RenameScopeType.Tests;
     }
 
-    if (displayName.equals(AnalysisBundle.message("psi.search.scope.production.files"))) {
-      return "production";
+    if (displayName.equals(GlobalSearchScopesCore.getProjectProductionFilesScopeName())) {
+      return RenameScopeType.Production;
     }
 
     if (myRefactoringScope instanceof LocalSearchScope) {
-      return "current file";
+      return RenameScopeType.CurrentFile;
     }
 
     Module module = ModuleUtilCore.findModuleForPsiElement(myPrimaryElement);
     if (module != null && myRefactoringScope.equals(module.getModuleScope())) {
-      return "module";
+      return RenameScopeType.Module;
     }
 
     if (!PluginInfoDetectorKt.getPluginInfo(myRefactoringScope.getClass()).isSafeToReport()) {
-      return "third.party";
+      return RenameScopeType.ThirdParty;
     }
 
-    return "unknown";
+    return RenameScopeType.Unknown;
   }
 }

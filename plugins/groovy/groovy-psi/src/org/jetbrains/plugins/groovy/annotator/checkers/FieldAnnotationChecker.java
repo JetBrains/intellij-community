@@ -49,11 +49,10 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
 
     PsiElement annoParent = annotation.getParent();
     PsiElement ownerToUse = annoParent instanceof PsiModifierList ? annoParent.getParent() : annoParent;
-    if (!(ownerToUse instanceof GrVariableDeclaration)) {
+    if (!(ownerToUse instanceof GrVariableDeclaration declaration)) {
       return false;
     }
     else {
-      GrVariableDeclaration declaration = (GrVariableDeclaration)ownerToUse;
       if (declaration.getVariables().length != 1 || !PsiUtil.isLocalVariable(declaration.getVariables()[0])) {
         return false;
       }

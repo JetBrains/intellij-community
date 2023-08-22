@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
@@ -20,10 +20,10 @@ import java.util.*;
 public class IDEATestNGRemoteListener {
 
   private final PrintStream myPrintStream;
-  private final List<String> myCurrentSuites = new ArrayList<String>();
-  private final Map<String, Integer> myInvocationCounts = new HashMap<String, Integer>();
-  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
-  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<ExposedTestResult, DelegatedResult>();
+  private final List<String> myCurrentSuites = new ArrayList<>();
+  private final Map<String, Integer> myInvocationCounts = new HashMap<>();
+  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<>();
+  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<>();
   private int mySkipped = 0;
 
   public IDEATestNGRemoteListener() {
@@ -198,7 +198,7 @@ public class IDEATestNGRemoteListener {
           }
         }
       }
-      myPrintStream.println("\n##teamcity[testSuiteStarted name ='" + escapeName(currentClassName) +
+      myPrintStream.println("##teamcity[testSuiteStarted name ='" + escapeName(currentClassName) +
                             (provideLocation ? "' locationHint = '" + location : "") + "']");
       myCurrentSuites.add(currentClassName);
     }
@@ -214,9 +214,9 @@ public class IDEATestNGRemoteListener {
     onSuiteStart(result.getTestHierarchy(), result, true);
     final String className = result.getClassName();
     final String methodName = result.getDisplayMethodName();
-    final String location = className + "/" + result.getMethodName() + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
+    final String location = className + "/" + result.getMethodName() + (invocationCount > 0 ? "[" + invocationCount + "]" : "");
     myPrintStream.println(
-      "\n##teamcity[testStarted name='" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
+      "##teamcity[testStarted name='" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
       "' locationHint='java:test://" + escapeName(location) + (config ? "' config='true" : "") +
       "']");
   }
@@ -227,10 +227,11 @@ public class IDEATestNGRemoteListener {
     }
     Throwable ex = result.getThrowable();
     String methodName = getTestMethodNameWithParams(result);
-    final Map<String, String> attrs = new LinkedHashMap<String, String>();
+    final Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("name", methodName);
     final String failureMessage = ex != null ? ex.getMessage() : null;
     if (ex != null) {
+      String expectedPrefix = " expected [";
       ComparisonFailureData notification;
       try {
         notification = ComparisonFailureData.create(ex);
@@ -247,12 +248,15 @@ public class IDEATestNGRemoteListener {
           notification = null;
         }
       }
-      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
+      else {
+        expectedPrefix = "expected:";
+      }
+
+      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex, "Comparison Failure: ", expectedPrefix);
     }
     else {
       attrs.put("message", "");
     }
-    myPrintStream.println();
     myPrintStream.println(MapSerializerUtil.asString(MapSerializerUtil.TEST_FAILED, attrs));
     onTestFinished(result);
   }
@@ -262,13 +266,13 @@ public class IDEATestNGRemoteListener {
       onTestStart(result);
       mySkipped++;
     }
-    myPrintStream.println("\n##teamcity[testIgnored name='" + escapeName(getTestMethodNameWithParams(result)) + "']");
+    myPrintStream.println("##teamcity[testIgnored name='" + escapeName(getTestMethodNameWithParams(result)) + "']");
     onTestFinished(result);
   }
 
   public void onTestFinished(ExposedTestResult result) {
     final long duration = result.getDuration();
-    myPrintStream.println("\n##teamcity[testFinished name='" +
+    myPrintStream.println("##teamcity[testFinished name='" +
                           escapeName(getTestMethodNameWithParams(result)) +
                           (duration > 0 ? "' duration='" + duration : "") +
                           "']");
@@ -299,7 +303,7 @@ public class IDEATestNGRemoteListener {
             }
           }
           else {
-            paramString = "[" + parameter.toString() + "]";
+            paramString = "[" + parameter + "]";
           }
         }
       }
@@ -310,7 +314,7 @@ public class IDEATestNGRemoteListener {
     if (invocationCount > 0) {
       paramString += " (" + invocationCount + ")";
     }
-    return paramString.length() > 0 ? paramString : null;
+    return !paramString.isEmpty() ? paramString : null;
   }
 
   protected String getTrace(Throwable tr) {
@@ -355,7 +359,7 @@ public class IDEATestNGRemoteListener {
     myResults.put(newResult, newResult);
     return newResult;
   }
-  
+
   protected static class DelegatedResult implements ExposedTestResult {
     private final ITestResult myResult;
     private final String myTestName;
@@ -384,29 +388,35 @@ public class IDEATestNGRemoteListener {
       Test annotation = member.getAnnotation(Test.class);
       if (annotation == null) return method.getMethodName();
       String testNameFromAnnotation = annotation.testName();
-      return testNameFromAnnotation == null || testNameFromAnnotation.length() == 0 ? method.getMethodName() : testNameFromAnnotation;
+      return testNameFromAnnotation == null || testNameFromAnnotation.isEmpty() ? method.getMethodName() : testNameFromAnnotation;
     }
 
+    @Override
     public Object[] getParameters() {
       return myResult.getParameters();
     }
 
+    @Override
     public String getMethodName() {
       return myResult.getMethod().getMethodName();
     }
 
+    @Override
     public String getDisplayMethodName() {
       return myTestName;
     }
 
+    @Override
     public String getClassName() {
       return myResult.getMethod().getTestClass().getName();
     }
 
+    @Override
     public long getDuration() {
       return myResult.getEndMillis() - myResult.getStartMillis();
     }
 
+    @Override
     public List<String> getTestHierarchy() {
       final List<String> hierarchy;
       final XmlTest xmlTest = myResult.getTestClass().getXmlTest();
@@ -418,21 +428,25 @@ public class IDEATestNGRemoteListener {
       return hierarchy;
     }
 
+    @Override
     public String getFileName() {
       final XmlTest xmlTest = myResult.getTestClass().getXmlTest();
       return xmlTest != null ? xmlTest.getSuite().getFileName() : null;
     }
 
+    @Override
     public String getXmlTestName() {
       final XmlTest xmlTest = myResult.getTestClass().getXmlTest();
       return xmlTest != null ? xmlTest.getName() : null;
     }
 
 
+    @Override
     public Throwable getThrowable() {
       return myResult.getThrowable();
     }
 
+    @Override
     public List<Integer> getIncludeMethods() {
       IClass testClass = myResult.getTestClass();
       if (testClass == null) return null;

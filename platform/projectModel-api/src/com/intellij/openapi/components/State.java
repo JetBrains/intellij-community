@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.function.Supplier;
 
 /**
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Persisting States</a>
@@ -42,8 +43,14 @@ public @interface State {
   boolean defaultStateAsResource() default false;
 
   /**
-   * Additional export path (relative to application-level configuration root directory).
+   * Additional export directory path (relative to application-level configuration root directory).
    */
+  @NotNull String additionalExportDirectory() default "";
+
+  /**
+   * @deprecated Use {@link #additionalExportDirectory()}.
+   */
+  @Deprecated(forRemoval = true)
   String additionalExportFile() default "";
 
   Class<? extends NameGetter> presentableName() default NameGetter.class;
@@ -57,22 +64,29 @@ public @interface State {
    * <p>Enables recording of boolean and numerical fields, if true and statistics is allowed.</p>
    * <br/>
    * <p>Boolean: records not default value of the field.</p>
-   * <p>Numerical: records an event that the value is not default.
+   * <p>Numerical/Enums/Strings: records an event that the value is not default.
    * To record an absolute value of the field, add {@link ReportValue} annotation. </p>
    *
    * <br/>
    * <i>Limitations:</i><ul>
-   * <li>Won't record the value of object, string or enum fields.</li>
+   * <li>Won't record the value of object</li>
    * <li>Won't record fields if state is persisted manually, i.e. the state is {@link org.jdom.Element} </li>
    * </ul>
    */
-  boolean reportStatistic() default false;
+  boolean reportStatistic() default true;
 
   boolean allowLoadInTests() default false;
 
   @ApiStatus.Internal
   boolean useLoadedStateAsExisting() default true;
 
-  abstract class NameGetter implements Getter<String> {
+  @ApiStatus.Experimental
+  boolean getStateRequiresEdt() default false;
+
+  abstract class NameGetter implements Supplier<@Nls String> {
+    @Override
+    public abstract @Nls String get();
   }
+
+  SettingsCategory category() default SettingsCategory.OTHER;
 }

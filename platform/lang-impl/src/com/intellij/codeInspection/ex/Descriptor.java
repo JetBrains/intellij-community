@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -13,17 +15,18 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Descriptor {
+public final class Descriptor {
   private static final Logger LOG = Logger.getInstance(Descriptor.class);
 
   @NotNull
-  private final String myText;
+  private final @InspectionMessage String myText;
   private final String[] myGroup;
   private final String myShortName;
-  private final InspectionToolWrapper myToolWrapper;
+  private final InspectionToolWrapper<?, ?> myToolWrapper;
   private final HighlightDisplayLevel myLevel;
   @Nullable
   private final NamedScope myScope;
+  private final TextAttributesKey myEditorAttributesKey;
   private final ScopeToolState myState;
   @NotNull
   private final InspectionProfileModifiableModel myInspectionProfile;
@@ -34,13 +37,14 @@ public class Descriptor {
   public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileModifiableModel inspectionProfile, @NotNull Project project) {
     myState = state;
     myInspectionProfile = inspectionProfile;
-    InspectionToolWrapper tool = state.getTool();
+    InspectionToolWrapper<?, ?> tool = state.getTool();
     myText = tool.getDisplayName();
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.getGeneralGroupName()} : groupPath;
     myShortName = tool.getShortName();
     myScope = state.getScope(project);
-    final HighlightDisplayKey key = HighlightDisplayKey.find(myShortName);
+    myEditorAttributesKey = state.getEditorAttributesKey();
+    final HighlightDisplayKey key = HighlightDisplayKey.findOrRegister(myShortName, myText);
     myLevel = inspectionProfile.getErrorLevel(key, myScope, project);
     myEnabled = inspectionProfile.isToolEnabled(key, myScope, project);
     myToolWrapper = tool;
@@ -48,8 +52,7 @@ public class Descriptor {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof Descriptor)) return false;
-    final Descriptor descriptor = (Descriptor)obj;
+    if (!(obj instanceof Descriptor descriptor)) return false;
     return myShortName.equals(descriptor.myShortName) &&
            myLevel.equals(descriptor.getLevel()) &&
            myEnabled == descriptor.isEnabled() &&
@@ -71,17 +74,21 @@ public class Descriptor {
   }
 
   @NotNull
-  public String getText() {
+  public @InspectionMessage String getText() {
     return myText;
   }
 
   @NotNull
   public HighlightDisplayKey getKey() {
-    return HighlightDisplayKey.find(myShortName);
+    return HighlightDisplayKey.findOrRegister(myShortName, myText);
   }
 
   public HighlightDisplayLevel getLevel() {
     return myLevel;
+  }
+
+  public TextAttributesKey getEditorAttributesKey() {
+    return myEditorAttributesKey;
   }
 
   @Nullable
@@ -91,13 +98,13 @@ public class Descriptor {
 
   public void loadConfig() {
     if (myConfig == null) {
-      InspectionToolWrapper toolWrapper = getToolWrapper();
+      InspectionToolWrapper<?, ?> toolWrapper = getToolWrapper();
       myConfig = createConfigElement(toolWrapper);
     }
   }
 
   @NotNull
-  public InspectionToolWrapper getToolWrapper() {
+  public InspectionToolWrapper<?, ?> getToolWrapper() {
     return myToolWrapper;
   }
 
@@ -113,7 +120,7 @@ public class Descriptor {
   }
 
   @NotNull
-  public static Element createConfigElement(InspectionToolWrapper toolWrapper) {
+  public static Element createConfigElement(InspectionToolWrapper<?, ?> toolWrapper) {
     Element element = new Element("options");
     try {
       toolWrapper.getTool().writeSettings(element);

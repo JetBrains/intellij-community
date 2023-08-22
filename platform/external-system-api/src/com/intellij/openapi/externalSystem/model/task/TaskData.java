@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.model.task;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +20,13 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
   @Nullable private String type;
   private boolean inherited;
   private boolean isTest;
+  private boolean isJvmTest;
 
   @PropertyMapping({"owner", "name", "linkedExternalProjectPath", "description"})
-  public TaskData(@NotNull ProjectSystemId owner, @NotNull String name, @NotNull String linkedExternalProjectPath, @Nullable String description) {
+  public TaskData(@NotNull ProjectSystemId owner,
+                  @NotNull String name,
+                  @NotNull String linkedExternalProjectPath,
+                  @Nullable String description) {
     super(owner);
     this.name = name;
     this.linkedExternalProjectPath = linkedExternalProjectPath;
@@ -29,7 +34,7 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
   }
 
   @NotNull
-  public String getName() {
+  public @NlsSafe String getName() {
     return name;
   }
 
@@ -40,7 +45,7 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
   }
 
   @Nullable
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return description;
   }
 
@@ -78,6 +83,14 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
     isTest = test;
   }
 
+  public boolean isJvmTest() {
+    return isJvmTest;
+  }
+
+  public void setJvmTest(boolean test) {
+    isJvmTest = test;
+  }
+
   @Override
   public int hashCode() {
     int result = super.hashCode();
@@ -113,7 +126,7 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
   }
 
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     return name;
   }
 }

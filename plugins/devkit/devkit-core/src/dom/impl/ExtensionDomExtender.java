@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.google.common.base.CaseFormat;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -17,6 +18,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.With;
@@ -40,7 +42,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   @Override
   public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
-    assert extensionPoint != null;
+    if (extensionPoint == null) return;
 
     final String interfaceName = extensionPoint.getInterface().getStringValue();
     if (interfaceName != null) {
@@ -75,42 +77,26 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     binding.visit(new ExtensionPointBinding.BindingVisitor() {
 
       @Override
-      public void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, boolean required) {
+      public void visitAttribute(@NotNull PsiField field, @NotNull @NonNls String attributeName, RequiredFlag required) {
         final With withElement = findWithElement(elements, field);
         final PsiType fieldType = field.getType();
-        Class clazz = String.class;
-        if (withElement != null || Extension.isClassField(attributeName)) {
-          clazz = PsiClass.class;
-        }
-        else if (PsiType.BOOLEAN.equals(fieldType)) {
+        Class<?> clazz = String.class;
+        if (PsiTypes.booleanType().equals(fieldType)) {
           clazz = Boolean.class;
         }
-        else if (PsiType.INT.equals(fieldType) ||
+        else if (PsiTypes.intType().equals(fieldType) ||
                  fieldType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
           clazz = Integer.class;
+        }
+        else if (withElement != null || Extension.isClassField(attributeName)) {
+          clazz = PsiClass.class;
         }
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attributeName), clazz).setDeclaringElement(field);
         markAsRequired(extension, required);
 
         if (clazz == String.class) {
-          if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
-            extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
-          }
-          else if (!fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(fieldType);
-            if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
-              extension.setConverter(createEnumConverter(fieldPsiClass));
-              return;
-            }
-          }
-
-          if ("language".equals(attributeName)) {
-            extension.setConverter(LANGUAGE_CONVERTER);
-          }
-          else if ("action".equals(attributeName)) {
-            extension.setConverter(ACTION_CONVERTER);
-          }
+          markStringProperty(extension, field, fieldType, attributeName);
         }
         else if (clazz == PsiClass.class) {
           markAsClass(extension, true, withElement);
@@ -118,24 +104,29 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       }
 
       @Override
-      public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, boolean required) {
+      public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, RequiredFlag required) {
+        boolean isBoolean = PsiTypes.booleanType().equals(field.getType());
+
         final DomExtension extension =
-          registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class)
+          registrar.registerFixedNumberChildExtension(new XmlName(tagName), isBoolean ? SimpleBooleanTagValue.class : SimpleTagValue.class)
             .setDeclaringElement(field);
         markAsRequired(extension, required);
 
+        if (isBoolean) {
+          return;
+        }
+
         final With withElement = findWithElement(elements, field);
         markAsClass(extension, Extension.isClassField(field.getName()), withElement);
-        if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
-          extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
-        }
+
+        markStringProperty(extension, field, field.getType(), tagName);
       }
 
       @Override
       public void visitXCollection(@NotNull PsiField field,
                                    @Nullable String tagName,
                                    @NotNull PsiAnnotation collectionAnnotation,
-                                   boolean required) {
+                                   RequiredFlag required) {
         if (tagName == null) {
           registerCollectionBinding(field, registrar, collectionAnnotation, required);
           return;
@@ -177,14 +168,41 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static void markAsRequired(DomExtension extension, boolean required) {
-    if (required) extension.addCustomAnnotation(MyRequired.INSTANCE);
+  private static void markAsRequired(DomExtension extension, ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
+    if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED) {
+      extension.addCustomAnnotation(MyRequired.INSTANCE);
+    }
+    else if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED_ALLOW_EMPTY) {
+      extension.addCustomAnnotation(MyRequiredCanBeEmpty.INSTANCE);
+    }
+  }
+
+  private static void markStringProperty(DomExtension extension, PsiField field, PsiType fieldType, String propertyName) {
+    if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
+      extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
+    }
+    else if (!fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(fieldType);
+      if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
+        extension.setConverter(createEnumConverter(fieldPsiClass));
+        return;
+      }
+    }
+
+    if ("language".equals(propertyName) ||
+        StringUtil.endsWith(propertyName, "Language")) // NON-NLS
+    {
+      extension.setConverter(LANGUAGE_CONVERTER);
+    }
+    else if ("action".equals(propertyName)) {
+      extension.setConverter(ACTION_CONVERTER);
+    }
   }
 
   private static void registerCollectionBinding(PsiField field,
                                                 DomExtensionsRegistrar registrar,
                                                 PsiAnnotation collectionAnnotation,
-                                                boolean required) {
+                                                ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
     final boolean surroundWithTag = PsiUtil.getAnnotationBooleanAttribute(collectionAnnotation, "surroundWithTag");
     if (surroundWithTag) return; // todo Set, List, Array
 
@@ -251,6 +269,9 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   public interface SimpleTagValue extends GenericDomValue<String> {
   }
 
+  public interface SimpleBooleanTagValue extends GenericDomValue<Boolean> {
+  }
+
   @SuppressWarnings("ClassExplicitlyAnnotation")
   private static class MyNoSpellchecking implements NoSpellchecking {
 
@@ -288,7 +309,33 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static class MyImplementationExtendClass extends ExtendClassImpl {
+  @SuppressWarnings("ClassExplicitlyAnnotation")
+  private static class MyRequiredCanBeEmpty implements Required {
+
+    private static final MyRequiredCanBeEmpty INSTANCE = new MyRequiredCanBeEmpty();
+
+    @Override
+    public boolean value() {
+      return true;
+    }
+
+    @Override
+    public boolean nonEmpty() {
+      return false;
+    }
+
+    @Override
+    public boolean identifier() {
+      return false;
+    }
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      return Required.class;
+    }
+  }
+
+  private static final class MyImplementationExtendClass extends ExtendClassImpl {
     private final String myInterfaceName;
 
     private MyImplementationExtendClass(String interfaceName) {
@@ -318,59 +365,89 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
   @NotNull
   private static ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
-    return new ResolvingConverter<PsiEnumConstant>() {
-
-      @Override
-      public String getErrorMessage(@Nullable String s, ConvertContext context) {
-        return "Cannot resolve '" + s + "' in " + fieldPsiClass.getQualifiedName();
-      }
-
-      @NotNull
-      @Override
-      public Collection<? extends PsiEnumConstant> getVariants(ConvertContext context) {
-        return ContainerUtil.findAll(fieldPsiClass.getFields(), PsiEnumConstant.class);
-      }
-
-      @Nullable
-      @Override
-      public LookupElement createLookupElement(PsiEnumConstant constant) {
-        return JavaLookupElementBuilder.forField(constant, toXmlName(constant), null);
-      }
-
-      @Nullable
-      @Override
-      public PsiEnumConstant fromString(@Nullable String s, ConvertContext context) {
-        if (s == null) return null;
-
-        final PsiField name = fieldPsiClass.findFieldByName(fromXmlName(s), false);
-        return name instanceof PsiEnumConstant ? (PsiEnumConstant)name : null;
-      }
-
-      @Nullable
-      @Override
-      public String toString(@Nullable PsiEnumConstant constant, ConvertContext context) {
-        return constant == null ? null : toXmlName(constant);
-      }
-
-      private String fromXmlName(@NotNull String name) {
-        if (doNotTransformName()) return name;
-        return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
-      }
-
-      private String toXmlName(PsiEnumConstant constant) {
-        if (doNotTransformName()) return constant.getName();
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, constant.getName());
-      }
-
-      private boolean doNotTransformName() {
-        return LEGACY_ENUM_NOTATION_CLASSES.contains(fieldPsiClass.getQualifiedName());
-      }
-    };
+    return new PsiEnumConstantResolvingConverter(fieldPsiClass.getQualifiedName());
   }
 
-  private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
-    ContainerUtil.immutableSet(
-      "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
-      "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind"
-    );
+  private static class PsiEnumConstantResolvingConverter extends ResolvingConverter<PsiEnumConstant> {
+
+    private final String myEnumFqn;
+
+    private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
+      Set.of(
+        "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
+        "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
+        "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
+      );
+
+    private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
+      Set.of(
+        "com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode"
+      );
+
+    PsiEnumConstantResolvingConverter(String enumFqn) { myEnumFqn = enumFqn; }
+
+    @Override
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, myEnumFqn);
+    }
+
+    @NotNull
+    @Override
+    public Collection<? extends PsiEnumConstant> getVariants(ConvertContext context) {
+      PsiClass enumClass = getEnumClass(context);
+      if (enumClass == null) return Collections.emptyList();
+
+      return ContainerUtil.findAll(enumClass.getFields(), PsiEnumConstant.class);
+    }
+
+    @Nullable
+    @Override
+    public LookupElement createLookupElement(PsiEnumConstant constant) {
+      return JavaLookupElementBuilder.forField(constant, toXmlName(constant), null);
+    }
+
+    @Nullable
+    @Override
+    public PsiEnumConstant fromString(@Nullable String s, ConvertContext context) {
+      if (s == null) return null;
+
+      PsiClass enumClass = getEnumClass(context);
+      if (enumClass == null) return null;
+
+      final PsiField name = enumClass.findFieldByName(fromXmlName(s), false);
+      return name instanceof PsiEnumConstant ? (PsiEnumConstant)name : null;
+    }
+
+    @Nullable
+    @Override
+    public String toString(@Nullable PsiEnumConstant constant, ConvertContext context) {
+      return constant == null ? null : toXmlName(constant);
+    }
+
+    @Nullable
+    private PsiClass getEnumClass(ConvertContext context) {
+      return DomJavaUtil.findClass(myEnumFqn, context.getInvocationElement());
+    }
+
+    private String fromXmlName(@NotNull String name) {
+      if (doNotTransformName()) return name;
+      if (enumLowerUnderscore()) return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_UNDERSCORE, name);
+      return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
+    }
+
+    private String toXmlName(PsiEnumConstant constant) {
+      String name = constant.getName();
+      if (doNotTransformName()) return name;
+      if (enumLowerUnderscore()) return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_UNDERSCORE, name);
+      return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, name);
+    }
+
+    private boolean doNotTransformName() {
+      return myEnumFqn != null && LEGACY_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+    }
+
+    private boolean enumLowerUnderscore() {
+      return myEnumFqn != null && LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+    }
+  }
 }

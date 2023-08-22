@@ -1,4 +1,4 @@
-// "Qualify with Test.this" "true"
+// "Qualify with Test.this" "true-preview"
 class Test {
   String myStr;
   class Foo extends Super {

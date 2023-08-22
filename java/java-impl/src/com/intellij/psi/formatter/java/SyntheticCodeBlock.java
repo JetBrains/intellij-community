@@ -126,10 +126,9 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   }
 
   @Override
+  @Nullable
   public ASTNode getFirstTreeNode() {
-    ASTNode result = AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
-    assert result != null;
-    return result;
+    return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
   }
 
   public void setChildAttributes(final ChildAttributes childAttributes) {
@@ -179,7 +178,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   private static boolean isDotFirst(final Block block) {
     Block current = block;
     while (!current.getSubBlocks().isEmpty()) {
-      current = block.getSubBlocks().get(0);
+      current = current.getSubBlocks().get(0);
     }
     ASTNode node = current instanceof LeafBlock ? ((LeafBlock)current).getNode() : null;
     return node != null && node.getElementType() == JavaTokenType.DOT;

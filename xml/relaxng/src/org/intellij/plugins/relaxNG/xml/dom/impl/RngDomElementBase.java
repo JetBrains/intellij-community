@@ -48,7 +48,7 @@ public abstract class RngDomElementBase implements RngDomElement, Pattern<XmlEle
       @Override
       public void visitDomElement(DomElement element) {
         if (element instanceof CommonElement) {
-          ((CommonElement)element).accept(visitor);
+          ((CommonElement<?>)element).accept(visitor);
         }
       }
     });

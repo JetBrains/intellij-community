@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.components.BaseState
@@ -35,10 +35,15 @@ class WatchesManagerState : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
   val expressions by list<ConfigurationState>()
+
+  @get:Property(surroundWithTag = false)
+  @get:XCollection
+  val inlineExpressionStates by list<InlineWatchState>()
 }
 
 @Tag("configuration")
-class ConfigurationState @JvmOverloads constructor(name: String? = null, expressions: List<XExpression>? = null) : BaseState() {
+class ConfigurationState @JvmOverloads constructor(name: String? = null,
+                                                   expressions: List<XExpression>? = null) : BaseState() {
   @get:Attribute
   var name by string()
 
@@ -59,9 +64,25 @@ class ConfigurationState @JvmOverloads constructor(name: String? = null, express
   }
 }
 
+@Tag("inline-watch")
+class InlineWatchState @JvmOverloads  constructor(expression: XExpression? = null, line: Int = -1, fileUrl: String? = null) : BaseState() {
+
+  @get:Attribute
+  var fileUrl by string()
+  @get:Attribute
+  var line by property(-1)
+  @get:Property(surroundWithTag = false)
+  var watchState by property<WatchState?>(null) {it == null}
+
+  init {
+    this.fileUrl = fileUrl
+    this.line = line
+    this.watchState = expression?.let { WatchState(it) }
+  }
+}
+
 @Tag("watch")
 class WatchState : XExpressionState {
-  @Suppress("unused")
   constructor() : super()
 
   constructor(expression: XExpression) : super(expression)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -34,7 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-class ShowEditorHighlighterTokensAction extends EditorAction {
+@SuppressWarnings("HardCodedStringLiteral")
+final class ShowEditorHighlighterTokensAction extends EditorAction {
   private static class Holder {
     private static final Key<String> TOKEN_NAME = Key.create("token.name");
     private static final Key<Boolean> LISTENER_ADDED = Key.create("token.mouse.listener.added");
@@ -50,13 +50,13 @@ class ShowEditorHighlighterTokensAction extends EditorAction {
         LogicalPosition logicalPosition = e.getLogicalPosition();
         int offset = e.getOffset();
         for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-          String text = highlighter.getUserData(Holder.TOKEN_NAME);
+          String text = highlighter.getUserData(TOKEN_NAME);
           if (!StringUtil.isEmpty(text) && (highlighter.getStartOffset() < offset && highlighter.getEndOffset() > offset ||
                                             !logicalPosition.leansForward && highlighter.getEndOffset() == offset ||
                                             logicalPosition.leansForward && highlighter.getStartOffset() == offset)) {
             int hintOffset = highlighter.getStartOffset();
-            Holder.ourAlarm.cancelAllRequests();
-            Holder.ourAlarm.addRequest(() -> {
+            ourAlarm.cancelAllRequests();
+            ourAlarm.addRequest(() -> {
               LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(text));
               Point point = HintManagerImpl.getHintPosition(hint, editor,
                                                             editor.offsetToLogicalPosition(hintOffset).leanForward(true), HintManager.ABOVE);
@@ -73,7 +73,7 @@ class ShowEditorHighlighterTokensAction extends EditorAction {
   private static boolean ourEscHandlerInstalled;
 
 
-  private static class EscapeHandler extends EditorActionHandler {
+  private static final class EscapeHandler extends EditorActionHandler {
     private final EditorActionHandler myDelegate;
 
     private EscapeHandler(EditorActionHandler delegate) {myDelegate = delegate;}
@@ -107,7 +107,7 @@ class ShowEditorHighlighterTokensAction extends EditorAction {
       protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         if (editor.getUserData(Holder.LISTENER_ADDED) != null) cleanup(editor);
 
-        HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(0);
+        HighlighterIterator it = editor.getHighlighter().createIterator(0);
         while (!it.atEnd()) {
           RangeHighlighter h = editor.getMarkupModel().addRangeHighlighter(it.getStart(), it.getEnd(),
                                                                            0, Holder.OUR_TEXT_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);

@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.util.io;
 
 import java.io.FilterInputStream;
@@ -63,11 +59,19 @@ public class LimitedInputStream extends FilterInputStream {
 
   @Override
   public int available() throws IOException {
+    //RC: super.available() may be expensive (=syscall for FileIS), hence in many cases we
+    //    overwrite this method to just return remainingLimit() -- if we're sure remainingLimit()
+    //    is precise estimate of remaining file size.
+    //    (In fact, we do that so often that maybe we should add ctor param for that purpose?)
     return Math.min(super.available(), remainingLimit());
   }
 
   protected int remainingLimit() {
     return myReadLimit - myBytesRead;
+  }
+
+  public int getBytesRead() {
+    return myBytesRead;
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,10 +30,7 @@ import java.util.Map;
 public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("TestNG QuickFix");
-  private static final String DISPLAY_NAME = "JUnit Test can be converted to TestNG";
   private static final Map<String, String> ANNOTATIONS_MAP;
-
-  public static final String QUICKFIX_NAME = "Convert TestCase to TestNG";
 
   static {
     ANNOTATIONS_MAP = new HashMap<>();
@@ -72,12 +70,20 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return QUICKFIX_NAME;
+      return TestngBundle.message("intention.family.name.convert.testcase.to.testng");
     }
 
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiClass.class);
+      if (psiClass == null) return IntentionPreviewInfo.EMPTY;
+      doFix(project, psiClass);
+      return IntentionPreviewInfo.DIFF;
     }
 
     @Override
@@ -210,10 +216,9 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       method.accept(new JavaRecursiveElementWalkingVisitor() {
 
         @Override
-        public void visitExpressionStatement(PsiExpressionStatement statement) {
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
           PsiExpression expression = statement.getExpression();
-          if (expression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+          if (expression instanceof PsiMethodCallExpression methodCall) {
             if (methodCall.getArgumentList().getExpressionCount() == 1) {
               PsiMethod resolved = methodCall.resolveMethod();
               if (resolved != null && "junit.framework.TestCase".equals(resolved.getContainingClass().getQualifiedName()) &&

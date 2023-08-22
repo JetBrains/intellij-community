@@ -43,6 +43,15 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+  @Override
   public String toString() {
     return "light reference list";
   }

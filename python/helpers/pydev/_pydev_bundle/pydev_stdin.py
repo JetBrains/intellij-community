@@ -34,7 +34,11 @@ class BaseStdIn:
 
     def __iter__(self):
         # BaseStdIn would not be considered as Iterable in Python 3 without explicit `__iter__` implementation
-        return self.original_stdin.__iter__()
+        self.iter = self.original_stdin.__iter__()
+        return self
+
+    def __next__(self):
+        return self.iter.__next__()
 
     def __getattr__(self, item):
         # it's called if the attribute wasn't found
@@ -57,6 +61,9 @@ class StdIn(BaseStdIn):
         self.rpc_client = rpc_client
 
     def readline(self, *args, **kwargs):
+        return self.request_input()
+
+    def request_input(self):
         from pydev_console.pydev_protocol import KeyboardInterruptException
 
         # Ok, callback into the client to get the new input
@@ -76,6 +83,12 @@ class StdIn(BaseStdIn):
 
     def close(self, *args, **kwargs):
         pass  # expected in StdIn
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.request_input()
 
 #=======================================================================================================================
 # DebugConsoleStdIn
@@ -103,4 +116,24 @@ class DebugConsoleStdIn(BaseStdIn):
         self.__pydev_run_command(True)
         result = self.original_stdin.readline(*args, **kwargs)
         self.__pydev_run_command(False)
+        return result
+
+    def __iter__(self):
+        self.iter = self.original_stdin.__iter__()
+        return self
+
+    def __next__(self):
+        # Notify Java side about input and call original function
+        self.__pydev_run_command(True)
+        released = False
+        if self.debugger._main_lock.is_acquired_by_current_thread():
+            # release main lock while waiting for input to process internal commands and handle interrupt() request
+            self.debugger._main_lock.release()
+            released = True
+        try:
+            result = self.iter.__next__()
+        finally:
+            self.__pydev_run_command(False)
+            if released:
+                self.debugger._main_lock.acquire()
         return result

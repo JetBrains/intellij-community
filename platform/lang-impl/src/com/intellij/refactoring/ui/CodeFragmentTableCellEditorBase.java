@@ -31,9 +31,6 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implements TableCellEditor {
   private Document myDocument;
   protected PsiCodeFragment myCodeFragment;

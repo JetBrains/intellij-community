@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.codeinsight;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -28,9 +28,6 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiType> {
   public RuntimeTypeEvaluator(@Nullable Editor editor, PsiElement expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
     super(editor, expression, context, indicator);
@@ -56,7 +53,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
   protected PsiType evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     Project project = evaluationContext.getProject();
     SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-    ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
+    ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<>() {
       @Override
       public ExpressionEvaluator compute() throws EvaluateException {
         return EvaluatorBuilderImpl.getInstance().build(myElement, position);
@@ -64,7 +61,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
     });
 
     final Value value = evaluator.evaluate(evaluationContext);
-    if(value != null){
+    if (value != null) {
       return getCastableRuntimeType(project, value);
     }
 

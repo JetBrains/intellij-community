@@ -49,8 +49,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
       myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.getErrorStripeMarkMinHeight(), JBUIScale.scale(4)));
       myPainter.setErrorStripeGap(Registry.intValue("error.stripe.gap", 0));
-      if (myPainter instanceof ExtraErrorStripePainter) {
-        ExtraErrorStripePainter extra = (ExtraErrorStripePainter)myPainter;
+      if (myPainter instanceof ExtraErrorStripePainter extra) {
         extra.setGroupSwap(!myScrollBar.getComponentOrientation().isLeftToRight());
       }
       myPainter.paint(g, x, y, width, height, object);

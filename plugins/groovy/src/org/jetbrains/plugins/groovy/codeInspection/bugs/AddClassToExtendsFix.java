@@ -1,17 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -26,6 +28,16 @@ public class AddClassToExtendsFix extends GroovyFix {
   public AddClassToExtendsFix(@NotNull GrTypeDefinition psiClass, @NotNull String interfaceName) {
     myPsiClassPointer = createSmartPointer(psiClass);
     myInterfaceName = interfaceName;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    GrTypeDefinition element = myPsiClassPointer.getElement();
+    if (element == null) {
+      return null;
+    }
+    GrTypeDefinition copy = PsiTreeUtil.findSameElementInCopy(element, target);
+    return new AddClassToExtendsFix(copy, myInterfaceName);
   }
 
   @Override
@@ -83,13 +95,12 @@ public class AddClassToExtendsFix extends GroovyFix {
   @NotNull
   @Override
   public String getName() {
-    return GroovyInspectionBundle.message("implement.class", myInterfaceName);
+    return GroovyBundle.message("implement.class", myInterfaceName);
   }
 
-  @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Implement";
+    return GroovyBundle.message("add.class.to.extends.family.name");
   }
 }

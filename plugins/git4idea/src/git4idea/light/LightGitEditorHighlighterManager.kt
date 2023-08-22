@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEditService
@@ -6,26 +6,21 @@ import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorInfoImpl
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
-import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.BaseSingleTaskController
 import git4idea.index.isTracked
 import git4idea.index.repositoryPath
-import org.jetbrains.annotations.NotNull
-
-private val LOG = Logger.getInstance("#git4idea.light.LightGitEditorHighlighterManager")
+import org.jetbrains.annotations.NonNls
 
 class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val singleTaskController = MySingleTaskController()
-  private var lst: LineStatusTrackerBase<Range>? = null
+  private var lst: SimpleLocalLineStatusTracker? = null
 
   private val lightEditService
     get() = LightEditService.getInstance()
@@ -50,6 +45,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     }, this)
 
     Disposer.register(tracker, this)
+    Disposer.register(this, disposableFlag)
   }
 
   private fun readBaseVersion(file: VirtualFile, repositoryPath: String?) {
@@ -65,7 +61,8 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     if (lightEditService.selectedFile == baseVersion.file && lst?.virtualFile == baseVersion.file) {
       if (baseVersion.text != null) {
         lst?.setBaseRevision(baseVersion.text)
-      } else {
+      }
+      else {
         dropLst()
       }
     }
@@ -87,8 +84,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     }
 
     if (lst == null) {
-      lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project, editor.document, file,
-                                                       LocalLineStatusTracker.Mode(true, true, false))
+      lst = SimpleLocalLineStatusTracker.createTracker(lightEditService.project!!, editor.document, file)
     }
     readBaseVersion(file, status.repositoryPath)
   }
@@ -103,13 +99,14 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, BaseVersion>("light.highlighter", this::setBaseVersion, this) {
+    BaseSingleTaskController<Request, BaseVersion>("light.highlighter", this::setBaseVersion, disposableFlag) {
     override fun process(requests: List<Request>, previousResult: BaseVersion?): BaseVersion {
       val request = requests.last()
       try {
         val content = getFileContentAsString(request.file, request.repositoryPath, tracker.gitExecutable)
         return BaseVersion(request.file, StringUtil.convertLineSeparators(content))
-      } catch (e: VcsException) {
+      }
+      catch (e: VcsException) {
         LOG.warn("Could not read base version for ${request.file}", e)
         return BaseVersion(request.file, null)
       }
@@ -120,7 +117,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
 
   private data class Request(val file: VirtualFile, val repositoryPath: String)
   private data class BaseVersion(val file: VirtualFile, val text: String?) {
-    override fun toString(): String {
+    override fun toString(): @NonNls String {
       return "BaseVersion(file=$file, text=${text?.take(10) ?: "null"}"
     }
   }

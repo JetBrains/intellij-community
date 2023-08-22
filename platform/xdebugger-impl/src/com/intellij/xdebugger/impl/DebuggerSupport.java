@@ -1,16 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.AbstractDebuggerSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 
 @Deprecated
 public abstract class DebuggerSupport {
@@ -42,8 +45,44 @@ public abstract class DebuggerSupport {
     return EXTENSION_POINT.getExtensions();
   }
 
+  private static final BreakpointPanelProvider<?> EMPTY_PANEL_PROVIDER = new BreakpointPanelProvider<>() {
+    @Override
+    public void createBreakpointsGroupingRules(Collection collection) {
+    }
+
+    @Override
+    public void addListener(BreakpointsListener listener, Project project, Disposable disposable) {
+    }
+
+    @Override
+    public int getPriority() {
+      return 0;
+    }
+
+    @Nullable
+    @Override
+    public Object findBreakpoint(@NotNull Project project, @NotNull Document document, int offset) {
+      return null;
+    }
+
+    @Override
+    public @Nullable GutterIconRenderer getBreakpointGutterIconRenderer(Object breakpoint) {
+      return null;
+    }
+
+    @Override
+    public void onDialogClosed(Project project) {
+    }
+
+    @Override
+    public void provideBreakpointItems(Project project, Collection<? super BreakpointItem> collection) {
+    }
+  };
+
   @NotNull
-  public abstract BreakpointPanelProvider<?> getBreakpointPanelProvider();
+  public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
+    return EMPTY_PANEL_PROVIDER;
+  }
 
   @NotNull
   public DebuggerActionHandler getStepOverHandler() {
@@ -151,6 +190,12 @@ public abstract class DebuggerSupport {
     return DisabledActionHandler.INSTANCE;
   }
 
+  @NotNull
+  public DebuggerActionHandler getAddToInlineWatchesActionHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
+
   public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
     return DisabledActionHandler.INSTANCE;
   }
@@ -171,7 +216,11 @@ public abstract class DebuggerSupport {
     }
   };
 
+  /**
+   * @deprecated use {@link com.intellij.xdebugger.XDebugSessionListener#breakpointsMuted(boolean)}
+   */
   @NotNull
+  @Deprecated
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return DISABLED_TOGGLE_HANDLER;
   }
@@ -190,20 +239,16 @@ public abstract class DebuggerSupport {
     public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
       return false;
     }
+
+    @Override
+    public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+      return true;
+    }
   };
 
   @NotNull
   public MarkObjectActionHandler getMarkObjectHandler() {
     return DISABLED_MARK_HANDLER;
-  }
-
-  /**
-   * @deprecated {@link XDebuggerManager#getCurrentSession()} is used instead
-   */
-  @Nullable
-  @Deprecated
-  public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
-    return null;
   }
 
   protected static final EditBreakpointActionHandler DISABLED_EDIT = new EditBreakpointActionHandler() {

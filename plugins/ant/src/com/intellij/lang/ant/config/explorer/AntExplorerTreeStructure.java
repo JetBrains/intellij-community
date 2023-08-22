@@ -12,6 +12,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,9 +28,9 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   private boolean myFilteredTargets = false;
   private static final Comparator<AntBuildTarget> ourTargetComparator = (target1, target2) -> {
     final String name1 = target1.getDisplayName();
-    if (name1 == null) return Integer.MIN_VALUE;
+    if (name1 == null) return -1;
     final String name2 = target2.getDisplayName();
-    if (name2 == null) return Integer.MAX_VALUE;
+    if (name2 == null) return 1;
     return name1.compareToIgnoreCase(name2);
   };
 
@@ -75,13 +76,12 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     final AntConfiguration configuration = AntConfiguration.getInstance(myProject);
     if (element == myRoot) {
       if (!configuration.isInitialized()) {
-        return new Object[] {AntBundle.message("loading.ant.config.progress")};
+        return new Object[] {AntBundle.message("progress.text.loading.ant.config")};
       }
-      return configuration.getBuildFileList().isEmpty() ? new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")} : configuration.getBuildFiles();
+      return configuration.getBuildFiles();
     }
 
-    if (element instanceof AntBuildFile) {
-      final AntBuildFile buildFile = (AntBuildFile)element;
+    if (element instanceof AntBuildFile buildFile) {
       final AntBuildModel model = buildFile.getModel();
 
       final List<AntBuildTarget> targets =
@@ -159,7 +159,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private static final class TextInfoNodeDescriptor extends AntNodeDescriptor {
-    TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
+    TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, @Nls String text) {
       super(project, parentDescriptor);
       myName = text;
       myColor = JBColor.blue;

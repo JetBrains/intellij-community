@@ -19,21 +19,20 @@ import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceAction;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 
 import java.util.List;
 import java.util.Set;
 
 public class XsltIntroduceParameterAction extends BaseIntroduceAction<IntroduceParameterOptions> {
-    static final String COMMAND_NAME = "Introduce XSLT Parameter";
-
     @Override
     public String getRefactoringName() {
-        return "Introduce Parameter";
+        return XPathBundle.message("dialog.title.introduce.parameter");
     }
 
     @Override
     protected String getCommandName() {
-        return null;
+        return XPathBundle.message("command.name.introduce.xslt.parameter");
     }
 
     @Override

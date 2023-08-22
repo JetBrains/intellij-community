@@ -1,4 +1,4 @@
-// "Replace with Comparator.comparingLong" "false"
+// "Replace with 'Comparator.comparingLong'" "false"
 
 import java.util.*;
 

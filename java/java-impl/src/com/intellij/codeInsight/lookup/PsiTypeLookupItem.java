@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @author peter
+ * LookupItem to represent a type. The object is either {@link PsiType}, or {@link PsiClass}.
  */
-public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
-  private static final InsertHandler<PsiTypeLookupItem> DEFAULT_IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
+public final class PsiTypeLookupItem extends LookupItem<Object> implements TypedLookupItem {
+  private static final InsertHandler<PsiTypeLookupItem> DEFAULT_IMPORT_FIXER = new InsertHandler<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {
       if (item.getObject() instanceof PsiClass) {
@@ -101,8 +101,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
     SmartPsiElementPointer<PsiElement> pointer = null;
-    if (getObject() instanceof PsiElement) {
-      PsiElement psiElement = (PsiElement)getObject();
+    if (getObject() instanceof PsiElement psiElement) {
       pointer = SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(psiElement);
     }
     myImportFixer.handleInsert(context, this);
@@ -112,6 +111,8 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     }
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
+    boolean insideVarDeclaration = position.getParent() instanceof PsiTypeElement typeElement &&
+                                   typeElement.getParent() instanceof PsiVariable;
     if (position != null) {
       int genericsStart = context.getTailOffset();
       context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
@@ -127,7 +128,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
         targetOffset += braces.length() + 1;
       } else {
         context.getDocument().insertString(targetOffset, braces);
-        targetOffset++;
+        targetOffset += insideVarDeclaration ? braces.length() : 1;
         if (context.getCompletionChar() == '[') {
           context.setAddCompletionChar(false);
         }
@@ -155,8 +156,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
       return "<>";
     }
 
-    if (getObject() instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)getObject();
+    if (getObject() instanceof PsiClass psiClass) {
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper();
       PsiSubstitutor substitutor = getSubstitutor();
       StringBuilder builder = new StringBuilder();
@@ -167,12 +167,12 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
              resolveHelper.resolveReferencedClass(parameter.getName(), context) != CompletionUtil.getOriginalOrSelf(parameter))) {
           return "";
         }
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           builder.append(", ");
         }
         builder.append(substitute.getCanonicalText());
       }
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         return "<" + builder + ">";
       }
     }
@@ -225,7 +225,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
           PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(name, context);
           String[] allStrings;
           if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
-            // inner class name should be shown qualified if its not accessible by single name
+            // inner class name should be shown qualified if it's not accessible by single name
             allStrings = ArrayUtilRt.toStringArray(JavaCompletionUtil.getAllLookupStrings(psiClass));
           } else {
             allStrings = new String[]{name};
@@ -261,7 +261,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     final Object object = getObject();
     if (object instanceof PsiClass) {
       JavaPsiClassReferenceElement.renderClassItem(presentation, this, (PsiClass)object, myDiamond, myLocationString, mySubstitutor);
@@ -310,7 +310,14 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     while (ref != null) {
       PsiElement qualifier = ref.getQualifier();
       PsiClass outer = aClass.getContainingClass();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement) || !Objects.equals(aClass.getName(), ref.getReferenceName()) || outer == null) break;
+      if (!Objects.equals(aClass.getName(), ref.getReferenceName())) {
+        if (!JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().isAccessible(aClass, ref, outer)) {
+          // An inner class of non-public superclass is accessed via public subclass: do not rationalize qualifier in this case
+          return;
+        }
+        break;
+      }
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement) || outer == null) break;
 
       goneDeeper = true;
       ref = (PsiJavaCodeReferenceElement)qualifier;
@@ -328,7 +335,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
                 "file.length=" + file.getTextLength() + "\n" +
                 "document=" + context.getDocument() + "\n" +
                 new Throwable(),
-                AttachmentFactory.createAttachment(context.getDocument()));
+                CoreAttachmentFactory.createAttachment(context.getDocument()));
       return;
     }
 

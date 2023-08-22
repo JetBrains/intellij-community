@@ -15,12 +15,16 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RemoveParamFix extends AbstractFix {
     private final XmlTag myTag;
@@ -34,7 +38,12 @@ public class RemoveParamFix extends AbstractFix {
     @Override
     @NotNull
     public String getText() {
-        return "Remove Argument '" + myName + "'";
+        return XPathBundle.message("intention.name.remove.argument", myName);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+        return XPathBundle.message("intention.family.name.remove.argument");
     }
 
     @Override
@@ -51,4 +60,9 @@ public class RemoveParamFix extends AbstractFix {
     protected boolean requiresEditor() {
         return false;
     }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new RemoveParamFix(PsiTreeUtil.findSameElementInCopy(myTag, target), myName);
+  }
 }

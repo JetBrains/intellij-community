@@ -58,4 +58,9 @@ public class DirectoryContentImpl extends DiffContentBase implements DirectoryCo
   public FileType getContentType() {
     return null;
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + ":" + myFile;
+  }
 }

@@ -1,19 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search
 
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.Searcher
 import com.intellij.model.search.impl.*
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchSession
@@ -21,20 +17,37 @@ import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.SmartList
 import com.intellij.util.text.StringSearcher
-import gnu.trove.THashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.produce
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
 private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.searcher")
 
+@Suppress("UNCHECKED_CAST")
+internal fun <R : Any> searchers(parameters: SearchParameters<R>): List<Searcher<SearchParameters<R>, R>> {
+  return searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
+}
+
 internal val indicatorOrEmpty: ProgressIndicator
   get() = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator())
 
+fun <R> runSearch(cs: CoroutineScope, project: Project, query: Query<R>): ReceiveChannel<R> {
+  @Suppress("EXPERIMENTAL_API_USAGE")
+  return cs.produce(capacity = Channel.UNLIMITED) {
+    coroutineToIndicator {
+      runSearch(project, query, Processor {
+        require(channel.trySend(it).isSuccess)
+        true
+      })
+    }
+  }
+}
 
 @Internal
 fun <R> runSearch(project: Project, query: Query<out R>, processor: Processor<in R>): Boolean {
@@ -85,7 +98,7 @@ private fun <B, R> handleParamRequest(progress: ProgressIndicator,
   }
 }
 
-private fun <R> collectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
+private fun <R : Any> collectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
   return DumbService.getInstance(parameters.project).runReadActionInSmartMode(Computable {
     if (parameters.areValid()) {
       doCollectSearchRequests(parameters)
@@ -96,11 +109,10 @@ private fun <R> collectSearchRequests(parameters: SearchParameters<R>): Collecti
   })
 }
 
-private fun <R> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
+private fun <R : Any> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
   val queries = ArrayList<Query<out R>>()
-
-  @Suppress("UNCHECKED_CAST")
-  val searchers = searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
+  queries.add(SearchersQuery(parameters))
+  val searchers = searchers(parameters)
   for (searcher: Searcher<SearchParameters<R>, R> in searchers) {
     ProgressManager.checkCanceled()
     queries += searcher.collectSearchRequests(parameters)
@@ -172,16 +184,23 @@ private class Layer<T>(
 
     for (wordRequest: WordRequest<T> in wordRequests) {
       progress.checkCanceled()
+      val occurrenceProcessor: OccurrenceProcessor = wordRequest.occurrenceProcessor(processor)
       val byRequest = theMap.getOrPut(wordRequest.searchWordRequest) {
         Pair(SmartList(), LinkedHashMap())
       }
-      val occurrenceProcessors: MutableCollection<OccurrenceProcessor> = when (val injectionInfo = wordRequest.injectionInfo) {
-        InjectionInfo.NoInjection -> byRequest.first
-        is InjectionInfo.InInjection -> byRequest.second.getOrPut(injectionInfo.languageInfo) {
-          SmartList()
-        }
+      val injectionInfo = wordRequest.injectionInfo
+      if (injectionInfo == InjectionInfo.NoInjection || injectionInfo == InjectionInfo.IncludeInjections) {
+        byRequest.first.add(occurrenceProcessor)
       }
-      occurrenceProcessors += wordRequest.occurrenceProcessor(processor)
+      if (injectionInfo is InjectionInfo.InInjection || injectionInfo == InjectionInfo.IncludeInjections) {
+        val languageInfo: LanguageInfo = if (injectionInfo is InjectionInfo.InInjection) {
+          injectionInfo.languageInfo
+        }
+        else {
+          LanguageInfo.NoLanguage
+        }
+        byRequest.second.getOrPut(languageInfo) { SmartList() }.add(occurrenceProcessor)
+      }
     }
 
     return theMap.map { (wordRequest: WordRequestInfo, byRequest) ->
@@ -199,15 +218,15 @@ private class Layer<T>(
       return processSingleRequest(globals.first())
     }
 
-    val globalsIds: Map<Set<IdIndexEntry>, List<WordRequestInfo>> = globals.groupBy(
-      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.getWordEntries(request.word, request.isCaseSensitive).toSet() },
+    val globalsIds: Map<PsiSearchHelperImpl.TextIndexQuery, List<WordRequestInfo>> = globals.groupBy(
+      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.TextIndexQuery.fromWord(request.word, request.isCaseSensitive, null) },
       { (request: WordRequestInfo, _) -> progress.checkCanceled(); request }
     )
     return myHelper.processGlobalRequests(globalsIds, progress, scopeProcessors(globals))
   }
 
   private fun scopeProcessors(globals: Collection<RequestAndProcessors>): Map<WordRequestInfo, Processor<in PsiElement>> {
-    val result = THashMap<WordRequestInfo, Processor<in PsiElement>>()
+    val result = HashMap<WordRequestInfo, Processor<in PsiElement>>()
     for (requestAndProcessors: RequestAndProcessors in globals) {
       progress.checkCanceled()
       result[requestAndProcessors.request] = scopeProcessor(requestAndProcessors)

@@ -1,20 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
-import com.google.common.net.HostAndPort;
-import com.google.common.net.InetAddresses;
-import com.google.common.net.InternetDomainName;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PortField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
@@ -124,16 +126,17 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         return;
       }
 
+      final HttpConfigurable settings = HttpConfigurable.getInstance();
       final String title = IdeBundle.message("dialog.title.check.proxy.settings");
-      final String answer =
+      final String url =
         Messages.showInputDialog(myMainPanel,
                                  IdeBundle.message("message.text.enter.url.to.check.connection"),
-                                 title, Messages.getQuestionIcon(), "http://", null);
-      if (StringUtil.isEmptyOrSpaces(answer)) {
+                                 title, Messages.getQuestionIcon(), settings.CHECK_CONNECTION_URL, null);
+      if (StringUtil.isEmptyOrSpaces(url)) {
         return;
       }
 
-      final HttpConfigurable settings = HttpConfigurable.getInstance();
+      settings.CHECK_CONNECTION_URL = url;
       try {
         apply(settings);
       }
@@ -144,7 +147,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       final AtomicReference<IOException> exceptionReference = new AtomicReference<>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         try {
-          HttpRequests.request(answer).readTimeout(3 * 1000).tryConnect();
+          HttpRequests.request(url).readTimeout(3 * 1000).tryConnect();
         }
         catch (IOException e) {
           exceptionReference.set(e);
@@ -215,45 +218,34 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   }
 
   @NotNull
-  private static String errorText(@NotNull String s) {
-    return "Problem with connection: " + s;
+  private static @NlsContexts.DialogMessage String errorText(@NotNull String s) {
+    return IdeBundle.message("dialog.message.problem.with.connection", s);
   }
 
   @Nullable
-  private String isValid() {
+  private @NlsContexts.DialogMessage String isValid() {
     if (myUseHTTPProxyRb.isSelected()) {
       String host = getText(myProxyHostTextField);
       if (host == null) {
-        return "Host name is empty";
+        return IdeBundle.message("dialog.message.host.name.empty");
       }
 
-      try {
-        HostAndPort parsedHost = HostAndPort.fromString(host);
-        if (parsedHost.hasPort()) {
-          return "Invalid host value";
+      switch (NetUtils.isValidHost(host)) {
+        case INVALID -> {
+          return IdeBundle.message("dialog.message.invalid.host.value");
         }
-        host = parsedHost.getHost();
-
-        try {
-          InetAddresses.forString(host);
+        case VALID -> {
           return null;
         }
-        catch (IllegalArgumentException e) {
-          // it is not an IPv4 or IPv6 literal
+        case VALID_PROXY -> {
         }
-
-        InternetDomainName.from(host);
       }
-      catch (IllegalArgumentException e) {
-        return "Invalid host value";
-      }
-
       if (myProxyAuthCheckBox.isSelected()) {
         if (StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText())) {
-          return "Login is empty";
+          return IdeBundle.message("dialog.message.login.empty");
         }
         if (myProxyPasswordTextField.getPassword().length == 0) {
-          return "Password is empty";
+          return IdeBundle.message("dialog.message.password.empty");
         }
       }
     }
@@ -267,7 +259,8 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       throw new ConfigurationException(error);
     }
 
-    if (isModified(settings)) {
+    boolean modified = isModified(settings);
+    if (modified) {
       settings.AUTHENTICATION_CANCELLED = false;
     }
 
@@ -285,6 +278,13 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
     settings.PROXY_PORT = myProxyPortTextField.getNumber();
     settings.PROXY_HOST = getText(myProxyHostTextField);
+
+    if (modified && JBCefApp.isStarted()) {
+      JBCefApp.getNotificationGroup()
+        .createNotification(IdeBundle.message("notification.title.jcef.proxyChanged"), IdeBundle.message("notification.content.jcef.applySettings"), NotificationType.WARNING)
+        .addAction(NotificationAction.createSimple(IdeBundle.message("action.jcef.restart"), () -> ApplicationManager.getApplication().restart()))
+        .notify(null);
+    }
   }
 
   @Nullable

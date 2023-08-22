@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable.renderers;
 
 import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,14 +15,11 @@ import javax.swing.*;
 /**
  * This is convenient class for implementing property renderers which
  * are based on JLabel.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
-  @Nullable private final String myStaticText;
+  private final @Nullable @Nls String myStaticText;
 
-  public LabelPropertyRenderer(@Nullable String staticText) {
+  public LabelPropertyRenderer(@Nullable @Nls String staticText) {
     myStaticText = staticText;
     setOpaque(true);
     putClientProperty("html.disable", true);
@@ -28,12 +27,11 @@ public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent(@Nullable PropertiesContainer container,
-                                 PropertyContext context,
-                                 @Nullable Object value,
-                                 boolean selected,
-                                 boolean hasFocus) {
+  public @NotNull JComponent getComponent(@Nullable PropertiesContainer container,
+                                          PropertyContext context,
+                                          @Nullable Object value,
+                                          boolean selected,
+                                          boolean hasFocus) {
     // Reset text and icon
     setText(null);
     setIcon(null);
@@ -54,6 +52,7 @@ public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
    * set.
    */
   protected void customize(@NotNull Object value) {
-    setText(myStaticText != null ? myStaticText : value.toString());
+    @NlsSafe String stringValue = value.toString();
+    setText(myStaticText != null ? myStaticText : stringValue);
   }
 }

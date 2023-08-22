@@ -31,7 +31,7 @@ abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTag
     super(element, ref);
   }
 
-  protected abstract XmlTag getTagElement(JavaFxTagNameReference ref);
+  abstract XmlTag getTagElement(@NotNull JavaFxTagNameReference ref);
 
   @Nullable
   @Override
@@ -63,14 +63,14 @@ abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTag
   }
 
   @Override
-  protected boolean isAccessible(@NotNull PsiMember member, @NotNull XmlTag reference) {
-    return member instanceof PsiClass && JavaFxPsiUtil.isClassAcceptable(reference.getParentTag(), (PsiClass)member);
+  protected boolean isAccessible(@NotNull PsiMember member, @NotNull XmlTag referenceElement) {
+    return member instanceof PsiClass && JavaFxPsiUtil.isClassAcceptable(referenceElement.getParentTag(), (PsiClass)member);
   }
 
   @Override
-  protected String getQualifiedName(@NotNull XmlTag tag) {
-    final XmlElementDescriptor descriptor = tag.getDescriptor();
-    return descriptor != null ? descriptor.getQualifiedName() : tag.getName();
+  protected String getQualifiedName(@NotNull XmlTag referenceElement) {
+    final XmlElementDescriptor descriptor = referenceElement.getDescriptor();
+    return descriptor != null ? descriptor.getQualifiedName() : referenceElement.getName();
   }
 
   @Override
@@ -79,7 +79,7 @@ abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTag
   }
 
   @Override
-  protected boolean hasUnresolvedImportWhichCanImport(PsiFile psiFile, String name) {
+  protected boolean hasUnresolvedImportWhichCanImport(@NotNull PsiFile psiFile, @NotNull String name) {
     return false;   //todo
   }
 

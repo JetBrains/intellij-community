@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -11,7 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class PropertyUtil extends PropertyUtilBase {
+import java.util.function.Supplier;
+
+public final class PropertyUtil extends PropertyUtilBase {
   private PropertyUtil() {
   }
 
@@ -22,9 +24,14 @@ public class PropertyUtil extends PropertyUtilBase {
 
   @Nullable
   private static PsiField getFieldOfGetter(PsiMethod method, boolean useIndex) {
+    return getFieldOfGetter(method, () -> getGetterReturnExpression(method), useIndex);
+  }
+
+  @Nullable
+  public static PsiField getFieldOfGetter(PsiMethod method, Supplier<? extends PsiExpression> returnExprSupplier, boolean useIndex) {
     PsiField field = useIndex && method instanceof PsiMethodImpl && method.isPhysical()
-            ? JavaSimplePropertyGistKt.getFieldOfGetter((PsiMethodImpl)method)
-            : getSimplyReturnedField(getGetterReturnExpression(method));
+                     ? JavaSimplePropertyGistKt.getFieldOfGetter(method)
+                     : getSimplyReturnedField(returnExprSupplier.get());
     if (field == null || !checkFieldLocation(method, field)) return null;
     final PsiType returnType = method.getReturnType();
     return returnType != null && field.getType().equals(returnType) ? field : null;
@@ -32,11 +39,11 @@ public class PropertyUtil extends PropertyUtilBase {
 
   @Nullable
   public static PsiField getSimplyReturnedField(@Nullable PsiExpression value) {
-    if (!(value instanceof PsiReferenceExpression)) {
+    value = PsiUtil.skipParenthesizedExprDown(value);
+    if (!(value instanceof PsiReferenceExpression reference)) {
       return null;
     }
 
-    final PsiReferenceExpression reference = (PsiReferenceExpression)value;
     if (hasSubstantialQualifier(reference)) {
       return null;
     }
@@ -50,10 +57,10 @@ public class PropertyUtil extends PropertyUtilBase {
   }
 
   private static boolean hasSubstantialQualifier(PsiReferenceExpression reference) {
-    final PsiExpression qualifier = reference.getQualifierExpression();
+    final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
     if (qualifier == null) return false;
 
-    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+    if (qualifier instanceof PsiQualifiedExpression) {
       return false;
     }
 
@@ -90,7 +97,7 @@ public class PropertyUtil extends PropertyUtilBase {
 
     PsiField field;
     if (useIndex && method instanceof PsiMethodImpl && method.isPhysical()) {
-      field = JavaSimplePropertyGistKt.getFieldOfSetter((PsiMethodImpl)method);
+      field = JavaSimplePropertyGistKt.getFieldOfSetter(method);
     }
     else {
       @NonNls final String name = method.getName();
@@ -106,26 +113,22 @@ public class PropertyUtil extends PropertyUtilBase {
         return null;
       }
       final PsiStatement statement = statements[0];
-      if (!(statement instanceof PsiExpressionStatement)) {
+      if (!(statement instanceof PsiExpressionStatement possibleAssignmentStatement)) {
         return null;
       }
-      final PsiExpressionStatement possibleAssignmentStatement = (PsiExpressionStatement)statement;
       final PsiExpression possibleAssignment = possibleAssignmentStatement.getExpression();
-      if (!(possibleAssignment instanceof PsiAssignmentExpression)) {
+      if (!(possibleAssignment instanceof PsiAssignmentExpression assignment)) {
         return null;
       }
-      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)possibleAssignment;
       if (!JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
         return null;
       }
-      final PsiExpression lhs = assignment.getLExpression();
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
+      if (!(lhs instanceof PsiReferenceExpression reference)) {
         return null;
       }
-      final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
-      final PsiExpression qualifier = reference.getQualifierExpression();
-      if (qualifier instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
+      if (qualifier instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiClass)) {
           return null;
@@ -135,19 +138,15 @@ public class PropertyUtil extends PropertyUtilBase {
         return null;
       }
       final PsiElement referent = reference.resolve();
-      if (referent == null) {
-        return null;
-      }
       if (!(referent instanceof PsiField)) {
         return null;
       }
       field = (PsiField)referent;
 
-      final PsiExpression rhs = assignment.getRExpression();
-      if (!(rhs instanceof PsiReferenceExpression)) {
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
+      if (!(rhs instanceof PsiReferenceExpression rReference)) {
         return null;
       }
-      final PsiReferenceExpression rReference = (PsiReferenceExpression)rhs;
       final PsiExpression rQualifier = rReference.getQualifierExpression();
       if (rQualifier != null) {
         return null;
@@ -221,7 +220,7 @@ public class PropertyUtil extends PropertyUtilBase {
   }
 
   private static boolean checkFieldLocation(PsiMethod method, PsiField field) {
-    return PsiResolveHelper.SERVICE.getInstance(method.getProject()).isAccessible(field, method, null) &&
+    return PsiResolveHelper.getInstance(method.getProject()).isAccessible(field, method, null) &&
            (!method.hasModifier(JvmModifier.STATIC) || field.hasModifier(JvmModifier.STATIC)) &&
            InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), field.getContainingClass(), true);
   }

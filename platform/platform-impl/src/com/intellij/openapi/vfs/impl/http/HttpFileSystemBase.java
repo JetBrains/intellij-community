@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.Disposable;
@@ -57,33 +43,29 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
   }
 
   @Override
-  public boolean isFileDownloaded(@NotNull final VirtualFile file) {
+  public boolean isFileDownloaded(final @NotNull VirtualFile file) {
     return file instanceof HttpVirtualFile && ((HttpVirtualFile)file).getFileInfo().getState() == RemoteFileState.DOWNLOADED;
   }
 
   @Override
-  @NotNull
-  public VirtualFile createChild(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory) {
+  public @NotNull VirtualFile createChild(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory) {
     String parentPath = parent.getPath();
     boolean hasEndSlash = parentPath.charAt(parentPath.length() - 1) == '/';
     return getRemoteFileManager().getOrCreateFile((HttpVirtualFileImpl)parent, Urls.newFromIdea(parent.getUrl() + (hasEndSlash ? "" : '/') + name), parentPath + (hasEndSlash ? "" : '/') + name, isDirectory);
   }
 
   @Override
-  @NotNull
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     return createChild(vDir, dirName, true);
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     return createChild(vDir, fileName, false);
   }
 
-  @NotNull
   @Override
-  public String extractPresentableUrl(@NotNull String path) {
+  public @NotNull String extractPresentableUrl(@NotNull String path) {
     return VirtualFileManager.constructUrl(myProtocol, path);
   }
 
@@ -96,9 +78,8 @@ public abstract class HttpFileSystemBase extends HttpFileSystem {
   public void refresh(boolean asynchronous) {
   }
 
-  @NotNull
   @Override
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return myProtocol;
   }
 

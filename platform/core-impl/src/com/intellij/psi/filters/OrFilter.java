@@ -24,20 +24,8 @@ import java.util.List;
 public class OrFilter implements ElementFilter {
   private final List<ElementFilter> myFilters;
 
-  /** @deprecated use {@link #OrFilter(ElementFilter...)} */
-  @Deprecated
-  public OrFilter() {
-    myFilters = new SmartList<>();
-  }
-
   public OrFilter(ElementFilter... filters) {
     myFilters = new SmartList<>(filters);
-  }
-
-  /** @deprecated use {@link #OrFilter(ElementFilter...)} */
-  @Deprecated
-  public void addFilter(ElementFilter filter) {
-    myFilters.add(filter);
   }
 
   @Override

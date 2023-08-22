@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl.javaCompiler.javac;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +42,7 @@ public class JavacConfiguration implements PersistentStateComponent<JpsJavaCompi
   }
 
   public static JpsJavaCompilerOptions getOptions(Project project, Class<? extends JavacConfiguration> aClass) {
-    JavacConfiguration configuration = ServiceManager.getService(project, aClass);
+    JavacConfiguration configuration = project.getService(aClass);
     return configuration.mySettings;
   }
 }

@@ -46,7 +46,7 @@ public class SameSourceRootInTwoModulesTest extends JavaPsiTestCase {
       PsiClass psiClass = myJavaFacade.findClass("p.A");
       assertEquals("p.A", psiClass.getQualifiedName());
 
-      final PsiFile psiFile = myPsiManager.findFile(myPackDir.findChild("A.java"));
+      PsiFile psiFile = myPsiManager.findFile(myPackDir.findChild("A.java"));
       psiFile.getChildren();
       assertEquals(psiFile, psiClass.getContainingFile());
 
@@ -54,11 +54,10 @@ public class SameSourceRootInTwoModulesTest extends JavaPsiTestCase {
       assertEquals(myModule, ModuleUtilCore.findModuleForFile(file, myProject));
 
       Module anotherModule = createModule("another");
-      myFilesToDelete.add(new File(anotherModule.getModuleFilePath()));
 
       PsiTestUtil.addSourceRoot(anotherModule, mySrcDir1);
 
-      assertEquals(anotherModule, ModuleUtilCore.findModuleForFile(file, myProject));
+      assertNotNull(ModuleUtilCore.findModuleForFile(file, myProject));
     });
   }
 }

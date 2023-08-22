@@ -11,8 +11,16 @@ import org.jetbrains.yaml.psi.YAMLScalar;
 @ApiStatus.Internal
 public abstract class YamlReferenceType extends YamlScalarType {
 
+  /**
+   * @deprecated initialise the {@code displayName} explicitly via {@link #YamlReferenceType(String, String)}
+   */
+  @Deprecated(forRemoval = true)
   protected YamlReferenceType(@NotNull String typeName) {
     super(typeName);
+  }
+
+  protected YamlReferenceType(@NotNull String typeName, @NotNull String displayName) {
+    super(typeName, displayName);
   }
 
   public PsiReference @NotNull [] getReferencesFromValue(@NotNull YAMLScalar valueScalar) {

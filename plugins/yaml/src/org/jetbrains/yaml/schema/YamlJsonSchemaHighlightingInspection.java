@@ -3,6 +3,7 @@ package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.psi.PsiElement;
@@ -13,20 +14,21 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceChecker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 import javax.swing.*;
 import java.util.Collection;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspectionBase {
   public boolean myCaseInsensitiveEnum = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JsonBundle.message("json.schema.inspection.case.insensitive.enum"), "myCaseInsensitiveEnum");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myCaseInsensitiveEnum", JsonBundle.message("json.schema.inspection.case.insensitive.enum")));
   }
 
   @Override
@@ -42,7 +44,8 @@ public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspecti
         if (!roots.contains(element)) return;
         final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, object);
         if (walker == null) return;
-        new JsonSchemaComplianceChecker(object, holder, walker, session, options, "Schema validation: ").annotate(element);
+        String prefix = YAMLBundle.message("inspections.schema.validation.prefix") + " ";
+        new JsonSchemaComplianceChecker(object, holder, walker, session, options,prefix).annotate(element);
       }
     };
   }

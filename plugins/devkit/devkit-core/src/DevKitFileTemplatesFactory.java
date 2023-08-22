@@ -1,37 +1,55 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.highlighter.XmlFileType;
+import org.jetbrains.annotations.NotNull;
 
-public class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFactory {
+public final class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFactory {
+
+  public static final String PLUGIN_XML = "devkit-plugin.xml";
+  public static final String THEME_PLUGIN_XML = "devkit-theme-plugin.xml";
+  public static final String THEME_JSON = "devkit-theme.json";
+  public static final String BUILD_GRADLE_KTS = "devkit-build.gradle.kts";
+  public static final String SETTINGS_GRADLE_KTS = "devkit-settings.gradle.kts";
+  public static final String GRADLE_WRAPPER_PROPERTIES = "devkit-gradle-wrapper.properties";
+  public static final String GRADLE_PROPERTIES = "devkit-gradle.properties";
 
   @Override
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
-    FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"),
-                                                                             AllIcons.Nodes.Plugin);
-    descriptor.addTemplate(new FileTemplateDescriptor("gradleBasedPlugin.xml", StdFileTypes.XML.getIcon()) {
+    FileTemplateGroupDescriptor root = new FileTemplateGroupDescriptor(DevKitBundle.message("module.builder.title"), AllIcons.Nodes.Plugin);
+    FileTemplateGroupDescriptor templatesRoot =
+      new FileTemplateGroupDescriptor(DevKitBundle.message("file.templates"), AllIcons.Nodes.Plugin);
+
+    templatesRoot.addTemplate(new FileTemplateDescriptor("gradleBasedPlugin.xml", XmlFileType.INSTANCE.getIcon()) {
       @Override
-      public String getDisplayName() {
-        return "plugin.xml in Gradle-based projects";
+      public @NotNull String getDisplayName() {
+        return DevKitBundle.message("module.wizard.gradle.plugin.xml.template.display.name");
       }
     });
-    descriptor.addTemplate(new FileTemplateDescriptor("plugin.xml", StdFileTypes.XML.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ProjectServiceClass.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ProjectServiceInterface.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ProjectServiceImplementation.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ApplicationServiceClass.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ApplicationServiceInterface.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ApplicationServiceImplementation.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ModuleServiceClass.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ModuleServiceInterface.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ModuleServiceImplementation.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("Action.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("InspectionDescription.html", StdFileTypes.HTML.getIcon()));
-    return descriptor;
-  }
+    templatesRoot.addTemplate(new FileTemplateDescriptor("plugin.xml", XmlFileType.INSTANCE.getIcon()));
+    templatesRoot.addTemplate(new FileTemplateDescriptor("Action.java", JavaFileType.INSTANCE.getIcon()));
+    templatesRoot.addTemplate(new FileTemplateDescriptor("InspectionDescription.html", HtmlFileType.INSTANCE.getIcon()));
 
+    FileTemplateGroupDescriptor newProjectRoot =
+      new FileTemplateGroupDescriptor(DevKitBundle.message("file.templates.new.plugin"), AllIcons.Nodes.Plugin);
+
+    newProjectRoot.addTemplate(PLUGIN_XML);
+    newProjectRoot.addTemplate(THEME_PLUGIN_XML);
+    newProjectRoot.addTemplate(THEME_JSON);
+    newProjectRoot.addTemplate(BUILD_GRADLE_KTS);
+    newProjectRoot.addTemplate(SETTINGS_GRADLE_KTS);
+    newProjectRoot.addTemplate(GRADLE_WRAPPER_PROPERTIES);
+    newProjectRoot.addTemplate(GRADLE_PROPERTIES);
+
+    root.addTemplate(templatesRoot);
+    root.addTemplate(newProjectRoot);
+
+    return root;
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -12,11 +12,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
-public class JavaGenericsUtil {
+public final class JavaGenericsUtil {
   public static boolean isReifiableType(PsiType type) {
     if (type instanceof PsiArrayType) {
       return isReifiableType(((PsiArrayType)type).getComponentType());
@@ -46,7 +48,6 @@ public class JavaGenericsUtil {
         return true;
       }
 
-      assert parameters.length == 0;
       final PsiClassType.ClassResolveResult resolved = classType.resolveGenerics();
       final PsiClass aClass = resolved.getElement();
       if (aClass instanceof PsiTypeParameter) {
@@ -163,17 +164,68 @@ public class JavaGenericsUtil {
             PsiClassType otherType = factory.createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
           }
-          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(operandClass)) {
-            final PsiType operand = operandResult.getSubstitutor().substitute(typeParameter);
-            if (operand instanceof PsiCapturedWildcardType) return true;
+          //from Java7. Java 6 now is unsupported
+          //according to `Checked and Unchecked Narrowing Reference Conversions`
+          PsiSubstitutor superSubstitutor =
+            TypeConversionUtil.getSuperClassSubstitutor(operandClass, castClass, castResult.getSubstitutor());
+          PsiSubstitutor operandSubstitutor = operandResult.getSubstitutor();
+          PsiClass superClass = operandResult.getElement();
+          if (superClass == null) {
+            return true;
           }
-          return false;
+          Set<PsiTypeParameter> capturedWildcardType = new HashSet<>();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(operandClass)) {
+            PsiType operandParameterType = operandSubstitutor.substitute(parameter);
+            if (operandParameterType instanceof PsiCapturedWildcardType) {
+              capturedWildcardType.add(parameter);
+            }
+            PsiType superParameterType = superSubstitutor.substitute(parameter);
+            if (operandParameterType != null &&
+                superParameterType != null &&
+                !TypeConversionUtil.typesAgree(superParameterType, operandParameterType, false)) {
+              return true;
+            }
+          }
+          return !capturedWildcardTypesAreNotMerged(capturedWildcardType, operandClass, castClass);
         }
         return true;
       }
     }
 
     return false;
+  }
+
+  //according to com.sun.tools.javac.code.Types.Adapter#visitTypeVar, it is impossible to merge 2 captured types.
+  private static boolean capturedWildcardTypesAreNotMerged(Set<PsiTypeParameter> capturedSuperClassTypes,
+                                                           PsiClass superClass,
+                                                           PsiClass derivedClass) {
+    if (capturedSuperClassTypes.isEmpty()) {
+      return true;
+    }
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY);
+    if (substitutor == PsiSubstitutor.EMPTY) {
+      return true;
+    }
+    Set<String> capturedSourceTypeParameters = new HashSet<>();
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(superClass)) {
+      if (!capturedSuperClassTypes.contains(parameter)) {
+        continue;
+      }
+      PsiType substituted = substitutor.substitute(parameter);
+      if (!(substituted instanceof PsiClassType)) {
+        continue;
+      }
+      PsiClass resolved = ((PsiClassType)substituted).resolve();
+      if (!(resolved instanceof PsiTypeParameter)) {
+        continue;
+      }
+      PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+      if (capturedSourceTypeParameters.contains(typeParameter.getName())) {
+        return false;
+      }
+      capturedSourceTypeParameters.add(typeParameter.getName());
+    }
+    return true;
   }
 
   public static boolean isRawToGeneric(PsiType lType, PsiType rType) {
@@ -256,6 +308,11 @@ public class JavaGenericsUtil {
     return false;
   }
 
+  /**
+   * @param expression expression used as for-each loop {@linkplain PsiForeachStatement#getIteratedValue() iterated value}.
+   * @return type of elements; the for-each loop {@linkplain PsiForeachStatement#getIterationParameter() iteration parameter} 
+   * must be assignable from this type. Returns null if the supplied expression type cannot be used as for-each loop iterated value.  
+   */
   @Nullable
   public static PsiType getCollectionItemType(@NotNull PsiExpression expression) {
     return getCollectionItemType(expression.getType(), expression.getResolveScope());

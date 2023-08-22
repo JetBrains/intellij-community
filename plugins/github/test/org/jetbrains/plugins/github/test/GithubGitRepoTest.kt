@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.test
 
 import com.intellij.openapi.components.service
@@ -10,19 +10,21 @@ import git4idea.config.GitConfigUtil
 import git4idea.repo.GitRepository
 import git4idea.test.GitHttpAuthTestService
 import git4idea.test.git
-import org.jetbrains.plugins.github.util.GithubGitHelper
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubUtil
 
 abstract class GithubGitRepoTest : GithubTest() {
 
-  protected lateinit var gitHelper: GithubGitHelper
+  private lateinit var ghRepositoryManager: GHHostedRepositoriesManager
+
   protected lateinit var repository: GitRepository
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-
-    gitHelper = service()
+    ghRepositoryManager = project.service()
   }
 
   override fun setCurrentAccount(accountData: AccountData?) {
@@ -44,7 +46,7 @@ abstract class GithubGitRepoTest : GithubTest() {
   }
 
   protected fun findGitRepo() {
-    repository = repositoryManager.getRepositoryForFile(projectRoot)!!
+    repository = repositoryManager.getRepositoryForFileQuick(projectRoot)!!
   }
 
   // workaround: user on test server got "" as username, so git can't generate default identity
@@ -64,7 +66,12 @@ abstract class GithubGitRepoTest : GithubTest() {
 
   protected fun checkRemoteConfigured() {
     assertNotNull(repository)
-    assertTrue("GitHub remote is not configured", GithubGitHelper.getInstance().hasAccessibleRemotes(repository))
+    val mappings = runBlocking {
+      ghRepositoryManager.knownRepositoriesFlow.first()
+    }
+    assertTrue("GitHub remote is not configured, current mappings: $mappings", mappings.any {
+      it.remote.repository == repository
+    })
   }
 
   protected fun checkLastCommitPushed() {

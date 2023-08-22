@@ -15,21 +15,22 @@
  */
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIfStatement
 import com.intellij.psi.impl.source.tree.ChildRole
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
+@ApiStatus.Internal
 class JavaUIfExpression(
   override val sourcePsi: PsiIfStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UIfExpression {
-  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
-  override val thenExpression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.thenBranch, this) }
-  override val elseExpression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.elseBranch, this) }
+  override val condition: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
+  override val thenExpression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.thenBranch, this) }
+  override val elseExpression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.elseBranch, this) }
 
   override val isTernary: Boolean
     get() = false

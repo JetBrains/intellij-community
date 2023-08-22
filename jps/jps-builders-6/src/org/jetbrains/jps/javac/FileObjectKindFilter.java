@@ -1,23 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
+import org.jetbrains.jps.javac.Iterators.BooleanFunction;
+import org.jetbrains.jps.javac.Iterators.Function;
 
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 11-Feb-19
  */
-public class FileObjectKindFilter<T> {
+public final class FileObjectKindFilter<T> {
   private final Function<? super T, String> myToNameConverter;
   private final Map<JavaFileObject.Kind, BooleanFunction<T>> myFilterMap;
 
   public FileObjectKindFilter(Function<? super T, String> toNameConverter) {
     myToNameConverter = toNameConverter;
-    final EnumMap<JavaFileObject.Kind, BooleanFunction<T>> filterMap = new EnumMap<JavaFileObject.Kind, BooleanFunction<T>>(JavaFileObject.Kind.class);
+    final Map<JavaFileObject.Kind, BooleanFunction<T>> filterMap = new EnumMap<>(JavaFileObject.Kind.class);
     for (final JavaFileObject.Kind kind : JavaFileObject.Kind.values()) {
       if (kind == JavaFileObject.Kind.OTHER) {
         filterMap.put(kind, new BooleanFunction<T>() {
@@ -31,7 +30,8 @@ public class FileObjectKindFilter<T> {
         filterMap.put(kind, new BooleanFunction<T>() {
           @Override
           public boolean fun(T data) {
-            return myToNameConverter.fun(data).endsWith(kind.extension);
+            final String name = myToNameConverter.fun(data);
+            return name.regionMatches(true, name.length() - kind.extension.length(), kind.extension, 0, kind.extension.length());
           }
         });
       }
@@ -39,9 +39,9 @@ public class FileObjectKindFilter<T> {
     myFilterMap = Collections.unmodifiableMap(filterMap);
   }
 
-  public BooleanFunction<T> getFor(final Set<? extends JavaFileObject.Kind> kinds) {
+  public BooleanFunction<T> getFor(final Set<JavaFileObject.Kind> kinds) {
     // optimization for a single-element collection
-    final Iterator<? extends JavaFileObject.Kind> it = kinds.iterator();
+    final Iterator<JavaFileObject.Kind> it = kinds.iterator();
     if (it.hasNext()) {
       final JavaFileObject.Kind kind = it.next();
       if (!it.hasNext()) {

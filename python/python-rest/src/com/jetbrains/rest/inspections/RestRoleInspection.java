@@ -17,7 +17,7 @@ package com.jetbrains.rest.inspections;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -29,22 +29,22 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import java.util.HashSet;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.rest.RestBundle;
+import com.jetbrains.rest.PythonRestBundle;
 import com.jetbrains.rest.RestFile;
 import com.jetbrains.rest.RestTokenTypes;
 import com.jetbrains.rest.RestUtil;
 import com.jetbrains.rest.psi.RestDirectiveBlock;
 import com.jetbrains.rest.psi.RestRole;
 import com.jetbrains.rest.quickfixes.AddIgnoredRoleFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * User: catherine
@@ -53,11 +53,6 @@ import java.util.Set;
  */
 public class RestRoleInspection extends RestInspection {
   public JDOMExternalizableStringList ignoredRoles = new JDOMExternalizableStringList();
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
 
   @NotNull
   @Override
@@ -85,8 +80,7 @@ public class RestRoleInspection extends RestInspection {
       if (config == null) return;
 
       PsiFile configFile = PsiManager.getInstance(project).findFile(config);
-      if (configFile instanceof PyFile) {
-        PyFile file = (PyFile)configFile;
+      if (configFile instanceof PyFile file) {
         List<PyFunction> functions = file.getTopLevelFunctions();
         for (PyFunction function : functions) {
           if (!"setup".equals(function.getName())) continue;
@@ -138,13 +132,14 @@ public class RestRoleInspection extends RestInspection {
         }
       }
       if (definedRoles.contains(node.getRoleName())) return;
-      registerProblem(node, "Not defined role '" + node.getRoleName() + "'", new AddIgnoredRoleFix(node.getRoleName(), RestRoleInspection.this));
+      registerProblem(
+        node, PythonRestBundle.message("python.rest.inspection.message.not.defined.role", node.getRoleName()),
+        new AddIgnoredRoleFix(node.getRoleName(), RestRoleInspection.this));
     }
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm("Ignore roles", ignoredRoles);
-    return form.getContentPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("ignoredRoles", PythonRestBundle.message("python.rest.inspections.role.ignore.roles.label")));
   }
 }

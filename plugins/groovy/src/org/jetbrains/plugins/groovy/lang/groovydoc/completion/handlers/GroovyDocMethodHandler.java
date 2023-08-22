@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-/**
- * @author ilyas
- */
 public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
 
   @Override
@@ -97,8 +94,7 @@ public class GroovyDocMethodHandler implements ContextSpecificInsertHandler {
     final Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiReference ref = context.getFile().findReferenceAt(startOffset);
-    if (ref instanceof GrDocMethodReference) {
-      GrDocMethodReference methodReference = (GrDocMethodReference) ref;
+    if (ref instanceof GrDocMethodReference methodReference) {
       GrDocMethodParams list = methodReference.getParameterList();
       for (GrDocMethodParameter parameter : list.getParameters()) {
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(parameter);

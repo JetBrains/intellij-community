@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.*;
@@ -6,6 +6,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import org.jetbrains.annotations.NotNull;
@@ -15,16 +17,13 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public abstract class WelcomePopupAction extends AnAction implements DumbAware {
 
   protected abstract void fillActions(DefaultActionGroup group);
 
-  protected abstract String getTextForEmpty();
+  protected abstract @NlsActions.ActionText String getTextForEmpty();
 
-  protected abstract String getCaption();
+  protected abstract @NlsContexts.PopupTitle String getCaption();
 
   /**
    * When there is only one option to choose from, this method is called to determine whether
@@ -36,7 +35,7 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
   protected abstract boolean isSilentlyChooseSingleOption();
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     showPopup(e);
   }
 
@@ -80,7 +79,7 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
   }
 
   protected void showPopup(DataContext context, ListPopup popup, JComponent contextComponent) {
-    Component focusedComponent = contextComponent != null ? contextComponent : PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
+    Component focusedComponent = contextComponent != null ? contextComponent : PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
     if (focusedComponent != null) {
       if (popup instanceof PopupFactoryImpl.ActionGroupPopup && focusedComponent instanceof JLabel) {
         ((PopupFactoryImpl.ActionGroupPopup)popup).showUnderneathOfLabel((JLabel)focusedComponent);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.*;
@@ -21,9 +7,9 @@ import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.util.containers.BidirectionalMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +17,7 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public class MissingTranslationsInspectionProvider implements InconsistentResourceBundleInspectionProvider {
+public final class MissingTranslationsInspectionProvider implements InconsistentResourceBundleInspectionProvider {
   @NotNull
   @Override
   public String getName() {
@@ -59,14 +45,14 @@ public class MissingTranslationsInspectionProvider implements InconsistentResour
       boolean isLeaf = children == null || children.isEmpty();
       if (!isLeaf) continue;
       Set<String> keys = propertiesFilesNamesMaps.get(file).keySet();
-      Set<String> parentKeys = new THashSet<>(keysUpToParent.get(parent));
+      Set<String> parentKeys = new HashSet<>(keysUpToParent.get(parent));
       if (parent.getLocale().getLanguage().equals(file.getLocale().getLanguage())) {
         // properties can be left untranslated in the dialect files
-        keys = new THashSet<>(keys);
+        keys = new HashSet<>(keys);
         keys.addAll(propertiesFilesNamesMaps.get(parent).keySet());
         parent = parents.get(parent);
         if (parent == null) continue;
-        parentKeys = new THashSet<>(keysUpToParent.get(parent));
+        parentKeys = new HashSet<>(keysUpToParent.get(parent));
       }
       parentKeys.removeAll(keys);
       for (String untranslatedKey : parentKeys) {

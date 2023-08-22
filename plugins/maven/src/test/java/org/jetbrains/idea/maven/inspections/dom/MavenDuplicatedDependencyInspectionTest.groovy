@@ -18,12 +18,11 @@ package org.jetbrains.idea.maven.inspections.dom
 
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
+import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCase {
 
+  @Test
   void testDuplicatedInSameFile() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
@@ -50,6 +49,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCas
     checkHighlighting()
   }
 
+  @Test 
   void testDuplicatedInSameFileDifferentVersion() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
@@ -75,6 +75,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCas
     checkHighlighting()
   }
 
+  @Test 
   void testDuplicatedInParentDifferentScope() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
@@ -121,9 +122,10 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCas
 
     importProject()
 
-    checkHighlighting(myProjectPom, true, false, true)
+    checkHighlighting()
   }
 
+  @Test 
   void testDuplicatedInParentSameScope() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
@@ -169,9 +171,10 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCas
 
     importProjectWithErrors()
 
-    checkHighlighting(myProjectPom, true, false, true)
+    checkHighlighting()
   }
 
+  @Test 
   void testDuplicatedInParentDifferentVersion() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 
@@ -214,9 +217,10 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomWithIndicesTestCas
   </dependencies>
 """)
 
-    checkHighlighting(myProjectPom, true, false, true)
+    checkHighlighting()
   }
 
+  @Test 
   void testDuplicatedInManagedDependencies() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
 

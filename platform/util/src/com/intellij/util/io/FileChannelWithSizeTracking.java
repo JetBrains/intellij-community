@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,32 +7,34 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 
-import static com.intellij.util.io.FileChannelUtil.unInterruptible;
+import static java.nio.file.StandardOpenOption.*;
 
 /**
- * Replacement of read-write file channel with shadow file size, valid when file manipulations happen in with this class only.
+ * Replacement of read-write file channel with shadow file size.
+ * Assumes file manipulations happen via this class only.
  */
-class FileChannelWithSizeTracking {
+final class FileChannelWithSizeTracking {
   private static final Logger LOG = Logger.getInstance(FileChannelWithSizeTracking.class);
   private static final boolean doAssertions = SystemProperties.getBooleanProperty("idea.do.random.access.wrapper.assertions", false);
 
   private final Path myPath;
-  private final FileChannel myChannel;
+  private final ResilientFileChannel fileChannel;
+
+  //TODO RC: why it is volatile? It suggests mutlithreaded use, but the class itself doesn't look like it
+  //         is safe for multithreaded env
   private volatile long mySize;
 
-  FileChannelWithSizeTracking(@NotNull Path path) throws IOException {
-    Path parent = path.getParent();
+  FileChannelWithSizeTracking(final @NotNull Path path) throws IOException {
+    final Path parent = path.getParent();
     if (!Files.exists(parent)) {
       Files.createDirectories(parent);
     }
-    myChannel = unInterruptible(FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
-    mySize = myChannel.size();
     myPath = path;
+    fileChannel = new ResilientFileChannel(path, READ, WRITE, CREATE);
+    mySize = fileChannel.size();
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Inst:" + this + "," + Thread.currentThread() + "," + getClass().getClassLoader());
@@ -55,7 +43,7 @@ class FileChannelWithSizeTracking {
 
   long length() throws IOException {
     if (doAssertions) {
-      assert mySize == myChannel.size();
+      assert mySize == fileChannel.size();
     }
     return mySize;
   }
@@ -64,7 +52,7 @@ class FileChannelWithSizeTracking {
     if (LOG.isTraceEnabled()) {
       LOG.trace("write:" + this + "," + Thread.currentThread() + "," + len + "," + addr);
     }
-    int written = myChannel.write(ByteBuffer.wrap(dst, off, len), addr);
+    int written = fileChannel.write(ByteBuffer.wrap(dst, off, len), addr);
     mySize = Math.max(written + addr, length());
   }
 
@@ -72,15 +60,14 @@ class FileChannelWithSizeTracking {
     if (LOG.isTraceEnabled()) {
       LOG.trace("read:" + this + "," + Thread.currentThread() + "," + len + "," + addr);
     }
-    myChannel.read(ByteBuffer.wrap(dst, off, len), addr);
+    fileChannel.read(ByteBuffer.wrap(dst, off, len), addr);
   }
 
   void close() throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Closed:" + this + "," + Thread.currentThread() );
     }
-    force();
-    myChannel.close();
+    fileChannel.close();
   }
 
   @Override
@@ -88,11 +75,10 @@ class FileChannelWithSizeTracking {
     return myPath + "@" + Integer.toHexString(hashCode());
   }
 
-  private void force() throws IOException {
+  public void force() throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Forcing:" + this + "," + Thread.currentThread() );
     }
-
-    myChannel.force(true);
+    fileChannel.force(true);
   }
 }

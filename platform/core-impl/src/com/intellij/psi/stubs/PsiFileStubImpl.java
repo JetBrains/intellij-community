@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
  */
 package com.intellij.psi.stubs;
 
-import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -41,7 +26,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   private volatile String myInvalidationReason;
   private volatile PsiFileStub[] myStubRoots;
 
-  public PsiFileStubImpl(final T file) {
+  public PsiFileStubImpl(T file) {
     super(null, null);
     myFile = file;
   }
@@ -52,7 +37,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   }
 
   @Override
-  public void setPsi(@NotNull final T psi) {
+  public void setPsi(@NotNull T psi) {
     myFile = psi;
   }
 
@@ -62,8 +47,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   }
 
   @Override
-  @Nullable
-  public String getInvalidationReason() {
+  public @Nullable String getInvalidationReason() {
     return myInvalidationReason;
   }
 
@@ -72,9 +56,8 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     return null;
   }
 
-  @NotNull
   @Override
-  public IStubFileElementType getType() {
+  public @NotNull IStubFileElementType getType() {
     return TYPE;
   }
 
@@ -82,30 +65,30 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   public PsiFileStub @NotNull [] getStubRoots() {
     if (myStubRoots != null) return myStubRoots;
 
-    final T psi = getPsi();
+    T psi = getPsi();
     if (psi == null) {
       return new PsiFileStub[]{this};
     }
 
-    final FileViewProvider viewProvider = psi.getViewProvider();
-    final PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();
+    FileViewProvider viewProvider = psi.getViewProvider();
+    PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();
 
     StubTree baseTree = getOrCalcStubTree(stubBindingRoot);
     if (baseTree != null) {
-      final List<PsiFileStub> roots = new SmartList<>(baseTree.getRoot());
-      final List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = StubTreeBuilder.getStubbedRoots(viewProvider);
+      List<PsiFileStub> roots = new SmartList<>(baseTree.getRoot());
+      List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = StubTreeBuilder.getStubbedRoots(viewProvider);
       for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
         if (stubbedRoot.second == stubBindingRoot) continue;
-        final StubTree secondaryStubTree = getOrCalcStubTree(stubbedRoot.second);
+        StubTree secondaryStubTree = getOrCalcStubTree(stubbedRoot.second);
         if (secondaryStubTree != null) {
-          final PsiFileStub root = secondaryStubTree.getRoot();
+          PsiFileStub root = secondaryStubTree.getRoot();
           roots.add(root);
         }
       }
-      final PsiFileStub[] rootsArray = roots.toArray(PsiFileStub.EMPTY_ARRAY);
+      PsiFileStub[] rootsArray = roots.toArray(PsiFileStub.EMPTY_ARRAY);
       for (PsiFileStub root : rootsArray) {
         if (root instanceof PsiFileStubImpl) {
-          ((PsiFileStubImpl)root).setStubRoots(rootsArray);
+          ((PsiFileStubImpl<?>)root).setStubRoots(rootsArray);
         }
       }
 
@@ -137,15 +120,14 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     return myStubRoots != null;
   }
 
-  public String getDiagnostics() {
-    ObjectStubTree stubTree = ObjectStubTree.getStubTree(this);
+  public final String getDiagnostics() {
+    ObjectStubTree<?> stubTree = ObjectStubTree.getStubTree(this);
     T file = myFile;
-    return toString() +
-           MoreObjects.toStringHelper("")
-             .add("myFile", file)
-             .add("myInvalidationReason", myInvalidationReason)
-             .add("myStubRoots", Arrays.toString(myStubRoots))
-             .add("stubTree", stubTree)
-             .toString();
+    return this + "(" +
+           "file='" + file + '\'' +
+           ", invalidationReason=" + myInvalidationReason +
+           ", stubRoots='" + Arrays.toString(myStubRoots) + '\'' +
+           ", stubTree='" + stubTree + '\'' +
+           ')';
   }
 }

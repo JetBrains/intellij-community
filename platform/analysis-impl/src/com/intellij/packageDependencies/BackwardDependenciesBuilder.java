@@ -62,7 +62,6 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     return AnalysisBundle.message("backward.dependencies.usage.view.initial.text");
   }
 
-  @Override
   public AnalysisScope getScopeOfInterest() {
     return myScopeOfInterest;
   }
@@ -80,8 +79,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
 
     subtractScope(builder, getScope());
     final PsiManager psiManager = PsiManager.getInstance(getProject());
-    psiManager.startBatchFilesProcessingMode();
-    try {
+    psiManager.runInBatchFilesMode(() -> {
       final int fileCount = getScope().getFileCount();
       final boolean includeTestSource = getScope().isIncludeTestSource();
       getScope().accept(virtualFile -> {
@@ -109,11 +107,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
             final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
             for (final PsiFile psiFile : dependencies.keySet()) {
               if (dependencies.get(psiFile).contains(file)) {
-                Set<PsiFile> fileDeps = getDependencies().get(file);
-                if (fileDeps == null) {
-                  fileDeps = new HashSet<>();
-                  getDependencies().put(file, fileDeps);
-                }
+                Set<PsiFile> fileDeps = getDependencies().computeIfAbsent(file, __ -> new HashSet<>());
                 fileDeps.add(psiFile);
               }
             }
@@ -122,10 +116,8 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
         });
         return true;
       });
-    }
-    finally {
-      psiManager.finishBatchFilesProcessingMode();
-    }
+      return null;
+    });
   }
 
   private static void subtractScope(final DependenciesBuilder builders, final AnalysisScope scope) {

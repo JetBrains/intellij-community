@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.regexp.psi.*;
 
 import java.util.Arrays;
@@ -11,7 +12,7 @@ import java.util.Comparator;
 /**
  * @author Bas Leijdekkers
  */
-class RegExpEquivalenceChecker {
+final class RegExpEquivalenceChecker {
 
   private static final Comparator<PsiElement> TEXT_COMPARATOR = Comparator.comparing(PsiElement::getText);
 
@@ -137,12 +138,7 @@ class RegExpEquivalenceChecker {
       Arrays.sort(elements1, TEXT_COMPARATOR);
       Arrays.sort(elements2, TEXT_COMPARATOR);
     }
-    for (int i = 0; i < elements1.length; i++) {
-      if (!areElementsEquivalent(elements1[i], elements2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return ArrayUtil.areEqual(elements1, elements2, RegExpEquivalenceChecker::areElementsEquivalent);
   }
 
   private static boolean areCharsEquivalent(RegExpChar aChar1, RegExpChar aChar2) {

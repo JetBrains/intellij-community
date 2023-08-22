@@ -1,5 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij.grazie">
-        <grammar.strategy language="yaml" implementationClass="com.intellij.grazie.ide.language.yaml.YamlGrammarCheckingStrategy"/>
-    </extensions>
-</idea-plugin>

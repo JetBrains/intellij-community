@@ -9,6 +9,7 @@ class ClassWithComponents<error descr="Record header declared for non-record">(i
 class ClassWithComponents2<error descr="Record header declared for non-record">(int x, int y)</error> {}
 <error descr="Modifier 'abstract' not allowed here">abstract</error> record AbstractRecord() {}
 record ExtendsObject() <error descr="No extends clause allowed for record">extends Object</error> {}
+record PermitsObject() <error descr="No permits clause allowed for record">permits Object</error> {}
 class ExtendsRecord extends <error descr="Cannot inherit from final 'NoComponents'">NoComponents</error> {}
 abstract class ExtendsJLR extends <error descr="Classes cannot directly extend 'java.lang.Record'">Record</error> {}
 class AnonymousExtendsJLR {
@@ -22,6 +23,7 @@ class AnonymousExtendsJLR {
 interface I1 { default void run() {}}
 interface I2 { void run();}
 record <error descr="Class 'UnrelatedDefaults' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults</error>() implements I1, I2 {}
+enum <error descr="Class 'UnrelatedDefaults2' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults2</error> implements I1, I2 {}
 
 record ComponentModifiers(
   <error descr="Modifier 'public' not allowed here">public</error> int x, 
@@ -54,7 +56,7 @@ record AnnotatedComponents(
 class Outer {
   record NestedRecord() {}
   class Inner {
-    <error descr="Inner classes cannot have static declarations">record InnerRecord()</error> {}
+    record InnerRecord() {}
   }
 }
 
@@ -65,4 +67,17 @@ record ProhibitedMembers() {
     System.out.println("initializer");
   }</error>
   <error descr="Modifier 'native' not allowed here">native</error> void test();
+}
+record StaticFieldCollides(int i) {
+  static int <error descr="Variable 'i' is already defined in the scope">i</error>;
+}
+record Incomplete(@<error descr="Class reference expected">i</error>nt a) {}
+record CStyle(int a<error descr="C-style array declaration not allowed in record component">[]</error>) {}
+record CStyle2(int[] a<error descr="C-style array declaration not allowed in record component">[] []</error> ) {}
+record JavaStyle(int[] [] a) {}
+record SafeVarargComponent(<error descr="@SafeVarargs is not allowed on a record component">@SafeVarargs</error> int... component) {}
+record ExtendsRecordExplicitly() <error descr="No extends clause allowed for record">extends java.lang.Record</error> {}
+
+record AbstractMethod() {
+  <error descr="Abstract method in non-abstract class">abstract</error> void f();
 }

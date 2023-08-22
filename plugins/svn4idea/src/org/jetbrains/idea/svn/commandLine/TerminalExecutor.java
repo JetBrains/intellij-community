@@ -19,18 +19,15 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TerminalExecutor extends CommandExecutor {
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -74,7 +71,7 @@ public class TerminalExecutor extends CommandExecutor {
     }
 
     ByteArrayOutputStream result = new ByteArrayOutputStream();
-    byte[] outputBytes = CharsetToolkit.getUtf8Bytes(getOutput());
+    byte[] outputBytes = getOutput().getBytes(StandardCharsets.UTF_8);
 
     result.write(outputBytes, 0, outputBytes.length);
 

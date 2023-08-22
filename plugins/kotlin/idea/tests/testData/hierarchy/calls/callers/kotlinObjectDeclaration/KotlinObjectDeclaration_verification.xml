@@ -1,0 +1,4 @@
+<node text="Foo  ()" base="true">
+  <node text="quux()(4 usages)  ()"/>
+  <node text="main0.kt  ()"/>
+</node>

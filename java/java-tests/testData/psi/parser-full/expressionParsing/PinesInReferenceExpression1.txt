@@ -49,4 +49,3 @@ PsiJavaFile:PinesInReferenceExpression1.java
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n')
     PsiJavaToken:RBRACE('}')
-    

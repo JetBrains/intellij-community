@@ -23,12 +23,14 @@ public class AssertAll {
       () -> Assertions.assertTrue(s3.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>().isEmpty()),
       () -> Assertions.assertTrue(s4.<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>().isEmpty())
     );
-    Assertions.assertAll(
-      () -> Assertions.assertTrue(<warning descr="Result of 's1.trim().isEmpty()' is always 'true'">s1.trim().isEmpty()</warning>),
-      () -> Assertions.assertTrue(<warning descr="Result of 's2.trim().isEmpty()' is always 'true'">s2.trim().isEmpty()</warning>),
-      () -> Assertions.assertTrue(<warning descr="Result of 's3.trim().isEmpty()' is always 'true'">s3.trim().isEmpty()</warning>),
-      () -> Assertions.assertTrue(<warning descr="Result of 's4.trim().isEmpty()' is always 'true'">s4.trim().isEmpty()</warning>)
-    );
+    for (int i = 0; i < 100; i++) {
+      Assertions.assertAll(
+        () -> Assertions.assertTrue(<warning descr="Result of 's1.trim().isEmpty()' is always 'true'">s1.trim().isEmpty()</warning>),
+        () -> Assertions.assertTrue(<warning descr="Result of 's2.trim().isEmpty()' is always 'true'">s2.trim().isEmpty()</warning>),
+        () -> Assertions.assertTrue(<warning descr="Result of 's3.trim().isEmpty()' is always 'true'">s3.trim().isEmpty()</warning>),
+        () -> Assertions.assertTrue(<warning descr="Result of 's4.trim().isEmpty()' is always 'true'">s4.trim().isEmpty()</warning>)
+      );
+    }
   }
 
   interface Person {

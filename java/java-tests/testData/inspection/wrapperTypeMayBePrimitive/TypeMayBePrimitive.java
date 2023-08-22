@@ -114,12 +114,32 @@ class StringConcat {
 }
 
 class ValueOf {
-  public void foo(long step) {
+  public void foo(long step, String s) {
     <warning descr="Type may be primitive">Long</warning> rangeStart = Long.valueOf("12");
     for (long number = rangeStart; number <= 12L; number += step) {
       System.out.println(number);
     }
   }
+}
+
+class TheSameName {
+  void foo(int n) {
+    switch (n) {
+      case 1: {
+        <warning descr="Type may be primitive">Integer</warning> i = Integer.valueOf("1");
+        use(i);
+        break;
+      }
+      case 2: {
+        <warning descr="Type may be primitive">Float</warning> i = Float.valueOf("1");
+        use(i);
+        break;
+      }
+    }
+  }
+
+  void use(int i) { }
+  void use(float f) { }
 }
 
 class BoxUnboxBalance {

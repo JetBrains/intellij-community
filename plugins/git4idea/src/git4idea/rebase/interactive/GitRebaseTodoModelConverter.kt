@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive
 
-import com.intellij.openapi.vcs.VcsException
 import git4idea.rebase.GitRebaseEntry
 
 internal fun <T : GitRebaseEntry> convertToModel(entries: List<T>): GitRebaseTodoModel<T> {
@@ -22,7 +21,7 @@ internal fun <T : GitRebaseEntry> convertToModel(entries: List<T>): GitRebaseTod
         // move them to the end
       }
       GitRebaseEntry.Action.FIXUP, GitRebaseEntry.Action.SQUASH -> {
-        val lastElement = result.lastOrNull() ?: throw VcsException("Couldn't unite with non-existed commit")
+        val lastElement = result.lastOrNull() ?: throw IllegalArgumentException("Couldn't unite with non-existed commit")
         val root = when (lastElement) {
           is GitRebaseTodoModel.Element.UniteChild<T> -> lastElement.root
           is GitRebaseTodoModel.Element.UniteRoot<T> -> lastElement
@@ -43,7 +42,7 @@ internal fun <T : GitRebaseEntry> convertToModel(entries: List<T>): GitRebaseTod
         root.addChild(element)
         result.add(element)
       }
-      is GitRebaseEntry.Action.Other -> throw VcsException("Couldn't convert unknown action to the model")
+      is GitRebaseEntry.Action.Other -> throw IllegalArgumentException("Couldn't convert unknown action to the model")
     }
   }
   entries.filter { it.action is GitRebaseEntry.Action.DROP }.forEach { entry ->

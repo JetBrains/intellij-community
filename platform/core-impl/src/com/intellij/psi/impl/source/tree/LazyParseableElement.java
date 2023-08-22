@@ -1,31 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.StaticGetter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementTypeBase;
@@ -38,10 +18,13 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
+
+import static com.intellij.util.ObjectUtils.objectInfo;
 
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance(LazyParseableElement.class);
-  private static final StaticGetter<CharSequence> NO_TEXT = new StaticGetter<>(null);
+  private static final Supplier<CharSequence> NO_TEXT = () -> null;
 
   // Lock which protects expanding chameleon for this node.
   // Under no circumstances should you grab the PSI_LOCK while holding this lock.
@@ -50,7 +33,7 @@ public class LazyParseableElement extends CompositeElement {
    * Cached or non-parsed text of this element. Must be non-null if {@link #myParsed} is false.
    * Coordinated writes to (myParsed, myText) are guarded by {@link #myLock}
    * */
-  @NotNull private volatile Getter<CharSequence> myText;
+  private volatile @NotNull Supplier<CharSequence> myText;
   private volatile boolean myParsed;
 
   public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
@@ -63,7 +46,8 @@ public class LazyParseableElement extends CompositeElement {
         myText = NO_TEXT;
       }
       else {
-        myText = new StaticGetter<>(ImmutableCharSequence.asImmutable(text));
+        CharSequence sequence = ImmutableCharSequence.asImmutable(text);
+        myText = () -> sequence;
         setCachedLength(text.length());
       }
     }
@@ -90,9 +74,8 @@ public class LazyParseableElement extends CompositeElement {
     }
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     CharSequence text = myText();
     if (text != null) {
       return text.toString();
@@ -103,8 +86,7 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
-  @NotNull
-  public CharSequence getChars() {
+  public @NotNull CharSequence getChars() {
     CharSequence text = myText();
     if (text == null) {
       // use super.getText() instead of super.getChars() to avoid extra myText() call
@@ -127,6 +109,15 @@ public class LazyParseableElement extends CompositeElement {
   public int hc() {
     CharSequence text = myText();
     return text == null ? super.hc() : LeafElement.leafHC(text);
+  }
+
+  @Override
+  public boolean textContains(char c) {
+    CharSequence text = myText();
+    if (text != null) {
+      return StringUtil.indexOf(text, c) != -1;
+    }
+    return super.textContains(c);
   }
 
   @Override
@@ -211,7 +202,8 @@ public class LazyParseableElement extends CompositeElement {
       child = child.getTreeNext();
     }
     if (length != text.length()) {
-      LOG.error("Text mismatch in " + LogUtil.objectAndClass(getElementType()), PluginException.createByClass("Text mismatch", null, getElementType().getClass()),
+      LOG.error("Text mismatch in " + objectInfo(getElementType()),
+                PluginException.createByClass("Text mismatch", null, getElementType().getClass()),
                 new Attachment("code.txt", text.toString()));
     }
   }

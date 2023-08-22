@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,15 +13,6 @@ import java.util.Arrays;
  * @author Maxim.Mossienko
  */
 public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
-  @Override
-  public Object[] getParametersForLookup(final LookupElement item, final ParameterInfoContext context) {
-    return null;
-  }
-
-  @Override
-  public boolean couldShowInLookup() {
-    return false;
-  }
 
   @Override
   public PsiReferenceParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
@@ -44,8 +20,7 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
       ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
 
     if (referenceParameterList != null) {
-      if (!(referenceParameterList.getParent() instanceof PsiJavaCodeReferenceElement)) return null;
-      final PsiJavaCodeReferenceElement ref = ((PsiJavaCodeReferenceElement)referenceParameterList.getParent());
+      if (!(referenceParameterList.getParent() instanceof PsiJavaCodeReferenceElement ref)) return null;
       final PsiElement psiElement = ref.resolve();
       if (!(psiElement instanceof PsiTypeParameterListOwner)) return null;
 
@@ -74,7 +49,7 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     int index = ParameterInfoUtils.getCurrentParameterIndex(parameterOwner.getNode(), context.getOffset(), JavaTokenType.COMMA);
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();
-    context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? (PsiElement)objectsToView[index]:null);
+    context.setHighlightedParameter(index < objectsToView.length && index >= 0 ? objectsToView[index] : null);
   }
 
   @Override

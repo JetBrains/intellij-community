@@ -3,9 +3,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -16,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ToggleColumnModeAction extends ToggleAction implements DumbAware, LightEditCompatible {
+public class ToggleColumnModeAction extends ToggleAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   public ToggleColumnModeAction() {
     setEnabledInModalContext(true);
   }
@@ -92,15 +94,21 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware, L
   }
 
   private static EditorEx getEditor(@NotNull AnActionEvent e) {
-    return (EditorEx) e.getData(CommonDataKeys.EDITOR);
+    return (EditorEx)e.getData(CommonDataKeys.EDITOR);
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e){
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     EditorEx editor = getEditor(e);
     if (editor == null || editor.isOneLineMode()) {
       e.getPresentation().setEnabledAndVisible(false);
-    } else {
+    }
+    else {
       e.getPresentation().setEnabledAndVisible(true);
       super.update(e);
     }

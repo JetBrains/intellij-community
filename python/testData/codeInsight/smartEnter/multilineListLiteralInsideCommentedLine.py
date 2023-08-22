@@ -1,0 +1,3 @@
+xs = [
+    # com<caret>ment
+]

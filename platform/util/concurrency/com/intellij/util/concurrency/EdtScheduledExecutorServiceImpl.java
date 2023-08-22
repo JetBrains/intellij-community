@@ -1,51 +1,66 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ContextAwareRunnable;
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An {@link ExecutorService} implementation which
  * delegates tasks to the EDT for execution.
  */
-class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements EdtScheduledExecutorService {
+final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements EdtScheduledExecutorService {
+  static final EdtScheduledExecutorService INSTANCE = new EdtScheduledExecutorServiceImpl();
+
   private EdtScheduledExecutorServiceImpl() {
     super(EdtExecutorServiceImpl.INSTANCE, ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);
   }
 
-
-  @NotNull
   @Override
-  public ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {
-    MyScheduledFutureTask<?> task = new MyScheduledFutureTask<Void>(command, null, triggerTime(delayQueue, delay, unit)){
+  public @NotNull ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {
+    return delayedExecute(new MyScheduledFutureTask<Void>(
+      ClientId.decorateRunnable(ThreadContext.captureThreadContext(command)),
+      null,
+      triggerTime(delay, unit)) {
       @Override
-      void executeMeInBackendExecutor() {
-        EdtExecutorService.getInstance().execute(this, modalityState);
+      boolean executeMeInBackendExecutor() {
+        // optimization: can be cancelled already
+        if (!isDone()) {
+          ApplicationManager.getApplication().invokeLater(this, modalityState, __ -> {
+            return isCancelled();
+          });
+        }
+        return true;
       }
-    };
-    return delayedExecute(task);
+    });
   }
 
   @Override
   void futureDone(@NotNull Future<?> task) {
     if (EdtExecutorServiceImpl.shouldManifestExceptionsImmediately()) {
-      EdtExecutorServiceImpl.manifestExceptionsIn(task);
+      ConcurrencyUtil.manifestExceptionsIn(task);
     }
   }
 
   // stubs
   @Override
   public void shutdown() {
-    AppScheduledExecutorService.error();
+    AppScheduledExecutorService.notAllowedMethodCall();
   }
 
-  @NotNull
   @Override
-  public List<Runnable> shutdownNow() {
-    return AppScheduledExecutorService.error();
+  public @NotNull List<Runnable> shutdownNow() {
+    return AppScheduledExecutorService.notAllowedMethodCall();
   }
 
   @Override
@@ -60,10 +75,7 @@ class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements EdtSc
 
   @Override
   public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) {
-    AppScheduledExecutorService.error();
+    AppScheduledExecutorService.notAllowedMethodCall();
     return false;
   }
-
-  static final EdtScheduledExecutorService INSTANCE = new EdtScheduledExecutorServiceImpl();
-
 }

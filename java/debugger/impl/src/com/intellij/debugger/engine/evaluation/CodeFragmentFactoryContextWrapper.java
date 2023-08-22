@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
@@ -69,6 +71,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     GlobalSearchScope originalResolveScope = codeFragment.getResolveScope();
     codeFragment.forceResolveScope(new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(codeFragment.getProject())) {
       final Comparator<VirtualFile> myScopeComparator = Comparator.comparing(originalResolveScope::contains).thenComparing(super::compare);
+
       @Override
       public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
         // prefer files from the original resolve scope
@@ -97,7 +100,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
             JavaPsiFacade.getElementFactory(project).createCodeBlockFromText("{" + text + "}", context);
           codeFragment.accept(new JavaRecursiveElementVisitor() {
             @Override
-            public void visitLocalVariable(PsiLocalVariable variable) {
+            public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
               final String name = variable.getName();
               variable.putUserData(LABEL_VARIABLE_VALUE_KEY, markupVariables.getSecond().get(name));
             }
@@ -108,6 +111,8 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     }
     return context;
   }
+
+  private static final Pattern ANONYMOUS_CLASS_NAME_PATTERN = Pattern.compile(".*\\$\\d.*");
 
   private static Pair<String, Map<String, ObjectReference>> createMarkupVariablesText(Map<?, ValueMarkup> markupMap) {
     final Map<String, ObjectReference> reverseMap = new HashMap<>();
@@ -121,9 +126,16 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
       }
       try {
         // TODO: we probably need something more complicated for type name generation, but not in EDT
-        final String typeName = objectRef.type().name().replace('$', '.');
+        String name = objectRef.type().name();
+        String typeName;
+        if (ANONYMOUS_CLASS_NAME_PATTERN.matcher(name).matches() || DebuggerUtilsEx.isLambdaClassName(name)) {
+          typeName = "Object";
+        }
+        else {
+          typeName = name.replace('$', '.');
+        }
         labelName += DEBUG_LABEL_SUFFIX;
-        if (buffer.length() > 0) {
+        if (!buffer.isEmpty()) {
           buffer.append("\n");
         }
         buffer.append(typeName).append(" ").append(labelName).append(";");

@@ -1,0 +1,2 @@
+SPOILED_unique_name=invalid2
+commonizer_target=(ios_arm32, ios_arm64, ios_x64)

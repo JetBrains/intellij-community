@@ -1,17 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicLabelUI;
 import java.awt.*;
 
-public class RightAlignedLabelUI extends BasicLabelUI {
+public final class RightAlignedLabelUI extends BasicLabelUI {
   @Override
   protected String layoutCL(
     JLabel label,
     FontMetrics fontMetrics,
-    String text,
+    @NlsContexts.Label String text,
     Icon icon,
     Rectangle viewR,
     Rectangle iconR,
@@ -30,7 +32,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
       textR,
       label.getIconTextGap());
 
-    if (s.equals(""))
+    if (s.isEmpty())
       return text;
     return s;
   }
@@ -52,7 +54,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
    */
   public static String layoutCompoundLabel(JComponent c,
     FontMetrics fm,
-    String text,
+    @NlsContexts.Label String text,
     Icon icon,
     int verticalAlignment,
     int horizontalAlignment,
@@ -63,8 +65,6 @@ public class RightAlignedLabelUI extends BasicLabelUI {
     Rectangle textR,
     int textIconGap) {
     boolean orientationIsLeftToRight = true;
-    int hAlign = horizontalAlignment;
-    int hTextPos = horizontalTextPosition;
 
 
     if (c != null) {
@@ -76,25 +76,19 @@ public class RightAlignedLabelUI extends BasicLabelUI {
 
     // Translate LEADING/TRAILING values in horizontalAlignment
     // to LEFT/RIGHT values depending on the components orientation
-    switch (horizontalAlignment) {
-    case LEADING:
-      hAlign = (orientationIsLeftToRight) ? LEFT : RIGHT;
-      break;
-    case TRAILING:
-      hAlign = (orientationIsLeftToRight) ? RIGHT : LEFT;
-      break;
-    }
+    int hAlign = switch (horizontalAlignment) {
+      case LEADING -> (orientationIsLeftToRight) ? LEFT : RIGHT;
+      case TRAILING -> (orientationIsLeftToRight) ? RIGHT : LEFT;
+      default -> horizontalAlignment;
+    };
 
     // Translate LEADING/TRAILING values in horizontalTextPosition
     // to LEFT/RIGHT values depending on the components orientation
-    switch (horizontalTextPosition) {
-    case LEADING:
-      hTextPos = (orientationIsLeftToRight) ? LEFT : RIGHT;
-      break;
-    case TRAILING:
-      hTextPos = (orientationIsLeftToRight) ? RIGHT : LEFT;
-      break;
-    }
+    int hTextPos = switch (horizontalTextPosition) {
+      case LEADING -> (orientationIsLeftToRight) ? LEFT : RIGHT;
+      case TRAILING -> (orientationIsLeftToRight) ? RIGHT : LEFT;
+      default -> horizontalTextPosition;
+    };
 
     return layoutCompoundLabel(fm,
       text,
@@ -121,7 +115,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
    */
   public static String layoutCompoundLabel(
     FontMetrics fm,
-    String text,
+    @NlsContexts.Label String text,
     Icon icon,
     int verticalAlignment,
     int horizontalAlignment,
@@ -148,7 +142,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
      */
 
     // Fix for textIsEmpty sent by Paulo Santos
-    boolean textIsEmpty = (text == null) || (text.equals(""));
+    boolean textIsEmpty = (text == null) || (text.isEmpty());
 
     String rettext = "";
     if (textIsEmpty) {

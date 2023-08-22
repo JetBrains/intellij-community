@@ -1,18 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "RefactoringSettings", storages = {
-  @Storage("baseRefactoring.xml"),
-  @Storage(value = "other.xml", deprecated = true),
-})
+@State(name = "RefactoringSettings", storages = @Storage("baseRefactoring.xml"), category = SettingsCategory.CODE)
 public class JavaRefactoringSettings implements PersistentStateComponent<JavaRefactoringSettings> {
   // properties should be public in order to get saved by DefaultExternalizable implementation
 
@@ -32,13 +29,6 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
 
   public boolean EXTRACT_INTERFACE_PREVIEW_USAGES = true;
 
-  /**
-   * @deprecated no read usages
-   */
-  @Deprecated 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public boolean MOVE_PREVIEW_USAGES = true;
-
   public boolean MOVE_SEARCH_IN_COMMENTS = true;
   public boolean MOVE_SEARCH_FOR_TEXT = true;
 
@@ -52,31 +42,27 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public int INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS;
   public int EXTRACT_INTERFACE_JAVADOC;
   public int EXTRACT_SUPERCLASS_JAVADOC;
-  
+
   public boolean INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE;
   public boolean INTRODUCE_PARAMETER_USE_INITIALIZER;
 
   public String INTRODUCE_FIELD_VISIBILITY;
   public int PULL_UP_MEMBERS_JAVADOC;
-  /**
-   * @deprecated no read usages of preview option
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public boolean PUSH_DOWN_PREVIEW_USAGES;
 
   public boolean INLINE_METHOD_THIS;
+  public boolean INLINE_METHOD_KEEP;
   public boolean INLINE_SUPER_CLASS_THIS;
   public boolean INLINE_FIELD_THIS;
+  public boolean INLINE_FIELD_KEEP;
   public boolean INLINE_LOCAL_THIS;
   public boolean INHERITANCE_TO_DELEGATION_DELEGATE_OTHER;
 
   public String INTRODUCE_CONSTANT_VISIBILITY;
-  public boolean INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS;
 
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS;
   public Boolean INTRODUCE_LOCAL_CREATE_VAR_TYPE = false;
   public Boolean INTRODUCE_PARAMETER_CREATE_FINALS;
+  public Boolean INTRODUCE_CONSTANT_REPLACE_ALL = false;
 
   public boolean INLINE_CLASS_SEARCH_IN_COMMENTS = true;
   public boolean INLINE_CLASS_SEARCH_IN_NON_JAVA = true;
@@ -88,8 +74,11 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_TESTS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_OVERLOADS = true;
 
+  public boolean EXTRACT_STATIC_METHOD = true;
+  public boolean EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = false;
+
   public static JavaRefactoringSettings getInstance() {
-    return ServiceManager.getService(JavaRefactoringSettings.class);
+    return ApplicationManager.getApplication().getService(JavaRefactoringSettings.class);
   }
 
   public boolean isToRenameInheritors() {

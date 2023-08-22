@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 
-public class OptionalUtil {
+public final class OptionalUtil {
   public static final String OPTIONAL_INT = "java.util.OptionalInt";
   public static final String OPTIONAL_LONG = "java.util.OptionalLong";
   public static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
@@ -19,7 +19,7 @@ public class OptionalUtil {
   public static final CallMatcher GUAVA_OPTIONAL_FROM_NULLABLE = CallMatcher.staticCall(GUAVA_OPTIONAL, "fromNullable").parameterCount(1);
   public static final CallMatcher JDK_OPTIONAL_OF_NULLABLE = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
   public static final CallMatcher OPTIONAL_OF_NULLABLE = CallMatcher.anyOf(JDK_OPTIONAL_OF_NULLABLE, GUAVA_OPTIONAL_FROM_NULLABLE);
-  
+
   public static final CallMatcher JDK_OPTIONAL_GET = CallMatcher.exactInstanceCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
   public static final CallMatcher JDK_OPTIONAL_INT_GET = CallMatcher.exactInstanceCall(OPTIONAL_INT, "getAsInt").parameterCount(0);
   public static final CallMatcher JDK_OPTIONAL_LONG_GET = CallMatcher.exactInstanceCall(OPTIONAL_LONG, "getAsLong").parameterCount(0);
@@ -34,16 +34,12 @@ public class OptionalUtil {
   @NotNull
   @Contract(pure = true)
   public static String getOptionalClass(String type) {
-    switch (type) {
-      case "int":
-        return OPTIONAL_INT;
-      case "long":
-        return OPTIONAL_LONG;
-      case "double":
-        return OPTIONAL_DOUBLE;
-      default:
-        return JAVA_UTIL_OPTIONAL;
-    }
+    return switch (type) {
+      case "int" -> OPTIONAL_INT;
+      case "long" -> OPTIONAL_LONG;
+      case "double" -> OPTIONAL_DOUBLE;
+      default -> JAVA_UTIL_OPTIONAL;
+    };
   }
 
   public static boolean isJdkOptionalClassName(String className) {
@@ -65,25 +61,21 @@ public class OptionalUtil {
     if(aClass == null) return null;
     String className = aClass.getQualifiedName();
     if(className == null) return null;
-    switch (className) {
-      case OPTIONAL_INT:
-        return PsiType.INT;
-      case OPTIONAL_LONG:
-        return PsiType.LONG;
-      case OPTIONAL_DOUBLE:
-        return PsiType.DOUBLE;
-      case JAVA_UTIL_OPTIONAL:
-      case GUAVA_OPTIONAL:
+    return switch (className) {
+      case OPTIONAL_INT -> PsiTypes.intType();
+      case OPTIONAL_LONG -> PsiTypes.longType();
+      case OPTIONAL_DOUBLE -> PsiTypes.doubleType();
+      case JAVA_UTIL_OPTIONAL, GUAVA_OPTIONAL -> {
         PsiType[] parameters = ((PsiClassType)type).getParameters();
-        if (parameters.length != 1) return null;
+        if (parameters.length != 1) yield null;
         PsiType streamType = parameters[0];
         if (streamType instanceof PsiCapturedWildcardType) {
           streamType = ((PsiCapturedWildcardType)streamType).getUpperBound();
         }
-        return streamType;
-      default:
-        return null;
-    }
+        yield streamType;
+      }
+      default -> null;
+    };
   }
 
   @Contract("null -> false")

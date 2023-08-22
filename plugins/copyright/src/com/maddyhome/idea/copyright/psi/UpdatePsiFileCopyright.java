@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -26,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,9 +31,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+/**
+ * Psi aware implementation of {@link UpdateCopyright}
+ */
 public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   private static final Logger LOG = Logger.getInstance(UpdatePsiFileCopyright.class);
   private final CopyrightProfile myOptions;
+
+  private final PsiFile file;
+  private final LanguageOptions langOpts;
+  private final TreeSet<CommentAction> actions = new TreeSet<>();
 
   protected UpdatePsiFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options) {
     super(project, module, root, options);
@@ -62,7 +55,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   @Override
   public void prepare() {
     if (file == null) {
-      logger.info("No file for root: " + getRoot());
+      LOG.info("No file for root: " + getRoot());
       return;
     }
 
@@ -78,7 +71,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
   public void complete(boolean allowReplacement) throws Exception {
     if (file == null) {
-      logger.info("No file for root: " + getRoot());
+      LOG.info("No file for root: " + getRoot());
       return;
     }
 
@@ -91,6 +84,9 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     return !(file instanceof PsiPlainTextFile);
   }
 
+  /**
+   * Call {@link #checkComments(PsiElement, PsiElement, boolean)} for the correct range according to the copyright {@link #langOpts}
+   */
   protected abstract void scanFile();
 
   protected void checkComments(PsiElement first, PsiElement last, boolean commentHere) {
@@ -108,7 +104,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     while (elem != last && elem != null) {
       if (elem instanceof PsiComment) {
         comments.add((PsiComment)elem);
-        logger.debug("found comment");
+        LOG.debug("found comment");
       }
 
       elem = getNextSibling(elem);
@@ -226,9 +222,12 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           suffix += "\n";
         }
         String prefix = "";
+        if(getLanguageOptions().isAddBlankBefore()){
+          prefix += "\n";
+        }
         if (getPreviousSibling(point) != null) {
           if (getPreviousSibling(point) instanceof PsiComment) {
-            prefix = "\n\n";
+            prefix += "\n\n";
           }
           if (getPreviousSibling(point) instanceof PsiWhiteSpace &&
               getPreviousSibling(getPreviousSibling(point)) != null &&
@@ -236,7 +235,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
             String ws = getPreviousSibling(point).getText();
             int cnt = countNewline(ws);
             if (cnt == 1) {
-              prefix = "\n";
+              prefix += "\n";
             }
           }
         }
@@ -253,8 +252,11 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
     catch (PatternSyntaxException ignore) {
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
-      logger.error(e);
+      LOG.error(e);
     }
   }
 
@@ -346,18 +348,21 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           int end = action.getEnd();
 
           switch (action.getType()) {
-            case CommentAction.ACTION_INSERT:
+            case CommentAction.ACTION_INSERT -> {
               String comment = getCommentText(action.getPrefix(), action.getSuffix());
               if (!comment.isEmpty()) {
                 doc.insertString(start, comment);
               }
-              break;
-            case CommentAction.ACTION_REPLACE:
-              if (allowReplacement) doc.replaceString(start, end, getCommentText("", ""));
-              break;
-            case CommentAction.ACTION_DELETE:
+            }
+            case CommentAction.ACTION_REPLACE -> {
+              if (allowReplacement) {
+                String oldComment = doc.getText(new TextRange(start, end));
+                doc.replaceString(start, end, getCommentText("", "", oldComment));
+              }
+            }
+            case CommentAction.ACTION_DELETE -> {
               if (allowReplacement) doc.deleteString(start, end);
-              break;
+            }
           }
         }
         PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
@@ -408,10 +413,16 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
   }
 
-  protected static class CommentAction implements Comparable<CommentAction> {
+  protected static final class CommentAction implements Comparable<CommentAction> {
     public static final int ACTION_INSERT = 1;
     public static final int ACTION_REPLACE = 2;
     public static final int ACTION_DELETE = 3;
+
+    private final int type;
+    private final int start;
+    private final int end;
+    private String prefix = null;
+    private String suffix = null;
 
     public CommentAction(int pos, String prefix, String suffix) {
       type = ACTION_INSERT;
@@ -457,17 +468,5 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
 
       return diff;
     }
-
-    private final int type;
-    private final int start;
-    private final int end;
-    private String prefix = null;
-    private String suffix = null;
   }
-
-  private final PsiFile file;
-  private final LanguageOptions langOpts;
-  private final TreeSet<CommentAction> actions = new TreeSet<>();
-
-  private static final Logger logger = Logger.getInstance(UpdatePsiFileCopyright.class.getName());
 }

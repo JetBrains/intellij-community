@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -34,9 +34,9 @@ import com.intellij.openapi.keymap.impl.ui.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import icons.ExternalSystemIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +48,14 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalSystemKeymapExtension implements KeymapExtension {
-
+public final class ExternalSystemKeymapExtension implements KeymapExtension {
+  /**
+   * Provides keymap group for keymap configuration dialog.
+   * This group should contain actions to run external system tasks or other build system actions.
+   * <p>
+   * Note: infrastructure for actions list configuration should be implemented on plugin side,
+   * if that needed.
+   */
   @FunctionalInterface
   public interface ActionsProvider {
     ExtensionPointName<ActionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemKeymapProvider");
@@ -59,7 +65,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
 
   @Override
-  public KeymapGroup createGroup(Condition<AnAction> condition, final Project project) {
+  public KeymapGroup createGroup(Condition<? super AnAction> condition, final Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(
       ExternalSystemBundle.message("external.system.keymap.group"), AllIcons.Nodes.ConfigFolder);
 
@@ -77,13 +83,12 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
     ActionManager actionManager = ActionManager.getInstance();
     if (actionManager != null) {
-      for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
+      for (String eachId : actionManager.getActionIdList(getActionPrefix(project, null))) {
         AnAction eachAction = actionManager.getAction(eachId);
 
-        if (!(eachAction instanceof MyExternalSystemAction)) continue;
+        if (!(eachAction instanceof MyExternalSystemAction taskAction)) continue;
         if (condition != null && !condition.value(actionManager.getActionOrStub(eachId))) continue;
 
-        MyExternalSystemAction taskAction = (MyExternalSystemAction)eachAction;
         projectToActionsMapping.putValue(taskAction.getSystemId(), eachId);
       }
     }
@@ -107,7 +112,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
       if (systemGroup instanceof Group) {
         Icon icon = AllIcons.General.Add;
-        ((Group)systemGroup).addHyperlink(new Hyperlink(icon, "Choose a task to assign a shortcut") {
+        ((Group)systemGroup).addHyperlink(new Hyperlink(icon, ExternalSystemBundle.message("link.label.choose.task.to.assign.shortcut")) {
           @Override
           public void onClick(MouseEvent e) {
             SelectExternalTaskDialog dialog = new SelectExternalTaskDialog(systemId, project);
@@ -166,8 +171,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
   private static boolean isGroupFiltered(Condition<? super AnAction> condition, KeymapGroup keymapGroup) {
     final EmptyAction emptyAction = new EmptyAction();
-    if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group) {
-      final Group group = (Group)keymapGroup;
+    if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group group) {
       return group.getSize() > 1 || condition.value(new EmptyAction(group.getName(), null, null));
     }
     return true;
@@ -195,7 +199,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   static void clearActions(@NotNull ExternalSystemShortcutsManager externalSystemShortcutsManager) {
     ActionManager manager = ActionManager.getInstance();
     if (manager != null) {
-      for (String each : manager.getActionIds(getActionPrefix(externalSystemShortcutsManager, null))) {
+      for (String each : manager.getActionIdList(getActionPrefix(externalSystemShortcutsManager, null))) {
         manager.unregisterAction(each);
       }
     }
@@ -210,7 +214,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
 
       for (String externalProjectPath : externalProjectPaths) {
-        for (String eachAction : actionManager.getActionIds(getActionPrefix(project, externalProjectPath))) {
+        for (String eachAction : actionManager.getActionIdList(getActionPrefix(project, externalProjectPath))) {
           AnAction action = actionManager.getAction(eachAction);
           if (!(action instanceof ExternalSystemRunConfigurationAction)) {
             actionManager.unregisterAction(eachAction);
@@ -236,14 +240,14 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     if (configurationType == null) return;
 
     ActionManager actionManager = ActionManager.getInstance();
-    for (String eachAction : actionManager.getActionIds(getActionPrefix(project, null))) {
+    for (String eachAction : actionManager.getActionIdList(getActionPrefix(project, null))) {
       AnAction action = actionManager.getAction(eachAction);
       if (action instanceof ExternalSystemRunConfigurationAction) {
         actionManager.unregisterAction(eachAction);
       }
     }
 
-    Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
+    Set<RunnerAndConfigurationSettings> settings = new HashSet<>(
       RunManager.getInstance(project).getConfigurationSettingsList(configurationType));
 
     final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();
@@ -282,7 +286,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     private final String myGroup;
     private final TaskData myTaskData;
 
-    ExternalSystemTaskAction(Project project, String group, TaskData taskData) {
+    ExternalSystemTaskAction(Project project, @NlsSafe String group, TaskData taskData) {
       myGroup = group;
       myTaskData = taskData;
       myId = getActionPrefix(project, taskData.getLinkedExternalProjectPath()) + taskData.getName();
@@ -332,9 +336,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ExternalSystemTaskAction)) return false;
-
-      ExternalSystemTaskAction action = (ExternalSystemTaskAction)o;
+      if (!(o instanceof ExternalSystemTaskAction action)) return false;
 
       if (myId != null ? !myId.equals(action.myId) : action.myId != null) return false;
       if (myGroup != null ? !myGroup.equals(action.myGroup) : action.myGroup != null) return false;

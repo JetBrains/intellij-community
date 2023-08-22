@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.groovy.uast
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import org.jetbrains.uast.test.common.RenderLogTestBase
-import org.jetbrains.uast.test.env.AbstractUastFixtureTest
+import com.intellij.platform.uast.testFramework.common.RenderLogTestBase
+import com.intellij.platform.uast.testFramework.env.AbstractUastFixtureTest
 
 abstract class AbstractGroovyUastTest : AbstractUastFixtureTest() {
   public override fun getTestDataPath(): String =

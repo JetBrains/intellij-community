@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Locally detected SDK to fix immediately
@@ -38,4 +39,13 @@ public interface UnknownSdkLocalSdkFix extends UnknownSdkFixConfigurator {
    */
   @NotNull
   String getSuggestedSdkName();
+
+  /**
+   * A suggestion can be using another already registered {@link Sdk} as prototype,
+   * The callee may use this to avoid creating duplicates
+   */
+  @Nullable
+  default Sdk getRegisteredSdkPrototype() {
+    return null;
+  }
 }

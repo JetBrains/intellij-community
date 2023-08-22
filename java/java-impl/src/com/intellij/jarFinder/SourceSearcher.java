@@ -20,9 +20,6 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class SourceSearcher {
   private static final String MAVEN_POM_ENTRY_PREFIX = "META-INF/maven/";
 
@@ -34,9 +31,6 @@ public abstract class SourceSearcher {
   }
 
   /**
-   * @param indicator
-   * @param artifactId
-   * @param version
    * @return url of found artifact
    */
   @Nullable
@@ -46,9 +40,6 @@ public abstract class SourceSearcher {
   }
 
   /**
-   * @param indicator
-   * @param artifactId
-   * @param version
    * @param classesJar classes jar
    * @return url of found artifact
    */
@@ -64,7 +55,7 @@ public abstract class SourceSearcher {
   protected static Element readElementCancelable(final ProgressIndicator indicator, String url) throws IOException {
     return HttpRequests.request(url)
       .accept("application/xml")
-      .connect(new HttpRequests.RequestProcessor<Element>() {
+      .connect(new HttpRequests.RequestProcessor<>() {
         @Override
         public Element process(@NotNull HttpRequests.Request request) throws IOException {
           try {

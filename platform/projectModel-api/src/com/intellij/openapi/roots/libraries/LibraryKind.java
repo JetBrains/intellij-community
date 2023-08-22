@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.libraries;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +56,16 @@ public class LibraryKind {
     return new LibraryKind(kindId);
   }
 
+  /**
+   * @deprecated it's better to store instance of {@code LibraryKind} instead of looking it by ID; if you really need to find an instance by
+   * its ID, use {@link LibraryKindRegistry#findKindById(String)}
+   */
+  @Deprecated
   public static LibraryKind findById(String kindId) {
+    return LibraryKindRegistry.getInstance().findKindById(kindId);
+  }
+
+  static @Nullable LibraryKind findByIdInternal(@Nullable String kindId) {
     return ourAllKinds.get(kindId);
   }
 

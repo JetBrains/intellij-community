@@ -23,6 +23,9 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 public class CollapseGraphAction extends CollapseOrExpandGraphAction {
+
+  private static final GraphAction ourGraphAction = new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE);
+
   public CollapseGraphAction() {
     super(VcsLogBundle.messagePointer("action.title.collapse.linear.branches"),
           VcsLogBundle.messagePointer("action.description.collapse.linear.branches"),
@@ -31,10 +34,15 @@ public class CollapseGraphAction extends CollapseOrExpandGraphAction {
   }
 
   @Override
+  protected @NotNull GraphAction getGraphAction() {
+    return ourGraphAction;
+  }
+
+  @Override
   protected void executeAction(@NotNull MainVcsLogUi vcsLogUi) {
     String title = vcsLogUi.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
                    ? VcsLogBundle.message("action.process.collapsing.merges")
                    : VcsLogBundle.message("action.process.collapsing.linear.branches");
-    performLongAction(vcsLogUi, new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_COLLAPSE), title);
+    performLongAction(vcsLogUi, getGraphAction(), title);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -6,18 +6,15 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class ModuleGroup {
+public final class ModuleGroup {
   public static final DataKey<ModuleGroup[]> ARRAY_DATA_KEY = DataKey.create("moduleGroup.array");
   private final List<String> myGroupPath;
 
@@ -52,6 +49,14 @@ public class ModuleGroup {
     return modulesInGroup(ModuleGrouper.instanceFor(project), recursively);
   }
 
+  /**
+   * Returns modules in this group (without modules in sub-groups) using cache built for default project grouper.
+   */
+  @NotNull
+  public Collection<Module> modulesInGroup(@NotNull Project project) {
+    return ModuleGroupsTree.getModuleGroupTree(project).getModulesInGroup(this);
+  }
+
   @NotNull
   public Collection<Module> modulesInGroup(@NotNull ModuleGrouper grouper, boolean recursively) {
     List<Module> result = new ArrayList<>();
@@ -69,9 +74,17 @@ public class ModuleGroup {
     return descendant.size() > parent.size() && moduleNamesAsGroups.contains(descendant.subList(0, parent.size() + 1));
   }
 
+  /**
+   * Returns direct subgroups of this group using cache built for default project grouper.
+   */
+  @NotNull
+  public Collection<ModuleGroup> childGroups(@NotNull Project project) {
+    return ModuleGroupsTree.getModuleGroupTree(project).getChildGroups(this);
+  }
+
   @NotNull
   public Collection<ModuleGroup> childGroups(@NotNull ModuleGrouper grouper) {
-    Set<ModuleGroup> result = new THashSet<>();
+    Set<ModuleGroup> result = new HashSet<>();
     Set<List<String>> moduleAsGroupsPaths = ContainerUtil.map2Set(grouper.getAllModules(), module -> grouper.getModuleAsGroupPath(module));
     for (Module module : grouper.getAllModules()) {
       List<String> group = grouper.getGroupPath(module);
@@ -91,17 +104,17 @@ public class ModuleGroup {
   }
 
   @NotNull
-  public String presentableText() {
+  public @NlsSafe String presentableText() {
     return "'" + myGroupPath.get(myGroupPath.size() - 1) + "'";
   }
 
   @NotNull
-  public String getQualifiedName() {
+  public @NlsSafe String getQualifiedName() {
     return StringUtil.join(myGroupPath, ".");
   }
 
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     return myGroupPath.get(myGroupPath.size() - 1);
   }
 }

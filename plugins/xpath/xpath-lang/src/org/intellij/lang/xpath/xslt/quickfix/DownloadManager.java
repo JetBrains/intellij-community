@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.HttpRequests;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,15 +54,15 @@ public abstract class DownloadManager {
   }
 
   public void fetch(@NotNull final String location) throws DownloadException {
-    if (resourceManager.getResourceLocation(location, myProject) != location) {
+    if (!location.equals(resourceManager.getResourceLocation(location, myProject))) {
       return;
     }
 
-    myProgress.setText("Downloading " + location);
+    myProgress.setText(XPathBundle.message("progress.text.downloading", location));
 
     File file = null;
     try {
-      file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<File>() {
+      file = HttpRequests.request(location).connect(new HttpRequests.RequestProcessor<>() {
         @Override
         public File process(@NotNull HttpRequests.Request request) throws IOException {
           String name = Integer.toHexString(System.identityHashCode(this)) + "_" +
@@ -82,7 +83,10 @@ public abstract class DownloadManager {
             resourceManager.addResource(location, file.getAbsolutePath());
           }
           else {
-            ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myProject, "Not a valid file: " + vf.getPresentableUrl(), "Download Problem"), myProject.getDisposed());
+            ApplicationManager.getApplication().invokeLater(
+              () -> Messages.showErrorDialog(myProject,
+                                             XPathBundle.message("dialog.message.not.valid.file", vf.getPresentableUrl()),
+                                             XPathBundle.message("dialog.title.download.problem")), myProject.getDisposed());
           }
         }
 
@@ -115,7 +119,7 @@ public abstract class DownloadManager {
       throw new DownloadException(location, e);
     }
     finally {
-      if (file != null && resourceManager.getResourceLocation(location, myProject) == location) {
+      if (file != null && location.equals(resourceManager.getResourceLocation(location, myProject))) {
         // something went wrong. get rid of the file
         FileUtil.delete(file);
       }

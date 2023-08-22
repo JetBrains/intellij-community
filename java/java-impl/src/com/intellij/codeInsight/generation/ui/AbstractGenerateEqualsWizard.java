@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
-import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,6 +65,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
     protected abstract void updateNonNullMemberInfos(Collection<? extends I> equalsMemberInfos);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   public AbstractGenerateEqualsWizard(Project project, Builder<C, M, I> builder) {
     super(JavaBundle.message("generate.equals.hashcode.wizard.title"), project);
     myBuilder = builder;

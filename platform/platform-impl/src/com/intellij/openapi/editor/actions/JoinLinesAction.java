@@ -20,19 +20,16 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class JoinLinesAction extends TextComponentEditorAction {
   public JoinLinesAction() {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       final Document doc = editor.getDocument();
 
       LogicalPosition caretPosition = caret.getLogicalPosition();
@@ -44,7 +41,7 @@ public class JoinLinesAction extends TextComponentEditorAction {
         if (doc.getLineStartOffset(endLine) == caret.getSelectionEnd()) endLine--;
       }
 
-      int[] caretRestoreOffset = new int[] {-1};
+      int[] caretRestoreOffset = new int[]{-1};
       int lineCount = endLine - startLine;
       final int line = startLine;
 
@@ -63,7 +60,8 @@ public class JoinLinesAction extends TextComponentEditorAction {
 
       if (caret.hasSelection()) {
         caret.moveToOffset(caret.getSelectionEnd());
-      } else {
+      }
+      else {
         if (caretRestoreOffset[0] != -1) {
           caret.moveToOffset(caretRestoreOffset[0]);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

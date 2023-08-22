@@ -1,18 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
+import javax.tools.SimpleJavaFileObject;
 import java.io.*;
 import java.net.URI;
 import java.nio.CharBuffer;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 16-Oct-18
  */
 public abstract class JpsFileObject extends SimpleJavaFileObject {
   private static final Kind[] ourAvailableKinds = Kind.values();
@@ -30,7 +29,7 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
 
   protected static Kind findKind(String name) {
     for (Kind kind : ourAvailableKinds) {
-      if (kind != Kind.OTHER && name.endsWith(kind.extension)) {
+      if (kind != Kind.OTHER && name.regionMatches(true, name.length() - kind.extension.length(), kind.extension, 0, kind.extension.length())) {
         return kind;
       }
     }
@@ -38,9 +37,7 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
   }
 
   /**
-   * @param path
-   * @param caseSensitiveFS
-   * @return null means the file manager should delegate to base implementation
+   * @return {@code null} means the file manager should delegate to base implementation
    */
   @Nullable
   protected abstract String inferBinaryName(Iterable<? extends File> path, boolean caseSensitiveFS);
@@ -50,11 +47,6 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
     final CharSequence content = getCharContent(ignoreEncodingErrors);
     if (content == null) {
       throw new UnsupportedOperationException();
-    }
-    // optimizations: avoid chars copying if possible
-    if (content instanceof CharArrayCharSequence) {
-      final CharArrayCharSequence _content = (CharArrayCharSequence)content;
-      return new CharArrayReader(_content.getBackendArray(), _content.getStart(), _content.length());
     }
     if (content instanceof CharBuffer) {
       final CharBuffer buffer = (CharBuffer)content;
@@ -69,10 +61,8 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
   @NotNull
   protected static CharSequence loadCharContent(@NotNull File file, @Nullable String encoding) throws IOException {
     // FileUtil.loadText clones char array if length mismatch
-    final FileInputStream stream = new FileInputStream(file);
-    try {
-      final Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
-      try {
+    try (FileInputStream stream = new FileInputStream(file)) {
+      try (Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding)) {
         // channel allows to avoid extra call to get file size because fd is reused, see Files.readAllBytes
         char[] chars = new char[(int)stream.getChannel().size()];
         int count = 0;
@@ -83,14 +73,8 @@ public abstract class JpsFileObject extends SimpleJavaFileObject {
           }
           count += n;
         }
-        return new CharArrayCharSequence(chars, 0, count);
+        return CharBuffer.wrap(chars, 0, count);
       }
-      finally {
-        reader.close();
-      }
-    }
-    finally {
-      stream.close();
     }
   }
 

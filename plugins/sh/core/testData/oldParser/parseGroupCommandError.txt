@@ -1,0 +1,43 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    SHELL_COMMAND
+      BLOCK
+        PsiElement({)('{')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('a')
+          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected, got '}'
+            <empty list>
+        PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SHELL_COMMAND
+      BLOCK
+        PsiElement({)('{')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('a')
+          PsiElement(;)(';')
+        PsiElement(})('}')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        PsiElement(STRING_CONTENT)('Example')
+        PsiElement(CLOSE_QUOTE)('"')

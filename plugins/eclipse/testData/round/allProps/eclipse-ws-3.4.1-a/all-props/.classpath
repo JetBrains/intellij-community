@@ -64,7 +64,6 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/lib-8"/>
 	<classpathentry exported="true" kind="var" path="ECLIPSE_VARS_LIB_9_CLS" sourcepath="/ECLIPSE_VARS_LIB_9_SRC"/>
 	<classpathentry exported="true" kind="var" path="ECLIPSE_VARS_LIB_A_CLS" sourcepath="/ECLIPSE_VARS_LIB_A_SRC"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

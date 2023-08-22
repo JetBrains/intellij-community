@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,15 +23,21 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class ScriptFilter extends FilterAction {
+class ScriptFilter extends FilterAction {
 
-  public ScriptFilter(FilterTable filterTable) {
-    super(SSRBundle.messagePointer("script.filter.name"), filterTable);
+  ScriptFilter() {
+    super(SSRBundle.messagePointer("script.filter.name"));
+  }
+
+  @Override
+  public @NotNull String getShortText(NamedScriptableDefinition variable) {
+    return variable.getScriptCodeConstraint().length() > 2 ? SSRBundle.message("script.tooltip.message") : "";
   }
 
   @Override
   public boolean hasFilter() {
-    return !StringUtil.isEmpty(myTable.getVariable().getScriptCodeConstraint());
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    return variable != null && !StringUtil.isEmpty(variable.getScriptCodeConstraint());
   }
 
   @Override
@@ -50,8 +56,8 @@ public class ScriptFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor getEditor() {
-    return new FilterEditor<NamedScriptableDefinition>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
+  public FilterEditor<NamedScriptableDefinition> getEditor() {
+    return new FilterEditor<>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("script.label"));
       private final EditorTextField myTextField = UIUtil.createScriptComponent("", myTable.getProject());
@@ -84,16 +90,16 @@ public class ScriptFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createSequentialGroup()
-                .addComponent(myLabel)
-                .addComponent(myTextField)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
-                .addComponent(myHelpLabel)
+            .addComponent(myLabel)
+            .addComponent(myTextField)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+            .addComponent(myHelpLabel)
         );
         layout.setVerticalGroup(
           layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                .addComponent(myLabel)
-                .addComponent(myTextField)
-                .addComponent(myHelpLabel)
+            .addComponent(myLabel)
+            .addComponent(myTextField)
+            .addComponent(myHelpLabel)
         );
       }
 

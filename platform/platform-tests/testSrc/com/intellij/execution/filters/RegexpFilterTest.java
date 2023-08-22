@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -123,7 +124,7 @@ public class RegexpFilterTest {
     }
 
     @Override
-    public void navigate(Project project) { }
+    public void navigate(@NotNull Project project) { }
 
     public void checkInfo(String fileName, int line, int column) {
       assertEquals(fileName, myFileName);

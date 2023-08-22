@@ -6,34 +6,45 @@ package com.jetbrains.python.codeInsight.stdlib
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.*
+import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
-import com.jetbrains.python.psi.impl.PyOverridingTypeProvider
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
 
-class PyDataclassOverridingTypeProvider : PyTypeProviderBase(), PyOverridingTypeProvider {
-
-  override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    return PyTypeUtil.notNullToRef(PyDataclassTypeProvider.getDataclassesReplaceType(referenceTarget, context, anchor))
-  }
-}
-
 class PyDataclassTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
-    return getDataclassTypeForCallee(referenceExpression, context) ?: getDataclassesReplaceType(referenceExpression, context)
+    return getDataclassesReplaceType(referenceExpression, context)
+  }
+
+  override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
+    val result = when {
+      referenceTarget is PyClass && anchor is PyCallExpression -> getDataclassTypeForClass(referenceTarget, context)
+      referenceTarget is PyParameter && referenceTarget.isSelf && anchor is PyCallExpression -> {
+        PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
+          ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+          ?.containingClass
+          ?.let { getDataclassTypeForClass(it, context) }
+      }
+      else -> null
+    }
+
+    return PyTypeUtil.notNullToRef(result)
   }
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
-    if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null && func.name == DUNDER_POST_INIT) {
+    if (func.name != Dataclasses.DUNDER_POST_INIT) return null
+    if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null) {
       val cls = func.containingClass
       val name = param.name
 
@@ -57,44 +68,11 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
   companion object {
 
-    private fun getDataclassTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
-      if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) return null
-
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
-      val resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false)
-
-      return PyUtil.filterTopPriorityResults(resolveResults)
-        .asSequence()
-        .map {
-          when {
-            it is PyClass -> getDataclassTypeForClass(it, context)
-            it is PyParameter && it.isSelf -> {
-              PsiTreeUtil.getParentOfType(it, PyFunction::class.java)
-                ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
-                ?.let {
-                  it.containingClass?.let { getDataclassTypeForClass(it, context) }
-                }
-            }
-            else -> null
-          }
-        }
-        .firstOrNull { it != null }
-    }
-
-    internal fun getDataclassesReplaceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): PyCallableType? {
-      return if (referenceTarget is PyCallable && anchor is PyCallExpression) {
-        getDataclassesReplaceType(referenceTarget, anchor, context)
-      }
-      else {
-        null
-      }
-    }
-
     private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
       val call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) ?: return null
       val callee = call.callee as? PyReferenceExpression ?: return null
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
+      val resolveContext = PyResolveContext.defaultContext(context)
       val resolvedCallee = PyUtil.multiResolveTopPriority(callee.getReference(resolveContext)).singleOrNull()
 
       return if (resolvedCallee is PyCallable) getDataclassesReplaceType(resolvedCallee, call, context) else null
@@ -102,8 +80,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
     private fun getDataclassesReplaceType(resolvedCallee: PyCallable, call: PyCallExpression, context: TypeEvalContext): PyCallableType? {
       val instanceName = when (resolvedCallee.qualifiedName) {
-        "dataclasses.replace" -> "obj"
-        "attr.assoc", "attr.evolve" -> "inst"
+        Dataclasses.DATACLASSES_REPLACE -> "obj"
+        in Attrs.ATTRS_ASSOC, in Attrs.ATTRS_EVOLVE -> "inst"
         else -> return null
       }
 
@@ -129,7 +107,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     private fun getDataclassTypeForClass(cls: PyClass, context: TypeEvalContext): PyCallableType? {
       val clsType = (context.getType(cls) as? PyClassLikeType) ?: return null
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
+      val resolveContext = PyResolveContext.defaultContext(context)
       val elementGenerator = PyElementGenerator.getInstance(cls.project)
       val ellipsis = elementGenerator.createEllipsis()
 
@@ -168,10 +146,10 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
             .filterNot { PyTypingTypeProvider.isClassVar(it, context) }
             .mapNotNull { fieldToParameter(current, it, parameters.type, ellipsis, context) }
             .filterNot { it.first in seenNames }
-            .forEach { (name, parameter) ->
+            .forEach { (name, kwOnly, parameter) ->
               // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
 
-              if (seenKeywordOnlyClass && name !in collected) {
+              if ((seenKeywordOnlyClass || kwOnly) && name !in collected) {
                 keywordOnly += name
               }
 
@@ -218,12 +196,12 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
                                  field: PyTargetExpression,
                                  dataclassType: PyDataclassParameters.Type,
                                  ellipsis: PyNoneLiteralExpression,
-                                 context: TypeEvalContext): Pair<String, PyCallableParameter?>? {
+                                 context: TypeEvalContext): Triple<String, Boolean, PyCallableParameter?>? {
       val fieldName = field.name ?: return null
 
       val stub = field.stub
       val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(field) else stub.getCustomStub(PyDataclassFieldStub::class.java)
-      if (fieldStub != null && !fieldStub.initValue()) return fieldName to null
+      if (fieldStub != null && !fieldStub.initValue()) return Triple(fieldName, false, null)
       if (fieldStub == null && field.annotationValue == null) return null // skip fields that are not annotated
 
       val parameterName =
@@ -234,11 +212,14 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           else it
         }
 
-      val parameter = PyCallableParameterImpl.nonPsi(parameterName,
-                                                     getTypeForParameter(cls, field, dataclassType, context),
-                                                     getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context))
+      val parameter = PyCallableParameterImpl.nonPsi(
+        parameterName,
+        getTypeForParameter(cls, field, dataclassType, context),
+        getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context),
+        field
+      )
 
-      return parameterName to parameter
+      return Triple(parameterName, fieldStub?.kwOnly() == true, parameter)
     }
 
     private fun getTypeForParameter(cls: PyClass,
@@ -253,7 +234,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       }
 
       val type = context.getType(field)
-      if (type is PyCollectionType && type.classQName == DATACLASSES_INITVAR_TYPE) {
+      if (type is PyCollectionType && type.classQName == Dataclasses.DATACLASSES_INITVAR) {
         return type.elementTypes.firstOrNull()
       }
 

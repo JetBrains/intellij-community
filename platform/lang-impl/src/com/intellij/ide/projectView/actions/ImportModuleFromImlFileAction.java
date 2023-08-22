@@ -1,16 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -23,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ImportModuleFromImlFileAction extends AnAction {
+public final class ImportModuleFromImlFileAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ImportModuleFromImlFileAction.class);
 
   @Override
@@ -42,8 +39,14 @@ public class ImportModuleFromImlFileAction extends AnAction {
     }
     catch (Exception ex) {
       LOG.info(ex);
-      Messages.showErrorDialog(project, LangBundle.message("dialog.message.cannot.import.module", ex.getMessage()), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(project, LangBundle.message("dialog.message.cannot.import.module", ex.getMessage()),
+                               CommonBundle.getErrorTitle());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -74,7 +77,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
 
     List<VirtualFile> modulesFiles = new ArrayList<>();
     for (VirtualFile file : files) {
-      if (!FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.IDEA_MODULE)) {
+      if (!FileTypeRegistry.getInstance().isFileOfType(file, ModuleFileType.INSTANCE)) {
         return Collections.emptyList();
       }
 

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
@@ -12,20 +10,20 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
+final class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   private final InspectionResultsView myView;
   private final Alarm myAlarm;
   private final Set<VirtualFile> myUnPresentEditedFiles = Collections.synchronizedSet(ContainerUtil.createWeakSet());
 
-  private final Set<VirtualFile> myFilesToProcess = new THashSet<>(); // guarded by myFilesToProcess
+  private final Set<VirtualFile> myFilesToProcess = new HashSet<>(); // guarded by myFilesToProcess
   private final AtomicBoolean myNeedReValidate = new AtomicBoolean(false);
   private final Alarm myUpdateQueue;
 
@@ -90,7 +88,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     PsiFile file = event.getFile();
     if (file != null) {
       VirtualFile vFile = file.getVirtualFile();
-      if (!myUnPresentEditedFiles.contains(vFile)) {
+      if (vFile != null && !myUnPresentEditedFiles.contains(vFile)) {
         synchronized (myFilesToProcess) {
           myFilesToProcess.add(vFile);
         }
@@ -120,7 +118,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
               if (pointer != null) {
                 VirtualFile vFile = pointer.getVirtualFile();
                 if (vFile == null || !vFile.isValid()) {
-                  ((SuppressableInspectionTreeNode)node).dropCache();
+                  ((SuppressableInspectionTreeNode)node).dropCaches();
                   if (!needUpdateUI[0]) {
                     needUpdateUI[0] = true;
                   }
@@ -135,10 +133,10 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
 
       Set<VirtualFile> filesToCheck;
       synchronized (myFilesToProcess) {
-        filesToCheck = new THashSet<>(myFilesToProcess);
+        filesToCheck = new HashSet<>(myFilesToProcess);
         myFilesToProcess.clear();
       }
-      Set<VirtualFile> unPresentFiles = new THashSet<>(filesToCheck);
+      Set<VirtualFile> unPresentFiles = new HashSet<>(filesToCheck);
       if (!filesToCheck.isEmpty()) {
         Processor<InspectionTreeNode> fileCheckProcessor = (node) -> {
           if (myView.isDisposed()) {
@@ -153,7 +151,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
                 VirtualFile vFile = ReadAction.compute(() -> pointer.getVirtualFile());
                 if (filesToCheck.contains(vFile)) {
                   unPresentFiles.remove(vFile);
-                  ((SuppressableInspectionTreeNode)node).dropCache();
+                  ((SuppressableInspectionTreeNode)node).dropCaches();
                   if (!needUpdateUI[0]) {
                     needUpdateUI[0] = true;
                   }
@@ -176,12 +174,12 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
       if (needUpdateUI[0] && !myAlarm.isDisposed()) {
         myAlarm.cancelAllRequests();
         //TODO replace with more accurate
-        myAlarm.addRequest(() -> myView.getTree().getInspectionTreeModel().reload(), 100, ModalityState.NON_MODAL);
+        myAlarm.addRequest(() -> myView.getTree().getInspectionTreeModel().reload(), 100, ModalityState.nonModal());
       }
     }, 200);
   }
 
-  private static class CompositeProcessor<X> implements Processor<X> {
+  private static final class CompositeProcessor<X> implements Processor<X> {
     private final Processor<? super X> myFirstProcessor;
     private boolean myFirstFinished;
     private final Processor<? super X> mySecondProcessor;

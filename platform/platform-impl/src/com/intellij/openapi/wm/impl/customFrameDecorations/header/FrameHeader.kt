@@ -1,107 +1,105 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
-import com.intellij.ui.awt.RelativeRectangle
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBImageIcon
 import java.awt.Font
 import java.awt.Frame
 import java.awt.Toolkit
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowStateListener
-import java.util.*
-import javax.swing.*
+import javax.swing.JFrame
+import javax.swing.JPopupMenu
+import javax.swing.JSeparator
 
-open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
-    private val myIconifyAction: Action = CustomFrameAction("Minimize", AllIcons.Windows.MinimizeSmall) { iconify() }
-    private val myRestoreAction: Action = CustomFrameAction("Restore", AllIcons.Windows.RestoreSmall) { restore() }
-    private val myMaximizeAction: Action = CustomFrameAction("Maximize", AllIcons.Windows.MaximizeSmall) { maximize() }
+internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(frame) {
+  private val iconifyAction = CustomFrameAction(ActionsBundle.message("action.MinimizeCurrentWindow.text"),
+                                                        AllIcons.Windows.MinimizeSmall) { iconify() }
+  private val restoreAction = CustomFrameAction(CommonBundle.message("button.without.mnemonic.restore"),
+                                                        AllIcons.Windows.RestoreSmall) { restore() }
+  private val maximizeAction = CustomFrameAction(IdeBundle.message("action.maximize.text"),
+                                                         AllIcons.Windows.MaximizeSmall) { maximize() }
 
-    private var windowStateListener: WindowStateListener
-    protected var myState = 0
+  protected var state = 0
 
-    init {
-        windowStateListener = object : WindowAdapter() {
-            override fun windowStateChanged(e: java.awt.event.WindowEvent?) {
-                updateActions()
-            }
-        }
-     }
+  @Suppress("LeakingThis")
+  private val closeAction = createCloseAction(this)
 
-    override fun createButtonsPane(): CustomFrameTitleButtons = ResizableCustomFrameTitleButtons.create(myCloseAction,
-            myRestoreAction, myIconifyAction, myMaximizeAction)
+  protected val buttonPanes: CustomFrameTitleButtons? by lazy {
+    createButtonsPane()
+  }
 
+  override fun windowStateChanged() {
+    super.windowStateChanged()
+    updateActions()
+  }
 
-    override fun windowStateChanged() {
-        super.windowStateChanged()
-        updateActions()
+  private fun iconify() {
+    frame.extendedState = state or Frame.ICONIFIED
+  }
+
+  private fun maximize() {
+    frame.extendedState = state or Frame.MAXIMIZED_BOTH
+  }
+
+  private fun restore() {
+    if (state and Frame.ICONIFIED != 0) {
+      frame.extendedState = state and Frame.ICONIFIED.inv()
+    }
+    else {
+      frame.extendedState = state and Frame.MAXIMIZED_BOTH.inv()
+    }
+  }
+
+  override fun addNotify() {
+    super.addNotify()
+    updateActions()
+  }
+
+  private fun updateActions() {
+    state = frame.extendedState
+    if (frame.isResizable) {
+      if (state and Frame.MAXIMIZED_BOTH != 0) {
+        maximizeAction.isEnabled = false
+        restoreAction.isEnabled = true
+      }
+      else {
+        maximizeAction.isEnabled = true
+        restoreAction.isEnabled = false
+      }
+    }
+    else {
+      maximizeAction.isEnabled = false
+      restoreAction.isEnabled = false
+    }
+    iconifyAction.isEnabled = true
+    closeAction.isEnabled = true
+
+    buttonPanes?.updateVisibility()
+    updateCustomTitleBar()
+  }
+
+  override fun addMenuItems(menu: JPopupMenu) {
+    menu.add(restoreAction).apply { font = JBFont.create(font, false) }
+    menu.add(iconifyAction).apply { font = JBFont.create(font, false) }
+    if (Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.MAXIMIZED_BOTH)) {
+      menu.add(maximizeAction).apply { font = JBFont.create(font, false) }
     }
 
-    private fun iconify() {
-        frame.extendedState = myState or Frame.ICONIFIED
+    menu.add(JSeparator())
+
+    val closeMenuItem = menu.add(closeAction)
+    closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
+  }
+
+  private fun createButtonsPane(): CustomFrameTitleButtons? {
+    if (IdeRootPane.hideNativeLinuxTitle) {
+      return ResizableCustomFrameTitleButtons.create(closeAction, restoreAction, iconifyAction, maximizeAction)
     }
-
-    private fun maximize() {
-        frame.extendedState = myState or Frame.MAXIMIZED_BOTH
-    }
-
-    private fun restore() {
-        if (myState and Frame.ICONIFIED != 0) {
-            frame.extendedState = myState and Frame.ICONIFIED.inv()
-        } else {
-            frame.extendedState = myState and Frame.MAXIMIZED_BOTH.inv()
-        }
-    }
-
-    override fun addNotify() {
-        super.addNotify()
-        updateActions()
-    }
-
-    private fun updateActions() {
-        myState = frame.extendedState
-        if (frame.isResizable) {
-            if (myState and Frame.MAXIMIZED_BOTH != 0) {
-                myMaximizeAction.isEnabled = false
-                myRestoreAction.isEnabled = true
-            } else {
-                myMaximizeAction.isEnabled = true
-                myRestoreAction.isEnabled = false
-            }
-        } else {
-            myMaximizeAction.isEnabled = false
-            myRestoreAction.isEnabled = false
-        }
-        myIconifyAction.isEnabled = true
-        myCloseAction.isEnabled = true
-
-        buttonPanes.updateVisibility()
-        updateCustomDecorationHitTestSpots()
-    }
-
-    override fun addMenuItems(menu: JPopupMenu) {
-        menu.add(myRestoreAction)
-        menu.add(myIconifyAction)
-        if (Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.MAXIMIZED_BOTH)) {
-            menu.add(myMaximizeAction)
-        }
-
-        menu.add(JSeparator())
-
-        val closeMenuItem = menu.add(myCloseAction)
-        closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
-    }
-
-    override fun getHitTestSpots(): ArrayList<RelativeRectangle> {
-        val hitTestSpots = ArrayList<RelativeRectangle>()
-
-        hitTestSpots.add(RelativeRectangle(productIcon))
-        hitTestSpots.add(RelativeRectangle(buttonPanes.getView()))
-        return hitTestSpots
-    }
+    return null
+  }
 }

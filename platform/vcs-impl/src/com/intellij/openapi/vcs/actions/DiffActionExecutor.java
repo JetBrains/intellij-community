@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -30,8 +31,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -81,12 +80,12 @@ public abstract class DiffActionExecutor {
     DiffContent diffContent;
     if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
-      if (content == null) throw new VcsException("Failed to load content");
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
       diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
     }
     else {
       String content = fileRevision.getContent();
-      if (content == null) throw new VcsException("Failed to load content");
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
       diffContent = contentFactory.create(myProject, content, fileRevision.getFile());
     }
 
@@ -108,10 +107,17 @@ public abstract class DiffActionExecutor {
     }
 
     @Override
+    public @Nullable FileType getContentType() {
+      return myFilePath.getFileType();
+    }
+
+    @Override
     public @NotNull DiffRequest process(@NotNull UserDataHolder context,
                                         @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
       final ContentRevision contentRevision = getContentRevision();
-      if (contentRevision == null) throw new DiffRequestProducerException("Can't get revision content");
+      if (contentRevision == null) {
+        throw new DiffRequestProducerException(VcsBundle.message("diff.producer.error.cant.get.revision.content"));
+      }
 
       try {
         DiffContent content1 = createRemote(contentRevision);
@@ -155,12 +161,6 @@ public abstract class DiffActionExecutor {
         throw new DiffRequestProducerException(e);
       }
     }
-  }
-
-  @Deprecated
-  public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
-                              final Project project, final VcsBackgroundableActions actionKey) {
-    showDiff(diffProvider, revisionNumber, selectedFile, project);
   }
 
   public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,

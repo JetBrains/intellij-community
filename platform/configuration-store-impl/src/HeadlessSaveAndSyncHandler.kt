@@ -1,29 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 
-/**
- * Trivial implementation used in tests and in the headless mode.
- */
-internal class HeadlessSaveAndSyncHandler : BaseSaveAndSyncHandler() {
-  override fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean) {}
-
-  override fun scheduleRefresh() {}
-
-  override fun refreshOpenFiles() {}
-
-  override fun blockSaveOnFrameDeactivation() {}
-
-  override fun unblockSaveOnFrameDeactivation() {}
-
-  override fun blockSyncOnFrameActivation() {}
-
-  override fun unblockSyncOnFrameActivation() {}
-
+private class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
-    StoreUtil.saveSettings(componentManager, forceSavingAllSettings = true)
+    runInAutoSaveDisabledMode {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+        componentManager.stateStore.save(forceSavingAllSettings = true)
+      }
+    }
     return true
   }
 }

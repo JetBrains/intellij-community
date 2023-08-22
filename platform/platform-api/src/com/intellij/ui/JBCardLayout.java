@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
@@ -111,7 +112,7 @@ public class JBCardLayout extends CardLayout {
           }
           return;
         }
-        linearProgress[0] = Math.min(1, Math.max(0, (float)timePassed / mySwipeTime));
+        linearProgress[0] = MathUtil.clamp((float)timePassed / mySwipeTime, 0, 1);
         double naturalProgress = (1 - Math.cos(Math.PI * linearProgress[0])) / 2;
         Rectangle bounds = new Rectangle(parent.getWidth(), parent.getHeight());
         JBInsets.removeFrom(bounds, parent.getInsets());

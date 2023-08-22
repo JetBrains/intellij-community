@@ -1,59 +1,60 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
 import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
+import com.siyeh.ig.format.FormatDecode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 
-public class RedundantCastInspection extends GenericsInspectionToolBase {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private final LocalQuickFix myQuickFixAction;
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
-  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS;
+  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS = true;
 
   public RedundantCastInspection() {
     myQuickFixAction = new AcceptSuggested();
   }
 
   @Override
-  public ProblemDescriptor @Nullable [] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
-    if (redundantCasts.isEmpty()) return null;
-    List<ProblemDescriptor> descriptions = new ArrayList<>(redundantCasts.size());
-    for (PsiTypeCastExpression redundantCast : redundantCasts) {
-      ProblemDescriptor descriptor = createDescription(redundantCast, manager, isOnTheFly);
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+
+    return RedundantCastUtil.createRedundantCastVisitor(typeCast -> {
+      ProblemDescriptor descriptor = createDescription(typeCast, holder.getManager(), isOnTheFly);
       if (descriptor != null) {
-        descriptions.add(descriptor);
+        holder.registerProblem(descriptor);
       }
-    }
-    if (descriptions.isEmpty()) return null;
-    return descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY);
+      return true;
+    });
   }
 
   @Override
-  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return getDescriptions(field, manager, isOnTheFly);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JavaAnalysisBundle.message("ignore.casts.in.suspicious.collections.method.calls"), "IGNORE_SUSPICIOUS_METHOD_CALLS");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_SUSPICIOUS_METHOD_CALLS", JavaAnalysisBundle.message("ignore.casts.in.suspicious.collections.method.calls")));
   }
 
   @Nullable
@@ -65,21 +66,26 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     if (parent instanceof PsiExpressionList)  {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
+        PsiType operandType = operand.getType();
         final String message = SuspiciousMethodCallUtil
-          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<>(), 0);
+          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operandType, true, new ArrayList<>(), 0);
         if (message != null) {
           return null;
         }
+        
+        if (FormatDecode.isSuspiciousFormatCall((PsiMethodCallExpression)gParent, cast)) {
+          return null;
+        }
+        
       }
     }
 
-    String message = JavaAnalysisBundle.message("inspection.redundant.cast.problem.descriptor",
-                                               "<code>" + PsiExpressionTrimRenderer.render(operand) + "</code>", "<code>#ref</code> #loc");
-    return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
+    String message = JavaAnalysisBundle.message("inspection.redundant.cast.problem.descriptor", PsiExpressionTrimRenderer.render(operand));
+    return manager.createProblemDescriptor(castType, message, myQuickFixAction, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, onTheFly);
   }
 
 
-  private static class AcceptSuggested implements LocalQuickFix {
+  private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -87,10 +93,8 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement castTypeElement = descriptor.getPsiElement();
-      PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
-      if (cast != null) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement castTypeElement, @NotNull ModPsiUpdater updater) {
+      if (castTypeElement.getParent() instanceof PsiTypeCastExpression cast) {
         RemoveRedundantCastUtil.removeCast(cast);
       }
     }

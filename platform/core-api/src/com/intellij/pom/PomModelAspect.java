@@ -16,7 +16,8 @@
 package com.intellij.pom;
 
 import com.intellij.pom.event.PomModelEvent;
+import org.jetbrains.annotations.NotNull;
 
 public interface PomModelAspect {
-  void update(PomModelEvent event);
+  void update(@NotNull PomModelEvent event);
 }

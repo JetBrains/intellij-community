@@ -25,6 +25,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,29 +38,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class InspectionValidator {
   public static final ProjectExtensionPointName<InspectionValidator> EP_NAME = new ProjectExtensionPointName<>("com.intellij.compiler.inspectionValidator");
   private final String myId;
-  private final String myDescription;
-  private final String myProgressIndicatorText;
+  private final @Nls String myDescription;
+  private final @NlsContexts.ProgressText String myProgressIndicatorText;
 
   private final Class<? extends LocalInspectionTool> @Nullable [] myInspectionToolClasses;
 
   @Nullable
   private final InspectionToolProvider myInspectionToolProvider;
-
-  /**
-   * @deprecated use {@link #InspectionValidator(String, String, String)} instead; this constructor uses {@code description} which may
-   * be localized as ID which must not be localized
-   */
-  @Deprecated
-  protected InspectionValidator(@NotNull @Nls String description,
-                                @NotNull @Nls String progressIndicatorText) {
-    this(description, description, progressIndicatorText);
-  }
 
   protected InspectionValidator(@NotNull @NonNls String id, @NotNull @Nls String description,
                                 @NotNull @Nls String progressIndicatorText) {
@@ -79,7 +67,6 @@ public abstract class InspectionValidator {
     return Collections.emptyList();
   }
 
-  @SuppressWarnings("unchecked")
   public Class<? extends LocalInspectionTool> @NotNull [] getInspectionToolClasses(final CompileContext context) {
     if (myInspectionToolClasses != null) {
       return myInspectionToolClasses;
@@ -89,15 +76,16 @@ public abstract class InspectionValidator {
     return myInspectionToolProvider.getInspectionClasses();
   }
 
+  @NotNull
   public final String getId() {
     return myId;
   }
 
-  public final String getDescription() {
+  public final @Nls String getDescription() {
     return myDescription;
   }
 
-  public final String getProgressIndicatorText() {
+  public final @NlsContexts.ProgressText String getProgressIndicatorText() {
     return myProgressIndicatorText;
   }
 

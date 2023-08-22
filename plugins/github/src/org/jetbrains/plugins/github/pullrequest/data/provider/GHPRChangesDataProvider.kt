@@ -2,33 +2,52 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.openapi.diff.impl.patch.FilePatch
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import git4idea.changes.GitBranchComparisonResult
 import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import java.util.concurrent.CompletableFuture
 
 interface GHPRChangesDataProvider {
 
-  @CalledInAwt
-  fun loadChanges(): CompletableFuture<GHPRChangesProvider>
+  @RequiresEdt
+  fun loadChanges(): CompletableFuture<GitBranchComparisonResult>
 
-  @CalledInAwt
+  @RequiresEdt
+  fun loadPatchFromMergeBase(progressIndicator: ProgressIndicator, commitSha: String, filePath: String): CompletableFuture<FilePatch?>
+
+  @RequiresEdt
   fun reloadChanges()
 
-  @CalledInAwt
+  @RequiresEdt
   fun addChangesListener(disposable: Disposable, listener: () -> Unit)
 
-  @CalledInAwt
-  fun loadChanged(disposable: Disposable, consumer: (CompletableFuture<GHPRChangesProvider>) -> Unit) {
+  @RequiresEdt
+  fun loadChanges(disposable: Disposable, consumer: (CompletableFuture<GitBranchComparisonResult>) -> Unit) {
     addChangesListener(disposable) {
       consumer(loadChanges())
     }
     consumer(loadChanges())
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>>
 
-  @CalledInAwt
+  @RequiresEdt
+  fun addCommitsListener(disposable: Disposable, listener: () -> Unit)
+
+  @RequiresEdt
+  fun loadCommitsFromApi(disposable: Disposable, consumer: (CompletableFuture<List<GHCommit>>) -> Unit) {
+    addCommitsListener(disposable) {
+      consumer(loadCommitsFromApi())
+    }
+    consumer(loadCommitsFromApi())
+  }
+
+  @RequiresEdt
+  fun fetchBaseBranch(): CompletableFuture<Unit>
+
+  @RequiresEdt
   fun fetchHeadBranch(): CompletableFuture<Unit>
 }

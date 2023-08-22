@@ -19,9 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class HgChangesetStatus {
 
-  private final String myName;
+  private final @Nls String myName;
   private int numChanges;
-  private String toolTip;
+  private @Nls String toolTip;
 
   public HgChangesetStatus(@NotNull @Nls String name) {
     myName = name;
@@ -34,6 +34,7 @@ public class HgChangesetStatus {
     });
   }
 
+  @Nls
   public String getStatusName() {
     return myName;
   }
@@ -42,6 +43,7 @@ public class HgChangesetStatus {
     return numChanges;
   }
 
+  @Nls
   public String getToolTip() {
     return toolTip;
   }

@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +23,14 @@ public class TemplateProjectStructureAction extends ShowStructureSettingsAction 
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (e.getPlace().equals(ActionPlaces.WELCOME_SCREEN)) {
-      e.getPresentation().setText(StringUtil.trimEnd(getTemplatePresentation().getText(), "..."));
+      final String text = getTemplatePresentation().getText();
+      if (text == null) return;
+      e.getPresentation().setText(StringUtil.trimEnd(text, "..."));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return super.getActionUpdateThread();
   }
 }

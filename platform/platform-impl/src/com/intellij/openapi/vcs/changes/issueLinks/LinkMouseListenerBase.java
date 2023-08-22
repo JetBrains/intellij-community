@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ui.ClickListener;
@@ -29,18 +15,21 @@ import java.awt.event.MouseMotionListener;
 public abstract class LinkMouseListenerBase<T> extends ClickListener implements MouseMotionListener {
   public static void installSingleTagOn(@NotNull SimpleColoredComponent component) {
     new LinkMouseListenerBase<Object>() {
-      @Nullable
       @Override
-      protected Object getTagAt(@NotNull MouseEvent e) {
+      protected @Nullable Object getTagAt(@NotNull MouseEvent e) {
         return ((SimpleColoredComponent)e.getSource()).getFragmentTagAt(e.getX());
       }
 
       @Override
       protected void handleTagClick(@Nullable Object tag, @NotNull MouseEvent event) {
         if (tag != null) {
-          if (tag instanceof Consumer) {
+          if (tag instanceof Consumer consumer) {
             //noinspection unchecked
-            ((Consumer<MouseEvent>)tag).consume(event);
+            consumer.consume(event);
+          }
+          else if (tag instanceof java.util.function.Consumer consumer) {
+            //noinspection unchecked
+            consumer.accept(event);
           }
           else {
             ((Runnable)tag).run();
@@ -50,8 +39,7 @@ public abstract class LinkMouseListenerBase<T> extends ClickListener implements 
     }.installOn(component);
   }
 
-  @Nullable
-  protected abstract T getTagAt(@NotNull MouseEvent e);
+  protected abstract @Nullable T getTagAt(@NotNull MouseEvent e);
 
   @Override
   public boolean onClick(@NotNull MouseEvent e, int clickCount) {

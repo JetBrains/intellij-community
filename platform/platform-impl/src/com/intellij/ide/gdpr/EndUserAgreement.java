@@ -1,19 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
@@ -25,7 +27,9 @@ public final class EndUserAgreement {
 
   private static final String PRIVACY_POLICY_DOCUMENT_NAME = "privacy";
   private static final String PRIVACY_POLICY_EAP_DOCUMENT_NAME = PRIVACY_POLICY_DOCUMENT_NAME + "Eap";
+  private static final String CWM_GUEST_EULA_NAME = "cwmGuestEua";
   private static final String EULA_DOCUMENT_NAME = "eua";
+  private static final String EULA_COMMUNITY_DOCUMENT_NAME = "euaCommunity";
   private static final String EULA_EAP_DOCUMENT_NAME = EULA_DOCUMENT_NAME + "Eap";
 
   private static final String PRIVACY_POLICY_CONTENT_FILE_NAME = "Cached";
@@ -59,11 +63,12 @@ public final class EndUserAgreement {
   }
 
   private static @NotNull Path getDataRoot() {
-    return Locations.getDataRoot().resolve("PrivacyPolicy");
+    return PathManager.getCommonDataPath().resolve(RELATIVE_RESOURCE_PATH);
   }
 
+  // path for classloader - without leading slash
   private static String getBundledResourcePath(String docName) {
-    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? "/PrivacyPolicy.html" : "/"+docName+".html";
+    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? "PrivacyPolicy.html" : docName + ".html";
   }
 
   public static void setAccepted(@NotNull Document doc) {
@@ -82,49 +87,44 @@ public final class EndUserAgreement {
 
   public static @NotNull Document getLatestDocument() {
     // needed for testing
-    final String text = System.getProperty(POLICY_TEXT_PROPERTY, null);
+    String text = System.getProperty(POLICY_TEXT_PROPERTY, null);
     if (text != null) {
-      final Document fromProperty = loadContent(PRIVACY_POLICY_DOCUMENT_NAME, new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
+      Document fromProperty = new Document(PRIVACY_POLICY_DOCUMENT_NAME, text);
       if (!fromProperty.getVersion().isUnknown()) {
         return fromProperty;
       }
     }
 
     String docName = getDocumentName();
-    try {
-      Document fromFile = loadContent(docName, Files.newInputStream(getDocumentContentFile(docName)));
-      if (!fromFile.getVersion().isUnknown()) {
-        return fromFile;
-      }
+    Document fromFile = loadContent(docName, getDocumentContentFile(docName));
+    if (fromFile != null && !fromFile.getVersion().isUnknown()) {
+      return fromFile;
     }
-    catch (IOException ignored) {
-    }
-    return loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
+    return loadContent(docName, getBundledResourcePath(docName));
   }
 
   public static boolean updateCachedContentToLatestBundledVersion() {
     try {
-      final String docName = getDocumentName();
-      Path cacheFile = getDocumentContentFile(docName);
-      if (Files.exists(cacheFile)) {
-        Document cached = loadContent(docName, Files.newInputStream(cacheFile));
-        if (!cached.getVersion().isUnknown()) {
-          final Document bundled = loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
-          if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
-            try {
-              // update content only and not the active document name
-              // active document name can be changed by JBA only
-              FileUtil.writeToFile(getDocumentContentFile(docName).toFile(), bundled.getText());
-            }
-            catch (FileNotFoundException e) {
-              LOG.info(e.getMessage());
-            }
-            catch (IOException e) {
-              LOG.info(e);
-            }
-            return true;
-          }
+      String docName = getDocumentName();
+      Document cached = loadContent(docName, getDocumentContentFile(docName));
+      if (cached == null || cached.getVersion().isUnknown()) {
+        return false;
+      }
+
+      Document bundled = loadContent(docName, getBundledResourcePath(docName));
+      if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
+        try {
+          // update content only and not the active document name
+          // active document name can be changed by JBA only
+          writeToFile(getDocumentContentFile(docName), bundled.getText());
         }
+        catch (NoSuchFileException e) {
+          LOG.info(e.getMessage());
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+        return true;
       }
     }
     catch (Throwable ignored) {
@@ -132,12 +132,17 @@ public final class EndUserAgreement {
     return false;
   }
 
-  public static void update(String docName, String text) {
+  private static void writeToFile(@NotNull Path file, @NotNull String text) throws IOException {
+    Files.createDirectories(file.getParent());
+    Files.writeString(file, text);
+  }
+
+  public static void update(@NotNull String docName, @NotNull String text) {
     try {
-      FileUtil.writeToFile(getDocumentContentFile(docName).toFile(), text);
-      FileUtil.writeToFile(getDocumentNameFile().toFile(), docName);
+      writeToFile(getDocumentContentFile(docName), text);
+      writeToFile(getDocumentNameFile(), docName);
     }
-    catch (FileNotFoundException e) {
+    catch (NoSuchFileException e) {
       LOG.info(e.getMessage());
     }
     catch (IOException e) {
@@ -145,32 +150,55 @@ public final class EndUserAgreement {
     }
   }
 
-  private static @NotNull Document loadContent(String docName, InputStream stream) {
-    if (stream != null) {
-      try (Reader reader = new InputStreamReader(stream instanceof ByteArrayInputStream ? stream : new BufferedInputStream(stream),
-                                                 StandardCharsets.UTF_8)) {
-        return new Document(docName, new String(FileUtil.adaptiveLoadText(reader)));
+  private static @NotNull Document loadContent(String docName, String resourcePath) {
+    try {
+      byte[] data = ResourceUtil.getResourceAsBytes(resourcePath, EndUserAgreement.class.getClassLoader());
+      if (data != null) {
+        return new Document(docName, new String(data, StandardCharsets.UTF_8));
       }
-      catch (IOException e) {
-        LOG.info(e);
-      }
+    }
+    catch (IOException e) {
+      LOG.info(docName + ": " + e.getMessage());
+      LOG.debug(e);
+    }
+    return new Document(docName, "");
+  }
+
+  private static @Nullable Document loadContent(String docName, Path file) {
+    try {
+      return new Document(docName, Files.readString(file));
+    }
+    catch (NoSuchFileException ignored) {
+      return null;
+    }
+    catch (IOException e) {
+      LOG.info(docName + ": " + e.getMessage());
+      LOG.debug(e);
     }
     return new Document(docName, "");
   }
 
   private static @NotNull String getDocumentName() {
     if (!PlatformUtils.isCommercialEdition()) {
+      if (PlatformUtils.isCommunityEdition()) {
+        return isEAP() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
+      }
+      if (PlatformUtils.isJetBrainsClient()) {
+        return CWM_GUEST_EULA_NAME;
+      }
+      if (PlatformUtils.isGateway()) {
+        return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+      }
       return isEAP()? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
     }
 
     try {
-      String docName = new String(Files.readAllBytes(getDocumentNameFile()), StandardCharsets.UTF_8);
-      if (!StringUtilRt.isEmptyOrSpaces(docName)) {
+      String docName = Files.readString(getDocumentNameFile());
+      if (docName != null && !docName.isBlank()) {
         return docName;
       }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
     return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
@@ -223,25 +251,22 @@ public final class EndUserAgreement {
     }
 
     private static @NotNull Version parseVersion(String text) {
-      if (!StringUtil.isEmptyOrSpaces(text)) {
-        try (BufferedReader reader = new BufferedReader(new StringReader(text))) {
-          final String line = reader.readLine();
-          if (line != null) {
-            final int startComment = line.indexOf(VERSION_COMMENT_START);
-            if (startComment >= 0) {
-              final int endComment = line.indexOf(VERSION_COMMENT_END);
-              if (endComment > startComment) {
-                return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
-              }
-            }
+      if (text == null || text.isBlank()) {
+        return Version.UNKNOWN;
+      }
+
+      Iterator<String> iterator = text.lines().iterator();
+      while (iterator.hasNext()) {
+        String line = iterator.next();
+        int startComment = line.indexOf(VERSION_COMMENT_START);
+        if (startComment >= 0) {
+          int endComment = line.indexOf(VERSION_COMMENT_END);
+          if (endComment > startComment) {
+            return Version.fromString(line.substring(startComment + VERSION_COMMENT_START.length(), endComment).trim());
           }
-        }
-        catch (IOException e) {
-          LOG.info(e);
         }
       }
       return Version.UNKNOWN;
     }
-
   }
 }

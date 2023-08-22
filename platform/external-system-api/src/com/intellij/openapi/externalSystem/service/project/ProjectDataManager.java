@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -22,24 +22,28 @@ import java.util.List;
  */
 public interface ProjectDataManager {
   static ProjectDataManager getInstance() {
-    return ServiceManager.getService(ProjectDataManager.class);
+    return ApplicationManager.getApplication().getService(ProjectDataManager.class);
   }
 
-  void importData(@NotNull Collection<DataNode<?>> nodes,
-                  @NotNull Project project,
-                  @NotNull IdeModifiableModelsProvider modelsProvider,
-                  boolean synchronous);
+  /**
+   * @deprecated
+   * Use {@link #importData(DataNode, Project)} instead.
+   * Service implementation always performs operations synchronously.
+   */
+  @Deprecated
+  default <T> void importData(@NotNull DataNode<T> node,
+                              @NotNull Project project,
+                              boolean synchronous) {
+    importData(node, project);
+  }
 
-  <T> void importData(@NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous);
+  <T> void importData(@NotNull DataNode<T> node,
+                              @NotNull Project project);
 
   <T> void importData(@NotNull DataNode<T> node,
                       @NotNull Project project,
-                      @NotNull IdeModifiableModelsProvider modelsProvider,
-                      boolean synchronous);
+                      @NotNull IdeModifiableModelsProvider modelsProvider);
 
-  <T> void importData(@NotNull DataNode<T> node,
-                      @NotNull Project project,
-                      boolean synchronous);
 
   @Nullable
   List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key);
@@ -53,4 +57,10 @@ public interface ProjectDataManager {
 
   @NotNull
   Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId);
+
+  /**
+   * Returns an instance which can be used to perform massive modifications of the project configurations. {@link IdeModifiableModelsProvider#commit()}
+   * must be manually called on the returned instance for these modifications to take effect.
+   */
+  @NotNull IdeModifiableModelsProvider createModifiableModelsProvider(@NotNull Project project);
 }

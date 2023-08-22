@@ -89,45 +89,50 @@ public class ExpressionTokenizer {
     if (index < length) nextChar = expr[index];
     // Check for a known token start
     switch (currentChar) {
-      case '(':
+      case '(' -> {
         return TOKEN_LBRACE;
-      case ')':
+      }
+      case ')' -> {
         return TOKEN_RBRACE;
-      case '=':
+      }
+      case '=' -> {
         return TOKEN_EQ;
-      case '!':
+      }
+      case '!' -> {
         if (nextChar == '=') {
           index++;
           return TOKEN_NOT_EQ;
         }
         return TOKEN_NOT;
-      case '|':
+      }
+      case '|' -> {
         if (nextChar == '|') {
           index++;
           return TOKEN_OR;
         }
-        break;
-      case '&':
+      }
+      case '&' -> {
         if (nextChar == '&') {
           index++;
           return TOKEN_AND;
         }
-        break;
-      case '>':
+      }
+      case '>' -> {
         if (nextChar == '=') {
           index++;
           return TOKEN_GE; // Greater than or equal
         }
         return TOKEN_GT; // Greater than
-      case '<':
+      }
+      case '<' -> {
         if (nextChar == '=') {
           index++;
           return TOKEN_LE; // Less than or equal
         }
         return TOKEN_LT; // Less than
-      default:
-        // Otherwise it's a string
-        break;
+      }
+      default -> { }
+      // Otherwise it's a string
     }
     int end = index;
     if (currentChar == '"' || currentChar == '\'') {

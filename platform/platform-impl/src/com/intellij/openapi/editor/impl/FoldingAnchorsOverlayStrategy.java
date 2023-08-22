@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ final class FoldingAnchorsOverlayStrategy {
   Collection<DisplayedFoldingAnchor> getAnchorsToDisplay(int firstVisibleOffset,
                                                          int lastVisibleOffset,
                                                          @NotNull List<FoldRegion> activeFoldRegions) {
-    Int2ObjectOpenHashMap<DisplayedFoldingAnchor> result = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<DisplayedFoldingAnchor> result = new Int2ObjectOpenHashMap<>();
     FoldRegion[] visibleFoldRegions = myEditor.getFoldingModel().fetchVisible();
     if (visibleFoldRegions != null) {
       for (FoldRegion region : visibleFoldRegions) {
@@ -40,6 +41,10 @@ final class FoldingAnchorsOverlayStrategy {
             // unless requested, we don't display markers for single-line fold regions
             continue;
           }
+        }
+
+        if (skipFoldingAnchor(region)) {
+          continue;
         }
 
         int foldStart = myEditor.offsetToVisualLine(startOffset);
@@ -63,7 +68,7 @@ final class FoldingAnchorsOverlayStrategy {
     return result.values();
   }
 
-  private static void tryAdding(@NotNull Int2ObjectOpenHashMap<DisplayedFoldingAnchor> resultsMap,
+  private static void tryAdding(@NotNull Int2ObjectMap<DisplayedFoldingAnchor> resultsMap,
                                 @NotNull FoldRegion region,
                                 int visualLine,
                                 int visualHeight,
@@ -89,5 +94,12 @@ final class FoldingAnchorsOverlayStrategy {
       }
     }
     resultsMap.put(visualLine, new DisplayedFoldingAnchor(region, visualLine, visualHeight, type));
+  }
+
+  private static boolean skipFoldingAnchor(@NotNull FoldRegion region) {
+    if (!region.isExpanded()) {
+      return Boolean.TRUE.equals(region.getUserData(FoldingModelImpl.HIDE_GUTTER_RENDERER_FOR_COLLAPSED));
+    }
+    return false;
   }
 }

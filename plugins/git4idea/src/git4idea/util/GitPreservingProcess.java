@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
-import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
@@ -31,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag;
+import static git4idea.GitNotificationIdsHolder.COULD_NOT_SAVE_UNCOMMITTED_CHANGES;
 
 /**
  * Executes a Git operation on a number of repositories surrounding it by stash-unstash procedure.
@@ -43,11 +43,11 @@ public class GitPreservingProcess {
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final Collection<? extends VirtualFile> myRootsToSave;
-  @NotNull private final String myOperationTitle;
-  @NotNull private final String myDestinationName;
+  @NotNull private final @Nls String myOperationTitle;
+  @NotNull private final @Nls String myDestinationName;
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final Runnable myOperation;
-  @NotNull private final String myStashMessage;
+  @NotNull private final @Nls String myStashMessage;
   @NotNull private final GitChangesSaver mySaver;
 
   @NotNull private final AtomicBoolean myLoaded = new AtomicBoolean();
@@ -56,7 +56,7 @@ public class GitPreservingProcess {
                               @NotNull Git git,
                               @NotNull Collection<? extends VirtualFile> rootsToSave,
                               @Nls @NotNull String operationTitle,
-                              @NotNull String destinationName,
+                              @Nls @NotNull String destinationName,
                               @NotNull GitSaveChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {
@@ -128,8 +128,8 @@ public class GitPreservingProcess {
       @Override
       public String getLeftPanelTitle(@NotNull VirtualFile file) {
         return saveMethod.selectBundleMessage(
-          GitBundle.getString("restore.conflict.diff.dialog.left.stash.title"),
-          GitBundle.getString("restore.conflict.diff.dialog.left.shelf.title")
+          GitBundle.message("restore.conflict.diff.dialog.left.stash.title"),
+          GitBundle.message("restore.conflict.diff.dialog.left.shelf.title")
         );
       }
 
@@ -159,7 +159,7 @@ public class GitPreservingProcess {
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
       VcsNotifier.getInstance(myProject).notifyError(
-        GitBundle.getString("save.notification.failed.title"),
+        COULD_NOT_SAVE_UNCOMMITTED_CHANGES, GitBundle.message("save.notification.failed.title"),
         mySaver.getSaveMethod().selectBundleMessage(
           GitBundle.message("save.notification.failed.stash.text", myOperationTitle, join(e.getMessages())),
           GitBundle.message("save.notification.failed.shelf.text", myOperationTitle, join(e.getMessages()))
@@ -176,21 +176,5 @@ public class GitPreservingProcess {
     else {
       LOG.info("The changes were already loaded");
     }
-  }
-
-  /**
-   * @deprecated Use {@link #GitPreservingProcess(Project, Git, Collection, String, String, GitSaveChangesPolicy,
-   * ProgressIndicator, Runnable)}
-   */
-  @Deprecated
-  public GitPreservingProcess(@NotNull Project project,
-                              @NotNull Git git,
-                              @NotNull Collection<? extends VirtualFile> rootsToSave,
-                              @NotNull String operationTitle,
-                              @NotNull String destinationName,
-                              @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,
-                              @NotNull ProgressIndicator indicator,
-                              @NotNull Runnable operation) {
-    this(project, git, rootsToSave, operationTitle, destinationName, saveMethod.convert(), indicator, operation);
   }
 }

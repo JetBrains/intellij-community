@@ -5,6 +5,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.io.systemIndependentPath
 import git4idea.GitVcs
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitBranchWorkerTest
@@ -13,6 +15,13 @@ import junit.framework.TestCase
 import java.io.File
 
 class GitExternalFileNotifierTest : GitSingleRepoTest() {
+
+  override fun setUpProject() {
+    super.setUpProject()
+    //ensure project root created by VFS (isFromRefresh == false) and not via external process like Git,
+    //otherwise all unversioned files under such project root will be considered like external.
+    VfsUtil.createDirectories(projectNioRoot.systemIndependentPath)
+  }
 
   override fun setUp() {
     super.setUp()
@@ -32,7 +41,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
   }
 
   fun `test no notification after branch checkout`() {
-    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler())
+    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler(project))
 
     worker.checkoutNewBranch("new", listOf(repo))
     val file1Name = "file1.txt"
@@ -76,7 +85,11 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
   private fun assertAdded(file: File) =
     assertTrue(changeListManager.getStatus(getVirtualFile(file)) == FileStatus.ADDED)
 
-  private fun waitForAllEvents() = GitVcs.getInstance(project).vfsListener.waitForAllEventsProcessedInTestMode()
+  private fun waitForAllEvents() {
+    updateUntrackedFiles()
+    changeListManager.waitEverythingDoneInTestMode()
+    GitVcs.getInstance(project).vfsListener.waitForExternalFilesEventsProcessedInTestMode()
+  }
 
   private fun assertNotificationByMessage(notificationContent: String) =
     vcsNotifier.notifications.find { it.content == notificationContent }

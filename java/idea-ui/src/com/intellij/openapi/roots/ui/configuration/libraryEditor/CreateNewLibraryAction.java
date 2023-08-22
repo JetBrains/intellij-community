@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
@@ -26,13 +12,14 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.LibraryTypeService;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -45,12 +32,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CreateNewLibraryAction extends DumbAwareAction {
+public final class CreateNewLibraryAction extends DumbAwareAction {
   private final @Nullable LibraryType myType;
   private final BaseLibrariesConfigurable myLibrariesConfigurable;
   private final Project myProject;
 
-  private CreateNewLibraryAction(@NotNull String text, @Nullable Icon icon, @Nullable LibraryType type, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
+  private CreateNewLibraryAction(@NotNull @NlsActions.ActionText String text,
+                                 @Nullable Icon icon,
+                                 @Nullable LibraryType type,
+                                 @NotNull BaseLibrariesConfigurable librariesConfigurable,
+                                 final @NotNull Project project) {
     super(text, null, icon);
     myType = type;
     myLibrariesConfigurable = librariesConfigurable;
@@ -90,11 +81,13 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     return configuration;
   }
 
-  public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
+  public static AnAction[] createActionOrGroup(@NotNull @NlsActions.ActionText String text,
+                                               @NotNull BaseLibrariesConfigurable librariesConfigurable,
+                                               final @NotNull Project project) {
     final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
     List<LibraryType<?>> suitableTypes = new ArrayList<>();
     if (librariesConfigurable instanceof ProjectLibrariesConfigurable || !project.isDefault()) {
-      final ModuleStructureConfigurable configurable = ModuleStructureConfigurable.getInstance(project);
+      final ModuleStructureConfigurable configurable = librariesConfigurable.getProjectStructureConfigurable().getModulesConfig();
       for (LibraryType<?> extension : extensions) {
         if (!LibraryEditingUtil.getSuitableModules(configurable, extension.getKind(), null).isEmpty()) {
           suitableTypes.add(extension);
@@ -125,10 +118,11 @@ public class CreateNewLibraryAction extends DumbAwareAction {
       createLibrary(myType, myLibrariesConfigurable.getTree(), myProject, myLibrariesConfigurable.getModelProvider().getModifiableModel());
     if (library == null) return;
 
-    final BaseLibrariesConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
+    final BaseLibrariesConfigurable rootConfigurable = myLibrariesConfigurable.getProjectStructureConfigurable().getConfigurableFor(library);
     final DefaultMutableTreeNode
       libraryNode = MasterDetailsComponent.findNodeByObject((TreeNode)rootConfigurable.getTree().getModel().getRoot(), library);
     rootConfigurable.selectNodeInTree(libraryNode);
-    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject, true);
+    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, myLibrariesConfigurable.getProjectStructureConfigurable(),
+                                                                    true);
   }
 }

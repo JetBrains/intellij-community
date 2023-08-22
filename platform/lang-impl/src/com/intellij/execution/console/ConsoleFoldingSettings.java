@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -11,16 +11,12 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author peter
- */
-@State(name="ConsoleFoldingSettings", storages=@Storage("consoleFolding.xml"))
-public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
+@State(name = "ConsoleFoldingSettings", storages = @Storage("consoleFolding.xml"), category = SettingsCategory.CODE)
+public final class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
   private final List<String> myPositivePatterns = new ArrayList<>();
   private final List<String> myNegativePatterns = new ArrayList<>();
 
@@ -28,23 +24,21 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
     for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
       patternList(regexp.negate).add(regexp.substring);
     }
-    CustomizableConsoleFoldingBean.EP_NAME
-      .addExtensionPointListener(new ExtensionPointListener<CustomizableConsoleFoldingBean>() {
-                                   @Override
-                                   public void extensionAdded(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-                                     patternList(extension.negate).add(extension.substring);
-                                   }
+    CustomizableConsoleFoldingBean.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        patternList(extension.negate).add(extension.substring);
+      }
 
-                                   @Override
-                                   public void extensionRemoved(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-                                     patternList(extension.negate).remove(extension.substring);
-                                   }
-                                 },
-                                 ApplicationManager.getApplication());
+      @Override
+      public void extensionRemoved(@NotNull CustomizableConsoleFoldingBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+        patternList(extension.negate).remove(extension.substring);
+      }
+    }, null);
   }
 
   public static ConsoleFoldingSettings getSettings() {
-    return ServiceManager.getService(ConsoleFoldingSettings.class);
+    return ApplicationManager.getApplication().getService(ConsoleFoldingSettings.class);
   }
 
   public boolean shouldFoldLine(String line) {
@@ -97,14 +91,14 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
   }
 
   private void writeDiff(List<? super String> added, List<? super String> removed, boolean negated) {
-    Set<String> baseline = new THashSet<>();
-    for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
+    Set<String> baseline = new HashSet<>();
+    for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensionList()) {
       if (regexp.negate == negated) {
         baseline.add(regexp.substring);
       }
     }
 
-    final List<String> current = patternList(negated);
+    List<String> current = patternList(negated);
     added.addAll(current);
     added.removeAll(baseline);
 
@@ -139,7 +133,7 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
 
   }
 
-  public static class MyBean {
+  public static final class MyBean {
     public List<String> addedPositive = new ArrayList<>();
     public List<String> addedNegative = new ArrayList<>();
     public List<String> removedPositive = new ArrayList<>();

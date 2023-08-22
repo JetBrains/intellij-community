@@ -1,16 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -43,8 +45,7 @@ public abstract class JBTableRowEditor extends JPanel {
     }
   }
 
-  @Nullable
-  public final MouseEvent getMouseEvent() {
+  public final @Nullable MouseEvent getMouseEvent() {
     if (myMouseEvent != null && myMouseEvent.getClickCount() == 0) return null;
     return myMouseEvent;
   }
@@ -53,11 +54,10 @@ public abstract class JBTableRowEditor extends JPanel {
     myMouseEvent = e;
   }
 
-  public static JPanel createLabeledPanel(String labelText, JComponent component) {
-    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-    final JBLabel label = new JBLabel(labelText, UIUtil.ComponentStyle.SMALL);
-    panel.add(label);
-    panel.add(component);
+  public static JPanel createLabeledPanel(@NlsContexts.Label String labelText, JComponent component) {
+    final JPanel panel = new JPanel(new BorderLayout(JBUI.scale(4), JBUI.scale(2)));
+    panel.add(new JBLabel(labelText, UIUtil.ComponentStyle.SMALL), BorderLayout.NORTH);
+    panel.add(component, BorderLayout.CENTER);
     return panel;
   }
 

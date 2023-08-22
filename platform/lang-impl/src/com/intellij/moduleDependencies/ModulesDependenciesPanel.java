@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -20,6 +21,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.ui.*;
@@ -49,7 +51,7 @@ import java.util.*;
 /**
  * @author anna
  */
-public class ModulesDependenciesPanel extends JPanel implements Disposable {
+public final class ModulesDependenciesPanel extends JPanel implements Disposable {
   public static final String HELP_ID = "module.dependencies.tool.window";
 
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (o1, o2) -> {
@@ -62,13 +64,13 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (userObject instanceof MyUserObject) {
-        MyUserObject node = (MyUserObject)userObject;
+      if (userObject instanceof MyUserObject node) {
         setIcon(ModuleType.get(node.myModule).getIcon());
         append(node.myModule.getName(), node.myInCycle ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else if (userObject != null) {
-        append(userObject.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        @NlsSafe String userObjectString = userObject.toString();
+        append(userObjectString, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
     }
   };
@@ -130,7 +132,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
   private Iterable<Module> getModuleDependencies(Module module) {
     final Iterator<Module> iterator = myState.forwardDirection ? myModuleGraph.getIn(module) : myModuleGraph.getOut(module);
-    return new Iterable<Module>() {
+    return new Iterable<>() {
       @Override
       public Iterator<Module> iterator() {
         return iterator;
@@ -211,7 +213,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     TreeUtil.installActions(tree);
 
-    new TreeSpeedSearch(tree, o -> o.getLastPathComponent().toString(), true);
+    TreeSpeedSearch.installOn(tree, true, o -> o.getLastPathComponent().toString());
 
     DefaultActionGroup group = new DefaultActionGroup();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
@@ -227,7 +229,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_CYCLIC_DEPENDENCIES));
     group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_MODULE_DEPENDENCIES));
 
-    PopupHandler.installUnknownPopupHandler(tree, group, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree, group, "ModuleDependenciesPopup");
   }
 
   private void updateSplitterProportion() {
@@ -256,6 +258,11 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       public void update(@NotNull AnActionEvent e) {
         analyzeDepsAction.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return analyzeDepsAction.getActionUpdateThread();
+      }
     });
 
     group.add(new ToggleAction(CodeInsightBundle.message("action.module.dependencies.direction")) {
@@ -275,12 +282,22 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
         e.getPresentation().setIcon(myState.forwardDirection ? AllIcons.Hierarchy.Subtypes : AllIcons.Hierarchy.Supertypes);
         super.update(e);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     });
 
     group.add(new ToggleAction(CodeInsightBundle.message("action.module.dependencies.tests"), null, AllIcons.Nodes.TestSourceFolder) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myState.includeTests;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -347,7 +364,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
   public void dispose() { }
 
 
-  private static class MyUserObject implements NavigatableWithText {
+  private static final class MyUserObject implements NavigatableWithText {
     private final Module myModule;
     private final boolean myInCycle;
 
@@ -392,7 +409,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
   }
 
-  private static class MyTreePanel extends JPanel implements DataProvider {
+  private static final class MyTreePanel extends JPanel implements DataProvider {
     private final Tree myTree;
     private final Project myProject;
 
@@ -410,20 +427,18 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       }
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
           if (node.getUserObject() instanceof MyUserObject) {
             return ((MyUserObject)node.getUserObject()).myModule;
           }
         }
       }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
           if (node.getUserObject() instanceof MyUserObject) {
             return node.getUserObject();
           }
@@ -433,33 +448,22 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
   }
 
-  private static class MyTreeExpander implements TreeExpander {
-    private final Tree myTree;
+  private static final class MyTreeExpander extends DefaultTreeExpander {
     private final boolean myEnableExpandAll;
 
     MyTreeExpander(Tree tree, boolean enableExpandAll) {
-      myTree = tree;
+      super(tree);
       myEnableExpandAll = enableExpandAll;
     }
 
     @Override
-    public void expandAll() {
-      TreeUtil.expandAll(myTree);
-    }
-
-    @Override
     public boolean canExpand() {
-      return myEnableExpandAll;
+      return myEnableExpandAll && super.canExpand();
     }
 
     @Override
-    public void collapseAll() {
-      TreeUtil.collapseAll(myTree, 3);
-    }
-
-    @Override
-    public boolean canCollapse() {
-      return true;
+    protected void collapseAll(@NotNull JTree tree, int keepSelectionLevel) {
+      super.collapseAll(tree, 3);
     }
   }
 }

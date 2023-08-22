@@ -62,7 +62,7 @@ public class EarResourceImpl implements EarConfiguration.EarResource {
 
     EarResourceImpl resource = (EarResourceImpl)o;
     if (!file.getPath().equals(resource.file.getPath())) return false;
-    if (myEarDirectory != resource.myEarDirectory) return false;
+    if (!myEarDirectory.equals(resource.myEarDirectory)) return false;
     if (!myRelativePath.equals(resource.myRelativePath)) return false;
 
     return true;

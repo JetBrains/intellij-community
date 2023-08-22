@@ -6,7 +6,7 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 
 /**
- * Pure presentation. If you need to preserve state between updates, you should use [StatefulPresentation] or [ChangeOnClickPresentation]
+ * Pure presentation. If you need to preserve state between updates you should use [StatefulPresentation] or [ChangeOnClickPresentation]
  */
 class OnClickPresentation(
   presentation: InlayPresentation,
@@ -14,11 +14,7 @@ class OnClickPresentation(
 ) : StaticDelegatePresentation(presentation) {
   constructor(presentation: InlayPresentation, listener: (MouseEvent, Point) -> Unit) : this(
     presentation,
-    object : InlayPresentationFactory.ClickListener {
-      override fun onClick(event: MouseEvent, translated: Point) {
-        listener(event, translated)
-      }
-    })
+    InlayPresentationFactory.ClickListener { event, translated -> listener(event, translated) })
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
     super.mouseClicked(event, translated)

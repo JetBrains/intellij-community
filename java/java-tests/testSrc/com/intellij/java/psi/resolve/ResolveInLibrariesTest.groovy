@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -34,16 +21,16 @@ import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
+import java.util.stream.Stream
+
 class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   void "test inheritance transitivity"() {
     def protobufJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("protobuf")
     VirtualFile jarCopy = WriteAction.compute {
-      JarFileSystem.instance.getLocalVirtualFileFor(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
+      JarFileSystem.instance.getLocalByEntry(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
     }
 
     PsiTestUtil.addProjectLibrary(module, 'proto1', [protobufJar], [])
@@ -78,8 +65,13 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     def oldSdk = projectRootManager.projectSdk
     try {
       WriteAction.run { projectRootManager.projectSdk = IdeaTestUtil.getMockJdk17() }
-      def groovy = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("Groovy")
-      PsiTestUtil.addProjectLibrary(module, 'groovy', [groovy], [])
+
+      // add jar with org.codehaus.groovy.ant.Groovydoc
+      ModuleRootModificationUtil.updateModel(module) { model ->
+        MavenDependencyUtil.addFromMaven(model, "org.codehaus.groovy:groovy-ant:2.4.17", false)
+      }
+
+      // add jar with org.apache.tools.ant.Task which is the superclass of org.codehaus.groovy.ant.Groovydoc
       def ant = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Ant")
       PsiTestUtil.addProjectLibrary(module, 'ant', ant)
 
@@ -154,9 +146,10 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     def pkg = facade.findPackage("")
     assert pkg.classes.size() == 1
 
-    Collection<VirtualFile> pkgDirs = pkg.directories.collect { it.virtualFile }
-    Collection<VirtualFile> pkgChildren = pkgDirs.collect { it.children as List }.flatten()
-    VirtualFile javaSrc = pkgChildren.find { it.name == 'LibraryClass.java' }
+    def javaSrc = Stream.of(pkg.directories)
+      .flatMap {Stream.of(it.virtualFile.children) }
+      .filter {it.name == 'LibraryClass.java' }
+      .findFirst().orElseThrow()
     checkFileIsNotLoadedAndHasNoIndexedStub(javaSrc)
 
     assert pkg.containsClassNamed('LibraryClass')
@@ -314,8 +307,8 @@ public abstract class Child<T> extends Parent<T> {
 """).virtualFile
     IdeaTestUtil.compileFile(VfsUtil.virtualToIoFile(libSrc), VfsUtil.virtualToIoFile(classesDir))
     VfsUtil.markDirtyAndRefresh(false, true, true, classesDir)
-    
-    WriteAction.run { libSrc.delete() }
+
+    WriteAction.run { libSrc.delete(null) }
 
     assert myFixture.findClass("p.Parent")
     assert myFixture.findClass("p.Child")

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class InspectionElement extends FakePsiElement {
+public final class InspectionElement extends FakePsiElement {
   public static final InspectionElement[] EMPTY_ARRAY = new InspectionElement[0];
   @NotNull private final InspectionToolWrapper myWrapper;
   @NotNull private final PsiManager myPsiManager;
@@ -41,12 +41,6 @@ public class InspectionElement extends FakePsiElement {
       @Override
       public String getPresentableText() {
         return myWrapper.getDisplayName();
-      }
-
-      @Nullable
-      @Override
-      public String getLocationString() {
-        return null;
       }
 
       @Nullable

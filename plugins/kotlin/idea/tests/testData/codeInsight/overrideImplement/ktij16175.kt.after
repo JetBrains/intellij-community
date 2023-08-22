@@ -1,0 +1,12 @@
+// FIR_IDENTICAL
+
+interface Foo {
+    val text: String
+    val name: String
+}
+
+class Bar(override val text: String, val number: Int) : Foo {
+    override val name: String
+        get() = TODO("Not yet implemented")
+
+}

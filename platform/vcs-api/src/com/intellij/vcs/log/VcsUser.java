@@ -13,6 +13,7 @@
 // limitations under the License.
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,8 +22,10 @@ import org.jetbrains.annotations.NotNull;
 public interface VcsUser {
 
   @NotNull
+  @NlsSafe
   String getName();
 
   @NotNull
+  @NlsSafe
   String getEmail();
 }

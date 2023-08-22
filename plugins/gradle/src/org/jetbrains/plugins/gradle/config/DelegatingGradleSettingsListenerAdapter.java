@@ -24,9 +24,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 
-/**
- * @author Denis Zhdanov
- */
 public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalSystemSettingsListener<GradleProjectSettings>
   implements GradleSettingsListener
 {
@@ -45,6 +42,10 @@ public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalS
 
   @Override
   public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
+  }
+
+  @Override
+  public void onGradleJvmChange(@Nullable String oldGradleJvm, @Nullable String newGradleJvm, @NotNull String linkedProjectPath) {
   }
 
   @Override

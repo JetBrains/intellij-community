@@ -13,7 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date 18.03.2007
  */
 public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrAnnotationTypeDefinition {
   public GrAnnotationTypeDefinitionImpl(@NotNull ASTNode node) {

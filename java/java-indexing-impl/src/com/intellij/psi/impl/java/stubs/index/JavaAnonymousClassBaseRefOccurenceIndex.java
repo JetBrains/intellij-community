@@ -25,8 +25,16 @@ public class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExte
     return JavaStubIndexKeys.ANONYMOUS_BASEREF;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getOccurences(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiAnonymousClass> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return getOccurences(s, project, scope);
+  }
+
+  public Collection<PsiAnonymousClass> getOccurences(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiAnonymousClass.class);
   }
 }

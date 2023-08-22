@@ -1,65 +1,58 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class EAPUsageCollector extends ApplicationUsagesCollector {
-  @NotNull
+  private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 5);
+  private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
+  private static final EnumEventField<LicenceType> LICENSE_VALUE = EventFields.Enum("value", LicenceType.class);
+  private static final StringEventField METADATA = EventFields.StringValidatedByRegexp("metadata", "license_metadata");
+  private static final EventField<String> LOGIN_HASH = EventFields.AnonymizedField("login_hash");
+  private static final BooleanEventField IS_JB_TEAM = EventFields.Boolean("is_jb_team");
+  private static final VarargEventId LICENSING = GROUP.registerVarargEvent("licencing", LICENSE_VALUE, METADATA, LOGIN_HASH, IS_JB_TEAM);
+
   @Override
-  public String getGroupId() {
-    return "user.advanced.info";
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @Override
-  public int getVersion() {
-    return 3;
-  }
-
-  @NotNull
-  @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     return collectMetrics();
   }
 
-  @NotNull
-  private static Set<MetricEvent> collectMetrics() {
+  private static @NotNull Set<MetricEvent> collectMetrics() {
     try {
-      if (!Main.isHeadless()) {
+      if (!AppMode.isHeadless()) {
         final Set<MetricEvent> result = new HashSet<>();
         if (ApplicationInfoEx.getInstanceEx().isEAP()) {
-          result.add(MetricEventFactoryKt.newMetric("eap"));
-          result.add(newBuildMetric("eap"));
+          result.add(BUILD.metric(BuildType.eap));
         }
         else {
-          result.add(MetricEventFactoryKt.newMetric("release"));
-          result.add(newBuildMetric("release"));
+          result.add(BUILD.metric(BuildType.release));
         }
         final LicensingFacade facade = LicensingFacade.getInstance();
         if (facade != null) {
           // non-eap commercial version
           if (facade.isEvaluationLicense()) {
-            result.add(MetricEventFactoryKt.newMetric("evaluation"));
-            result.add(newLicencingMetric("evaluation", facade.metadata));
+            result.add(newLicencingMetric(LicenceType.evaluation, facade));
           }
-          else if (!StringUtil.isEmpty(facade.getLicensedToMessage())){
-            result.add(MetricEventFactoryKt.newMetric("license"));
-            result.add(newLicencingMetric("license", facade.metadata));
+          else if (!StringUtil.isEmpty(facade.getLicensedToMessage())) {
+            result.add(newLicencingMetric(LicenceType.license, facade));
           }
         }
         return result;
@@ -71,17 +64,22 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
     return Collections.emptySet();
   }
 
-  @NotNull
-  private static MetricEvent newLicencingMetric(@NotNull String value, @Nullable String metadata) {
-    FeatureUsageData data = new FeatureUsageData();
-    if (StringUtil.isNotEmpty(metadata)) {
-      data.addData("metadata", metadata);
+  private static @NotNull MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
+    List<EventPair<?>> data = new ArrayList<>();
+    String licensedToMessage = licensingFacade.getLicensedToMessage();
+    if (licensedToMessage != null && licensedToMessage.contains("JetBrains Team")) {
+      data.add(IS_JB_TEAM.with(true));
     }
-    return MetricEventFactoryKt.newMetric("licencing", value, data);
+    String metadata = licensingFacade.metadata;
+    if (StringUtil.isNotEmpty(metadata)) {
+      data.add(METADATA.with(metadata));
+    }
+    data.add(LICENSE_VALUE.with(value));
+    data.add(LOGIN_HASH.with(licensingFacade.getLicenseeEmail()));
+    return LICENSING.metric(data);
   }
 
-  @NotNull
-  private static MetricEvent newBuildMetric(@NotNull String value) {
-    return MetricEventFactoryKt.newMetric("build", value);
-  }
+  private enum LicenceType {evaluation, license}
+
+  private enum BuildType {eap, release}
 }

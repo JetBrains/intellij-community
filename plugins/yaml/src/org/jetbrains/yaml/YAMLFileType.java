@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class YAMLFileType extends LanguageFileType {
+public final class YAMLFileType extends LanguageFileType {
   public static final YAMLFileType YML = new YAMLFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "yml";
 
@@ -26,7 +25,7 @@ public class YAMLFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return YAMLBundle.message("filetype.description.yaml");
+    return YAMLBundle.message("filetype.yaml.description");
   }
 
   @Override
@@ -36,7 +35,6 @@ public class YAMLFileType extends LanguageFileType {
   }
 
   @Override
-  @Nullable
   public Icon getIcon() {
     return AllIcons.FileTypes.Yaml;
   }

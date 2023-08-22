@@ -19,15 +19,18 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveDictKeyQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,15 +50,14 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyDictLiteralExpression(@NotNull PyDictLiteralExpression node) {
       if (node.isEmpty()) return;
@@ -127,12 +129,13 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
 
     private void registerProblems(@NotNull MultiMap<String, PsiElement> keyValueAndKeys, LocalQuickFix @NotNull ... quickFixes) {
       for (Map.Entry<String, Collection<PsiElement>> entry : keyValueAndKeys.entrySet()) {
-        final String keyValue = entry.getKey();
+        final @NlsSafe String keyValue = entry.getKey();
         final Collection<PsiElement> keys = entry.getValue();
 
         if (keys.size() > 1) {
           for (PsiElement key : keys) {
-            registerProblem(key, "Dictionary contains duplicate keys '" + unwrapStringKey(keyValue) + "'", quickFixes);
+            String unquotedKey = unwrapStringKey(keyValue);
+            registerProblem(key, PyPsiBundle.message("INSP.duplicate.keys.dictionary.contains.duplicate.keys", unquotedKey), quickFixes);
           }
         }
       }

@@ -9,10 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
-public class WeakTimerListener implements TimerListener {
+/** @deprecated use {@link com.intellij.openapi.actionSystem.ActionManager#removeTimerListener(TimerListener)} instead */
+@Deprecated
+class WeakTimerListener implements TimerListener {
   private final Reference<TimerListener> myRef;
 
-  public WeakTimerListener(@NotNull TimerListener delegate) {
+  WeakTimerListener(@NotNull TimerListener delegate) {
     myRef = new WeakReference<>(delegate);
   }
 

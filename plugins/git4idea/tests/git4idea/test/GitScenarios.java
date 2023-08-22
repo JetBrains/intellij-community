@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,7 +19,7 @@ import static git4idea.test.GitExecutor.git;
  * - make some unmerged files in the working tree;
  * - make the situation when local changes would be overwritten by merge.
  */
-public class GitScenarios {
+public final class GitScenarios {
   private static final String BRANCH_FOR_UNMERGED_CONFLICTS = "unmerged_files_branch_" + Math.random();
 
   public static final MergeContent LOCAL_CHANGES_OVERWRITTEN_BY = new MergeContent("common content\ncommon content\ncommon content\n",
@@ -84,7 +85,7 @@ public class GitScenarios {
    * Branch must not exist at this point.
    */
   public static String conflict(GitRepository repository, String branch, String file) {
-    assert !branchExists(repository, branch) : "Branch [" + branch + "] shouldn\'t exist for this scenario";
+    assert !branchExists(repository, branch) : "Branch [" + branch + "] shouldn't exist for this scenario";
 
     cd(repository);
 

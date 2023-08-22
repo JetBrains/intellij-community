@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -14,7 +17,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +29,7 @@ import java.awt.datatransfer.StringSelection;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author peter
- */
-class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvider, PasteProvider {
+class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvider, PasteProvider, DeleteProvider {
   private final TemplateListPanel myConfigurable;
 
   LiveTemplateTree(final CheckboxTreeCellRenderer renderer, final CheckedTreeNode root, TemplateListPanel configurable) {
@@ -51,29 +50,35 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, o -> {
+    TreeSpeedSearch.installOn(this, true, o -> {
       Object object = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       if (object instanceof TemplateGroup) {
         return ((TemplateGroup)object).getName();
       }
-      if (object instanceof TemplateImpl) {
-        TemplateImpl template = (TemplateImpl)object;
+      if (object instanceof TemplateImpl template) {
         return StringUtil.notNullize(template.getGroupName()) + " " +
                StringUtil.notNullize(template.getKey()) + " " +
                StringUtil.notNullize(template.getDescription()) + " " +
                template.getTemplateText();
       }
       return "";
-    }, true).setComparator(new SubstringSpeedSearchComparator());
+    }).setComparator(new SubstringSpeedSearchComparator());
   }
 
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) || PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
+        PlatformDataKeys.PASTE_PROVIDER.is(dataId) ||
+        PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return this;
     }
     return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -85,7 +90,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
       new StringSelection(StringUtil.join(templates,
                                           template -> JDOMUtil.writeElement(
                                             TemplateSettings.serializeTemplate(template, templateSettings.getDefaultTemplate(template), TemplateContext.getIdToType())),
-                                          SystemProperties.getLineSeparator())));
+                                          System.lineSeparator())));
 
   }
 
@@ -101,7 +106,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Override
   public boolean isPastePossible(@NotNull DataContext dataContext) {
-    if (myConfigurable.getSingleSelectedGroup() == null) return false;
+    if (myConfigurable.getSingleContextGroup() == null) return false;
 
     String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     return s != null && s.trim().startsWith("<template ");
@@ -114,15 +119,17 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Override
   public void performPaste(@NotNull DataContext dataContext) {
-    TemplateGroup group = myConfigurable.getSingleSelectedGroup();
+    TemplateGroup group = myConfigurable.getSingleContextGroup();
     assert group != null;
 
     String buffer = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     assert buffer != null;
 
     try {
+      LiveTemplateContextService ltContextService = LiveTemplateContextService.getInstance();
       for (Element templateElement : JDOMUtil.load("<root>" + buffer + "</root>").getChildren(TemplateSettings.TEMPLATE)) {
-        TemplateImpl template = TemplateSettings.readTemplateFromElement(group.getName(), templateElement, getClass().getClassLoader());
+        TemplateImpl template = TemplateSettings.readTemplateFromElement(group.getName(), templateElement, getClass().getClassLoader(),
+                                                                         ltContextService);
         while (group.containsTemplate(template.getKey(), template.getId())) {
           template.setKey(template.getKey() + "1");
           if (template.getId() != null) {
@@ -136,7 +143,17 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
     }
   }
 
-  private static class SubstringSpeedSearchComparator extends SpeedSearchComparator {
+  @Override
+  public void deleteElement(@NotNull DataContext dataContext) {
+    myConfigurable.removeRows();
+  }
+
+  @Override
+  public boolean canDeleteElement(@NotNull DataContext dataContext) {
+    return !myConfigurable.getSelectedTemplates().isEmpty();
+  }
+
+  private static final class SubstringSpeedSearchComparator extends SpeedSearchComparator {
     @Override
     public int matchingDegree(String pattern, String text) {
       return matchingFragments(pattern, text) != null ? 1 : 0;

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class FxmlPresenceListener implements BulkFileListener {
+public final class FxmlPresenceListener implements BulkFileListener {
   private static final Key<ModificationTracker> KEY = Key.create("fxml.presence.modification.tracker");
   private final SimpleModificationTracker myModificationTracker;
 
@@ -31,7 +31,7 @@ public class FxmlPresenceListener implements BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       checkEvent(event);
     }
@@ -39,8 +39,7 @@ public class FxmlPresenceListener implements BulkFileListener {
 
   private void checkEvent(@NotNull VFileEvent event) {
     if (event instanceof VFileContentChangeEvent) return;
-    if (event instanceof VFilePropertyChangeEvent) {
-      VFilePropertyChangeEvent propertyChangeEvent = (VFilePropertyChangeEvent)event;
+    if (event instanceof VFilePropertyChangeEvent propertyChangeEvent) {
       if (VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName())) {
         final String oldName = (String)propertyChangeEvent.getOldValue();
         final String newName = (String)propertyChangeEvent.getNewValue();

@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
@@ -37,7 +38,7 @@ public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel 
   private String myGradleVersion;
 
   public BuildScriptClasspathModelImpl() {
-    myClasspathEntries = new ArrayList<ClasspathEntryModel>(0);
+    myClasspathEntries = new ArrayList<>(0);
   }
 
   @Override
@@ -81,7 +82,7 @@ public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel 
         gradleHomeDir != null && (other.gradleHomeDir == null || !gradleHomeDir.getPath().equals(other.gradleHomeDir.getPath()))) {
       return false;
     }
-    if (myGradleVersion != null ? !myGradleVersion.equals(other.myGradleVersion) : other.myGradleVersion != null) return false;
+    if (!Objects.equals(myGradleVersion, other.myGradleVersion)) return false;
 
     return true;
   }

@@ -1,0 +1,1 @@
+from .multiarray import ndarray

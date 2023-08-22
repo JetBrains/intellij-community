@@ -63,7 +63,7 @@ class SimpleBanner extends JPanel {
       }
 
       int y;
-      if (component == myProgress) {
+      if (component instanceof JLabel) {
         y = (int)(JBUIScale.scale(1.5f) + (template.getHeight() - component.getHeight()) / 2f);
       }
       else {
@@ -105,7 +105,7 @@ class SimpleBanner extends JPanel {
   }
 
   void updateProgressBorder() {
-    myProgress.setBorder(myLeftPanel.getComponentCount() == 1 ? JBUI.Borders.emptyLeft(10) : null);
+    myProgress.setBorder(myShowProgress ? JBUI.Borders.emptyLeft(10) : null);
   }
 
   boolean canShow() {

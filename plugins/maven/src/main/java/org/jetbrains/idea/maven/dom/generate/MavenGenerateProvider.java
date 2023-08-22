@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
 public abstract class MavenGenerateProvider<ELEMENT_TYPE extends DomElement> extends AbstractDomGenerateProvider<ELEMENT_TYPE> {
-  public MavenGenerateProvider(String description, Class<ELEMENT_TYPE> clazz) {
+  public MavenGenerateProvider(@NlsContexts.DetailedDescription String description, Class<ELEMENT_TYPE> clazz) {
     super(description, clazz);
   }
 

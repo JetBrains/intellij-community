@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -34,10 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
 
-/**
- * @author peter
- */
-public class LiveTemplateCompletionContributor extends CompletionContributor implements DumbAware {
+public final class LiveTemplateCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Key<Boolean> ourShowTemplatesInTests = Key.create("ShowTemplatesInTests");
 
   @TestOnly
@@ -53,7 +51,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
   }
 
   public LiveTemplateCompletionContributor() {
-    extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -73,25 +71,30 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
 
         Editor editor = parameters.getEditor();
         int offset = editor.getCaretModel().getOffset();
-        final List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(file, offset, false);
+        final List<TemplateImpl> availableTemplates = TemplateManagerImpl.listApplicableTemplates(
+          TemplateActionContext.expanding(file, editor));
         final Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
         boolean isAutopopup = parameters.getInvocationCount() == 0;
         if (showAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
-          if (Registry.is("ide.completion.show.live.templates.on.top")) {
-            ensureTemplatesShown(templatesShown, templates, finalResult, isAutopopup);
+          boolean showLiveTemplatesOnTop = Registry.is("ide.completion.show.live.templates.on.top");
+          if (showLiveTemplatesOnTop) {
+            ensureTemplatesShown(templatesShown, templates, availableTemplates, finalResult, isAutopopup);
+            showCustomLiveTemplates(parameters, result);
           }
 
           result.runRemainingContributors(parameters, completionResult -> {
             finalResult.passResult(completionResult);
             if (completionResult.isStartMatch()) {
-              ensureTemplatesShown(templatesShown, templates, finalResult, isAutopopup);
+              ensureTemplatesShown(templatesShown, templates, availableTemplates, finalResult, isAutopopup);
             }
           });
 
-          ensureTemplatesShown(templatesShown, templates, result, isAutopopup);
-          showCustomLiveTemplates(parameters, result);
+          ensureTemplatesShown(templatesShown, templates, availableTemplates, result, isAutopopup);
+          if (!showLiveTemplatesOnTop) {
+            showCustomLiveTemplates(parameters, result);
+          }
           return;
         }
 
@@ -120,7 +123,8 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
 
   public static boolean customTemplateAvailableAndHasCompletionItem(@Nullable Character shortcutChar, @NotNull Editor editor, @NotNull PsiFile file, int offset) {
     CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
-    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+    TemplateActionContext templateActionContext = TemplateActionContext.expanding(file, editor);
+    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext)) {
       ProgressManager.checkCanceled();
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         if ((shortcutChar == null || customLiveTemplate.getShortcut() == shortcutChar.charValue())
@@ -139,13 +143,16 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
 
   private static void ensureTemplatesShown(AtomicBoolean templatesShown,
                                            Map<TemplateImpl, String> templates,
+                                           List<? extends TemplateImpl> availableTemplates,
                                            CompletionResultSet result,
                                            boolean isAutopopup) {
     if (!templatesShown.getAndSet(true)) {
-      result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<String>("type after non-identifier") {
+      var templateKeys = ContainerUtil.map(availableTemplates, template -> template.getKey());
+
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<>("type after non-identifier") {
         @Override
         public boolean accepts(@NotNull String s, ProcessingContext context) {
-          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2));
+          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) && templateKeys.stream().anyMatch(template -> s.endsWith(template));
         }
       }));
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
@@ -158,9 +165,9 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
   }
 
   private static void showCustomLiveTemplates(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    PsiFile file = parameters.getPosition().getContainingFile();
-    Editor editor = parameters.getEditor();
-    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(editor, file, false)) {
+    TemplateActionContext templateActionContext = TemplateActionContext.expanding(
+      parameters.getPosition().getContainingFile(), parameters.getEditor());
+    for (CustomLiveTemplate customLiveTemplate : TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext)) {
       ProgressManager.checkCanceled();
       if (customLiveTemplate instanceof CustomLiveTemplateBase) {
         ((CustomLiveTemplateBase)customLiveTemplate).addCompletions(parameters, result);

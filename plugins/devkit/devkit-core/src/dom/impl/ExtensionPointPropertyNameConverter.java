@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
@@ -23,14 +24,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class ExtensionPointPropertyNameConverter extends ResolvingConverter<PsiField> {
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Cannot resolve extension point property '" + s + "'";
+    return DevKitBundle.message("plugin.xml.convert.extension.property.cannot.resolve", s);
   }
 
   @NotNull

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.tracking;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -168,7 +169,6 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
   private final class MyConstructorBreakpoints extends MyConstructorBreakpointBase {
     private final List<BreakpointRequest> myRequests = new ArrayList<>();
-    private final String myDisplayName = "MemoryViewConstructorTracker:" + myClassName;
     private volatile boolean myIsEnabled = false;
     private volatile boolean myIsDeleted = false;
 
@@ -192,7 +192,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
     @Override
     public String getDisplayName() {
-      return myDisplayName;
+      return JavaDebuggerBundle.message("memory.view.constructor.tracker.name", myClassName);
     }
 
     @Override

@@ -1,4 +1,4 @@
-// "Delete catch for 'java.io.FileNotFoundException'" "true"
+// "Delete catch for 'java.io.FileNotFoundException'" "true-preview"
 import java.io.*;
 
 class C {

@@ -25,9 +25,6 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class SuperfluousRemover {
 
   private final Set<File> myParentPaths;

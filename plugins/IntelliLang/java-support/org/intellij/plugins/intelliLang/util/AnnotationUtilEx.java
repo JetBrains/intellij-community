@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * Contains some extended utility functions for dealing with annotations.
  */
-public class AnnotationUtilEx {
+public final class AnnotationUtilEx {
   private static final PsiConstantEvaluationHelperImpl CONSTANT_EVALUATION_HELPER = new PsiConstantEvaluationHelperImpl();
 
   private AnnotationUtilEx() {
@@ -48,7 +48,7 @@ public class AnnotationUtilEx {
   }
 
   /**
-   * Determines the PsiModifierListOwner for the passed element depending of the specified LookupType. The LookupType
+   * Determines the PsiModifierListOwner for the passed element, depending on the specified LookupType. The LookupType
    * decides whether to prefer the element a reference expressions resolves to, or the element that is implied by the
    * usage context ("expected type").
    */
@@ -73,8 +73,7 @@ public class AnnotationUtilEx {
         element = ((PsiAssignmentExpression)element).getLExpression();
         continue;
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression p) {
         if (p.getRExpression() == element) {
           element = p.getLExpression();
           continue;
@@ -89,8 +88,7 @@ public class AnnotationUtilEx {
       else if (parent instanceof PsiModifierListOwner) {
         return (PsiModifierListOwner)parent;
       }
-      else if (parent instanceof PsiArrayInitializerMemberValue) {
-        final PsiArrayInitializerMemberValue value = (PsiArrayInitializerMemberValue)parent;
+      else if (parent instanceof PsiArrayInitializerMemberValue value) {
         final PsiElement pair = value.getParent();
         if (pair instanceof PsiNameValuePair) {
           return AnnotationUtil.getAnnotationMethod((PsiNameValuePair)pair);
@@ -104,7 +102,7 @@ public class AnnotationUtilEx {
       }
 
       // If no annotation has been found through the usage context, check if the element
-      // (i.e. the element the reference refers to) is annotated itself
+      // (i.e., the element the reference refers to) is annotated itself
       if (type != LookupType.DECLARATION_ONLY) {
         if (element instanceof PsiReferenceExpression) {
           final PsiElement e = ((PsiReferenceExpression)element).resolve();
@@ -119,21 +117,22 @@ public class AnnotationUtilEx {
   }
 
   public interface AnnotatedElementVisitor {
-    boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression);
-    boolean visitMethodReturnStatement(PsiElement source, PsiMethod method);
-    boolean visitVariable(PsiVariable variable);
-    boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation);
-    boolean visitReference(PsiReferenceExpression expression);
+    boolean visitAnnotationParameter(@NotNull PsiNameValuePair nameValuePair, @NotNull PsiAnnotation psiAnnotation);
+    boolean visitMethodParameter(@NotNull PsiExpression expression, @NotNull PsiCall psiCallExpression);
+    boolean visitMethodReturnStatement(@NotNull PsiElement source, @NotNull PsiMethod method);
+    boolean visitReference(@NotNull PsiReferenceExpression expression);
+    boolean visitVariable(@NotNull PsiVariable variable);
   }
 
   public static void visitAnnotatedElements(@Nullable PsiElement element, AnnotatedElementVisitor visitor) {
     if (element == null) return;
     for (PsiElement cur = ContextComputationProcessor.getTopLevelInjectionTarget(element); cur != null; cur = cur.getParent()) {
+      if (cur instanceof PsiMethodCallExpression) break;
       if (!visitAnnotatedElementInner(cur, visitor)) return;
     }
   }
 
-  private static boolean visitAnnotatedElementInner(PsiElement element, AnnotatedElementVisitor visitor) {
+  private static boolean visitAnnotatedElementInner(@NotNull PsiElement element, @NotNull AnnotatedElementVisitor visitor) {
     final PsiElement parent = element.getParent();
 
     if (element instanceof PsiReferenceExpression) {
@@ -144,12 +143,11 @@ public class AnnotationUtilEx {
       return visitor.visitAnnotationParameter((PsiNameValuePair)element, (PsiAnnotation)parent.getParent());
     }
 
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression p = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression p) {
       if (p.getRExpression() == element || p.getOperationTokenType() == JavaTokenType.PLUSEQ) {
         final PsiExpression left = p.getLExpression();
         if (left instanceof PsiReferenceExpression) {
-          if (!visitor.visitReference((PsiReferenceExpression)left)) return false;
+          return visitor.visitReference((PsiReferenceExpression)left);
         }
       }
     }
@@ -158,16 +156,12 @@ public class AnnotationUtilEx {
     }
     else if (parent instanceof PsiFunctionalExpression) {
       PsiMethod m = LambdaUtil.getFunctionalInterfaceMethod(parent);
-      if (m != null) {
-        if (!visitor.visitMethodReturnStatement(element, m)) return false;
-      }
+      return m == null || visitor.visitMethodReturnStatement(element, m);
     }
     else if (parent instanceof PsiReturnStatement) {
       PsiElement e = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiFunctionalExpression.class);
       PsiMethod m = e == null ? null : e instanceof PsiMethod ? (PsiMethod)e : LambdaUtil.getFunctionalInterfaceMethod(e);
-      if (m != null) {
-        if (!visitor.visitMethodReturnStatement(parent, m)) return false;
-      }
+      return m == null || visitor.visitMethodReturnStatement(parent, m);
     }
     else if (parent instanceof PsiVariable) {
       return visitor.visitVariable((PsiVariable)parent);
@@ -188,7 +182,7 @@ public class AnnotationUtilEx {
    * Utility method to obtain annotations of a specific type from the supplied PsiModifierListOwner.
    * For optimization reasons, this method only looks at elements of type java.lang.String.
    * <p/>
-   * The parameter {@code allowIndirect} determines if the method should look for indirect annotations, i.e.
+   * The parameter {@code allowIndirect} determines if the method should look for indirect annotations, i.e.,
    * annotations which have themselves been annotated by the supplied annotation name. Currently, this only allows
    * one level of indirection and returns an array of [base-annotation, indirect annotation]
    * <p/>
@@ -205,7 +199,7 @@ public class AnnotationUtilEx {
       if (annotations.length == 0 || !PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
       return annotations;
     }
-    
+
     if (!PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
 
     return getAnnotationsFromImpl(owner, annotationName, allowIndirect, inHierarchy);
@@ -213,7 +207,7 @@ public class AnnotationUtilEx {
 
 
   /**
-   * The parameter {@code allowIndirect} determines if the method should look for indirect annotations, i.e.
+   * The parameter {@code allowIndirect} determines if the method should look for indirect annotations, i.e.,
    * annotations which have themselves been annotated by the supplied annotation name. Currently, this only allows
    * one level of indirection and returns an array of [base-annotation, indirect annotation]
    * <p/>
@@ -293,7 +287,7 @@ public class AnnotationUtilEx {
   }
 
   private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner) {
-    final Set<PsiAnnotation> all = new HashSet<PsiAnnotation>() {
+    final Set<PsiAnnotation> all = new HashSet<>() {
       @Override
       public boolean add(PsiAnnotation o) {
         // don't overwrite "higher level" annotations

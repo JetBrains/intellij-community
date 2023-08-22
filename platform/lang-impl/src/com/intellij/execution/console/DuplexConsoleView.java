@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionBundle;
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel implements ConsoleView,
                                                                                                        ObservableConsoleView,
@@ -51,6 +52,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   @NotNull
   private final SwitchDuplexConsoleViewAction mySwitchConsoleAction;
   private boolean myDisableSwitchConsoleActionOnProcessEnd = true;
+  private final Collection<DuplexConsoleListener> myListeners = new CopyOnWriteArraySet<>();
 
   public DuplexConsoleView(@NotNull S primaryConsoleView, @NotNull T secondaryConsoleView) {
     this(primaryConsoleView, secondaryConsoleView, null);
@@ -105,6 +107,15 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getSubConsoleView(primary).getComponent(), true));
 
     myPrimary = primary;
+
+    for (DuplexConsoleListener listener : myListeners) {
+      listener.consoleEnabled(primary);
+    }
+  }
+
+  public void addSwitchListener(@NotNull DuplexConsoleListener listener, @NotNull Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, () -> myListeners.remove(listener));
   }
 
   public boolean isPrimaryConsoleEnabled() {
@@ -144,7 +155,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     myProcessHandler = processHandler;
 
     myPrimaryConsoleView.attachToProcess(processHandler);
@@ -287,7 +298,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     });
   }
 
-  private class MergedWrapTextAction extends MergedToggleAction {
+  private final class MergedWrapTextAction extends MergedToggleAction {
 
     private MergedWrapTextAction(@NotNull ToggleUseSoftWrapsToolbarAction action1, @NotNull ToggleUseSoftWrapsToolbarAction action2) {
       super(action1, action2);
@@ -300,7 +311,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
-  private class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
+  private final class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
 
     SwitchDuplexConsoleViewAction() {
       super(ExecutionBundle.messagePointer("run.configuration.show.command.line.action.name"), AllIcons.Debugger.Console);
@@ -334,6 +345,11 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
         presentation.setEnabled(false);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private static class MergedToggleAction extends ToggleAction implements DumbAware {
@@ -358,9 +374,14 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
       myAction1.setSelected(e, state);
       myAction2.setSelected(e, state);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
-  private static class MergedAction extends AnAction implements DumbAware {
+  private static final class MergedAction extends AnAction implements DumbAware {
     @NotNull
     private final AnAction myAction1;
     @NotNull

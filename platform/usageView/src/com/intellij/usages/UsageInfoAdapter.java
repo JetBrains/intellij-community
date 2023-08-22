@@ -5,13 +5,14 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.MergeableUsage;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface UsageInfoAdapter extends Usage, MergeableUsage {
   @NotNull
   String getPath();
-
   int getLine();
-
   int getNavigationOffset();
-
-  UsageInfo @NotNull [] getMergedInfos();
+  @NotNull UsageInfo @NotNull [] getMergedInfos();
+  @NotNull
+  CompletableFuture<UsageInfo[]> getMergedInfosAsync();
 }

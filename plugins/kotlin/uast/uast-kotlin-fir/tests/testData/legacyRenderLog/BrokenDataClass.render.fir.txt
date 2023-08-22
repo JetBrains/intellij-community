@@ -1,0 +1,9 @@
+public final class Cls : <ErrorType> {
+    @org.jetbrains.annotations.NotNull private final var a: long
+    public final fun getA() : long = UastEmptyExpression
+    public fun Cls(@org.jetbrains.annotations.NotNull a: long, @org.jetbrains.annotations.NotNull b: long) {
+        <anonymous class>(a, a, a)
+    }
+    public final fun component1() : long = UastEmptyExpression
+    public final fun copy(@org.jetbrains.annotations.NotNull a: long) : Cls = UastEmptyExpression
+}

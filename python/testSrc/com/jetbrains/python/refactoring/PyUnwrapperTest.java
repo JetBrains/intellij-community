@@ -5,9 +5,11 @@ import com.intellij.codeInsight.unwrap.UnwrapHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -15,6 +17,11 @@ import java.util.List;
  * User : ktisha
  */
 public class PyUnwrapperTest extends PyTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testIfUnwrap() {doTest();}
   public void testIfUnwrapEmpty() {doNegativeTest();}

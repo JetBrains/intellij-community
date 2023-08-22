@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
@@ -17,15 +18,14 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
-public class SetupTaskIntrospector {
+
+public final class SetupTaskIntrospector {
   private static final Logger LOG = Logger.getInstance(SetupTaskIntrospector.class);
 
   private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<>();
@@ -97,7 +97,7 @@ public class SetupTaskIntrospector {
     return result;
   }
 
-  private static SetupTask createTaskFromFile(PyFile file, @NotNull String name, boolean setuptools) {
+  private static SetupTask createTaskFromFile(PyFile file, @NotNull @NlsSafe String name, boolean setuptools) {
     SetupTask task = new SetupTask(name);
     // setuptools wraps the build_ext command class in a way that we cannot understand; use the distutils class which it delegates to
     final PyClass taskClass = (name.equals("build_ext") && setuptools)
@@ -148,15 +148,15 @@ public class SetupTaskIntrospector {
     if (value instanceof PySequenceExpression) {
       Collections.addAll(result, ((PySequenceExpression)value).getElements());
     }
-    else if (value instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
+    else if (value instanceof PyBinaryExpression binaryExpression) {
       if (binaryExpression.isOperator("+")) {
         collectSequenceElements(binaryExpression.getLeftExpression(), result);
         collectSequenceElements(binaryExpression.getRightExpression(), result);
       }
     }
     else if (value instanceof PyReferenceExpression) {
-      final PsiElement resolveResult = ((PyReferenceExpression)value).getReference(PyResolveContext.defaultContext()).resolve();
+      final var context = TypeEvalContext.codeInsightFallback(value.getProject());
+      final PsiElement resolveResult = ((PyReferenceExpression)value).getReference(PyResolveContext.defaultContext(context)).resolve();
       collectSequenceElements(resolveResult, result);
     }
     else if (value instanceof PyTargetExpression) {

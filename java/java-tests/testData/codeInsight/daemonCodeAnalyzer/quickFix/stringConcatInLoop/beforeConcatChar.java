@@ -1,4 +1,4 @@
-// "Convert variable 'str1' from String to StringBuilder" "true"
+// "Convert variable 'str1' from String to StringBuilder" "true-preview"
 
 public class IntentionBug {
     public static void main(String[] args) {

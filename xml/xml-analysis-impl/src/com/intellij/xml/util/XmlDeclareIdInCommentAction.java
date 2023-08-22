@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author spleaner
- */
 public class XmlDeclareIdInCommentAction implements LocalQuickFix {
   private final String myId;
 
@@ -48,7 +45,7 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("declare.id.in.comment.quickfix");
+    return XmlAnalysisBundle.message("xml.quickfix.declare.id.in.comment");
   }
 
   @Nullable

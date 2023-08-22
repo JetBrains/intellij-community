@@ -1,4 +1,4 @@
-// "Delete repeated 'I'" "true"
+// "Delete repeated 'I'" "true-preview"
 interface I {}
 class Test {
   {

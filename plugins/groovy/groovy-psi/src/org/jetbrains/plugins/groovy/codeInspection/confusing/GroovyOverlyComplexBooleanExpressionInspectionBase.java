@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -25,7 +26,7 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
 
   @Override
   protected String buildErrorString(Object... args) {
-    return "Overly complex boolean expression #loc";
+    return GroovyBundle.message("inspection.message.overly.complex.boolean.expression");
   }
 
   @NotNull
@@ -75,17 +76,14 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
       if (!isBoolean(expression)) {
         return 1;
       }
-      if (expression instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression) expression;
+      if (expression instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lhs = binaryExpression.getLeftOperand();
         final GrExpression rhs = binaryExpression.getRightOperand();
         return countTerms(lhs) + countTerms(rhs);
-      } else if (expression instanceof GrUnaryExpression) {
-        final GrUnaryExpression prefixExpression = (GrUnaryExpression) expression;
+      } else if (expression instanceof GrUnaryExpression prefixExpression) {
         final GrExpression operand = prefixExpression.getOperand();
         return countTerms(operand);
-      } else if (expression instanceof GrParenthesizedExpression) {
-        final GrParenthesizedExpression parenthesizedExpression = (GrParenthesizedExpression) expression;
+      } else if (expression instanceof GrParenthesizedExpression parenthesizedExpression) {
         final GrExpression contents = parenthesizedExpression.getOperand();
         return countTerms(contents);
       }
@@ -101,17 +99,14 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
     }
 
     private boolean isBoolean(GrExpression expression) {
-      if (expression instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression) expression;
+      if (expression instanceof GrBinaryExpression binaryExpression) {
         final IElementType sign = binaryExpression.getOperationTokenType();
         return GroovyTokenTypes.mLAND.equals(sign) ||
             GroovyTokenTypes.mLOR.equals(sign);
-      } else if (expression instanceof GrUnaryExpression) {
-        final GrUnaryExpression prefixExpression = (GrUnaryExpression) expression;
+      } else if (expression instanceof GrUnaryExpression prefixExpression) {
         final IElementType sign = prefixExpression.getOperationTokenType();
         return GroovyTokenTypes.mLNOT.equals(sign);
-      } else if (expression instanceof GrParenthesizedExpression) {
-        final GrParenthesizedExpression parenthesizedExpression = (GrParenthesizedExpression) expression;
+      } else if (expression instanceof GrParenthesizedExpression parenthesizedExpression) {
         final GrExpression contents = parenthesizedExpression.getOperand();
         return isBoolean(contents);
       }

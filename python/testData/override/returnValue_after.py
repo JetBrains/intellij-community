@@ -3,7 +3,7 @@ class A:
 
 class B(A):
     def doStuff(self, foo=True):
-        <selection>return A.doStuff(self, foo)</selection>
+        <selection>return super().doStuff(foo)</selection>
 
     def otherMethod(self, foo, bar):
         print foo, bar

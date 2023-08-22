@@ -13,28 +13,17 @@ class SingleComponentCenteringLayout : LayoutManager2 {
     val component = component
     if (component == null) return
 
-    val size: Dimension = parent.size
-    val preferredSize: Dimension = component.preferredSize
-
-    val insets: Insets = parent.insets
-    JBInsets.removeFrom(size, insets)
-
-    val width = min(size.width, preferredSize.width)
-    val height = min(size.height, preferredSize.height)
-    val x = max(0, (size.width - preferredSize.width) / 2)
-    val y = max(0, (size.height - preferredSize.height) / 2)
-
-    component.setBounds(insets.left + x, insets.top + y, width, height)
+    component.bounds = getBoundsForCentered(parent, component)
   }
 
-  override fun maximumLayoutSize(target: Container) = component?.maximumSize?.also { JBInsets.addTo(it, target.insets) }
-                                                      ?: Dimension(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
+  override fun maximumLayoutSize(target: Container): Dimension = component?.maximumSize?.also { JBInsets.addTo(it, target.insets) }
+                                                                 ?: Dimension(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
 
-  override fun preferredLayoutSize(parent: Container) = component?.preferredSize?.also { JBInsets.addTo(it, parent.insets) }
-                                                        ?: Dimension(0, 0)
+  override fun preferredLayoutSize(parent: Container): Dimension = component?.preferredSize?.also { JBInsets.addTo(it, parent.insets) }
+                                                                   ?: Dimension(0, 0)
 
-  override fun minimumLayoutSize(parent: Container) = component?.minimumSize?.also { JBInsets.addTo(it, parent.insets) }
-                                                      ?: Dimension(0, 0)
+  override fun minimumLayoutSize(parent: Container): Dimension = component?.minimumSize?.also { JBInsets.addTo(it, parent.insets) }
+                                                                 ?: Dimension(0, 0)
 
   override fun addLayoutComponent(comp: Component?, constraints: Any?) {
     component = comp
@@ -51,4 +40,21 @@ class SingleComponentCenteringLayout : LayoutManager2 {
   override fun invalidateLayout(target: Container?) {}
   override fun getLayoutAlignmentY(target: Container?): Float = 0.5f
   override fun getLayoutAlignmentX(target: Container?): Float = 0.5f
+
+  companion object {
+
+    fun getBoundsForCentered(parent: Container, component: Component): Rectangle {
+      val size: Dimension = parent.size
+      val preferredSize: Dimension = component.preferredSize
+
+      val insets: Insets = parent.insets
+      JBInsets.removeFrom(size, insets)
+
+      val x = max(0, insets.left + (size.width - preferredSize.width) / 2)
+      val y = max(0, insets.top + (size.height - preferredSize.height) / 2)
+      val width = min(size.width, preferredSize.width)
+      val height = min(size.height, preferredSize.height)
+      return Rectangle(x, y, width, height)
+    }
+  }
 }

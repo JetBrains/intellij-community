@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -14,6 +15,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
@@ -25,8 +27,13 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public final class VirtualFileDeleteProvider implements DeleteProvider {
+public final class VirtualFileDeleteProvider implements DeleteProvider{
   private static final Logger LOG = Logger.getInstance(VirtualFileDeleteProvider.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
@@ -112,7 +119,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     }
   }
 
-  private static String createConfirmationMessage(VirtualFile[] filesToDelete) {
+  private static @NlsContexts.DialogMessage String createConfirmationMessage(VirtualFile[] filesToDelete) {
     if (filesToDelete.length == 1) {
       if (filesToDelete[0].isDirectory()) {
         return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message", filesToDelete[0].getName());

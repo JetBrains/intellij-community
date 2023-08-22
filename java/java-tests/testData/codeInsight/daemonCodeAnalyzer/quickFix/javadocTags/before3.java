@@ -1,5 +1,5 @@
-// "Add tag @param for parameter 'a'" "true"
-class a {
+// "Add tag @param for parameter 'a'" "true-preview"
+public class a {
 
 /**<caret>
  * @param b

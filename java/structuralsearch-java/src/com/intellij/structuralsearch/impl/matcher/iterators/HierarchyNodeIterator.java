@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -16,14 +17,14 @@ import java.util.Set;
  */
 public class HierarchyNodeIterator extends NodeIterator {
   private int index;
-  private final List<PsiElement> remaining;
+  private final List<PsiElement> remaining = new SmartList<>();
   private boolean objectTaken;
   private boolean firstElementTaken;
   private final boolean acceptClasses;
   private final boolean acceptInterfaces;
   private final boolean acceptFirstElement;
 
-  private void build(PsiElement current, Set<PsiElement> visited) {
+  private void build(PsiElement current, @NotNull Set<PsiElement> visited) {
     if (current == null) return;
 
     final String text = current instanceof PsiClass ? ((PsiClass)current).getName() : current.getText();
@@ -34,9 +35,8 @@ public class HierarchyNodeIterator extends NodeIterator {
     }
 
     PsiElement element = current instanceof PsiReference ? ((PsiReference)current).resolve() : current;
-    if (element instanceof PsiClass) {
+    if (element instanceof PsiClass clazz) {
       if (visited.contains(element)) return;
-      final PsiClass clazz = (PsiClass)element;
 
       if (acceptInterfaces || !clazz.isInterface()) visited.add(element);
 
@@ -66,7 +66,7 @@ public class HierarchyNodeIterator extends NodeIterator {
     }
   }
 
-  private void processClasses(PsiReferenceList referenceList, Set<PsiElement> visited) {
+  private void processClasses(PsiReferenceList referenceList, @NotNull Set<PsiElement> visited) {
     if (referenceList == null) {
       return;
     }
@@ -79,8 +79,7 @@ public class HierarchyNodeIterator extends NodeIterator {
     this(reference, acceptClasses, acceptInterfaces, true);
   }
 
-  public HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces, boolean acceptFirstElement) {
-    remaining = new SmartList<>();
+  private HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces, boolean acceptFirstElement) {
     this.acceptClasses = acceptClasses;
     this.acceptInterfaces = acceptInterfaces;
     this.acceptFirstElement = acceptFirstElement;

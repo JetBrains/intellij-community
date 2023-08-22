@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.navigation.EmptyNavigatable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -23,13 +25,15 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MavenNavigationUtil {
+public final class MavenNavigationUtil {
   private static final String ARTIFACT_ID = "artifactId";
 
   private MavenNavigationUtil() { }
@@ -59,49 +63,56 @@ public class MavenNavigationUtil {
     };
   }
 
-  @Nullable
-  public static Navigatable createNavigatableForDependency(final Project project, final VirtualFile file, final MavenArtifact artifact) {
-    return new NavigatableAdapter() {
-      @Override
-      public void navigate(boolean requestFocus) {
-        if (!file.isValid()) return;
+  public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
+                                                                    @NotNull VirtualFile file,
+                                                                    @NotNull MavenArtifact artifact) {
+    return createNavigatableForDependency(project, file, artifact.getGroupId(), artifact.getArtifactId());
+  }
 
-        MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, file);
-        if (projectModel == null) return;
+  public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
+                                                                    @NotNull VirtualFile file,
+                                                                    @NotNull String groupId,
+                                                                    @NotNull String artifactId) {
 
-        MavenDomDependency dependency = findDependency(projectModel, artifact.getGroupId(), artifact.getArtifactId());
-        if (dependency == null) return;
-
-        XmlTag artifactId = dependency.getArtifactId().getXmlTag();
-        if (artifactId == null) return;
-
-        navigate(project, artifactId.getContainingFile().getVirtualFile(), artifactId.getTextOffset() + artifactId.getName().length() + 2, requestFocus);
-      }
-    };
+    return Optional.of(file).filter(VirtualFile::isValid)
+      .map(f -> MavenDomUtil.getMavenDomProjectModel(project, f))
+      .map(projectModel -> findDependency(projectModel, groupId, artifactId))
+      .map(dependency -> dependency.getArtifactId().getXmlTag())
+      .map(artifactIdTag -> Pair.create(artifactIdTag.getContainingFile().getVirtualFile(),
+                                        artifactIdTag.getTextOffset() + artifactIdTag.getName().length() + 2))
+      .<Navigatable>map(pair ->
+                          new NavigatableAdapter() {
+                            @Override
+                            public void navigate(boolean requestFocus) {
+                              navigate(project, pair.getFirst(), pair.getSecond(), requestFocus);
+                            }
+                          }
+      ).orElse(EmptyNavigatable.INSTANCE);
   }
 
   @Nullable
   public static VirtualFile getArtifactFile(Project project, MavenId id) {
-    final File file = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getLocalRepository(), id);
-    return file.exists() ? LocalFileSystem.getInstance().findFileByIoFile(file) : null;
+    Path path = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getLocalRepository(), id);
+    return Files.exists(path) ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   }
 
   @Nullable
   public static MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, final String groupId, final String artifactId) {
-    MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor = new MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies>() {
-      @Nullable
-      @Override
-      protected MavenDomDependency find(MavenDomDependencies element) {
-        for (MavenDomDependency dependency : element.getDependencies()) {
-          if (Objects.equals(groupId, dependency.getGroupId().getStringValue()) &&
-              Objects.equals(artifactId, dependency.getArtifactId().getStringValue())) {
-            return dependency;
+    MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor =
+      new MavenDomProjectProcessorUtils.SearchProcessor<>() {
+        @Nullable
+        @Override
+        protected MavenDomDependency find(MavenDomDependencies element) {
+          for (MavenDomDependency dependency : element.getDependencies()) {
+            if (Objects.equals(groupId, dependency.getGroupId().getStringValue()) &&
+                Objects.equals(artifactId, dependency.getArtifactId().getStringValue())) {
+              return dependency;
+            }
           }
-        }
 
-        return null;
-      }
-    };
+          return null;
+        }
+      };
 
     MavenDomProjectProcessorUtils.processDependencies(projectDom, processor);
 

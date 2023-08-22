@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.testFramework.UsefulTestCase
@@ -7,6 +7,8 @@ import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
 import java.util.*
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 class GHPRTimelineMergingModelTest : UsefulTestCase() {
 
@@ -20,6 +22,23 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
   override fun setUp() {
     super.setUp()
     model = GHPRTimelineMergingModel()
+    model.addListDataListener(object : ListDataListener {
+      override fun contentsChanged(e: ListDataEvent) {
+        for (i in e.index0..e.index1) {
+          model.getElementAt(i)
+        }
+      }
+
+      override fun intervalRemoved(e: ListDataEvent) {
+        assertTrue(model.size - 1 < e.index0)
+      }
+
+      override fun intervalAdded(e: ListDataEvent) {
+        for (i in e.index0..e.index1) {
+          model.getElementAt(i)
+        }
+      }
+    })
   }
 
   fun testMerge() {
@@ -30,7 +49,7 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
       GHPRRenamedTitleEvent(actor1, currentDate, "old", "new"),
       GHPRClosedEvent(actor1, currentDate),
       GHPRReopenedEvent(actor1, currentDate),
-      GHPRMergedEvent(actor1, currentDate)
+      GHPRMergedEvent(actor1, currentDate, null, "master")
     ))
 
     assertEquals(2, model.size)
@@ -44,7 +63,7 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
 
     model.add(listOf(GHPRClosedEvent(actor1, currentDate)))
     model.add(listOf(GHPRReopenedEvent(actor1, currentDate)))
-    model.add(listOf(GHPRMergedEvent(actor1, currentDate)))
+    model.add(listOf(GHPRMergedEvent(actor1, currentDate, null, "master")))
 
     assertEquals(2, model.size)
   }
@@ -101,7 +120,7 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
       //date difference
       GHPRReopenedEvent(actor1, Date(currentDate.time + DateFormatUtil.YEAR)),
       //actor difference
-      GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR))
+      GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR), null, "master")
     ))
     assertEquals(7, model.size)
   }
@@ -113,8 +132,16 @@ class GHPRTimelineMergingModelTest : UsefulTestCase() {
     model.add(listOf(GHPRAssignedEvent(actor1, currentDate, createTestUser("user3"))))
     model.add(listOf(GHPRClosedEvent(actor1, currentDate)))
     model.add(listOf(GHPRReopenedEvent(actor1, Date(currentDate.time + DateFormatUtil.YEAR))))
-    model.add(listOf(GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR))))
+    model.add(listOf(GHPRMergedEvent(actor2, Date(currentDate.time + DateFormatUtil.YEAR), null, "master")))
     assertEquals(7, model.size)
+  }
+
+  fun testCorrectEventOnLastCollapsed() {
+    val event = GHPRAssignedEvent(actor1, currentDate, createTestUser("user3"))
+    model.add(listOf(event))
+    model.add(listOf(GHPRClosedEvent(actor1, currentDate)))
+    model.add(listOf(GHPRReopenedEvent(actor1, currentDate)))
+    assertEquals(1, model.size)
   }
 
   companion object {

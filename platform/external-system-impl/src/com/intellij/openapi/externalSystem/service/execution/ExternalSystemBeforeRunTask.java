@@ -58,10 +58,8 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ExternalSystemBeforeRunTask)) return false;
+    if (!(o instanceof ExternalSystemBeforeRunTask task)) return false;
     if (!super.equals(o)) return false;
-
-    ExternalSystemBeforeRunTask task = (ExternalSystemBeforeRunTask)o;
 
     if (!myTaskExecutionSettings.equals(task.myTaskExecutionSettings)) return false;
 

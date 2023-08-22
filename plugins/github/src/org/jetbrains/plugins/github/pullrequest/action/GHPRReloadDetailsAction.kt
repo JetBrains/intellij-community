@@ -6,19 +6,25 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import java.util.function.Supplier
 
 class GHPRReloadDetailsAction
   : RefreshAction(GithubBundle.messagePointer("pull.request.refresh.details.action"),
-                  Supplier<String?> { null },
+                  Supplier { null },
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {
-    val selection = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
+    val selection = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
     e.presentation.isEnabled = selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider.detailsData.reloadDetails()
+    val dataProvider: GHPRDataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    dataProvider.detailsData.reloadDetails()
+    dataProvider.stateData.reloadMergeabilityState()
+    dataProvider.reviewData.resetPendingReview()
+    dataProvider.changesData.reloadChanges()
+    dataProvider.viewedStateData.reset()
   }
 }

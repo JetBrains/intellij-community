@@ -17,9 +17,6 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.project.PossiblyDumbAware;
 
-/**
- * @author peter
- */
 public abstract class WeighedFileEditorProvider implements FileEditorProvider, PossiblyDumbAware {
 
   double DEFAULT_WEIGHT = 1;

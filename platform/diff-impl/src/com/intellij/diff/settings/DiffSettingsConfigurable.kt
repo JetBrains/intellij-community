@@ -21,7 +21,10 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindValue
+import com.intellij.ui.dsl.builder.labelTable
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JLabel
 
 class DiffSettingsConfigurable : BoundSearchableConfigurable(
@@ -34,29 +37,31 @@ class DiffSettingsConfigurable : BoundSearchableConfigurable(
     val diffSettings = DiffSettings.getSettings()
 
     return panel {
-      titledRow(message("settings.diff.name")) {
-        row {
-          cell(isFullWidth = true) {
-            label(message("settings.context.lines"))
-            slider(0, TextDiffSettingsHolder.CONTEXT_RANGE_MODES.size - 1, 1, 1)
-              .labelTable {
-                TextDiffSettingsHolder.CONTEXT_RANGE_MODES.forEachIndexed { index, range ->
-                  put(index, JLabel(TextDiffSettingsHolder.CONTEXT_RANGE_MODE_LABELS[index]))
-                }
-              }
-              .withValueBinding(
-                PropertyBinding(
-                  { TextDiffSettingsHolder.CONTEXT_RANGE_MODES.indexOf(textSettings.contextRange).coerceAtLeast(0) },
-                  { textSettings.contextRange = TextDiffSettingsHolder.CONTEXT_RANGE_MODES[it] }
-                )
-              )
-          }
+      group(message("settings.diff.name")) {
+        row(message("settings.context.lines")) {
+          slider(0, TextDiffSettingsHolder.CONTEXT_RANGE_MODES.size - 1, 1, 1)
+            .labelTable(TextDiffSettingsHolder.CONTEXT_RANGE_MODES.indices.associateWith { index ->
+              JLabel(TextDiffSettingsHolder.CONTEXT_RANGE_MODE_LABELS[index])
+            })
+            .bindValue(
+              { TextDiffSettingsHolder.CONTEXT_RANGE_MODES.indexOf(textSettings.contextRange).coerceAtLeast(0) },
+              { textSettings.contextRange = TextDiffSettingsHolder.CONTEXT_RANGE_MODES[it] }
+            )
         }
-        row { checkBox(message("settings.go.to.the.next.file.after.reaching.last.change"), diffSettings::isGoToNextFileOnNextDifference) }
+        row {
+          checkBox(message("settings.go.to.the.next.file.after.reaching.last.change"))
+            .bindSelected(diffSettings::isGoToNextFileOnNextDifference)
+        }
       }
-      titledRow(message("settings.merge.text")) {
-        row { checkBox(message("settings.automatically.apply.non.conflicting.changes"), textSettings::isAutoApplyNonConflictedChanges) }
-        row { checkBox(message("settings.highlight.modified.lines.in.gutter"), textSettings::isEnableLstGutterMarkersInMerge) }
+      group(message("settings.merge.text")) {
+        row {
+          checkBox(message("settings.automatically.apply.non.conflicting.changes"))
+            .bindSelected(textSettings::isAutoApplyNonConflictedChanges)
+        }
+        row {
+          checkBox(message("settings.highlight.modified.lines.in.gutter"))
+            .bindSelected(textSettings::isEnableLstGutterMarkersInMerge)
+        }
       }
     }
   }

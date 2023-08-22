@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -18,13 +19,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,9 +63,9 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
       // TODO: Logic should be revised to just append some revisions to history panel instead of creating and showing new history session
       mySession.getRevisionList().addAll(vcsFileRevisions);
       VcsHistorySession copy = mySession.copyWithCachedRevision();
-      ApplicationManager.getApplication().invokeLater(() -> myContentPanel.setHistorySession(copy));
+      ApplicationManager.getApplication().invokeLater(() -> myContentPanel.setHistorySession(copy), o -> Disposer.isDisposed(this));
     };
-    myBuffer = new BufferedListConsumer<VcsFileRevision>(5, sessionRefresher, 1000) {
+    myBuffer = new BufferedListConsumer<>(5, sessionRefresher, 1000) {
       @Override
       protected void invokeConsumer(@NotNull Runnable consumerRunnable) {
         // Do not invoke in arbitrary background thread as due to parallel execution this could lead to cases when invokeLater() (from
@@ -89,7 +90,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
     return VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData(dataProvider);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public boolean shouldBeRefreshed() {
     return mySession.shouldBeRefreshed();
   }
@@ -149,6 +150,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
     toolWindow.activate(null);
   }
 
+  @NlsContexts.TabTitle
   @NotNull
   private static String getTabName(@NotNull FilePath path, @Nullable VcsRevisionNumber revisionNumber) {
     String tabName = path.getName();
@@ -174,11 +176,20 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
   public void dispose() {
   }
 
-  private class FileHistoryContentPanel extends JBPanel {
+  private final class FileHistoryContentPanel extends JBPanelWithEmptyText {
     @Nullable private FileHistoryPanelImpl myFileHistoryPanel;
 
     private FileHistoryContentPanel() {
       super(new BorderLayout());
+      String text;
+      if (myStartingRevisionNumber != null) {
+        text = VcsBundle.message("loading.file.history.up.to.revision.status", myPath.getName(),
+                                 VcsUtil.getShortRevisionString(myStartingRevisionNumber));
+      }
+      else {
+        text = VcsBundle.message("loading.file.history.status", myPath.getName());
+      }
+      withEmptyText(text);
     }
 
     public void setHistorySession(@NotNull VcsHistorySession session) {

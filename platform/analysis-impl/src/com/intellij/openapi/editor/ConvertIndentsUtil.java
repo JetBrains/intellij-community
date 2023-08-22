@@ -5,7 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 
-public class ConvertIndentsUtil {
+public final class ConvertIndentsUtil {
   private static final IndentBuilder tabIndentBuilder = new IndentBuilder() {
     @Override
     public String buildIndent(int length, int tabSize) {
@@ -29,7 +29,7 @@ public class ConvertIndentsUtil {
 
   private static int processIndents(Document document, int tabSize, TextRange textRange, IndentBuilder indentBuilder) {
     int[] changedLines = {0};
-    DocumentUtil.executeInBulk(document, true, () -> {
+    DocumentUtil.executeInBulk(document, () -> {
       int startLine = document.getLineNumber(textRange.getStartOffset());
       int endLine = document.getLineNumber(textRange.getEndOffset());
       for (int line = startLine; line <= endLine; line++) {

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,9 +42,6 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
 
-/**
- * @author cdr
- */
 public class UnscrambleDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
@@ -123,7 +121,7 @@ public class UnscrambleDialog extends DialogWrapper {
     myLogFile.setHistorySize(10);
     myLogFile.setHistory(savedUrls);
 
-    String lastUrl = getPropertyValue(PROPERTY_LOG_FILE_LAST_URL);
+    String lastUrl = getPropertyValue(PROPERTY_LOG_FILE_LAST_URL); //NON-NLS URL is safe to show
     if (lastUrl == null && !savedUrls.isEmpty()) {
       lastUrl = savedUrls.get(savedUrls.size() - 1);
     }
@@ -137,7 +135,7 @@ public class UnscrambleDialog extends DialogWrapper {
     int index = 0;
     if (selectedUnscrambler != null) {
       for (int i = 0; i < count; i++) {
-        final UnscrambleSupport unscrambleSupport = (UnscrambleSupport)myUnscrambleChooser.getItemAt(i);
+        final UnscrambleSupport unscrambleSupport = myUnscrambleChooser.getItemAt(i);
         if (unscrambleSupport != null && Comparing.strEqual(unscrambleSupport.getPresentableName(), selectedUnscrambler.getPresentableName())) {
           index = i;
           break;
@@ -262,7 +260,7 @@ public class UnscrambleDialog extends DialogWrapper {
   }
 
   @Nullable
-  private String getPropertyValue(@NotNull String name) {
+  private @NlsSafe String getPropertyValue(@NotNull String name) {
     String projectValue = PropertiesComponent.getInstance(myProject).getValue(name);
     if (projectValue != null) {
       return projectValue;
@@ -423,7 +421,6 @@ public class UnscrambleDialog extends DialogWrapper {
       try {
         String line = reader.readLine();
         if (line == null) return null;
-        line = line.trim();
         String name = getExceptionAbbreviation(line);
         if (name != null) return name;
       }
@@ -437,18 +434,24 @@ public class UnscrambleDialog extends DialogWrapper {
   @Nullable
   private static String getExceptionAbbreviation(String line) {
     line = StringUtil.trimStart(line.trim(), "Caused by: ");
-    int lastDelimiter = 0;
+    int classNameStart = 0;
+    int classNameEnd = line.length();
     for (int j = 0; j < line.length(); j++) {
       char c = line.charAt(j);
       if (c == '.' || c == '$') {
-        lastDelimiter = j;
+        classNameStart = j + 1;
         continue;
+      }
+      if (c == ':') {
+        classNameEnd = j;
+        break;
       }
       if (!StringUtil.isJavaIdentifierPart(c)) {
         return null;
       }
     }
-    String clazz = line.substring(lastDelimiter);
+    if (classNameStart >= classNameEnd) return null;
+    String clazz = line.substring(classNameStart, classNameEnd);
     String abbreviate = abbreviate(clazz);
     return abbreviate.length() > 1 ? abbreviate : clazz;
   }

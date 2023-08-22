@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -22,7 +8,6 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -32,7 +17,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandler {
+public final class CollapseExpandDocCommentsHandler implements CodeInsightActionHandler {
 
   private static final Key<Boolean> DOC_COMMENT_MARK = Key.create("explicit.fold.region.doc.comment.mark");
 
@@ -79,8 +64,8 @@ public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandle
   private static boolean hasAllowedTokenType(@NotNull Editor editor, @NotNull FoldRegion region, @Nullable PsiElement element) {
     if (element == null) return false;
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(element.getLanguage());
-    if (!(editor instanceof EditorEx) || !(commenter instanceof CodeDocumentationAwareCommenter)) return false;
-    final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(region.getStartOffset());
+    if (!(commenter instanceof CodeDocumentationAwareCommenter)) return false;
+    final HighlighterIterator iterator = editor.getHighlighter().createIterator(region.getStartOffset());
     if (iterator.atEnd()) return false;
     return ((CodeDocumentationAwareCommenter)commenter).getDocumentationCommentTokenType() == iterator.getTokenType();
   }

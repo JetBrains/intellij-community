@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginDescriptorTestKt
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -11,6 +13,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.ServiceContainerUtil
 import groovy.transform.CompileStatic
+
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 @CompileStatic
 class LanguageExtensionOrderTest extends LightPlatformTestCase {
@@ -43,7 +48,11 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
 
   private void registerExtensions(String... xmls) {
     for (ext in xmls) {
-      myArea.registerExtension(myDescriptor, JDOMUtil.load(ext), null)
+      String moduleXml = "<idea-plugin><extensions>" + ext + "</extensions></idea-plugin>"
+
+      IdeaPluginDescriptorImpl pluginDescriptor =
+        PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), myDescriptor.pluginId)
+      pluginDescriptor.registerExtensions(myArea.extensionPoints, pluginDescriptor.appContainerDescriptor, null)
     }
   }
 

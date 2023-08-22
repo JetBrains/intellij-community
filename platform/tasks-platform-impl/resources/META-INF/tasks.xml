@@ -1,0 +1,18 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.BookmarkContextProvider"/>
+    <notificationGroup id="Tasks" displayType="BALLOON" bundle="messages.TaskBundle" key="notification.group.context.corrupted"/>
+    <notificationGroup id="Branch Context group" displayType="BALLOON" bundle="messages.TaskBundle" key="notification.group.branch.context"/>
+  </extensions>
+  <projectListeners>
+    <listener class="com.intellij.tasks.context.BranchContextTracker" topic="com.intellij.openapi.vcs.BranchChangeListener"/>
+  </projectListeners>
+</idea-plugin>

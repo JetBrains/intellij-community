@@ -1,13 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
-import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
+import git4idea.status.GitStagingAreaHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ import java.util.Collection;
  *   All get-methods (like {@link #getCurrentRevision()}) are just getters of the correspondent fields and thus are very fast.
  * </p>
  * <p>
- *   The GitRepository is updated "externally" by the {@link git4idea.repo.GitRepositoryUpdater}, when correspondent {@code .git/} service files
+ *   The GitRepository is updated "externally" by the {@link GitRepositoryUpdater}, when correspondent {@code .git/} service files
  *   change.
  * </p>
  * <p>
@@ -53,7 +54,7 @@ public interface GitRepository extends Repository {
   /**
    * @deprecated Use #getRepositoryFiles(), since there will be two administrative directories if user uses git worktrees.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   VirtualFile getGitDir();
 
@@ -61,10 +62,10 @@ public interface GitRepository extends Repository {
   GitRepositoryFiles getRepositoryFiles();
 
   @NotNull
-  GitUntrackedFilesHolder getUntrackedFilesHolder();
+  GitStagingAreaHolder getStagingAreaHolder();
 
   @NotNull
-  GitConflictsHolder getConflictsHolder();
+  GitUntrackedFilesHolder getUntrackedFilesHolder();
 
 
   @NotNull
@@ -109,5 +110,5 @@ public interface GitRepository extends Repository {
   Collection<GitSubmoduleInfo> getSubmodules();
 
   @NotNull
-  VcsRepositoryIgnoredFilesHolder getIgnoredFilesHolder();
+  GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder();
 }

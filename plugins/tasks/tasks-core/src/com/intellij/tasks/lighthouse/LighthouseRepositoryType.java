@@ -48,7 +48,7 @@ public class LighthouseRepositoryType extends BaseRepositoryType<LighthouseRepos
   @Override
   public TaskRepositoryEditor createEditor(LighthouseRepository repository,
                                            Project project,
-                                           Consumer<LighthouseRepository> changeListener) {
+                                           Consumer<? super LighthouseRepository> changeListener) {
     return new LighthouseRepositoryEditor(project, repository, changeListener);
   }
 }

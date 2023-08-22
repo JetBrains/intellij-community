@@ -1,29 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class CompactDataOutput implements DataOutput {
+public final class CompactDataOutput implements DataOutput {
   private final OutputStream out;
   private final byte[] writeBuffer = IOUtil.allocReadWriteUTFBuffer();
 
@@ -82,7 +64,7 @@ public class CompactDataOutput implements DataOutput {
     writeBuffer[4] = (byte)(v >>> 24);
     writeBuffer[5] = (byte)(v >>> 16);
     writeBuffer[6] = (byte)(v >>>  8);
-    writeBuffer[7] = (byte)(v >>>  0);
+    writeBuffer[7] = (byte)(v);
     out.write(writeBuffer, 0, 8);
   }
 
@@ -110,7 +92,7 @@ public class CompactDataOutput implements DataOutput {
     for (int i = 0 ; i < len ; i++) {
         int v = s.charAt(i);
         out.write((v >>> 8) & 0xFF);
-        out.write((v >>> 0) & 0xFF);
+        out.write(v & 0xFF);
     }
   }
 

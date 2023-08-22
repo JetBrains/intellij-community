@@ -1,32 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaModuleTestCase;
@@ -35,10 +17,9 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.util.JpsPathUtil;
-import org.junit.Assume;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   protected static void assertRoots(PathsList pathsList, VirtualFile... files) {
@@ -50,8 +31,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return getMockJdk17WithRtJarOnly();
   }
 
-  @NotNull
-  protected static Sdk getMockJdk17WithRtJarOnly() {
+  protected static @NotNull Sdk getMockJdk17WithRtJarOnly() {
     return retainRtJarOnlyAndSetVersion(IdeaTestUtil.getMockJdk17());
   }
 
@@ -59,9 +39,8 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return retainRtJarOnlyAndSetVersion(IdeaTestUtil.getMockJdk18());
   }
 
-  @NotNull
   @Contract(pure = true)
-  private static Sdk retainRtJarOnlyAndSetVersion(Sdk jdk) {
+  private static @NotNull Sdk retainRtJarOnlyAndSetVersion(Sdk jdk) {
     try {
       jdk = (Sdk)jdk.clone();
     }
@@ -92,16 +71,12 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return getMockJdk18WithRtJarOnly().getRootProvider().getFiles(OrderRootType.CLASSES)[0];
   }
 
-  protected VirtualFile getJDomJar() {
-    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JDOM");
+  protected static VirtualFile getFastUtilJar() {
+    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("fastutil-min");
   }
 
-  protected VirtualFile getJDomSources() {
-    //todo[nik] download sources of JDOM library and locate the JAR via IntelliJProjectConfiguration instead
-    String url = JpsPathUtil.getLibraryRootUrl(PathManagerEx.findFileUnderCommunityHome("lib/src/jdom.zip"));
-    VirtualFile jar = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
-    assertNotNull(jar);
-    return jar;
+  protected static Path getLibSources() {
+    return IntelliJProjectConfiguration.getJarPathFromSingleJarProjectLibrary("gson");
   }
 
   protected VirtualFile addSourceRoot(Module module, boolean testSource) throws IOException {
@@ -112,7 +87,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
 
   protected VirtualFile setModuleOutput(final Module module, final boolean test) throws IOException {
     final VirtualFile output = getVirtualFile(createTempDir(module.getName() + (test ? "Test" : "Prod") + "Output"));
-    PsiTestUtil.setCompilerOutputPath(module, output != null ? output.getUrl() : null, test);
+    PsiTestUtil.setCompilerOutputPath(module, output.getUrl(), test);
     return output;
   }
 
@@ -131,19 +106,11 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     });
   }
 
-  protected Library createJDomLibrary() {
-    return createLibrary("jdom", getJDomJar(), getJDomSources());
-  }
-
   protected Library createAsmLibrary() {
     return createLibrary("asm", getAsmJar(), null);
   }
 
   protected VirtualFile getAsmJar() {
     return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
-  }
-
-  protected static void ignoreTestUnderWorkspaceModel() {
-    Assume.assumeFalse("Not applicable to workspace model", Registry.is("ide.new.project.model"));
   }
 }

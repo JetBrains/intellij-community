@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
@@ -7,9 +7,8 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -24,7 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -34,15 +33,13 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.ProjectRule;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,21 +47,22 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class UsageViewTest extends BasePlatformTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
     // sick and tired of hunting tests leaking documents
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
 
-    Set<Object> alreadyLeaking = new THashSet<>(ContainerUtil.identityStrategy());
-    Condition<Object> isReallyLeak = file -> {
+    Set<Object> alreadyLeaking = new ReferenceOpenHashSet<>();
+    Predicate<Object> isReallyLeak = file -> {
       if (file instanceof PsiFile) {
         if (!((PsiFile)file).isPhysical()) {
           return false;
         }
         Project project = ((PsiFile)file).getProject();
         if (alreadyLeaking.add(project)) {
-          System.err.println(project + " already leaking; its creation trace: " + ProjectRule.getCreationPlace(project));
+          System.err.println(project + " already leaking; its creation trace: " + ((ProjectEx)project).getCreationTrace());
         }
       }
       alreadyLeaking.add(file);
@@ -83,7 +81,7 @@ public class UsageViewTest extends BasePlatformTestCase {
 
     UsageView usageView = createUsageView(usages);
 
-    LightPlatformTestCase.clearEncodingManagerDocumentQueue();
+    TestApplicationKt.clearEncodingManagerDocumentQueue(ApplicationManager.getApplication());
     FileDocumentManager.getInstance().saveAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
 
@@ -128,13 +126,12 @@ public class UsageViewTest extends BasePlatformTestCase {
 
   public void testUsageViewCanRerunAfterTargetWasInvalidatedAndRestored() {
     @Language("JAVA")
-    String fileText = "public class X{" +
-                      "    void foo() {\n" +
-                      "        bar();\n" +
-                      "        bar();\n" +
-                      "    }" +
-                      "    void bar() {}\n" +
-                      "}";
+    String fileText = """
+      public class X{    void foo() {
+              bar();
+              bar();
+          }    void bar() {}
+      }""";
     PsiFile psiFile = myFixture.addFileToProject("X.java", fileText);
 
     PsiElement[] members = psiFile.getChildren()[psiFile.getChildren().length - 1].getChildren();
@@ -172,6 +169,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     assertTrue(usageView.canPerformReRun());
 
     UsageView newView = usageView.doReRun();
+    Disposer.register(myFixture.getTestRootDisposable(), newView);
     Set<Usage> usages = newView.getUsages();
     assertEquals(2, usages.size());
   }
@@ -231,12 +229,14 @@ public class UsageViewTest extends BasePlatformTestCase {
     assertEmpty(excluded);
 
     String text = new ExporterToTextFile(usageView, UsageViewSettings.getInstance()).getReportText();
-    assertEquals("Found usages  (1 usage found)\n" +
-                 "    Unclassified usage  (1 usage found)\n" +
-                 "        light_idea_test_case  (1 usage found)\n" +
-                 "              (1 usage found)\n" +
-                 "                X.java  (1 usage found)\n" +
-                 "                    1 public class X{ int xxx; } //comment\n", StringUtil.convertLineSeparators(text));
+    assertEquals("""
+                   Usages in  (1 usage found)
+                       Unclassified  (1 usage found)
+                           light_idea_test_case  (1 usage found)
+                                 (1 usage found)
+                                   X.java  (1 usage found)
+                                       1 public class X{ int xxx; } //comment
+                   """, StringUtil.convertLineSeparators(text));
   }
 
   @NotNull
@@ -270,7 +270,7 @@ public class UsageViewTest extends BasePlatformTestCase {
     Node nodeToExclude = (Node)usageNode[0].getParent();
 
     JComponent component = usageView.getComponent();
-    DataProvider provider = new TypeSafeDataProviderAdapter((TypeSafeDataProvider)component);
+    DataProvider provider = DataManagerImpl.getDataProviderEx(component);
     ExclusionHandler exclusionHandler = (ExclusionHandler)provider.getData(ExclusionHandler.EXCLUSION_HANDLER.getName());
     exclusionHandler.excludeNode(nodeToExclude);
     UIUtil.dispatchAllInvocationEvents();

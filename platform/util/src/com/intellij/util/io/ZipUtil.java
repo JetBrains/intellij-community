@@ -1,23 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-public class ZipUtil {
+public final class ZipUtil {
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
   private ZipUtil() { }
@@ -38,7 +40,16 @@ public class ZipUtil {
                                      @NotNull String relativeName,
                                      @Nullable Set<? super String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter) throws IOException {
-    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD, file.isDirectory());
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, file.lastModified());
+  }
+
+  public static boolean addFileToZip(@NotNull ZipOutputStream zos,
+                                     @NotNull File file,
+                                     @NotNull String relativeName,
+                                     @Nullable Set<? super String> writtenItemRelativePaths,
+                                     @Nullable FileFilter fileFilter,
+                                     long timestamp) throws IOException {
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD, timestamp, file.isDirectory());
   }
 
   /*
@@ -51,15 +62,28 @@ public class ZipUtil {
                                      @Nullable FileFilter fileFilter,
                                      @NotNull FileContentProcessor contentProcessor,
                                      boolean isDir) throws IOException {
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, contentProcessor, file.lastModified(), isDir);
+  }
+
+  private static boolean addFileToZip(@NotNull ZipOutputStream zos,
+                                     @NotNull File file,
+                                     @NotNull String relativeName,
+                                     @Nullable Set<? super String> writtenItemRelativePaths,
+                                     @Nullable FileFilter fileFilter,
+                                     @NotNull FileContentProcessor contentProcessor,
+                                     long timestamp,
+                                     boolean isDir) throws IOException {
     while (!relativeName.isEmpty() && relativeName.charAt(0) == '/') {
       relativeName = relativeName.substring(1);
     }
 
-    if (isDir && !StringUtil.endsWithChar(relativeName, '/')) {
+    if (isDir && !Strings.endsWithChar(relativeName, '/')) {
       relativeName += "/";
     }
-    if (fileFilter != null && !FileUtil.isFilePathAcceptable(file, fileFilter)) return false;
-    if (writtenItemRelativePaths != null && !writtenItemRelativePaths.add(relativeName)) return false;
+    if ((fileFilter != null && !FileUtilRt.isFilePathAcceptable(file, fileFilter)) ||
+        (writtenItemRelativePaths != null && !writtenItemRelativePaths.add(relativeName))) {
+      return false;
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Add " + file + " as " + relativeName);
@@ -67,7 +91,7 @@ public class ZipUtil {
 
     long size = isDir ? 0 : file.length();
     ZipEntry e = new ZipEntry(relativeName);
-    e.setTime(file.lastModified());
+    e.setTime(timestamp);
     if (size == 0) {
       e.setMethod(ZipEntry.STORED);
       e.setSize(0);
@@ -103,7 +127,7 @@ public class ZipUtil {
                                                @NotNull String relativePath,
                                                @Nullable FileFilter fileFilter,
                                                @Nullable Set<String> writtenItemRelativePaths) throws IOException {
-    if (jarFile != null && FileUtil.isAncestor(dir, jarFile, false)) {
+    if (jarFile != null && FileUtil.isAncestor(dir.getPath(), jarFile.getPath(), false)) {
       return false;
     }
     if (!relativePath.isEmpty()) {
@@ -120,31 +144,48 @@ public class ZipUtil {
     return true;
   }
 
-  /** @see Decompressor.Zip */
+  /**
+   * @deprecated use {@link #extract(Path, Path, FilenameFilter)}
+   */
+  @Deprecated
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir.toPath(), filter)).extract(outputDir.toPath());
+  }
+
+  /** @see Decompressor.Zip */
+  public static void extract(@NotNull Path file, @NotNull Path outputDir, @Nullable FilenameFilter filter) throws IOException {
     new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
   }
 
-  /** @see Decompressor.Zip */
-  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
+  public static void extract(@NotNull Path file, @NotNull Path outputDir, @Nullable FilenameFilter filter, boolean overwrite)
+    throws IOException {
     new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir, filter)).overwrite(overwrite).extract(outputDir);
   }
 
-  private static class FileFilterAdapter implements Condition<String> {
-    private static FileFilterAdapter wrap(File outputDir, @Nullable FilenameFilter filter) {
+  /**
+   * @deprecated {@link #extract(Path, Path, FilenameFilter, boolean)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filter, boolean overwrite) throws IOException {
+    new Decompressor.Zip(file).filter(FileFilterAdapter.wrap(outputDir.toPath(), filter)).overwrite(overwrite).extract(outputDir);
+  }
+
+  private static final class FileFilterAdapter implements Predicate<String> {
+    private static FileFilterAdapter wrap(@NotNull Path outputDir, @Nullable FilenameFilter filter) {
       return filter == null ? null : new FileFilterAdapter(outputDir, filter);
     }
 
     private final File myOutputDir;
     private final FilenameFilter myFilter;
 
-    private FileFilterAdapter(File outputDir, FilenameFilter filter) {
-      myOutputDir = outputDir;
+    private FileFilterAdapter(@NotNull Path outputDir, FilenameFilter filter) {
+      myOutputDir = outputDir.toFile();
       myFilter = filter;
     }
 
     @Override
-    public boolean value(String entryName) {
+    public boolean test(String entryName) {
       File outputFile = new File(myOutputDir, entryName);
       return myFilter.accept(outputFile.getParentFile(), outputFile.getName());
     }
@@ -177,33 +218,11 @@ public class ZipUtil {
     }
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link Decompressor.Zip} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void extract(@NotNull ZipFile zip, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
-    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
-  }
-
-  /** @deprecated use {@link Decompressor.Zip} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean overwrite) throws IOException {
-    File outputFile = Decompressor.entryFile(outputDir, entry.getName());
-    try {
-      if (entry.isDirectory()) {
-        FileUtil.createDirectory(outputFile);
-      }
-      else if (!outputFile.exists() || overwrite) {
-        FileUtil.createParentDirs(outputFile);
-        try (FileOutputStream os = new FileOutputStream(outputFile)) {
-          FileUtilRt.copy(inputStream, os);
-        }
-      }
-    }
-    finally {
-      inputStream.close();
+  public static void compressFile(@NotNull Path srcFile, @NotNull Path zipFile) throws IOException {
+    try (ZipOutputStream os = new ZipOutputStream(Files.newOutputStream(zipFile))) {
+      os.putNextEntry(new ZipEntry(srcFile.getFileName().toString()));
+      Files.copy(srcFile, os);
+      os.closeEntry();
     }
   }
-  //</editor-fold>
 }

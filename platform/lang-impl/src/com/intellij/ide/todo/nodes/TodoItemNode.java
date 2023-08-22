@@ -184,10 +184,6 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     }
   }
 
-  public int getRowCount() {
-    return myAdditionalLines.size() + 1;
-  }
-
   @Override
   public String getTestPresentation() {
     return "Item: " + getValue().getTodoItem().getTextRange();
@@ -203,7 +199,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     return myAdditionalLines;
   }
 
-  private static class AdditionalTodoLine implements HighlightedRegionProvider {
+  private static final class AdditionalTodoLine implements HighlightedRegionProvider {
     private final String myText;
     private final List<HighlightedRegion> myHighlights;
 

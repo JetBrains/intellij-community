@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.idea.IdeaContentRoot;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator;
 
@@ -14,13 +15,14 @@ import static org.jetbrains.plugins.gradle.tooling.Exceptions.unsupportedMethod;
 import static org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.AdapterUtils.wrap;
 import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.emptyDomainObjectSet;
 
-public class InternalIdeaContentRoot implements IdeaContentRoot {
+@ApiStatus.Internal
+public final class InternalIdeaContentRoot implements IdeaContentRoot {
   private File rootDirectory;
   private Set<InternalIdeaSourceDirectory> sourceDirectories = emptyDomainObjectSet();
   private Set<InternalIdeaSourceDirectory> testDirectories = emptyDomainObjectSet();
   private Set<InternalIdeaSourceDirectory> resourceDirectories = emptyDomainObjectSet();
   private Set<InternalIdeaSourceDirectory> testResourceDirectories = emptyDomainObjectSet();
-  private Set<File> excludeDirectories = new LinkedHashSet<File>();
+  private Set<File> excludeDirectories = new LinkedHashSet<>();
 
   private final GradleVersionComparator myGradleVersionComparator;
 
@@ -47,22 +49,12 @@ public class InternalIdeaContentRoot implements IdeaContentRoot {
   }
 
   @Override
-  public ImmutableDomainObjectSet<InternalIdeaSourceDirectory> getGeneratedSourceDirectories() {
-    return ImmutableDomainObjectSet.of(generated(this.sourceDirectories));
-  }
-
-  @Override
   public ImmutableDomainObjectSet<InternalIdeaSourceDirectory> getTestDirectories() {
     return wrap(testDirectories);
   }
 
   public void setTestDirectories(Set<InternalIdeaSourceDirectory> testDirectories) {
     this.testDirectories = ImmutableDomainObjectSet.of(testDirectories);
-  }
-
-  @Override
-  public ImmutableDomainObjectSet<InternalIdeaSourceDirectory> getGeneratedTestDirectories() {
-    return ImmutableDomainObjectSet.of(generated(this.testDirectories));
   }
 
   @Override
@@ -96,17 +88,6 @@ public class InternalIdeaContentRoot implements IdeaContentRoot {
 
   public void setExcludeDirectories(Set<File> excludeDirectories) {
     this.excludeDirectories = excludeDirectories;
-  }
-
-  private static Set<InternalIdeaSourceDirectory> generated(Set<InternalIdeaSourceDirectory> directories) {
-    Set<InternalIdeaSourceDirectory> generated = new LinkedHashSet<InternalIdeaSourceDirectory>();
-    for (InternalIdeaSourceDirectory sourceDirectory : directories) {
-      if (sourceDirectory.isGenerated()) {
-        generated.add(sourceDirectory);
-      }
-    }
-
-    return generated;
   }
 
   public String toString() {

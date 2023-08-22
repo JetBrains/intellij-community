@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.ide.DataManager;
@@ -20,7 +6,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.impl.SelectionModelImpl;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +22,13 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     myEditor = editor;
   }
 
-  @NotNull
   @Override
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
-  @NotNull
   @Override
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myEditor.getCaretModel();
   }
 
@@ -96,15 +80,13 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return true;
   }
 
-  @NotNull
   @Override
-  public LogicalPosition getLogicalPosition() {
+  public @NotNull LogicalPosition getLogicalPosition() {
     JTextComponent textComponent = getTextComponent();
     int caretPos = textComponent.getCaretPosition();
     int line;
     int lineStart;
-    if (textComponent instanceof JTextArea) {
-      final JTextArea textArea = (JTextArea)textComponent;
+    if (textComponent instanceof JTextArea textArea) {
       try {
         line = textArea.getLineOfOffset(caretPos);
         lineStart = textArea.getLineStartOffset(line);
@@ -120,9 +102,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return new LogicalPosition(line, caretPos - lineStart);
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     LogicalPosition pos = getLogicalPosition();
     return new VisualPosition(pos.line, pos.column);
   }
@@ -147,9 +128,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return getTextComponent().getSelectionStart();
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionStartPosition() {
+  public @NotNull VisualPosition getSelectionStartPosition() {
     return myEditor.offsetToVisualPosition(getSelectionStart());
   }
 
@@ -158,15 +138,13 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return getTextComponent().getSelectionEnd();
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionEndPosition() {
+  public @NotNull VisualPosition getSelectionEndPosition() {
     return myEditor.offsetToVisualPosition(getSelectionEnd());
   }
 
-  @Nullable
   @Override
-  public String getSelectedText() {
+  public @Nullable String getSelectedText() {
     return getTextComponent().getSelectedText();
   }
 
@@ -179,9 +157,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return caretPosition == start ? end : start;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getLeadSelectionPosition() {
+  public @NotNull VisualPosition getLeadSelectionPosition() {
     return myEditor.offsetToVisualPosition(getLeadSelectionOffset());
   }
 
@@ -235,7 +212,7 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public void selectLineAtCaret() {
-    SelectionModelImpl.doSelectLineAtCaret(this);
+    EditorActionUtil.selectEntireLines(this, true);
   }
 
   @Override
@@ -247,9 +224,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     handler.execute(myEditor, null, DataManager.getInstance().getDataContext(myEditor.getComponent()));
   }
 
-  @Nullable
   @Override
-  public Caret clone(boolean above) {
+  public @Nullable Caret clone(boolean above) {
     return null;
   }
 
@@ -267,9 +243,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return false;
   }
 
-  @NotNull
   @Override
-  public CaretVisualAttributes getVisualAttributes() {
+  public @NotNull CaretVisualAttributes getVisualAttributes() {
     return CaretVisualAttributes.DEFAULT;
   }
 

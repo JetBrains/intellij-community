@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.codeinsight;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory;
 import com.intellij.json.psi.JsonNumberLiteral;
@@ -33,8 +34,7 @@ public class JsonLiteralAnnotator implements Annotator {
     if (element instanceof JsonReferenceExpression) {
       highlightPropertyKey(element, holder);
     }
-    else if (element instanceof JsonStringLiteral) {
-      final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
+    else if (element instanceof JsonStringLiteral stringLiteral) {
       final int elementOffset = element.getTextOffset();
       highlightPropertyKey(element, holder);
       final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
@@ -50,7 +50,7 @@ public class JsonLiteralAnnotator implements Annotator {
       for (Pair<TextRange, String> fragment: fragments) {
         for (JsonLiteralChecker checker: extensions) {
           if (!checker.isApplicable(element)) continue;
-          Pair<TextRange, String> error = checker.getErrorForStringFragment(fragment, stringLiteral);
+          Pair<TextRange, @InspectionMessage String> error = checker.getErrorForStringFragment(fragment, stringLiteral);
           if (error != null) {
             holder.newAnnotation(HighlightSeverity.ERROR, error.second).range(error.getFirst().shiftRight(elementOffset)).create();
           }

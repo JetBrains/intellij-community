@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.util.TextRange;
@@ -10,8 +10,6 @@ import java.util.List;
 
 /**
  * Represents the occurrence of an index pattern in the comments of a source code file.
- *
- * @author yole
  * @see com.intellij.psi.search.searches.IndexPatternSearch
  * @see IndexPatternProvider
  */

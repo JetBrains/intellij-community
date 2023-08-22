@@ -1,4 +1,4 @@
-// "Unroll loop" "true"
+// "Unroll loop" "true-preview"
 class Test {
   void test(String s1, String s2, String s3) {
       if (s1.length() <= 5) {

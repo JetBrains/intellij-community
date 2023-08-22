@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -14,8 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class InspectionProfileLoadUtil {
-  private static String getProfileName(@NotNull Path file, @NotNull Element element) {
+public final class InspectionProfileLoadUtil {
+  @NotNull
+  public static String getProfileName(@NotNull Path file, @NotNull Element element) {
     String name = null;
     for (Element option : element.getChildren("option")) {
       if ("myName".equals(option.getAttributeValue("name"))) {

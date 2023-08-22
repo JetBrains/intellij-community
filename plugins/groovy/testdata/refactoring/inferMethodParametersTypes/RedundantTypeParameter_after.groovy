@@ -1,4 +1,4 @@
-def <T> boolean foo(List<? extends List<T>> a, T b) {
+def <T> boolean foo(ArrayList<? extends ArrayList<T>> a, T b) {
   a.get(0).add(b)
 }
 

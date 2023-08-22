@@ -1,25 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.isEmpty
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.toByteArray
 import org.jdom.Element
 import java.io.InputStream
-import java.util.*
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.LinkedHashMap
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import java.util.concurrent.locks.StampedLock
 
-class SchemeManagerIprProvider(private val subStateTagName: String, private val comparator: Comparator<String>? = null) : StreamProvider, SimpleModificationTracker() {
-  private val lock = ReentrantReadWriteLock()
+class SchemeManagerIprProvider(private val subStateTagName: String,
+                               private val comparator: Comparator<String>? = null) : StreamProvider, SimpleModificationTracker() {
+  private val lock = StampedLock()
   private var nameToData = LinkedHashMap<String, ByteArray>()
 
   override val isExclusive = false
@@ -53,10 +50,10 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     return true
   }
 
-  override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+  override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
     LOG.assertTrue(content.isNotEmpty())
     lock.write {
-      nameToData.put(PathUtilRt.getFileName(fileSpec), ArrayUtil.realloc(content, size))
+      nameToData.put(PathUtilRt.getFileName(fileSpec), content)
     }
     incModificationCount()
   }
@@ -75,7 +72,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
     for (child in state.getChildren(subStateTagName)) {
       // https://youtrack.jetbrains.com/issue/RIDER-10052
       // ignore empty elements
-      if (child.isEmpty()) {
+      if (JDOMUtil.isEmpty(child)) {
         continue
       }
 
@@ -117,7 +114,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         names.sortWith(comparator)
       }
       for (name in names) {
-        nameToData.get(name)?.let { state.addContent(JDOMUtil.load(it.inputStream())) }
+        nameToData.get(name)?.let { state.addContent(JDOMUtil.load(it)) }
       }
     }
   }
@@ -134,5 +131,25 @@ class SchemeManagerIprProvider(private val subStateTagName: String, private val 
         }
       }
     }
+  }
+}
+
+private fun StampedLock.read(task: () -> Unit) {
+  val stamp = readLock()
+  try {
+    task()
+  }
+  finally {
+    unlockRead(stamp)
+  }
+}
+
+private fun StampedLock.write(task: () -> Unit) {
+  val stamp = writeLock()
+  try {
+    task()
+  }
+  finally {
+    unlockWrite(stamp)
   }
 }

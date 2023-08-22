@@ -25,13 +25,12 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -44,6 +43,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.net.NetUtils;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.intellij.plugins.xslt.run.rt.XSLTMain;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,9 +52,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.intellij.lang.xpath.xslt.run.XsltRunConfiguration.isEmpty;
-
-public class XsltCommandLineState extends CommandLineState {
+public final class XsltCommandLineState extends CommandLineState {
   public static final Key<XsltCommandLineState> STATE = Key.create("STATE");
 
   private final XsltRunConfiguration myXsltRunConfiguration;
@@ -87,7 +85,7 @@ public class XsltCommandLineState extends CommandLineState {
     return osProcessHandler;
   }
 
-  protected SimpleJavaParameters createJavaParameters() throws ExecutionException {
+  private SimpleJavaParameters createJavaParameters() throws ExecutionException {
     final Sdk jdk = myXsltRunConfiguration.getEffectiveJDK();
     if (jdk == null) {
       throw CantRunException.noJdkConfigured();
@@ -107,12 +105,12 @@ public class XsltCommandLineState extends CommandLineState {
 
     final ParametersList vmParameters = parameters.getVMParametersList();
     vmParameters.addParametersString(myXsltRunConfiguration.myVmArguments);
-    if (isEmpty(myXsltRunConfiguration.getXsltFile())) {
-      throw new CantRunException("No XSLT file selected");
+    if (XsltRunConfiguration.isEmpty(myXsltRunConfiguration.getXsltFile())) {
+      throw new CantRunException(XPathBundle.message("dialog.message.no.xslt.file.selected"));
     }
     vmParameters.defineProperty("xslt.file", myXsltRunConfiguration.getXsltFile());
-    if (isEmpty(myXsltRunConfiguration.getXmlInputFile())) {
-      throw new CantRunException("No XML input file selected");
+    if (XsltRunConfiguration.isEmpty(myXsltRunConfiguration.getXmlInputFile())) {
+      throw new CantRunException(XPathBundle.message("dialog.message.no.xml.input.file.selected"));
     }
     vmParameters.defineProperty("xslt.input", myXsltRunConfiguration.getXmlInputFile());
 
@@ -129,25 +127,23 @@ public class XsltCommandLineState extends CommandLineState {
     for (Pair<String, String> pair : myXsltRunConfiguration.getParameters()) {
       final String name = pair.getFirst();
       final String value = pair.getSecond();
-      if (isEmpty(name) || value == null) continue;
+      if (XsltRunConfiguration.isEmpty(name) || value == null) continue;
       vmParameters.defineProperty("xslt.param." + name, value);
     }
     vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
-    PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-    if (pluginId != null) {
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
-      assert descriptor != null;
-      Path rtPath = descriptor.getPluginPath().resolve("lib/rt/xslt-rt.jar");
+    PluginDescriptor plugin = PluginManager.getPluginByClass(getClass());
+    if (plugin != null) {
+      Path rtPath = plugin.getPluginPath().resolve("lib/rt/xslt-rt.jar");
       if (!Files.exists(rtPath)) {
-        throw new CantRunException("Runtime classes not found at " + rtPath);
+        throw new CantRunException(XPathBundle.message("dialog.message.runtime.classes.not.found.at", rtPath));
       }
       parameters.getClassPath().addTail(rtPath.toAbsolutePath().toString());
     }
     else {
       String rtPath = PathManager.getJarPathForClass(XSLTMain.class);
       if (rtPath == null) {
-        throw new CantRunException("Cannot find runtime classes on the classpath");
+        throw new CantRunException(XPathBundle.message("dialog.message.cannot.find.runtime.classes.on.classpath"));
       }
       parameters.getClassPath().addTail(rtPath);
       parameters.getVMParametersList().prepend("-ea");
@@ -155,7 +151,7 @@ public class XsltCommandLineState extends CommandLineState {
 
     parameters.setMainClass("org.intellij.plugins.xslt.run.rt.XSLTRunner");
 
-    if (isEmpty(myXsltRunConfiguration.myWorkingDirectory)) {
+    if (XsltRunConfiguration.isEmpty(myXsltRunConfiguration.myWorkingDirectory)) {
       parameters.setWorkingDirectory(new File(myXsltRunConfiguration.getXsltFile()).getParentFile());
     }
     else {
@@ -174,7 +170,7 @@ public class XsltCommandLineState extends CommandLineState {
     return parameters;
   }
 
-  protected static String expandPath(String path, Module module, Project project) {
+  private static String expandPath(String path, Module module, Project project) {
     path = PathMacroManager.getInstance(project).expandPath(path);
     if (module != null) {
       path = PathMacroManager.getInstance(module).expandPath(path);
@@ -207,7 +203,7 @@ public class XsltCommandLineState extends CommandLineState {
                 return;
               }
             }
-            VirtualFileManager.getInstance().asyncRefresh(null);
+            VirtualFileManager.getInstance().asyncRefresh();
           }
         }));
       }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ObjectUtils;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTokenTypes;
@@ -41,7 +42,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
     TextRange contentRange = TextRange.create(firstContentNode.getStartOffset(), getTextRange().getEndOffset())
       .shiftRight(-getTextRange().getStartOffset());
 
-    final List<String> lines = StringUtil.split(contentRange.substring(getText()), "\n", true, false);
+    final List<String> lines = StringUtil.split(contentRange.substring(getText()), "\n", false, false);
     // First line has opening quote
     int cumulativeOffset = contentRange.getStartOffset();
     for (int i = 0; i < lines.size(); ++i) {
@@ -68,25 +69,15 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
       }
 
       result.add(TextRange.create(lineStart, lineEnd).shiftRight(cumulativeOffset));
-      cumulativeOffset += line.length() + 1;
+      cumulativeOffset += line.length();
     }
 
     return result;
   }
 
-  @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
-    final TextRange leftRange = contentRanges.get(indexBefore);
-    if (leftRange.isEmpty() || !isSingleQuote() && text.charAt(leftRange.getEndOffset() - 1) == '\\') {
-      return "\n";
-    }
-    else if (contentRanges.get(indexBefore + 1).isEmpty()) {
-      return "";
-    }
-    else {
-      return " ";
-    }
+  public @NotNull YamlScalarTextEvaluator getTextEvaluator() {
+    return new YAMLQuotedTextTextEvaluator(this);
   }
 
   @SuppressWarnings("AssignmentToForLoopParameter")
@@ -102,7 +93,7 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
       }
       else if (!isSingleQuote() && input.charAt(i) == '\\') {
         if (input.charAt(i + 1) == '\n') {
-          result.add(Pair.create(TextRange.from(i, 2), ""));
+          result.add(Pair.create(TextRange.from(i, 2), i > 0 || input.length() > i + 2 ? "" : "\n"));
           i++;
           continue;
         }
@@ -138,11 +129,11 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
         if (!isSingleQuote() && i + 1 < input.length() && YAMLGrammarCharUtil.isSpaceLike(input.charAt(i + 1))) {
           result.add(Pair.create(TextRange.from(i, 1), "\\n\\\n" + indentString + "\\"));
         }
-        else if (!isSingleQuote() && i + 1 < input.length() && input.charAt(i + 1) == '\n') {
+        else if (!isSingleQuote() && i + 1 < input.length() && input.charAt(i + 1) == '\n' && i > 0) {
           result.add(Pair.create(TextRange.from(i, 1), "\\\n" + indentString + "\\n"));
         }
         else {
-          result.add(Pair.create(TextRange.from(i, 1), "\n\n" + indentString));
+          result.add(Pair.create(TextRange.from(i, 1), "\n" + indentString));
         }
         currentLength = 0;
         continue;
@@ -221,8 +212,8 @@ public final class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuot
       {'P', 8233},
     };
 
-    private static final NotNullLazyValue<Int2IntOpenHashMap> ESC_TO_CODE = NotNullLazyValue.createValue(() -> {
-      Int2IntOpenHashMap map = new Int2IntOpenHashMap(ONE_LETTER_CONVERSIONS.length);
+    private static final NotNullLazyValue<Int2IntMap> ESC_TO_CODE = NotNullLazyValue.createValue(() -> {
+      Int2IntMap map = new Int2IntOpenHashMap(ONE_LETTER_CONVERSIONS.length);
       for (int[] conversion : ONE_LETTER_CONVERSIONS) {
         map.put(conversion[0], conversion[1]);
       }

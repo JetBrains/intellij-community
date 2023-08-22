@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,7 @@ import java.util.concurrent.Callable;
 /**
  * An adapter from Runnable to Callable.
  */
-public class RunnableCallable implements Callable<Void> {
+public final class RunnableCallable implements Callable<Void> {
   private final Runnable myDelegate;
 
   public RunnableCallable(@NotNull Runnable delegate) {
@@ -21,8 +21,7 @@ public class RunnableCallable implements Callable<Void> {
     return null;
   }
 
-  @NotNull
-  public Runnable getDelegate() {
+  public @NotNull Runnable getDelegate() {
     return myDelegate;
   }
 

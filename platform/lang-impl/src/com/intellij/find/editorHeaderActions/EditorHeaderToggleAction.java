@@ -3,21 +3,23 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.SearchSession;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class EditorHeaderToggleAction extends CheckboxAction implements DumbAware, LightEditCompatible {
-  protected EditorHeaderToggleAction(@NotNull String text) {
+  protected EditorHeaderToggleAction(@NotNull @NlsContexts.Checkbox String text) {
     this(text, null, null, null);
   }
 
-  protected EditorHeaderToggleAction(@NotNull String text, @Nullable Icon icon, @Nullable Icon hoveredIcon, @Nullable Icon selectedIcon) {
+  protected EditorHeaderToggleAction(@NotNull @NlsContexts.Checkbox String text, @Nullable Icon icon, @Nullable Icon hoveredIcon, @Nullable Icon selectedIcon) {
     super(text);
     getTemplatePresentation().setIcon(icon);
     getTemplatePresentation().setHoveredIcon(hoveredIcon);
@@ -36,6 +38,11 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
     customComponent.setFocusable(false);
     customComponent.setOpaque(false);
     return customComponent;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

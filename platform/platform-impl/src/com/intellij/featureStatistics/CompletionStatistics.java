@@ -15,9 +15,6 @@
  */
 package com.intellij.featureStatistics;
 
-/**
- * @author peter
- */
 public class CompletionStatistics extends CumulativeStatistics {
   public int sparedCharacters = 0;
 

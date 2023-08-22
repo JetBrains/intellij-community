@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.packaging.ui;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -77,7 +77,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @NotNull
   public List<RepoPackage> reloadAllPackages() throws IOException {
     if (useConda()) {
-      final Multimap<String, String> packages = PyCondaPackageService.getInstance().listAllPackagesAndVersions();
+      final Multimap<String, String> packages = PyCondaPackageService.listAllPackagesAndVersions();
       if (packages == null) return Collections.emptyList();
       final List<RepoPackage> results = new ArrayList<>();
       for (String pkg : packages.keySet()) {
@@ -90,17 +90,13 @@ public class PyCondaManagementService extends PyPackageManagementService {
     }
   }
 
-  @Override
-  public boolean canManageRepositories() {
-    return true;
-  }
 
   @Override
   public void fetchAllRepositories(@NotNull CatchingConsumer<? super List<String>, ? super Exception> consumer) {
     if (useConda()) {
       myExecutorService.execute(() -> {
         try {
-          final List<String> channels = ContainerUtil.notNullize(PyCondaPackageService.getInstance().listChannels());
+          final List<String> channels = ContainerUtil.notNullize(PyCondaPackageService.listChannels());
           consumer.consume(channels);
         }
         catch (ExecutionException e) {
@@ -121,7 +117,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
           try {
-            PyCondaRunKt.runConda(mySdk, Lists.newArrayList("config", "--add", "channels", repositoryUrl, "--force"));
+            PyCondaRunKt.runConda(mySdk, Arrays.asList("config", "--add", "channels", repositoryUrl, "--force"));
           }
           catch (ExecutionException e) {
             LOG.warn("Failed to add repository. " + e);
@@ -142,7 +138,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
           try {
-            PyCondaRunKt.runConda(mySdk, Lists.newArrayList("config", "--remove", "channels", repositoryUrl, "--force"));
+            PyCondaRunKt.runConda(mySdk, Arrays.asList("config", "--remove", "channels", repositoryUrl, "--force"));
           }
           catch (ExecutionException e) {
             LOG.warn("Failed to remove repository. " + e);
@@ -161,11 +157,11 @@ public class PyCondaManagementService extends PyPackageManagementService {
   }
 
   @Override
-  public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
+  public void fetchPackageVersions(String packageName, CatchingConsumer<? super List<String>, ? super Exception> consumer) {
     if (useConda()) {
       myExecutorService.execute(() -> {
         try {
-          consumer.consume(PyCondaPackageService.getInstance().listPackageVersions(packageName));
+          consumer.consume(PyCondaPackageService.listPackageVersions(packageName));
         }
         catch (ExecutionException e) {
           consumer.consume(e);
@@ -178,12 +174,12 @@ public class PyCondaManagementService extends PyPackageManagementService {
   }
 
   @Override
-  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
+  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<? super String, ? super Exception> consumer) {
     final String packageName = pkg.getName();
     if (useConda()) {
       myExecutorService.execute(() -> {
         try {
-          final String latestVersion = ContainerUtil.getFirstItem(PyCondaPackageService.getInstance().listPackageVersions(packageName));
+          final String latestVersion = ContainerUtil.getFirstItem(PyCondaPackageService.listPackageVersions(packageName));
           consumer.consume(latestVersion);
         }
         catch (ExecutionException e) {

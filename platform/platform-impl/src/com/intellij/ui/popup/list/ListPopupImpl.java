@@ -1,68 +1,77 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.ListActions;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.ClosableByLeftArrow;
-import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.popup.NextStepHandler;
-import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.*;
+import com.intellij.ui.popup.async.AsyncPopupStep;
+import com.intellij.ui.popup.async.AsyncPopupWaiter;
+import com.intellij.ui.popup.tree.TreePopupImpl;
+import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Comparator;
+import java.util.Objects;
 
-public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
+import static java.awt.event.InputEvent.CTRL_MASK;
+import static java.awt.event.InputEvent.META_MASK;
+
+public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler, ListPopupStep.ListPopupModelListener {
+  static final int NEXT_STEP_AREA_WIDTH = 20;
+  private static final int DEFAULT_MAX_ROW_COUNT = 30;
+
   private static final Logger LOG = Logger.getInstance(ListPopupImpl.class);
+  protected final PopupInlineActionsSupport myPopupInlineActionsSupport = PopupInlineActionsSupport.Companion.create(this);
 
   private MyList myList;
 
   private MyMouseMotionListener myMouseMotionListener;
   private MyMouseListener myMouseListener;
+  private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
 
   private ListPopupModel myListModel;
 
-  private int myIndexForShowingChild = -1;
-  private int myMaxRowCount = 30;
-  private boolean myAutoHandleBeforeShow;
+  private @Nullable AsyncPopupWaiter myAsyncPopupWaiter;
 
-  /**
-   * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)} + {@link #setMaxRowCount(int)}
-   */
-  @Deprecated
-  public ListPopupImpl(@NotNull ListPopupStep aStep, int maxRowCount) {
-    this(aStep);
-    setMaxRowCount(maxRowCount);
-  }
+  private int myIndexForShowingChild = -1;
+  private boolean myAutoHandleBeforeShow;
+  private boolean myShowSubmenuOnHover;
+  private boolean myExecuteExpandedItemOnClick;
 
   /**
    * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)}
@@ -72,8 +81,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep, null);
   }
 
-  public ListPopupImpl(@Nullable Project project,
-                       @NotNull ListPopupStep aStep) {
+  public ListPopupImpl(@Nullable Project project, @NotNull ListPopupStep aStep) {
     this(project, null, aStep, null);
   }
 
@@ -84,15 +92,16 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     super(project, aParent, aStep);
     setParentValue(parentValue);
     replacePasteAction();
+    aStep.addListener(this);
   }
 
   public void setMaxRowCount(int maxRowCount) {
     if (maxRowCount <= 0) return;
-    myMaxRowCount = maxRowCount;
+    myList.setVisibleRowCount(maxRowCount);
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
-    int offset = -UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding().left;
+    int offset = -UIUtil.getListCellHPadding() - getListInsets().left;
     if (label.getIcon() != null) {
       offset += label.getIcon().getIconWidth() + label.getIconTextGap();
     }
@@ -107,11 +116,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   protected boolean beforeShow() {
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
-    myList.setVisibleRowCount(myMaxRowCount);
 
     boolean shouldShow = super.beforeShow();
     if (myAutoHandleBeforeShow) {
-      final boolean toDispose = tryToAutoSelect(true);
+      boolean toDispose = tryToAutoSelect(true);
       shouldShow &= !toDispose;
     }
 
@@ -124,6 +132,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     super.goBack();
   }
 
+  /**
+   * @return index of the selected item, regardless of the applied filter
+   */
+  public int getOriginalSelectedIndex() {
+    int index = myList.getSelectedIndex();
+    return index == -1 ? -1 : myListModel.getOriginalIndex(index);
+  }
+
   @Override
   protected void afterShowSync() {
     super.afterShowSync();
@@ -134,7 +150,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     ListPopupStep<Object> listStep = getListStep();
     boolean selected = false;
     if (listStep instanceof MultiSelectionListPopupStep<?>) {
-      int[] indices = ((MultiSelectionListPopupStep)listStep).getDefaultOptionIndices();
+      int[] indices = ((MultiSelectionListPopupStep<?>)listStep).getDefaultOptionIndices();
       if (indices.length > 0) {
         ScrollingUtil.ensureIndexIsVisible(myList, indices[0], 0);
         myList.setSelectedIndices(indices);
@@ -142,7 +158,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
     else {
-      final int defaultIndex = listStep.getDefaultOptionIndex();
+      int defaultIndex = listStep.getDefaultOptionIndex();
       if (isSelectableAt(defaultIndex)) {
         ScrollingUtil.selectItem(myList, defaultIndex);
         selected = true;
@@ -169,7 +185,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private boolean autoSelectUsingStatistics() {
-    final String filter = getSpeedSearch().getFilter();
+    String filter = getSpeedSearch().getFilter();
     if (!StringUtil.isEmpty(filter)) {
       int maxUseCount = -1;
       int mostUsedValue = -1;
@@ -177,8 +193,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       for (int i = 0; i < elementsCount; i++) {
         Object value = myListModel.getElementAt(i);
         if (!isSelectable(value)) continue;
-        final String text = getListStep().getTextFor(value);
-        final int count =
+        String text = getListStep().getTextFor(value);
+        int count =
             StatisticsManager.getInstance().getUseCount(new StatisticsInfo("#list_popup:" + myStep.getTitle() + "#" + filter, text));
         if (count > maxUseCount) {
           maxUseCount = count;
@@ -225,7 +241,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private int getSelectableCount() {
     int count = 0;
     for (int i = 0; i < myListModel.getSize(); i++) {
-      final Object each = myListModel.getElementAt(i);
+      Object each = myListModel.getElementAt(i);
       if (getListStep().isSelectable(each)) {
         count++;
       }
@@ -246,18 +262,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     ListPopupStep<Object> step = getListStep();
     myListModel = new ListPopupModel(this, getSpeedSearch(), step);
     myList = new MyList();
+    myList.setVisibleRowCount(DEFAULT_MAX_ROW_COUNT);
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
     if (step instanceof ListPopupStepEx) {
-      ((ListPopupStepEx)step).setEmptyText(myList.getEmptyText());
+      ((ListPopupStepEx<?>)step).setEmptyText(myList.getEmptyText());
     }
 
     myList.setSelectionModel(new MyListSelectionModel());
 
     selectFirstSelectableItem();
-    Insets padding = UIUtil.getListViewportPadding();
-    myList.setBorder(new EmptyBorder(padding));
+    myList.setBorder(new EmptyBorder(getListInsets()));
 
     ScrollingUtil.installActions(myList);
 
@@ -266,30 +282,88 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     registerAction("handleSelection1", KeyEvent.VK_ENTER, 0, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        handleSelect(true);
+        handleSelect(true, createKeyEvent(e, KeyEvent.VK_ENTER));
       }
     });
 
     myList.getActionMap().put(ListActions.Right.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        handleSelect(false);
+        Object selected = myList.getSelectedValue();
+        if (selected != null && myPopupInlineActionsSupport.hasExtraButtons(selected)) {
+          if (nextExtendedButton(selected)) return;
+        }
+
+        handleRightKeyPressed(createKeyEvent(e, KeyEvent.VK_RIGHT));
       }
     });
 
     myList.getActionMap().put(ListActions.Left.ID, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        Object selected = myList.getSelectedValue();
+        if (selected != null && myPopupInlineActionsSupport.hasExtraButtons(selected)) {
+          if (prevExtendedButton(selected)) return;
+        }
+
+        disposeAsyncPopupWaiter();
         if (isClosableByLeftArrow()) {
           goBack();
+        }
+        else {
+          handleLeftKeyPressed(createKeyEvent(e, KeyEvent.VK_LEFT));
         }
       }
     });
 
+    myList.addListSelectionListener(new ListSelectionListener() {
+      private int prevItemIndex = -1;
+
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        if (prevItemIndex == myList.getSelectedIndex()) return;
+        prevItemIndex = myList.getSelectedIndex();
+        myList.setSelectedButtonIndex(null);
+        disposeAsyncPopupWaiter();
+      }
+    });
+
+    PopupUtil.applyNewUIBackground(myList);
 
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
     return myList;
+  }
+
+ protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
+    return new KeyEvent(myList, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED);
+  }
+
+  private boolean nextExtendedButton(Object selected) {
+    Integer currentIndex = myList.getSelectedButtonIndex();
+    int buttonsCount = myPopupInlineActionsSupport.calcExtraButtonsCount(selected);
+    if (currentIndex == null) currentIndex = -1;
+    if (currentIndex >= buttonsCount - 1) return false;
+
+    boolean changed = myList.setSelectedButtonIndex(++currentIndex);
+    if (changed) {
+      getContent().repaint();
+      if (myPopupInlineActionsSupport.isMoreButton(selected, currentIndex) && buttonsCount == 1) {
+        myPopupInlineActionsSupport.getInlineAction(selected, currentIndex, null).executeAction();
+      }
+    }
+    return true;
+  }
+
+  private boolean prevExtendedButton(Object selected) {
+    Integer currentIndex = myList.getSelectedButtonIndex();
+    if (currentIndex == null) return false;
+
+    if (--currentIndex < 0) currentIndex = null;
+    boolean changed = myList.setSelectedButtonIndex(currentIndex);
+    if (changed) {
+      getContent().repaint();
+    }
+    return true;
   }
 
   private boolean isMultiSelectionEnabled() {
@@ -310,7 +384,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return myList.getInputMap();
   }
 
-  protected ListCellRenderer getListElementRenderer() {
+  protected ListCellRenderer<?> getListElementRenderer() {
     return new PopupListElementRenderer(this);
   }
 
@@ -323,7 +397,16 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   public void dispose() {
     myList.removeMouseMotionListener(myMouseMotionListener);
     myList.removeMouseListener(myMouseListener);
+    getListStep().removeListener(this);
+    disposeAsyncPopupWaiter();
     super.dispose();
+  }
+
+  private void disposeAsyncPopupWaiter() {
+    if (myAsyncPopupWaiter != null) {
+      myAsyncPopupWaiter.dispose();
+      myAsyncPopupWaiter = null;
+    }
   }
 
   protected int getSelectedIndex() {
@@ -361,66 +444,80 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     _handleSelect(handleFinalChoices, e);
   }
 
-  private boolean _handleSelect(final boolean handleFinalChoices, @Nullable InputEvent e) {
+  private boolean _handleSelect(boolean handleFinalChoices, @Nullable InputEvent e) {
     if (myList.getSelectedIndex() == -1) return false;
 
     if (getSpeedSearch().isHoldingFilter() && myList.getModel().getSize() == 0) return false;
 
-    if (myList.getSelectedIndex() == getIndexForShowingChild()) {
+    if (!myExecuteExpandedItemOnClick && myList.getSelectedIndex() == getIndexForShowingChild()) {
       if (myChild != null && !myChild.isVisible()) setIndexForShowingChild(-1);
       return false;
     }
 
-    final Object[] selectedValues = myList.getSelectedValues();
-    final ListPopupStep<Object> listStep = getListStep();
-    if (!listStep.isSelectable(selectedValues[0])) return false;
+    Object[] selectedValues = myList.getSelectedValues();
+    if (selectedValues.length == 0) return false;
+    ListPopupStep<Object> listStep = getListStep();
+    Object selectedValue = selectedValues[0];
+    if (!listStep.isSelectable(selectedValue)) return false;
 
     if ((listStep instanceof MultiSelectionListPopupStep<?> && !((MultiSelectionListPopupStep<Object>)listStep).hasSubstep(Arrays.asList(selectedValues))
-         || !listStep.hasSubstep(selectedValues[0])) && !handleFinalChoices) return false;
+         || !listStep.hasSubstep(selectedValue)) && !handleFinalChoices) return false;
 
     disposeChildren();
 
     if (myListModel.getSize() == 0) {
-      setFinalRunnable(myStep.getFinalRunnable());
-      setOk(true);
-      disposeAllParents(e);
-      setIndexForShowingChild(-1);
+      disposePopup(e);
       return true;
     }
 
     valuesSelected(selectedValues);
 
-    AtomicBoolean insideOnChosen = new AtomicBoolean(true);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (insideOnChosen.get()) {
-        LOG.error("Showing dialogs from popup onChosen can result in focus issues. Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
+    Integer inlineButtonIndex = myList.getSelectedButtonIndex();
+    if (inlineButtonIndex != null) {
+      InlineActionDescriptor actionDescriptor = myPopupInlineActionsSupport.getInlineAction(selectedValue, inlineButtonIndex, e);
+      if (actionDescriptor.getClosesPopup()) {
+        disposePopup(e);
       }
-    }, ModalityState.any());
+      actionDescriptor.executeAction();
+      return true;
+    }
 
-    final PopupStep nextStep;
-    try {
+    PopupStep<?> nextStep;
+    try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect();
+         AccessToken ignore2 = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       if (listStep instanceof MultiSelectionListPopupStep<?>) {
         nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
       }
       else if (e != null && listStep instanceof ListPopupStepEx<?>) {
-        nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValues[0], handleFinalChoices, e.getModifiers());
+        nextStep = ((ListPopupStepEx<Object>)listStep).onChosen(selectedValue, handleFinalChoices, e);
       }
       else {
-        nextStep = listStep.onChosen(selectedValues[0], handleFinalChoices);
+        nextStep = listStep.onChosen(selectedValue, handleFinalChoices);
       }
     }
-    finally {
-      insideOnChosen.set(false);
-    }
-    return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValues[0] : null, e);
+    return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValue : null, e);
   }
 
-  private void valuesSelected(final Object[] values) {
+  protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {
+    handleSelect(false, keyEvent);
+  }
+
+  protected void handleLeftKeyPressed(@NotNull KeyEvent keyEvent) {
+  }
+
+  private void disposePopup(@Nullable InputEvent e) {
+    setFinalRunnable(myStep.getFinalRunnable());
+    setOk(true);
+    disposeAllParents(e);
+    setIndexForShowingChild(-1);
+  }
+
+  private void valuesSelected(Object[] values) {
     if (shouldUseStatistics()) {
-      final String filter = getSpeedSearch().getFilter();
+      String filter = getSpeedSearch().getFilter();
       if (!StringUtil.isEmpty(filter)) {
         for (Object value : values) {
-          final String text = getListStep().getTextFor(value);
+          String text = getListStep().getTextFor(value);
           StatisticsManager.getInstance().incUseCount(new StatisticsInfo("#list_popup:" + getListStep().getTitle() + "#" + filter, text));
         }
       }
@@ -428,58 +525,110 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   @Override
-  public void handleNextStep(final PopupStep nextStep, Object parentValue) {
+  public void handleNextStep(PopupStep nextStep, Object parentValue) {
     handleNextStep(nextStep, parentValue, null);
   }
 
-  public boolean handleNextStep(final PopupStep nextStep, Object parentValue, InputEvent e) {
-    if (nextStep != PopupStep.FINAL_CHOICE) {
-      final Point point = myList.indexToLocation(myList.getSelectedIndex());
-      SwingUtilities.convertPointToScreen(point, myList);
-      myChild = createPopup(this, nextStep, parentValue);
-      if (myChild instanceof ListPopupImpl) {
-        for (ListSelectionListener listener : myList.getListSelectionListeners()) {
-          ((ListPopupImpl)myChild).addListSelectionListener(listener);
-        }
-      }
-      final JComponent container = getContent();
-
-      int y = point.y;
-      if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
-        SeparatorWithText swt = new SeparatorWithText();
-        swt.setCaption(getListModel().getCaptionAboveOf(parentValue));
-        y += swt.getPreferredSize().height - 1;
-      }
-
-      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
-      setIndexForShowingChild(myList.getSelectedIndex());
+  public boolean handleNextStep(PopupStep nextStep, Object parentValue, InputEvent e) {
+    disposeAsyncPopupWaiter();
+    if (nextStep == PopupStep.FINAL_CHOICE) {
+      disposePopup(e);
+      return true;
+    }
+    else if (nextStep instanceof AsyncPopupStep) {
+      Rectangle bounds = getCellBounds(getSelectedIndex());
+      // TODO: separator size calculation, see IDEA-327566
+      RelativePoint point = new RelativePoint(getList(), new Point(bounds.width, bounds.y + bounds.height / 2));
+      myAsyncPopupWaiter = new AsyncPopupWaiter((AsyncPopupStep<?>)nextStep, point, step -> {
+        handleNextStep(step, parentValue, e);
+        return Unit.INSTANCE;
+      });
       return false;
     }
     else {
-      setOk(true);
-      setFinalRunnable(myStep.getFinalRunnable());
-      disposeAllParents(e);
-      setIndexForShowingChild(-1);
-      return true;
+      showNextStepPopup(nextStep, parentValue);
+      return false;
     }
   }
 
+  void showNextStepPopup(PopupStep nextStep, Object parentValue) {
+    if (nextStep == null) {
+      String valueText = getListStep().getTextFor(parentValue);
+      String message = String.format("Cannot open submenu for '%s' item. PopupStep is null", valueText);
+      LOG.warn(message);
+      return;
+    }
+
+    if ((PopupStep<?>)myStep instanceof ActionPopupStep actionPopupStep && nextStep instanceof ActionPopupStep nextActionPopupStep) {
+      nextActionPopupStep.setSubStepContextAdjuster(actionPopupStep.getSubStepContextAdjuster());
+    }
+
+    Point point = myList.indexToLocation(myList.getSelectedIndex());
+    SwingUtilities.convertPointToScreen(point, myList);
+    myChild = createPopup(this, nextStep, parentValue);
+    if (ScreenReader.isActive()) myChild.setRequestFocus(true);
+    if (myChild instanceof ListPopup child) {
+      for (ListSelectionListener listener : myList.getListSelectionListeners()) {
+        child.addListSelectionListener(listener);
+      }
+      child.setShowSubmenuOnHover(myShowSubmenuOnHover);
+      child.setExecuteExpandedItemOnClick(myExecuteExpandedItemOnClick);
+    }
+    JComponent container = getContent();
+
+    int y = point.y;
+    if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
+      SeparatorWithText swt = new SeparatorWithText();
+      swt.setCaption(getListModel().getCaptionAboveOf(parentValue));
+      y += swt.getPreferredSize().height - 1;
+    }
+
+    if (!UiInterceptors.tryIntercept(myChild)) {
+      // Intercept child popup in tests because it is impossible to calculate location on screen there
+      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
+    }
+    setIndexForShowingChild(myList.getSelectedIndex());
+    myMouseMovementTracker.reset();
+  }
 
   @Override
   public void addListSelectionListener(ListSelectionListener listSelectionListener) {
     myList.addListSelectionListener(listSelectionListener);
   }
 
-  private class MyMouseMotionListener extends MouseMotionAdapter {
-    private int myLastSelectedIndex = -2;
-    private Point myLastMouseLocation;
+  @Override
+  public void onModelChanged() {
+    boolean updateEmptyModel = myListModel.getSize() == 0;
+    myListModel.syncModel();
+    if (updateEmptyModel) {
+      selectFirstSelectableItem();
+      pack(true, true);
+    }
+  }
 
+  private enum ExtendMode {
+    NO_EXTEND, EXTEND_ON_HOVER
+  }
+
+  private class MyMouseMotionListener extends MouseMotionAdapter {
+
+    private int myLastSelectedIndex = -2;
+    private ExtendMode myExtendMode = ExtendMode.NO_EXTEND;
+    private Point myLastMouseLocation;
+    private Timer myShowSubmenuTimer;
+
+    /**
+     * this method should be changed only in par with
+     * {@link TreePopupImpl.MyMouseMotionListener#isMouseMoved(Point)}
+     */
     private boolean isMouseMoved(Point location) {
       if (myLastMouseLocation == null) {
         myLastMouseLocation = location;
         return false;
       }
-      return !myLastMouseLocation.equals(location);
+      Point prev = myLastMouseLocation;
+      myLastMouseLocation = location;
+      return !prev.equals(location);
     }
 
     @Override
@@ -490,12 +639,28 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       int index = myList.locationToIndex(point);
 
       if (isSelectableAt(index)) {
-        if (index != myLastSelectedIndex) {
+        if (index != myLastSelectedIndex && !isMovingToSubmenu(e)) {
+          myExtendMode = calcExtendMode(index);
           if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
             myList.setSelectedIndex(index);
+            if (myShowSubmenuOnHover) {
+              disposeChildren();
+            }
+            if (myExtendMode == ExtendMode.EXTEND_ON_HOVER) {
+              showSubMenu(index, true);
+            }
           }
           restartTimer();
           myLastSelectedIndex = index;
+        }
+
+        Object element = myListModel.getElementAt(index);
+        if (element != null && myPopupInlineActionsSupport.hasExtraButtons(element)) {
+          Integer buttonIndex = myPopupInlineActionsSupport.calcButtonIndex(element, point);
+          boolean changed = myList.setSelectedButtonIndex(buttonIndex);
+          if (changed) {
+            getContent().repaint();
+          }
         }
       }
       else {
@@ -505,13 +670,60 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
       notifyParentOnChildSelection();
     }
+
+    private @NotNull ExtendMode calcExtendMode(int index) {
+      ListPopupStep<Object> listStep = getListStep();
+      Object selectedValue = myListModel.getElementAt(index);
+      if (selectedValue == null || !listStep.hasSubstep(selectedValue)) return ExtendMode.NO_EXTEND;
+
+      return myShowSubmenuOnHover ? ExtendMode.EXTEND_ON_HOVER : ExtendMode.NO_EXTEND;
+    }
+
+    private boolean isMovingToSubmenu(MouseEvent e) {
+      if (myChild == null || myChild.isDisposed()) return false;
+
+      Rectangle childBounds = myChild.getBounds();
+      childBounds.setLocation(myChild.getLocationOnScreen());
+
+      return myMouseMovementTracker.isMovingTowards(e, childBounds);
+    }
+
+    private void showSubMenu(int forIndex, boolean withTimer) {
+      if (getIndexForShowingChild() == forIndex) return;
+
+      disposeChildren();
+
+      if (myShowSubmenuTimer != null && myShowSubmenuTimer.isRunning()) {
+        myShowSubmenuTimer.stop();
+        myShowSubmenuTimer = null;
+      }
+
+      ListPopupStep<Object> listStep = getListStep();
+      Object selectedValue = myListModel.getElementAt(forIndex);
+      if (withTimer) {
+        ClientId currentClientId = ClientId.getCurrent();
+        myShowSubmenuTimer = new Timer(250, e -> {
+          try (AccessToken ignore = ClientId.withClientId(currentClientId)) {
+            if (!isDisposed() && myLastSelectedIndex == forIndex) {
+              disposeChildren();
+              showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+            }
+          }
+        });
+        myShowSubmenuTimer.setRepeats(false);
+        myShowSubmenuTimer.start();
+      }
+      else {
+        showNextStepPopup(listStep.onChosen(selectedValue, false), selectedValue);
+      }
+    }
   }
 
   protected boolean isActionClick(MouseEvent e) {
     return UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED, true);
   }
 
-  public Object[] getSelectedValues() {
+  public Object @NotNull [] getSelectedValues() {
     return myList.getSelectedValues();
   }
 
@@ -521,8 +733,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     public void mouseReleased(MouseEvent e) {
       if (!isActionClick(e) || isMultiSelectionEnabled() && UIUtil.isSelectionButtonDown(e)) return;
       IdeEventQueue.getInstance().blockNextEvents(e); // sometimes, after popup close, MOUSE_RELEASE event delivers to other components
-      final Object selectedValue = myList.getSelectedValue();
-      final ListPopupStep<Object> listStep = getListStep();
+      Object selectedValue = myList.getSelectedValue();
+      ListPopupStep<Object> listStep = getListStep();
       handleSelect(handleFinalChoices(e, selectedValue, listStep), e);
       stopTimer();
     }
@@ -533,13 +745,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private boolean isOnNextStepButton(MouseEvent e) {
-    final int index = myList.getSelectedIndex();
-    final Rectangle bounds = myList.getCellBounds(index, index);
+    int index = myList.getSelectedIndex();
+    Rectangle bounds = myList.getCellBounds(index, index);
     if (bounds != null) {
       JBInsets.removeFrom(bounds, UIUtil.getListCellPadding());
     }
-    final Point point = e.getPoint();
-    return bounds != null && point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth();
+    Point point = e.getPoint();
+    return bounds != null && point.getX() > bounds.width + bounds.getX() - NEXT_STEP_AREA_WIDTH;
   }
 
   @Override
@@ -555,7 +767,14 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JBList implements DataProvider {
+  interface ListWithInlineButtons {
+    @Nullable Integer getSelectedButtonIndex();
+  }
+
+  private class MyList extends JBList implements DataProvider, ListWithInlineButtons {
+
+    private @Nullable Integer selectedButtonIndex;
+
     MyList() {
       super(myListModel);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
@@ -579,51 +798,61 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
 
       boolean isClick = UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) || UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED);
-      if (!isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex()) {
+      if (!isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex() ||
+          isMultiSelectionEnabled() && hasMultiSelectionModifier(e)) {
         super.processMouseEvent(e);
       }
     }
 
+    private boolean hasMultiSelectionModifier(@NotNull MouseEvent e) {
+      return (e.getModifiers() & (SystemInfo.isMac ? META_MASK : CTRL_MASK)) != 0;
+    }
+
     @Override
     public Object getData(@NotNull String dataId) {
-       if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
-        return myList.getSelectedValue();
-      }
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)){
-         return myList.getSelectedValues();
-      }
       if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
         if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
           return mySpeedSearchPatternField;
         }
       }
-      return null;
+      return PopupImplUtil.getDataImplForList(myList, dataId);
+    }
+
+    @Override
+    public @Nullable Integer getSelectedButtonIndex() {
+      return selectedButtonIndex;
+    }
+
+    private boolean setSelectedButtonIndex(@Nullable Integer index) {
+      if (Objects.compare(index, selectedButtonIndex, Comparator.nullsFirst(Integer::compare)) == 0) return false;
+
+      selectedButtonIndex = index;
+      return true;
     }
   }
 
-  private class MyListSelectionModel extends DefaultListSelectionModel {
+  private final class MyListSelectionModel extends DefaultListSelectionModel {
+    private boolean myInitialSelectionSet = false;
+
     private MyListSelectionModel() {
       setSelectionMode(isMultiSelectionEnabled() ? MULTIPLE_INTERVAL_SELECTION : SINGLE_SELECTION);
     }
 
     @Override
+    public void clearSelection() {
+      super.clearSelection();
+      setAnchorSelectionIndex(-1);
+      setLeadSelectionIndex(-1);
+    }
+
+    @Override
     public void setSelectionInterval(int index0, int index1) {
       if (getSelectionMode() == SINGLE_SELECTION) {
-        if (index0 > getLeadSelectionIndex()) {
-          for (int i = index0; i < myListModel.getSize(); i++) {
-            if (getListStep().isSelectable(myListModel.getElementAt(i))) {
-              super.setSelectionInterval(i, i);
-              break;
-            }
-          }
-        }
-        else {
-          for (int i = index0; i >= 0; i--) {
-            if (getListStep().isSelectable(myListModel.getElementAt(i))) {
-              super.setSelectionInterval(i, i);
-              break;
-            }
-          }
+        int index = findSelectableIndex(index0, getLeadSelectionIndex());
+        if (0 <= index) super.setSelectionInterval(index, index);
+        if (index == 0 && !myInitialSelectionSet) {
+          myInitialSelectionSet = true;
+          fireValueChanged(0, 0); // enforce listeners to be notified about initial selection
         }
       }
       else {
@@ -632,8 +861,35 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  private int findSelectableIndex(int index, int lead) {
+    int size = myListModel.getSize();
+    if (index < 0 || size <= index) return -1;
+
+    // iterate through the first part of the available items
+    int found = findSelectableIndexInModel(index, index < lead ? -1 : size);
+    if (found >= 0) return found;
+
+    // iterate through the second part of the available items
+    UISettings settings = UISettings.getInstanceOrNull();
+    return settings != null && settings.getCycleScrolling() && 1 == Math.abs(index - lead)
+           ? findSelectableIndexInModel(index < lead ? size - 1 : 0, index)
+           : findSelectableIndexInModel(index, lead < -1 ? -1 : Math.min(lead, size));
+  }
+
+  private int findSelectableIndexInModel(int index, int stop) {
+    while (index != stop) {
+      if (getListStep().isSelectable(myListModel.getElementAt(index))) return index;
+      index += index > stop ? -1 : 1;
+    }
+    return -1;
+  }
+
   @Override
   protected void onSpeedSearchPatternChanged() {
+    ListPopupStep<?> step = getListStep();
+    if (step instanceof FilterableListPopupStep<?>) {
+      ((FilterableListPopupStep<?>)step).updateFilter(mySpeedSearch.getFilter());
+    }
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
       if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {
@@ -647,8 +903,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     if (fullMatchIndex != -1 && isSelectableAt(fullMatchIndex)) {
       myList.setSelectedIndex(fullMatchIndex);
     }
-
-    if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
+    else {
       selectFirstSelectableItem();
     }
   }
@@ -674,8 +929,26 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  public void selectAndExpandValue(Object value) {
+    selectAndChooseNextStep(value, false);
+  }
+
+  public void selectAndExecuteValue(Object value) {
+    selectAndChooseNextStep(value, true);
+  }
+
+  private void selectAndChooseNextStep(Object value, boolean finalChoice) {
+    if (myListModel.isVisible(value) && isSelectable(value)) {
+      myList.setSelectedValue(value, true);
+      disposeChildren();
+      PopupStep<Object> listStep = getListStep();
+      PopupStep<?> nextStep = listStep.onChosen(value, finalChoice);
+      handleNextStep(nextStep, value);
+    }
+  }
+
   @Override
-  public void setHandleAutoSelectionBeforeShow(final boolean autoHandle) {
+  public void setHandleAutoSelectionBeforeShow(boolean autoHandle) {
     myAutoHandleBeforeShow = autoHandle;
   }
 
@@ -685,7 +958,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   @Override
+  public void setShowSubmenuOnHover(boolean showSubmenuOnHover) {
+    myShowSubmenuOnHover = showSubmenuOnHover;
+  }
+
+  @Override
+  public void setExecuteExpandedItemOnClick(boolean executeExpandedItemOnClick) {
+    myExecuteExpandedItemOnClick = executeExpandedItemOnClick;
+  }
+
+  @Override
   public void showInBestPositionFor(@NotNull Editor editor) {
+    if (UiInterceptors.tryIntercept(this)) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       handleSelect(true);
       if (!Disposer.isDisposed(this)) {
@@ -711,7 +995,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   private boolean isSelectable(@Nullable Object value) {
     // it is possible to use null elements in list model
-    return getListStep().isSelectable(value);
+    try {
+      return getListStep().isSelectable(value);
+    }
+    catch (Exception exception) {
+      LOG.error(getListStep().getClass().getName(), exception);
+      return false;
+    }
   }
 
   private boolean isSelectableAt(int index) {
@@ -720,5 +1010,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       if (isSelectable(value)) return true;
     }
     return false;
+  }
+
+  private Insets getListInsets() {
+    return PopupUtil.getListInsets(StringUtil.isNotEmpty(getStep().getTitle()), isAdVisible());
   }
 }

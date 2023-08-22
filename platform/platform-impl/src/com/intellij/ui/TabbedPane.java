@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public interface TabbedPane {
 
   void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String title);
 
-  void setToolTipTextAt(int index, String toolTipText);
+  void setToolTipTextAt(int index, @NlsContexts.Tooltip String toolTipText);
 
   void setComponentAt(int index, Component c);
 
@@ -64,7 +65,7 @@ public interface TabbedPane {
 
   void scrollTabToVisible(int index);
 
-  String getTitleAt(int i);
+  @Nls String getTitleAt(int i);
 
   void removeAll();
 

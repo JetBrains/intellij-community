@@ -1,0 +1,8 @@
+// "Change to 'val'" "true"
+annotation class Ann(
+    val a: Int,
+    var<caret> b: Int
+)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix

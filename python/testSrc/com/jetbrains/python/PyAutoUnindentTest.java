@@ -19,7 +19,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * Checks auto-unindenting of 'else' and friends.
- * User: dcheryasov
  */
 public class PyAutoUnindentTest extends PyTestCase {
 

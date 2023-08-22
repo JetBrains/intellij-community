@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +12,6 @@ import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 
 import java.io.File;
 import java.util.*;
-
-import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.reduce;
 
 /**
  * @author Vladislav.Soroka
@@ -40,7 +36,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
                                     Collection<? extends ExternalDependency> dependencies) {
     myId = new DefaultExternalDependencyId(id);
     mySelectionReason = selectionReason;
-    myDependencies = dependencies == null ? new ArrayList<ExternalDependency>(0) : ModelFactory.createCopy(dependencies);
+    myDependencies = dependencies == null ? new ArrayList<>(0) : ModelFactory.createCopy(dependencies);
   }
 
   public AbstractExternalDependency(ExternalDependency dependency) {
@@ -113,6 +109,10 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     return mySelectionReason;
   }
 
+  public void setSelectionReason(String selectionReason) {
+    this.mySelectionReason = selectionReason;
+  }
+
   @Override
   public int getClasspathOrder() {
     return myClasspathOrder;
@@ -120,10 +120,6 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
 
   public void setClasspathOrder(int order) {
     myClasspathOrder = order;
-  }
-
-  public void setSelectionReason(String selectionReason) {
-    this.mySelectionReason = selectionReason;
   }
 
   @Override
@@ -180,7 +176,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
   }
 
   protected static int calcFilesPathsHashCode(@NotNull Iterable<File> iterable) {
-    return reduce(iterable, 0, new BiFunction<Integer, Integer, File>() {
+    return GradleContainerUtil.reduce(iterable, 0, new BiFunction<Integer, Integer, File>() {
       @Override
       public Integer fun(Integer currentResult, File item) {
         return 31 * currentResult + (item == null ? 0 : item.getPath().hashCode());
@@ -188,16 +184,15 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     });
   }
 
-  private static class DependenciesIterator implements Iterator<AbstractExternalDependency> {
+  private static final class DependenciesIterator implements Iterator<AbstractExternalDependency> {
     private final Set<AbstractExternalDependency> mySeenDependencies;
-    private final LinkedList<ExternalDependency> myToProcess;
-    private final LinkedList<Integer> myProcessedStructure;
+    private final ArrayDeque<ExternalDependency> myToProcess;
+    private final ArrayList<Integer> myProcessedStructure;
 
     private DependenciesIterator(@NotNull Collection<ExternalDependency> dependencies) {
-      //noinspection unchecked
-      mySeenDependencies = new THashSet<AbstractExternalDependency>(TObjectHashingStrategy.IDENTITY);
-      myToProcess = new LinkedList<ExternalDependency>(dependencies);
-      myProcessedStructure = new LinkedList<Integer>();
+      mySeenDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
+      myToProcess = new ArrayDeque<>(dependencies);
+      myProcessedStructure = new ArrayList<>();
     }
 
     @Override
@@ -208,7 +203,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
         myToProcess.removeFirst();
         return hasNext();
       }
-      return !myToProcess.isEmpty();
+      return true;
     }
 
     @Override
@@ -222,11 +217,6 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
       else {
         return next();
       }
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("remove");
     }
   }
 }

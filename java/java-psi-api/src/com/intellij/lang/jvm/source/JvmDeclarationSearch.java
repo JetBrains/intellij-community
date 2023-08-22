@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.source;
 
-import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.jvm.JvmElement;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
@@ -50,13 +49,17 @@ public final class JvmDeclarationSearch {
 
   private static @Nullable PsiElement findDeclaringElement(@NotNull PsiElement potentiallyIdentifyingElement) {
     PsiElement parent = potentiallyIdentifyingElement.getParent();
-    if (parent instanceof PsiNameIdentifierOwner
-        && ((PsiNameIdentifierOwner)parent).getIdentifyingElement() == potentiallyIdentifyingElement) {
+    if (parent instanceof PsiNameIdentifierOwner &&
+        ((PsiNameIdentifierOwner)parent).getIdentifyingElement() == potentiallyIdentifyingElement) {
       return parent;
     }
-    else {
-      return null;
+    for (JvmDeclarationSearcher searcher : JvmDeclarationSearcher.EP.allForLanguage(potentiallyIdentifyingElement.getLanguage())) {
+      PsiElement declaringElement = searcher.adjustIdentifierElement(potentiallyIdentifyingElement);
+      if (declaringElement != null) {
+        return declaringElement;
+      }
     }
+    return null;
   }
 
   private static @NotNull Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement) {

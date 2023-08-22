@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit4;
 
 import com.intellij.execution.ExecutionException;
@@ -6,7 +6,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
@@ -36,11 +39,13 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
   @Override
   protected void setupModule() throws Exception {
     super.setupModule();
-    
+
     final ArtifactRepositoryManager repoManager = getRepoManager();
     myModule2 = createEmptyModule();
-    
-    ModuleRootModificationUtil.setModuleSdk(myModule2, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
+
+    Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(myModule2, jdk);
     ModuleRootModificationUtil.updateModel(myModule2, model -> {
       String contentUrl = getTestContentRoot() + "/module2";
       ContentEntry contentEntry = model.addContentEntry(contentUrl);
@@ -75,7 +80,12 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertSize(3, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+    assertStartedEvents(3, processOutput);
+  }
+
+  private static void assertStartedEvents(int size, ProcessOutput processOutput) {
+    assertEquals("error output" + processOutput.err.toString() + "\n commandline: " + processOutput.sys.toString(), 
+                 size, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
   }
 
   public void testForkPerModuleForModuleInfoInTestRootInModuleWithDependency() throws ExecutionException {
@@ -92,7 +102,7 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+    assertStartedEvents(2, processOutput);
   }
 
   public void testForkPerMethodForModuleInfoInTestRoot() throws ExecutionException {
@@ -108,6 +118,6 @@ public class JUnitForkWithModuleInfoIntegrationTest extends AbstractTestFramewor
 
     assertTrue(processOutput.sys.toString().contains("-junit5"));
     assertEmpty(processOutput.out);
-    assertSize(2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance));
+    assertStartedEvents(2, processOutput);
   }
 }

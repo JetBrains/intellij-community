@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.LanguageUtil;
@@ -41,7 +27,7 @@ class AnchorElementInfo extends SelfElementInfo {
   AnchorElementInfo(@NotNull PsiElement anchor,
                     @NotNull PsiFileWithStubSupport containingFile,
                     int stubId,
-                    @NotNull IStubElementType stubElementType) {
+                    @NotNull IStubElementType<?,?> stubElementType) {
     super(null,
           Identikit.fromTypes(anchor.getClass(), stubElementType, LanguageUtil.getRootLanguage(containingFile)),
           containingFile, false);
@@ -49,7 +35,7 @@ class AnchorElementInfo extends SelfElementInfo {
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
 
-  private static long pack(int stubId, @Nullable IStubElementType stubElementType) {
+  private static long pack(int stubId, @Nullable IStubElementType<?,?> stubElementType) {
     short index = stubElementType == null ? 0 : stubElementType.getIndex();
     assert index >= 0 : "Unregistered token types not allowed here: " + stubElementType;
     return ((long)stubId) | ((long)index << 32);
@@ -60,15 +46,14 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  @Nullable
-  public PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
+  public @Nullable PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     long typeAndId = myStubElementTypeAndId;
     int stubId = (int)typeAndId;
     if (stubId != -1) {
       PsiFile file = restoreFile(manager);
       if (!(file instanceof PsiFileWithStubSupport)) return null;
       short index = (short)(typeAndId >> 32);
-      IStubElementType stubElementType = (IStubElementType)IElementType.find(index);
+      IStubElementType<?,?> stubElementType = (IStubElementType<?,?>)IElementType.find(index);
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, stubElementType, false);
     }
 
@@ -76,7 +61,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
+  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     if (other instanceof AnchorElementInfo) {
       if (!getVirtualFile().equals(other.getVirtualFile())) return false;
 
@@ -122,9 +107,8 @@ class AnchorElementInfo extends SelfElementInfo {
     return super.getRange(manager);
   }
 
-  @Nullable
   @Override
-  public TextRange getPsiRange(@NotNull SmartPointerManagerImpl manager) {
+  public @Nullable TextRange getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     if (getStubId() != -1) {
       switchToTree(manager);
     }

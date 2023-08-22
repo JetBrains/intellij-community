@@ -7,6 +7,8 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetRootsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -15,6 +17,7 @@ public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRoo
   private boolean myInitialized;
   private boolean myDisposed;
   private boolean myConfigured;
+  private static int constructorCounter;
 
   public MockFacet(@NotNull final Module module, final String name) {
     this(module, name, new MockFacetConfiguration());
@@ -22,6 +25,8 @@ public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRoo
 
   public MockFacet(final Module module, String name, final MockFacetConfiguration configuration) {
     super(MockFacetType.getInstance(), module, name, configuration, null);
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    constructorCounter += 1;
   }
 
   @Override
@@ -68,6 +73,14 @@ public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRoo
   @Override
   @NotNull
   public Collection<VirtualFile> getFacetRoots() {
-    return getConfiguration().getRoots();
+    return ContainerUtil.mapNotNull(getConfiguration().getRootUrls(), VirtualFileManager.getInstance()::findFileByUrl);
+  }
+
+  public static int getConstructorCounter() {
+    return constructorCounter;
+  }
+
+  public static void setConstructorCounter(int constructorCounter) {
+    MockFacet.constructorCounter = constructorCounter;
   }
 }

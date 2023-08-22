@@ -15,16 +15,14 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.PsiElementProcessor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a file or directory which can be renamed.
- *
- * @author ven
  */
 public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigatablePsiElement {
   boolean isDirectory();
@@ -36,9 +34,8 @@ public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigatableP
   VirtualFile getVirtualFile();
 
   @Override
-  @NotNull
-  @NonNls
+  @NotNull @NlsSafe
   String getName();
 
-  boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor);
+  boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> processor);
 }

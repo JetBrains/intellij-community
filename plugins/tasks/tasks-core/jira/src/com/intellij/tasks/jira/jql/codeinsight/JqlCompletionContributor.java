@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.jira.jql.codeinsight;
 
 import com.intellij.codeInsight.completion.*;
@@ -29,8 +30,7 @@ public class JqlCompletionContributor extends CompletionContributor {
   private static final FilterPattern BEGINNING_OF_LINE = new FilterPattern(new ElementFilter() {
     @Override
     public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-      if (!(element instanceof PsiElement)) return false;
-      PsiElement p = (PsiElement)element;
+      if (!(element instanceof PsiElement p)) return false;
       PsiFile file = p.getContainingFile().getOriginalFile();
       char[] chars = file.textToCharArray();
       for (int offset = p.getTextOffset() - 1; offset >= 0; offset--) {
@@ -172,7 +172,7 @@ public class JqlCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), true));
+    LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), false));
     super.fillCompletionVariants(parameters, result);
   }
 
@@ -234,7 +234,7 @@ public class JqlCompletionContributor extends CompletionContributor {
            new JqlKeywordCompletionProvider("empty", "null"));
   }
 
-  private static class JqlKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final class JqlKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final String[] myKeywords;
 
     private JqlKeywordCompletionProvider(String... keywords) {
@@ -264,20 +264,12 @@ public class JqlCompletionContributor extends CompletionContributor {
       if (predicate != null) {
         listFunctionExpected = false;
         JqlHistoryPredicate.Type predicateType = predicate.getType();
-        switch (predicateType) {
-          case BEFORE:
-          case AFTER:
-          case DURING:
-          case ON:
-            operandType = JqlFieldType.DATE;
-            break;
-          case BY:
-            operandType = JqlFieldType.USER;
-            break;
+        operandType = switch (predicateType) {
+          case BEFORE, AFTER, DURING, ON -> JqlFieldType.DATE;
+          case BY -> JqlFieldType.USER;
           // from, to
-          default:
-            operandType = findTypeOfField(curElem);
-        }
+          default -> findTypeOfField(curElem);
+        };
       }
       else {
         operandType = findTypeOfField(curElem);
@@ -306,7 +298,7 @@ public class JqlCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static class JqlFieldCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final class JqlFieldCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final JqlFieldType myFieldType;
 
     private JqlFieldCompletionProvider(JqlFieldType fieldType) {

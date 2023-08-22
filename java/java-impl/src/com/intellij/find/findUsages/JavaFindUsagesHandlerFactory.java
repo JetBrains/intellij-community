@@ -1,19 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
-import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-
-/**
- * @author peter
-*/
 public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   private final JavaClassFindUsagesOptions myFindClassOptions;
   private final JavaMethodFindUsagesOptions myFindMethodOptions;
@@ -22,7 +18,7 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   private final JavaVariableFindUsagesOptions myFindVariableOptions;
 
   public static JavaFindUsagesHandlerFactory getInstance(@NotNull Project project) {
-    return ContainerUtil.findInstance(EP_NAME.getExtensions(project), JavaFindUsagesHandlerFactory.class);
+    return ContainerUtil.findInstance(EP_NAME.getExtensionList(project), JavaFindUsagesHandlerFactory.class);
   }
 
   public JavaFindUsagesHandlerFactory(Project project) {
@@ -41,29 +37,8 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element,  @NotNull OperationMode operationMode) {
     if (element instanceof PsiDirectory) {
-      final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
+      PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
       return psiPackage == null ? null : new JavaFindUsagesHandler(psiPackage, this);
-    }
-
-    if (element instanceof PsiMethod && operationMode != OperationMode.HIGHLIGHT_USAGES) {
-      PsiMethod method = (PsiMethod)element;
-      final PsiMethod[] methods;
-
-      if (operationMode == OperationMode.USAGES_WITH_DEFAULT_OPTIONS && 
-          Registry.is("java.find.usages.always.use.top.hierarchy.methods")) {
-        methods = SuperMethodWarningUtil.getTargetMethodCandidates(method, Collections.emptyList());
-      }
-      else {
-        methods = SuperMethodWarningUtil.checkSuperMethods(method, JavaFindUsagesHandler.getActionString());
-      }
-
-      if (methods.length > 1) {
-        return new JavaFindUsagesHandler(element, methods, this);
-      }
-      if (methods.length == 1) {
-        return new JavaFindUsagesHandler(methods[0], this);
-      }
-      return FindUsagesHandler.NULL_HANDLER;
     }
 
     return new JavaFindUsagesHandler(element, this);

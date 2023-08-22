@@ -24,8 +24,11 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -38,8 +41,12 @@ public interface DebuggableRunConfiguration extends RunConfiguration {
       return new InetSocketAddress(InetAddress.getLoopbackAddress(), NetUtils.findAvailableSocketPort());
     }
     catch (IOException e) {
-      throw new ExecutionException("Cannot find available port", e);
+      throw new ExecutionException(XDebuggerBundle.message("error.message.cannot.find.available.port"), e);
     }
+  }
+
+  default Promise<InetSocketAddress> computeDebugAddressAsync(RunProfileState state) throws ExecutionException {
+    return Promises.resolvedPromise(computeDebugAddress(state));
   }
 
   @NotNull

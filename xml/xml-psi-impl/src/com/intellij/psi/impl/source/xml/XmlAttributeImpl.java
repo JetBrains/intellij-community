@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -57,21 +56,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else if (i == XmlElementType.XML_ATTRIBUTE_VALUE) {
-      return XmlChildRole.XML_ATTRIBUTE_VALUE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
-  }
-
-  @Override
   public XmlAttributeValue getValueElement() {
     return (XmlAttributeValue)XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
   }
@@ -82,7 +66,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public XmlElement getNameElement() {
+  public @Nullable XmlElement getNameElement() {
     ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     return child == null ? null : (XmlElement)child.getPsi();
   }
@@ -101,7 +85,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public XmlTag getParent() {
+  public @Nullable XmlTag getParent() {
     final PsiElement parentTag = super.getParent();
     return parentTag instanceof XmlTag ? (XmlTag)parentTag : null; // Invalid elements might belong to DummyHolder instead.
   }

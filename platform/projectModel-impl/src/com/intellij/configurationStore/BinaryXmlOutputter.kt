@@ -1,4 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.util.io.DataOutputStream
@@ -68,13 +70,12 @@ private class BinaryXmlReader(private val input: DataInputStream) {
   }
 
   private fun readUInt29(): Int {
-    var value: Int
     var b = input.read()
     if ((b and 0xFF) < 128) {
       return b
     }
 
-    value = b and 0x7F shl 7
+    var value = b and 0x7F shl 7
     b = input.read()
     if ((b and 0xFF) < 128) {
       return value or b

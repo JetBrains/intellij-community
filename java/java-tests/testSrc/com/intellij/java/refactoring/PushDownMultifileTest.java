@@ -43,14 +43,14 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
     doTest(fail, "a.A", "b.B");
   }
 
-  private void doTest(final boolean fail, final String sourceClassName, final String targetClassName) {
+  private void doTest(final boolean fail, final String sourceClassName, final String... targetClassNames) {
     try {
       doTest(() -> {
         final PsiClass srcClass = myFixture.findClass(sourceClassName);
-        assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myFixture.findClass(targetClassName);
-        assertTrue("Target class not found", targetClass != null);
+        for (String targetClassName : targetClassNames) {
+          myFixture.findClass(targetClassName);
+        }
 
         final PsiMethod[] methods = srcClass.getMethods();
         assertTrue("No methods found", methods.length > 0);
@@ -93,14 +93,16 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
     doTest(false, "a.I", "a.I1");
   }
 
+  public void testTwoInheritors() {
+    doTest(false, "c.Super", "a.SomeA", "b.SomeB");
+  }
+
   public void testUsagesInXml() {
     try {
       doTest(() -> {
         final PsiClass srcClass = myFixture.findClass("a.A");
-        assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myFixture.findClass("b.B");
-        assertTrue("Target class not found", targetClass != null);
+        myFixture.findClass("b.B");
 
         final PsiField[] fields = srcClass.getFields();
         assertTrue("No methods found", fields.length > 0);

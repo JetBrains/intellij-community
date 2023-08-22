@@ -13,7 +13,7 @@ import org.jetbrains.debugger.values.Value
 import javax.swing.Icon
 
 open class BasicDebuggerViewSupport : MemberFilter, DebuggerViewSupport {
-  protected val defaultMemberFilterPromise: Promise<MemberFilter> = resolvedPromise<MemberFilter>(this)
+  protected val defaultMemberFilterPromise: Promise<MemberFilter> = resolvedPromise(this)
 
   override fun propertyNamesToString(list: List<String>, quotedAware: Boolean): String = ValueModifierUtil.propertyNamesToString(list, quotedAware)
 

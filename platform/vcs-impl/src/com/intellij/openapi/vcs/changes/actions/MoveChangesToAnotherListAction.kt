@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.idea.ActionsBundle
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
@@ -16,14 +17,16 @@ import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.isEmpty
+import com.intellij.util.containers.asJBIterable
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.Nls
 
 class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val enabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
-                  (!e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY).isEmpty() ||
+                  ChangeListManager.getInstance(project).areChangeListsEnabled() &&
+                  (!e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY).asJBIterable().isEmpty() ||
                    !e.getData(VcsDataKeys.CHANGES).isNullOrEmpty() ||
                    !e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())
 
@@ -43,7 +46,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 
       if (isEmpty) {
         VcsBalloonProblemNotifier.showOverChangesView(project,
-                                                      VcsBundle.message("move.to.another.changelist.nothing.selected.notification.title"),
+                                                      VcsBundle.message("move.to.another.changelist.nothing.selected.notification"),
                                                       MessageType.INFO)
         return
       }
@@ -69,11 +72,11 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 
       val targetList = askTargetList(project, changes)
       if (targetList != null) {
-        val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+        val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
         changeListManager.moveChangesTo(targetList, *changes.toTypedArray())
         if (unversionedFiles.isNotEmpty()) {
-          changeListManager.addUnversionedFiles(targetList, unversionedFiles)
+          ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInBackground(project, targetList, unversionedFiles)
         }
         return true
       }
@@ -84,7 +87,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       val comparator = compareBy<LocalChangeList> { if (it.isDefault) -1 else 0 }
         .thenBy { if (it.changes.isEmpty()) -1 else 0 }
         .then(ChangesUtil.CHANGELIST_COMPARATOR)
-      return lists.minWith(comparator)
+      return lists.minWithOrNull(comparator)
     }
 
     private fun askTargetList(project: Project, changes: Collection<Change>): LocalChangeList? {
@@ -106,7 +109,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
                             selectedRanges: List<LocalRange>,
                             tracker: PartialLocalLineStatusTracker): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
-      val allChangelists = changeListManager.changeListsCopy
+      val allChangelists = changeListManager.changeLists
 
       val affectedListIds = selectedRanges.map { range -> range.changelistId }.toSet()
       val affectedLists = allChangelists.filter { list -> affectedListIds.contains(list.id) }.toSet()
@@ -121,9 +124,9 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
     private fun askTargetChangelist(project: Project,
                                     affectedLists: Set<LocalChangeList>,
                                     sameFileChangeLists: Set<LocalChangeList>,
-                                    title: String): LocalChangeList? {
+                                    title: @Nls String): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
-      val allChangelists = changeListManager.changeListsCopy
+      val allChangelists = changeListManager.changeLists
 
       val nonAffectedLists = if (affectedLists.size == 1) allChangelists - affectedLists else allChangelists
 
@@ -134,7 +137,9 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
         .ifEmpty { nonAffectedLists }
       val defaultSelection = guessPreferredList(preferredList)
 
-      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, title, null)
+      val chooser = ChangeListChooser(project, StringUtil.removeEllipsisSuffix(title))
+      chooser.setChangeLists(suggestedLists)
+      chooser.setDefaultSelection(defaultSelection)
       chooser.show()
       return chooser.selectedList
     }

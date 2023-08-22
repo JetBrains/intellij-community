@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImplKt;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,9 +59,8 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
     }
   }
 
-  @NotNull
   @Override
-  protected Class<KeymapScheme> getSchemeType() {
+  protected @NotNull Class<KeymapScheme> getSchemeType() {
     return KeymapScheme.class;
   }
 
@@ -84,8 +84,7 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
     copyScheme(parent, name);
   }
 
-  @NotNull
-  private KeymapScheme copyScheme(@NotNull KeymapScheme parent, @NotNull String name) {
+  private @NotNull KeymapScheme copyScheme(@NotNull KeymapScheme parent, @NotNull String name) {
     KeymapScheme scheme = parent.copy(name);
     list.add(scheme);
     selector.selectKeymap(scheme, true);
@@ -194,14 +193,16 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
    * @return the error message if changes cannot be applied
    * @see KeymapPanel#apply()
    */
-  String apply() {
+  @NlsContexts.DialogMessage String apply() {
     HashSet<String> set = new HashSet<>();
     for (KeymapScheme scheme : list) {
       String name = scheme.getName();
+      boolean hasUniqueName = set.add(name);
+      if (!scheme.isMutable()) continue;
       if (isEmptyOrSpaces(name)) {
         return KeyMapBundle.message("configuration.all.keymaps.should.have.non.empty.names.error.message");
       }
-      if (!set.add(name)) {
+      if (!hasUniqueName) {
         return KeyMapBundle.message("configuration.all.keymaps.should.have.unique.names.error.message");
       }
     }
@@ -217,8 +218,7 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
   /**
    * @return a list of loaded keymaps
    */
-  @NotNull
-  private static List<Keymap> getKeymaps() {
+  private static @NotNull List<Keymap> getKeymaps() {
     return ((KeymapManagerImpl)KeymapManager.getInstance()).getKeymaps(FILTER);
   }
 

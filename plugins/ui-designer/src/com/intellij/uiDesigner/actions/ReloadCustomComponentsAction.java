@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -35,6 +36,11 @@ public class ReloadCustomComponentsAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     e.getPresentation().setVisible(editor != null && haveCustomComponents(editor));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static boolean haveCustomComponents(final GuiEditor editor) {

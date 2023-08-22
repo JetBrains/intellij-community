@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author peter
- */
 public final class DumbUnawareHider extends JBPanelWithEmptyText {
   private final JComponent myDumbUnawareContent;
 

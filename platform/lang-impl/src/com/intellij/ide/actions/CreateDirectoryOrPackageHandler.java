@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -38,7 +39,8 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @Nullable private PsiFileSystemItem myCreatedElement = null;
   @NotNull private final String myDelimiters;
   @Nullable private final Component myDialogParent;
-  private String myErrorText;
+  private @NlsContexts.DetailedDescription String myErrorText;
+  private @NlsContexts.DetailedDescription String myWarningText;
 
   public CreateDirectoryOrPackageHandler(@Nullable Project project,
                                          @NotNull PsiDirectory directory,
@@ -61,29 +63,37 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
 
   @Override
   public boolean checkInput(String inputString) {
+    myErrorText = checkForErrors(inputString);
+    if (myErrorText == null) {
+      myWarningText = checkForWarnings(inputString);
+    }
+    else {
+      myWarningText = null;
+    }
+    return myErrorText == null;
+  }
+
+  private @Nullable @NlsContexts.DetailedDescription String checkForErrors(String inputString) {
     final StringTokenizer tokenizer = new StringTokenizer(inputString, myDelimiters);
     VirtualFile vFile = myDirectory.getVirtualFile();
     boolean firstToken = true;
     while (tokenizer.hasMoreTokens()) {
       final String token = tokenizer.nextToken();
       if (!tokenizer.hasMoreTokens() && (token.equals(".") || token.equals(".."))) {
-        myErrorText = IdeBundle.message("error.invalid.directory.name", token);
-        return false;
+        return IdeBundle.message("error.invalid.directory.name", token);
       }
       if (vFile != null) {
         if (firstToken && "~".equals(token)) {
           final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
           if (userHomeDir == null) {
-            myErrorText = IdeBundle.message("error.user.home.directory.not.found");
-            return false;
+            return IdeBundle.message("error.user.home.directory.not.found");
           }
           vFile = userHomeDir;
         }
         else if ("..".equals(token)) {
           final VirtualFile parent = vFile.getParent();
           if (parent == null) {
-            myErrorText = IdeBundle.message("error.invalid.directory", vFile.getPresentableUrl() + File.separatorChar + "..");
-            return false;
+            return IdeBundle.message("error.invalid.directory", vFile.getPresentableUrl() + File.separatorChar + "..");
           }
           vFile = parent;
         }
@@ -91,29 +101,45 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
           final VirtualFile child = vFile.findChild(token);
           if (child != null) {
             if (!child.isDirectory()) {
-              myErrorText = IdeBundle.message("error.file.with.name.already.exists", token);
-              return false;
+              return IdeBundle.message("error.file.with.name.already.exists", token);
             }
             else if (!tokenizer.hasMoreTokens()) {
-              myErrorText = IdeBundle.message("error.directory.with.name.already.exists", token);
-              return false;
+              return IdeBundle.message("error.directory.with.name.already.exists", token);
             }
           }
           vFile = child;
         }
       }
-      if (FileTypeManager.getInstance().isFileIgnored(token)) {
-        myErrorText = myIsDirectory ? IdeBundle.message("warning.create.directory.with.ignored.name", token)
-                                    : IdeBundle.message("warning.create.package.with.ignored.name", token);
-        return true;
-      }
-      if (!myIsDirectory && token.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(token)) {
-        myErrorText = IdeBundle.message("error.invalid.java.package.name");
-        return true;
-      }
       firstToken = false;
     }
-    myErrorText = null;
+    return null;
+  }
+
+  private @Nullable @NlsContexts.DetailedDescription String checkForWarnings(String inputString) {
+    final StringTokenizer tokenizer = new StringTokenizer(inputString, myDelimiters);
+    while (tokenizer.hasMoreTokens()) {
+      final String token = tokenizer.nextToken();
+      if (FileTypeManager.getInstance().isFileIgnored(token)) {
+        return myIsDirectory ? IdeBundle.message("warning.create.directory.with.ignored.name", token)
+                                    : IdeBundle.message("warning.create.package.with.ignored.name", token);
+      }
+      if (!myIsDirectory && !token.isEmpty() && myProject != null && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(token)) {
+        return IdeBundle.message("error.invalid.java.package.name");
+      }
+    }
+    if (myIsDirectory && inputString.contains(".") && hasNoPathDelimiters(inputString)) {
+      return IdeBundle.message("warning.create.directory.with.dot");
+    }
+    return null;
+  }
+
+  private boolean hasNoPathDelimiters(String string) {
+    for (int i = 0; i < myDelimiters.length(); i++) {
+      char delimiter = myDelimiters.charAt(i);
+      if (string.contains(String.valueOf(delimiter))) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -123,10 +149,13 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   }
 
   @Override
-  public boolean canClose(final String subDirName) {
+  public @Nullable String getWarningText(String inputString) {
+    return myWarningText;
+  }
 
-    if (subDirName.length() == 0) {
-      showErrorDialog(IdeBundle.message("error.name.should.be.specified"));
+  @Override
+  public boolean canClose(final String subDirName) {
+    if (subDirName.isEmpty()) {
       return false;
     }
 
@@ -155,8 +184,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   private Boolean suggestCreatingFileInstead(String subDirName) {
     Boolean createFile = false;
     if (StringUtil.countChars(subDirName, '.') == 1 && Registry.is("ide.suggest.file.when.creating.filename.like.directory")) {
-      FileType fileType = findFileTypeBoundToName(subDirName);
-      if (fileType != null) {
+      if (findFileTypeBoundToName(subDirName) != null) {
         String message = LangBundle.message("dialog.message.name.you.entered", subDirName);
         int ec = Messages.showYesNoCancelDialog(myProject, message,
                                                 LangBundle.message("dialog.title.file.name.detected"),
@@ -165,7 +193,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
                                                                                        LangBundle.message("button.no.create.directory") :
                                                                                        LangBundle.message("button.no.create.package")),
                                                 CommonBundle.getCancelButtonText(),
-                                                fileType.getIcon());
+                                                Messages.getQuestionIcon());
         if (ec == Messages.CANCEL) {
           createFile = null;
         }
@@ -212,7 +240,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
                                                                       : IdeBundle.message("command.create.package"), null);
   }
 
-  private void showErrorDialog(String message) {
+  private void showErrorDialog(@NlsContexts.DialogMessage String message) {
     String title = CommonBundle.getErrorTitle();
     Icon icon = Messages.getErrorIcon();
     if (myDialogParent != null) {

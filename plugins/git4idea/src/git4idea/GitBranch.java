@@ -1,12 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
-import com.intellij.vcs.log.Hash;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a Git branch, local or remote.
@@ -17,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>It contains information about the branch name and the hash it points to.
  *    Note that the object (including the hash) is immutable. That means that if branch reference move along, you have to get new instance
- *    of the GitBranch object, probably from {@link GitRepository#getBranches()} or {@link git4idea.repo.GitRepository#getCurrentBranch()}.
+ *    of the GitBranch object, probably from {@link GitRepository#getBranches()} or {@link GitRepository#getCurrentBranch()}.
  * </p>
  *
  * <p>GitBranches are equal, if their full names are equal. That means that if two GitBranch objects have different hashes, they
@@ -28,13 +26,6 @@ public abstract class GitBranch extends GitReference {
 
   @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
   @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
-
-  /**
-   * @deprecated All usages should be reviewed and substituted with actual GitBranch objects with Hashes retrieved from the GitRepository.
-   */
-  @Deprecated
-  @Nullable
-  public static final Hash DUMMY_HASH = null;
 
   protected GitBranch(@NotNull String name) {
     super(GitBranchUtil.stripRefsPrefix(name));

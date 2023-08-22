@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
@@ -64,7 +65,8 @@ public class SubtypingConstraint implements ConstraintFormula {
   public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     final boolean reduceResult = doReduce(constraints);
     if (!reduceResult) {
-      session.registerIncompatibleErrorMessage(session.getInferenceVariables(), session.getPresentableText(myS) + " can be converted to " + session.getPresentableText(myT));
+      session.registerIncompatibleErrorMessage(session.getInferenceVariables(),
+                                               JavaPsiBundle.message("type.can.be.converted", session.getPresentableText(myS), session.getPresentableText(myT)));
     }
     return reduceResult;
   }

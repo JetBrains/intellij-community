@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,6 +22,7 @@ import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.config.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,13 +30,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-public class AntBuildFileImpl implements AntBuildFileBase {
+public final class AntBuildFileImpl implements AntBuildFileBase {
   private static final Logger LOG = Logger.getInstance(AntBuildFileImpl.class);
   @NonNls private static final String ANT_LIB = "/.ant/lib";
   private volatile Map<String, String> myCachedExternalProperties;
   private final Object myOptionsLock = new Object();
 
-  public static final AbstractProperty<AntInstallation> ANT_INSTALLATION = new AbstractProperty<AntInstallation>() {
+  public static final AbstractProperty<AntInstallation> ANT_INSTALLATION = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$antInstallation";
@@ -59,7 +61,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     }
   };
 
-  public static final AbstractProperty<List<File>> ALL_CLASS_PATH = new AbstractProperty<List<File>>() {
+  public static final AbstractProperty<List<File>> ALL_CLASS_PATH = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$allClasspath";
@@ -72,7 +74,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
     @Override
     public List<File> get(AbstractProperty.AbstractPropertyContainer container) {
-      ArrayList<File> classpath = new ArrayList<>();
+      List<File> classpath = new ArrayList<>();
       collectClasspath(classpath, ADDITIONAL_CLASSPATH, container);
       AntInstallation antInstallation = ANT_INSTALLATION.get(container);
       if (antInstallation != null) {
@@ -82,7 +84,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
       return classpath;
     }
 
-    private void collectClasspath(ArrayList<File> files,
+    private void collectClasspath(List<File> files,
                                   ListProperty<AntClasspathEntry> property,
                                   AbstractProperty.AbstractPropertyContainer container) {
       if (!container.hasProperty(property)) return;
@@ -92,7 +94,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
         entry.addFilesTo(files);
       }
     }
-
+                                                                       
     @Override
     public void set(AbstractProperty.AbstractPropertyContainer container, List<File> files) {
       throw new UnsupportedOperationException(getName());
@@ -105,7 +107,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   public static final BooleanProperty RUN_IN_BACKGROUND = new BooleanProperty("runInBackground", true);
-  public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 128);
+  public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 512);
   public static final IntProperty MAX_STACK_SIZE = new IntProperty("maximumStackSize", 2);
   public static final BooleanProperty VERBOSE = new BooleanProperty("verbose", true);
   public static final BooleanProperty TREE_VIEW = new BooleanProperty("treeView", true);
@@ -119,7 +121,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public static final AbstractProperty<AntReference> ANT_REFERENCE =
     new ValueProperty<>("antReference", AntReference.PROJECT_DEFAULT);
   public static final ListProperty<AntClasspathEntry> ADDITIONAL_CLASSPATH = ListProperty.create("additionalClassPath");
-  public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<AntInstallation>() {
+  public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<>() {
     @Override
     public String getName() {
       return "$runWithAnt";
@@ -144,6 +146,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   private final VirtualFile myVFile;
+  @NotNull
   private final Project myProject;
   private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
@@ -152,28 +155,30 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   private final ClassLoaderHolder myClassloaderHolder;
   private boolean myShouldExpand = true;
 
-  public AntBuildFileImpl(final XmlFile antFile, final AntConfigurationBase configuration) {
+  public AntBuildFileImpl(@NotNull PsiFile antFile, final AntConfigurationBase configuration) {
     myVFile = antFile.getOriginalFile().getVirtualFile();
     myProject = antFile.getProject();
     myAntConfiguration = configuration;
     myWorkspaceOptions = new ExternalizablePropertyContainer();
-    myWorkspaceOptions.registerProperty(RUN_IN_BACKGROUND);
-    myWorkspaceOptions.registerProperty(CLOSE_ON_NO_ERRORS);
-    myWorkspaceOptions.registerProperty(TREE_VIEW);
-    myWorkspaceOptions.registerProperty(TREE_VIEW_ANSI_COLOR);
-    myWorkspaceOptions.registerProperty(TREE_VIEW_COLLAPSE_TARGETS);
-    myWorkspaceOptions.registerProperty(VERBOSE);
-    myWorkspaceOptions.registerProperty(TARGET_FILTERS, "filter", NewInstanceFactory.fromClass(TargetFilter.class));
+    myWorkspaceOptions.registerProperty(RUN_IN_BACKGROUND, Externalizer.BOOLEAN);
+    myWorkspaceOptions.registerProperty(CLOSE_ON_NO_ERRORS, Externalizer.BOOLEAN);
+    myWorkspaceOptions.registerProperty(TREE_VIEW, Externalizer.BOOLEAN);
+    myWorkspaceOptions.registerProperty(TREE_VIEW_ANSI_COLOR, Externalizer.BOOLEAN);
+    myWorkspaceOptions.registerProperty(TREE_VIEW_COLLAPSE_TARGETS, Externalizer.BOOLEAN);
+    myWorkspaceOptions.registerProperty(VERBOSE, Externalizer.BOOLEAN);
+    myWorkspaceOptions.registerProperty(TARGET_FILTERS, "filter",
+                                        new Externalizer.FactoryBased<>(NewInstanceFactory.fromClass(TargetFilter.class)));
 
     myWorkspaceOptions.rememberKey(RUN_WITH_ANT);
 
     myProjectOptions = new ExternalizablePropertyContainer();
-    myProjectOptions.registerProperty(MAX_HEAP_SIZE);
-    myProjectOptions.registerProperty(MAX_STACK_SIZE);
-    myProjectOptions.registerProperty(CUSTOM_JDK_NAME);
-    myProjectOptions.registerProperty(ANT_COMMAND_LINE_PARAMETERS);
-    myProjectOptions.registerProperty(ANT_PROPERTIES, "property", NewInstanceFactory.fromClass(BuildFileProperty.class));
-    myProjectOptions.registerProperty(ADDITIONAL_CLASSPATH, "entry", SinglePathEntry.EXTERNALIZER);
+    myProjectOptions.registerProperty(MAX_HEAP_SIZE, Externalizer.INTEGER);
+    myProjectOptions.registerProperty(MAX_STACK_SIZE, Externalizer.INTEGER);
+    myProjectOptions.registerProperty(CUSTOM_JDK_NAME, Externalizer.STRING);
+    myProjectOptions.registerProperty(ANT_COMMAND_LINE_PARAMETERS, Externalizer.STRING);
+    myProjectOptions.registerProperty(ANT_PROPERTIES, "property",
+                                      new Externalizer.FactoryBased<>(NewInstanceFactory.fromClass(BuildFileProperty.class)));
+    myProjectOptions.registerProperty(ADDITIONAL_CLASSPATH, "entry", AntClasspathEntry.EXTERNALIZER);
     myProjectOptions.registerProperty(ANT_REFERENCE, AntReference.EXTERNALIZER);
 
     myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{
@@ -184,15 +189,14 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public static List<File> getUserHomeLibraries() {
-    ArrayList<File> classpath = new ArrayList<>();
+    List<File> classpath = new ArrayList<>();
     final String homeDir = SystemProperties.getUserHome();
     new AllJarsUnderDirEntry(new File(homeDir, ANT_LIB)).addFilesTo(classpath);
     return classpath;
   }
 
   @Override
-  @Nullable
-  public String getPresentableName() {
+  public @NotNull @Nls String getPresentableName() {
     AntBuildModel model = myAntConfiguration.getModelIfRegistered(this);
     String name = model != null ? model.getName() : null;
     if (StringUtil.isEmptyOrSpaces(name)) {
@@ -203,7 +207,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   @Override
   @Nullable
-  public String getName() {
+  public @NlsSafe String getName() {
     final VirtualFile vFile = getVirtualFile();
     return vFile != null ? vFile.getName() : null;
   }
@@ -238,12 +242,8 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   @Override
   @Nullable
   public XmlFile getAntFile() {
-    final PsiFile psiFile = myVFile.isValid() ? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
-    if (!(psiFile instanceof XmlFile)) {
-      return null;
-    }
-    final XmlFile xmlFile = (XmlFile)psiFile;
-    return AntDomFileDescription.isAntFile(xmlFile) ? xmlFile : null;
+    final PsiFile psiFile = myVFile.isValid()? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
+    return (psiFile instanceof XmlFile xmlFile) && AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
   }
 
   @Override
@@ -264,7 +264,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   @Override
   @Nullable
-  public String getPresentableUrl() {
+  public @NlsSafe String getPresentableUrl() {
     final VirtualFile file = getVirtualFile();
     return (file == null) ? null : file.getPresentableUrl();
   }
@@ -367,7 +367,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
       myWorkspaceOptions.readExternal(parentNode);
       final Element expanded = parentNode.getChild("expanded");
       if (expanded != null) {
-        myShouldExpand = Boolean.valueOf(expanded.getAttributeValue("value"));
+        myShouldExpand = Boolean.parseBoolean(expanded.getAttributeValue("value"));
       }
 
       // don't lose old command line parameters

@@ -51,7 +51,7 @@
                 </constraints>
                 <properties>
                   <focusable value="false"/>
-                  <text value="A&amp;dd"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.add2"/>
                 </properties>
               </component>
               <component id="924c4" class="javax.swing.JButton" binding="myEditRepoButton">
@@ -59,7 +59,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Edit"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.edit2"/>
                 </properties>
               </component>
               <component id="d12de" class="javax.swing.JButton" binding="myRemoveRepoButton">
@@ -67,7 +67,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Remove"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.remove2"/>
                 </properties>
               </component>
               <component id="9dabf" class="javax.swing.JButton" binding="myResetToDefaultReposButton">
@@ -75,7 +75,7 @@
                   <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Reset Defaults"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.reset.defaults"/>
                 </properties>
               </component>
             </children>
@@ -129,7 +129,7 @@
                 </constraints>
                 <properties>
                   <focusable value="false"/>
-                  <text value="&amp;Add"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.add"/>
                 </properties>
               </component>
               <component id="51b" class="javax.swing.JButton" binding="myRemoveServiceButton">
@@ -137,7 +137,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Remove"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.remove"/>
                 </properties>
               </component>
               <component id="d96a1" class="javax.swing.JButton" binding="myTestServiceButton" default-binding="true">
@@ -145,7 +145,7 @@
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Test"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.test"/>
                 </properties>
               </component>
               <component id="ca06e" class="javax.swing.JButton" binding="myEditServiceButton">
@@ -153,7 +153,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Edit"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.edit"/>
                 </properties>
               </component>
               <component id="24fc3" class="javax.swing.JButton" binding="myResetToDefaultServicesButton">
@@ -161,7 +161,7 @@
                   <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Reset Defaults"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.reset.defaults"/>
                 </properties>
               </component>
             </children>

@@ -38,15 +38,16 @@ public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWit
     });
 
 
-    comboBox.setRenderer(new ColoredListCellRenderer<Object>() {
+    comboBox.setRenderer(new ColoredListCellRenderer<>() {
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof ToolsGroup) {
           SeparatorWithText separator = new SeparatorWithText();
-          separator.setCaption(StringUtil.notNullize(((ToolsGroup)value).getName(), ToolsBundle.message("tools.unnamed.group")));
+          separator.setCaption(StringUtil.notNullize(((ToolsGroup<?>)value).getName(), ToolsBundle.message("tools.unnamed.group")));
           separator.setCaptionCentered(false);
           return separator;
-        } else {
+        }
+        else {
           return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
         }
       }

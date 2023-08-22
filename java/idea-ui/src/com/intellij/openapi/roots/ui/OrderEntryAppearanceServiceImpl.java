@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.ide.JavaUiBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -37,8 +38,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
   @NotNull
   @Override
   public CellAppearanceEx forOrderEntry(Project project, @NotNull final OrderEntry orderEntry, final boolean selected) {
-    if (orderEntry instanceof JdkOrderEntry) {
-      JdkOrderEntry jdkLibraryEntry = (JdkOrderEntry)orderEntry;
+    if (orderEntry instanceof JdkOrderEntry jdkLibraryEntry) {
       Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
@@ -49,8 +49,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     else if (!orderEntry.isValid()) {
       return FileAppearanceService.getInstance().forInvalidUrl(orderEntry.getPresentableName());
     }
-    else if (orderEntry instanceof LibraryOrderEntry) {
-      LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+    else if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
       if (!libraryOrderEntry.isValid()) { //library can be removed
         return FileAppearanceService.getInstance().forInvalidUrl(orderEntry.getPresentableName());
       }
@@ -63,8 +62,8 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       Icon icon = orderEntry instanceof ModuleSourceOrderEntry ? sourceFolderIcon(false) : null;
       return new SimpleTextCellAppearance(presentableName, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
     }
-    else if (orderEntry instanceof ModuleOrderEntry) {
-      final Icon icon = ModuleType.get(((ModuleOrderEntry)orderEntry).getModule()).getIcon();
+    else if (orderEntry instanceof ModuleOrderEntry entry) {
+      final Icon icon = ModuleType.get(entry.getModule()).getIcon();
       return SimpleTextCellAppearance.regular(orderEntry.getPresentableName(), icon);
     }
     else {
@@ -85,7 +84,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
     final String[] files = library.getUrls(OrderRootType.CLASSES);
     if (files.length == 0) {
-      return SimpleTextCellAppearance.invalid(ProjectModelBundle.message("library.empty.library.item"), PlatformIcons.LIBRARY_ICON);
+      return SimpleTextCellAppearance.invalid(ProjectModelBundle.message("empty.library.title"), PlatformIcons.LIBRARY_ICON);
     }
     else if (files.length == 1) {
       return forVirtualFilePointer(new LightFilePointer(files[0]));
@@ -128,7 +127,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
   }
 
   @NotNull
-  private static CellAppearanceEx normalOrRedWaved(@NotNull final String text, @Nullable final Icon icon, final boolean waved) {
+  private static CellAppearanceEx normalOrRedWaved(@NotNull final @NlsContexts.Label String text, @Nullable final Icon icon, final boolean waved) {
     return waved ? new SimpleTextCellAppearance(text, icon, new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, null, JBColor.RED))
                  : SimpleTextCellAppearance.regular(text, icon);
   }

@@ -1,16 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.externalAnnotation.location
 
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.LightPlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-
 class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
-
   @Test
   fun `test missing annotation is not provided`() {
     val provider = JBBundledAnnotationsProvider()
@@ -28,10 +27,11 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
 
     val locations = provider.getLocations(project, lib, "junit", "junit", "4.12")
 
-    assertThat(locations)
+    val locationsAssert = assertThat(locations)
+    locationsAssert
       .hasSize(1)
-      .usingElementComparatorIgnoringFields("myRepositoryUrls")
-      .containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
+      .usingRecursiveFieldByFieldElementComparatorIgnoringFields("myRepositoryUrls")
+    locationsAssert.containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
   }
 
   @Test
@@ -39,15 +39,17 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
     val provider = JBBundledAnnotationsProvider()
     val lib = createLibrary()
 
-    assertThat(provider.getLocations(project, lib, "junit", "junit", "4.1"))
+    var locationsAssert = assertThat(provider.getLocations(project, lib, "junit", "junit", "4.1"))
+    locationsAssert
       .hasSize(1)
-      .usingElementComparatorIgnoringFields("myRepositoryUrls")
-      .containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
+      .usingRecursiveFieldByFieldElementComparatorIgnoringFields("myRepositoryUrls")
+    locationsAssert.containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
 
-    assertThat(provider.getLocations(project, lib, "junit", "junit", "4.9"))
+    locationsAssert = assertThat(provider.getLocations(project, lib, "junit", "junit", "4.9"))
+    locationsAssert
       .hasSize(1)
-      .usingElementComparatorIgnoringFields("myRepositoryUrls")
-      .containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
+      .usingRecursiveFieldByFieldElementComparatorIgnoringFields("myRepositoryUrls")
+    locationsAssert.containsOnly(AnnotationsLocation("org.jetbrains.externalAnnotations.junit", "junit", "4.12-an1"))
   }
 
   @Test
@@ -62,6 +64,12 @@ class JBBundledAnnotationsProviderTest : LightPlatformTestCase() {
 
   private fun createLibrary(): Library {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    return WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("test-library") }
+    val library = runWriteActionAndWait { libraryTable.createLibrary("test-library") }
+    disposeOnTearDown(object : Disposable {
+      override fun dispose() {
+        runWriteActionAndWait { libraryTable.removeLibrary(library) }
+      }
+    })
+    return library
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.IdeEventQueue;
@@ -15,7 +15,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.stream.Stream;
 
-public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopupEventDispatcher {
+public final class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopupEventDispatcher {
 
   private static WizardPopup ourActiveWizardRoot;
   private static WizardPopup ourShowingStep;
@@ -78,7 +78,10 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
 
     while (true) {
       if (eachParent.isDisposed() || !eachParent.getContent().isShowing()) {
-        getActiveRoot().cancel();
+        WizardPopup currentActiveRoot = getActiveRoot();
+        if (eachParent.getParent() == currentActiveRoot) {
+          currentActiveRoot.cancel();
+        }
         return false;
       }
 
@@ -124,8 +127,14 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
           return;
         }
       }
+      WizardPopup activeRoot = getActiveRoot();
+      if (aBaseWizardPopup != activeRoot && ourShowingStep != activeRoot) {
+        // even if no parent popup exist (e.g. it's ActionGroupPopup), sync showing step with possible changed active root.
+        // set visible active root to correctly dispatch subsequent events.
+        ourShowingStep = activeRoot;
+      }
     }
-   }
+  }
 
   static WizardPopup getActiveRoot() {
     return ourActiveWizardRoot;
@@ -136,9 +145,8 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     return ourShowingStep != null && !ourShowingStep.isDisposed() ? ourShowingStep.getContent() : null;
   }
 
-  @NotNull
   @Override
-  public Stream<JBPopup> getPopupStream() {
+  public @NotNull Stream<JBPopup> getPopupStream() {
     return Stream.of(ourActiveWizardRoot);
   }
 

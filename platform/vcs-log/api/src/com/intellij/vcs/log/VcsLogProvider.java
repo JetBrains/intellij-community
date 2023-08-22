@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,6 @@ import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +38,7 @@ public interface VcsLogProvider {
   /**
    * Reads the whole history.
    * <p/>
-   * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
+   * Reports the commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
    *
    * @return all references and all authors in the repository.
    */
@@ -49,17 +48,17 @@ public interface VcsLogProvider {
   /**
    * Reads those details of the given commits, which are necessary to be shown in the log table and commit details.
    */
-  List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  void readMetadata(@NotNull VirtualFile root,
+                    @NotNull List<String> hashes,
+                    @NotNull Consumer<? super VcsCommitMetadata> consumer) throws VcsException;
 
   /**
    * Reads full details for specified commits in the repository.
    * <p/>
-   * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
+   * Reports the commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
    */
-  default void readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes,
-                               @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) throws VcsException {
-    readFullDetails(root, hashes, commitConsumer, false);
-  }
+  void readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes,
+                       @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer) throws VcsException;
 
   /**
    * <p>Returns the VCS which is supported by this provider.</p>
@@ -116,8 +115,7 @@ public interface VcsLogProvider {
    * @param <T>      Type of property value.
    * @return Property value or null if unset.
    */
-  @Nullable
-  <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
+  @Nullable <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
 
   /**
    * Returns currently checked out branch in given root, or null if not on any branch or provided root is not under version control.
@@ -169,7 +167,7 @@ public interface VcsLogProvider {
 
     /**
      * Returns the number of commits that should be queried from the VCS. <br/>
-     * (of course it may return less commits if the repository is small)
+     * (of course it may return fewer commits if the repository is small)
      */
     int getCommitCount();
   }
@@ -194,40 +192,5 @@ public interface VcsLogProvider {
 
     @NotNull
     Set<VcsRef> getRefs();
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readMetadata(VirtualFile, List)}.
-   */
-  @NotNull
-  @Deprecated
-  default List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
-    return readMetadata(root, hashes);
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readFullDetails(VirtualFile, List, Consumer)}.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  default void readFullDetails(@NotNull VirtualFile root,
-                               @NotNull List<String> hashes,
-                               @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer,
-                               boolean isForIndexing)
-    throws VcsException {
-    throw new UnsupportedOperationException(this.getClass().getName() + ".readFullDetails is deprecated");
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readFullDetails(VirtualFile, List, Consumer)}.
-   */
-  @NotNull
-  @Deprecated
-  default List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
-    List<VcsFullCommitDetails> result = new ArrayList<>();
-    readFullDetails(root, hashes, result::add);
-    return result;
   }
 }

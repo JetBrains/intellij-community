@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.editor.Editor;
@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 
-/**
- * @author Pavel.Dolgov
- */
 public interface ProjectSdkSetupValidator {
   ExtensionPointName<ProjectSdkSetupValidator> EP_NAME = ExtensionPointName.create("com.intellij.projectSdkSetupValidator");
 
@@ -42,9 +39,8 @@ public interface ProjectSdkSetupValidator {
    * <br/>
    * NOTE. Do not forget to implement this method.
    */
-  @NotNull
   @SuppressWarnings("MissingDeprecatedAnnotation")
-  default EditorNotificationPanel.ActionHandler getFixHandler(@NotNull Project project, @NotNull VirtualFile file) {
+  default @NotNull EditorNotificationPanel.ActionHandler getFixHandler(@NotNull Project project, @NotNull VirtualFile file) {
     return new ActionHandler() {
       @Override
       @Deprecated

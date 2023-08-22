@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui
 
@@ -7,15 +7,18 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import kotlin.math.max
 import kotlin.properties.Delegates.observable
 
-private val FileStatus.attributes get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor { color })
+private val FileStatus.attributes
+  get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.lazy { color ?: UIUtil.getLabelForeground() })
 
-private fun Int.formatInt(): String = "%,d".format(this)
+private fun Int.formatInt(): String = "%,d".format(this) // NON-NLS
 
 open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
-  private val myRootPanel = SimpleColoredComponent()
+  private val myRootPanel = SimpleColoredComponent().apply { isOpaque = false  }
   private val isPanelEmpty get() = !myRootPanel.iterator().hasNext()
 
   val component get() = myRootPanel
@@ -37,7 +40,7 @@ open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
   }
 
   @JvmOverloads
-  protected fun append(included: Int, fileStatus: FileStatus, label: String, compactLabel: String? = null) {
+  protected fun append(included: Int, fileStatus: FileStatus, @Nls label: String, compactLabel: @Nls String? = null) {
     if (included > 0) {
       if (!isPanelEmpty) {
         appendSpace()
@@ -60,7 +63,8 @@ open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
     myRootPanel.append("   ")
   }
 
-  private fun format(value: Any, label: String, compactLabel: String?): String =
+  @Nls
+  private fun format(value: Any, @Nls label: String, compactLabel: @Nls String?): String =
     if (isCompact && compactLabel != null) "$compactLabel$value" else "$value $label"
 
   interface InfoCalculator {

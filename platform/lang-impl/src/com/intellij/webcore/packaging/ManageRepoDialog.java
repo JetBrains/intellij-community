@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
 import com.intellij.ide.IdeBundle;
@@ -23,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
@@ -32,7 +19,7 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.util.List;
 
-public class ManageRepoDialog extends DialogWrapper {
+public final class ManageRepoDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private final JBList<String> myList;
   private boolean myEnabled;
@@ -45,13 +32,13 @@ public class ManageRepoDialog extends DialogWrapper {
     myList = new JBList<>();
     myList.setPaintBusy(true);
     final DefaultListModel<String> repoModel = new DefaultListModel<>();
-    controller.fetchAllRepositories(new CatchingConsumer<List<String>, Exception>() {
+    controller.fetchAllRepositories(new CatchingConsumer<>() {
       @Override
-      public void consume(List<String> repoUrls) {
+      public void consume(List<@NlsSafe String> repoUrls) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (isDisposed()) return;
           myList.setPaintBusy(false);
-          for (String repoUrl: repoUrls) {
+          for (@NlsSafe String repoUrl : repoUrls) {
             repoModel.addElement(repoUrl);
           }
         }, ModalityState.any());

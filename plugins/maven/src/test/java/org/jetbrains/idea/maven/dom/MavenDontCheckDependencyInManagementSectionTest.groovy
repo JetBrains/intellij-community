@@ -15,11 +15,12 @@
  */
 package org.jetbrains.idea.maven.dom
 
-/**
- * @author Sergey Evdokimov
- */
+import com.intellij.maven.testFramework.MavenDomTestCase
+import org.junit.Test
+
 class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
 
+  @Test
   void testHighlighting() {
     importProject("""
 <groupId>test</groupId>
@@ -109,7 +110,7 @@ class MavenDontCheckDependencyInManagementSectionTest extends MavenDomTestCase {
   </build>
 """)
 
-    checkHighlighting(myProjectPom, true, false, true)
+    checkHighlighting()
   }
 
 }

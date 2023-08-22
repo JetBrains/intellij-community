@@ -18,6 +18,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind;
@@ -56,6 +57,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   @NotNull
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+    if (!isSupportedFile(file)) {
+      return text;
+    }
+
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -87,6 +92,11 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       }
     }
     return buffer.toString();
+  }
+
+  @Override
+  protected boolean isSupportedFile(PsiFile file) {
+    return file instanceof GroovyFile;
   }
 
   private static boolean canPasteRaw(String text, String rawText, StringKind kind) {

@@ -16,16 +16,16 @@ interface ii {}
 
  int f1() throws Exception {
    return 2;
-   <error descr="Unreachable statement">return 5;</error>
+   <error descr="Unreachable statement">return</error> 5;
  }
  int f2(int i) throws Exception {
    if (i==2) return 2;
    throw new Exception();
-   <error descr="Unreachable statement">return 5;</error>
+   <error descr="Unreachable statement">return</error> 5;
  }
  int f3(int i) throws Exception {
    for (;;) return 2;
-   <error descr="Unreachable statement">return 5;</error>
+   <error descr="Unreachable statement">return</error> 5;
  }
  int f4(int i) throws Exception {
    try {
@@ -34,7 +34,7 @@ interface ii {}
    } finally {
      if (i==6) return 9;
    }
-   <error descr="Unreachable statement">return 5;</error>
+   <error descr="Unreachable statement">return</error> 5;
  }
 
  void f5()
@@ -75,7 +75,7 @@ interface ii {}
     for (;;) {
       if (e==null) {
         return;
-        <error descr="Unreachable statement">throw e;</error>
+        <error descr="Unreachable statement">throw</error> e;
       }
     }
   }
@@ -94,7 +94,7 @@ interface ii {}
     void test() {
         int i;
         return;
-        <error descr="Unreachable statement">assert i == i;</error>
+        <error descr="Unreachable statement">assert</error> i == i;
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.openapi.projectRoots.Sdk
@@ -8,20 +8,18 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
 
-/**
- * @author vlan
- */
 class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?, preferredType: String?) : PyAddSdkPanel() {
   override val panelName: String get() = com.jetbrains.python.PyBundle.message("python.add.sdk.panel.name.new.environment.using")
   override val nameExtensionComponent: JComboBox<PyAddNewEnvPanel>
@@ -37,7 +35,7 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
 
   // TODO: Introduce a method in PyAddSdkProvider or in a Python SDK Provider
   private val panels = createPanels(existingSdks, newProjectPath)
-  var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
+  var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == (preferredType ?: PySdkSettings.instance.preferredEnvironmentType) } ?: panels[0]
 
   private val listeners = mutableListOf<Runnable>()
 
@@ -81,6 +79,10 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
     return createdSdk
   }
 
+  override fun getStatisticInfo(): InterpreterStatisticsInfo? {
+    return selectedPanel.getStatisticInfo();
+  }
+
   override fun validateAll(): List<ValidationInfo> = selectedPanel.validateAll()
 
   override fun addChangeListener(listener: Runnable) {
@@ -91,15 +93,18 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
   }
 
   private fun createPanels(existingSdks: List<Sdk>, newProjectPath: String?): List<PyAddNewEnvPanel> {
-    val condaPanel = PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context)
+    val condaPanel = PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath)
     val venvPanel = PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context)
-    val pipEnvPanel = PyAddPipEnvPanel(null, null, existingSdks, newProjectPath, context)
+
+    val envPanelsFromProviders = PySdkProvider.EP_NAME.extensionList
+      .map { it.createNewEnvironmentPanel(null, null, existingSdks, newProjectPath, context) }
+      .toTypedArray()
 
     return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
-      listOf(condaPanel, venvPanel, pipEnvPanel)
+      listOf(condaPanel, venvPanel, *envPanelsFromProviders)
     }
     else {
-      listOf(venvPanel, pipEnvPanel, condaPanel)
+      listOf(venvPanel, *envPanelsFromProviders, condaPanel)
     }
   }
 }

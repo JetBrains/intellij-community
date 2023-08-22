@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +12,9 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RefactoringChangeUtil {
+import java.util.Objects;
+
+public final class RefactoringChangeUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringChangeUtil.class);
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
@@ -42,14 +30,16 @@ public class RefactoringChangeUtil {
       }
 
       if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
-        return getTypeByExpression(((PsiAssignmentExpression)expr.getParent()).getRExpression());
+        PsiAssignmentExpression assignmentExpression =
+          (PsiAssignmentExpression)PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
+        return getTypeByExpression(Objects.requireNonNull(assignmentExpression).getRExpression());
       }
       return null;
     }
 
     return GenericsUtil.getVariableTypeByExpressionType(type);
   }
-  
+
   public static PsiReferenceExpression qualifyReference(@NotNull PsiReferenceExpression referenceExpression,
                                                         @NotNull PsiMember member,
                                                         @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
@@ -116,8 +106,8 @@ public class RefactoringChangeUtil {
   /**
    * Calculates class or interface where referenced member should be searched
    * @param expression reference to the class member
-   * @return class based on the type of the qualifier expression, 
-   *         or containing class, if {@code expression} is not qualified                  
+   * @return class based on the type of the qualifier expression,
+   *         or containing class, if {@code expression} is not qualified
    */
   @Nullable
   public static PsiClass getQualifierClass(@NotNull PsiReferenceExpression expression) {
@@ -138,6 +128,7 @@ public class RefactoringChangeUtil {
     return getThisClass(expression);
   }
 
+  @SuppressWarnings("unchecked")
   static <T extends PsiQualifiedExpression> T createQualifiedExpression(@NotNull PsiManager manager,
                                                                         PsiClass qualifierClass,
                                                                         @NotNull String qName) throws IncorrectOperationException {
@@ -155,11 +146,11 @@ public class RefactoringChangeUtil {
      }
    }
 
-  public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
+  public static @NotNull PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
     return createQualifiedExpression(manager, qualifierClass, "this");
   }
 
-  public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
+  public static @NotNull PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
     return createQualifiedExpression(manager, qualifierClass, "super");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.OptionDescription;
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.Changeable;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,16 +50,15 @@ public class RegistryTextOptionDescriptor extends OptionDescription implements C
   @Override
   public void invokeInternalEditor() {
     if (myValue.getKey().contains("color") && ColorUtil.fromHex(myValue.asString(), null) != null) {
-      Color color = ColorChooser.chooseColor(IdeFrameImpl.getActiveFrame(), "Change Color For '" + myValue.getKey() + "'", ColorUtil.fromHex(myValue.asString()));
+      Color color = ColorChooserService.getInstance().showDialog(IdeFrameImpl.getActiveFrame(), "Change Color For '" + myValue.getKey() + "'", ColorUtil.fromHex(myValue.asString()));
       if (color != null) {
         myValue.setValue(ColorUtil.toHex(color));
       }
     } else {
       String s = Messages.showInputDialog((Project)null, "Enter new value for '" + myValue.getKey() + "'", "Change Registry Value", null,
                                           myValue.asString(), new InputValidatorEx() {
-          @Nullable
           @Override
-          public String getErrorText(String inputString) {
+          public @Nullable String getErrorText(String inputString) {
             return canClose(inputString) ? null : "Should not be empty";
           }
 

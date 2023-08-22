@@ -16,8 +16,6 @@ import java.awt.*;
  *   <li>processes the input and reacts accordingly - shows error message if the project is invalid or proceeds to the next screen;</li>
  * </ul>
  * </pre>
- *
- * @author Denis Zhdanov
  */
 public class SelectExternalProjectStep extends AbstractImportFromExternalSystemWizardStep {
 

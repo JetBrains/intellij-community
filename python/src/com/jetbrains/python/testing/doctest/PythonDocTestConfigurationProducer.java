@@ -24,15 +24,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class PythonDocTestConfigurationProducer extends PythonTestLegacyConfigurationProducer {
+public final class PythonDocTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PythonDocTestRunConfiguration> {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {
-    return PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY;
+    return PythonTestConfigurationType.getInstance().getDocTestFactory();
   }
 
   @Override
-  protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
+  protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
+                                   @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
     return PythonDocTestUtil.isDocTestFunction(pyFunction);
   }
 

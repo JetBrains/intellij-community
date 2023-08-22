@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -38,7 +34,7 @@ import java.util.ArrayList;
 public class ChooseActionsDialog extends DialogWrapper {
   private final ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
-  private final TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor<?> myTreeExpansionMonitor;
   private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
   private final Keymap myKeymap;
   private final QuickList[] myQuicklists;
@@ -78,9 +74,8 @@ public class ChooseActionsDialog extends DialogWrapper {
     return createToolbarPanel();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myFilterComponent.getTextEditor();
   }
 
@@ -97,8 +92,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     ArrayList<String> actions = new ArrayList<>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
-      if (node instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode defNode = (DefaultMutableTreeNode)node;
+      if (node instanceof DefaultMutableTreeNode defNode) {
         Object userObject = defNode.getUserObject();
         if (userObject instanceof String) {
           actions.add((String)userObject);
@@ -114,15 +108,17 @@ public class ChooseActionsDialog extends DialogWrapper {
   private JPanel createToolbarPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     DefaultActionGroup group = new DefaultActionGroup();
-    final JComponent toolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true).getComponent();
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true);
+    toolbar.setTargetComponent(myActionsTree.getTree());
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
     final TreeExpander treeExpander = KeymapPanel.createTreeExpander(myActionsTree);
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
-    panel.add(toolbar, BorderLayout.WEST);
+    panel.add(toolbar.getComponent(), BorderLayout.WEST);
     group = new DefaultActionGroup();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true);
+    actionToolbar.setTargetComponent(myActionsTree.getTree());
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
@@ -150,7 +146,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     panel.add(myFilterComponent, BorderLayout.CENTER);
 
     group.add(new AnAction(KeyMapBundle.message("filter.shortcut.action.text"),
-                           KeyMapBundle.message("filter.shortcut.action.text"),
+                           KeyMapBundle.message("filter.shortcut.action.description"),
                            AllIcons.Actions.ShortcutFilter) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -160,13 +156,18 @@ public class ChooseActionsDialog extends DialogWrapper {
       }
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
-                           KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
+                           KeyMapBundle.message("filter.shortcut.action.description"), AllIcons.Actions.GC) {
       @Override
       public void update(@NotNull AnActionEvent event) {
         boolean enabled = null != myFilteringPanel.getShortcut();
         Presentation presentation = event.getPresentation();
         presentation.setEnabled(enabled);
         presentation.setIcon(enabled ? AllIcons.Actions.Cancel : EmptyIcon.ICON_16);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override

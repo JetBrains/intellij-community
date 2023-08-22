@@ -13,6 +13,7 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -24,12 +25,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- ** finds correspondence between new descriptor and one created on the previous steps
- ** stores maximum  CACHED_STEPS steps
- ** call saveState function to start new step
+ * <ul>
+ * <li>finds correspondence between new descriptor and one created on the previous steps
+ * <li>stores maximum CACHED_STEPS steps
+ * <li>call saveState function to start new step
+ * </ul>
  */
-
-public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager{
+public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeManager {
   private static final Comparator<DebuggerTreeNode> ourNodeComparator = new NodeComparator();
 
   private final DebuggerTree myDebuggerTree;
@@ -62,7 +64,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
 
   @Override
   @NotNull
-  public DebuggerTreeNodeImpl createMessageNode(String message) {
+  public DebuggerTreeNodeImpl createMessageNode(@NlsContexts.Label String message) {
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
   }
 
@@ -79,7 +81,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     final DescriptorTree descriptorTree;
     if (historyKey != null) {
       final DescriptorTree historyTree = myHistories.get(historyKey);
-      descriptorTree = (historyTree != null)? historyTree : new DescriptorTree(true);
+      descriptorTree = (historyTree != null) ? historyTree : new DescriptorTree(true);
     }
     else {
       descriptorTree = new DescriptorTree(true);

@@ -11,13 +11,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
 public class GradleTraceTest extends GradleImportPerformanceTestCase {
 
   @Test
-  public void testEmptyImport() {
+  public void testEmptyImport() throws IOException {
+    createSettingsFile("");
     long testStartTime = System.currentTimeMillis();
     importProjectUsingSingeModulePerGradleProject();
     long importDoneTime = System.currentTimeMillis();
@@ -41,7 +43,8 @@ public class GradleTraceTest extends GradleImportPerformanceTestCase {
   }
 
   @Test
-  public void testEmptyImportPerSourceSet() {
+  public void testEmptyImportPerSourceSet() throws IOException {
+    createSettingsFile("");
     long testStartTime = System.currentTimeMillis();
     importProject();
     long importDoneTime = System.currentTimeMillis();

@@ -2,15 +2,13 @@
 
 package com.intellij.codeInsight.completion.simple;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
-/**
- * @author peter
- */
 public abstract class ParenthesesTailType extends TailType {
 
   protected abstract boolean isSpaceBeforeParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
@@ -19,7 +17,7 @@ public abstract class ParenthesesTailType extends TailType {
 
   @Override
   public int processTail(final Editor editor, int tailOffset) {
-    CommonCodeStyleSettings styleSettings = CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset);
+    CommonCodeStyleSettings styleSettings = CodeStyle.getLocalLanguageSettings(editor, tailOffset);
     if (isSpaceBeforeParentheses(styleSettings, editor, tailOffset)) {
       tailOffset = insertChar(editor, tailOffset, ' ');
     }

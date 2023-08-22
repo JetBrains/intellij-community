@@ -16,18 +16,17 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DomCollectionProblemDescriptorImpl extends DomElementProblemDescriptorImpl implements DomCollectionProblemDescriptor {
   private final DomCollectionChildDescription myChildDescription;
 
   public DomCollectionProblemDescriptorImpl(final DomElement domElement,
-                                            final String message,
+                                            final @InspectionMessage String message,
                                             final HighlightSeverity type,
                                             final DomCollectionChildDescription childDescription) {
     super(domElement, message, type);
@@ -35,10 +34,10 @@ public class DomCollectionProblemDescriptorImpl extends DomElementProblemDescrip
   }
 
   public DomCollectionProblemDescriptorImpl(final DomElement domElement,
-                                            final String message,
+                                            final @InspectionMessage String message,
                                             final HighlightSeverity type,
                                             final DomCollectionChildDescription childDescription,
-                                            final LocalQuickFix... fixes) {
+                                            @NotNull LocalQuickFix @NotNull ... fixes) {
     super(domElement, message, type, fixes);
     myChildDescription = childDescription;
   }

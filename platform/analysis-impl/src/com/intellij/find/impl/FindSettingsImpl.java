@@ -1,18 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,15 +67,15 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @SuppressWarnings("WeakerAccess") public boolean WITH_SUBDIRECTORIES = true;
   @SuppressWarnings("WeakerAccess") public boolean SHOW_RESULTS_IN_SEPARATE_VIEW;
 
-  @SuppressWarnings("WeakerAccess") public String SEARCH_SCOPE = getDefaultSearchScope();
+  @SuppressWarnings("WeakerAccess") public @Nls String SEARCH_SCOPE = getDefaultSearchScope();
   @SuppressWarnings("WeakerAccess") public String FILE_MASK;
 
   @Property(surroundWithTag = false)
   @XCollection(propertyElementName = "recentFileMasks", elementName = "mask", valueAttributeName = "")
-  public List<String> recentFileMasks = new ArrayList<>();
+  protected final List<String> recentFileMasks = new ArrayList<>();
 
   @Override
-  public void loadState(@NotNull FindSettingsImpl state) {
+  public final void loadState(@NotNull FindSettingsImpl state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
@@ -89,7 +95,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   }
 
   @Override
-  public String getDefaultScopeName() {
+  public @Nls String getDefaultScopeName() {
     return SEARCH_SCOPE;
   }
 
@@ -229,18 +235,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     model.setSearchContext(searchContext);
     model.setWithSubdirectories(isWithSubdirectories());
     model.setFileFilter(FILE_MASK);
-
-    model.setCustomScopeName(FIND_SCOPE);
-  }
-
-  @Override
-  public void addStringToFind(@NotNull String s){
-    FindRecents.getInstance().addStringToFind(s);
-  }
-
-  @Override
-  public void addStringToReplace(@NotNull String s) {
-    FindRecents.getInstance().addStringToReplace(s);
   }
 
   @Override
@@ -254,22 +248,20 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   }
 
   @Override
-  public String @NotNull [] getRecentFileMasks() {
+  public final @NlsSafe String @NotNull [] getRecentFileMasks() {
     return ArrayUtilRt.toStringArray(recentFileMasks);
   }
 
   @Override
   @Transient
-  public String getFileMask() {
+  public final @Nullable @NlsSafe String getFileMask() {
     return FILE_MASK;
   }
 
   @Override
-  public void setFileMask(String _fileMask) {
-    FILE_MASK = _fileMask;
-    if (!StringUtil.isEmptyOrSpaces(_fileMask)) {
-      FindInProjectSettingsBase.addRecentStringToList(_fileMask, recentFileMasks);
-    }
+  public final void setFileMask(@Nullable @NlsSafe String fileMask) {
+    FILE_MASK = fileMask;
+    FindInProjectSettingsBase.addRecentStringToList(fileMask, recentFileMasks);
   }
 
   @Override
@@ -345,11 +337,11 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @State(name = "FindRecents", storages = @Storage(value = "find.recents.xml", roamingType = RoamingType.DISABLED))
   static final class FindRecents extends FindInProjectSettingsBase {
     public static FindRecents getInstance() {
-      return ServiceManager.getService(FindRecents.class);
+      return ApplicationManager.getApplication().getService(FindRecents.class);
     }
   }
 
-  private static String getDefaultSearchScope() {
+  private static @Nls String getDefaultSearchScope() {
     return FindBundle.message("find.scope.all.project.classes");
   }
 }

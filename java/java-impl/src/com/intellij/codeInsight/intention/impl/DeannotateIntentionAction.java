@@ -29,14 +29,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 public class DeannotateIntentionAction implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(DeannotateIntentionAction.class);
@@ -45,13 +48,16 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
   @Override
   @NotNull
   public String getText() {
-    return JavaBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " @" + myAnnotationName : "...");
+    if (myAnnotationName == null) {
+      return JavaBundle.message("deannotate.intention.action.several.text");
+    }
+    return JavaBundle.message("deannotate.intention.action.text", "@" + myAnnotationName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return JavaBundle.message("deannotate.intention.action.text");
+    return JavaBundle.message("deannotate.intention.action.family.name");
   }
 
   @Override
@@ -85,23 +91,23 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
       deannotate(externalAnnotations[0], project, file, annotationsManager, listOwner);
       return;
     }
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiAnnotation>(JavaBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
-      @Override
-      public PopupStep<?> onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
-        if (finalChoice) {
-          doFinalStep(() -> deannotate(selectedValue, project, file, annotationsManager, listOwner));
+    Map<PsiAnnotation, @NlsSafe String> qualifiedNames = StreamEx.of(externalAnnotations).toMap(PsiAnnotation::getQualifiedName);
+    JBPopupFactory.getInstance().createListPopup(
+      new BaseListPopupStep<>(JavaBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
+        @Override
+        public PopupStep<?> onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
+          if (finalChoice) {
+            doFinalStep(() -> deannotate(selectedValue, project, file, annotationsManager, listOwner));
+          }
+          return PopupStep.FINAL_CHOICE;
         }
-        return PopupStep.FINAL_CHOICE;
-      }
 
-      @Override
-      @NotNull
-      public String getTextFor(final PsiAnnotation value) {
-        final String qualifiedName = value.getQualifiedName();
-        LOG.assertTrue(qualifiedName != null);
-        return qualifiedName;
-      }
-    }).showInBestPositionFor(editor);
+        @Override
+        @NotNull
+        public String getTextFor(final PsiAnnotation value) {
+          return qualifiedNames.get(value);
+        }
+      }).showInBestPositionFor(editor);
   }
 
   private void deannotate(final PsiAnnotation annotation,

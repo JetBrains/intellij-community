@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -35,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public final class Match {
   private static final Logger LOG = Logger.getInstance(Match.class);
   private final PsiElement myMatchStart;
@@ -82,8 +68,6 @@ public final class Match {
 
   /**
    * Returns either local variable declaration or expression
-   * @param outputParameter
-   * @return
    */
   public ReturnValue getOutputVariableValue(PsiVariable outputParameter) {
     final PsiElement decl = myDeclarationCorrespondence.get(outputParameter);
@@ -107,7 +91,7 @@ public final class Match {
       final boolean [] valueDependsOnReplacedScope = new boolean[1];
       value.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           final PsiElement resolved = expression.resolve();
           if (resolved != null && Comparing.equal(resolved.getContainingFile(), getMatchEnd().getContainingFile())) {
@@ -132,8 +116,7 @@ public final class Match {
     final PsiType parameterType = parameter.getType();
     if (type == null) return false;
     if (currentValue == null) {
-      if (parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter) {
-        final PsiTypeParameter typeParameter = (PsiTypeParameter)((PsiClassType)parameterType).resolve();
+      if (PsiUtil.resolveClassInClassTypeOnly(parameterType) instanceof PsiTypeParameter typeParameter) {
         LOG.assertTrue(typeParameter != null);
         for (PsiClassType classType : typeParameter.getExtendsListTypes()) {
           if (!classType.isAssignableFrom(type)) return false;
@@ -202,14 +185,10 @@ public final class Match {
 
         return instanceExpression == null;
       }
-      else {
-        if (instanceExpression != null) {
-          return PsiEquivalenceUtil.areElementsEquivalent(instanceExpression, myInstanceExpression.get());
-        }
-        else {
-          return myInstanceExpression.get() == null || myInstanceExpression.get() instanceof PsiThisExpression;
-        }
+      if (instanceExpression != null) {
+        return PsiEquivalenceUtil.areElementsEquivalent(instanceExpression, myInstanceExpression.get());
       }
+      return myInstanceExpression.get() instanceof PsiThisExpression;
     }
   }
 
@@ -289,8 +268,8 @@ public final class Match {
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(getMatchStart());
     try {
       final Project project = getMatchStart().getProject();
-      final ControlFlow controlFlow = ControlFlowFactory.getInstance(project)
-          .getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
+      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), 
+                                                                        ControlFlowOptions.NO_CONST_EVALUATE);
       final int endOffset = controlFlow.getEndOffset(getMatchEnd());
       final int startOffset = controlFlow.getStartOffset(getMatchStart());
       final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, endOffset, controlFlow.getSize());

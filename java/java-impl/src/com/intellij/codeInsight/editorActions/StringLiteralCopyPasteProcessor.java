@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
-import com.google.common.base.Strings;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +28,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
 
   @Override
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
+    if (!isSupportedFile(file)) {
+      return null;
+    }
+
     // The main idea is to un-escape string/char literals content if necessary.
     // Example:
     //    Suppose we have a following text at the editor: String s = "first <selection>line \n second</selection> line"
@@ -108,6 +111,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   @NotNull
   @Override
   public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
+    if (!isSupportedFile(file)) {
+      return text;
+    }
+
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -136,6 +143,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return escapeTextBlock(text, offset, "\"".equals(before), "\"".equals(after));
     }
     return text;
+  }
+
+  protected boolean isSupportedFile(PsiFile file) {
+    return file instanceof PsiJavaFile;
   }
 
   private boolean isSuitableForContext(String text, PsiElement context) {
@@ -250,7 +261,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   @NotNull
   protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     StringBuilder buffer = new StringBuilder();
-    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "\'", buffer);
+    StringUtil.escapeStringCharacters(s.length(), s, isStringLiteral(token) ? "\"" : "'", buffer);
     return buffer.toString();
   }
 
@@ -258,7 +269,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   protected String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
     StringBuilder buffer = new StringBuilder(text.length());
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, false);
-    String indent = Strings.repeat(" ", offset);
+    String indent = " ".repeat(offset);
     for (int i = 0; i < lines.length; i++) {
       String content = PsiLiteralUtil.escapeBackSlashesInTextBlock(lines[i]);
       content = PsiLiteralUtil.escapeTextBlockCharacters(content, i == 0 && escapeStartQuote,

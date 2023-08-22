@@ -4,7 +4,6 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.TextBlockMigrationInspection;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,8 +22,4 @@ public class TextBlockMigrationInspectionTest extends LightQuickFixParameterized
     return "/inspection/textBlockMigration/";
   }
 
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_14_PREVIEW;
-  }
 }

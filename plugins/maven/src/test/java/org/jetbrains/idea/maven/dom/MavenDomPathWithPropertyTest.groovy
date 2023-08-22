@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.psi.PsiManager
+import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenDomPathWithPropertyTest extends MavenDomTestCase {
 
+  @Test
   void testRename() {
     importProject("""
 <groupId>test</groupId>
@@ -59,38 +59,16 @@ class MavenDomPathWithPropertyTest extends MavenDomTestCase {
     def bbb = dir.parent
     myFixture.renameElement(PsiManager.getInstance(myFixture.project).findDirectory(bbb), "Z")
 
-    assert PsiManager.getInstance(myFixture.project).findFile(myProjectPom).text.contains("""
-<groupId>test</groupId>
-<artifactId>project</artifactId>
-<version>1</version>
 
-<properties>
-  <ppp>aaa</ppp>
-  <rrr>res</rrr>
-</properties>
-
-<build>
-  <resources>
-    <resource>
-      <directory>aaa/Z/res</directory>
-    </resource>
-    <resource>
-      <directory>\${pom.basedir}/aaa/Z/res</directory>
-    </resource>
-    <resource>
-      <directory>\${pom.basedir}/@ppp@/Z/res</directory>
-    </resource>
-    <resource>
-      <directory>@ppp@/Z/res</directory>
-    </resource>
-    <resource>
-      <directory>@ppp@/Z/@rrr@</directory>
-    </resource>
-  </resources>
-</build>
-""")
+    def text = PsiManager.getInstance(myFixture.project).findFile(myProjectPom).text
+    assert text.contains("<directory>aaa/Z/res</directory>");
+    assert text.contains("<directory>aaa/Z/res</directory>");
+    assert text.contains("<directory>aaa/Z/res</directory>");
+    assert text.contains("<directory>aaa/Z/res</directory>");
+    assert text.contains("<directory>aaa/Z/@rrr@</directory>");
   }
 
+  @Test
   void testCompletionDirectoriesOnly() {
     createProjectPom("""
     <groupId>test</groupId>

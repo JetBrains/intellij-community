@@ -15,8 +15,8 @@
  */
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.java.codeInsight.daemon.quickFix.ChangeNewOperatorTypeTest;
-import com.intellij.java.codeInsight.daemon.quickFix.Simplify2DiamondInspectionsTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.ChangeNewOperatorTypeTest;
+import com.intellij.codeInsight.daemon.impl.quickfix.Simplify2DiamondInspectionsTest;
 import com.intellij.java.refactoring.IntroduceParameterTest;
 import com.intellij.java.refactoring.IntroduceVariableTest;
 import org.junit.runner.RunWith;

@@ -1,0 +1,6 @@
+// AFTER-WARNING: Parameter 'args' is never used
+// AFTER-WARNING: Variable 'x' is never used
+fun main(args: Array<String>){
+    val a = 1
+    val x = "<caret>$a!!!!"
+}

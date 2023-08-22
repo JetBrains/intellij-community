@@ -24,6 +24,8 @@ abstract class CommittedChangesPanel(val project: Project) : BorderLayoutPanel()
 
     val group = ActionManager.getInstance().getAction("CommittedChangesToolbar") as ActionGroup
     val toolBar = browser.createGroupFilterToolbar(project, group, extraActions, auxiliaryView?.toolbarActions.orEmpty())
+    toolBar.targetComponent = browser.changesTree
+
     val filterComponent = CommittedChangesFilterComponent()
     Disposer.register(this, filterComponent)
 

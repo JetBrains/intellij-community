@@ -1,13 +1,12 @@
+import sys
+
 try:
     try:
         from _pydevd_frame_eval_ext import pydevd_frame_evaluator as mod
     except ImportError:
         from _pydevd_frame_eval import pydevd_frame_evaluator as mod
-
 except ImportError:
     try:
-        import sys
-
         try:
             is_64bits = sys.maxsize > 2 ** 32
         except:
@@ -40,4 +39,4 @@ dummy_trace_dispatch = mod.dummy_trace_dispatch
 
 get_thread_info_py = mod.get_thread_info_py
 
-clear_thread_local_info = mod.clear_thread_local_info
+clear_thread_local_info = mod.clear_thread_local_info_py

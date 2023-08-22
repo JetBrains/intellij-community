@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author Max Medvedev
  */
-public class GrHighlightUtil {
+public final class GrHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GrHighlightUtil.class);
 
   private static Set<GrVariable> getReassignedVariables(final PsiElement scope) {
@@ -45,11 +45,10 @@ public class GrHighlightUtil {
     PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceExpression) || ((GrReferenceExpression)element).isQualified()) {
+        if (!(element instanceof GrReferenceExpression ref) || ((GrReferenceExpression)element).isQualified()) {
           return true;
         }
 
-        GrReferenceExpression ref = (GrReferenceExpression)element;
         if (isWriteAccess(ref)) {
           PsiElement target = ref.resolve();
           if (target instanceof GrVariable && ((GrVariable)target).getInitializerGroovy() != null ||
@@ -96,9 +95,8 @@ public class GrHighlightUtil {
     }
 
     final PsiType type = qualifier.getType();
-    if (type instanceof PsiClassType &&
+    if (type instanceof PsiClassType classType &&
         !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof GroovyScriptClass)) {
-      final PsiClassType classType = (PsiClassType)type;
       final PsiClass psiClass = classType.resolve();
       if (psiClass instanceof GroovyScriptClass) {
         return true;

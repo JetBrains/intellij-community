@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -27,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.*;
 
-/**
- * @author peter
- */
 public class ReferenceListWeigher extends ProximityWeigher {
   public static final ReferenceListWeigher INSTANCE = new ReferenceListWeigher();
 
@@ -88,13 +71,18 @@ public class ReferenceListWeigher extends ProximityWeigher {
   @NotNull
   public ReferenceListApplicability getApplicability(@NotNull PsiClass aClass, @NotNull PsiElement position) {
     Preference condition = getPreferredCondition(position);
+    if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      if (condition == Preference.Interfaces || condition == Preference.Classes) {
+        return inapplicable;
+      }
+    }
     if (condition == Preference.Interfaces) return aClass.isInterface() ? applicableByKind : inapplicable;
     if (condition == Preference.Classes) {
       if (aClass.isInterface()) return inapplicable;
       String name = aClass.getName();
       if (name != null && name.endsWith("TestCase")) {
         VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-        if (vFile != null && ProjectFileIndex.SERVICE.getInstance(aClass.getProject()).isInTestSourceContent(vFile)) {
+        if (vFile != null && ProjectFileIndex.getInstance(aClass.getProject()).isInTestSourceContent(vFile)) {
           return applicableByName;
         }
       }

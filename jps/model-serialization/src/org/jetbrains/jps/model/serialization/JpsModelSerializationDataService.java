@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,26 +10,22 @@ import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExte
 import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationImpl;
 import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSerializationDataExtension;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JpsModelSerializationDataService {
-  /**
-   * @deprecated use {@link #computeAllPathVariables(org.jetbrains.jps.model.JpsGlobal)} instead
-   */
-  @Deprecated
-  @NotNull
-  public static Map<String, String> getAllPathVariables(JpsGlobal global) {
-    return computeAllPathVariables(global);
-  }
+public final class JpsModelSerializationDataService {
 
   public static Map<String, String> computeAllPathVariables(JpsGlobal global) {
     Map<String, String> pathVariables = new HashMap<>(PathMacroUtil.getGlobalSystemMacros(false));
     JpsPathVariablesConfiguration configuration = getPathVariablesConfiguration(global);
     if (configuration != null) {
       pathVariables.putAll(configuration.getAllUserVariables());
+    }
+    for (JpsPathMacroContributor extension : JpsServiceManager.getInstance().getExtensions(JpsPathMacroContributor.class)) {
+      pathVariables.putAll(extension.getPathMacros());
     }
     return pathVariables;
   }

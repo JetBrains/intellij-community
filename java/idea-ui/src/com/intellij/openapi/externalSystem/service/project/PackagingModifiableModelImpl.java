@@ -70,7 +70,7 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
   }
 
   @Override
-  public ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter() {
+  public @NotNull ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter() {
     return myArtifactExternalDependenciesImporter;
   }
 
@@ -178,20 +178,6 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
   private static class DummyArtifactModel implements ModifiableArtifactModel {
     @NotNull
     @Override
-    public ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType) {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public ModifiableArtifact addArtifact(@NotNull String name,
-                                          @NotNull ArtifactType artifactType,
-                                          CompositePackagingElement<?> rootElement) {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
     public ModifiableArtifact addArtifact(@NotNull String name,
                                           @NotNull ArtifactType artifactType,
                                           CompositePackagingElement<?> rootElement,
@@ -211,7 +197,7 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
 
     @Nullable
     @Override
-    public Artifact getModifiableCopy(Artifact artifact) {
+    public Artifact getModifiableCopy(@NotNull Artifact artifact) {
       return null;
     }
 

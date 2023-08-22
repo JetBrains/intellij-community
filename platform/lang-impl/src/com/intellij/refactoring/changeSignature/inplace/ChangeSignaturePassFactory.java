@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -17,13 +17,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
 
 final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override
@@ -40,24 +39,18 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
     return new ChangeSignaturePass(file.getProject(), file, editor);
   }
 
-  private static class ChangeSignaturePass extends TextEditorHighlightingPass {
-    @NonNls private static final String SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED = "Signature change was detected";
-    private final Project myProject;
+  private static final class ChangeSignaturePass extends TextEditorHighlightingPass {
     private final PsiFile myFile;
     private final Editor myEditor;
 
     ChangeSignaturePass(Project project, PsiFile file, Editor editor) {
       super(project, editor.getDocument(), true);
-      myProject = project;
       myFile = file;
       myEditor = editor;
     }
 
     @Override
-    public void doCollectInformation(@NotNull ProgressIndicator progress) {}
-
-    @Override
-    public void doApplyInformationToEditor() {
+    public void doCollectInformation(@NotNull ProgressIndicator progress) {
       HighlightInfo info = null;
       final InplaceChangeSignature currentRefactoring = InplaceChangeSignature.getCurrentRefactoring(myEditor);
       if (currentRefactoring != null) {
@@ -75,12 +68,17 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
                                                        null, Font.PLAIN);
         HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(range);
         builder.textAttributes(attributes);
-        builder.descriptionAndTooltip(SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED);
+        builder.descriptionAndTooltip(RefactoringBundle.message("text.signature.change.was.detected.highlight.tooltip"));
+        IntentionAction action = new ApplyChangeSignatureAction(currentRefactoring.getInitialName());
+        builder.registerFix(action, null, null, null, null);
         info = builder.createUnconditionally();
-        QuickFixAction.registerQuickFixAction(info, new ApplyChangeSignatureAction(currentRefactoring.getInitialName()));
       }
-      Collection<HighlightInfo> infos = info != null ? Collections.singletonList(info) : Collections.emptyList();
-      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myFile, myDocument, 0, myFile.getTextLength(),
+                                                               ContainerUtil.createMaybeSingletonList(info), getId());
+    }
+
+    @Override
+    public void doApplyInformationToEditor() {
     }
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.xsltDebugger.rt.engine.local.xalan;
 
 import org.apache.xalan.processor.TransformerFactoryImpl;
@@ -13,7 +14,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import java.util.TooManyListenersException;
 
-public class XalanSupport {
+public final class XalanSupport {
   public static boolean init(Transformer transformer, LocalDebugger dbg) {
     if (transformer instanceof TransformerImpl) {
       try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts
 
 import com.intellij.openapi.Disposable
@@ -16,12 +16,12 @@ import com.intellij.packaging.ui.ArtifactPropertiesEditor
 import com.intellij.packaging.ui.PackagingElementPresentation
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ui.EmptyIcon
-import java.util.function.Consumer
+import java.util.function.Supplier
 import javax.swing.Icon
 
 class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
   fun `test unload and load artifact type`() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(Consumer {}, testRootDisposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable) {}
     val artifactManager = ArtifactManager.getInstance(myProject)
     runWithRegisteredExtension(MockArtifactType(), ArtifactType.EP_NAME) {
       artifactManager.addArtifact("mock", MockArtifactType.getInstance(), PackagingElementFactory.getInstance().createArtifactRootElement())
@@ -52,7 +52,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     assertOneElement(artifactManager.allArtifactsIncludingInvalid)
     val artifact = assertOneElement(artifactManager.getArtifactsByType(PlainArtifactType.getInstance()))
     assertEquals("mock", artifact.name)
-    assertEquals("data", (artifact.rootElement.children.single() as MockPackagingElement).state.data)
+    assertEmpty(artifact.rootElement.children)
   }
 
   fun `test unload and load artifact properties`() {
@@ -75,7 +75,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     assertEquals("data", (artifact.getProperties(MockArtifactPropertiesProvider.getInstance()) as MockArtifactProperties).data)
   }
 
-  private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
+  private inline fun <T : Any> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
     val disposable = Disposer.newDisposable()
     registerExtension(extension, extensionPoint, disposable)
     try {
@@ -86,30 +86,30 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     }
   }
 
-  private fun <T> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
+  private fun <T : Any> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
     val artifactTypeDisposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
       runWriteAction {
         Disposer.dispose(artifactTypeDisposable)
       }
     })
-    extensionPointName.getPoint(null).registerExtension(type, artifactTypeDisposable)
+    extensionPointName.point.registerExtension(type, artifactTypeDisposable)
   }
 
   override fun setUp() {
     super.setUp()
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(Consumer {}, testRootDisposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable) {}
   }
 }
 
-private class MockArtifactType : ArtifactType("mock", "Mock") {
+private class MockArtifactType : ArtifactType("mock", Supplier { "Mock" }) {
   companion object {
     fun getInstance() = EP_NAME.findExtension(MockArtifactType::class.java)!!
   }
 
   override fun getIcon(): Icon = EmptyIcon.ICON_16
 
-  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String? = ""
+  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String = ""
 
   override fun createRootElement(artifactName: String): CompositePackagingElement<*> {
     return PackagingElementFactory.getInstance().createArtifactRootElement()
@@ -134,12 +134,12 @@ private class MockPackagingElement : PackagingElement<MockPackagingElementState>
 
 private class MockPackagingElementState(var data: String = "")
 
-private class MockPackagingElementType : PackagingElementType<MockPackagingElement>("mock-element", "Mock Element") {
+private class MockPackagingElementType : PackagingElementType<MockPackagingElement>("mock-element", Supplier { "Mock Element" }) {
   override fun canCreate(context: ArtifactEditorContext, artifact: Artifact): Boolean = true
 
   override fun chooseAndCreate(context: ArtifactEditorContext,
                                artifact: Artifact,
-                               parent: CompositePackagingElement<*>): MutableList<out PackagingElement<*>> {
+                               parent: CompositePackagingElement<*>): List<PackagingElement<*>> {
     throw UnsupportedOperationException()
   }
 
@@ -148,10 +148,10 @@ private class MockPackagingElementType : PackagingElementType<MockPackagingEleme
   }
 }
 
-private class MockArtifactProperties : ArtifactProperties<MockArtifactProperties>() {
+internal class MockArtifactProperties : ArtifactProperties<MockArtifactProperties>() {
   var data: String = ""
 
-  override fun getState(): MockArtifactProperties? {
+  override fun getState(): MockArtifactProperties {
     return this
   }
 
@@ -164,7 +164,7 @@ private class MockArtifactProperties : ArtifactProperties<MockArtifactProperties
   }
 }
 
-private class MockArtifactPropertiesProvider : ArtifactPropertiesProvider("mock-properties") {
+internal class MockArtifactPropertiesProvider : ArtifactPropertiesProvider("mock-properties") {
   companion object {
     fun getInstance(): MockArtifactPropertiesProvider = EP_NAME.findExtensionOrFail(MockArtifactPropertiesProvider::class.java)
   }

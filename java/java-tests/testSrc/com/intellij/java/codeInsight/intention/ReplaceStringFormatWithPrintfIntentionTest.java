@@ -3,17 +3,10 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.performance.RedundantStringFormatCallInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceStringFormatWithPrintfIntentionTest extends LightQuickFixParameterizedTestCase {
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_14_PREVIEW;
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/replaceStringFormat";

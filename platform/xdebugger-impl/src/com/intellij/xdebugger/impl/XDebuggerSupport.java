@@ -2,10 +2,7 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.*;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
@@ -32,6 +29,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XQuickEvaluateHandler myQuickEvaluateHandler;
 
   private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
+  private final XAddToInlineWatchesFromEditorActionHandler myAddToInlineWatchesActionHandler;
   private final DebuggerActionHandler myEvaluateInConsoleActionHandler = new XEvaluateInConsoleFromEditorActionHandler();
 
   private final DebuggerToggleActionHandler myMuteBreakpointsHandler;
@@ -44,6 +42,7 @@ public class XDebuggerSupport extends DebuggerSupport {
     myToggleLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler(false);
     myToggleTemporaryLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler(true);
     myAddToWatchesActionHandler = new XAddToWatchesFromEditorActionHandler();
+    myAddToInlineWatchesActionHandler = new XAddToInlineWatchesFromEditorActionHandler();
     myStepOverHandler = new XDebuggerSuspendedActionHandler() {
       @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
@@ -201,6 +200,13 @@ public class XDebuggerSupport extends DebuggerSupport {
 
   @NotNull
   @Override
+  public DebuggerActionHandler getAddToInlineWatchesActionHandler() {
+    return myAddToInlineWatchesActionHandler;
+  }
+
+
+  @NotNull
+  @Override
   public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
     return myEvaluateInConsoleActionHandler;
   }
@@ -215,11 +221,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   @Override
   public MarkObjectActionHandler getMarkObjectHandler() {
     return myMarkObjectActionHandler;
-  }
-
-  @Override
-  public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
-    return XDebuggerManager.getInstance(project).getCurrentSession();
   }
 
   @NotNull

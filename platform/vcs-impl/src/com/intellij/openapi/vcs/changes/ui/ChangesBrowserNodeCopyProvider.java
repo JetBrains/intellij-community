@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +26,11 @@ class ChangesBrowserNodeCopyProvider implements CopyProvider {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return myTree.getSelectionPaths() != null;
   }
@@ -41,7 +47,7 @@ class ChangesBrowserNodeCopyProvider implements CopyProvider {
     CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(paths, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof ChangesBrowserNode) {
-        return ((ChangesBrowserNode)node).getTextPresentation();
+        return ((ChangesBrowserNode<?>)node).getTextPresentation();
       }
       else {
         return node.toString();

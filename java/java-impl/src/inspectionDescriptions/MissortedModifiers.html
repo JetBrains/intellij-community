@@ -1,0 +1,39 @@
+<html>
+<body>
+Reports declarations whose modifiers are not in the canonical
+preferred order (as stated in the Java Language Specification).
+<p><b>Example:</b></p>
+<pre><code>
+  class Foo {
+    native public final void foo();
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Foo {
+    public final native void foo();
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>Use the inspection settings to:</p>
+<ul>
+  <li>
+    <p>
+      toggle the reporting of misplaced annotations:
+      (annotations with <code>ElementType.TYPE_USE</code> <em>not</em> directly
+      before the type and after the modifier keywords, or
+      other annotations <em>not</em> before the modifier keywords).
+      When this option is disabled, any annotation can be positioned before or after the modifier keywords.
+      Modifier lists with annotations in between the modifier keywords will always be reported.
+    </p>
+  </li>
+  <li>
+    <p>
+      specify whether the <code>ElementType.TYPE_USE</code> annotation should be positioned directly before
+      a type, even when the annotation has other targets specified.
+    </p>
+  </li>
+</ul>
+
+</body>
+</html>

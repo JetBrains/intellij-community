@@ -1,4 +1,4 @@
-// "Replace iteration with bulk 'TestClass.test' call" "false"
+// "Replace iteration with bulk 'TestClass.test()' call" "false"
 package testpackage;
 
 import java.util.*;

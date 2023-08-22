@@ -195,7 +195,8 @@ class TeamcityTestResult(TestResult):
 
         diff_failed = None
         try:
-            error = err[1]
+            from .jb_local_exc_store import get_exception
+            error = get_exception()
             if isinstance(error, EqualsAssertionError):
                 diff_failed = error
         except Exception:
@@ -207,8 +208,7 @@ class TeamcityTestResult(TestResult):
             try:
                 details = err.getTraceback()
             except AttributeError:
-                frames_to_skip_from_tail = 2 if diff_failed else 0
-                details = convert_error_to_string(err, frames_to_skip_from_tail)
+                details = convert_error_to_string(err, ["diff_tools", "case.py"])
 
         subtest_failures = self.get_subtest_failure(test_id)
         if subtest_failures:

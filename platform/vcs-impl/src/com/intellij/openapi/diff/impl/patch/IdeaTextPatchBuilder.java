@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.diff.util.Side;
@@ -15,12 +15,16 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class IdeaTextPatchBuilder {
+public final class IdeaTextPatchBuilder {
   private IdeaTextPatchBuilder() {
   }
 
@@ -56,21 +60,26 @@ public class IdeaTextPatchBuilder {
     }
   }
 
-  @NotNull
-  public static List<FilePatch> buildPatch(Project project,
-                                           Collection<? extends Change> changes,
-                                           String basePath,
-                                           boolean reversePatch) throws VcsException {
+  public static @NotNull List<FilePatch> buildPatch(Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull String basePath,
+                                                    boolean reversePatch) throws VcsException {
+    return buildPatch(project, changes, Paths.get(basePath), reversePatch, false);
+  }
+
+  public static @NotNull List<FilePatch> buildPatch(Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull Path basePath,
+                                                    boolean reversePatch) throws VcsException {
     return buildPatch(project, changes, basePath, reversePatch, false);
   }
 
-  @NotNull
-  public static List<FilePatch> buildPatch(Project project,
-                                           Collection<? extends Change> changes,
-                                           String basePath,
-                                           boolean reversePatch,
-                                           boolean honorExcludedFromCommit) throws VcsException {
-    final Collection<BeforeAfter<AirContentRevision>> revisions;
+  public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull Path basePath,
+                                                    boolean reversePatch,
+                                                    boolean honorExcludedFromCommit) throws VcsException {
+    Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes), honorExcludedFromCommit);
     }
@@ -89,34 +98,55 @@ public class IdeaTextPatchBuilder {
     return convertRevision(cr, null);
   }
 
+  public static boolean isBinaryRevision(@Nullable ContentRevision cr) {
+    if (cr == null) return false;
+    if (cr instanceof BinaryContentRevision) return true;
+    return cr.getFile().getFileType().isBinary();
+  }
+
   @Nullable
   private static AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable String actualTextContent) {
-    if (cr == null) return null;
-    final FilePath fp = cr.getFile();
-    final StaticPathDescription description = new StaticPathDescription(fp.isDirectory(), fp.getIOFile().lastModified(), fp.getPath());
-
-    if (actualTextContent != null) {
-      return new PartialTextAirContentRevision(actualTextContent, cr, description, null);
+    if (cr == null) {
+      return null;
     }
-    else if (cr instanceof BinaryContentRevision) {
-      return new BinaryAirContentRevision((BinaryContentRevision)cr, description, null);
+
+    FilePath filePath = cr.getFile();
+    if (actualTextContent != null) {
+      return new PartialTextAirContentRevision(actualTextContent, cr, filePath);
+    }
+    else if (cr instanceof ByteBackedContentRevision &&
+             isBinaryRevision(cr)) {
+      return new BinaryAirContentRevision((ByteBackedContentRevision)cr, filePath);
     }
     else {
-      return new TextAirContentRevision(cr, description, null);
+      return new TextAirContentRevision(cr, filePath);
     }
   }
 
-  private static class BinaryAirContentRevision implements AirContentRevision {
-    @NotNull private final BinaryContentRevision myRevision;
-    @NotNull private final StaticPathDescription myDescription;
-    @Nullable private final Long myTimestamp;
+  @Nullable
+  private static Long getRevisionTimestamp(@NotNull ContentRevision revision) {
+    if (revision instanceof CurrentContentRevision) {
+      try {
+        FilePath filePath = revision.getFile();
+        Path path = filePath.getIOFile().toPath();
+        return Files.getLastModifiedTime(path).toMillis();
+      }
+      catch (IOException e) {
+        return null;
+      }
+    }
+    return null;
+  }
 
-    BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
-                                    @NotNull StaticPathDescription description,
-                                    @Nullable Long timestamp) {
+
+  private static class BinaryAirContentRevision implements AirContentRevision {
+    @NotNull private final ByteBackedContentRevision myRevision;
+    @NotNull private final FilePath myFilePath;
+
+    BinaryAirContentRevision(@NotNull ByteBackedContentRevision revision,
+                             @NotNull FilePath filePath) {
       myRevision = revision;
-      myDescription = description;
-      myTimestamp = timestamp;
+      myFilePath = filePath;
     }
 
     @Override
@@ -131,32 +161,34 @@ public class IdeaTextPatchBuilder {
 
     @Override
     public byte[] getContentAsBytes() throws VcsException {
-      return myRevision.getBinaryContent();
+      return myRevision.getContentAsBytes();
     }
 
     @Override
     public String getRevisionNumber() {
-      return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
+      return myRevision.getRevisionNumber().asString();
+    }
+
+    @Override
+    public @Nullable Long getLastModifiedTimestamp() {
+      return getRevisionTimestamp(myRevision);
     }
 
     @Override
     @NotNull
-    public PathDescription getPath() {
-      return myDescription;
+    public FilePath getPath() {
+      return myFilePath;
     }
   }
 
   private static class TextAirContentRevision implements AirContentRevision {
     @NotNull private final ContentRevision myRevision;
-    @NotNull private final StaticPathDescription myDescription;
-    @Nullable private final Long myTimestamp;
+    @NotNull private final FilePath myFilePath;
 
     TextAirContentRevision(@NotNull ContentRevision revision,
-                                  @NotNull StaticPathDescription description,
-                                  @Nullable Long timestamp) {
+                           @NotNull FilePath filePath) {
       myRevision = revision;
-      myDescription = description;
-      myTimestamp = timestamp;
+      myFilePath = filePath;
     }
 
     @Override
@@ -171,24 +203,23 @@ public class IdeaTextPatchBuilder {
 
     @Override
     public byte[] getContentAsBytes() throws VcsException {
-      if (myRevision instanceof ByteBackedContentRevision) {
-        return ((ByteBackedContentRevision)myRevision).getContentAsBytes();
-      }
-
-      String textContent = getContentAsString();
-      if (textContent == null) return null;
-      return textContent.getBytes(getCharset());
+      return ChangesUtil.loadContentRevision(myRevision);
     }
 
     @Override
     public String getRevisionNumber() {
-      return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
+      return myRevision.getRevisionNumber().asString();
+    }
+
+    @Override
+    public @Nullable Long getLastModifiedTimestamp() {
+      return getRevisionTimestamp(myRevision);
     }
 
     @Override
     @NotNull
-    public PathDescription getPath() {
-      return myDescription;
+    public FilePath getPath() {
+      return myFilePath;
     }
 
     @NotNull
@@ -209,10 +240,9 @@ public class IdeaTextPatchBuilder {
     @NotNull private final String myContent;
 
     PartialTextAirContentRevision(@NotNull String content,
-                                         @NotNull ContentRevision delegateRevision,
-                                         @NotNull StaticPathDescription description,
-                                         @Nullable Long timestamp) {
-      super(delegateRevision, description, timestamp);
+                                  @NotNull ContentRevision delegateRevision,
+                                  @NotNull FilePath filePath) {
+      super(delegateRevision, filePath);
       myContent = content;
     }
 

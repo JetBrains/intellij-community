@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.icons.AllIcons;
@@ -21,18 +21,17 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-public class YAMLStructureViewFactory implements PsiStructureViewFactory {
+public final class YAMLStructureViewFactory implements PsiStructureViewFactory {
   static final Icon ALIAS_ICON = AllIcons.Nodes.Alias;
 
   public YAMLStructureViewFactory() {
     YAMLCustomStructureViewFactory.EP_NAME.addChangeListener(
         () -> ApplicationManager.getApplication().getMessageBus().syncPublisher(StructureViewWrapperImpl.STRUCTURE_CHANGED).run(),
-        ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint(null)));
+        ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint()));
   }
 
   @Override
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
+  public @Nullable StructureViewBuilder getStructureViewBuilder(final @NotNull PsiFile psiFile) {
     if (!(psiFile instanceof YAMLFile)) {
       return null;
     }
@@ -46,12 +45,10 @@ public class YAMLStructureViewFactory implements PsiStructureViewFactory {
 
     return new TreeBasedStructureViewBuilder() {
       @Override
-      @NotNull
-      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+      public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
         return new StructureViewModelBase(psiFile, editor, new YAMLStructureViewFile((YAMLFile)psiFile)){
-          @NotNull
           @Override
-          public Collection<NodeProvider> getNodeProviders() {
+          public @NotNull Collection<NodeProvider<?>> getNodeProviders() {
             return Collections.singleton(new YAMLAliasResolveNodeProvider());
           }
         }
@@ -61,13 +58,11 @@ public class YAMLStructureViewFactory implements PsiStructureViewFactory {
     };
   }
 
-  @NotNull
-  static String getAliasPresentableText(@NotNull YAMLAlias alias) {
+  static @NotNull String getAliasPresentableText(@NotNull YAMLAlias alias) {
     return "*" + alias.getAliasName();
   }
 
-  @NotNull
-  static Collection<StructureViewTreeElement> createChildrenViewTreeElements(@Nullable YAMLPsiElement element, @Nullable String path) {
+  static @NotNull Collection<StructureViewTreeElement> createChildrenViewTreeElements(@Nullable YAMLPsiElement element, @Nullable String path) {
     if (element == null) {
       return Collections.emptyList();
     }

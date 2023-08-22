@@ -36,7 +36,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +43,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return isVisible(e.getDataContext());
@@ -62,13 +67,13 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     presentation.setEnabled(isVisible(dc) && isEnabled(dc));
   }
 
-  private boolean isVisible(final DataContext dc) {
+  private static boolean isVisible(final DataContext dc) {
     final Project project = CommonDataKeys.PROJECT.getData(dc);
-    return (project != null) && (VcsDataKeys.LABEL_BEFORE.getData(dc) != null) && (VcsDataKeys.LABEL_AFTER.getData(dc) != null);
+    return (project != null) && (UpdateInfoTree.LABEL_BEFORE.getData(dc) != null) && (UpdateInfoTree.LABEL_AFTER.getData(dc) != null);
   }
 
-  private boolean isEnabled(final DataContext dc) {
-    final Iterable<Pair<FilePath, FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
+  private static boolean isEnabled(final DataContext dc) {
+    final Iterable<Pair<FilePath, FileStatus>> iterable = UpdateInfoTree.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
     return iterable != null;
   }
 
@@ -78,10 +83,10 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     if ((!isVisible(dc)) || (!isEnabled(dc))) return;
 
     final Project project = CommonDataKeys.PROJECT.getData(dc);
-    final Iterable<Pair<FilePath, FileStatus>> iterable = e.getRequiredData(VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE);
-    final Label before = (Label)e.getRequiredData(VcsDataKeys.LABEL_BEFORE);
-    final Label after = (Label)e.getRequiredData(VcsDataKeys.LABEL_AFTER);
-    final FilePath selectedUrl = VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getData(dc);
+    final Iterable<Pair<FilePath, FileStatus>> iterable = e.getRequiredData(UpdateInfoTree.UPDATE_VIEW_FILES_ITERABLE);
+    final Label before = e.getRequiredData(UpdateInfoTree.LABEL_BEFORE);
+    final Label after = e.getRequiredData(UpdateInfoTree.LABEL_AFTER);
+    final FilePath selectedUrl = UpdateInfoTree.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
     DiffRequestChain requestChain = createDiffRequestChain(project, before, after, iterable, selectedUrl);
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.FRAME);
@@ -112,10 +117,10 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     @NotNull private final FilePath myFilePath;
 
     MyDiffRequestProducer(@Nullable Project project,
-                                 @NotNull Label before,
-                                 @NotNull Label after,
-                                 @NotNull FilePath filePath,
-                                 @NotNull FileStatus fileStatus) {
+                          @NotNull Label before,
+                          @NotNull Label after,
+                          @NotNull FilePath filePath,
+                          @NotNull FileStatus fileStatus) {
       myProject = project;
       myBefore = before;
       myAfter = after;
@@ -168,11 +173,31 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
         }
 
         String title = DiffRequestFactoryImpl.getContentTitle(myFilePath);
-        return new SimpleDiffRequest(title, content1, content2, "Before update", "After update");
+        return new SimpleDiffRequest(title,
+                                     content1,
+                                     content2,
+                                     VcsBundle.message("update.label.before.update"),
+                                     VcsBundle.message("update.label.after.update"));
       }
       catch (IOException e) {
-        throw new DiffRequestProducerException("Can't load content", e);
+        throw new DiffRequestProducerException(VcsBundle.message("update.can.t.load.content"), e);
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyDiffRequestProducer producer = (MyDiffRequestProducer)o;
+      return myBefore.equals(producer.myBefore) &&
+             myAfter.equals(producer.myAfter) &&
+             myFileStatus.equals(producer.myFileStatus) &&
+             myFilePath.equals(producer.myFilePath);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myBefore, myAfter, myFileStatus, myFilePath);
     }
   }
 
@@ -180,7 +205,7 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     ByteContent byteContent = label.getByteContent(path.getPath());
 
     if (byteContent == null || byteContent.isDirectory() || byteContent.getBytes() == null) {
-      throw new DiffRequestProducerException("Can't load content");
+      throw new DiffRequestProducerException(VcsBundle.message("update.can.t.load.content"));
     }
 
     return byteContent.getBytes();

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,7 @@ import java.awt.*;
  * <pre>
  * {@code SwingUtilities2.AA_TEXT_PROPERTY_KEY -> SwingUtilities2.AATextInfo}
  * </pre>
- * was split into the pair (see <a href="https://bugs.openjdk.java.net/browse/JDK-6302464">JDK-6302464</a>):
+ * was split into the pair (see <a href="https://bugs.openjdk.org/browse/JDK-6302464">JDK-6302464</a>):
  * <pre>
  * {@code RenderingHints.KEY_TEXT_ANTIALIASING -> Object}
  * {@code RenderingHints.KEY_TEXT_LCD_CONTRAST -> Integer}
@@ -33,28 +32,18 @@ public final class AATextInfo {
   }
 
   public static Object create(@NotNull Object aaHint, @NotNull Integer lcdContrastHint) {
-    return SystemInfoRt.IS_AT_LEAST_JAVA9 ? new AATextInfo(aaHint, lcdContrastHint) : UIUtilities.createAATextInfo(aaHint, lcdContrastHint);
+    return new AATextInfo(aaHint, lcdContrastHint);
   }
 
   public static void putClientProperty(@Nullable Object aaTextInfo, @NotNull JComponent component) {
-    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
-      AATextInfo info = (AATextInfo)ObjectUtils.notNull(aaTextInfo, new AATextInfo(null, null));
-      component.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, info.aaHint);
-      component.putClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST, info.lcdContrastHint);
-    }
-    else {
-      component.putClientProperty(UIUtilities.AA_TEXT_PROPERTY_KEY, aaTextInfo);
-    }
+    AATextInfo info = (AATextInfo)ObjectUtils.notNull(aaTextInfo, new AATextInfo(null, null));
+    component.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, info.aaHint);
+    component.putClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST, info.lcdContrastHint);
   }
 
   public static Object getClientProperty(@NotNull JComponent component) {
-    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
-      Object aaHint = component.getClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING);
-      Object lcdContrastHint = component.getClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST);
-      return new AATextInfo(aaHint, lcdContrastHint != null ? (Integer)lcdContrastHint : null);
-    }
-    else {
-      return component.getClientProperty(UIUtilities.AA_TEXT_PROPERTY_KEY);
-    }
+    Object aaHint = component.getClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING);
+    Object lcdContrastHint = component.getClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+    return new AATextInfo(aaHint, lcdContrastHint != null ? (Integer)lcdContrastHint : null);
   }
 }

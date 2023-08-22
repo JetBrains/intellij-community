@@ -15,12 +15,16 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -59,6 +63,61 @@ public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
     // TODO change where the placeholder empty import element is added in such cases
     //checkAddingNameInFromImport("from mod import ( # comment", "bar", null, true, "from mod import (bar # comment");
     checkAddingNameInFromImport("from mod import ()", "bar", null, true, "from mod import (bar)");
+  }
+
+  public void testPrecedingImportBlock() {
+    List<List<PsiComment>> blocks;
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+
+                                        # comment
+                                        # comment
+                                        def func():\s
+                                            pass""");
+    assertSize(2, blocks);
+    assertSize(1, blocks.get(0));
+    assertSize(2, blocks.get(1));
+
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+
+                                        # comment
+                                        # comment
+
+                                        def func():\s
+                                            pass""");
+    assertSize(3, blocks);
+    assertSize(1, blocks.get(0));
+    assertSize(2, blocks.get(1));
+    assertSize(0, blocks.get(2));
+
+    blocks = getPrecedingImportBlocks("def func(): \n" +
+                                      "    pass");
+    assertSize(0, blocks);
+
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+                                        x = 42
+
+                                        def func():\s
+                                            pass""");
+    assertSize(0, blocks);
+
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+                                        x = 42
+
+                                        # comment
+                                        def func():\s
+                                            pass""");
+    assertSize(1, blocks);
+    assertSize(1, blocks.get(0));
+  }
+
+  private List<List<PsiComment>> getPrecedingImportBlocks(@NotNull String text) {
+    PyFile file = assertInstanceOf(myFixture.configureByText("a.py", text), PyFile.class);
+    PyFunction func = file.findTopLevelFunction("func");
+    return PyPsiUtils.getPrecedingCommentBlocks(func);
   }
 
   private void checkAddingNameInFromImport(@NotNull String fromImport,

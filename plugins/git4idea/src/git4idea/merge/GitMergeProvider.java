@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.*;
@@ -70,6 +73,8 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @NotNull
   private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
+    if (Registry.is("git.do.not.swap.merge.conflict.sides")) return Collections.emptySet();
+
     Set<VirtualFile> reverseMap = new HashSet<>();
     for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
       boolean reverse;
@@ -113,7 +118,11 @@ public class GitMergeProvider implements MergeProvider2 {
   @NotNull
   public MergeSession createMergeSession(@NotNull List<VirtualFile> files) {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> new MyMergeSession(files), "Loading Unmerged Files", true, myProject);
+      () -> new MyMergeSession(files),
+      GitBundle.message("merge.progress.indicator.loading.unmerged.files.title"),
+      true,
+      myProject
+    );
   }
 
   @Override
@@ -122,11 +131,23 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @NotNull
-  public static String calcColumnName(boolean isTheirs, @Nullable String branchName) {
-    String title = isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status");
-    return branchName != null
-           ? title + " (" + branchName + ")"
-           : title;
+  public static @NlsContexts.ColumnName String calcColumnName(boolean isTheirs, @NlsSafe @Nullable String branchName) {
+    if (isTheirs) {
+      if (branchName != null) {
+        return GitBundle.message("merge.tool.column.theirs.with.branch.status", branchName);
+      }
+      else {
+        return GitBundle.message("merge.tool.column.theirs.status");
+      }
+    }
+    else {
+      if (branchName != null) {
+        return GitBundle.message("merge.tool.column.yours.with.branch.status", branchName);
+      }
+      else {
+        return GitBundle.message("merge.tool.column.yours.status");
+      }
+    }
   }
 
   /**
@@ -301,22 +322,16 @@ public class GitMergeProvider implements MergeProvider2 {
       public String valueOf(VirtualFile file) {
         GitConflict c = myConflicts.get(file);
         if (c == null) {
-          LOG.error("No conflict for the file " + file);
           return "";
         }
         boolean isReversed = myReverseRoots.contains(c.getRoot());
         GitConflict.Status currentStatus = c.getStatus(ConflictSide.OURS, isReversed);
         GitConflict.Status lastStatus = c.getStatus(ConflictSide.THEIRS, isReversed);
         GitConflict.Status status = myIsLast ? lastStatus : currentStatus;
-        switch (status) {
-          case ADDED:
-          case MODIFIED:
-            return GitBundle.message("merge.tool.column.status.modified");
-          case DELETED:
-            return GitBundle.message("merge.tool.column.status.deleted");
-          default:
-            throw new IllegalStateException("Unknown status " + status + " for file " + file.getPath());
-        }
+        return GitBundle.message(switch (status) {
+          case ADDED, MODIFIED -> "merge.tool.column.status.modified";
+          case DELETED -> "merge.tool.column.status.deleted";
+        });
       }
 
       @Override

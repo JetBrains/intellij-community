@@ -1,21 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.RelativeFont;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
@@ -28,7 +25,7 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
   private final JLabel myProjectIcon = new JLabel(AllIcons.General.ProjectConfigurable, SwingConstants.LEFT);
   private final NonOpaquePanel myActionsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 2, 2));
 
-  private final Map<Action, LinkLabel> myActions = new HashMap<>();
+  private final Map<Action, ActionLink> myActions = new HashMap<>();
 
   Banner() {
     setLayout(new BorderLayout());
@@ -44,17 +41,7 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
 
   public void addAction(final Action action) {
     action.addPropertyChangeListener(this);
-    final LinkLabel label = new LinkLabel(null, null, new LinkListener() {
-      @Override
-      public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
-        action.actionPerformed(new ActionEvent(Banner.this, ActionEvent.ACTION_PERFORMED, Action.ACTION_COMMAND_KEY));
-      }
-    }) {
-      @Override
-      protected Color getTextColor() {
-        return PlatformColors.BLUE;
-      }
-    };
+    ActionLink label = new ActionLink("", action);
     label.setFont(label.getFont().deriveFont(Font.BOLD));
     myActions.put(action, label);
     myActionsPanel.add(label);
@@ -62,7 +49,7 @@ class Banner extends NonOpaquePanel implements PropertyChangeListener{
   }
 
   void updateAction(Action action) {
-    final LinkLabel label = myActions.get(action);
+    ActionLink label = myActions.get(action);
     label.setVisible(action.isEnabled());
     label.setText((String)action.getValue(Action.NAME));
     label.setToolTipText((String)action.getValue(Action.SHORT_DESCRIPTION));

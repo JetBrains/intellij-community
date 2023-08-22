@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,8 +7,7 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 
-public class RemoveRedundantTypeArgumentsUtil {
-  private static final Logger LOG = Logger.getInstance(RemoveRedundantTypeArgumentsUtil.class);
+public final class RemoveRedundantTypeArgumentsUtil {
 
   public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
     PsiElement replacement = PsiDiamondTypeUtil.createExplicitReplacement(psiElement);

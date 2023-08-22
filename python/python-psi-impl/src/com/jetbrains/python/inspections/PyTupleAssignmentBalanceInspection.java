@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyNoneType;
@@ -30,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
   @NotNull
@@ -40,16 +38,15 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyExpression lhsExpression = PyPsiUtils.flattenParens(node.getLeftHandSideExpression());
       final PyExpression assignedValue = node.getAssignedValue();
       if (!(lhsExpression instanceof PyTupleExpression) || assignedValue == null) return;
@@ -59,7 +56,8 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
       final int starExpressions = countStarExpressions(targets);
       if (starExpressions > 1) {
-        registerProblem(lhsExpression, "Only one starred expression allowed in assignment");
+        registerProblem(lhsExpression,
+                        PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"));
         return;
       }
 
@@ -67,10 +65,10 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       if (valuesLength == -1) return;
 
       if (targetsLength > valuesLength + starExpressions) {
-        registerProblem(assignedValue, "Need more values to unpack");
+        registerProblem(assignedValue, PyPsiBundle.message("INSP.tuple.assignment.balance.need.more.values.to.unpack"));
       }
       else if (starExpressions == 0 && targetsLength < valuesLength) {
-        registerProblem(assignedValue, "Too many values to unpack");
+        registerProblem(assignedValue, PyPsiBundle.message("INSP.tuple.assignment.balance.too.many.values.to.unpack"));
       }
     }
 
@@ -84,8 +82,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       else if (assignedValue instanceof PyNumericLiteralExpression || assignedValue instanceof PyNoneLiteralExpression) {
         return 1;
       }
-      else if (assignedValue instanceof PyCallExpression) {
-        final PyCallExpression call = (PyCallExpression)assignedValue;
+      else if (assignedValue instanceof PyCallExpression call) {
         if (call.isCalleeText("dict")) {
           return call.getArguments().length;
         }

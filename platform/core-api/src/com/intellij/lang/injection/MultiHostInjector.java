@@ -16,8 +16,13 @@ import java.util.List;
  * (completion, highlighting, navigation) become available there.
  * </p>
  *
+ * <p>For the more high-level API consider implementing the
+ * {@link com.intellij.lang.injection.general.LanguageInjectionContributor LanguageInjectionContributor} and/or
+ * {@link com.intellij.lang.injection.general.LanguageInjectionPerformer LanguageInjectionPerformer} </p>
+ *
  * @see com.intellij.psi.PsiLanguageInjectionHost
  * @see MultiHostRegistrar
+ * @see com.intellij.lang.injection.general.LanguageInjectionContributor
  */
 public interface MultiHostInjector {
   ProjectExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = new ProjectExtensionPointName<>("com.intellij.multiHostInjector");
@@ -30,7 +35,10 @@ public interface MultiHostInjector {
    * class MyRegExpToJavaInjector implements MultiHostInjector {
    *   void getLanguagesToInject(MultiHostRegistrar registrar, PsiElement context) {
    *     if (context instanceof PsiLiteralExpression && looksLikeAGoodPlaceToInject(context)) {
-   *       registrar.startInjecting(REGEXP_LANG).addPlace(null,null,context,innerRangeStrippingQuotes(context));
+   *       registrar
+   *         .startInjecting(REGEXP_LANG)
+   *         .addPlace(null,null,context,innerRangeStrippingQuotes(context))
+   *         .doneInjecting();
    *     }
    *   }
    * }

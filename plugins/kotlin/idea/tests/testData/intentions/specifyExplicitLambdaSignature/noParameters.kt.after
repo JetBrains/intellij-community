@@ -1,0 +1,10 @@
+// WITH_STDLIB
+
+fun bar() {}
+
+fun foo() {
+    run {
+        ->
+        bar()
+    }
+}

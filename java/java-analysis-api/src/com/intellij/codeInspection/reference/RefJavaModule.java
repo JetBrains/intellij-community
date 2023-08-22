@@ -23,9 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
 public interface RefJavaModule extends RefElement {
   Key<RefJavaModule> JAVA_MODULE = Key.create("JAVA_MODULE");
 
@@ -47,15 +44,6 @@ public interface RefJavaModule extends RefElement {
   @NotNull
   List<RequiredModule> getRequiredModules();
 
-  class RequiredModule {
-    @NotNull public final String moduleName;
-    @NotNull public final Map<String, List<String>> packagesExportedByModule;
-    public final boolean isTransitive;
-
-    public RequiredModule(@NotNull String moduleName, @NotNull Map<String, List<String>> packagesExportedByModule, boolean isTransitive) {
-      this.moduleName = moduleName;
-      this.packagesExportedByModule = packagesExportedByModule;
-      this.isTransitive = isTransitive;
-    }
+  record RequiredModule(@NotNull String moduleName, @NotNull Map<String, List<String>> packagesExportedByModule, boolean isTransitive) {
   }
 }

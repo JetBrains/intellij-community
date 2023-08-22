@@ -1,4 +1,4 @@
-// "Convert field to local variable in method 'test'" "true"
+// "Convert field to local variable in method 'test'" "true-preview"
 class Foo {
   void test() {
     class Bar {

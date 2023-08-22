@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -17,6 +17,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -25,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DescriptorComposer extends HTMLComposerImpl {
+public final class DescriptorComposer extends HTMLComposerImpl {
   private static final Logger LOG = Logger.getInstance(DescriptorComposer.class);
   private final InspectionToolPresentation myTool;
 
@@ -85,14 +87,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
     int problemIdx = 0;
     if (descriptions != null) { //server-side inspections
-      problemIdx = -1;
-      for (int i = 0; i < descriptions.length; i++) {
-        CommonProblemDescriptor description = descriptions[i];
-        if (description == descriptor) {
-          problemIdx = i;
-          break;
-        }
-      }
+      problemIdx = ArrayUtil.indexOf(descriptions, descriptor);
       if (problemIdx == -1) return;
     }
 
@@ -130,7 +125,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     VirtualFile vFile = null;
 
     if (expression != null) {
-      vFile = expression.getContainingFile().getVirtualFile();
+      vFile = (expression instanceof PsiFileSystemItem ? (PsiFileSystemItem) expression : expression.getContainingFile()).getVirtualFile();
       if (vFile instanceof VirtualFileWindow) vFile = ((VirtualFileWindow)vFile).getDelegate();
 
       anchor.append("<a HREF=\"");

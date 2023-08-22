@@ -85,6 +85,10 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return myIsConstructor;
   }
 
+  public PsiElement getCurrentFileContext() {
+    return myCurrentFileContext;
+  }
+
   public void setIsConstructor(boolean myIsConstructor) {
     this.myIsConstructor = myIsConstructor;
   }
@@ -93,6 +97,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     add(new CandidateInfo(method, PsiSubstitutor.EMPTY, false, false, myCurrentFileContext));
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {

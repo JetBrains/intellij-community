@@ -1,0 +1,12 @@
+{
+    "mainFile": "Main.kt",
+    "usages": [
+        "Doo.kt",
+        "Foo.kt",
+        "JavaClass.java",
+        "Main.kt",
+        "TypeAliasUsage.kt",
+        "Usage.kt"
+    ],
+    "ignoreK2Compiler": "KTIJ-24828"
+}

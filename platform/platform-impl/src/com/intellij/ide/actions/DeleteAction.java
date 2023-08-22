@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DeleteProvider;
@@ -8,22 +8,19 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
-import java.awt.event.KeyEvent;
 
 public class DeleteAction extends AnAction implements DumbAware, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(DeleteAction.class);
 
   public DeleteAction() { }
 
-  public DeleteAction(String text, String description, Icon icon) {
+  public DeleteAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 
@@ -40,8 +37,7 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
     }
   }
 
-  @Nullable
-  protected DeleteProvider getDeleteProvider(DataContext dataContext) {
+  protected @Nullable DeleteProvider getDeleteProvider(DataContext dataContext) {
     return PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(dataContext);
   }
 
@@ -64,34 +60,19 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
       return;
     }
 
-    DataContext dataContext = e.getDataContext();
-    DeleteProvider provider = getDeleteProvider(dataContext);
-    if (e.getInputEvent() instanceof KeyEvent) {
-      KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
-      Object component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      if (component instanceof JTextComponent) provider = null; // Do not override text deletion
-      if (keyEvent.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
-        // Do not override text deletion in speed search
-        if (component instanceof JComponent) {
-          SpeedSearchSupply searchSupply = SpeedSearchSupply.getSupply((JComponent)component);
-          if (searchSupply != null) provider = null;
-        }
-
-        String activeSpeedSearchFilter = SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.getData(dataContext);
-        if (!StringUtil.isEmpty(activeSpeedSearchFilter)) {
-          provider = null;
-        }
+    CopyAction.updateWithProvider(e, getDeleteProvider(e.getDataContext()), false, provider -> {
+      boolean isPopupPlace = ActionPlaces.isPopupPlace(e.getPlace());
+      boolean enabled = provider.canDeleteElement(e.getDataContext());
+      presentation.setEnabled(enabled);
+      presentation.setVisible(!isPopupPlace || enabled);
+      if (provider instanceof TitledHandler) {
+        presentation.setText(((TitledHandler)provider).getActionTitle());
       }
-    }
-    if (provider instanceof TitledHandler) {
-      presentation.setText(((TitledHandler)provider).getActionTitle());
-    }
-    boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      presentation.setVisible(canDelete);
-    }
-    else {
-      presentation.setEnabled(canDelete);
-    }
+    });
+   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

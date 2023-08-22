@@ -1,10 +1,10 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.structuralsearch.groovy">
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <membersContributor implementation="com.intellij.structuralsearch.IdeaOpenApiNonCodeMembersContributor"/>
+    <membersContributor implementation="com.intellij.structuralsearch.groovy.IdeaOpenApiNonCodeMembersContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <structuralsearch.profile implementation="com.intellij.structuralsearch.GroovyStructuralSearchProfile"/>
-    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.GroovyEquivalenceDescriptorProvider"/>
+    <structuralsearch.profile implementation="com.intellij.structuralsearch.groovy.GroovyStructuralSearchProfile"/>
+    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.groovy.GroovyEquivalenceDescriptorProvider"/>
   </extensions>
 </idea-plugin>

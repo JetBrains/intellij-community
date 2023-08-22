@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import org.jdom.Attribute;
@@ -22,6 +23,7 @@ public class ReplaceOptions implements JDOMExternalizable {
   private boolean toShortenFQN;
   private boolean myToReformatAccordingToStyle;
   private boolean myToUseStaticImport;
+  @NotNull
   private final MatchOptions matchOptions;
 
   @NonNls private static final String REFORMAT_ATTR_NAME = "reformatAccordingToStyle";
@@ -35,14 +37,14 @@ public class ReplaceOptions implements JDOMExternalizable {
     this(new MatchOptions());
   }
 
-  public ReplaceOptions(MatchOptions matchOptions) {
+  public ReplaceOptions(@NotNull MatchOptions matchOptions) {
     variableDefs = new LinkedHashMap<>();
     this.matchOptions = matchOptions;
-    replacement = "";
+    replacement = matchOptions.getSearchPattern();
     myToUseStaticImport = false;
   }
 
-  ReplaceOptions(ReplaceOptions options) {
+  private ReplaceOptions(@NotNull ReplaceOptions options) {
     variableDefs = new LinkedHashMap<>(options.variableDefs.size());
     options.variableDefs.forEach((key, value) -> variableDefs.put(key, value.copy())); // deep copy
     replacement = options.replacement;
@@ -52,11 +54,13 @@ public class ReplaceOptions implements JDOMExternalizable {
     matchOptions = options.matchOptions.copy(); // deep copy
   }
 
+  @NotNull
   public ReplaceOptions copy() {
     return new ReplaceOptions(this);
   }
 
-  public String getReplacement() {
+  @NotNull
+  public @NlsSafe String getReplacement() {
     return replacement;
   }
 
@@ -76,7 +80,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     return myToReformatAccordingToStyle;
   }
 
-  public MatchOptions getMatchOptions() {
+  public @NotNull MatchOptions getMatchOptions() {
     return matchOptions;
   }
 
@@ -92,6 +96,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     myToUseStaticImport = useStaticImport;
   }
 
+  @NotNull
   private Set<String> getUsedVariableNames() {
     return TemplateImplUtil.parseVariableNames(replacement);
   }
@@ -155,9 +160,7 @@ public class ReplaceOptions implements JDOMExternalizable {
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ReplaceOptions)) return false;
-
-    final ReplaceOptions replaceOptions = (ReplaceOptions)o;
+    if (!(o instanceof ReplaceOptions replaceOptions)) return false;
 
     if (myToReformatAccordingToStyle != replaceOptions.myToReformatAccordingToStyle) return false;
     if (toShortenFQN != replaceOptions.toShortenFQN) return false;
@@ -179,20 +182,22 @@ public class ReplaceOptions implements JDOMExternalizable {
     return result;
   }
 
-  public ReplacementVariableDefinition getVariableDefinition(String name) {
+  public ReplacementVariableDefinition getVariableDefinition(@NotNull String name) {
     return variableDefs != null ? variableDefs.get(name): null;
   }
 
-  public void addVariableDefinition(ReplacementVariableDefinition definition) {
+  public void addVariableDefinition(@NotNull ReplacementVariableDefinition definition) {
     variableDefs.put(definition.getName(), definition);
   }
 
-  public ReplacementVariableDefinition addNewVariableDefinition(String name) {
+  @NotNull
+  public ReplacementVariableDefinition addNewVariableDefinition(@NotNull String name) {
     final ReplacementVariableDefinition definition = new ReplacementVariableDefinition(name);
     variableDefs.put(name, definition);
     return definition;
   }
 
+  @NotNull
   public Collection<ReplacementVariableDefinition> getVariableDefinitions() {
     return variableDefs.values();
   }

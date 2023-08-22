@@ -77,4 +77,9 @@ public class PreloadedData extends UserDataHolderBase {
   public void setHasHasWorkToDo(boolean hasWorkFlag) {
     this.hasWorkFlag = hasWorkFlag;
   }
+
+  @Override
+  public String toString() {
+    return "PreloadedData(fsEventOrdinal=" + fsEventOrdinal + ", hasWorkFlag=" + hasWorkFlag + ")";
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExprUtil {
+public final class ExprUtil {
   public static List<VarVersionPair> getSyntheticParametersMask(String className, String descriptor, int parameters) {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(className);
     return node != null ? getSyntheticParametersMask(node, descriptor, parameters) : null;

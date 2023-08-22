@@ -15,15 +15,10 @@
  */
 package com.jetbrains.python.codeInsight.liveTemplates;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 public class PyLiveTemplatesExpandingTest extends PyTestCase {
 
@@ -39,15 +34,7 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
   private void doMultiFileTest() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
     myFixture.configureByFile("a.py");
-
-    final Editor editor = myFixture.getEditor();
-    final Project project = myFixture.getProject();
-
-    new ListTemplatesAction().actionPerformedImpl(project, editor);
-    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    assertNotNull(lookup);
-    lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-
+    myFixture.type("\t");
     myFixture.checkResultByFile(getTestName(false) + "/a_after.py");
   }
 
@@ -62,5 +49,44 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
     manager.startTemplate(myFixture.getEditor(), template);
 
     myFixture.checkResult("# comment ");
+  }
+
+  // PY-43889
+  public void testMainInDef() {
+    doMultiFileTest();
+  }
+
+  // PY-43889
+  public void testMainInImport() {
+    doMultiFileTest();
+  }
+
+  // PY-43889
+  public void testMainInMain() {
+    doMultiFileTest();
+  }
+
+  // PY-43889
+  public void testMainTopLevel() {
+    doMultiFileTest();
+  }
+
+  // PY-26060
+  public void testSuperTemplateWithPython2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-26060
+  public void testSuperTemplateWithPython3() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-41231
+  public void testIterableVariableWithTypeAnnotation() {
+    doMultiFileTest();
   }
 }

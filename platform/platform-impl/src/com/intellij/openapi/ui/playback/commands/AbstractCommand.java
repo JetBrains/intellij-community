@@ -1,44 +1,80 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackContext;
-import org.jetbrains.concurrency.AsyncPromise;
+import io.opentelemetry.context.Context;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class AbstractCommand implements PlaybackCommand {
   private static final Logger LOG = Logger.getInstance(AbstractCommand.class);
 
-  public static final String CMD_PREFIX = "%";
+  public static final @NonNls String CMD_PREFIX = "%";
 
-  private final String myText;
+  /**
+   * "%commandName some parameters" => "some parameters"
+   * OR
+   * "some parameters" => "some parameters"
+   */
+  public String extractCommandArgument(String prefix) {
+    if (myText.startsWith(prefix)) {
+      return myText.substring(prefix.length()).trim();
+    }
+    else {
+      return myText;
+    }
+  }
+
+  public ArrayList<String> extractCommandList(String prefix, String delimiter) {
+    return new ArrayList<>(Arrays.stream(extractCommandArgument(prefix).split(delimiter))
+                             .map(argument -> argument.trim())
+                             .filter(argument -> !argument.isEmpty())
+                             .toList());
+  }
+
+  private final @NonNls @NotNull String myText;
   private final int myLine;
-  private final boolean myExecuteInAwt;
+  private final boolean executeInAwt;
 
-  private File myScriptDir;
+  private @Nullable File myScriptDir;
 
-  public AbstractCommand(String text, int line) {
+  public AbstractCommand(@NotNull String text, int line) {
     this(text, line, false);
   }
 
-  public AbstractCommand(String text, int line, boolean executeInAwt) {
-    myExecuteInAwt = executeInAwt;
+  public AbstractCommand(@NotNull String text, int line, boolean executeInAwt) {
+    this.executeInAwt = executeInAwt;
     myText = text;
     myLine = line;
   }
 
-  public String getText() {
+  public final @NonNls @NotNull String getText() {
     return myText;
   }
 
-  public int getLine() {
+  public final int getLine() {
     return myLine;
+  }
+
+  @Override
+  public final @Nullable File getScriptDir() {
+    return myScriptDir;
+  }
+
+  public final void setScriptDir(@Nullable File scriptDir) {
+    myScriptDir = scriptDir;
   }
 
   @Override
@@ -47,38 +83,46 @@ public abstract class AbstractCommand implements PlaybackCommand {
   }
 
   @Override
-  public final Promise<Object> execute(final PlaybackContext context) {
+  public final @NotNull CompletableFuture<?> execute(@NotNull PlaybackContext context) {
     try {
       if (isToDumpCommand()) {
-        dumpCommand(context);
+        context.code(getText(), getLine());
       }
-      final AsyncPromise<Object> result = new AsyncPromise<>();
-      Runnable runnable = () -> {
+
+      CompletableFuture<Object> result = new CompletableFuture<>();
+      Runnable runnable = Context.current().wrap(() -> {
         try {
-          _execute(context).processed(result);
+          Promises.asCompletableFuture(_execute(context)).whenComplete((o, throwable) -> {
+            if (throwable == null) {
+              result.complete(o);
+            }
+            else {
+              result.completeExceptionally(throwable);
+            }
+          });
         }
         catch (Throwable e) {
           LOG.error(e);
-          context.error(e.getMessage(), getLine());
-          result.setError(e);
+          dumpError(context, e.getMessage());
+          result.completeExceptionally(e);
         }
-      };
+      });
 
-      if (isAwtThread()) {
-        // prevent previous action context affecting next action.
-        // E.g. previous action may have called callback.setDone from inside write action, while
-        // next action may not expect that
-        ApplicationManager.getApplication().invokeLater(runnable);
+      Application application = ApplicationManager.getApplication();
+      if (executeInAwt) {
+        // Prevent previous action context affecting next action.
+        // E.g., previous action may have called callback.setDone from inside write action, while
+        // the next action may not expect that
+        application.invokeLater(runnable);
       }
       else {
-        ApplicationManager.getApplication().executeOnPooledThread(runnable);
+        application.executeOnPooledThread(runnable);
       }
-
-     return result;
+      return result;
     }
     catch (Throwable e) {
-      context.error(e.getMessage(), getLine());
-      return Promises.rejectedPromise(e);
+      dumpError(context, e.getMessage());
+      return CompletableFuture.failedFuture(e);
     }
   }
 
@@ -86,28 +130,9 @@ public abstract class AbstractCommand implements PlaybackCommand {
     return true;
   }
 
-  protected boolean isAwtThread() {
-    return myExecuteInAwt;
-  }
+  protected abstract @NotNull Promise<Object> _execute(@NotNull PlaybackContext context);
 
-  protected abstract Promise<Object> _execute(PlaybackContext context);
-
-  public void dumpCommand(PlaybackContext context) {
-    context.code(getText(), getLine());
-  }
-
-  public void dumpError(PlaybackContext context, final String text) {
+  protected final void dumpError(@NotNull PlaybackContext context, @NotNull String text) {
     context.error(text, getLine());
-  }
-
-  @Override
-  public File getScriptDir() {
-    return myScriptDir;
-  }
-
-
-  public PlaybackCommand setScriptDir(File scriptDir) {
-    myScriptDir = scriptDir;
-    return this;
   }
 }

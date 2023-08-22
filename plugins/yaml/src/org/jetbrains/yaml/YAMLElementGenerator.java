@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -12,10 +11,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.psi.YAMLFile;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLScalar;
-import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
 
 import java.util.Collection;
@@ -29,7 +25,7 @@ public class YAMLElementGenerator {
   }
 
   public static YAMLElementGenerator getInstance(Project project) {
-    return ServiceManager.getService(project, YAMLElementGenerator.class);
+    return project.getService(YAMLElementGenerator.class);
   }
 
   @NotNull
@@ -73,7 +69,7 @@ public class YAMLElementGenerator {
   @NotNull
   public YAMLFile createDummyYamlWithText(@NotNull String text) {
     return (YAMLFile) PsiFileFactory.getInstance(myProject)
-      .createFileFromText("temp." + YAMLFileType.YML.getDefaultExtension(), YAMLFileType.YML, text, LocalTimeCounter.currentTime(), true);
+      .createFileFromText("temp." + YAMLFileType.YML.getDefaultExtension(), YAMLFileType.YML, text, LocalTimeCounter.currentTime(), false);
   }
 
   @NotNull
@@ -102,5 +98,30 @@ public class YAMLElementGenerator {
     final PsiElement at = file.findElementAt("? foo ".length());
     assert at != null && at.getNode().getElementType() == YAMLTokenTypes.COLON;
     return at;
+  }
+  @NotNull
+  public PsiElement createDocumentMarker() {
+    final YAMLFile file = createDummyYamlWithText("---");
+    PsiElement at = file.findElementAt(0);
+    assert at != null && at.getNode().getElementType() == YAMLTokenTypes.DOCUMENT_MARKER;
+    return at;
+  }
+
+  @NotNull
+  public YAMLSequence createEmptySequence() {
+    YAMLSequence sequence = PsiTreeUtil.findChildOfType(createDummyYamlWithText("- dummy"), YAMLSequence.class);
+    assert sequence != null;
+    sequence.deleteChildRange(sequence.getFirstChild(), sequence.getLastChild());
+    return sequence;
+  }
+
+  @NotNull
+  public YAMLSequenceItem createEmptySequenceItem() {
+    YAMLSequenceItem sequenceItem = PsiTreeUtil.findChildOfType(createDummyYamlWithText("- dummy"), YAMLSequenceItem.class);
+    assert sequenceItem != null;
+    YAMLValue value = sequenceItem.getValue();
+    assert value != null;
+    value.deleteChildRange(value.getFirstChild(), value.getLastChild());
+    return sequenceItem;
   }
 }

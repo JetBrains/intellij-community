@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -18,17 +18,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Encapsulates logic for processing {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)} option.
- *
- * @author Denis Zhdanov
  */
-public class AutoHardWrapHandler {
+public final class AutoHardWrapHandler {
 
   /**
    * This key is used as a flag that indicates if {@code 'auto wrap line on typing'} activity is performed now.
@@ -49,7 +47,7 @@ public class AutoHardWrapHandler {
    * Hence, we remember last auto-wrap change per-document and merge it with the new auto-wrap if necessary. Current collection
    * holds that {@code 'document -> last auto-wrap change'} mappings.
    */
-  private final Map<Document, AutoWrapChange> myAutoWrapChanges = ContainerUtil.createWeakMap();
+  private final Map<Document, AutoWrapChange> myAutoWrapChanges = new WeakHashMap<>();
 
   public static AutoHardWrapHandler getInstance() {
     return INSTANCE;
@@ -204,7 +202,7 @@ public class AutoHardWrapHandler {
     caretModel.moveToOffset(baseCaretOffset + caretOffsetDiff[0]);
   }
 
-  private static class AutoWrapChange {
+  private static final class AutoWrapChange {
 
     final TextChangeImpl change = new TextChangeImpl("", 0, 0);
     int visualLine;

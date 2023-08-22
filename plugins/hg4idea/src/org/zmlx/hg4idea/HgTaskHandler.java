@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.branch.DvcsTaskHandler;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -27,11 +26,14 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.Collections;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.EXCEPTION_DURING_MERGE_COMMIT;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_ERROR;
+
 public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   private final HgReferenceValidator myNameValidator;
 
   public HgTaskHandler(@NotNull Project project) {
-    super(ServiceManager.getService(project, HgRepositoryManager.class), project, "bookmark");
+    super(project.getService(HgRepositoryManager.class), project, "bookmark");
 
     myNameValidator = HgReferenceValidator.getInstance();
   }
@@ -73,15 +75,15 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
         Project project = repository.getProject();
         VirtualFile repositoryRoot = repository.getRoot();
         try {
-          new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread();
+          new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread(); //NON-NLS
           HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
         }
         catch (HgCommandException e) {
-            HgErrorUtil.handleException(project, e);
+            HgErrorUtil.handleException(project, MERGE_ERROR, e);
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project)
-            .notifyError(HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
+            .notifyError(EXCEPTION_DURING_MERGE_COMMIT, HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
         }
       });
     }

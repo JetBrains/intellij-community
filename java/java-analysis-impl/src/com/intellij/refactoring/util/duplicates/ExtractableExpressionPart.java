@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
@@ -25,10 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
-public class ExtractableExpressionPart {
+public final class ExtractableExpressionPart {
   final PsiExpression myUsage;
   final PsiVariable myVariable;
   final Object myValue;
@@ -119,8 +102,7 @@ public class ExtractableExpressionPart {
     if (resolved instanceof PsiField && isModification(expression)) {
       return null;
     }
-    if (resolved instanceof PsiVariable && (scope == null || !DuplicatesFinder.isUnder(resolved, scope))) {
-      PsiVariable variable = (PsiVariable)resolved;
+    if (resolved instanceof PsiVariable variable && (scope == null || !DuplicatesFinder.isUnder(resolved, scope))) {
       return new ExtractableExpressionPart(expression, variable, null, variable.getType());
     }
     return null;
@@ -128,14 +110,12 @@ public class ExtractableExpressionPart {
 
   private static boolean isModification(@NotNull PsiReferenceExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+    if (parent instanceof PsiAssignmentExpression assignment) {
       if (PsiTreeUtil.isAncestor(assignment.getLExpression(), expression, false)) {
         return true;
       }
     }
-    else if (parent instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unary = (PsiUnaryExpression)parent;
+    else if (parent instanceof PsiUnaryExpression unary) {
       IElementType tokenType = unary.getOperationTokenType();
       if ((tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) &&
           PsiTreeUtil.isAncestor(unary.getOperand(), expression, false)) {
@@ -148,7 +128,7 @@ public class ExtractableExpressionPart {
   @Nullable
   private static ExtractableExpressionPart matchExpression(@NotNull PsiExpression expression) {
     PsiType type = expression.getType();
-    if (type != null && !PsiType.VOID.equals(type)) {
+    if (type != null && !PsiTypes.voidType().equals(type)) {
       return new ExtractableExpressionPart(expression, null, null, type);
     }
     return null;

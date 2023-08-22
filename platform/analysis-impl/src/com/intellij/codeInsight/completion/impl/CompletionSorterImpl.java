@@ -9,10 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
-/**
- * @author peter
- */
 public class CompletionSorterImpl extends CompletionSorter {
   private final List<? extends ClassifierFactory<LookupElement>> myMembers;
   private final int myHashCode;
@@ -25,7 +23,7 @@ public class CompletionSorterImpl extends CompletionSorter {
 
   public static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
     final String id = weigher.toString();
-    return new ClassifierFactory<LookupElement>(id) {
+    return new ClassifierFactory<>(id) {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
         return new CachingComparingClassifier(next, weigher);
@@ -68,6 +66,10 @@ public class CompletionSorterImpl extends CompletionSorter {
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
   }
 
+  public CompletionSorterImpl withoutClassifiers(@NotNull Predicate<? super ClassifierFactory<LookupElement>> removeCondition) {
+    return new CompletionSorterImpl(ContainerUtil.filter(myMembers, t -> !removeCondition.test(t)));
+  }
+
   private CompletionSorterImpl enhanced(ClassifierFactory<LookupElement> classifierFactory, int index) {
     final List<ClassifierFactory<LookupElement>> copy = new ArrayList<>(myMembers);
     copy.add(index, classifierFactory);
@@ -81,14 +83,7 @@ public class CompletionSorterImpl extends CompletionSorter {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof CompletionSorterImpl)) return false;
-
-    CompletionSorterImpl that = (CompletionSorterImpl)o;
-
-    if (!myMembers.equals(that.myMembers)) return false;
-
-    return true;
+    return this == o || o instanceof CompletionSorterImpl that && myMembers.equals(that.myMembers);
   }
 
   @Override

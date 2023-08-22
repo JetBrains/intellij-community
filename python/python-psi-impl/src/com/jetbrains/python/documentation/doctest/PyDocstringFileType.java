@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyDocstringFileType extends PythonFileType {
   public static final PythonFileType INSTANCE = new PyDocstringFileType();
 
-  protected PyDocstringFileType() {
+  private PyDocstringFileType() {
     super(new PyDocstringLanguageDialect());
   }
 
@@ -40,7 +40,7 @@ public class PyDocstringFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return PyPsiBundle.message("python.docstring.file.type");
+    return PyPsiBundle.message("filetype.python.docstring.description");
   }
 
   @NotNull

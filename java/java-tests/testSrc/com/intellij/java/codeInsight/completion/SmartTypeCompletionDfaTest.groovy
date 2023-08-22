@@ -17,11 +17,9 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class SmartTypeCompletionDfaTest extends LightFixtureCompletionTestCase {
   @Override
@@ -43,8 +41,10 @@ class SmartTypeCompletionDfaTest extends LightFixtureCompletionTestCase {
     checkResultByFile("/" + getTestName(false) + "-out.java")
   }
 
+  @NeedsIndex.Full
   void testCastGenericQualifier() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testDontAutoCastWhenAlreadyCasted() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, "s", "toString")
@@ -52,22 +52,28 @@ class SmartTypeCompletionDfaTest extends LightFixtureCompletionTestCase {
     checkResultByTestName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testAutoCastWhenAlreadyCasted() {
     configureByTestName()
     myFixture.type('\n')
     checkResultByTestName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuggestCastedValueAfterCast() { doTest() }
 
+  @NeedsIndex.Full
   void testSuggestInstanceofedValue() { doTest() }
 
   void testSuggestInstanceofedValueInTernary() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuggestInstanceofedValueInComplexIf() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuggestInstanceofedValueInElseNegated() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuggestInstanceofedValueAfterReturn() { doTest() }
 
   void testNoInstanceofedValueWhenBasicSuits() { doTest() }
@@ -80,6 +86,7 @@ class SmartTypeCompletionDfaTest extends LightFixtureCompletionTestCase {
 
   void testInstanceofedInsideAnonymous() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testCastToTypeWithWildcard() { doTest() }
 
 }

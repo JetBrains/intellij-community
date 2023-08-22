@@ -1,4 +1,4 @@
-// "Copy 'a' to final temp variable" "true"
+// "Copy 'a' to final temp variable" "true-preview"
 public class DoubleTrouble {
     public void test() {
         int a = 1;

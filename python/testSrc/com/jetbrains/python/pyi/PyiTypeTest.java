@@ -24,19 +24,12 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyiTypeTest extends PyTestCase {
 
   private Disposable myDisposable;
@@ -48,25 +41,13 @@ public class PyiTypeTest extends PyTestCase {
     assertNotNull(file);
     file.refresh(false, true);
     ModuleRootModificationUtil.addContentRoot(fixture.getModule(), path);
-    return ()->ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> {
-                            for (ContentEntry entry : model.getContentEntries()) {
-                              if (file.equals(entry.getFile())) {
-                                model.removeContentEntry(entry);
-                              }
-                            }
-                          });
-  }
-
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    setLanguageLevel(LanguageLevel.PYTHON35);
+    return () -> ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> {
+      for (ContentEntry entry : model.getContentEntries()) {
+        if (file.equals(entry.getFile())) {
+          model.removeContentEntry(entry);
+        }
+      }
+    });
   }
 
   @Override
@@ -76,7 +57,6 @@ public class PyiTypeTest extends PyTestCase {
         Disposer.dispose(myDisposable);
         myDisposable = null;
       }
-      setLanguageLevel(null);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -90,15 +70,14 @@ public class PyiTypeTest extends PyTestCase {
     myFixture.copyDirectoryToProject("pyi/type/" + getTestName(true), "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     final String fileName = getTestName(false) + ".py";
-    myFixture.configureByFile(fileName);
+    final var file = myFixture.configureByFile(fileName);
     final PsiElement element = myFixture.getElementAtCaret();
     assertInstanceOf(element, PyTypedElement.class);
     final PyTypedElement typedElement = (PyTypedElement)element;
     final Project project = element.getProject();
-    final PsiFile containingFile = element.getContainingFile();
-    assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, containingFile));
-    assertProjectFilesNotParsed(myFixture.getFile());
-    assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, containingFile));
+    assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, file));
+    assertProjectFilesNotParsed(file);
+    assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, file));
   }
 
   public void testFunctionParameter() {
@@ -106,7 +85,7 @@ public class PyiTypeTest extends PyTestCase {
   }
 
   public void testFunctionReturnType() {
-    doTest("Optional[int]");
+    doTest("int | None");
   }
 
   public void testFunctionType() {
@@ -132,12 +111,12 @@ public class PyiTypeTest extends PyTestCase {
 
   // PY-22808
   public void testOverloadedNotMatchedType() {
-    doTest("Union[list, Any]");
+    doTest("list | Any");
   }
 
   // PY-22808
   public void testOverloadedNotMatchedGenericType() {
-    doTest("Union[Dict[str, Any], list]");
+    doTest("dict[str, Any] | list");
   }
 
   public void testGenericClassDefinitionInOtherFile() {

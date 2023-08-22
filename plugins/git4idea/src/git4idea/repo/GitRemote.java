@@ -15,6 +15,8 @@
  */
 package git4idea.repo;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,6 +90,7 @@ public final class GitRemote implements Comparable<GitRemote> {
   }
 
   @NotNull
+  @NlsSafe
   public String getName() {
     return myName;
   }
@@ -142,6 +145,7 @@ public final class GitRemote implements Comparable<GitRemote> {
     return myName.hashCode();
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("GitRemote{myName='%s', myUrls=%s, myPushUrls=%s, myFetchRefSpec='%s', myPushRefSpec='%s'}",

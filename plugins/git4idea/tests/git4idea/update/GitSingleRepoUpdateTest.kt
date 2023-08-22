@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -9,17 +9,16 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.config.UpdateMethod.REBASE
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import java.io.File
+import java.nio.file.Path
 
 class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
-
   private lateinit var repo: GitRepository
-  private lateinit var broRepo : File
+  private lateinit var broRepo : Path
 
   override fun setUp() {
     super.setUp()
 
-    repo = createRepository(project, projectPath, true)
+    repo = createRepository(project, projectNioRoot, true)
     cd(projectPath)
 
     val parent = prepareRemoteRepo(repo)
@@ -31,7 +30,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#git4idea.update")
 
   fun `test stash is called for rebase if there are local changes and local commits`() {
-    broRepo.commitAndPush()
+    commitAndPush(broRepo)
     tac("a.txt")
     val localFile = file("a.txt").append("content").add().file
     updateChangeListManager()
@@ -49,7 +48,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
   // "Fast-forward merge" optimization
   fun `test stash is not called for rebase if there are local changes, but no local commits`() {
-    broRepo.commitAndPush()
+    commitAndPush(broRepo)
     val localFile = file("a.txt").append("content").add().file
     updateChangeListManager()
 
@@ -66,7 +65,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
   // IDEA-167688
   fun `test stash is not called for rebase if there are no local changes`() {
-    broRepo.commitAndPush()
+    commitAndPush(broRepo)
 
     var stashCalled = false
     git.stashListener = {
@@ -79,7 +78,7 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
   // IDEA-76760
   fun `test stash is called for rebase in case of AD changes`() {
-    broRepo.commitAndPush()
+    commitAndPush(broRepo)
 
     var stashCalled = false
     git.stashListener = {
@@ -154,8 +153,8 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
   private fun updateProcess() = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), null, false, true)
 
-  private fun File.commitAndPush() {
-    cd(this)
+  private fun commitAndPush(path: Path) {
+    cd(path)
     commitSomethingToBroRepo()
     git("push -u origin master")
     cd(repo)
@@ -163,9 +162,9 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
   private fun commitSomethingToBroRepo() {
     cd(broRepo)
-    val file = File(broRepo, "bro.txt")
+    val file = broRepo.resolve("bro.txt")
     val content = "content-${Math.random()}\n"
-    FileUtil.writeToFile(file, content.toByteArray(), true)
+    FileUtil.writeToFile(file.toFile(), content.toByteArray(), true)
     addCommit("modified bro.txt")
   }
 

@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
-/**
- * @author Irina.Chernushina
- */
 public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConfigurable {
   public VcsContentAnnotationConfigurable(Project project) {
     super(project, VcsBundle.message("settings.checkbox.show.changed.in.last"), VcsBundle.message("settings.checkbox.measure.days"));
@@ -32,7 +29,7 @@ public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConf
   public boolean isModified() {
     VcsContentAnnotationSettings settings = VcsContentAnnotationSettings.getInstance(myProject);
     if (myHighlightRecentlyChanged.isSelected() != settings.isShow()) return true;
-    if (! Comparing.equal(myHighlightInterval.getValue(), settings.getLimitDays())) return true;
+    if (!Comparing.equal(myHighlightInterval.getValue(), settings.getLimitDays())) return true;
     return false;
   }
 
@@ -40,7 +37,7 @@ public class VcsContentAnnotationConfigurable extends VcsCheckBoxWithSpinnerConf
   public void apply() {
     VcsContentAnnotationSettings settings = VcsContentAnnotationSettings.getInstance(myProject);
     settings.setShow(myHighlightRecentlyChanged.isSelected());
-    settings.setLimit(((Number)myHighlightInterval.getValue()).intValue());
+    settings.setLimitDays(((Number)myHighlightInterval.getValue()).intValue());
   }
 
   @Override

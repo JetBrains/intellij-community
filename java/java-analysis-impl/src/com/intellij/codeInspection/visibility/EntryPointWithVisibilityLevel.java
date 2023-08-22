@@ -20,6 +20,7 @@ import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,7 +41,7 @@ public abstract class EntryPointWithVisibilityLevel extends EntryPoint {
   /**
    * Title for checkbox in visibility inspection settings
    */
-  public abstract String getTitle();
+  public abstract @Nls String getTitle();
 
   /**
    * Id to serialize checkbox state in visibility inspection settings

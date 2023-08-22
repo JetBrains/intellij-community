@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.module.ModuleGroupTestsKt;
@@ -29,17 +29,19 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
     Module module = createModule("foo");
     CompilerConfigurationImpl configuration = getConfiguration();
     configuration.setBytecodeTargetLevel(module, "1.6");
-    assertThat(configuration.getState()).isEqualTo("<state>\n" +
-                                                   "  <bytecodeTargetLevel>\n" +
-                                                   "    <module name=\"foo\" target=\"1.6\" />\n" +
-                                                   "  </bytecodeTargetLevel>\n" +
-                                                   "</state>");
+    assertThat(configuration.getState()).isEqualTo("""
+                                                     <state>
+                                                       <bytecodeTargetLevel>
+                                                         <module name="foo" target="1.6" />
+                                                       </bytecodeTargetLevel>
+                                                     </state>""");
 
-    configuration.loadState(JDOMUtil.load("<state>\n" +
-                                          "  <bytecodeTargetLevel>\n" +
-                                          "    <module name=\"foo\" target=\"1.7\" />\n" +
-                                          "  </bytecodeTargetLevel>\n" +
-                                          "</state>"));
+    configuration.loadState(JDOMUtil.load("""
+                                            <state>
+                                              <bytecodeTargetLevel>
+                                                <module name="foo" target="1.7" />
+                                              </bytecodeTargetLevel>
+                                            </state>"""));
 
     assertThat(configuration.getBytecodeTargetLevel(module)).isEqualTo("1.7");
   }

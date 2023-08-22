@@ -3,11 +3,8 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
@@ -66,22 +63,22 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyNoDefaultBase() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyDefaultBase() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyNoDefaultDerived() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyDefaultDerived() {
     doTest();
   }
@@ -123,18 +120,19 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-32078
   public void testComparisonForManuallyOrderedAttrs() {
-    doTestByText("from attr import s\n" +
-                 "\n" +
-                 "@s(cmp=False)\n" +
-                 "class Test:\n" +
-                 "    def __gt__(self, other):\n" +
-                 "        pass\n" +
-                 "\n" +
-                 "print(Test() < Test())\n" +
-                 "print(Test() > Test())\n" +
-                 "\n" +
-                 "print(Test < Test)\n" +
-                 "print(Test > Test)");
+    doTestByText("""
+                   from attr import s
+
+                   @s(cmp=False)
+                   class Test:
+                       def __gt__(self, other):
+                           pass
+
+                   print(Test() < Test())
+                   print(Test() > Test())
+
+                   print(Test < Test)
+                   print(Test > Test)""");
   }
 
   // PY-28506
@@ -189,11 +187,12 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   // PY-33445
   public void testDontConsiderUnresolvedFieldsAsInitOnly() {
-    doTestByText("class A:\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "a = A()\n" +
-                 "b = a.b");
+    doTestByText("""
+                   class A:
+                       pass
+
+                   a = A()
+                   b = a.b""");
   }
 
   // PY-27398
@@ -224,6 +223,21 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   // PY-28506
   public void testWrongDunderPostInitSignatureInStdHierarchy() {
     doTest();
+  }
+
+  // PY-43359
+  public void testSuppressedDunderPostInitSignature() {
+    doTestByText("""
+                   import dataclasses
+
+                   @dataclasses.dataclass
+                   class A:
+                       a: int
+                       b: dataclasses.InitVar[str]
+                       c: dataclasses.InitVar[bytes]
+
+                       def __post_init__(self, *args, **kwargs):
+                           pass""");
   }
 
   // PY-27398
@@ -301,22 +315,27 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  @Override
-  protected void doTest() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> {
-        myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
-        super.doTest();
-        assertProjectFilesNotParsed(myFixture.getFile());
-      }
-    );
+  // PY-49946
+  public void testFieldsOrderInInheritanceNotKwOnlyBaseDataclass() {
+    doTest();
   }
 
-  @Nullable
+  // PY-49946
+  public void testFieldsOrderInInheritanceKwOnlyBaseDataclass() {
+    doTest();
+  }
+
+  // PY-49946
+  public void testFieldsOrderOverridden() {
+    doTest();
+  }
+
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+  protected void doTest() {
+    myFixture.copyDirectoryToProject("packages/attr", "attr");
+    myFixture.copyDirectoryToProject("packages/attrs", "attrs");
+    super.doTest();
+    assertProjectFilesNotParsed(myFixture.getFile());
   }
 
   @NotNull

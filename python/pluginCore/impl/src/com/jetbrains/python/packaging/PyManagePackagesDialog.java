@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.project.Project;
@@ -7,8 +7,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
@@ -21,9 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyManagePackagesDialog extends DialogWrapper {
   private final JPanel myMainPanel;
 
@@ -31,19 +31,18 @@ public class PyManagePackagesDialog extends DialogWrapper {
     super(project, true);
     setTitle(PyBundle.message("manage.python.packages"));
 
-    List<Sdk> sdks = PythonSdkUtil.getAllSdks();
-    sdks.sort(new PreferredSdkComparator());
+    List<Sdk> sdks = ContainerUtil.sorted(PythonSdkUtil.getAllSdks(), new PreferredSdkComparator());
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
-    sdkComboBox.setRenderer(new PySdkListCellRenderer(null));
+    sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
-    PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel();
+    PackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel();
     final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
     packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, sdk));
     packagesPanel.updateNotifications(sdk);
 
     myMainPanel = new JPanel(new BorderLayout());
-    final LabeledComponent<JComboBox> sdkLabeledComponent = LabeledComponent.create(sdkComboBox, PyBundle.message("interpreter"));
+    final LabeledComponent<JComboBox> sdkLabeledComponent = LabeledComponent.create(sdkComboBox, PySdkBundle.message("python.interpreter.label"));
     sdkLabeledComponent.setLabelLocation(BorderLayout.WEST);
     myMainPanel.add(sdkLabeledComponent, BorderLayout.NORTH);
     myMainPanel.add(packagesPanel, BorderLayout.CENTER);

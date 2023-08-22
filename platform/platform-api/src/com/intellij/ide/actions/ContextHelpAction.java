@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ContextHelpAction extends AnAction implements DumbAware {
+public class ContextHelpAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private final String myHelpID;
 
   public ContextHelpAction() {
@@ -47,7 +48,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
 
   @Nullable
   protected String getHelpId(DataContext dataContext) {
-    return myHelpID != null ? myHelpID : PlatformDataKeys.HELP_ID.getData(dataContext);
+    return myHelpID != null ? myHelpID : PlatformCoreDataKeys.HELP_ID.getData(dataContext);
   }
 
   @Override
@@ -66,5 +67,10 @@ public class ContextHelpAction extends AnAction implements DumbAware {
       presentation.setIcon(AllIcons.Actions.Help);
       presentation.setText(CommonBundle.getHelpButtonText());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

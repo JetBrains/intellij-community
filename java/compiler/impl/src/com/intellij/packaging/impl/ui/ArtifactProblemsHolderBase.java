@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public abstract class ArtifactProblemsHolderBase implements ArtifactProblemsHold
   }
 
   @Override
-  public void registerError(@NotNull String message, @NotNull String problemTypeId) {
+  public void registerError(@NotNull @NlsContexts.DialogMessage String message, @NotNull String problemTypeId) {
     registerError(message, problemTypeId, null);
   }
 }

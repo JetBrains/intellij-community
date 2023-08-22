@@ -32,8 +32,7 @@ object PyReceiverMlCompletionFeatures {
   }
 
   private fun getReceivers(position: PsiElement, typeEvalContext: TypeEvalContext): List<PsiElement> {
-    val scope = PsiTreeUtil.getParentOfType(position, PyCallExpression::class.java, PyAssignmentStatement::class.java)
-    return when (scope) {
+    return when (val scope = PsiTreeUtil.getParentOfType(position, PyCallExpression::class.java, PyAssignmentStatement::class.java)) {
       is PyCallExpression -> getReceivers(position, scope, typeEvalContext)
       is PyAssignmentStatement -> getReceivers(position, scope)
       else -> emptyList()
@@ -41,7 +40,7 @@ object PyReceiverMlCompletionFeatures {
   }
 
   private fun getReceivers(position: PsiElement, call: PyCallExpression, typeEvalContext: TypeEvalContext): List<PsiElement> {
-    val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+    val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
     val mapArguments = call.multiMapArguments(resolveContext)
     if (mapArguments.isEmpty()) return emptyList()
     return mapArguments.mapNotNull { entry -> entry.mappedParameters[position.parent]?.parameter }

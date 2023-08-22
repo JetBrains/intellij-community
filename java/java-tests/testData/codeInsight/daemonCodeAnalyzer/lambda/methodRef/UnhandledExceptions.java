@@ -4,7 +4,7 @@ public class ExTest {
     }
 
     {
-      Block<String> b = <error descr="Unhandled exception: ExTest.Ex">ExTest::maybeThrow</error>;
+      Block<String> b = <error descr="Unhandled exception: ExTest.Ex">ExTest::maybeThrow;</error>
     }
 
 

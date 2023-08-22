@@ -3,30 +3,28 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
 interface GHPRDetailsDataProvider {
 
-  @get:CalledInAwt
   val loadedDetails: GHPullRequest?
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadDetails(): CompletableFuture<GHPullRequest>
 
-  @CalledInAwt
+  @RequiresEdt
   fun reloadDetails()
 
-  @CalledInAwt
+  @RequiresEdt
   fun addDetailsReloadListener(disposable: Disposable, listener: () -> Unit)
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadDetails(disposable: Disposable, consumer: (CompletableFuture<GHPullRequest>) -> Unit) {
     addDetailsReloadListener(disposable) {
       consumer(loadDetails())
@@ -34,18 +32,21 @@ interface GHPRDetailsDataProvider {
     consumer(loadDetails())
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun addDetailsLoadedListener(disposable: Disposable, listener: () -> Unit)
 
-  @CalledInAwt
+  @RequiresEdt
+  fun updateDetails(indicator: ProgressIndicator, title: String? = null, description: String? = null): CompletableFuture<GHPullRequest>
+
+  @RequiresEdt
   fun adjustReviewers(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>)
     : CompletableFuture<Unit>
 
-  @CalledInAwt
+  @RequiresEdt
   fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>)
     : CompletableFuture<Unit>
 
-  @CalledInAwt
+  @RequiresEdt
   fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>)
     : CompletableFuture<Unit>
 }

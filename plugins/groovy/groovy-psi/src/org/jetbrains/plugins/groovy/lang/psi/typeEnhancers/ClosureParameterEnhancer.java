@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,21 +22,20 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-/**
- * @author peter
- */
 public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
-  private static final Map<String, String> simpleTypes = new HashMap<>();
-  private static final Set<String> iterations = new HashSet<>();
+  private static final Map<@NlsSafe String, @NlsSafe String> simpleTypes = new HashMap<>();
+  private static final Set<@NlsSafe String> iterations = new HashSet<>();
 
   static {
     simpleTypes.put("times", JAVA_LANG_INTEGER);
@@ -98,7 +97,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   @Override
   @Nullable
   protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression closure, int index) {
-    if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic(closure)) {
+    if (CompileStaticUtil.isCompileStatic(closure)) {
       return null;
     }
 
@@ -249,7 +248,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiClass entryClass = JavaPsiFacade.getInstance(project).findClass(JAVA_UTIL_MAP_ENTRY, scope);
     if (entryClass == null) {
-      if (key != null && key != PsiType.NULL && value != null && value != PsiType.NULL) {
+      if (key != null && key != PsiTypes.nullType() && value != null && value != PsiTypes.nullType()) {
         final String text = String.format("%s<%s,%s>", JAVA_UTIL_MAP_ENTRY, key.getCanonicalText(), value.getCanonicalText());
         return factory.createTypeFromText(text, null);
       }

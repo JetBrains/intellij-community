@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +20,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
-public class ArrangementGroupingRulesControl extends JBTable {
+public final class ArrangementGroupingRulesControl extends JBTable {
 
   @NotNull public static final DataKey<ArrangementGroupingRulesControl> KEY = DataKey.create("Arrangement.Rule.Group.Control");
 
@@ -34,8 +31,6 @@ public class ArrangementGroupingRulesControl extends JBTable {
     new HashMap<>();
 
   @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
-
-  private int myRowUnderMouse = -1;
 
   public ArrangementGroupingRulesControl(@NotNull ArrangementStandardSettingsManager settingsManager,
                                          @NotNull ArrangementColorsProvider colorsProvider)
@@ -118,38 +113,12 @@ public class ArrangementGroupingRulesControl extends JBTable {
     return result;
   }
 
-  @Override
-  protected void processMouseMotionEvent(MouseEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_MOVED) {
-      int oldRow = myRowUnderMouse;
-      myRowUnderMouse = rowAtPoint(e.getPoint());
-      if (oldRow >= 0 && myRowUnderMouse != oldRow) {
-        getModel().fireTableRowsUpdated(oldRow, oldRow);
-      }
-      if (myRowUnderMouse >= 0 && myRowUnderMouse != oldRow) {
-        getModel().fireTableRowsUpdated(myRowUnderMouse, myRowUnderMouse);
-      }
-    }
-    super.processMouseMotionEvent(e);
-  }
-
-  @Override
-  protected void processMouseEvent(MouseEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_EXITED && myRowUnderMouse >= 0) {
-      int row = myRowUnderMouse;
-      myRowUnderMouse = -1;
-      getModel().fireTableRowsUpdated(row, row);
-    }
-    super.processMouseEvent(e);
-  }
-
-  private class MyRenderer implements TableCellRenderer {
+  private static final class MyRenderer implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      if (value instanceof ArrangementGroupingComponent) {
-        ArrangementGroupingComponent component = (ArrangementGroupingComponent)value;
+      if (value instanceof ArrangementGroupingComponent component) {
         component.setRowIndex(row + 1);
-        component.setHighlight(myRowUnderMouse == row || table.isRowSelected(row));
+        component.setHighlight(TableHoverListener.getHoveredRow(table) == row || table.isRowSelected(row));
         component.revalidate();
         return component;
       }
@@ -160,7 +129,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
     }
   }
 
-  private static class MyEditor extends AbstractTableCellEditor {
+  private static final class MyEditor extends AbstractTableCellEditor {
 
     @Nullable Object myValue;
 

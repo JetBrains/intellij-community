@@ -73,12 +73,8 @@ public final class BinaryContent {
   }
 
   private static void _writeToFile(final File file, BinaryContent content) throws IOException {
-    final OutputStream stream = new FileOutputStream(file);
-    try {
+    try (OutputStream stream = new FileOutputStream(file)) {
       stream.write(content.getBuffer(), content.getOffset(), content.getLength());
-    }
-    finally {
-      stream.close();
     }
   }
 

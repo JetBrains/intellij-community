@@ -1,7 +1,6 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolModelGenerator
 
-import gnu.trove.THashSet
-import gnu.trove.TObjectProcedure
 import org.jetbrains.protocolReader.FileUpdater
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -13,7 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes
  * Records a list of files in the root directory and deletes files that were not re-generated.
  */
 class FileSet(private val rootDir: Path) {
-  private val unusedFiles = THashSet<Path>()
+  private val unusedFiles = HashSet<Path>()
 
   init {
     Files.walkFileTree(rootDir, object : SimpleFileVisitor<Path>() {
@@ -37,7 +36,7 @@ class FileSet(private val rootDir: Path) {
   }
 
   fun deleteOtherFiles() {
-    unusedFiles.forEach(TObjectProcedure<Path> { it ->
+    for (it in unusedFiles) {
       if (Files.deleteIfExists(it)) {
         val parent = it.parent
         Files.newDirectoryStream(parent).use { stream ->
@@ -46,7 +45,6 @@ class FileSet(private val rootDir: Path) {
           }
         }
       }
-      true
-    })
+    }
   }
 }

@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -30,21 +17,15 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyVariableViewSettings {
-  public static final String LOADING_TIMED_OUT = PyBundle.message("debugger.variables.view.loading.timed.out");
-  public static final String ON_DEMAND_LINK_TEXT = PyBundle.message("debugger.variables.view.switch.to.loading.on.demand");
-  public static final String WARNING_MESSAGE = PyBundle.message("debugger.variables.view.warning.message");
-
+public final class PyVariableViewSettings {
   public static class SimplifiedView extends ToggleAction {
     private final PyDebugProcess myProcess;
-    private final String myText;
     private volatile boolean mySimplifiedView;
 
     public SimplifiedView(@Nullable PyDebugProcess debugProcess) {
-      super("", PyBundle.message("debugger.simplified.view.description"), null);
+      super(PyBundle.message("debugger.simplified.view.text"), PyBundle.message("debugger.simplified.view.description"), null);
       mySimplifiedView = PyDebuggerSettings.getInstance().isSimplifiedView();
       myProcess = debugProcess;
-      myText = PyBundle.message("debugger.simplified.view.text");
     }
 
     @Override
@@ -52,7 +33,11 @@ public class PyVariableViewSettings {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
-      presentation.setText(myText);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -73,16 +58,18 @@ public class PyVariableViewSettings {
   public static void showWarningMessage(@Nullable final XCompositeNode node) {
     if (node == null) return;
     final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
-    if (debuggerSettings.getValuesPolicy() == PyDebugValue.ValuesPolicy.ON_DEMAND) return;
+    if (debuggerSettings.getValuesPolicy() == ValuesPolicy.ON_DEMAND) return;
 
     node.setMessage(
-      WARNING_MESSAGE, AllIcons.General.BalloonWarning, SimpleTextAttributes.REGULAR_ATTRIBUTES,
-      new XDebuggerTreeNodeHyperlink(ON_DEMAND_LINK_TEXT) {
+      PyBundle.message("debugger.variables.view.warning.message"),
+      AllIcons.General.BalloonWarning,
+      SimpleTextAttributes.REGULAR_ATTRIBUTES,
+      new XDebuggerTreeNodeHyperlink(PyBundle.message("debugger.variables.view.switch.to.loading.on.demand")) {
         private boolean linkClicked = false;
 
         @Override
         public void onClick(MouseEvent event) {
-          debuggerSettings.setValuesPolicy(PyDebugValue.ValuesPolicy.ON_DEMAND);
+          debuggerSettings.setValuesPolicy(ValuesPolicy.ON_DEMAND);
           linkClicked = true;
         }
 
@@ -93,70 +80,104 @@ public class PyVariableViewSettings {
             return "";
           }
           else {
-            return ON_DEMAND_LINK_TEXT;
+            return PyBundle.message("debugger.variables.view.switch.to.loading.on.demand");
           }
         }
       });
   }
 
-  public static class VariablesPolicyGroup extends DefaultActionGroup {
-    @NotNull private final List<PolicyAction> myValuesPolicyActions = new ArrayList<>();
-    private final List<ValuesPolicyListener> myValuesPolicyListeners = new ArrayList<>();
+  public static class VariablePolicyAction extends AbstractPolicyAction<ValuesPolicy, VariablesPolicyGroup> {
 
-    public VariablesPolicyGroup() {
-      super(PyBundle.message("debugger.variables.loading.policy"), true);
-      myValuesPolicyActions
-        .add(new PolicyAction(PyBundle.message("debugger.variables.loading.synchronously.text"),
-                              PyBundle.message("debugger.variables.loading.synchronously.description"), PyDebugValue.ValuesPolicy.SYNC, this));
-      myValuesPolicyActions
-        .add(new PolicyAction(PyBundle.message("debugger.variables.loading.asynchronously.text"),
-                              PyBundle.message("debugger.variables.loading.asynchronously.description"), PyDebugValue.ValuesPolicy.ASYNC, this));
-      myValuesPolicyActions
-        .add(new PolicyAction(PyBundle.message("debugger.variables.loading.on.demand.text"),
-                              PyBundle.message("debugger.variables.loading.on.demand.description"), PyDebugValue.ValuesPolicy.ON_DEMAND, this));
-
-      for (AnAction action : myValuesPolicyActions) {
-        add(action);
-      }
+    public VariablePolicyAction(@Nls @NotNull String text,
+                                @Nls @NotNull String description,
+                                @NotNull ValuesPolicy policy,
+                                @NotNull VariablesPolicyGroup actionGroup) {
+      super(text, description, policy, actionGroup);
     }
 
-    public void updatePolicyActions() {
-      final PyDebugValue.ValuesPolicy currentValuesPolicy = PyDebuggerSettings.getInstance().getValuesPolicy();
-      for (PolicyAction action : myValuesPolicyActions) {
-        action.setEnabled(currentValuesPolicy == action.getPolicy());
-      }
-    }
-
-    private void notifyValuesPolicyUpdated() {
-      for (ValuesPolicyListener listener : myValuesPolicyListeners) {
-        listener.valuesPolicyUpdated();
-      }
-    }
-
-    public void addValuesPolicyListener(@NotNull ValuesPolicyListener listener) {
-      myValuesPolicyListeners.add(listener);
-    }
-
-    public interface ValuesPolicyListener {
-      void valuesPolicyUpdated();
+    @Override
+    protected void changeDebuggerSettings() {
+      PyDebuggerSettings.getInstance().setValuesPolicy(getPolicy());
     }
   }
 
-  public static class PolicyAction extends ToggleAction {
-    @NotNull private final String myText;
-    @NotNull private final PyDebugValue.ValuesPolicy myPolicy;
-    @NotNull private final VariablesPolicyGroup myActionGroup;
+  public static class VariablesPolicyGroup extends AbstractPolicyGroup<ValuesPolicy, VariablePolicyAction> {
+    public VariablesPolicyGroup() {
+      super(PyBundle.message("debugger.variables.loading.policy"));
+      addPolicyActions(new VariablePolicyAction(PyBundle.message("debugger.variables.loading.synchronously.text"),
+                                                PyBundle.message("debugger.variables.loading.synchronously.description"),
+                                                ValuesPolicy.SYNC, this),
+                       new VariablePolicyAction(PyBundle.message("debugger.variables.loading.asynchronously.text"),
+                                                PyBundle.message("debugger.variables.loading.asynchronously.description"),
+                                                ValuesPolicy.ASYNC, this),
+                       new VariablePolicyAction(PyBundle.message("debugger.variables.loading.on.demand.text"),
+                                                PyBundle.message("debugger.variables.loading.on.demand.description"),
+                                                ValuesPolicy.ON_DEMAND, this));
+    }
+
+    @Override
+    protected ValuesPolicy getDebuggerPolicy() {
+      return PyDebuggerSettings.getInstance().getValuesPolicy();
+    }
+  }
+
+  public static class QuotingPolicyAction extends AbstractPolicyAction<QuotingPolicy, QuotingPolicyGroup> {
+
+    public QuotingPolicyAction(@Nls @NotNull String text,
+                               @Nls @NotNull String description,
+                               @NotNull QuotingPolicy policy,
+                               @NotNull QuotingPolicyGroup actionGroup) {
+      super(text, description, policy, actionGroup);
+    }
+
+    @Override
+    protected void changeDebuggerSettings() {
+      PyDebuggerSettings.getInstance().setQuotingPolicy(getPolicy());
+    }
+  }
+
+  public static class QuotingPolicyGroup extends AbstractPolicyGroup<QuotingPolicy, QuotingPolicyAction> {
+    public QuotingPolicyGroup() {
+      super(PyBundle.message("debugger.variables.view.quoting.policy"));
+      addPolicyActions(new QuotingPolicyAction(PyBundle.message("debugger.variables.view.quoting.single.text"),
+                                               PyBundle.message("debugger.variables.view.quoting.single.description"),
+                                               QuotingPolicy.SINGLE, this),
+                       new QuotingPolicyAction(PyBundle.message("debugger.variables.view.quoting.double.text"),
+                                               PyBundle.message("debugger.variables.view.quoting.double.description"),
+                                               QuotingPolicy.DOUBLE, this),
+                       new QuotingPolicyAction(PyBundle.message("debugger.variables.view.quoting.without.text"),
+                                               PyBundle.message("debugger.variables.view.quoting.without.description"),
+                                               QuotingPolicy.NONE, this));
+    }
+
+    @Override
+    protected QuotingPolicy getDebuggerPolicy() {
+      return PyDebuggerSettings.getInstance().getQuotingPolicy();
+    }
+  }
+
+  private static abstract class AbstractPolicyAction<Policy extends AbstractPolicy, PolicyGroup extends AbstractPolicyGroup<Policy, ? extends ToggleAction>>
+    extends ToggleAction {
+    @NotNull private final Policy myPolicy;
+    @NotNull private final PolicyGroup myActionGroup;
     private volatile boolean isEnabled;
 
-    public PolicyAction(@NotNull @Nls String text,
-                        @NotNull @Nls String description,
-                        @NotNull PyDebugValue.ValuesPolicy policy,
-                        @NotNull VariablesPolicyGroup actionGroup) {
-      super("", description, null);
-      myText = text;
+    private AbstractPolicyAction(@NotNull @Nls String text,
+                                 @NotNull @Nls String description,
+                                 @NotNull Policy policy,
+                                 @NotNull PolicyGroup actionGroup) {
+      super(text, description, null);
       myPolicy = policy;
       myActionGroup = actionGroup;
       isEnabled = PyDebuggerSettings.getInstance().getValuesPolicy() == policy;
+    }
+
+    public @NotNull PolicyGroup getActionGroup() {
+      return myActionGroup;
+    }
+
+    public @NotNull Policy getPolicy() {
+      return myPolicy;
     }
 
     @Override
@@ -165,12 +186,11 @@ public class PyVariableViewSettings {
       myActionGroup.updatePolicyActions();
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
-      presentation.setText(myText);
     }
 
-    @NotNull
-    public PyDebugValue.ValuesPolicy getPolicy() {
-      return myPolicy;
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     public void setEnabled(boolean enabled) {
@@ -186,10 +206,48 @@ public class PyVariableViewSettings {
     public void setSelected(@NotNull AnActionEvent e, boolean hide) {
       isEnabled = hide;
       if (hide) {
-        PyDebuggerSettings.getInstance().setValuesPolicy(myPolicy);
-        myActionGroup.notifyValuesPolicyUpdated();
+        changeDebuggerSettings();
+        myActionGroup.notifyPolicyUpdated();
       }
       myActionGroup.updatePolicyActions();
     }
+
+    protected abstract void changeDebuggerSettings();
+  }
+
+  private static abstract class AbstractPolicyGroup<Policy extends AbstractPolicy, PolicyAction extends AbstractPolicyAction<Policy, ? extends DefaultActionGroup>>
+    extends DefaultActionGroup {
+    @NotNull private final List<PolicyAction> myPolicyActions = new ArrayList<>();
+    private final List<PolicyListener> myPolicyListeners = new ArrayList<>();
+
+    private AbstractPolicyGroup(@NlsActions.ActionText String name) {
+      super(name, true);
+    }
+
+    public void addPolicyActions(PolicyAction... actions) {
+      myPolicyActions.addAll(List.of(actions));
+      for (AnAction action : myPolicyActions) {
+        add(action);
+      }
+    }
+
+    public void notifyPolicyUpdated() {
+      for (PolicyListener listener : myPolicyListeners) {
+        listener.valuesPolicyUpdated();
+      }
+    }
+
+    public void addValuesPolicyListener(@NotNull PolicyListener listener) {
+      myPolicyListeners.add(listener);
+    }
+
+    protected void updatePolicyActions() {
+      final AbstractPolicy currentPolicy = getDebuggerPolicy();
+      for (PolicyAction action : myPolicyActions) {
+        action.setEnabled(currentPolicy == action.getPolicy());
+      }
+    }
+
+    protected abstract AbstractPolicy getDebuggerPolicy();
   }
 }

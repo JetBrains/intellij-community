@@ -3,5 +3,5 @@ interface A {
 }
 
 class B implements A {
-  Object fo<caret>o(String x, Integer[] is) {}
+  void fo<caret>o(String x, Integer[] is) {}
 }

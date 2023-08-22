@@ -12,10 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class AbstractInsetsProperty<T extends RadComponent> extends Property<T, Insets> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;
@@ -50,7 +46,7 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
   @Override
   public final PropertyEditor<Insets> getEditor() {
     if (myEditor == null) {
-      myEditor = new IntRegexEditor<Insets>(Insets.class, myRenderer, new int[] { 0, 0, 0, 0 }) {
+      myEditor = new IntRegexEditor<>(Insets.class, myRenderer, new int[]{0, 0, 0, 0}) {
         @Override
         public Insets getValue() throws Exception {
           // if a single number has been entered, interpret it as same value for all parts (IDEADEV-7330)
@@ -60,7 +56,7 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
             myTf.setText(myRenderer.formatText(insets));
             return insets;
           }
-          catch(NumberFormatException ex) {
+          catch (NumberFormatException ex) {
             return super.getValue();
           }
         }

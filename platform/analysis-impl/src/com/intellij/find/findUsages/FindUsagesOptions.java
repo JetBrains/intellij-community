@@ -2,6 +2,7 @@
 
 package com.intellij.find.findUsages;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -9,10 +10,7 @@ import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -38,11 +36,10 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static SearchScope findScopeByName(@NotNull Project project,
-                                            @Nullable DataContext dataContext,
-                                            @Nullable String scopeName) {
-    List<SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
+  public static @NotNull SearchScope findScopeByName(@NotNull Project project,
+                                                     @Nullable DataContext dataContext,
+                                                     @Nullable String scopeName) {
+    List<? extends SearchScope> predefined = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
       project, dataContext, true, false, false, false, false);
     for (SearchScope scope : predefined) {
       if (scope.getDisplayName().equals(scopeName)) {
@@ -93,7 +90,7 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   @NotNull
-  public String generateUsagesString() {
-    return "Usages";
+  public @Nls String generateUsagesString() {
+    return AnalysisBundle.message("find.usages.panel.title.usages");
   }
 }

@@ -1,0 +1,6 @@
+fun foo(list: List<String>) {
+    list.map { String()<caret> }
+}
+
+// ELEMENT: String
+// TAIL_TEXT: " (kotlin)"

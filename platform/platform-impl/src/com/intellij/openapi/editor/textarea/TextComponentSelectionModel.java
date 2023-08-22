@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.editor.*;
@@ -21,11 +7,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-/**
- * @author yole
- */
 class TextComponentSelectionModel implements SelectionModel {
   private final TextComponentEditor myEditor;
 
@@ -38,43 +19,38 @@ class TextComponentSelectionModel implements SelectionModel {
     return myEditor;
   }
 
-  @Nullable
   @Override
-  public VisualPosition getSelectionStartPosition() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public VisualPosition getSelectionEndPosition() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public VisualPosition getLeadSelectionPosition() {
+  public @Nullable VisualPosition getSelectionStartPosition() {
     return null;
   }
 
   @Override
-  public void addSelectionListener(@NotNull final SelectionListener listener) {
+  public @Nullable VisualPosition getSelectionEndPosition() {
+    return null;
+  }
+
+  @Override
+  public @Nullable VisualPosition getLeadSelectionPosition() {
+    return null;
+  }
+
+  @Override
+  public void addSelectionListener(final @NotNull SelectionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeSelectionListener(@NotNull final SelectionListener listener) {
+  public void removeSelectionListener(final @NotNull SelectionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
   public void copySelectionToClipboard() {
-    if (! (myEditor.getContentComponent() instanceof JPasswordField)) {
-      EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
-    }
+    EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
   }
 
   @Override
-  public void setBlockSelection(@NotNull final LogicalPosition blockStart, @NotNull final LogicalPosition blockEnd) {
+  public void setBlockSelection(final @NotNull LogicalPosition blockStart, final @NotNull LogicalPosition blockEnd) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

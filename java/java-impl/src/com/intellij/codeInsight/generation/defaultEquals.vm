@@ -35,9 +35,9 @@ Object $paramName){
 ##
 #macro(addDoubleFieldComparison $field)
   #if ($field.double)
-    if(java.lang.Double.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0)return false;
+    if(java.lang.Double.compare($field.accessor, ${classInstanceName}.$field.accessor) != 0)return false;
   #else
-    if(java.lang.Float.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0)return false;
+    if(java.lang.Float.compare($field.accessor, ${classInstanceName}.$field.accessor) != 0)return false;
   #end
 #end
 ##

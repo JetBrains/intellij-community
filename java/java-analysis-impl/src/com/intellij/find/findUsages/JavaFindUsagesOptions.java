@@ -15,19 +15,19 @@
  */
 package com.intellij.find.findUsages;
 
+import com.ibm.icu.text.ListFormatter;
+import com.intellij.DynamicBundle;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions {
   public boolean isSkipImportStatements;
 
@@ -83,7 +83,7 @@ public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions 
     return result;
   }
 
-  protected void addUsageTypes(@NotNull Set<? super String> to) {
+  protected void addUsageTypes(@NotNull List<? super String> to) {
     if (isUsages) {
       to.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
@@ -92,12 +92,14 @@ public abstract class JavaFindUsagesOptions extends PersistentFindUsagesOptions 
   @NotNull
   @Override
   public final String generateUsagesString() {
-    String separator = " " + AnalysisBundle.message("find.usages.panel.title.separator") + " ";
-    LinkedHashSet<String> strings = new LinkedHashSet<>();
+    List<String> strings = new ArrayList<>();
     addUsageTypes(strings);
     if (strings.isEmpty()) {
-      strings.add(AnalysisBundle.message("find.usages.panel.title.usages"));
+      return AnalysisBundle.message("find.usages.panel.title.usages");
     }
-    return StringUtil.join(strings, separator);
+    return formatOrList(strings);
+  }
+  private static @NotNull @Nls String formatOrList(Collection<?> list) {
+    return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE).format(list);
   }
 }

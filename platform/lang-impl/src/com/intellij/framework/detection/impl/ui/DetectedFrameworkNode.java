@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.ui;
 
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -29,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Collection;
 
-class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
+final class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
   private static final Logger LOG = Logger.getInstance(DetectedFrameworkNode.class);
   private final DetectedFrameworkDescription myDescription;
   private final FrameworkDetectionContext myContext;
@@ -61,7 +51,7 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
           commonParent = null;
         }
       }
-      renderer.append(files.size() + " " + (commonName != null ? commonName : firstFile.getFileType().getDefaultExtension()) + " files");
+      renderer.append(ProjectBundle.message("comment.0.1.files", files.size(), commonName != null ? commonName : firstFile.getFileType().getDefaultExtension()));
       if (commonParent != null) {
         appendDirectoryPath(renderer, commonParent);
       }
@@ -80,8 +70,22 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
 
   @Override
   public void disableDetection(DetectionExcludesConfiguration configuration) {
-    for (VirtualFile file : myDescription.getRelatedFiles()) {
-      configuration.addExcludedFile(file, myDescription.getDetector().getFrameworkType());
+    Collection<? extends VirtualFile> files = myDescription.getRelatedFiles();
+    FrameworkType frameworkType = myDescription.getDetector().getFrameworkType();
+    if (files.size() <= 5) {
+      for (VirtualFile file : files) {
+        configuration.addExcludedFile(file, frameworkType);
+      }
+    }
+    else {
+      VirtualFile commonAncestor = VfsUtil.getCommonAncestor(files);
+      if (commonAncestor != null) {
+        configuration.addExcludedFile(commonAncestor, frameworkType);
+      }
+      else {
+        LOG.info("Cannot find common ancestor for " + files.size() + " files, disabling detection for " + frameworkType.getId() + " in the whole project");
+        configuration.addExcludedFramework(frameworkType);
+      }
     }
   }
 
@@ -91,7 +95,7 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
   }
 
   @NotNull
-  private String getRelativePath(@NotNull VirtualFile file) {
+  private @NlsSafe String getRelativePath(@NotNull VirtualFile file) {
     final VirtualFile dir = myContext.getBaseDir();
     if (dir != null) {
       final String path = VfsUtilCore.getRelativePath(dir, file, File.separatorChar);

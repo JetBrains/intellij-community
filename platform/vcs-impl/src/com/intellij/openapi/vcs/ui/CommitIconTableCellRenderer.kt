@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.ui
 
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredRenderer
+import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.Ellipse2D
 import javax.swing.JTable
@@ -10,16 +11,15 @@ import javax.swing.table.TableCellRenderer
 
 open class CommitIconTableCellRenderer(
   private val graphColorSupplier: () -> JBColor,
-  defaultCellHeight: Int = 22,
+  private val defaultCellHeight: Int = 22,
   private val graphLineWidth: Float = 1.5f
 ) : SimpleColoredRenderer(), TableCellRenderer {
-
-  companion object {
-    private const val NODE_WIDTH = 8
-    private const val NODE_CENTER_X = NODE_WIDTH
-  }
-
-  private val NODE_CENTER_Y = defaultCellHeight / 2
+  protected open val nodeWidth
+    get() = JBUI.scale(8)
+  protected val nodeCenterX
+    get() = nodeWidth
+  protected val nodeCenterY
+    get() = defaultCellHeight / 2
 
   private var rowIndex = 0
   private var isLastRow = false
@@ -72,13 +72,13 @@ open class CommitIconTableCellRenderer(
   }
 
   protected open fun drawNode(g: Graphics2D) {
-    drawCircle(g, NODE_CENTER_X, NODE_CENTER_Y)
+    drawCircle(g, nodeCenterX, nodeCenterY)
   }
 
   protected open fun drawCircle(g: Graphics2D,
                                 x0: Int,
                                 y0: Int,
-                                circleRadius: Int = NODE_WIDTH / 2,
+                                circleRadius: Int = nodeWidth / 2,
                                 circleColor: Color = graphColorSupplier()) {
     val circle = Ellipse2D.Double(
       x0 - circleRadius + 0.5,
@@ -91,9 +91,9 @@ open class CommitIconTableCellRenderer(
   }
 
   protected open fun drawEdge(g: Graphics2D, tableRowHeight: Int, isDownEdge: Boolean) {
-    val y1 = NODE_CENTER_Y
+    val y1 = nodeCenterY
     val y2 = if (isDownEdge) tableRowHeight else 0
-    val x = NODE_CENTER_X
+    val x = nodeCenterX
     g.color = graphColorSupplier()
     g.stroke = BasicStroke(graphLineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL)
     g.drawLine(x, y1, x, y2)

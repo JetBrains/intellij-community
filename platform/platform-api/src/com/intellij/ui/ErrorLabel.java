@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -27,34 +29,34 @@ public class ErrorLabel extends JLabel {
   private boolean myUnderline;
 
   private Color myForeground;
-  private String myTooltip;
+  private @NlsContexts.Tooltip String myTooltip;
 
   public ErrorLabel() {
     this(null, null);
   }
 
-  public ErrorLabel(String text) {
+  public ErrorLabel(@NlsContexts.Label String text) {
     this(text, null);
   }
 
-  public ErrorLabel(String text, Icon icon) {
+  public ErrorLabel(@NlsContexts.Label String text, Icon icon) {
     super(text, icon, SwingConstants.LEFT);
     setOpaque(false);
   }
 
-  public void setErrorText(String text, Color color) {
+  public void setErrorText(@NlsContexts.Label String text, Color color) {
     boolean newUnderline = text != null;
     myForeground = color;
     if (newUnderline) {
-      updateLabelView(newUnderline, text);
+      updateLabelView(true, text);
     }
     else if (myUnderline) {
-      updateLabelView(newUnderline, myTooltip);
+      updateLabelView(false, myTooltip);
     }
   }
 
   @Override
-  public void setToolTipText(String text) {
+  public void setToolTipText(@NlsContexts.Tooltip String text) {
     if (myUnderline) {
       myTooltip = text;
     }
@@ -65,7 +67,7 @@ public class ErrorLabel extends JLabel {
 
 
 
-  private void updateLabelView(boolean newUnderline, String tooltip) {
+  private void updateLabelView(boolean newUnderline, @NlsContexts.Tooltip String tooltip) {
     super.setToolTipText(tooltip);
     myUnderline = newUnderline;
     repaint();

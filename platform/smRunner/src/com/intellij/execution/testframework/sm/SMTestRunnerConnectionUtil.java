@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.ExecutionException;
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +32,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class SMTestRunnerConnectionUtil {
+public final class SMTestRunnerConnectionUtil {
   private static final String TEST_RUNNER_DEBUG_MODE_PROPERTY = "idea.smrunner.debug";
 
   private SMTestRunnerConnectionUtil() { }
@@ -151,7 +150,7 @@ public class SMTestRunnerConnectionUtil {
    * @return true if in debug mode, otherwise false.
    */
   public static boolean isInDebugMode() {
-    return Boolean.valueOf(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
+    return Boolean.parseBoolean(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
   }
 
   private static void attachEventsProcessors(TestConsoleProperties consoleProperties,
@@ -199,9 +198,13 @@ public class SMTestRunnerConnectionUtil {
       outputConsumer.setProcessor(eventsProcessor);
     });
 
-    outputConsumer.startTesting();
-
+    outputConsumer.setupProcessor();
     processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        outputConsumer.startTesting();
+      }
+
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
@@ -262,8 +265,7 @@ public class SMTestRunnerConnectionUtil {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
@@ -304,9 +306,8 @@ public class SMTestRunnerConnectionUtil {
    * @deprecated should be removed with createConsoleWithCustomLocator()
    */
   @SuppressWarnings("rawtypes")
-  @ApiStatus.ScheduledForRemoval()
-  @Deprecated
-  private static class CompositeTestLocationProvider implements SMTestLocator {
+  @Deprecated(forRemoval = true)
+  private static final class CompositeTestLocationProvider implements SMTestLocator {
     private final TestLocationProvider myPrimaryLocator;
 
     private CompositeTestLocationProvider(@Nullable TestLocationProvider primaryLocator) {

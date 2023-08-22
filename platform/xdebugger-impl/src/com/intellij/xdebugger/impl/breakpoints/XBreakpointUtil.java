@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -24,6 +24,7 @@ import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,11 +39,13 @@ public final class XBreakpointUtil {
   private XBreakpointUtil() {
   }
 
+  @Nls
   public static <B extends XBreakpoint> String getShortText(B breakpoint) {
     //noinspection unchecked
     return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(breakpoint.getType().getShortText(breakpoint)), 70, 5);
   }
 
+  @Nls
   public static <B extends XBreakpoint> String getDisplayText(@NotNull B breakpoint) {
     //noinspection unchecked
     return breakpoint.getType().getDisplayText(breakpoint);
@@ -84,7 +87,7 @@ public final class XBreakpointUtil {
         if (position != null) {
           if (position.getFile().equals(FileDocumentManager.getInstance().getFile(editorDocument)) &&
               editorDocument.getLineNumber(offset) == position.getLine()) {
-            return Pair.create(((XBreakpointBase)breakpoint).createGutterIconRenderer(), breakpoint);
+            return Pair.create(((XBreakpointBase<?, ?, ?>)breakpoint).createGutterIconRenderer(), breakpoint);
           }
         }
       }
@@ -122,12 +125,44 @@ public final class XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @NotNull
-  public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
+  public static Promise<@Nullable XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
                                                               @NotNull XSourcePosition position,
                                                               @Nullable Editor editor,
                                                               boolean temporary,
                                                               boolean moveCaret,
                                                               boolean canRemove) {
+    Pair<List<XLineBreakpointType>, Integer> info = getAvailableLineBreakpointInfo(project, position, editor);
+    List<XLineBreakpointType> typeWinner = info.first;
+    int lineWinner = info.second;
+    int lineStart = position.getLine();
+
+    if (typeWinner.isEmpty()) {
+      return rejectedPromise(new RuntimeException("Cannot find appropriate type"));
+    }
+
+    XSourcePosition winPosition = (lineStart == lineWinner) ? position : XSourcePositionImpl.create(position.getFile(), lineWinner);
+    Promise<XLineBreakpoint> res =
+      XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor, canRemove);
+
+    if (editor != null && lineStart != lineWinner) {
+      int offset = editor.getDocument().getLineStartOffset(lineWinner);
+      ExpandRegionAction.expandRegionAtOffset(editor, offset);
+      if (moveCaret) {
+        editor.getCaretModel().moveToOffset(offset);
+      }
+    }
+    return res;
+  }
+
+  public static List<XLineBreakpointType> getAvailableLineBreakpointTypes(@NotNull Project project,
+                                                                          @NotNull XSourcePosition position,
+                                                                          @Nullable Editor editor) {
+    return getAvailableLineBreakpointInfo(project, position, editor).first;
+  }
+
+  private static Pair<List<XLineBreakpointType>, Integer> getAvailableLineBreakpointInfo(@NotNull Project project,
+                                                                                         @NotNull XSourcePosition position,
+                                                                                         @Nullable Editor editor) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
     // for folded text check each line and find out type with the biggest priority
@@ -171,22 +206,6 @@ public final class XBreakpointUtil {
         }
       }
     }
-
-    if (typeWinner.isEmpty()) {
-      return rejectedPromise(new RuntimeException("Cannot find appropriate type"));
-    }
-
-    XSourcePosition winPosition = (lineStart == lineWinner) ? position : XSourcePositionImpl.create(file, lineWinner);
-    Promise<XLineBreakpoint> res =
-      XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor, canRemove);
-
-    if (editor != null && lineStart != lineWinner) {
-      int offset = editor.getDocument().getLineStartOffset(lineWinner);
-      ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
-      if (moveCaret) {
-        editor.getCaretModel().moveToOffset(offset);
-      }
-    }
-    return res;
+    return Pair.create(typeWinner, lineWinner);
   }
 }

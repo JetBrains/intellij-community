@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
@@ -6,8 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.BaseOutputReader;
 import io.netty.bootstrap.ServerBootstrap;
@@ -35,16 +36,15 @@ import javax.tools.Diagnostic;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
-/**
- * @author Eugene Zhuravlev
- */
 public class ExternalJavacManager extends ProcessAdapter {
   private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
 
@@ -55,25 +55,19 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   private static final AttributeKey<UUID> PROCESS_ID_KEY = AttributeKey.valueOf("ExternalJavacServer.ProcessId");
   private static final Key<Integer> PROCESS_HASH = Key.create("ExternalJavacServer.SdkHomePath");
+  private static final Key<ExternalJavacMessageHandler.WslSupport> WSL_SUPPORT = Key.create("_wsl_support_");
 
   private final File myWorkingDir;
   private final ChannelRegistrar myChannelRegistrar;
   private int myListenPort = DEFAULT_SERVER_PORT;
+  private InetAddress myListenAddress;
   private final Map<UUID, CompileSession> mySessions = Collections.synchronizedMap(new HashMap<>());
   private final Map<UUID, ExternalJavacProcessHandler> myRunningProcesses = Collections.synchronizedMap(new HashMap<>());
   private final Map<UUID, Channel> myConnections = Collections.synchronizedMap(new HashMap<>()); // processId->channel
   private final Executor myExecutor;
   private boolean myOwnExecutor;
   private final long myKeepAliveTimeout;
-
-  /**
-   * @deprecated: use {@link #ExternalJavacManager(File, Executor)} instead with explicit executor parameter
-   */
-  @Deprecated
-  public ExternalJavacManager(@NotNull final File workingDir) {
-    this(workingDir, ConcurrencyUtil.newSingleThreadExecutor("Javac server event loop pool"));
-    myOwnExecutor = true;
-  }
+  private String myWslExePath = "wsl";
 
   public ExternalJavacManager(@NotNull final File workingDir, @NotNull Executor executor) {
     this(workingDir, executor, 5 * 60 * 1000L /* 5 minutes default*/);
@@ -86,7 +80,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     myKeepAliveTimeout = keepAliveTimeout;
   }
 
-  public void start(int listenPort) {
+  public void start(int listenPort) throws UnknownHostException {
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     final ServerBootstrap bootstrap = new ServerBootstrap()
       .group(new NioEventLoopGroup(1, myExecutor))
@@ -104,49 +98,19 @@ public class ExternalJavacManager extends ProcessAdapter {
                                      compilationRequestsHandler);
         }
       });
-    try {
-      final InetAddress loopback = InetAddress.getByName(null);
-      myChannelRegistrar.add(bootstrap.bind(loopback, listenPort).syncUninterruptibly().channel());
-      myListenPort = listenPort;
-    }
-    catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * @deprecated Use {@link #forkJavac(String, int, List, List, CompilationPaths, Collection, Map, DiagnosticOutputConsumer, OutputFileConsumer, JavaCompilingTool, CanceledStatus, boolean)} instead
-   */
-  @Deprecated
-  public boolean forkJavac(String javaHome,
-                           int heapSize,
-                           List<String> vmOptions,
-                           List<String> options,
-                           Collection<? extends File> platformCp,
-                           Collection<? extends File> classpath,
-                           Collection<? extends File> upgradeModulePath,
-                           Collection<? extends File> modulePath,
-                           Collection<? extends File> sourcePath,
-                           Collection<? extends File> files,
-                           Map<File, Set<File>> outs,
-                           DiagnosticOutputConsumer diagnosticSink,
-                           OutputFileConsumer outputSink,
-                           JavaCompilingTool compilingTool,
-                           CanceledStatus cancelStatus) {
-    return forkJavac(
-      javaHome, heapSize, vmOptions, options,
-      CompilationPaths.create(platformCp, classpath, upgradeModulePath, ModulePath.create(modulePath), sourcePath),
-      files, outs, diagnosticSink, outputSink, compilingTool, cancelStatus, false
-    ).get();
+    // javac process forked in a Linux VM can only access ExternalJavacManager, which is listening in a host machine, using real IP
+    myListenAddress = WslToLinuxPathConverter.isWslPath(myWorkingDir)? InetAddress.getLocalHost() : InetAddress.getLoopbackAddress();
+    myChannelRegistrar.add(bootstrap.bind(myListenAddress, listenPort).syncUninterruptibly().channel());
+    myListenPort = listenPort;
   }
 
 
   public ExternalJavacRunResult forkJavac(String javaHome,
                                           int heapSize,
-                                          List<String> vmOptions,
-                                          List<String> options,
+                                          Iterable<String> vmOptions,
+                                          Iterable<String> options,
                                           CompilationPaths paths,
-                                          Collection<? extends File> files,
+                                          Iterable<? extends File> files,
                                           Map<File, Set<File>> outs,
                                           DiagnosticOutputConsumer diagnosticSink,
                                           OutputFileConsumer outputSink,
@@ -154,18 +118,20 @@ public class ExternalJavacManager extends ProcessAdapter {
                                           CanceledStatus cancelStatus, final boolean keepProcessAlive) {
     try {
       final ExternalJavacProcessHandler running = findRunningProcess(processHash(javaHome, vmOptions, compilingTool));
-      final ExternalJavacProcessHandler processHandler = running != null && running.lock()? running : launchExternalJavacProcess(
-        javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool, running == null && keepProcessAlive
+      final ExternalJavacProcessHandler processHandler = running != null? running : launchExternalJavacProcess(
+        javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool, keepProcessAlive
       );
 
       final Channel channel = lookupChannel(processHandler.getProcessId());
       if (channel != null) {
+        final ExternalJavacMessageHandler.WslSupport wslSupport = WSL_SUPPORT.get(processHandler);
+        final ExternalJavacMessageHandler.WslSupport converter = wslSupport instanceof WslToLinuxPathConverter? ((WslToLinuxPathConverter)wslSupport).reverseConverter() : ExternalJavacMessageHandler.WslSupport.DIRECT;
         final CompileSession session = new CompileSession(
-          processHandler.getProcessId(), new ExternalJavacMessageHandler(diagnosticSink, outputSink, getEncodingName(options)), cancelStatus
+          processHandler.getProcessId(), new ExternalJavacMessageHandler(diagnosticSink, outputSink, getEncodingName(options), converter), cancelStatus
         );
         mySessions.put(session.getId(), session);
         channel.writeAndFlush(JavacProtoUtil.toMessage(session.getId(), JavacProtoUtil.createCompilationRequest(
-          options, files, paths.getClasspath(), paths.getPlatformClasspath(), paths.getModulePath(), paths.getUpgradeModulePath(), paths.getSourcePath(), outs
+          options, files, paths.getClasspath(), paths.getPlatformClasspath(), paths.getModulePath(), paths.getUpgradeModulePath(), paths.getSourcePath(), outs, wslSupport
         )));
         return session;
       }
@@ -208,7 +174,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private ExternalJavacProcessHandler findRunningProcess(int processHash) {
-    LOG.debug("findRunningProcess: looking for hash " + processHash);
+    debug(()-> "findRunningProcess: looking for hash " + processHash);
     List<ExternalJavacProcessHandler> idleProcesses = null;
     try {
       synchronized (myRunningProcesses) {
@@ -220,20 +186,20 @@ public class ExternalJavacManager extends ProcessAdapter {
           }
 
           final Integer hash = PROCESS_HASH.get(process);
-          if (hash != null && hash == processHash) {
-            LOG.debug("findRunningProcess: returning process " + process.getProcessId() + " for hash " + processHash);
+          if (hash != null && hash == processHash && process.lock()) {
+            debug(()-> "findRunningProcess: returning process " + process.getProcessId() + " for hash " + processHash);
             return process;
           }
           if (process.getIdleTime() > myKeepAliveTimeout) {
             if (idleProcesses == null) {
               idleProcesses = new ArrayList<>();
             }
-            LOG.debug("findRunningProcess: adding " + process.getProcessId() + " to idle list");
+            debug(()-> "findRunningProcess: adding " + process.getProcessId() + " to idle list");
             idleProcesses.add(process);
           }
         }
       }
-      LOG.debug("findRunningProcess: no running process for " + hashCode() + " is found");
+      debug(()-> "findRunningProcess: no running process for " + processHash + " is found");
       return null;
     }
     finally {
@@ -245,14 +211,32 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  private static int processHash(String sdkHomePath, List<String> vmOptions, JavaCompilingTool tool) {
-    return Objects.hash(sdkHomePath.replace(File.separatorChar, '/'), vmOptions, tool.getId());
+  private static <T> void debug(T data, Function<? super T, String> message) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(message.apply(data));
+    }
+  }
+
+  private static void debug(Supplier<String> message) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(message.get());
+    }
+  }
+
+  private static int processHash(String sdkHomePath, Iterable<String> vmOptions, JavaCompilingTool tool) {
+    Collection<? extends String> opts = vmOptions instanceof Collection<?>? (Collection<String>)vmOptions : Iterators.collect(vmOptions, new ArrayList<>());
+    return Objects.hash(sdkHomePath.replace(File.separatorChar, '/'), opts, tool.getId());
   }
 
   @Nullable
-  private static String getEncodingName(List<String> options) {
-    int p = options.indexOf("-encoding");
-    return p >= 0 && p < options.size() - 1 ? options.get(p + 1) : null;
+  private static String getEncodingName(Iterable<String> options) {
+    for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
+      final String option = it.next();
+      if ("-encoding".equals(option)) {
+        return it.hasNext()? it.next() : null;
+      }
+    }
+    return null;
   }
 
   public boolean isRunning() {
@@ -299,32 +283,33 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   private boolean shutdownProcess(ExternalJavacProcessHandler process) {
     UUID processId = process.getProcessId();
-    LOG.debug("shutdownProcess: shutting down " + processId);
+    debug(()-> "shutdownProcess: shutting down " + processId);
     final Channel conn = myConnections.get(processId);
     if (conn != null && process.lock()) {
-      LOG.debug("shutdownProcess: sending shutdown request to " + processId);
+      debug(()-> "shutdownProcess: sending shutdown request to " + processId);
       conn.writeAndFlush(JavacProtoUtil.toMessage(processId, JavacProtoUtil.createShutdownRequest()));
       return true;
     }
     return false;
   }
 
-  private ExternalJavacProcessHandler launchExternalJavacProcess(String sdkHomePath,
+  private ExternalJavacProcessHandler launchExternalJavacProcess(final String sdkHomePath,
                                                                  int heapSize,
                                                                  int port,
                                                                  File workingDir,
-                                                                 List<String> vmOptions,
+                                                                 Iterable<String> vmOptions,
                                                                  JavaCompilingTool compilingTool,
                                                                  final boolean keepProcessAlive) throws Exception {
     final UUID processId = UUID.randomUUID();
     final List<String> cmdLine = new ArrayList<>();
 
-    appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
-
+    final WslToLinuxPathConverter wslConverter = WslToLinuxPathConverter.createFrom(sdkHomePath);
+    final boolean launchWSL = wslConverter != null;
+    final ExternalJavacMessageHandler.WslSupport wslSupport = launchWSL? wslConverter : ExternalJavacMessageHandler.WslSupport.DIRECT;
+    appendParam(cmdLine, wslSupport.convertPath(sdkHomePath + "/bin/java"));
     appendParam(cmdLine, "-Djava.awt.headless=true");
 
     //appendParam(cmdLine, "-XX:MaxPermSize=150m");
-    //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
     if (heapSize > 0) {
       // if the value is zero or negative, use JVM default memory settings
       final int xms = heapSize / 2;
@@ -348,38 +333,58 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     appendParam(cmdLine, "-D" + ExternalJavacProcess.JPS_JAVA_COMPILING_TOOL_PROPERTY + "=" + compilingTool.getId());
 
-    // this will disable standard extensions to ensure javac is loaded from the right tools.jar
-    appendParam(cmdLine, "-Djava.ext.dirs=");
-
-    appendParam(cmdLine, "-Dlog4j.defaultInitOverride=true");
-
     for (String option : vmOptions) {
       appendParam(cmdLine, option);
     }
 
     appendParam(cmdLine, "-classpath");
     List<File> cp = ClasspathBootstrap.getExternalJavacProcessClasspath(sdkHomePath, compilingTool);
-    appendParam(cmdLine, cp.stream().map(File::getPath).collect(Collectors.joining(File.pathSeparator)));
+    String pathSeparator = launchWSL? ":" : File.pathSeparator;
+    String classpath = String.join(pathSeparator, Iterators.map(cp, f -> wslSupport.convertPath(f.getPath())));
+    if (launchWSL && !classpath.isEmpty()) {
+      cmdLine.add("'" + classpath.replace("'", "\\'") + "'");
+    }
+    else {
+      appendParam(cmdLine, classpath);
+    }
 
     appendParam(cmdLine, ExternalJavacProcess.class.getName());
     appendParam(cmdLine, processId.toString());
-    appendParam(cmdLine, "127.0.0.1");
+    InetAddress targetAddress = myListenAddress;
+    if (targetAddress == null) {
+      targetAddress = InetAddress.getLoopbackAddress();
+    }
+    appendParam(cmdLine, targetAddress.getHostAddress());
     appendParam(cmdLine, Integer.toString(port));
     appendParam(cmdLine, Boolean.toString(keepProcessAlive));  // keep in memory after build finished
 
-    appendParam(cmdLine, FileUtil.toSystemIndependentName(workingDir.getPath()));
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("starting external compiler: " + cmdLine);
+    if (launchWSL) {
+      String command =
+        "\"cd '" + wslSupport.convertPath(workingDir.getPath()) + "' && " + String.join(" ", cmdLine) + "\"";
+      cmdLine.clear();
+      cmdLine.add(myWslExePath);
+      cmdLine.add("--distribution");
+      cmdLine.add(wslConverter.getDistributionId());
+      cmdLine.add("--exec");
+      cmdLine.add("/bin/sh");
+      cmdLine.add("-c");
+      cmdLine.add(command);
     }
+
+    debug(()-> "starting external compiler: " + cmdLine);
     FileUtil.createDirectory(workingDir);
 
     final int processHash = processHash(sdkHomePath, vmOptions, compilingTool);
-    final ExternalJavacProcessHandler processHandler = createProcessHandler(processId, new ProcessBuilder(cmdLine).directory(workingDir).start(), StringUtil.join(cmdLine, " "), keepProcessAlive);
+    final ProcessBuilder processBuilder = new ProcessBuilder(cmdLine);
+    if (!launchWSL) {
+      processBuilder.directory(workingDir);
+    }
+    final ExternalJavacProcessHandler processHandler = createProcessHandler(processId, processBuilder.start(), String.join(" ", cmdLine), keepProcessAlive);
+    WSL_SUPPORT.set(processHandler, wslSupport);
     PROCESS_HASH.set(processHandler, processHash);
     processHandler.lock();
     myRunningProcesses.put(processId, processHandler);
-    LOG.debug("external compiler process registered: id=" + processId + ", hash=" + processHash);
+    debug(()-> "external compiler process registered: id=" + processId + ", hash=" + processHash);
     processHandler.addProcessListener(this);
     processHandler.startNotify();
     return processHandler;
@@ -388,7 +393,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   @Override
   public void processTerminated(@NotNull ProcessEvent event) {
     final UUID processId = ((ExternalJavacProcessHandler)event.getProcessHandler()).getProcessId();
-    LOG.debug("process " + processId + " terminated");
+    debug(()-> "process " + processId + " terminated");
     myRunningProcesses.remove(processId);
     if (myConnections.get(processId) == null) {
       // only if connection has never been established
@@ -436,11 +441,14 @@ public class ExternalJavacManager extends ProcessAdapter {
             }
           }
         }
+        final String msg = prefix + ": " + text;
         if (consumers != null) {
-          final String msg = prefix + ": " + text;
           for (DiagnosticOutputConsumer consumer : consumers) {
             consumer.outputLineAvailable(msg);
           }
+        }
+        else {
+          LOG.info(msg.trim());
         }
       }
     }
@@ -454,9 +462,9 @@ public class ExternalJavacManager extends ProcessAdapter {
   private static void appendParam(List<? super String> cmdLine, String parameter) {
     if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {
-        parameter = StringUtil.replace(parameter, "\"", "\\\"");
+        parameter = parameter.replace("\"", "\\\"");
       }
-      else if (parameter.length() == 0) {
+      else if (parameter.isEmpty()) {
         parameter = "\"\"";
       }
     }
@@ -470,8 +478,10 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  private static String getVMExecutablePath(String sdkHome) {
-    return sdkHome + "/bin/java";
+  public void setWslExecutablePath(@Nullable Path wslExePath) {
+    if (wslExePath != null) {
+      myWslExePath = wslExePath.toAbsolutePath().toString();
+    }
   }
 
   protected static class ExternalJavacProcessHandler extends BaseOSProcessHandler {
@@ -556,27 +566,27 @@ public class ExternalJavacManager extends ProcessAdapter {
               myConnections.put(msgUuid, channel);
               myConnections.notifyAll();
             }
+            return;
           }
-          else if (handler != null) {
-            final boolean terminateOk = handler.handleMessage(message);
-            if (terminateOk) {
-              session.setDone();
-              mySessions.remove(session.getId());
-              final ExternalJavacProcessHandler process = myRunningProcesses.get(session.getProcessId());
-              if (process != null) {
-                process.unlock();
-              }
-            }
-            else if (session.isCancelRequested()) {
-              reply = JavacProtoUtil.toMessage(msgUuid, JavacProtoUtil.createCancelRequest());
+        }
+
+        if (handler != null) {
+          final boolean terminateOk = handler.handleMessage(message);
+          if (terminateOk) {
+            session.setDone();
+            mySessions.remove(session.getId());
+            final ExternalJavacProcessHandler process = myRunningProcesses.get(session.getProcessId());
+            if (process != null) {
+              process.unlock();
             }
           }
-          else {
+          else if (session.isCancelRequested()) {
             reply = JavacProtoUtil.toMessage(msgUuid, JavacProtoUtil.createCancelRequest());
           }
         }
         else {
-          reply = JavacProtoUtil.toMessage(msgUuid, JavacProtoUtil.createFailure("Unsupported message: " + messageType.name(), null));
+          LOG.info("No message handler is registered to handle message " + messageType.name() + "; canceling the process");
+          reply = JavacProtoUtil.toMessage(msgUuid, JavacProtoUtil.createCancelRequest());
         }
       }
       finally {
@@ -591,10 +601,10 @@ public class ExternalJavacManager extends ProcessAdapter {
     Channel channel = null;
     synchronized (myConnections) {
       channel = myConnections.get(processId);
-      LOG.debug("lookupChannel: channel for " + processId + " is " + channel);
+      debug(channel, ch-> "lookupChannel: channel for " + processId + " is " + ch);
       while (channel == null) {
         if (!myRunningProcesses.containsKey(processId)) {
-          LOG.debug("lookupChannel: no process for " + processId);
+          debug(()-> "lookupChannel: no process for " + processId);
           break; // the process is already gone
         }
         try {
@@ -603,7 +613,7 @@ public class ExternalJavacManager extends ProcessAdapter {
         catch (InterruptedException ignored) {
         }
         channel = myConnections.get(processId);
-        LOG.debug("lookupChannel: after wait channel for " + processId + " is " + channel);
+        debug(channel, ch-> "lookupChannel: after wait channel for " + processId + " is " + ch);
       }
     }
     return channel;
@@ -705,7 +715,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       }
       boolean successfully = isTerminatedSuccessfully();
       if (!successfully) {
-        LOG.debug("Javac compile session " + myId + " in process " + myProcessId + "didn't terminate successfully");
+        debug(()-> "Javac compile session " + myId + " in process " + myProcessId + "didn't terminate successfully");
       }
       return successfully;
     }
@@ -720,7 +730,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       }
       boolean successfully = isTerminatedSuccessfully();
       if (!successfully) {
-        LOG.debug("Javac compile session " + myId + " in process " + myProcessId + "didn't terminate successfully");
+        debug(()-> "Javac compile session " + myId + " in process " + myProcessId + "didn't terminate successfully");
       }
       return successfully;
     }
@@ -734,5 +744,72 @@ public class ExternalJavacManager extends ProcessAdapter {
       }
     }
 
+  }
+
+  private static class WslToLinuxPathConverter implements ExternalJavacMessageHandler.WslSupport {
+    private static final String WSL_PATH_PREFIX = "//wsl$/";
+    private static final String MNT_PREFIX = "/mnt/";
+    private static final int MNT_PATTERN_LENGTH = MNT_PREFIX.length() + 2;
+    private final String myDistributionId;
+
+    WslToLinuxPathConverter(String distributionId) {
+      myDistributionId = distributionId;
+    }
+
+    public String getDistributionId() {
+      return myDistributionId;
+    }
+
+    @Override
+    public String convertPath(String path) {
+      final String normalized = FileUtilRt.toSystemIndependentName(path);
+      if (isWslPath(normalized)) {
+        final int distrSeparatorIndex = normalized.indexOf('/', WSL_PATH_PREFIX.length());
+        return distrSeparatorIndex > WSL_PATH_PREFIX.length()? normalized.substring(distrSeparatorIndex) : normalized;
+      }
+      if (isWinPath(normalized)) {
+        return MNT_PREFIX + Character.toLowerCase(normalized.charAt(0)) + normalized.substring(2);
+      }
+      return normalized;
+    }
+
+    public ExternalJavacMessageHandler.WslSupport reverseConverter() {
+      final String prefix = WSL_PATH_PREFIX + myDistributionId;
+      return path -> {
+        if (path.startsWith(MNT_PREFIX) && path.length() >= MNT_PATTERN_LENGTH) {
+          final char driveLetter = path.charAt(MNT_PREFIX.length());
+          if (Character.isLetter(driveLetter) && path.charAt(MNT_PATTERN_LENGTH - 1) == '/') {
+            return driveLetter + ":/" + path.substring(MNT_PATTERN_LENGTH);
+          }
+        }
+        return path.startsWith("/")? prefix + path : prefix + "/" + path;
+      };
+    }
+
+    @Nullable
+    static ExternalJavacManager.WslToLinuxPathConverter createFrom(String path) {
+      if (SystemInfo.isWin10OrNewer) {
+        path = FileUtilRt.toSystemIndependentName(path);
+        if (path.startsWith(WSL_PATH_PREFIX)) {
+          final int distrSeparatorIndex = path.indexOf('/', WSL_PATH_PREFIX.length());
+          if (distrSeparatorIndex > WSL_PATH_PREFIX.length()) {
+            return new WslToLinuxPathConverter(path.substring(WSL_PATH_PREFIX.length(), distrSeparatorIndex));
+          }
+        }
+      }
+      return null;
+    }
+
+    static boolean isWslPath(File file) {
+      return file != null && isWslPath(FileUtilRt.toSystemIndependentName(file.getAbsolutePath()));
+    }
+
+    static boolean isWslPath(String path) {
+      return path.startsWith(WSL_PATH_PREFIX);
+    }
+
+    static boolean isWinPath(String path) {
+      return OSAgnosticPathUtil.isAbsoluteDosPath(path);
+    }
   }
 }

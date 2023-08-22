@@ -2,23 +2,49 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class DfIntConstantType extends DfConstantType<Integer> implements DfIntType {
-  DfIntConstantType(int value) {
+import java.util.Objects;
+
+public class DfIntConstantType extends DfConstantType<Integer> implements DfIntType {
+  private final @Nullable LongRangeSet myWideRange;
+
+  DfIntConstantType(int value, @Nullable LongRangeSet wideRange) {
     super(value);
+    myWideRange = wideRange;
+  }
+
+  @Override
+  public boolean isSuperType(@NotNull DfType other) {
+    return DfIntType.super.isSuperType(other);
+  }
+
+  @Override
+  public @NotNull DfType meet(@NotNull DfType other) {
+    return DfIntType.super.meet(other);
   }
 
   @NotNull
   @Override
-  public PsiPrimitiveType getPsiType() {
-    return DfIntType.super.getPsiType();
+  public LongRangeSet getWideRange() {
+    return myWideRange == null ? getRange() : myWideRange;
   }
 
   @NotNull
   @Override
   public LongRangeSet getRange() {
     return LongRangeSet.point(getValue());
+  }
+
+  @Override
+  public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
+    return DfIntType.super.fromRelation(relationType);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return this == obj || super.equals(obj) && Objects.equals(((DfIntConstantType)obj).myWideRange, myWideRange);
   }
 }

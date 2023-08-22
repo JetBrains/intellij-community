@@ -17,16 +17,16 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ListCellRendererWrapper;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * Renders a list cell which contains a class.
- *
- * @author dsl
  */
 public class ClassCellRenderer extends ListCellRendererWrapper<PsiClass> {
   private final boolean myShowReadOnly;
@@ -52,13 +52,14 @@ public class ClassCellRenderer extends ListCellRendererWrapper<PsiClass> {
     }
   }
 
+  @Nls
   private static String getClassText(@NotNull PsiClass aClass) {
-    String qualifiedName = aClass.getQualifiedName();
+    @NlsSafe String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName != null) {
       return qualifiedName;
     }
 
-    String name = aClass.getName();
+    @NlsSafe String name = aClass.getName();
     if (name != null) {
       return name;
     }

@@ -15,13 +15,20 @@
  */
 package com.jetbrains.python.intentions;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User : ktisha
  */
 public class PyConvertFormatOperatorToMethodIntentionTest extends PyIntentionTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testSimple() {
     doTest(PyPsiBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);

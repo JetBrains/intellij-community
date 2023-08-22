@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.designer.LightToolWindowContent;
@@ -8,6 +8,7 @@ import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -31,9 +32,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PaletteWindow extends JPanel implements LightToolWindowContent, DataProvider {
   private final Project myProject;
   private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<>();
@@ -148,7 +147,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
         remove(myScrollPane);
         add(myTabbedPane);
       }
-      for (String tabName : tabNames) {
+      for (@NlsSafe String tabName : tabNames) {
         PaletteContentWindow contentWindow = new PaletteContentWindow();
         JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(contentWindow);
         scrollPane.addMouseListener(new MyScrollPanePopupHandler());
@@ -222,26 +221,13 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     return null;
   }
 
-  @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    PaletteItem item = getActiveItem();
-    if (item != null) {
-      Object data = item.getData(myProject, dataId);
-      if (data != null) return data;
-    }
+  private @Nullable PaletteGroup getActiveGroup() {
     for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       if ((groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) || groupHeader == myLastFocusedGroup) {
-        return groupHeader.getGroup().getData(myProject, dataId);
+        return groupHeader.getGroup();
       }
     }
-    final int tabCount = collectTabNames(myGroups).length;
+    int tabCount = collectTabNames(myGroups).length;
     if (tabCount > 0) {
       JScrollPane activeScrollPane;
       if (tabCount == 1) {
@@ -253,8 +239,37 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
       PaletteContentWindow activeContentWindow = (PaletteContentWindow)activeScrollPane.getViewport().getView();
       PaletteGroupHeader groupHeader = activeContentWindow.getLastGroupHeader();
       if (groupHeader != null) {
-        return groupHeader.getGroup().getData(myProject, dataId);
+        return groupHeader.getGroup();
       }
+    }
+    return null;
+  }
+
+  @Override
+  @Nullable
+  public Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return ourHelpID;
+    }
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      PaletteItem item = getActiveItem();
+      PaletteGroup group = getActiveGroup();
+      DataProvider provider1 = item == null ? null : (DataProvider)item.getData(myProject, dataId);
+      DataProvider provider2 = group == null ? null : (DataProvider)group.getData(myProject, dataId);
+      if (provider1 == null && provider2 == null) return null;
+      return provider1 == null ? provider2 : CompositeDataProvider.compose(provider1, provider2);
+    }
+    PaletteItem item = getActiveItem();
+    if (item != null) {
+      Object data = item.getData(myProject, dataId);
+      if (data != null) return data;
+    }
+    PaletteGroup group = getActiveGroup();
+    if (group != null) {
+      return group.getData(myProject, dataId);
     }
     return null;
   }

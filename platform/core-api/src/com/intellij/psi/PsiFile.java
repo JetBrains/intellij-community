@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A PSI element representing a file.
  * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/psi_files.html">PSI Files</a>
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/psi-files.html">PSI Files</a>
  * for high-level overview.
  *
  * @see com.intellij.openapi.actionSystem.LangDataKeys#PSI_FILE
@@ -90,7 +90,7 @@ public interface PsiFile extends PsiFileSystemItem {
   FileASTNode getNode();
 
   /**
-   * Called by the PSI framework when the contents of the file changes.
+   * Called by the PSI framework when the contents of the file change.
    * If you override this method, you <b>must</b> call the base class implementation.
    * While this method can be used to invalidate file-level caches, it is more much safe to invalidate them in {@link #clearCaches()}
    * since file contents can be reloaded completely (without any specific subtree change) without this method being called.
@@ -106,8 +106,7 @@ public interface PsiFile extends PsiFileSystemItem {
   /**
    * @return the element type of the file node, but possibly in an efficient node that doesn't instantiate the node.
    */
-  @Nullable
-  default IFileElementType getFileElementType() {
+  default @Nullable IFileElementType getFileElementType() {
     return ObjectUtils.tryCast(PsiUtilCore.getElementType(getNode()), IFileElementType.class);
   }
 }

@@ -1,0 +1,7 @@
+// WITH_STDLIB
+
+fun test() {
+    foo()
+}
+
+fun foo() = 0

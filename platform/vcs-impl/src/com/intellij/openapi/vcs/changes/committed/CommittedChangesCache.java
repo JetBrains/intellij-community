@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.ProgressManagerQueue;
@@ -42,10 +41,8 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublisher;
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
-/**
- * @author yole
- */
-@Service
+
+@Service(Service.Level.PROJECT)
 @State(
   name = "CommittedChangesCache",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
@@ -67,11 +64,16 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private final CachesHolder myCachesHolder;
   private final RepositoryLocationCache myLocationCache;
 
-  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>("committed changes updates",
-                                                                                    CommittedChangesListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>(CommittedChangesListener.class, Topic.BroadcastDirection.NONE);
 
   public static CommittedChangesCache getInstance(Project project) {
     return project.getService(CommittedChangesCache.class);
+  }
+
+  @Nullable
+  public static CommittedChangesCache getInstanceIfCreated(Project project) {
+    return project.getServiceIfCreated(CommittedChangesCache.class);
   }
 
   public CommittedChangesCache(@NotNull Project project) {
@@ -81,6 +83,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       @Override
       public void directoryMappingChanged() {
         myLocationCache.reset();
+        myCachesHolder.reset();
         refreshAllCachesAsync(false, true);
         refreshIncomingChangesAsync();
         myTaskQueue.run(() -> {
@@ -117,10 +120,6 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     myExternallyLoadedChangeLists = new ConcurrentHashMap<>();
   }
 
-  public MessageBus getMessageBus() {
-    return myProject.getMessageBus();
-  }
-
   @Override
   public void loadState(@NotNull CommittedChangesCacheState state) {
     super.loadState(state);
@@ -130,8 +129,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   public boolean isMaxCountSupportedForProject() {
     for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-      if (provider instanceof CachingCommittedChangesProvider) {
-        final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
+      if (provider instanceof CachingCommittedChangesProvider cachingProvider) {
         if (!cachingProvider.isMaxCountSupported()) {
           return false;
         }
@@ -140,7 +138,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return true;
   }
 
-  private class MyProjectChangesLoader implements Runnable {
+  private final class MyProjectChangesLoader implements Runnable {
     private final ChangeBrowserSettings mySettings;
     private final int myMaxCount;
     private final boolean myCacheOnly;
@@ -214,7 +212,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
         else if (!myDisposed) {
           myConsumer.consume(new ArrayList<>(myResult));
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
   }
 
@@ -274,7 +272,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       return cacheFile.hasCompleteHistory();
     }
 
-    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_DATE_BEFORE_FILTER || settings.USE_CHANGE_AFTER_FILTER || settings.USE_CHANGE_BEFORE_FILTER;
+    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_CHANGE_AFTER_FILTER;
     boolean hasNonDateFilter = settings.isNonDateFilterSpecified();
     if (!hasDateFilter && hasNonDateFilter) {
       return cacheFile.hasCompleteHistory();
@@ -557,7 +555,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return result;
   }
 
-  private static class IncomingListsZipper extends VcsCommittedListsZipperAdapter {
+  private static final class IncomingListsZipper extends VcsCommittedListsZipperAdapter {
     private final VcsCommittedListsZipper myVcsZipper;
 
     private IncomingListsZipper(final VcsCommittedListsZipper vcsZipper) {
@@ -782,7 +780,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       myRefreshingIncomingChanges = false;
       debug("Incoming changes refresh complete, clearing cached incoming changes");
       notifyReloadIncomingChanges();
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
   public void refreshAllCachesAsync(final boolean initIfEmpty, final boolean inBackground) {
@@ -952,7 +950,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     void receivedError(VcsException ex);
   }
 
-  private static class MyRefreshRunnable implements Runnable {
+  private static final class MyRefreshRunnable implements Runnable {
     private CommittedChangesCache myCache;
 
     private MyRefreshRunnable(final CommittedChangesCache cache) {

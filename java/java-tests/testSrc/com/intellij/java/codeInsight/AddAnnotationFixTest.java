@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -15,10 +15,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Disposer;
@@ -40,6 +37,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +64,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final String dataPath = PathManagerEx.getTestDataPath() + "/codeInsight/externalAnnotations";
     myFixture.setTestDataPath(dataPath);
-    final JavaModuleFixtureBuilder builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    final JavaModuleFixtureBuilder<?> builder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
 
     myFixture.setUp();
@@ -373,11 +373,35 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myFixture.getTempDirPath() + "/content/anno/p/annotations.xml");
       assert file != null;
-      String newText = "  " + StreamUtil.readText(file.getInputStream(), "UTF-8") + "      ";
+      String newText;
+      try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
+        newText = "  " + StreamUtil.readText(reader) + "      ";
+      }
       FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), newText);
       file.refresh(false, false);
     });
     stopListeningAndCheckEvents();
+  } 
+
+  public void testLibraryAnnotationRootsChanged() throws IOException {
+    addDefaultLibrary();
+    myFixture.configureByFiles("content/anno/p/annotations.xml");
+    PsiFile[] files = myFixture.configureByFiles("lib/p/TestDeannotation.java");
+
+    PsiClass aClass = ((PsiJavaFile)files[0]).getClasses()[0];
+    assertNotNull(aClass);
+    assertTrue(AnnotationUtil.isAnnotated(aClass.getMethods()[0], AnnotationUtil.NOT_NULL, AnnotationUtil.CHECK_EXTERNAL));
+
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), model -> {
+      final LibraryTable libraryTable = model.getModuleLibraryTable();
+      Library library = libraryTable.getModifiableModel().getLibraryByName("test");
+      Library.ModifiableModel libraryModifiableModel = library.getModifiableModel();
+      libraryModifiableModel.removeRoot(VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno"),
+                                        AnnotationOrderRootType.getInstance());
+      libraryModifiableModel.commit();
+    });
+
+    assertFalse(AnnotationUtil.isAnnotated(aClass.getMethods()[0], AnnotationUtil.NOT_NULL, AnnotationUtil.CHECK_EXTERNAL));
   }
 
   public void testAnnotationsUpdatedWhenFileEdited() {

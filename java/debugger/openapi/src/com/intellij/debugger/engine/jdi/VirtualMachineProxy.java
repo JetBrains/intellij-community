@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author lex
- */
 public interface VirtualMachineProxy {
   List<ReferenceType> allClasses();
 

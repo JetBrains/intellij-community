@@ -22,9 +22,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LightResolveTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class ResolveVariable15Test extends LightResolveTestCase {
   @NotNull
   @Override

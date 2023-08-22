@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -39,19 +25,18 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
-
-  MavenResourcesTarget(final MavenResourcesTargetType type, @NotNull JpsModule module) {
+public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDescriptor> {
+  MavenResourcesTarget(@NotNull MavenResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myModule.getName();
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     return Collections.emptyList();
   }
 
@@ -62,7 +47,7 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
 
   @NotNull
   @Override
-  public List<MavenResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
+  public List<MavenResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     // todo: should we honor ignored and excluded roots here?
     final List<MavenResourceRootDescriptor> result = new ArrayList<>();
 
@@ -98,7 +83,7 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
 
   @Nullable
   @Override
-  public MavenResourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+  public MavenResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
     for (MavenResourceRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       if (descriptor.getRootId().equals(rootId)) {
         return descriptor;
@@ -115,12 +100,12 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
 
   @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     MavenModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     if (configuration == null) return Collections.emptyList();
 
-    final Set<File> result = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> result = FileCollectionFactory.createCanonicalFileSet();
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
       final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);
@@ -155,7 +140,7 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   }
 
   @Override
-  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
     final BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
     final MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration != null) {

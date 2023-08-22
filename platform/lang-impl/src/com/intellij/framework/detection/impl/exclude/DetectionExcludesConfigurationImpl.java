@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
@@ -7,6 +7,7 @@ import com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExclud
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @State(name = "FrameworkDetectionExcludesConfiguration")
-public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfiguration
+public final class DetectionExcludesConfigurationImpl extends DetectionExcludesConfiguration
          implements PersistentStateComponent<ExcludesConfigurationState>, Disposable {
   private final Map<String, VirtualFilePointerContainer> myExcludedFiles;
   private final Set<String> myExcludedFrameworks;
@@ -148,6 +149,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
     final Iterator<VirtualFile> iterator = files.iterator();
     while (iterator.hasNext()) {
+      ProgressManager.checkCanceled();
       VirtualFile file = iterator.next();
       if (isFileExcluded(file, frameworkType.getId())) {
         iterator.remove();

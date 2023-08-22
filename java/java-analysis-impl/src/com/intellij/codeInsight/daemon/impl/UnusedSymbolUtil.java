@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.DaemonTooltipsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -12,6 +12,7 @@ import com.intellij.find.findUsages.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.source.PsiClassImpl;
@@ -24,12 +25,14 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class UnusedSymbolUtil {
+public final class UnusedSymbolUtil {
 
   public static boolean isInjected(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
     return EntryPointsManagerBase.getInstance(project).isEntryPoint(modifierListOwner);
@@ -75,20 +78,38 @@ public class UnusedSymbolUtil {
     return EntryPointsManager.getInstance(project).isImplicitWrite(element);
   }
 
+  /**
+   * @deprecated use {@link #createUnusedSymbolInfoBuilder(PsiElement, String, HighlightInfoType, String)} instead
+   */
+  @Deprecated
   @Nullable
   public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
-                                                     @NotNull String message,
-                                                     @NotNull final HighlightInfoType highlightInfoType) {
-    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).group(
-      GeneralHighlightingPass.POST_UPDATE_ALL).create();
-    if (info == null) {
-      return null; //filtered out
+                                                     @NotNull @NlsContexts.DetailedDescription String message,
+                                                     @NotNull final HighlightInfoType highlightInfoType,
+                                                     @Nullable String shortName) {
+    return createUnusedSymbolInfoBuilder(element, message, highlightInfoType, shortName).create();
+  }
+  @NotNull
+  public static HighlightInfo.Builder createUnusedSymbolInfoBuilder(@NotNull PsiElement element,
+                                                                    @NotNull @NlsContexts.DetailedDescription String message,
+                                                                    @NotNull final HighlightInfoType highlightInfoType,
+                                                                    @Nullable String shortName) {
+    String tooltip;
+    if (shortName != null) {
+      tooltip = DaemonTooltipsUtil.getWrappedTooltip(message, shortName, true);
     }
+    else {
+      tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    }
+
+    HighlightInfo.@NotNull Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element)
+      .description(message).escapedToolTip(tooltip).group(
+      GeneralHighlightingPass.POST_UPDATE_ALL);
 
     for (UnusedDeclarationFixProvider provider : UnusedDeclarationFixProvider.EP_NAME.getExtensionList()) {
       IntentionAction[] fixes = provider.getQuickFixes(element);
       for (IntentionAction fix : fixes) {
-        QuickFixAction.registerQuickFixAction(info, fix);
+        info.registerFix(fix, null, null, null, null);
       }
     }
     return info;
@@ -178,8 +199,19 @@ public class UnusedSymbolUtil {
     return sure;
   }
 
-  private static void log(String s) {
+  private static void log(@NonNls String s) {
     //System.out.println(s);
+  }
+
+  @NotNull
+  public static SearchScope getUseScope(@NotNull PsiMember member) {
+    Project project = member.getProject();
+    SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
+    // some classes may have references from within XML outside dependent modules, e.g. our actions
+    if (useScope instanceof GlobalSearchScope globalUseScope && member instanceof PsiClass) {
+      useScope = GlobalSearchScope.projectScope(project).uniteWith(globalUseScope);
+    }
+    return useScope;
   }
 
   // return false if can't process usages (weird member of too may usages) or processor returned false
@@ -189,18 +221,23 @@ public class UnusedSymbolUtil {
                                       @NotNull ProgressIndicator progress,
                                       @Nullable PsiFile ignoreFile,
                                       @NotNull Processor<? super UsageInfo> usageInfoProcessor) {
+    return processUsages(project, containingFile, getUseScope(member), member, progress, ignoreFile, usageInfoProcessor);
+  }
+
+  public static boolean processUsages(@NotNull Project project,
+                                      @NotNull PsiFile containingFile,
+                                      @NotNull final SearchScope useScope,
+                                      @NotNull PsiMember member,
+                                      @NotNull ProgressIndicator progress,
+                                      @Nullable PsiFile ignoreFile,
+                                      @NotNull Processor<? super UsageInfo> usageInfoProcessor) {
     String name = member.getName();
     if (name == null) {
       log("* "+member.getName()+" no name; false");
       return false;
     }
-    SearchScope useScope = member.getUseScope();
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
     if (useScope instanceof GlobalSearchScope) {
-      // some classes may have references from within XML outside dependent modules, e.g. our actions
-      if (member instanceof PsiClass) {
-        useScope = GlobalSearchScope.projectScope(project).uniteWith((GlobalSearchScope)useScope);
-      }
 
       PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
@@ -240,8 +277,7 @@ public class UnusedSymbolUtil {
       options = new JavaClassFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
     }
-    else if (member instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)member;
+    else if (member instanceof PsiMethod method) {
       options = new JavaMethodFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = method.isConstructor();
       toSearch.addAll(DeepestSuperMethodsSearch.search(method).findAll());

@@ -19,6 +19,8 @@ package com.intellij.vcs.log.graph.api.elements;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public final class GraphEdge implements GraphElement {
   public static GraphEdge createNormalEdge(int nodeIndex1, int nodeIndex2, @NotNull GraphEdgeType type) {
     assert type.isNormalEdge() : "Unexpected edge type: " + type;
@@ -26,16 +28,11 @@ public final class GraphEdge implements GraphElement {
   }
 
   public static GraphEdge createEdgeWithTargetId(int nodeIndex, @Nullable Integer targetId, @NotNull GraphEdgeType type) {
-    switch (type) {
-      case DOTTED_ARROW_UP:
-        return new GraphEdge(null, nodeIndex, targetId, type);
-      case NOT_LOAD_COMMIT:
-      case DOTTED_ARROW_DOWN:
-        return new GraphEdge(nodeIndex, null, targetId, type);
-
-      default:
-        throw new AssertionError("Unexpected edge type: " + type);
-    }
+    return switch (type) {
+      case DOTTED_ARROW_UP -> new GraphEdge(null, nodeIndex, targetId, type);
+      case NOT_LOAD_COMMIT, DOTTED_ARROW_DOWN -> new GraphEdge(nodeIndex, null, targetId, type);
+      default -> throw new AssertionError("Unexpected edge type: " + type);
+    };
   }
 
   @Nullable private final Integer myUpNodeIndex;
@@ -81,9 +78,9 @@ public final class GraphEdge implements GraphElement {
     GraphEdge graphEdge = (GraphEdge)o;
 
     if (myType != graphEdge.myType) return false;
-    if (myUpNodeIndex != null ? !myUpNodeIndex.equals(graphEdge.myUpNodeIndex) : graphEdge.myUpNodeIndex != null) return false;
-    if (myDownNodeIndex != null ? !myDownNodeIndex.equals(graphEdge.myDownNodeIndex) : graphEdge.myDownNodeIndex != null) return false;
-    if (myTargetId != null ? !myTargetId.equals(graphEdge.myTargetId) : graphEdge.myTargetId != null) return false;
+    if (!Objects.equals(myUpNodeIndex, graphEdge.myUpNodeIndex)) return false;
+    if (!Objects.equals(myDownNodeIndex, graphEdge.myDownNodeIndex)) return false;
+    if (!Objects.equals(myTargetId, graphEdge.myTargetId)) return false;
 
     return true;
   }

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -42,9 +29,7 @@ public class GrSplitDeclarationIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    if (!(element instanceof GrVariableDeclaration)) return;
-
-    GrVariableDeclaration declaration = (GrVariableDeclaration)element;
+    if (!(element instanceof GrVariableDeclaration declaration)) return;
 
     GrVariable[] variables = declaration.getVariables();
     if (variables.length == 1) {
@@ -132,11 +117,11 @@ public class GrSplitDeclarationIntention extends Intention {
     return decl;
   }
 
-  private String myText = "";
+  private @IntentionName String myText = "";
 
   @NotNull
   @Override
-  public String getText() {
+  public @IntentionName String getText() {
     return myText;
   }
 
@@ -146,8 +131,7 @@ public class GrSplitDeclarationIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (element instanceof GrVariableDeclaration) {
-          GrVariableDeclaration decl = (GrVariableDeclaration)element;
+        if (element instanceof GrVariableDeclaration decl) {
           GrVariable[] variables = decl.getVariables();
           if (variables.length > 1 && PsiUtil.isLocalVariable(variables[0])) {
             if (!decl.isTuple() || decl.getTupleInitializer() instanceof GrListOrMap) {

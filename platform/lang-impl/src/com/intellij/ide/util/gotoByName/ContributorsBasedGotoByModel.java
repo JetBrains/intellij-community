@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
+import com.intellij.navigation.ChooseByNameContributorEx2;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,15 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Processor;
-import com.intellij.util.Processors;
+import com.intellij.util.*;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
-import com.intellij.util.indexing.IdFilter;
-import gnu.trove.THashSet;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,9 +58,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ContainerUtil.find(getContributorList(), o -> DumbService.isDumbAware(o)) != null;
   }
 
-  @NotNull
   @Override
-  public ListCellRenderer getListCellRenderer() {
+  public @NotNull ListCellRenderer<?> getListCellRenderer() {
     return new NavigationItemListCellRenderer();
   }
 
@@ -70,14 +67,14 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return false;
   }
 
-  private final ConcurrentMap<ChooseByNameContributor, TIntHashSet> myContributorToItsSymbolsMap = ContainerUtil.createConcurrentWeakMap();
+  private final ConcurrentMap<ChooseByNameContributor, IntSet> myContributorToItsSymbolsMap = CollectionFactory.createConcurrentWeakMap();
 
   @Override
   public void processNames(@NotNull Processor<? super String> nameProcessor, @NotNull FindSymbolParameters parameters) {
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> contributors = filterDumb(getContributorList());
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    Processor<ChooseByNameContributor> processor = new ReadActionProcessor<ChooseByNameContributor>() {
+    Processor<ChooseByNameContributor> processor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(@NotNull ChooseByNameContributor contributor) {
         try {
@@ -93,7 +90,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         catch (ProcessCanceledException | IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
-        catch (Exception ex) {
+        catch (Throwable ex) {
           LOG.error(ex);
         }
         return true;
@@ -114,8 +111,16 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public void processContributorNames(@NotNull ChooseByNameContributor contributor,
                                       @NotNull FindSymbolParameters parameters,
                                       @NotNull Processor<? super String> nameProcessor) {
-    TIntHashSet filter = new TIntHashSet(1000);
-    if (contributor instanceof ChooseByNameContributorEx) {
+    IntSet filter = new IntOpenHashSet(1000);
+    if (contributor instanceof ChooseByNameContributorEx2) {
+      ((ChooseByNameContributorEx2)contributor).processNames(s -> {
+        if (nameProcessor.process(s)) {
+          filter.add(s.hashCode());
+        }
+        return true;
+      }, parameters);
+    }
+    else if (contributor instanceof ChooseByNameContributorEx) {
       ((ChooseByNameContributorEx)contributor).processNames(s -> {
         if (nameProcessor.process(s)) {
           filter.add(s.hashCode());
@@ -134,13 +139,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     myContributorToItsSymbolsMap.put(contributor, filter);
   }
 
-  IdFilter getIdFilter(boolean withLibraries) {
-    return IdFilter.getProjectIdFilter(myProject, withLibraries);
-  }
-
   @Override
   public String @NotNull [] getNames(final boolean checkBoxState) {
-    final THashSet<String> allNames = new THashSet<>();
+    Set<String> allNames = new HashSet<>();
 
     Collection<String> result = Collections.synchronizedCollection(allNames);
     processNames(Processors.cancelableCollectProcessor(result),
@@ -163,82 +164,96 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return answer;
   }
 
-  public Object @NotNull [] getElementsByName(@NotNull final String name,
-                                              @NotNull final FindSymbolParameters parameters,
-                                              @NotNull final ProgressIndicator canceled) {
-    long elementByNameStarted = System.currentTimeMillis();
-    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<>());
-
-    Processor<ChooseByNameContributor> processor = contributor -> {
-      if (myProject.isDisposed()) {
-        return true;
+  public Object @NotNull [] getElementsByName(@NotNull String name,
+                                              @NotNull FindSymbolParameters parameters,
+                                              @NotNull ProgressIndicator canceled) {
+    Map<ChooseByNameContributor, String> applicable = new HashMap<>();
+    for (ChooseByNameContributor contributor : filterDumb(getContributorList())) {
+      IntSet filter = myContributorToItsSymbolsMap.get(contributor);
+      if (filter == null || filter.contains(name.hashCode())) {
+        applicable.put(contributor, name);
       }
-      TIntHashSet filter = myContributorToItsSymbolsMap.get(contributor);
-      if (filter != null && !filter.contains(name.hashCode())) return true;
-      try {
-        boolean searchInLibraries = parameters.isSearchInLibraries();
-        long contributorStarted = System.currentTimeMillis();
+    }
+    if (applicable.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    long start = System.nanoTime();
+    List<NavigationItem> items = Collections.synchronizedList(new ArrayList<>());
 
-        if (contributor instanceof ChooseByNameContributorEx) {
-          ((ChooseByNameContributorEx)contributor).processElementsWithName(name, item -> {
-            canceled.checkCanceled();
-            if (acceptItem(item)) items.add(item);
-            return true;
-          }, parameters);
-
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + ",");
-          }
-        }
-        else {
-          NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
-          for (NavigationItem item : itemsByName) {
-            canceled.checkCanceled();
-            if (item == null) {
-              PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
-              continue;
-            }
-            VirtualFile file = item instanceof PsiElement && !(item instanceof PomTargetPsiElement)
-                               ? PsiUtilCore.getVirtualFile((PsiElement)item) : null;
-            if (file != null && !parameters.getSearchScope().contains(file)) continue;
-
-            if (acceptItem(item)) {
-              items.add(item);
-            }
-          }
-
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + "," + itemsByName.length);
-          }
-        }
-      }
-      catch (ProcessCanceledException ex) {
-        // index corruption detected, ignore
-      }
-      catch (Exception ex) {
-        LOG.error(ex);
-      }
-      return true;
-    };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(getContributorList()), canceled, processor)) {
+    Processor<ChooseByNameContributor> processor = contributor ->
+      processContributorForName(contributor, applicable.get(contributor), parameters, canceled, items);
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(applicable.keySet()), canceled, processor)) {
       canceled.cancel();
     }
     canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Retrieving " + name + ":" + items.size() + " for " + (System.currentTimeMillis() - elementByNameStarted));
+      LOG.debug("Retrieving " + name + ":" + items.size() + " for " + TimeoutUtil.getDurationMillis(start));
     }
     return ArrayUtil.toObjectArray(items);
+  }
+
+  private boolean processContributorForName(@NotNull ChooseByNameContributor contributor,
+                                            @NotNull String name,
+                                            @NotNull FindSymbolParameters parameters,
+                                            @NotNull ProgressIndicator canceled,
+                                            @NotNull List<? super NavigationItem> items) {
+    if (myProject.isDisposed()) {
+      return true;
+    }
+    try {
+      boolean searchInLibraries = parameters.isSearchInLibraries();
+      long start = System.nanoTime();
+      int[] count = {0};
+
+      if (contributor instanceof ChooseByNameContributorEx) {
+        ((ChooseByNameContributorEx)contributor).processElementsWithName(name, item -> {
+          canceled.checkCanceled();
+          count[0]++;
+          if (acceptItem(item)) items.add(item);
+          return true;
+        }, parameters);
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
+        }
+      }
+      else {
+        NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
+        count[0] += itemsByName.length;
+        for (NavigationItem item : itemsByName) {
+          canceled.checkCanceled();
+          if (item == null) {
+            PluginException.logPluginError(LOG, "null item from contributor " + contributor + " for name " + name, null, contributor.getClass());
+            continue;
+          }
+          VirtualFile file = item instanceof PsiElement && !(item instanceof PomTargetPsiElement)
+                             ? PsiUtilCore.getVirtualFile((PsiElement)item) : null;
+          if (file != null && !parameters.getSearchScope().contains(file)) continue;
+
+          if (acceptItem(item)) {
+            items.add(item);
+          }
+        }
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
+      }
+    }
+    catch (ProcessCanceledException ex) {
+      // index corruption detected, ignore
+    }
+    catch (Throwable ex) {
+      LOG.error(ex);
+    }
+    return true;
   }
 
   /**
    * Get elements by name from contributors.
    *
    * @param name a name
-   * @param checkBoxState if true, non-project files are considered as well
+   * @param checkBoxState if {@code true}, non-project files are considered as well
    * @param pattern a pattern to use
-   * @return a list of navigation items from contributors for
-   *  which {@link #acceptItem(NavigationItem) returns true.
-   *
+   * @return a array of navigation items from contributors for
+   *  which {@link #acceptItem(NavigationItem)} returns {@code true}.
    */
   @Override
   public Object @NotNull [] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {

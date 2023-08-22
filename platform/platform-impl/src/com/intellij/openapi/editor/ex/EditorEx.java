@@ -30,12 +30,12 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +51,11 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_INSERT_MODE = "insertMode";
   @NonNls String PROP_COLUMN_MODE = "columnMode";
   @NonNls String PROP_FONT_SIZE = "fontSize";
+  @NonNls String PROP_FONT_SIZE_2D = "fontSize2D";
+  @NonNls String PROP_ONE_LINE_MODE = "oneLineMode";
+  @NonNls String PROP_HIGHLIGHTER = "highlighter";
+  @NonNls String PROP_HEADER_COMPONENT = "headerComponent";
+
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
   @NotNull
@@ -70,7 +75,7 @@ public interface EditorEx extends Editor {
    *
    * @return the markup model instance.
    * @see com.intellij.openapi.editor.markup.MarkupEditorFilter
-   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingFilter(Condition)
+   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingPredicate(java.util.function.Predicate)
    * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, Project, boolean)
    */
   @NotNull
@@ -79,9 +84,6 @@ public interface EditorEx extends Editor {
   @NotNull
   EditorGutterComponentEx getGutterComponentEx();
 
-  @NotNull
-  EditorHighlighter getHighlighter();
-
   JComponent getPermanentHeaderComponent();
 
   /**
@@ -89,9 +91,9 @@ public interface EditorEx extends Editor {
    */
   void setViewer(boolean isViewer);
 
-  void setPermanentHeaderComponent(JComponent component);
-
   void setHighlighter(@NotNull EditorHighlighter highlighter);
+
+  void setPermanentHeaderComponent(JComponent component);
 
   void setColorsScheme(@NotNull EditorColorsScheme scheme);
 
@@ -111,12 +113,16 @@ public interface EditorEx extends Editor {
 
   void setHorizontalScrollbarVisible(boolean b);
 
+  @NotNull
   CutProvider getCutProvider();
 
+  @NotNull
   CopyProvider getCopyProvider();
 
+  @NotNull
   PasteProvider getPasteProvider();
 
+  @NotNull
   DeleteProvider getDeleteProvider();
 
   void repaint(int startOffset, int endOffset);
@@ -147,7 +153,7 @@ public interface EditorEx extends Editor {
 
   void setRendererMode(boolean isRendererMode);
 
-  void setFile(VirtualFile vFile);
+  void setFile(@NotNull VirtualFile vFile);
 
   @NotNull
   DataContext getDataContext();
@@ -155,6 +161,10 @@ public interface EditorEx extends Editor {
   boolean processKeyTyped(@NotNull KeyEvent e);
 
   void setFontSize(int fontSize);
+
+  default void setFontSize(float fontSize) {
+    setFontSize((int)(fontSize + 0.5));
+  }
 
   @NotNull
   Color getBackgroundColor();
@@ -166,6 +176,7 @@ public interface EditorEx extends Editor {
   boolean isEmbeddedIntoDialogWrapper();
   void setEmbeddedIntoDialogWrapper(boolean b);
 
+  @Override
   VirtualFile getVirtualFile();
 
   TextDrawingCallback getTextDrawingCallback();
@@ -197,7 +208,7 @@ public interface EditorEx extends Editor {
    *
    * @param text    virtual text to show until user data is entered or the editor is focused
    */
-  void setPlaceholder(@Nullable CharSequence text);
+  void setPlaceholder(@Nullable @Nls CharSequence text);
 
   /**
    * Sets text attributes for a placeholder. Font style and color are currently supported. 
@@ -270,9 +281,9 @@ public interface EditorEx extends Editor {
 
   /**
    * Registers a function which will be applied to a line number to obtain additional text fragments. The fragments returned by the
-   * function will be drawn in the editor after end of the line (together with fragments returned by {@link com.intellij.openapi.editor.EditorLinePainter} extensions).
+   * function will be drawn in the editor after end of the line (together with fragments returned by {@link EditorLinePainter} extensions).
    */
-  void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter);
+  void registerLineExtensionPainter(@NotNull IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>> lineExtensionPainter);
 
   /**
    * Allows to register a callback that will be called one each repaint of the editor vertical scrollbar.

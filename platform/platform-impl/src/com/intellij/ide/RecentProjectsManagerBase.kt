@@ -1,72 +1,84 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION", "LiftReturnOrAssignment")
+
 package com.intellij.ide
 
+import com.intellij.diagnostic.runActivity
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.ui.UISettings
+import com.intellij.ide.impl.ProjectUtil.isSameProject
+import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.OpenProjectImplOptions
+import com.intellij.openapi.project.impl.createNewProjectFrameProducer
+import com.intellij.openapi.project.impl.frame
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
-import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.ProjectSelfieUtil
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.project.stateStore
-import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.outputStream
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.io.write
-import com.intellij.util.pooledThreadSingleAlarm
-import com.intellij.util.text.nullize
-import com.intellij.util.ui.UIUtil
-import gnu.trove.THashMap
-import gnu.trove.THashSet
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jps.util.JpsPathUtil
-import java.awt.image.BufferedImage
 import java.nio.ByteBuffer
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
-import javax.imageio.IIOImage
-import javax.imageio.ImageIO
-import javax.imageio.ImageTypeSpecifier
-import javax.imageio.stream.MemoryCacheImageOutputStream
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.io.path.isDirectory
+import kotlin.time.Duration.Companion.milliseconds
+
+private val LOG = logger<RecentProjectsManager>()
 
 /**
  * Used directly by IntelliJ IDEA.
  */
+@OptIn(FlowPreview::class)
 @State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
-open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
+open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
+  RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
-    const val MAX_PROJECTS_IN_MAIN_MENU = 6
+    const val MAX_PROJECTS_IN_MAIN_MENU: Int = 6
 
     @JvmStatic
-    val instanceEx: RecentProjectsManagerBase
-      get() = getInstance() as RecentProjectsManagerBase
+    fun getInstanceEx(): RecentProjectsManagerBase = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
 
     @JvmStatic
     fun isFileSystemPath(path: String): Boolean {
@@ -74,62 +86,49 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  private val modCounter = AtomicLong()
-  private val projectIconHelper by lazy { RecentProjectIconHelper() }
-  private val namesToResolve: MutableSet<String> = THashSet(MAX_PROJECTS_IN_MAIN_MENU)
+  private val modCounter = LongAdder()
+  private val projectIconHelper by lazy(::RecentProjectIconHelper)
+  private val namesToResolve = HashSet<String>(MAX_PROJECTS_IN_MAIN_MENU)
 
-  private val nameCache: MutableMap<String, String> = Collections.synchronizedMap(THashMap())
+  private val nameCache: MutableMap<String, String> = Collections.synchronizedMap(HashMap())
 
-  private val nameResolver = pooledThreadSingleAlarm(50) {
-    var paths: Set<String>
-    synchronized(namesToResolve) {
-      paths = THashSet(namesToResolve)
-      namesToResolve.clear()
-    }
-    for (p in paths) {
-      nameCache.put(p, readProjectName(p))
-    }
-  }
+  private val disableUpdatingRecentInfo = AtomicBoolean()
+
+  private val nameResolveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
 
-  final override fun getState(): RecentProjectManagerState {
-    synchronized(stateLock) {
-      // https://youtrack.jetbrains.com/issue/TBX-3756
-      @Suppress("DEPRECATION")
-      state.recentPaths.clear()
-      @Suppress("DEPRECATION")
-      state.recentPaths.addAll(state.additionalInfo.keys.reversed())
-      if (state.pid == null) {
-        //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
-        state.pid = null
-      }
-      return state
+  init {
+    coroutineScope.launch {
+      nameResolveRequests
+        .debounce(50.milliseconds)
+        .collectLatest {
+          val paths = synchronized(namesToResolve) {
+            val paths = namesToResolve.toList()
+            namesToResolve.clear()
+            paths
+          }
+          for (p in paths) {
+            nameCache.put(p, readProjectName(p))
+          }
+        }
     }
   }
 
-  fun getProjectMetaInfo(file: Path): RecentProjectMetaInfo? {
-    synchronized(stateLock) {
-      return state.additionalInfo.get(file.systemIndependentPath)
-    }
-  }
+  final override fun getState(): RecentProjectManagerState = state
 
-  final override fun noStateLoaded() {
-    val old = service<OldRecentDirectoryProjectsManager>().loadedState ?: return
-    val newState = RecentProjectManagerState()
-    newState.copyFrom(old)
-    newState.intIncrementModificationCount()
-    loadState(newState)
+  fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
+    val path = getProjectPath(projectStoreBaseDir) ?: return null
+    synchronized(stateLock) {
+      return state.additionalInfo.get(path)
+    }
   }
 
   final override fun loadState(state: RecentProjectManagerState) {
     synchronized(stateLock) {
       this.state = state
       state.pid = null
-
-      @Suppress("DEPRECATION")
-      migrateOpenPaths(state.openPaths)
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
       @Suppress("DEPRECATION")
@@ -158,45 +157,24 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
           state.additionalInfo.clear()
           state.additionalInfo.putAll(newAdditionalInfo)
         }
+
+        @Suppress("DEPRECATION")
+        state.recentPaths.clear()
       }
     }
-  }
-
-  // reorder according to openPaths order and mark as opened
-  private fun migrateOpenPaths(openPaths: MutableList<String>) {
-    if (openPaths.isEmpty()) {
-      return
-    }
-
-    convertToSystemIndependentPaths(openPaths)
-
-    val oldInfoMap = mutableMapOf<String, RecentProjectMetaInfo>()
-    for (path in openPaths) {
-      val info = state.additionalInfo.remove(path)
-      if (info != null) {
-        oldInfoMap.put(path, info)
-      }
-    }
-
-    for (path in openPaths.asReversed()) {
-      val info = oldInfoMap.get(path) ?: RecentProjectMetaInfo()
-      info.opened = true
-      state.additionalInfo.put(path, info)
-    }
-    openPaths.clear()
-    modCounter.incrementAndGet()
   }
 
   override fun removePath(path: String) {
     synchronized(stateLock) {
       if (state.additionalInfo.remove(path) != null) {
-        modCounter.incrementAndGet()
+        modCounter.increment()
       }
       for (group in state.groups) {
         if (group.removeProject(path)) {
-          modCounter.incrementAndGet()
+          modCounter.increment()
         }
       }
+      fireChangeEvent()
     }
   }
 
@@ -206,65 +184,57 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  /**
-   * @return a path pointing to a directory where the last project was created or null if not available
-   */
-  override fun getLastProjectCreationLocation(): String? {
-    synchronized(stateLock) {
-      return state.lastProjectLocation
-    }
-  }
 
-  override fun setLastProjectCreationLocation(value: String?) {
-    val newValue = PathUtil.toSystemIndependentName(value.nullize(nullizeSpaces = true))
-    synchronized(stateLock) {
-      state.lastProjectLocation = newValue
+  override var lastProjectCreationLocation: String?
+    get() {
+      synchronized(stateLock) {
+        return state.lastProjectLocation
+      }
     }
-  }
+    set(value) {
+      val newValue = value?.takeIf { it.isNotBlank() }?.let { FileUtilRt.toSystemIndependentName(it) }
+      synchronized(stateLock) {
+        state.lastProjectLocation = newValue
+      }
+    }
 
   override fun updateLastProjectPath() {
-    val openProjects = ProjectUtil.getOpenProjects()
+    val openProjects = ProjectManagerEx.getOpenProjects()
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
         info.opened = false
       }
 
       for (project in openProjects) {
-        val path = getProjectPath(project)
-        val info = if (path == null) null else state.additionalInfo.get(path)
-        if (info != null) {
-          info.opened = true
-          info.projectOpenTimestamp = System.currentTimeMillis()
-          info.displayName = getProjectDisplayName(project)
-        }
+        val path = getProjectPath(project) ?: continue
+        val info = state.additionalInfo.get(path) ?: continue
+        info.opened = true
+        info.displayName = getProjectDisplayName(project)
       }
-      state.validateRecentProjects(modCounter)
+      modCounter.increment()
     }
   }
 
   protected open fun getProjectDisplayName(project: Project): String? = null
 
-  fun getProjectIcon(path: String, isDark: Boolean): Icon? {
-    return projectIconHelper.getProjectIcon(path, isDark)
+  fun getProjectIcon(path: String, isProjectValid: Boolean): Icon {
+    return projectIconHelper.getProjectIcon(path, isProjectValid)
   }
 
-  fun getProjectOrAppIcon(path: String): Icon {
-    return projectIconHelper.getProjectOrAppIcon(path)
+  fun getProjectIcon(path: String, isProjectValid: Boolean, iconSize: Int): Icon {
+    return projectIconHelper.getProjectIcon(path, isProjectValid, iconSize)
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun getRecentProjectsActions(addClearListItem: Boolean): Array<AnAction> {
     return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem).toTypedArray()
   }
 
-  override fun getRecentProjectsActions(addClearListItem: Boolean, useGroups: Boolean): Array<AnAction?> {
-    return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem, useGroups = useGroups).toTypedArray()
-  }
-
-  private fun markPathRecent(path: String, project: Project) {
+  fun markPathRecent(path: String, project: Project): RecentProjectMetaInfo {
     synchronized(stateLock) {
       for (group in state.groups) {
         if (group.markProjectFirst(path)) {
-          modCounter.incrementAndGet()
+          modCounter.increment()
           break
         }
       }
@@ -272,11 +242,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       // remove instead of get to re-order
       val info = state.additionalInfo.remove(path) ?: RecentProjectMetaInfo()
       state.additionalInfo.put(path, info)
-      modCounter.incrementAndGet()
+      modCounter.increment()
+
       val appInfo = ApplicationInfoEx.getInstanceEx()
       info.displayName = getProjectDisplayName(project)
       info.projectWorkspaceId = project.stateStore.projectWorkspaceId
-      info.frame = ProjectFrameBounds.getInstance(project).state
+      ProjectFrameBounds.getInstance(project).frameInfoHelper.info?.let {
+        info.frame = it
+      }
       info.build = appInfo!!.build.asString()
       info.productionCode = appInfo.build.productCode
       info.eap = appInfo.isEAP
@@ -284,72 +257,147 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       info.projectOpenTimestamp = System.currentTimeMillis()
       info.buildTimestamp = appInfo.buildDate.timeInMillis
       info.metadata = getRecentProjectMetadata(path, project)
+      return info
     }
   }
 
-  @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER")
+  fun addRecentPath(path: String, info: RecentProjectMetaInfo) {
+    synchronized(stateLock) {
+      state.additionalInfo.put(path, info)
+      modCounter.increment()
+    }
+  }
+
   // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
+
+  open fun getProjectPath(projectStoreBaseDir: Path): String? {
+    return projectStoreBaseDir.systemIndependentPath
+  }
 
   open fun getProjectPath(project: Project): String? {
     return FileUtilRt.toSystemIndependentName(project.presentableUrl ?: return null)
   }
 
+  @TestOnly
+  fun openProjectSync(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
+    @Suppress("RAW_RUN_BLOCKING")
+    return runBlocking { openProject(projectFile, openProjectOptions) }
+  }
+
   // open for Rider
-  open fun openProject(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
-    val existing = ProjectUtil.findAndFocusExistingProjectForPath(projectFile)
-    return when {
-      existing != null -> existing
-      ProjectUtil.isValidProjectPath(projectFile) -> {
-        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectFile, openProjectOptions)
+  open suspend fun openProject(projectFile: Path, options: OpenProjectTask): Project? {
+    var effectiveOptions = options
+    if (options.implOptions == null) {
+      getProjectMetaInfo(projectFile)?.let { info ->
+        effectiveOptions = effectiveOptions.copy(
+          projectWorkspaceId = info.projectWorkspaceId,
+          implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame)
+        )
       }
-      else -> {
-        // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
-        // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
-        // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
-        // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
-        ProjectUtil.openOrImport(projectFile, openProjectOptions)
+    }
+
+    if (isValidProjectPath(projectFile)) {
+      val projectManager = ProjectManagerEx.getInstanceEx()
+      projectManager.openProjects.firstOrNull { isSameProject(projectFile = projectFile, project = it) }?.let { project ->
+        withContext(Dispatchers.EDT) {
+          ProjectUtil.focusProjectWindow(project = project)
+        }
+        return project
       }
+      return projectManager.openProjectAsync(projectFile, effectiveOptions)
+    }
+    else {
+      // If .idea is missing in the recent project's dir, this might mean, for instance, that 'git clean' was called.
+      // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
+      // IDEA-144453 IDEA rejects opening a recent project if there are no .idea subfolder
+      // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug was deleted
+      LOG.info("Opening project from the recent projects, but .idea is missing. Open project as this is first time.")
+      return ProjectUtil.openOrImportAsync(projectFile, effectiveOptions)
+    }
+  }
+
+  override fun setActivationTimestamp(project: Project, timestamp: Long) {
+    if (disableUpdatingRecentInfo.get()) {
+      return
+    }
+
+    val projectPath = getProjectPath(project) ?: return
+    synchronized(stateLock) {
+      findAndRemoveNewlyClonedProject(projectPath)
+      val info = state.additionalInfo.computeIfAbsent(projectPath) { RecentProjectMetaInfo() }
+      info.activationTimestamp = timestamp
+      info.opened = true
+      info.displayName = getProjectDisplayName(project)
+      state.lastOpenedProject = projectPath
+    }
+    modCounter.increment()
+  }
+
+  fun getLastOpenedProject(): String? = state.lastOpenedProject
+
+  @Internal
+  class MyFrameStateListener : FrameStateListener {
+    override fun onFrameActivated(frame: IdeFrame): Unit = frame.notifyProjectActivation()
+  }
+
+  @Internal
+  suspend fun projectOpened(project: Project) {
+    projectOpened(project, System.currentTimeMillis())
+  }
+
+  internal suspend fun projectOpened(project: Project, openTimestamp: Long) {
+    if (disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
+      return
+    }
+
+    val projectPath = getProjectPath(project) ?: return
+    synchronized(stateLock) {
+      findAndRemoveNewlyClonedProject(projectPath)
+      val info = markPathRecent(path = projectPath, project = project)
+      info.opened = true
+      info.displayName = getProjectDisplayName(project)
+      info.projectOpenTimestamp = openTimestamp
+
+      state.lastOpenedProject = projectPath
+      validateRecentProjects(modCounter, state.additionalInfo)
+    }
+
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      updateSystemDockMenu()
     }
   }
 
   @Internal
-  class MyProjectListener : ProjectManagerListener {
-    private val manager = instanceEx
-
-    companion object {
-      private fun updateSystemDockMenu() {
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-          SystemDock.updateMenu()
-        }
+  @VisibleForTesting
+  class MyProjectListener : ProjectCloseListener {
+    override fun projectClosingBeforeSave(project: Project) {
+      val app = ApplicationManagerEx.getApplicationEx()
+      if (app.isExitInProgress) {
+        // `appClosing` handler updates project info (even more - on `projectClosed` the full-screen state maybe not correct)
+        return
       }
-    }
 
-    override fun projectOpened(project: Project) {
-      val path = manager.getProjectPath(project)
-      if (path != null) {
-        manager.markPathRecent(path, project)
-      }
-      manager.updateLastProjectPath()
-      updateSystemDockMenu()
-    }
-
-    override fun projectClosing(project: Project) {
+      val manager = getInstanceEx()
       val path = manager.getProjectPath(project) ?: return
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-        manager.updateProjectInfo(project, WindowManager.getInstance() as WindowManagerImpl, writLastProjectInfo = false)
+      if (!app.isHeadlessEnvironment) {
+        manager.updateProjectInfo(project = project,
+                                  windowManager = WindowManager.getInstance() as WindowManagerImpl,
+                                  writeLastProjectInfo = false,
+                                  appClosing = false)
       }
       manager.nameCache.put(path, project.name)
     }
 
     override fun projectClosed(project: Project) {
-      val openProjects = ProjectManager.getInstance().openProjects
-      if (openProjects.isNotEmpty()) {
-        val openProject = openProjects[openProjects.size - 1]
-        val path = manager.getProjectPath(openProject)
-        if (path != null) {
-          manager.markPathRecent(path, openProject)
-        }
+      if (ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+        // `appClosing` handler updates project info (even more - on `projectClosed` the full-screen state maybe not correct)
+        return
+      }
+
+      val manager = getInstanceEx()
+      synchronized(manager.stateLock) {
+        manager.state.additionalInfo.get(manager.getProjectPath(project))?.opened = false
       }
       updateSystemDockMenu()
     }
@@ -357,8 +405,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   fun getRecentPaths(): List<String> {
     synchronized(stateLock) {
-      state.validateRecentProjects(modCounter)
-      return state.additionalInfo.keys.toList().asReversed()
+      validateRecentProjects(modCounter, state.additionalInfo)
+      return state.additionalInfo.filter { !it.value.hidden }.keys.reversed()
     }
   }
 
@@ -369,59 +417,176 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   fun getProjectName(path: String): String {
-    val cached = nameCache.get(path)
-    if (cached != null) {
-      return cached
+    nameCache.get(path)?.let {
+      return it
     }
 
-    nameResolver.cancel()
     synchronized(namesToResolve) {
       namesToResolve.add(path)
     }
-    nameResolver.request()
+    check(nameResolveRequests.tryEmit(Unit))
+
     val name = PathUtilRt.getFileName(path)
     return if (path.endsWith(".ipr")) FileUtilRt.getNameWithoutExtension(name) else name
   }
 
+  fun forceReopenProjects() {
+    synchronized(stateLock) {
+      state.forceReopenProjects = true
+    }
+  }
+
   override fun willReopenProjectOnStart(): Boolean {
-    if (!GeneralSettings.getInstance().isReopenLastProject) {
+    if (!synchronized(stateLock) { state.forceReopenProjects }
+        && (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects())) {
       return false
     }
 
     synchronized(stateLock) {
-      return state.additionalInfo.values.any { it.opened }
+      state.forceReopenProjects = false
+      return state.additionalInfo.values.any { canReopenProject(it) }
     }
   }
 
-  override fun reopenLastProjectsOnStart(): Boolean {
-    val openPaths = lastOpenedProjects
-    var someProjectWasOpened = false
-    for ((key, value) in openPaths) {
-      val options = OpenProjectTask(forceOpenInNewFrame = true, sendFrameBack = someProjectWasOpened, showWelcomeScreen = false, frame = value.frame, projectWorkspaceId = value.projectWorkspaceId)
-      val project = openProject(Paths.get(key), options)
-      if (!someProjectWasOpened) {
-        someProjectWasOpened = project != null
+  override suspend fun reopenLastProjectsOnStart(): Boolean {
+    // Do not reopen, because previously opened projects will open in new instances
+    // TODO alternative behaviour?
+    if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
+      return false
+    }
+
+    val openPaths = synchronized(stateLock) {
+      state.additionalInfo.entries.filter { canReopenProject(it.value) }
+    }
+    if (openPaths.isEmpty()) {
+      return false
+    }
+
+    disableUpdatingRecentInfo.set(true)
+    try {
+      if (openPaths.size == 1 || isOpenProjectsOneByOneRequired()) {
+        return openOneByOne(openPaths, index = 0, someProjectWasOpened = false)
+      }
+      else {
+        return openMultiple(openPaths)
       }
     }
-
-    return someProjectWasOpened
-  }
-
-  protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
-    get() = synchronized(stateLock) {
-      return state.additionalInfo.entries.filter { it.value.opened }.asReversed()
-    }
-
-  override fun getGroups(): List<ProjectGroup> {
-    synchronized(stateLock) {
-      return Collections.unmodifiableList(state.groups)
+    finally {
+      disableUpdatingRecentInfo.set(false)
     }
   }
+
+  // open for Rider
+  protected open fun isOpenProjectsOneByOneRequired(): Boolean {
+    return ApplicationManager.getApplication().isHeadlessEnvironment || WindowManagerEx.getInstanceEx().getFrameHelper(null) != null
+  }
+
+  private suspend fun openOneByOne(openPaths: List<Entry<String, RecentProjectMetaInfo>>,
+                                   index: Int,
+                                   someProjectWasOpened: Boolean): Boolean {
+    val (key, value) = openPaths.get(index)
+    val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
+      forceOpenInNewFrame = true
+      showWelcomeScreen = false
+      projectWorkspaceId = value.projectWorkspaceId
+      implOptions = OpenProjectImplOptions(recentProjectMetaInfo = value, frameInfo = value.frame)
+    })
+    val nextIndex = index + 1
+    if (nextIndex == openPaths.size) {
+      return someProjectWasOpened || project != null
+    }
+    else {
+      return openOneByOne(openPaths, index = index + 1, someProjectWasOpened = someProjectWasOpened || project != null)
+    }
+  }
+
+  override fun suggestNewProjectLocation(): String = ProjectUtil.getBaseDir()
+
+  // open for Rider
+  @Suppress("MemberVisibilityCanBePrivate")
+  protected suspend fun isValidProjectPath(file: Path): Boolean {
+    return withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(file) }
+  }
+
+  private suspend fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
+    val toOpen = openPaths.mapNotNull { entry ->
+      runCatching {
+        val path = Path.of(entry.key)
+        if (isValidProjectPath(path)) Pair(path, entry.value) else null
+      }.getOrLogException(LOG)
+    }
+
+    // ok, no non-existent project paths and every info has a frame
+    val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
+    val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
+    span("project frame initialization", Dispatchers.EDT) {
+      var activeTask: Pair<Path, OpenProjectTask>? = null
+      for ((path, info) in toOpen) {
+        val isActive = info == activeInfo
+        val ideFrame = createNewProjectFrameProducer(info.frame).create()
+        info.frameTitle?.let {
+          ideFrame.title = it
+        }
+
+        IdeRootPane.customizeRawFrame(ideFrame)
+        ideFrame.isVisible = true
+        val task = Pair(path, OpenProjectTask {
+          forceOpenInNewFrame = true
+          showWelcomeScreen = false
+          projectWorkspaceId = info.projectWorkspaceId
+          implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frame = ideFrame)
+        })
+        if (isActive) {
+          activeTask = task
+        }
+        else {
+          taskList.add(task)
+        }
+      }
+
+      // we open project windows in the order projects were opened historically (to preserve taskbar order),
+      // but once the windows are created, we start project loading from the latest active project (and put its window at front)
+      taskList.add(activeTask!!)
+      taskList.reverse()
+      activeTask.second.frame?.toFront()
+    }
+
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    for ((path, options) in taskList) {
+      projectManager.openProjectAsync(path, options)
+    }
+    return true
+  }
+
+  private fun canReopenProject(info: RecentProjectMetaInfo): Boolean {
+    return info.opened && !info.hidden
+  }
+
+  /**
+   * Do not reopen a project on restart and do not show it in the recent projects list
+   */
+  fun setProjectHidden(project: Project, hidden: Boolean) {
+    val path = getProjectPath(project) ?: return
+    val info = state.additionalInfo.get(path) ?: return
+    val oldHidden = info.hidden
+    info.hidden = hidden
+    if (oldHidden != hidden) {
+      modCounter.increment()
+    }
+  }
+
+  override val groups: List<ProjectGroup>
+    get() {
+      synchronized(stateLock) {
+        return Collections.unmodifiableList(state.groups)
+      }
+    }
 
   override fun addGroup(group: ProjectGroup) {
     synchronized(stateLock) {
       if (!state.groups.contains(group)) {
         state.groups.add(group)
+        fireChangeEvent()
       }
     }
   }
@@ -430,49 +595,99 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     synchronized(stateLock) {
       for (path in group.projects) {
         state.additionalInfo.remove(path)
-        for (anotherGroup in state.groups) {
-          if (anotherGroup !== group) {
-            group.removeProject(path)
-          }
-        }
       }
 
       state.groups.remove(group)
-      modCounter.incrementAndGet()
+      modCounter.increment()
+      fireChangeEvent()
     }
   }
+
+  override fun moveProjectToGroup(projectPath: String, to: ProjectGroup) {
+    for (group in groups) {
+      group.removeProject(projectPath)
+    }
+    to.addProject(projectPath)
+    to.isExpanded = true // Save state for UI
+    fireChangeEvent()
+  }
+
+  override fun removeProjectFromGroup(projectPath: String, from: ProjectGroup) {
+    from.removeProject(projectPath)
+    fireChangeEvent()
+  }
+
+  fun findGroup(projectPath: String): ProjectGroup? = groups.find { it.projects.contains(projectPath) }
 
   override fun getModificationCount(): Long {
     synchronized(stateLock) {
-      return modCounter.get() + state.modificationCount
+      return modCounter.sum() + state.modificationCount
     }
   }
 
-  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writLastProjectInfo: Boolean) {
-    val frame = windowManager.getFrameHelper(project) ?: return
+  private fun updateProjectInfo(project: Project, windowManager: WindowManagerImpl, writeLastProjectInfo: Boolean, appClosing: Boolean) {
+    val frameHelper = windowManager.getFrameHelper(project)
+    if (frameHelper == null) {
+      LOG.warn("Cannot update frame info (project=${project.name}, reason=frame helper is not found)")
+      return
+    }
+
+    val frame = frameHelper.frame
+    if (appClosing) {
+      frameHelper.appClosing()
+    }
+
     val workspaceId = project.stateStore.projectWorkspaceId
 
-    // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
-    val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager)
+    val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frameHelper, frame, windowManager)
     val path = getProjectPath(project)
     synchronized(stateLock) {
       val info = state.additionalInfo.get(path)
-      if (info != null) {
+      if (info == null) {
+        LOG.warn("Cannot find info for ${project.name} to update frame info")
+      }
+      else {
         if (info.frame !== frameInfo) {
           info.frame = frameInfo
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Saved updated frame info ${info.frame} for project '${project.name}'")
+          }
         }
+        info.displayName = getProjectDisplayName(project)
         info.projectWorkspaceId = workspaceId
+        info.frameTitle = frame.title
+        info.colorInfo = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
       }
     }
 
-    logger<RecentProjectsManager>().runAndLogException {
-      if (writLastProjectInfo) {
-        writeInfoFile(frameInfo, frame.frame)
+    runCatching {
+      if (writeLastProjectInfo) {
+        writeInfoFile(frameInfo, frame)
+      }
+    }.getOrLogException(LOG)
+  }
+
+  /**
+   * Finding a project that has just been cloned.
+   * Skip a project with a similar path for [markPathRecent] to work correctly
+   *
+   * @param projectPath path to file that opens project (may differ with directory specified during cloning)
+   */
+  private fun findAndRemoveNewlyClonedProject(projectPath: String) {
+    if (state.additionalInfo.containsKey(projectPath)) {
+      return
+    }
+
+    var file: Path? = Path.of(projectPath)
+    while (file != null) {
+      val projectMetaInfo = state.additionalInfo.remove(file.systemIndependentPath)
+      if (projectMetaInfo != null) {
+        modCounter.increment()
+        fireChangeEvent()
+        break
       }
 
-      if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
-        takeASelfie(frame, workspaceId)
-      }
+      file = file.parent
     }
   }
 
@@ -514,47 +729,43 @@ int32 "extendedState"
     buffer.putInt(frameInfo.extendedState)
 
     buffer.flip()
-    infoFile.write(buffer)
+    Files.newByteChannel(infoFile.createParentDirectories(), StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
+      it.write(buffer)
+    }
   }
 
-  private fun takeASelfie(frameHelper: ProjectFrameHelper, workspaceId: String) {
-    val frame = frameHelper.frame
-    val width = frame.width
-    val height = frame.height
-    val image = UIUtil.createImage(frame, width, height, BufferedImage.TYPE_INT_ARGB)
-    UISettings.setupAntialiasing(image.graphics)
-    frame.paint(image.graphics)
-    val selfieFile = ProjectSelfieUtil.getSelfieLocation(workspaceId)
-    // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
-    //long start = System.currentTimeMillis();
-    selfieFile.outputStream().use { stream ->
-      MemoryCacheImageOutputStream(stream).use { out ->
-        val writer = ImageIO.getImageWriters(ImageTypeSpecifier.createFromRenderedImage(image), "png").next()
-        try {
-          writer.output = out
-          writer.write(null, IIOImage(image, null, null), null)
-        }
-        finally {
-          writer.dispose()
+  fun patchRecentPaths(patcher: (String) -> String?) {
+    synchronized(stateLock) {
+      for (path in state.additionalInfo.keys.toList()) {
+        patcher(path)?.let { newPath ->
+          state.additionalInfo.remove(path)?.let { info ->
+            state.additionalInfo.put(newPath, info)
+          }
         }
       }
+      modCounter.increment()
     }
+  }
 
-    //System.out.println("Write image: " + (System.currentTimeMillis() - start) + "ms");
-    val lastLink = selfieFile.parent.resolve("last.png")
-    if (SystemInfo.isUnix) {
-      Files.deleteIfExists(lastLink)
-      Files.createSymbolicLink(lastLink, selfieFile)
-    }
-    else {
-      Files.copy(selfieFile, lastLink, StandardCopyOption.REPLACE_EXISTING)
+  @Internal
+  fun updateProjectColor(project: Project) {
+    val info = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
+    val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return
+    updateProjectColor(Path.of(projectPath), info)
+  }
+
+  @Internal
+  fun updateProjectColor(projectBasePath: Path, info: RecentProjectColorInfo) {
+    synchronized(stateLock) {
+      getProjectMetaInfo(projectBasePath)?.colorInfo = info
+      modCounter.increment()
     }
   }
 
   @Internal
   class MyAppLifecycleListener : AppLifecycleListener {
     override fun projectOpenFailed() {
-      instanceEx.updateLastProjectPath()
+      getInstanceEx().updateLastProjectPath()
     }
 
     override fun appClosing() {
@@ -562,24 +773,37 @@ int32 "extendedState"
         return
       }
 
-      val windowManager = WindowManager.getInstance() as WindowManagerImpl
-      val manager = instanceEx
-      val openProjects = ProjectUtil.getOpenProjects()
+      val projectManager = ProjectManager.getInstanceIfCreated() ?: return
+      val openProjects = projectManager.openProjects
       // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
-      if (openProjects.isEmpty() || !isUseProjectFrameAsSplash()) {
-        Files.deleteIfExists(getLastProjectFrameInfoFile())
+      if (openProjects.isEmpty()) {
+        if (!isUseProjectFrameAsSplash()) {
+          Files.deleteIfExists(getLastProjectFrameInfoFile())
+        }
       }
-
-      for ((index, project) in openProjects.withIndex()) {
-        manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0)
+      else {
+        val manager = getInstanceEx()
+        val windowManager = WindowManager.getInstance() as WindowManagerImpl
+        for ((index, project) in openProjects.withIndex()) {
+          manager.updateProjectInfo(project = project,
+                                    windowManager = windowManager,
+                                    writeLastProjectInfo = index == 0,
+                                    appClosing = true)
+        }
       }
     }
 
     override fun projectFrameClosed() {
       // ProjectManagerListener.projectClosed cannot be used to call updateLastProjectPath,
-      // because called even if project closed on app exit
-      instanceEx.updateLastProjectPath()
+      // because called even if a project closed on app exit
+      getInstanceEx().updateLastProjectPath()
     }
+  }
+}
+
+private fun fireChangeEvent() {
+  ApplicationManager.getApplication().invokeLater {
+    ApplicationManager.getApplication().messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC).change()
   }
 }
 
@@ -590,14 +814,22 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val file = Paths.get(path)
+  val file = try {
+    Path.of(path)
+  }
+  catch (e: InvalidPathException) {
+    return path
+  }
+
   if (!file.isDirectory()) {
-    return FileUtilRt.getNameWithoutExtension(file.fileName.toString())
+    val fileName = file.fileName
+    if (fileName != null) {
+      return FileUtilRt.getNameWithoutExtension(fileName.toString())
+    }
   }
 
   val projectDir = file.resolve(Project.DIRECTORY_STORE_FOLDER)
-  return JpsPathUtil.readProjectName(projectDir) ?:
-         JpsPathUtil.getDefaultProjectName(projectDir)
+  return JpsPathUtil.readProjectName(projectDir) ?: JpsPathUtil.getDefaultProjectName(projectDir)
 }
 
 private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
@@ -608,18 +840,42 @@ private fun convertToSystemIndependentPaths(list: MutableList<String>) {
   }
 }
 
-@Service
-@State(name = "RecentDirectoryProjectsManager", storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)])
-private class OldRecentDirectoryProjectsManager : PersistentStateComponent<RecentProjectManagerState> {
-  var loadedState: RecentProjectManagerState? = null
+private fun updateSystemDockMenu() {
+  if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+    runActivity("system dock menu") {
+      SystemDock.updateMenu()
+    }
+  }
+}
 
-  companion object {
-    private val emptyState = RecentProjectManagerState()
+private fun validateRecentProjects(modCounter: LongAdder, map: MutableMap<String, RecentProjectMetaInfo>) {
+  val limit = AdvancedSettings.getInt("ide.max.recent.projects")
+  var toRemove = map.size - limit
+  if (limit < 1 || toRemove <= 0) {
+    return
   }
 
-  override fun loadState(state: RecentProjectManagerState) {
-    loadedState = state
+  val oldMapSize = map.size
+  val iterator = map.values.iterator()
+  while (true) {
+    if (!iterator.hasNext()) {
+      break
+    }
+
+    val info = iterator.next()
+    if (info.opened) {
+      continue
+    }
+
+    iterator.remove()
+    toRemove--
+
+    if (toRemove <= 0) {
+      break
+    }
   }
 
-  override fun getState() = emptyState
+  if (oldMapSize != map.size) {
+    modCounter.increment()
+  }
 }

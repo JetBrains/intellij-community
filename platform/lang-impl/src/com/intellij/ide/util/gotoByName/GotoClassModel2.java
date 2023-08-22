@@ -27,8 +27,6 @@ public class GotoClassModel2 extends FilteringGotoByModel<LanguageRef> {
 
   public GotoClassModel2(@NotNull Project project) {
     super(project, new ChooseByNameContributor[0]);
-    ChooseByNameContributor.CLASS_EP_NAME.addChangeListener(
-      () -> mySeparators = null, project);
   }
 
   @Override
@@ -141,10 +139,5 @@ public class GotoClassModel2 extends FilteringGotoByModel<LanguageRef> {
   @Override
   public boolean willOpenEditor() {
     return true;
-  }
-
-  @Override
-  public boolean sameNamesForProjectAndLibraries() {
-    return false;
   }
 }

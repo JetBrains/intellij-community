@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint
 
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiBinaryFile
 import com.intellij.psi.PsiElement
@@ -20,16 +20,22 @@ import javax.swing.Icon
 
 /**
  * A single element shown in the Show Implementations view.
- *
- * @author yole
  */
 abstract class ImplementationViewElement {
   abstract val project: Project
   abstract val isNamed: Boolean
+  @get:NlsSafe
   abstract val name: String?
+  @get:NlsSafe
   abstract val presentableText: String
+
+  @get:NlsSafe
+  open val containerPresentation: String? = null
+
   abstract val containingFile: VirtualFile?
+  @get:NlsSafe
   abstract val text: String?
+  @get:NlsSafe
   abstract val locationText: String?
   abstract val locationIcon: Icon?
   abstract val containingMemberOrSelf: ImplementationViewElement
@@ -67,16 +73,18 @@ class PsiImplementationViewElement(val psiElement: PsiElement) : ImplementationV
       if (presentation == null) {
         return presentableName
       }
-
       val elementPresentation  = presentation.presentableText
-      val locationString = presentation.locationString
+      if (elementPresentation == null) {
+        return presentableName
+      }
+      return elementPresentation
 
-      return if (vFile.name == elementPresentation + "." + vFile.extension) {
-        presentableName + if (!StringUtil.isEmptyOrSpaces(locationString)) " $locationString" else ""
-      }
-      else {
-        "$presentableName ($elementPresentation)"
-      }
+    }
+
+  override val containerPresentation: String?
+    get() {
+      val presentation = (psiElement as? NavigationItem)?.presentation ?: return null
+      return presentation.locationString
     }
 
   override val locationText: String?

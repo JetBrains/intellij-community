@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -29,6 +30,7 @@ public abstract class FixableUsageInfo extends UsageInfo {
   public abstract void fixUsage() throws IncorrectOperationException;
 
   @Nullable
+  @NlsContexts.DialogMessage
   public String getConflictMessage() {
     return null;
   }

@@ -1,10 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.project.Project;
@@ -14,20 +8,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.resolve.graphInference.PatternInference;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaResolveUtil {
+public final class JavaResolveUtil {
   public static PsiClass getContextClass(@NotNull PsiElement element) {
     PsiElement prev = element;
     PsiElement scope = element.getContext();
@@ -56,6 +49,13 @@ public class JavaResolveUtil {
                                      @NotNull PsiElement place,
                                      @Nullable PsiClass accessObjectClass,
                                      @Nullable PsiElement fileResolveScope) {
+    if (place instanceof PsiDirectory && 
+        modifierList != null && 
+        accessObjectClass == null &&
+        PsiUtil.getAccessLevel(modifierList) == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)place);
+      return aPackage != null && JavaPsiFacade.getInstance(member.getProject()).isInPackage(member, aPackage);
+    }
     return isAccessible(member, memberClass, modifierList, place, accessObjectClass, fileResolveScope, place.getContainingFile());
   }
 
@@ -118,6 +118,10 @@ public class JavaResolveUtil {
       else {
         contextClass = PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
         if (isInClassAnnotationParameterList(place, contextClass)) return false;
+        if (contextClass instanceof PsiAnonymousClass && 
+            PsiTreeUtil.isAncestor(((PsiAnonymousClass)contextClass).getArgumentList(), place, true)) {
+          contextClass = PsiTreeUtil.getContextOfType(contextClass, PsiClass.class, true);
+        }
       }
       return canAccessProtectedMember(member, memberClass, accessObjectClass, contextClass,
                                       modifierList.hasModifierProperty(PsiModifier.STATIC));
@@ -204,7 +208,7 @@ public class JavaResolveUtil {
            !PsiImplUtil.isInServerPage(placeFile);
   }
 
-  public static boolean isInJavaDoc(final PsiElement place) {
+  public static boolean isInJavaDoc(@NotNull PsiElement place) {
     PsiElement scope = place;
     while(scope != null){
       if (scope instanceof PsiDocComment) return true;
@@ -255,19 +259,25 @@ public class JavaResolveUtil {
 
   public static void substituteResults(@NotNull final PsiJavaCodeReferenceElement ref, JavaResolveResult @NotNull [] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
+      PsiDeconstructionPattern pattern = ObjectUtils.tryCast(ref.getParent().getParent(), PsiDeconstructionPattern.class);
       for (int i = 0; i < result.length; i++) {
         final CandidateInfo resolveResult = (CandidateInfo)result[i];
         final PsiElement resultElement = resolveResult.getElement();
-        if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
-          PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-          result[i] = new CandidateInfo(resolveResult, substitutor) {
-            @NotNull
-            @Override
-            public PsiSubstitutor getSubstitutor() {
-              final PsiType[] parameters = ref.getTypeParameters();
-              return super.getSubstitutor().putAll((PsiClass)resultElement, parameters);
-            }
-          };
+        if (resultElement instanceof PsiClass) {
+          PsiClass resultClass = (PsiClass)resultElement;
+          if (resultClass.hasTypeParameters()) {
+            PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+            result[i] = pattern != null && ref.getTypeParameterCount() == 0 
+                        ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass, JavaPsiPatternUtil.getContextType(pattern))
+                        : new CandidateInfo(resolveResult, substitutor) {
+                          @NotNull
+                          @Override
+                          public PsiSubstitutor getSubstitutor() {
+                            PsiType[] parameters = ref.getTypeParameters();
+                            return super.getSubstitutor().putAll(resultClass, parameters);
+                          }
+                        };
+          }
         }
       }
     }
@@ -297,7 +307,18 @@ public class JavaResolveUtil {
     final FileElement holder = result.getTreeElement();
     holder.rawAddChildren((TreeElement)expressionList.getNode());
 
-    return PsiResolveHelper.SERVICE.getInstance(project)
+    return PsiResolveHelper.getInstance(project)
       .resolveConstructor(PsiTypesUtil.getClassType(superClassWhichTheSuperCallMustResolveTo), expressionList, place).getElement();
+  }
+
+  @Nullable
+  public static PsiPackage getContainingPackage(@NotNull final PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+
+    final PsiDirectory directory = file.getContainingDirectory();
+    if (directory == null) return null;
+
+    return JavaDirectoryService.getInstance().getPackage(directory);
   }
 }

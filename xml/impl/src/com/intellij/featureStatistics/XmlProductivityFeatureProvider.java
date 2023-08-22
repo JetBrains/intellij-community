@@ -9,27 +9,17 @@ import java.util.Collections;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlProductivityFeatureProvider extends ProductivityFeaturesProvider {
+final class XmlProductivityFeatureProvider extends ProductivityFeaturesProvider {
   @Override
   public FeatureDescriptor[] getFeatureDescriptors() {
     return new FeatureDescriptor[]{new FeatureDescriptor(XmlCompletionContributor.TAG_NAME_COMPLETION_FEATURE,
                                                          "completion",
-                                                         "TagNameCompletion.html",
+                                                         "TagNameCompletion",
                                                          XmlBundle.message("tag.name.completion.display.name"),
                                                          0,
                                                          1,
                                                          Collections.emptySet(),
                                                          3,
                                                          this)};
-  }
-
-  @Override
-  public GroupDescriptor[] getGroupDescriptors() {
-    return new GroupDescriptor[0];
-  }
-
-  @Override
-  public ApplicabilityFilter[] getApplicabilityFilters() {
-    return new ApplicabilityFilter[0];
   }
 }

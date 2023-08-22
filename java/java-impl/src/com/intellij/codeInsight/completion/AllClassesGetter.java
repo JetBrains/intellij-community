@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -15,15 +15,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class AllClassesGetter {
+public final class AllClassesGetter {
   private static final Logger LOG = Logger.getInstance(AllClassesGetter.class);
-  public static final InsertHandler<JavaPsiClassReferenceElement> TRY_SHORTENING = new InsertHandler<JavaPsiClassReferenceElement>() {
+  public static final InsertHandler<JavaPsiClassReferenceElement> TRY_SHORTENING = new InsertHandler<>() {
 
     private void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final Editor editor = context.getEditor();
@@ -65,7 +65,8 @@ public class AllClassesGetter {
         }
         else if (psiClass.isValid()) {
           try {
-            context.setTailOffset(psiReference.getRangeInElement().getEndOffset() + psiReference.getElement().getTextRange().getStartOffset());
+            context
+              .setTailOffset(psiReference.getRangeInElement().getEndOffset() + psiReference.getElement().getTextRange().getStartOffset());
             final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
             if (newUnderlying != null) {
               final PsiElement psiElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newUnderlying);
@@ -99,7 +100,6 @@ public class AllClassesGetter {
       _handleInsert(context, item);
       item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
     }
-
   };
 
   public static final InsertHandler<JavaPsiClassReferenceElement> INSERT_FQN = (context, item) -> {
@@ -126,7 +126,7 @@ public class AllClassesGetter {
                                         @NotNull Project project,
                                         @NotNull GlobalSearchScope scope,
                                         @NotNull Processor<? super PsiClass> processor) {
-    final Set<String> names = new THashSet<>(10000);
+    final Set<String> names = new HashSet<>(10000);
     AllClassesSearchExecutor.processClassNames(project, scope, s -> {
       if (prefixMatcher.prefixMatches(s)) {
         names.add(s);

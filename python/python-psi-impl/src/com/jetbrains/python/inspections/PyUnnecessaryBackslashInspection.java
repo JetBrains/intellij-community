@@ -22,8 +22,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.Stack;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveUnnecessaryBackslashQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,32 +41,32 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
-    public void visitPyParameterList(final PyParameterList list) {
+    public void visitPyParameterList(final @NotNull PyParameterList list) {
       findProblem(list);
     }
 
     @Override
-    public void visitPyArgumentList(final PyArgumentList list) {
+    public void visitPyArgumentList(final @NotNull PyArgumentList list) {
       findProblem(list);
     }
 
     @Override
-    public void visitPyTupleExpression(PyTupleExpression node) {
+    public void visitPyTupleExpression(@NotNull PyTupleExpression node) {
       if (node.getParent() instanceof PyParenthesizedExpression)
         findProblem(node);
     }
 
     @Override
-    public void visitPyParenthesizedExpression(final PyParenthesizedExpression expression) {
+    public void visitPyParenthesizedExpression(final @NotNull PyParenthesizedExpression expression) {
       final Stack<PsiElement> stack = new Stack<>();
       stack.push(expression);
       while (!stack.isEmpty()) {
@@ -81,22 +83,22 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyDictLiteralExpression(final PyDictLiteralExpression expression) {
+    public void visitPyDictLiteralExpression(final @NotNull PyDictLiteralExpression expression) {
       findProblem(expression);
     }
 
     @Override
-    public void visitPyListLiteralExpression(final PyListLiteralExpression expression) {
+    public void visitPyListLiteralExpression(final @NotNull PyListLiteralExpression expression) {
       findProblem(expression);
     }
 
     @Override
-    public void visitPySetLiteralExpression(final PySetLiteralExpression expression) {
+    public void visitPySetLiteralExpression(final @NotNull PySetLiteralExpression expression) {
       findProblem(expression);
     }
 
     @Override
-    public void visitPyStringLiteralExpression(final PyStringLiteralExpression stringLiteralExpression) {
+    public void visitPyStringLiteralExpression(final @NotNull PyStringLiteralExpression stringLiteralExpression) {
       PsiElement parent = stringLiteralExpression.getParent();
       if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
           parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression ||
@@ -110,7 +112,8 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
       if (children != null) {
         for (PsiWhiteSpace ws : children) {
           if (ws.getText().contains("\\")) {
-            registerProblem(ws, "Unnecessary backslash in expression.", new RemoveUnnecessaryBackslashQuickFix());
+            registerProblem(ws, PyPsiBundle.message("INSP.unnecessary.backslash.unnecessary.backslash.in.expression"),
+                            new RemoveUnnecessaryBackslashQuickFix());
           }
         }
       }

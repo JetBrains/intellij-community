@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,11 +14,14 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
+import javax.net.ssl.X509TrustManager;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager;
-
 
 /**
  * @author Mikhail Golubev
@@ -96,15 +85,41 @@ public class CertificateTest extends LightPlatformTestCase {
     doTest(TRUSTED_CERT_CN, false);
   }
 
+  public void testAdditionalSystemTrustManager() throws Exception {
+    Assert.assertTrue(myTrustManager.removeCertificate(myAuthorityCertificate));
+
+    Assert.assertFalse(myTrustManager.containsCertificate(TRUSTED_CERT_CN));
+    assertEquals(0, myTrustManager.getCertificates().size());
+    List<X509Certificate> acceptedIssuersBefore = Arrays.asList(myCertificateManager.getTrustManager().getAcceptedIssuers());
+    Assert.assertFalse(acceptedIssuersBefore.contains(myAuthorityCertificate));
+
+    X509TrustManager customTrustManager = ConfirmingTrustManager.createTrustManagerFromCertificates(
+      List.of(myAuthorityCertificate)
+    );
+
+    myCertificateManager.getTrustManager().addSystemTrustManager(customTrustManager);
+    try {
+      List<X509Certificate> acceptedIssuersAfter = Arrays.asList(myCertificateManager.getTrustManager().getAcceptedIssuers());
+      Assert.assertTrue(acceptedIssuersAfter.contains(myAuthorityCertificate));
+
+      doTestHttpCall("https://" + TRUSTED_CERT_CN);
+
+      // No certificates were added to mutable store
+      assertEquals(0, myTrustManager.getCertificates().size());
+      Assert.assertFalse(myTrustManager.containsCertificate(TRUSTED_CERT_CN));
+    }
+    finally {
+      myCertificateManager.getTrustManager().removeSystemTrustManager(customTrustManager);
+    }
+  }
 
   private void doTest(@NonNls String alias, boolean willBeAdded) throws Exception {
     doTest("https://" + alias, alias, willBeAdded);
   }
 
   private void doTest(@NotNull String url, @NotNull String alias, boolean added) throws Exception {
-    try (CloseableHttpResponse response = myClient.execute(new HttpGet(url))) {
-      assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
-    }
+    doTestHttpCall(url);
+
     if (added) {
       assertTrue(myTrustManager.containsCertificate(alias));
       assertEquals(2, myTrustManager.getCertificates().size());
@@ -112,6 +127,12 @@ public class CertificateTest extends LightPlatformTestCase {
     else {
       // only CA certificate
       assertEquals(1, myTrustManager.getCertificates().size());
+    }
+  }
+
+  private void doTestHttpCall(@NotNull String url) throws Exception {
+    try (CloseableHttpResponse response = myClient.execute(new HttpGet(url))) {
+      assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
     }
   }
 
@@ -124,7 +145,7 @@ public class CertificateTest extends LightPlatformTestCase {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final Thread thread = new Thread(() -> {
         try {
-          boolean accepted = CertificateManager.showAcceptDialog(() -> {
+          boolean accepted = CertificateManager.Companion.showAcceptDialog(() -> {
             // this dialog will be attempted to show only if blocking thread was forcibly interrupted after timeout
             throw new AssertionError("Deadlock was not detected in time");
           });

@@ -17,9 +17,6 @@ package com.intellij.util.xml;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public class XmlFileHeader {
   public static final XmlFileHeader EMPTY = new XmlFileHeader(null, null, null, null);
 
@@ -58,9 +55,7 @@ public class XmlFileHeader {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof XmlFileHeader)) return false;
-
-    final XmlFileHeader header = (XmlFileHeader)o;
+    if (!(o instanceof XmlFileHeader header)) return false;
 
     if (myPublicId != null ? !myPublicId.equals(header.myPublicId) : header.myPublicId != null) return false;
     if (myRootTagLocalName != null ? !myRootTagLocalName.equals(header.myRootTagLocalName) : header.myRootTagLocalName != null)

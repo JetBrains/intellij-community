@@ -34,13 +34,11 @@ public class JpsJavaExtensionTest extends JpsJavaModelTestCase {
   }
 
   public void testDependency() {
-    final JpsModel model = myModel.createModifiableModel(new TestJpsEventDispatcher());
-    final JpsModule module = model.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
-    final JpsLibrary library = model.getProject().addLibrary("l", JpsJavaLibraryType.INSTANCE);
+    final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
+    final JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
     final JpsLibraryDependency dependency = module.getDependenciesList().addLibraryDependency(library);
     getJavaService().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.TEST);
     getJavaService().getOrCreateDependencyExtension(dependency).setExported(true);
-    model.commit();
 
     List<JpsDependencyElement> dependencies = assertOneElement(myProject.getModules()).getDependenciesList().getDependencies();
     assertEquals(2, dependencies.size());

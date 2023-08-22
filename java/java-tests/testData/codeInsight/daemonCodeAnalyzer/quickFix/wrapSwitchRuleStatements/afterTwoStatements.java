@@ -1,4 +1,4 @@
-// "Wrap with block" "true"
+// "Wrap with block" "true-preview"
 class X {
   void foo(int i) {
     switch(i) {

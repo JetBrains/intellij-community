@@ -1,6 +1,5 @@
 package com.intellij.configurationScript
 
-import com.intellij.configurationScript.yaml.LightScalarResolver
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,12 +11,14 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.inputStreamIfExists
+import org.jetbrains.annotations.ApiStatus
 import org.snakeyaml.engine.v2.api.LoadSettings
 import org.snakeyaml.engine.v2.composer.Composer
 import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.NodeTuple
 import org.snakeyaml.engine.v2.parser.ParserImpl
 import org.snakeyaml.engine.v2.scanner.StreamReader
+import org.snakeyaml.engine.v2.schema.FailsafeSchema
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -28,15 +29,8 @@ internal class ConfigurationFileManager(project: Project) {
   private val clearableLazyValues = ContainerUtil.createConcurrentList<() -> Unit>()
 
   private val yamlData = SynchronizedClearableLazy {
-    val file = findConfigurationFile(project) ?: return@SynchronizedClearableLazy null
-    try {
-      val inputStream = file.inputStreamIfExists() ?: return@SynchronizedClearableLazy null
-      return@SynchronizedClearableLazy doRead(inputStream.bufferedReader())
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot parse \"$file\"", e)
-    }
-    null
+    val projectIdeaDir = Paths.get(project.basePath ?: return@SynchronizedClearableLazy null)
+    readProjectConfigurationFile(projectIdeaDir)
   }
 
   init {
@@ -86,23 +80,29 @@ internal class ConfigurationFileManager(project: Project) {
     })
   }
 
-  fun getConfigurationNode() = yamlData.value
+  fun getConfigurationNode(): MappingNode? = yamlData.value
 
-  // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
-  // "load" under the hood uses "compose" - i.e. Yaml itself doesn't use stream API to build object model.
   fun findValueNode(namePath: String): List<NodeTuple>? {
-    return findValueNodeByPath(namePath, yamlData.value?.value ?: return null)
+    val root = getConfigurationNode() ?: return null
+    return findValueNode(root, namePath)
   }
+}
+
+// later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
+// "load" under the hood uses "compose" - i.e. Yaml itself doesn't use stream API to build object model.
+@ApiStatus.Internal
+fun findValueNode(root: MappingNode, namePath: String): List<NodeTuple>? {
+  return findValueNodeByPath(namePath, root.value ?: return null)
 }
 
 internal fun doRead(reader: Reader): MappingNode? {
   reader.use {
     val settings = LoadSettings.builder()
       .setUseMarks(false)
-      .setScalarResolver(LightScalarResolver())
+      .setSchema(FailsafeSchema())
       .build()
-    val parser = ParserImpl(StreamReader(it, settings), settings)
-    return Composer(parser, settings).singleNode.orElse(null) as? MappingNode
+    val parser = ParserImpl(settings, StreamReader(settings, it))
+    return Composer(settings, parser).singleNode.orElse(null) as? MappingNode
   }
 }
 
@@ -119,13 +119,25 @@ internal fun isConfigurationFile(name: CharSequence): Boolean {
 /**
  * not-null doesn't mean that you should not expect NoSuchFileException
  */
-private fun findConfigurationFile(project: Project): Path? {
-  val projectIdeaDir = Paths.get(project.basePath ?: return null)
+private fun findConfigurationFile(projectIdeaDir: Path): Path? {
   var file = projectIdeaDir.resolve("intellij.yaml")
   if (!file.toFile().exists()) {
     // do not check file exists - on read we in any case should check NoSuchFileException
     file = projectIdeaDir.resolve("intellij.yml")
   }
   return file
+}
+
+@ApiStatus.Internal
+fun readProjectConfigurationFile(projectIdeaDir: Path): MappingNode? {
+  val file = findConfigurationFile(projectIdeaDir) ?: return null
+  try {
+    val inputStream = file.inputStreamIfExists() ?: return null
+    return doRead(inputStream.bufferedReader())
+  }
+  catch (e: Throwable) {
+    LOG.error("Cannot parse \"$file\"", e)
+  }
+  return null
 }
 

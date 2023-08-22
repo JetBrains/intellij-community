@@ -1,0 +1,27 @@
+//file:noinspection GrPackage
+
+//noinspection GrUnresolvedAccess
+String projectPath = PROJECT_PATH
+//noinspection GrUnresolvedAccess
+String taskName = TASK_NAME
+//noinspection GrUnresolvedAccess
+Class<?> taskType = TASK_TYPE
+
+initscript {
+  dependencies {
+    //noinspection GrUnresolvedAccess
+    classpath files(EXTENSIONS_JARS_PATH)
+  }
+}
+
+allprojects {
+  afterEvaluate { Project project ->
+    if (project.path == projectPath || (':' + rootProject.projectDir.name + project.path) == projectPath) {
+      def overwrite = project.tasks.findByName(taskName) != null
+      project.tasks.create(name: taskName, overwrite: overwrite, type: taskType) {
+        //noinspection GrUnresolvedAccess
+        TASK_CONFIGURATION
+      }
+    }
+  }
+}

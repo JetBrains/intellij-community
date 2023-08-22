@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-public class GrTypeComboBox extends ComboBox {
+public final class GrTypeComboBox extends ComboBox {
 
   private static final Logger LOG = Logger.getInstance(GrTypeComboBox.class);
 
@@ -54,7 +54,7 @@ public class GrTypeComboBox extends ComboBox {
       return new GrTypeComboBox(type, expected, expected == null, expression, selectDef);
     }
     else {
-      if (type == PsiType.NULL) {
+      if (type == PsiTypes.nullType()) {
         type = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
       }
       return new GrTypeComboBox(type, null, true, expression, selectDef);
@@ -88,7 +88,7 @@ public class GrTypeComboBox extends ComboBox {
       //suggest double as the second item after original BigDecimal
       addItem(new PsiTypeItem(type));
       types.remove(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
-      addItem(new PsiTypeItem(PsiType.DOUBLE));
+      addItem(new PsiTypeItem(PsiTypes.doubleType()));
     }
 
     for (String typeName : types.keySet()) {
@@ -103,7 +103,7 @@ public class GrTypeComboBox extends ComboBox {
   public void addClosureTypesFrom(@Nullable PsiType type, @NotNull PsiElement context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final PsiType cl;
-    if (type == null || type == PsiType.NULL) {
+    if (type == null || type == PsiTypes.nullType()) {
       cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, context);
     }
     else {
@@ -201,7 +201,7 @@ public class GrTypeComboBox extends ComboBox {
     combo.setSelectedIndex(next);
   }
 
-  private static class PsiTypeItem {
+  private static final class PsiTypeItem {
     @Nullable
     private final PsiType myType;
 

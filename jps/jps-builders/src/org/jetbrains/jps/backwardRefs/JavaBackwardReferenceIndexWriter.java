@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.util.ShutDownTracker;
@@ -23,7 +23,7 @@ import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.IOException;
 
-public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<CompiledFileData> {
+public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<CompiledFileData> {
   public static final String PROP_KEY = "jps.backward.ref.index.builder";
 
   private static volatile JavaBackwardReferenceIndexWriter ourInstance;
@@ -39,7 +39,8 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
       File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
       try {
         ourInstance.close();
-      } finally {
+      }
+      finally {
         ourInstance = null;
         if (dir != null) {
           FileUtil.delete(dir);
@@ -65,24 +66,27 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
         CompilerReferenceIndex.removeIndexFiles(buildDir);
         return;
       }
+
+      boolean cleanupOk = true;
       if (isRebuild) {
         CompilerReferenceIndex.removeIndexFiles(buildDir);
-      } else if (CompilerReferenceIndex.versionDiffers(buildDir, JavaCompilerIndices.VERSION)) {
+        cleanupOk = !CompilerReferenceIndex.exists(buildDir);
+      }
+      else if (CompilerReferenceIndex.versionDiffers(buildDir, JavaCompilerIndices.VERSION)) {
         CompilerReferenceIndex.removeIndexFiles(buildDir);
         if ((ourInitAttempt++ == 0 && areAllJavaModulesAffected(context))) {
           throw new BuildDataCorruptedException("backward reference index will be updated to actual version");
-        } else {
-          // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
         }
+        // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
+        return;
       }
 
-      if (CompilerReferenceIndex.exists(buildDir) || isRebuild) {
+      if (cleanupOk) {
         ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, dataManager.getRelativizer(), false));
-        ShutDownTracker.getInstance().registerShutdownTask(() -> {
-          closeIfNeeded(false);
-        });
+        ShutDownTracker.getInstance().registerShutdownTask(() -> closeIfNeeded(false));
       }
-    } else {
+    }
+    else {
       CompilerReferenceIndex.removeIndexFiles(buildDir);
     }
   }
@@ -91,7 +95,7 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
     return SystemProperties.getBooleanProperty(PROP_KEY, false);
   }
 
-  synchronized CompilerRef.JavaCompilerClassRef asClassUsage(JavacRef aClass) throws IOException {
+  synchronized @NotNull CompilerRef.JavaCompilerClassRef asClassUsage(JavacRef aClass) throws IOException {
     return new CompilerRef.JavaCompilerClassRef(id(aClass, myIndex.getByteSeqEum()));
   }
 

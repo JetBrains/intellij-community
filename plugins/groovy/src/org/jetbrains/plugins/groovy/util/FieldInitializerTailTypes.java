@@ -1,14 +1,11 @@
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.codeInsight.lookup.CommaTailType;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
-/**
- * @author Sergey Evdokimov
- */
 public class FieldInitializerTailTypes extends TailType {
 
   public static final TailType EQ_CLOSURE = new FieldInitializerTailTypes("{}", 1);
@@ -26,7 +23,7 @@ public class FieldInitializerTailTypes extends TailType {
 
   @Override
   public int processTail(Editor editor, int tailOffset) {
-    CommonCodeStyleSettings styleSettings = CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset);
+    CommonCodeStyleSettings styleSettings = CodeStyle.getLocalLanguageSettings(editor, tailOffset);
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
     int textLength = chars.length();

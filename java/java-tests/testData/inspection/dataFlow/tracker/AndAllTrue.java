@@ -1,8 +1,8 @@
 /*
 Value is always true (obj != null && obj2 != null; line#16)
-  Operand #1 of &&-chain is true (obj != null; line#16)
+  Operand #1 of and-chain is true (obj != null; line#16)
     'obj' is known to be 'non-null' from line #13 (Objects.requireNonNull(obj); line#13)
-  and operand #2 of &&-chain is true (obj2 != null; line#16)
+  and operand #2 of and-chain is true (obj2 != null; line#16)
     'obj2' is known to be 'non-null' from line #14 (Objects.requireNonNull(obj2); line#14)
  */
 

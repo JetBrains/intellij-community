@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView.impl;
 
 import com.intellij.ide.ExporterToTextFile;
@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,16 +48,14 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
   }
 
   @Override
-  @NotNull
-  public String getReportText() {
+  public @NotNull String getReportText() {
     StringBuffer buffer = new StringBuffer();
     getReportText(buffer, (ErrorTreeElement)myStructure.getRootElement(), myCbShowDetails.isSelected(), 0);
     return buffer.toString();
   }
 
   @Override
-  @NotNull
-  public String getDefaultFilePath() {
+  public @NotNull String getDefaultFilePath() {
     return "";
   }
 
@@ -68,16 +65,15 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
   }
 
   private void getReportText(StringBuffer buffer, final ErrorTreeElement element, boolean withUsages, final int indent) {
-    final String newline = SystemProperties.getLineSeparator();
+    final String newline = System.lineSeparator();
     Object[] children = myStructure.getChildElements(element);
     for (final Object child : children) {
-      if (!(child instanceof ErrorTreeElement)) {
+      if (!(child instanceof ErrorTreeElement childElement)) {
         continue;
       }
       if (!withUsages && child instanceof NavigatableMessageElement) {
         continue;
       }
-      final ErrorTreeElement childElement = (ErrorTreeElement)child;
       if (buffer.length() > 0) {
         buffer.append(newline);
       }

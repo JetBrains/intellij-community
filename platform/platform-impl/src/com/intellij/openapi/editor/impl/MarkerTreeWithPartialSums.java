@@ -1,19 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 /**
  * Extension of {@link RangeMarkerTree} which can quickly calculate sum of values associated with markers for a given offset range.
  * Only 'non-greedy' markers with zero length are supported (for such markers start offset is always equal to end offset).
  * Not thread safe - cannot be used from multiple threads simultaneously.
  */
-class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
+class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
   MarkerTreeWithPartialSums(@NotNull Document document) {
     super(document);
   }
@@ -28,7 +28,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplie
    * so that internal caches related to calculating value sums could be updated.
    */
   void valueUpdated(T marker) {
-    Node node = (Node)lookupNode(marker);
+    Node<T> node = (Node<T>)lookupNode(marker);
     if (node != null) node.recalculateSubTreeSumUp();
   }
 
@@ -51,15 +51,14 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplie
     return value;
   }
 
-  @NotNull
   @Override
-  protected HardReferencingRangeMarkerTree.Node<T> createNewNode(@NotNull T key,
-                                                                 int start,
-                                                                 int end,
-                                                                 boolean greedyToLeft,
-                                                                 boolean greedyToRight,
-                                                                 boolean stickingToRight,
-                                                                 int layer) {
+  protected @NotNull RMNode<T> createNewNode(@NotNull T key,
+                                             int start,
+                                             int end,
+                                             boolean greedyToLeft,
+                                             boolean greedyToRight,
+                                             boolean stickingToRight,
+                                             int layer) {
     assert start == end;
     assert !greedyToLeft;
     assert !greedyToRight;
@@ -72,7 +71,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplie
     ((Node<T>)node).recalculateSubTreeSum();
   }
 
-  static class Node<T extends RangeMarkerWithGetterImpl & IntSupplier> extends HardReferencingRangeMarkerTree.Node<T> {
+  static class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
     private int subtreeSum;
 
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,
@@ -102,7 +101,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplie
 
     private int getLocalSum() {
       int sum = 0;
-      for (Getter<T> g : intervals) {
+      for (Supplier<? extends T> g : intervals) {
         sum += g.get().getAsInt();
       }
       return sum;
@@ -117,7 +116,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplie
     }
 
     private void recalculateSubTreeSumUp() {
-      Node n = this;
+      Node<?> n = this;
       while (n != null) {
         n.recalculateSubTreeSum();
         n = n.getParent();

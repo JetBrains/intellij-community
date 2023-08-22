@@ -1,48 +1,96 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.Convertor;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.ListIterator;
 
 import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
 
-public class TableSpeedSearch extends SpeedSearchBase<JTable> {
+/**
+ * To install the speed search on a {@link JTable} component, pass the table component to one of the constructors.
+ */
+public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
   private static final PairFunction<Object, Cell, String> TO_STRING = (o, cell) -> o == null || o instanceof Boolean ? "" : o.toString();
   private final PairFunction<Object, ? super Cell, String> myToStringConvertor;
 
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TableSpeedSearch(JTable table, Void sig, final Convertor<Object, String> toStringConvertor) {
+    this(table, sig, (o, c) -> toStringConvertor.convert(o));
+  }
+
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TableSpeedSearch(JTable table, Void sig, final PairFunction<Object, ? super Cell, String> toStringConvertor) {
+    super(table, sig);
+
+    myToStringConvertor = toStringConvertor;
+  }
+
+  public static @NotNull TableSpeedSearch installOn(JTable table) {
+    return installOn(table, TO_STRING);
+  }
+
+  public static @NotNull TableSpeedSearch installOn(JTable table, final Convertor<Object, String> toStringConvertor) {
+    return installOn(table, (o, c) -> toStringConvertor.convert(o));
+  }
+
+  public static @NotNull TableSpeedSearch installOn(JTable table, final PairFunction<Object, ? super Cell, String> toStringConvertor) {
+    TableSpeedSearch search = new TableSpeedSearch(table, null, toStringConvertor);
+    search.setupListeners();
+    return search;
+  }
+
+  /**
+   * @deprecated Use the static method {@link TableSpeedSearch#installOn(JTable)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TableSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TableSpeedSearch(JTable table) {
     this(table, TO_STRING);
   }
 
+  /**
+   * @deprecated Use the static method {@link TableSpeedSearch#installOn(JTable, Convertor)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TableSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TableSpeedSearch(JTable table, final Convertor<Object, String> toStringConvertor) {
     this(table, (o, c) -> toStringConvertor.convert(o));
   }
 
+  /**
+   * @deprecated Use the static method {@link TableSpeedSearch#installOn(JTable, PairFunction)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TableSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TableSpeedSearch(JTable table, final PairFunction<Object, ? super Cell, String> toStringConvertor) {
     super(table);
 
@@ -54,15 +102,34 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   }
 
   @Override
+  public void setupListeners() {
+    super.setupListeners();
+    // edit on F2 & double click, do not interfere with quick search
+    myComponent.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
+
+    new MySelectAllAction(myComponent, this).registerCustomShortcutSet(myComponent, null);
+  }
+
+  @Override
   protected boolean isSpeedSearchEnabled() {
     boolean tableIsNotEmpty = myComponent.getRowCount() != 0 && myComponent.getColumnCount() != 0;
     return tableIsNotEmpty && !myComponent.isEditing() && super.isSpeedSearchEnabled();
   }
 
-  @NotNull
   @Override
-  protected ListIterator<Object> getElementIterator(int startingIndex) {
-    return new MyListIterator(startingIndex);
+  protected @NotNull ListIterator<Object> getElementIterator(int startingViewIndex) {
+    int count = getElementCount();
+    return new AbstractList<>() {
+      @Override
+      public Object get(int index) {
+        return index;
+      }
+
+      @Override
+      public int size() {
+        return count;
+      }
+    }.listIterator(startingViewIndex);
   }
 
   @Override
@@ -95,11 +162,6 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   }
 
   @Override
-  protected Object @NotNull [] getAllElements() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
   protected String getElementText(Object element) {
     final int index = ((Integer)element).intValue();
     int row = index / myComponent.getColumnCount();
@@ -108,64 +170,8 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     return myToStringConvertor.fun(value, new Cell(row, col));
   }
 
-  private class MyListIterator implements ListIterator<Object> {
-
-    private int myCursor;
-
-    MyListIterator(int startingIndex) {
-      final int total = getElementCount();
-      myCursor = startingIndex < 0 ? total : startingIndex;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myCursor < getElementCount();
-    }
-
-    @Override
-    public Object next() {
-      return myCursor++;
-    }
-
-    @Override
-    public boolean hasPrevious() {
-      return myCursor > 0;
-    }
-
-    @Override
-    public Object previous() {
-      return (myCursor--) - 1;
-    }
-
-    @Override
-    public int nextIndex() {
-      return myCursor;
-    }
-
-    @Override
-    public int previousIndex() {
-      return myCursor - 1;
-    }
-
-    @Override
-    public void remove() {
-      throw new AssertionError("Not Implemented");
-    }
-
-    @Override
-    public void set(Object o) {
-      throw new AssertionError("Not Implemented");
-    }
-
-    @Override
-    public void add(Object o) {
-      throw new AssertionError("Not Implemented");
-    }
-  }
-
-  @NotNull
-  private TIntArrayList findAllFilteredRows(String s) {
-    TIntArrayList rows = new TIntArrayList();
+  private @NotNull IntList findAllFilteredRows(String s) {
+    IntList rows = new IntArrayList();
     String _s = s.trim();
 
     for (int row = 0; row < myComponent.getRowCount(); row++) {
@@ -180,9 +186,22 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     return rows;
   }
 
+  @Override
+  protected boolean isMatchingRow(int modelRow, String pattern) {
+    int columns = myComponent.getColumnCount();
+    for (int col = 0; col < columns; col ++) {
+      Object value = myComponent.getModel().getValueAt(modelRow, col);
+      String str = myToStringConvertor.fun(value, new Cell(modelRow, col));
+      if (str != null && compare(str, pattern)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static class MySelectAllAction extends DumbAwareAction {
-    @NotNull private final JTable myTable;
-    @NotNull private final TableSpeedSearch mySearch;
+    private final @NotNull JTable myTable;
+    private final @NotNull TableSpeedSearch mySearch;
 
     MySelectAllAction(@NotNull JTable table, @NotNull TableSpeedSearch search) {
       myTable = table;
@@ -199,16 +218,23 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       ListSelectionModel sm = myTable.getSelectionModel();
 
       String query = mySearch.getEnteredPrefix();
       if (query == null) return;
 
-      TIntArrayList filtered = mySearch.findAllFilteredRows(query);
-      if (filtered.isEmpty()) return;
+      IntList filtered = mySearch.findAllFilteredRows(query);
+      if (filtered.isEmpty()) {
+        return;
+      }
 
-      boolean alreadySelected = Arrays.equals(filtered.toNativeArray(), myTable.getSelectedRows());
+      boolean alreadySelected = Arrays.equals(filtered.toIntArray(), myTable.getSelectedRows());
 
       if (alreadySelected) {
         int anchor = sm.getAnchorSelectionIndex();
@@ -225,11 +251,13 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
           int index = (Integer)currentElement;
           anchor = index / myTable.getColumnCount();
         }
-        if (anchor == -1) anchor = filtered.get(0);
+        if (anchor == -1) {
+          anchor = filtered.getInt(0);
+        }
 
         sm.clearSelection();
         for (int i = 0; i < filtered.size(); i++) {
-          int value = filtered.get(i);
+          int value = filtered.getInt(i);
           sm.addSelectionInterval(value, value);
         }
         sm.setAnchorSelectionIndex(anchor);

@@ -2,17 +2,9 @@
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.psi.impl.PyFunctionImpl
-import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 
 class PyMlCompletionFeaturesTest: PyMlCompletionTestCase() {
   override fun getTestDataPath(): String = super.getTestDataPath() + "/codeInsight/mlcompletion"
-
-  override fun setUp() {
-    super.setUp()
-    setLanguageLevel(LanguageLevel.PYTHON35)
-  }
 
   // Context features
 
@@ -139,11 +131,6 @@ class PyMlCompletionFeaturesTest: PyMlCompletionTestCase() {
                                                              Pair("number_of_occurrences_in_scope", MLFeatureValue.numerical(1)),
                                                              Pair("kind", MLFeatureValue.categorical(PyCompletionMlElementKind.TYPE_OR_CLASS)),
                                                              Pair("is_builtins", MLFeatureValue.binary(false)))
-
-  fun testNumberOfOccurrencesNamedArgsWithPrefix() = doElementFeaturesTest("end=",
-                                                                  Pair("number_of_occurrences_in_scope", MLFeatureValue.numerical(1)),
-                                                                  Pair("kind", MLFeatureValue.categorical(PyCompletionMlElementKind.NAMED_ARG)),
-                                                                  Pair("is_builtins", MLFeatureValue.binary(false)))
 
   fun testNumberOfOccurrencesNamedArgsEmptyPrefix() = doElementFeaturesTest("file=",
                                                                             Pair("number_of_occurrences_in_scope", MLFeatureValue.numerical(0)),

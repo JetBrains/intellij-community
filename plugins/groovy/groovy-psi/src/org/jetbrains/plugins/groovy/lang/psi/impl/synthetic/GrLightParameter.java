@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiFile;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -18,9 +20,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author ven
- */
+import java.util.Objects;
+
 public class GrLightParameter extends LightVariableBuilder<GrLightParameter> implements GrParameter {
   public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
   private volatile boolean myOptional;
@@ -30,7 +31,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   private final GrTypeElement myTypeElement;
   private final PsiType myTypeGroovy;
 
-  public GrLightParameter(@NotNull String name, @Nullable PsiType type, @NotNull PsiElement scope) {
+  public GrLightParameter(@NlsSafe @NotNull String name, @Nullable PsiType type, @NotNull PsiElement scope) {
     super(scope.getManager(), name, getTypeNotNull(type, scope), GroovyLanguage.INSTANCE);
     myScope = scope;
     myModifierList = new GrLightModifierList(this);
@@ -158,10 +159,26 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   }
 
   @Override
-  public GrLightParameter setModifiers(String... modifiers) {
+  public @NotNull GrLightParameter setModifiers(@GrModifierConstant @NotNull String @NotNull ... modifiers) {
     GrLightModifierList modifiersList = new GrLightModifierList(getContext());
     modifiersList.setModifiers(modifiers);
     myModifierList = modifiersList;
     return this;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GrLightParameter parameter = (GrLightParameter)o;
+    return myOptional == parameter.myOptional &&
+           Objects.equals(myModifierList, parameter.myModifierList) &&
+           Objects.equals(myInitializer, parameter.myInitializer) &&
+           Objects.equals(myTypeGroovy, parameter.myTypeGroovy);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myOptional, myModifierList, myInitializer, myTypeGroovy);
   }
 }

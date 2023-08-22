@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -18,5 +19,10 @@ public class ViewToolWindowButtonsAction extends ToggleAction implements DumbAwa
     UISettings uiSettings = UISettings.getInstance();
     uiSettings.setHideToolStripes(!state);
     uiSettings.fireUISettingsChanged();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

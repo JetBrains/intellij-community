@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.tree;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,7 @@ public class FileNode {
     return !Objects.equals(icon, myIcon.getAndSet(icon));
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName.get();
   }
 
@@ -44,7 +45,7 @@ public class FileNode {
     return !Objects.equals(name, myName.getAndSet(name));
   }
 
-  public String getComment() {
+  public @NlsSafe String getComment() {
     return myComment.get();
   }
 

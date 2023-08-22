@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore.actions
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -17,7 +18,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
-import kotlin.streams.toList
+import org.jetbrains.annotations.Nls
 
 open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   ActionGroup(
@@ -27,6 +28,8 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   ), DumbAware {
 
   private var actions: Collection<AnAction> = emptyList()
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val selectedFiles = getSelectedFiles(e)
@@ -38,7 +41,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       return
     }
 
-    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project).toList()
+    val unversionedFiles = ScheduleForAdditionAction.Manager.getUnversionedFiles(e, project).toList()
     if (unversionedFiles.isEmpty()) {
       presentation.isVisible = false
       return
@@ -64,7 +67,9 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       actions += additionalActions
     }
 
-    isPopup = actions.size > 1
+    presentation.isPopupGroup = actions.size > 1
+    presentation.isPerformGroup = actions.size == 1
+    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup)
     presentation.isVisible = actions.isNotEmpty()
   }
 
@@ -72,18 +77,17 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
                                              selectedFiles: List<VirtualFile>,
                                              unversionedFiles: List<VirtualFile>): List<AnAction> = emptyList()
 
-  override fun canBePerformed(context: DataContext) = actions.size == 1
-
   override fun actionPerformed(e: AnActionEvent) {
     actions.firstOrNull()?.actionPerformed(e)
   }
 
   override fun getChildren(e: AnActionEvent?) = actions.toTypedArray()
 
-  private fun filterSelectedFiles(project: Project, files: List<VirtualFile>) =
-    files.filter { file ->
-      VcsUtil.isFileUnderVcs(project, VcsUtil.getFilePath(file)) && !ChangeListManager.getInstance(project).isIgnoredFile(file)
-    }
+  private fun filterSelectedFiles(project: Project, files: List<VirtualFile>): List<VirtualFile> {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val changeListManager = ChangeListManager.getInstance(project)
+    return files.filter { file -> vcsManager.getVcsFor(file) != null && !changeListManager.isIgnoredFile(file) }
+  }
 
   private fun findSuitableIgnoreFiles(project: Project, file: VirtualFile): Collection<VirtualFile> {
     val fileParent = file.parent
@@ -107,7 +111,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
   private fun createNewIgnoreFileAction(project: Project, selectedFiles: List<VirtualFile>): AnAction? {
     val filename = ignoreFileType.ignoreLanguage.filename
-    val (rootVcs, commonIgnoreFileRoot) = selectedFiles.getCommonIgnoreFileRoot(project) ?: return null
+    val (rootVcs, commonIgnoreFileRoot) = getCommonIgnoreFileRoot(selectedFiles, project) ?: return null
     if (rootVcs == null) return null
     if (commonIgnoreFileRoot.findChild(filename) != null) return null
     val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(rootVcs) ?: return null
@@ -121,26 +125,30 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
     }
   }
 
-  private fun VirtualFile.toTextRepresentation(project: Project, projectDir: VirtualFile?, size: Int): String {
-    if (size == 1) return message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename)
-    val projectRootOrVcsRoot = projectDir ?: VcsUtil.getVcsRootFor(project, this) ?: return name
-
-    return VfsUtil.getRelativePath(this, projectRootOrVcsRoot) ?: name
-  }
-
-  private fun Collection<VirtualFile>.getCommonIgnoreFileRoot(project: Project): VcsRoot? {
-    val vcsManager = ProjectLevelVcsManager.getInstance(project)
-    val first = firstOrNull() ?: return null
-    val commonVcsRoot = vcsManager.getVcsRootObjectFor(first) ?: return null
-    if (first == commonVcsRoot.path) return null //trying to ignore vcs root itself
-
-    val haveCommonRoot = asSequence().drop(1).all {
-      it != commonVcsRoot && vcsManager.getVcsRootObjectFor(it) == commonVcsRoot
+  private fun VirtualFile.toTextRepresentation(project: Project, projectDir: VirtualFile?, size: Int): @Nls String {
+    if (size == 1) {
+      return message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename)
     }
-
-    return if (haveCommonRoot) commonVcsRoot else null
+    val projectRootOrVcsRoot = projectDir ?: VcsUtil.getVcsRootFor(project, this) ?: return name
+    return VfsUtil.getRelativePath(this, projectRootOrVcsRoot) ?: name
   }
 
   private operator fun VcsRoot.component1() = vcs
   private operator fun VcsRoot.component2() = path
+}
+
+private fun getCommonIgnoreFileRoot(files: Collection<VirtualFile>, project: Project): VcsRoot? {
+  val first = files.firstOrNull() ?: return null
+  val vcsManager = ProjectLevelVcsManager.getInstance(project)
+  val commonVcsRoot = vcsManager.getVcsRootObjectFor(first) ?: return null
+  if (first == commonVcsRoot.path) {
+    // trying to ignore vcs root itself
+    return null
+  }
+
+  val haveCommonRoot = files.asSequence().drop(1).all {
+    it != commonVcsRoot.path && vcsManager.getVcsRootObjectFor(it) == commonVcsRoot
+  }
+
+  return if (haveCommonRoot) commonVcsRoot else null
 }

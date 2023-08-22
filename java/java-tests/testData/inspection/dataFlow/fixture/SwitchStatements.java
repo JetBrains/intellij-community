@@ -54,4 +54,20 @@ public class SwitchStatements {
       case 2 -> System.out.println("two");
     }
   }
+
+  enum X {A, B, C}
+
+  void testThrowingBranch(X x) {
+    if (x == X.A) return;
+    switch(x) {
+      case A -> throw new AssertionError();
+      case B -> System.out.println(1);
+      case C -> System.out.println(2);
+    }
+    switch(x) {
+      case B: System.out.println(1);break;
+      case C: System.out.println(2);break;
+      case A: default: throw new AssertionError();
+    }
+  }
 }

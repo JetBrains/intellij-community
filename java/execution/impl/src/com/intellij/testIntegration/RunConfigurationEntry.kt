@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration
 
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -24,8 +10,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.vfs.VirtualFileManager
 import java.util.*
 import javax.swing.Icon
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 
 interface RecentTestsPopupEntry {
@@ -77,13 +61,13 @@ class SuiteEntry(val suiteUrl: String,
                  override val runDate: Date,
                  var runConfiguration: RunnerAndConfigurationSettings) : RecentTestsPopupEntry {
 
-  val tests: HashSet<SingleTestEntry> = hashSetOf<SingleTestEntry>()
+  val tests: HashSet<SingleTestEntry> = hashSetOf()
   val suiteName: String = VirtualFileManager.extractPath(suiteUrl)
   
   var runConfigurationEntry: RunConfigurationEntry? = null
 
   override val presentation: String = suiteUrl.toClassName(0)
-  override val icon: Icon? = AllIcons.RunConfigurations.Junit
+  override val icon: Icon = AllIcons.RunConfigurations.Junit
   
   override val failed: Boolean
     get() {
@@ -104,11 +88,11 @@ class SuiteEntry(val suiteUrl: String,
 
 class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings) : RecentTestsPopupEntry {
 
-  val suites: ArrayList<SuiteEntry> = arrayListOf<SuiteEntry>()
+  val suites: ArrayList<SuiteEntry> = arrayListOf()
   
   override val runDate: Date
     get() {
-      return suites.minBy { it.runDate }!!.runDate
+      return suites.minByOrNull { it.runDate }!!.runDate
     }
   
   
@@ -124,7 +108,7 @@ class RunConfigurationEntry(val runSettings: RunnerAndConfigurationSettings) : R
 
   override val presentation: String = runSettings.name
 
-  override val icon: Icon? = AllIcons.RunConfigurations.Junit
+  override val icon: Icon = AllIcons.RunConfigurations.Junit
 
   override fun accept(visitor: TestEntryVisitor) {
     visitor.visitRunConfiguration(this)

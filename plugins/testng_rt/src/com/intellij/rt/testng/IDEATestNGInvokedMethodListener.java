@@ -12,6 +12,7 @@ public class IDEATestNGInvokedMethodListener implements IInvokedMethodListener {
     myListener = listener;
   }
 
+  @Override
   public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
     synchronized (myListener) {
       if (!testResult.getMethod().isTest()) {
@@ -21,5 +22,6 @@ public class IDEATestNGInvokedMethodListener implements IInvokedMethodListener {
   }
 
   //should be covered by test listeners
+  @Override
   public void afterInvocation(IInvokedMethod method, ITestResult testResult) {}
 }

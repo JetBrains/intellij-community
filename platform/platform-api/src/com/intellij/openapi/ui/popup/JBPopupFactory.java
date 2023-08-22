@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.ui.popup;
 
@@ -6,8 +6,9 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.awt.RelativePoint;
@@ -20,6 +21,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Factory class for creating popup chooser windows (similar to the Code | Generate... popup) and various notifications/confirmations.
@@ -85,7 +87,7 @@ public abstract class JBPopupFactory {
    * @return the popup factory instance.
    */
   public static JBPopupFactory getInstance() {
-    return ServiceManager.getService(JBPopupFactory.class);
+    return ApplicationManager.getApplication().getService(JBPopupFactory.class);
   }
 
   @NotNull
@@ -155,7 +157,7 @@ public abstract class JBPopupFactory {
   /**
    * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
                                          @NotNull DataContext dataContext,
@@ -170,7 +172,7 @@ public abstract class JBPopupFactory {
   /**
    * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
                                          @NotNull DataContext dataContext,
@@ -368,12 +370,19 @@ public abstract class JBPopupFactory {
   public abstract ListPopup createListPopup(@NotNull ListPopupStep step, int maxRowCount);
 
   @NotNull
+  public abstract ListPopup createListPopup(@NotNull Project project,
+                                            @NotNull ListPopupStep step,
+                                            @NotNull Function<? super ListCellRenderer, ? extends ListCellRenderer> cellRendererProducer);
+
+  @NotNull
   public abstract TreePopup createTree(JBPopup parent, @NotNull TreePopupStep step, Object parentValue);
+
   @NotNull
   public abstract TreePopup createTree(@NotNull TreePopupStep step);
 
   @NotNull
-  public abstract ComponentPopupBuilder createComponentPopupBuilder(@NotNull JComponent content, @Nullable JComponent preferableFocusComponent);
+  public abstract ComponentPopupBuilder createComponentPopupBuilder(@NotNull JComponent content,
+                                                                    @Nullable JComponent preferableFocusComponent);
 
   /**
    * Returns the location where a popup with the specified data context is displayed.
@@ -405,7 +414,7 @@ public abstract class JBPopupFactory {
   public abstract boolean isBestPopupLocationVisible(@NotNull Editor editor);
 
   public abstract Point getCenterOf(JComponent container, JComponent content);
-  
+
   @NotNull
   public abstract List<JBPopup> getChildPopups(@NotNull Component parent);
 

@@ -14,6 +14,7 @@ import java.awt.event.KeyEvent;
 
 public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
   private static final String ACTION_EMPTY = "!!!EmptyAction";
+  private static final String ACTION_DISABLED_EMPTY = "!!!DisabledEmptyAction";
   private static final String OUR_KEYMAP_NAME = "IdeKeyEventDispatcherTestKeymap";
 
   private final JTextField myTextField = new JTextField();
@@ -35,6 +36,11 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
       actionManager.registerAction(ACTION_EMPTY, new EmptyAction());
     }
     myKeymap.addShortcut(ACTION_EMPTY, new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK), null));
+
+    if (actionManager.getAction(ACTION_DISABLED_EMPTY) == null) {
+      actionManager.registerAction(ACTION_DISABLED_EMPTY, new DisabledEmptyAction());
+    }
+    myKeymap.addShortcut(ACTION_DISABLED_EMPTY, new KeyboardShortcut(KeyStroke.getKeyStroke('z'), KeyStroke.getKeyStroke('z')));
   }
 
   @Override
@@ -43,6 +49,7 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
       KeymapManagerEx.getInstanceEx().getSchemeManager().removeScheme(myKeymap);
       KeymapManagerEx.getInstanceEx().setActiveKeymap(mySavedKeymap);
       ActionManager.getInstance().unregisterAction(ACTION_EMPTY);
+      ActionManager.getInstance().unregisterAction(ACTION_DISABLED_EMPTY);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -56,7 +63,7 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
     Keymap activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
 
     for (String actionId : activeKeymap.getActionIdList()) {
-      if (ACTION_EMPTY.equals(actionId)) {
+      if (ACTION_EMPTY.equals(actionId) || ACTION_DISABLED_EMPTY.equals(actionId)) {
         continue;
       }
       Shortcut[] shortcuts = activeKeymap.getShortcuts(actionId);
@@ -91,9 +98,25 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
     assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, 0, KeyEvent.VK_ENTER, (char)0, KeyEvent.KEY_LOCATION_STANDARD)));
   }
 
+  public void testKeyTypedIfBoundActionDisabled() {
+    IdeKeyEventDispatcher dispatcher = new IdeKeyEventDispatcher(null);
+
+    assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'z')));
+  }
+
   private static class EmptyAction extends AnAction {
     EmptyAction() {
       setEnabledInModalContext(true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) { }
+  }
+
+  private static class DisabledEmptyAction extends AnAction {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(false);
     }
 
     @Override

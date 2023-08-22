@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -11,10 +11,8 @@ import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
+
+public final class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
   private final boolean myPlural;
 
   private DeleteTypeDescriptionLocation(final boolean plural) {
@@ -36,7 +34,7 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
     return myPlural;
   }
 
-  private static class DefaultProvider implements ElementDescriptionProvider {
+  private static final class DefaultProvider implements ElementDescriptionProvider {
     @Override
     public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (location instanceof DeleteTypeDescriptionLocation) {

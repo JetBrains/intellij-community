@@ -23,7 +23,7 @@ import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class ErrorUtil {
+public final class ErrorUtil {
 
   private ErrorUtil() {
   }
@@ -59,7 +59,7 @@ public class ErrorUtil {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression literal) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression literal) {
       if (PsiLiteralUtil.isUnsafeLiteral(literal)) {
         containsErrorElement = true;
         stopWalking();

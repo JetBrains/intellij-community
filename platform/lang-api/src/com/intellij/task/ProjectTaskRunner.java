@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyWithDefaultValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +13,6 @@ import org.jetbrains.concurrency.Promise;
 
 import java.util.Arrays;
 import java.util.Collection;
-
-import static com.intellij.task.ProjectTaskManager.EMPTY_TASKS_ARRAY;
 
 /**
  * {@link ProjectTaskRunner} provides an extension point to run any IDE tasks using {@link ProjectTaskManager} api.
@@ -67,7 +49,7 @@ public abstract class ProjectTaskRunner {
                              @NotNull ProjectTaskContext context,
                              ProjectTask @NotNull ... tasks) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
-    run(project, context, new ProjectTaskNotificationAdapter(promise), tasks);
+    run(project, context, new ProjectTaskNotificationAdapter(promise), Arrays.asList(tasks));
     return promise;
   }
 
@@ -91,6 +73,16 @@ public abstract class ProjectTaskRunner {
     return null;
   }
 
+  @ApiStatus.Experimental
+  @Nullable
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, ProjectTask @NotNull ... tasks) {
+    if (tasks.length == 0) return null;
+    if (tasks.length == 1 && tasks[0] instanceof ExecuteRunConfigurationTask) {
+      return createExecutionEnvironment(project, (ExecuteRunConfigurationTask)tasks[0], null);
+    }
+    return null;
+  }
+
   /**
    * The flag indicates if the {@link ProjectTaskRunner} supports reporting an information about generated files during execution or not.
    * The fine-grained events per generated files allow greatly improve IDE performance for some activities like fast hotswap reload after incremental compilation.
@@ -107,58 +99,27 @@ public abstract class ProjectTaskRunner {
   }
 
   //<editor-fold desc="Deprecated methods. To be removed in 2020.1">
-  private static final Key<Boolean> RECURSION_GUARD_KEY = KeyWithDefaultValue.create("recursion guard key", false);
-
   /**
    * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void run(@NotNull Project project,
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
-    if (!RECURSION_GUARD_KEY.get(context)) {
-      RECURSION_GUARD_KEY.set(context, true);
-      run(project, context, callback, tasks.toArray(EMPTY_TASKS_ARRAY));
-      RECURSION_GUARD_KEY.set(context, false);
-    }
-    else {
-      assertUnsupportedOperation(callback);
-      notifyIfNeeded(run(project, context, tasks.toArray(new ProjectTask[]{})), callback);
-    }
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(run(project, context, tasks.toArray(new ProjectTask[]{})), callback);
   }
 
-  /**
-   * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void run(@NotNull Project project,
-                  @NotNull ProjectTaskContext context,
-                  @Nullable ProjectTaskNotification callback,
-                  ProjectTask @NotNull ... tasks) {
-    if (!RECURSION_GUARD_KEY.get(context)) {
-      RECURSION_GUARD_KEY.set(context, true);
-      run(project, context, callback, Arrays.asList(tasks));
-      RECURSION_GUARD_KEY.set(context, false);
-    }
-    else {
-      assertUnsupportedOperation(callback);
-      notifyIfNeeded(run(project, context, tasks), callback);
-    }
-  }
+  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
+    private final @NotNull AsyncPromise<? super Result> myPromise;
 
-  @SuppressWarnings("deprecation")
-  private static class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
-    private final AsyncPromise<Result> myPromise;
-
-    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<Result> promise) {
+    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<? super Result> promise) {
       myPromise = promise;
     }
 
     @Override
-    public void finished(@NotNull ProjectTaskResult taskResult) {
+    public void finished(@SuppressWarnings("deprecation") @NotNull ProjectTaskResult taskResult) {
       myPromise.setResult(new Result() {
         @Override
         public boolean isAborted() {
@@ -173,19 +134,18 @@ public abstract class ProjectTaskRunner {
     }
   }
 
-  @SuppressWarnings("deprecation")
-  private static void notifyIfNeeded(@NotNull Promise<Result> promise, @Nullable ProjectTaskNotification callback) {
+  private static void notifyIfNeeded(@NotNull Promise<? extends Result> promise, @SuppressWarnings("deprecation") @Nullable ProjectTaskNotification callback) {
     if (callback != null) {
+      //noinspection deprecation
       promise
         .onSuccess(result -> callback.finished(new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0)))
         .onError(throwable -> callback.finished(new ProjectTaskResult(true, 0, 0)));
     }
   }
 
-  @SuppressWarnings("deprecation")
-  private static void assertUnsupportedOperation(@Nullable ProjectTaskNotification callback) {
+  private void assertUnsupportedOperation(@SuppressWarnings("deprecation") @Nullable ProjectTaskNotification callback) {
     if (callback instanceof ProjectTaskNotificationAdapter) {
-      throw new UnsupportedOperationException("Please, provide implementation non-deprecated ProjectTaskRunner.run(Project, ProjectTaskContext, ProjectTask...) method");
+      throw new UnsupportedOperationException("Please, provide implementation non-deprecated ProjectTaskRunner.run(Project, ProjectTaskContext, ProjectTask...) method in " + getClass());
     }
   }
   //</editor-fold>

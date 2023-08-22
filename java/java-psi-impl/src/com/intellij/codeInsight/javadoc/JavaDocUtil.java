@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -24,10 +26,11 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JavaDocUtil {
+public final class JavaDocUtil {
   private static final Logger LOG = Logger.getInstance(JavaDocUtil.class);
 
   @NonNls private static final Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
+  private static final String JAVA_LANG = "java.lang.";
 
   private JavaDocUtil() {
   }
@@ -245,8 +248,8 @@ public class JavaDocUtil {
       buffer.append(name);
       buffer.append("(");
       PsiParameter[] parms = method.getParameterList().getParameters();
-      boolean spaceBeforeComma = JavaDocCodeStyle.getInstance(project).spaceBeforeComma();
-      boolean spaceAfterComma = JavaDocCodeStyle.getInstance(project).spaceAfterComma();
+      boolean spaceBeforeComma = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isSpaceBeforeComma();
+      boolean spaceAfterComma = JavaFileCodeStyleFacade.forContext(element.getContainingFile()).isSpaceAfterComma();
       for (int i = 0; i < parms.length; i++) {
         PsiParameter parm = parms[i];
         String typeText = TypeConversionUtil.erasure(parm.getType()).getCanonicalText();
@@ -279,7 +282,7 @@ public class JavaDocUtil {
     return null;
   }
 
-  public static String getShortestClassName(PsiClass aClass, PsiElement context) {
+  public static @NlsSafe String getShortestClassName(PsiClass aClass, PsiElement context) {
     @NonNls String shortName = aClass.getName();
     if(shortName == null){
       shortName = "null";
@@ -301,9 +304,10 @@ public class JavaDocUtil {
     catch (IndexNotReadyException e) {
       LOG.debug(e);
     }
-    return manager.areElementsEquivalent(aClass, resolvedClass)
-      ? shortName
-      : StringUtil.trimStart(qName, "java.lang.");
+    if (manager.areElementsEquivalent(aClass, resolvedClass)) {
+      return shortName;
+    }
+    return JAVA_LANG.length() + shortName.length() == qName.length() ? StringUtil.trimStart(qName, JAVA_LANG) : qName;
   }
 
   public static String getLabelText(Project project, PsiManager manager, String refText, PsiElement context) {
@@ -372,8 +376,8 @@ public class JavaDocUtil {
     if (!StringUtil.endsWithChar(memberText, ')')) return memberText;
     String parms = memberText.substring(parenthIndex + 1, memberText.length() - 1);
     StringBuilder buffer = new StringBuilder();
-    boolean spaceBeforeComma = JavaDocCodeStyle.getInstance(project).spaceBeforeComma();
-    boolean spaceAfterComma = JavaDocCodeStyle.getInstance(project).spaceAfterComma();
+    boolean spaceBeforeComma = JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isSpaceBeforeComma();
+    boolean spaceAfterComma = JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isSpaceAfterComma();
     StringTokenizer tokenizer = new StringTokenizer(parms, ",");
     while (tokenizer.hasMoreTokens()) {
       String param = tokenizer.nextToken().trim();
@@ -396,7 +400,7 @@ public class JavaDocUtil {
         }
       }
     }
-    return memberText.substring(0, parenthIndex + 1) + buffer.toString() + ")";
+    return memberText.substring(0, parenthIndex + 1) + buffer + ")";
   }
 
   public static PsiClassType[] getImplementsList(PsiClass aClass) {

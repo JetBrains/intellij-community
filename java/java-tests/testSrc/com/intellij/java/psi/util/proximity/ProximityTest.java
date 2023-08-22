@@ -23,9 +23,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 
-/**
- * @author peter
- */
 public class ProximityTest extends JavaCodeInsightFixtureTestCase {
 
   public void testSameSourceRoot() throws Throwable {

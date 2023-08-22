@@ -1,8 +1,11 @@
+package org.jetbrains.annotations;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.Nls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
+
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE, ElementType.TYPE, ElementType.PACKAGE})
+@interface Nls { }
 
 @Target({ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.PARAMETER})
 @interface Anno {}
@@ -14,8 +17,7 @@ class Test {
     }
 
     @Language("HTML")
-    @Nls
-    private String newMethod(@Language("HTML") @Nls String sample) {
+    private @Nls String newMethod(@Language("HTML") @Nls String sample) {
         return sample;
     }
 }

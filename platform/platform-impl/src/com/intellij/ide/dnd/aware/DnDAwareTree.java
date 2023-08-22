@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd.aware;
 
 import com.intellij.ide.dnd.DnDAware;
@@ -9,7 +9,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +52,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
 
   @Override
   public final boolean isOverSelection(final Point point) {
-    final TreePath path = WideSelectionTreeUI.isWideSelection(this)
-                          ? getClosestPathForLocation(point.x, point.y) : getPathForLocation(point.x, point.y);
+    final TreePath path = TreeUtil.getPathForLocation(this, point.x, point.y);
     if (path == null) return false;
     return isPathSelected(path);
   }
@@ -64,28 +63,24 @@ public class DnDAwareTree extends Tree implements DnDAware {
   }
 
   @Override
-  @NotNull
-  public final JComponent getComponent() {
+  public final @NotNull JComponent getComponent() {
     return this;
   }
 
-  @NotNull
-  public static Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull TreePath path, @NotNull Point dragOrigin) {
+  public static @NotNull Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull TreePath path, @NotNull Point dragOrigin) {
     int row = dndAwareTree.getRowForPath(path);
     Component comp = dndAwareTree.getCellRenderer().getTreeCellRendererComponent(dndAwareTree, path.getLastPathComponent(), false, true, true, row, false);
     return createDragImage(dndAwareTree, comp, dragOrigin, true);
   }
 
-  @NotNull
-  public static Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull String text, @Nullable Point dragOrigin) {
+  public static @NotNull Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull @Nls String text, @Nullable Point dragOrigin) {
     return createDragImage(dndAwareTree, new JLabel(text), dragOrigin, false);
   }
 
-  @NotNull
-  private static Pair<Image, Point> createDragImage(@NotNull Tree tree,
-                                                    @NotNull Component c,
-                                                    @Nullable Point dragOrigin,
-                                                    boolean adjustToPathUnderDragOrigin) {
+  private static @NotNull Pair<Image, Point> createDragImage(@NotNull Tree tree,
+                                                             @NotNull Component c,
+                                                             @Nullable Point dragOrigin,
+                                                             boolean adjustToPathUnderDragOrigin) {
     if (c instanceof JComponent) {
       ((JComponent)c).setOpaque(true);
     }
@@ -123,11 +118,10 @@ public class DnDAwareTree extends Tree implements DnDAware {
   private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
     @Override
     protected Transferable createTransferable(JComponent component) {
-      if (component instanceof JTree) {
-        JTree tree = (JTree)component;
+      if (component instanceof JTree tree) {
         TreePath[] selection = tree.getSelectionPaths();
         if (selection != null && selection.length > 1) {
-          return new TransferableList<TreePath>(selection) {
+          return new TransferableList<>(selection) {
             @Override
             protected String toString(TreePath path) {
               return String.valueOf(path.getLastPathComponent());

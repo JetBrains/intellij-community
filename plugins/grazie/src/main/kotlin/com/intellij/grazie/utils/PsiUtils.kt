@@ -2,7 +2,6 @@
 package com.intellij.grazie.utils
 
 import com.intellij.lang.ASTNode
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.TreeUtil
@@ -10,6 +9,7 @@ import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 
 internal typealias PsiPointer<E> = SmartPsiElementPointer<E>
 
@@ -24,10 +24,6 @@ fun ASTNode.hasType(tokens: Set<IElementType>) = this.elementType in tokens
 inline fun <reified T : PsiElement> T.toPointer(): PsiPointer<T> = SmartPointerManager.createPointer(this)
 
 fun PsiElement.parents(): Sequence<PsiElement> = generateSequence(this) { it.parent }
-
-fun PsiElement.isInjectedFragment(): Boolean {
-  return InjectedLanguageManager.getInstance(this.project).isInjectedFragment(this.containingFile)
-}
 
 fun PsiElementProcessor<in PsiElement>.processElements(element: PsiElement?) {
   ProgressManager.checkCanceled()
@@ -81,4 +77,39 @@ fun IntRange.isAtEnd(element: PsiElement, skipWhitespace: Boolean = true): Boole
     end--
   }
   return end in this
+}
+
+/**
+ * Get all siblings of [element] that are accepted by [checkSibling]
+ * which are separated by whitespace containing at most one line break
+ */
+fun getNotSoDistantSimilarSiblings(element: PsiElement, checkSibling: (PsiElement) -> Boolean): List<PsiElement> {
+  return getNotSoDistantSimilarSiblings(element, TokenSet.EMPTY, checkSibling)
+}
+
+/**
+ * Get all siblings of [element] that are accepted by [checkSibling]
+ * which are separated by whitespace ([PsiWhiteSpace] or anything in [whitespaceTokens]) containing at most one line break
+ */
+fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenSet, checkSibling: (PsiElement) -> Boolean): List<PsiElement> {
+  require(checkSibling(element))
+  fun PsiElement.process(next: Boolean): List<PsiElement> {
+    val result = arrayListOf<PsiElement>()
+    var newLinesBetweenSiblingsCount = 0
+
+    var sibling: PsiElement = this@process
+    while (true) {
+      sibling = (if (next) sibling.nextSibling else sibling.prevSibling) ?: break
+      if (checkSibling(sibling)) {
+        newLinesBetweenSiblingsCount = 0
+        result.add(sibling)
+      } else if (sibling is PsiWhiteSpace || sibling.elementType in whitespaceTokens) {
+        newLinesBetweenSiblingsCount += sibling.text.count { char -> char == '\n' }
+        if (newLinesBetweenSiblingsCount > 1) break
+      } else break
+    }
+    return result
+  }
+
+  return element.process(false).reversed() + listOf(element) + element.process(true)
 }

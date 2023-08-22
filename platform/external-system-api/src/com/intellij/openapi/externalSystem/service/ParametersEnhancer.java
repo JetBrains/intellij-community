@@ -19,9 +19,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public interface ParametersEnhancer {
 
   /**

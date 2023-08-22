@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
@@ -36,7 +21,7 @@ import java.util.Collections;
  */
 public abstract class JavaProjectModelModificationService {
   public static JavaProjectModelModificationService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, JavaProjectModelModificationService.class);
+    return project.getService(JavaProjectModelModificationService.class);
   }
 
   public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to) {
@@ -67,5 +52,15 @@ public abstract class JavaProjectModelModificationService {
                                               @NotNull ExternalLibraryDescriptor libraryDescriptor,
                                               @NotNull DependencyScope scope);
 
-  public abstract Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel languageLevel);
+  /**
+   * Changes a language level for specified module. Also, if modifySource = true changes underneath external build system files
+   * (such as pom.xml for Maven, build.gradle/build.gradle.kts for Gradle, etc)
+   * * @param module Intellij Java Module to change
+   * * @param languageLevel new level
+   * @param modifySource if true, also, external build system files from underneath build system (if any) to be changed. When false
+   *                     only language level for module in Intellij project structure will be changed, and build system files remain untouched.
+   *                     This parameter do not affect JPS based projects, as files allways to be chanded.
+   * @return completed promise, when changes are complete. Rejected promise if no changes were done.
+   */
+  public abstract Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull LanguageLevel languageLevel, boolean modifySource);
 }

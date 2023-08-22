@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.google.common.primitives.Ints;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -25,7 +26,16 @@ import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
+/**
+ * @deprecated replaced by {@link FileHistoryOneCommitAction}
+ */
+@Deprecated
 public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata> extends AnAction implements DumbAware {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -59,7 +69,7 @@ public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata>
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
 
-    List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
+    List<CommitId> commits = ui.getTable().getSelection().getCommits();
     if (commits.size() != 1) return;
     CommitId commit = Objects.requireNonNull(getFirstItem(commits));
 
@@ -74,11 +84,9 @@ public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata>
                                                           MessageType.ERROR), null);
   }
 
-  @NotNull
-  protected abstract List<T> getSelection(@NotNull FileHistoryUi ui);
+  protected abstract @NotNull List<T> getSelection(@NotNull FileHistoryUi ui);
 
-  @NotNull
-  protected abstract DataGetter<T> getDetailsGetter(@NotNull FileHistoryUi ui);
+  protected abstract @NotNull DataGetter<T> getDetailsGetter(@NotNull FileHistoryUi ui);
 
   protected abstract void performAction(@NotNull Project project,
                                         @NotNull FileHistoryUi ui,

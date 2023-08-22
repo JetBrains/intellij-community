@@ -8,6 +8,7 @@ import com.intellij.debugger.memory.ui.StackFramePopup;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -54,5 +55,10 @@ public class ShowRelatedStackAction extends AnAction {
     }
 
     return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

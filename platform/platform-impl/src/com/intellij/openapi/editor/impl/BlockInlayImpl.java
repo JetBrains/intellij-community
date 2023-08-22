@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,7 @@ import java.util.function.IntSupplier;
 
 final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, BlockInlayImpl<?>> implements IntSupplier {
   final boolean myShowAbove;
+  final boolean myShowWhenFolded;
   final int myPriority;
   private int myHeightInPixels;
   private GutterIconRenderer myGutterIconRenderer;
@@ -23,10 +25,12 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
                  int offset,
                  boolean relatesToPrecedingText,
                  boolean showAbove,
+                 boolean showWhenFolded,
                  int priority,
                  @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
     myShowAbove = showAbove;
+    myShowWhenFolded = showWhenFolded;
     myPriority = priority;
   }
 
@@ -55,9 +59,11 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   @Override
   Point getPosition() {
     int visualLine = myEditor.offsetToVisualLine(getOffset());
-    int y = myEditor.visualLineToY(visualLine);
+    int[] yRange = myEditor.visualLineToYRange(visualLine);
     List<Inlay<?>> allInlays = myEditor.getInlayModel().getBlockElementsForVisualLine(visualLine, myShowAbove);
+    int y;
     if (myShowAbove) {
+      y = yRange[0];
       boolean found = false;
       for (Inlay<?> inlay : allInlays) {
         if (inlay == this) found = true;
@@ -65,7 +71,7 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
       }
     }
     else {
-      y += myEditor.getLineHeight();
+      y = yRange[1];
       for (Inlay<?> inlay : allInlays) {
         if (inlay == this) break;
         y += inlay.getHeightInPixels();
@@ -79,21 +85,18 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
     return myHeightInPixels;
   }
 
-  @NotNull
   @Override
-  public Placement getPlacement() {
+  public @NotNull Placement getPlacement() {
     return myShowAbove ? Placement.ABOVE_LINE : Placement.BELOW_LINE;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     return myEditor.offsetToVisualPosition(getOffset());
   }
 
-  @Nullable
   @Override
-  public GutterIconRenderer getGutterIconRenderer() {
+  public @Nullable GutterIconRenderer getGutterIconRenderer() {
     return myGutterIconRenderer;
   }
 
@@ -103,11 +106,20 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   }
 
   @Override
+  public @NotNull InlayProperties getProperties() {
+    return new InlayProperties()
+      .relatesToPrecedingText(isRelatedToPrecedingText())
+      .showAbove(myShowAbove)
+      .showWhenFolded(myShowWhenFolded)
+      .priority(myPriority);
+  }
+
+  @Override
   public String toString() {
     return "[Block inlay, offset=" + getOffset() +
            ", width=" + myWidthInPixels +
            ", height=" + myHeightInPixels +
            ", renderer=" + myRenderer +
-           "]";
+           "]" + (isValid() ? "" : "(invalid)");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -9,10 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author peter
- */
-public class FileReferenceHelperRegistrar {
+public final class FileReferenceHelperRegistrar {
 
   private FileReferenceHelperRegistrar() {
   }
@@ -32,7 +29,7 @@ public class FileReferenceHelperRegistrar {
       return helper;
     }
     FileReferenceHelper[] helpers = getHelpers();
-    return helpers[helpers.length-1];
+    return helpers[helpers.length - 1];
   }
 
   /**

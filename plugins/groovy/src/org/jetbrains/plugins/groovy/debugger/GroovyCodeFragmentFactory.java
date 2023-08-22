@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
@@ -15,7 +15,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -24,9 +23,9 @@ import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -40,9 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author ven
- */
 public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
   private static final String EVAL_NAME = "_JETGROOVY_EVAL_";
   private static final String IMPORTS = "___$$IMPORTS$$___";
@@ -121,17 +117,20 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       javaText.append("|clazz = java.lang.Class.forName(\"").append(ClassUtil.getJVMClassName(contextClass)).append("\");\n");
     }
 
-    javaText.append("final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();\n" +
-                    "   final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);\n" +
-                    "   final java.lang.Class |c = |loader.parseClass(");
+    javaText.append("""
+                      final java.lang.ClassLoader |parentLoader = |clazz.getClassLoader();
+                         final groovy.lang.GroovyClassLoader |loader = new groovy.lang.GroovyClassLoader(|parentLoader);
+                         final java.lang.Class |c = |loader.parseClass(""");
     javaText.append("\"" + IMPORTS + "class DUMMY").append(" { ").append("public groovy.lang.Closure ")
-      .append(EVAL_NAME).append(" = {").append(TEXT).append("}}\"");
-    javaText.append(", \"DUMMY.groovy\");\n" +
-                    "   int |i;\n" +
-                    "   java.lang.reflect.Field[] |fields = |c.getFields();\n" +
-                    "   for (int |j = 0; |j < |fields.length; |j++) if (|fields[|j].getName().equals(\"_JETGROOVY_EVAL_\")) {|i = |j; break;}\n" +
-                    "   final java.lang.reflect.Field |field = |fields[|i];\n" +
-                    "   final java.lang.Object |closure = |field.get(|c.newInstance());\n");
+      .append(EVAL_NAME).append(" = {\\n").append(TEXT).append("\\n}}\"");
+    javaText.append("""
+                      , "DUMMY.groovy");
+                         int |i;
+                         java.lang.reflect.Field[] |fields = |c.getFields();
+                         for (int |j = 0; |j < |fields.length; |j++) if (|fields[|j].getName().equals("_JETGROOVY_EVAL_")) {|i = |j; break;}
+                         final java.lang.reflect.Field |field = |fields[|i];
+                         final java.lang.Object |closure = |field.get(|c.newInstance());
+                      """);
 
     javaText.append("groovy.lang.ExpandoMetaClass |emc = new groovy.lang.ExpandoMetaClass(|clazz);\n");
     if (!isStatic) {
@@ -175,7 +174,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     final GroovyFile toEval = factory.createGroovyFile(text, false, context);
 
     final GrFunctionalExpression functionalExpression = PsiTreeUtil.getParentOfType(context, GrFunctionalExpression.class);
-    final Map<String, String> parameters = new THashMap<>();
+    final Map<String, String> parameters = new HashMap<>();
     final Map<GrExpression, String> replacements = new HashMap<>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
       @Override

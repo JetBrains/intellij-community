@@ -23,7 +23,6 @@ import java.util.List;
  * Provides 'numpy' module dynamic members for numeric types.
  *
  * @author avereshchagin
- * @author vlan
  */
 public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   private static final String[] NUMERIC_TYPES = {
@@ -45,7 +44,7 @@ public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   @NotNull
   protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
     if ("numpy".equals(qName)) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
       final PsiElement clazz = new PyPsiPath.ToClassQName(DTYPE).resolve(module, resolveContext);
       if (clazz != null) {
         final List<PyCustomMember> members = new ArrayList<>();

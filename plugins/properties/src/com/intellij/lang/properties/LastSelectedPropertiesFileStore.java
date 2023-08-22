@@ -1,35 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author cdr
- */
-@State(
-  name = "LastSelectedPropertiesFileStore",
-  storages = @Storage(value = "lastSelectedPropertiesFile.xml", roamingType = RoamingType.DISABLED)
-)
-public class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
+@State(name = "LastSelectedPropertiesFileStore", storages = @Storage(StoragePathMacros.CACHE_FILE))
+public final class LastSelectedPropertiesFileStore implements PersistentStateComponent<Element> {
   private final Map<String, String> lastSelectedUrls = new LinkedHashMap<>();
   private String lastSelectedFileUrl;
 
   public static LastSelectedPropertiesFileStore getInstance() {
-    return ServiceManager.getService(LastSelectedPropertiesFileStore.class);
+    return ApplicationManager.getApplication().getService(LastSelectedPropertiesFileStore.class);
   }
 
   @Nullable

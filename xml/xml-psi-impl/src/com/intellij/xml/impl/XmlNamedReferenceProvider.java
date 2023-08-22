@@ -26,10 +26,9 @@ public final class XmlNamedReferenceProvider implements PsiSymbolReferenceProvid
   @Override
   public Collection<? extends PsiSymbolReference> getReferences(@NotNull PsiExternalReferenceHost element,
                                                                 @NotNull PsiSymbolReferenceHints hints) {
-    if (!(element instanceof XmlNamedReferenceHost)) {
+    if (!(element instanceof XmlNamedReferenceHost host)) {
       return Collections.emptyList();
     }
-    final XmlNamedReferenceHost host = (XmlNamedReferenceHost)element;
     final Collection<XmlNamedReferenceProviderBean> beans = NamedReferenceProviders.getInstance().getNamedReferenceProviderBeans(host);
     final List<PsiSymbolReference> result = new SmartList<>();
     for (XmlNamedReferenceProviderBean bean : beans) {

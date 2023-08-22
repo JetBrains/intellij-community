@@ -11,7 +11,6 @@
       <splitpane id="c0141" binding="mySplitPane">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="200" height="200"/>
           </grid>
         </constraints>
         <properties>
@@ -103,7 +102,9 @@
             <constraints>
               <splitpane position="right"/>
             </constraints>
-            <properties/>
+            <properties>
+              <preferredSize width="300" height="100"/>
+            </properties>
             <border type="none"/>
             <children/>
           </grid>

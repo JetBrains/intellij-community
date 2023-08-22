@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.indices.impl;
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.JpsModel;
@@ -34,21 +21,26 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
-  private final Set<File> myExcludedRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-  private final Set<File> myTopLevelContentRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-  private final Map<JpsModule, ArrayList<File>> myModuleToExcludesMap = new THashMap<>();
-  private final Map<JpsModule, List<File>> myModuleToContentMap = new THashMap<>();
-  private final Map<File, FileTypeAssocTable<Boolean>> myExcludeFromContentRootTables = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
+  private final Set<File> myExcludedRoots = FileCollectionFactory.createCanonicalFileSet();
+  private final Set<File> myTopLevelContentRoots = FileCollectionFactory.createCanonicalFileSet();
+  private final Map<JpsModule, ArrayList<File>> myModuleToExcludesMap = new HashMap<>();
+  private final Map<JpsModule, List<File>> myModuleToContentMap = new HashMap<>();
+  private final Map<File, FileTypeAssocTable<Boolean>> myExcludeFromContentRootTables = FileCollectionFactory.createCanonicalFileMap();
 
   public ModuleExcludeIndexImpl(JpsModel model) {
     final Collection<JpsModule> allModules = model.getProject().getModules();
-    Map<File, JpsModule> contentToModule = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    Map<File, JpsModule> contentToModule = FileCollectionFactory.createCanonicalFileMap();
+
+    /* maps URL of content root to URLs of its source roots if there are exclusion patterns to be reused */
+    MultiMap<String, String> contentToSourceRootsWithExcludePatterns = MultiMap.createLinked();
+
     MultiMap<String, String> excludePatterns = MultiMap.createLinked();
     for (final JpsModule module : allModules) {
       final ArrayList<File> moduleExcludes = new ArrayList<>();
@@ -66,7 +58,8 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
           moduleExcludes.add(JpsPathUtil.urlToFile(testOutputUrl));
         }
       }
-      for (JpsExcludePattern pattern : module.getExcludePatterns()) {
+      List<JpsExcludePattern> excludePatternsList = module.getExcludePatterns();
+      for (JpsExcludePattern pattern : excludePatternsList) {
         excludePatterns.putValue(pattern.getBaseDirUrl(), pattern.getPattern());
       }
       List<String> contentUrls = module.getContentRootsList().getUrls();
@@ -80,6 +73,12 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         File sourceRoot = root.getFile();
         moduleContent.add(sourceRoot);
         contentToModule.put(sourceRoot, module);
+        //source root should reuse exclusion patterns from its parent content root if any
+        for (JpsExcludePattern pattern : excludePatternsList) {
+          if (FileUtil.isAncestor(JpsPathUtil.urlToFile(pattern.getBaseDirUrl()), sourceRoot, true)) {
+            contentToSourceRootsWithExcludePatterns.putValue(pattern.getBaseDirUrl(), root.getUrl());
+          }
+        }
       }
       myModuleToExcludesMap.put(module, moduleExcludes);
       myModuleToContentMap.put(module, moduleContent);
@@ -93,12 +92,16 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         table.addAssociation(factory.createMatcher(pattern), Boolean.TRUE);
       }
       myExcludeFromContentRootTables.put(JpsPathUtil.urlToFile(entry.getKey()), table);
+      Collection<String> sourceRootUrls = contentToSourceRootsWithExcludePatterns.get(entry.getKey());
+      for (String sourceRootUrl : sourceRootUrls) {
+        myExcludeFromContentRootTables.put(JpsPathUtil.urlToFile(sourceRootUrl), table);
+      }
     }
 
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(model.getProject());
     if (projectExtension != null) {
       String url = projectExtension.getOutputUrl();
-      if (!StringUtil.isEmpty(url)) {
+      if (!Strings.isEmpty(url)) {
         File excluded = JpsPathUtil.urlToFile(url);
         File parent = excluded;
         while (parent != null) {
@@ -106,14 +109,14 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
           if (module != null) {
             myModuleToExcludesMap.get(module).add(excluded);
           }
-          parent = FileUtil.getParentFile(parent);
+          parent = FileUtilRt.getParentFile(parent);
         }
         myExcludedRoots.add(excluded);
       }
     }
 
     List<File> parents = new ArrayList<>();
-    Set<File> notUnderExcludedCache = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> notUnderExcludedCache = FileCollectionFactory.createCanonicalFileSet();
     for (JpsModule module : allModules) {
       for (File contentRoot : myModuleToContentMap.get(module)) {
         File parent = contentRoot.getParentFile();
@@ -146,8 +149,8 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
       }
     }
 
-    for (List<File> files : myModuleToExcludesMap.values()) {
-      ((ArrayList<File>)files).trimToSize();
+    for (ArrayList<File> files : myModuleToExcludesMap.values()) {
+      files.trimToSize();
     }
   }
 
@@ -221,5 +224,12 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   @Override
   public Collection<File> getModuleExcludes(JpsModule module) {
     return myModuleToExcludesMap.get(module);
+  }
+
+  @Override
+  public @NotNull FileFilter getModuleFileFilterHonorExclusionPatterns(@NotNull JpsModule module) {
+    List<File> contentRoots = myModuleToContentMap.get(module);
+    if (contentRoots == null || contentRoots.isEmpty() || myExcludeFromContentRootTables.isEmpty()) return FileFilters.EVERYTHING;
+    return file -> determineFileLocation(file, contentRoots, Collections.emptyList()) == FileLocation.IN_CONTENT;
   }
 }

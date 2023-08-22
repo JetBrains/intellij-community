@@ -22,9 +22,7 @@ public class JUnitRunDashboardCustomizer extends RunDashboardCustomizer {
   @Nullable
   public PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
     RunConfiguration runConfiguration = node.getConfigurationSettings().getConfiguration();
-    if (!(runConfiguration instanceof JUnitConfiguration)) return null;
-
-    JUnitConfiguration jUnitConfiguration = (JUnitConfiguration)runConfiguration;
+    if (!(runConfiguration instanceof JUnitConfiguration jUnitConfiguration)) return null;
 
     String runClassName = jUnitConfiguration.getRunClass();
     if (runClassName == null) return null;

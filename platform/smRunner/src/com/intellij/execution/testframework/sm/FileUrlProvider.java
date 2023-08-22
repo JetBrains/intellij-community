@@ -35,9 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Roman Chernyatchik
- */
 public class FileUrlProvider implements SMTestLocator, DumbAware {
 
   public static final FileUrlProvider INSTANCE = new FileUrlProvider();
@@ -128,14 +125,14 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
     PsiElement elementAtLine = null;
     while (offset <= endOffset) {
       elementAtLine = psiFile.findElementAt(offset);
-      if (!(elementAtLine instanceof PsiWhiteSpace)) break;
+      if (elementAtLine == null || isNonBlankLeafPsiElement(elementAtLine)) break;
       int length = elementAtLine.getTextLength();
       offset += length > 1 ? length - 1 : 1;
     }
     
     if (elementAtLine instanceof PsiPlainText && offset > 0) {
       int offsetInPlainTextFile = offset;
-      return new PsiLocation<PsiPlainText>(project, (PsiPlainText)elementAtLine) {
+      return new PsiLocation<>(project, (PsiPlainText)elementAtLine) {
         @Nullable
         @Override
         public OpenFileDescriptor getOpenFileDescriptor() {
@@ -146,5 +143,20 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
     }
 
     return PsiLocation.fromPsiElement(project, elementAtLine != null ? elementAtLine : psiFile);
+  }
+
+  private static boolean isNonBlankLeafPsiElement(final @NotNull PsiElement element) {
+    if (element instanceof PsiWhiteSpace) {
+      return false;
+    }
+
+    final CharSequence chars = element.getNode().getChars();
+    for (int i = 0; i < chars.length(); i++) {
+      if (!Character.isWhitespace(chars.charAt(i))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

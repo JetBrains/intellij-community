@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmType;
@@ -12,10 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a wildcard type, with bounds.
- *
- * @author dsl
  */
-public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
+public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   public static final String EXTENDS_PREFIX = "? extends ";
   public static final String SUPER_PREFIX = "? super ";
 
@@ -42,12 +40,12 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   }
 
   public static @NotNull PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiTypes.nullType(), bound);
     return new PsiWildcardType(manager, true, bound);
   }
 
   public static @NotNull PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiTypes.nullType(), bound);
     return new PsiWildcardType(manager, false, bound);
   }
 
@@ -212,7 +210,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    * @return {@code PsiType} representing an upper bound. Never returns {@code null}.
    */
   public @NotNull PsiType getSuperBound() {
-    return myBound == null || myIsExtending ? NULL : myBound;
+    return myBound == null || myIsExtending ? (PsiPrimitiveType)PsiTypes.nullType() : myBound;
   }
 
   @Override

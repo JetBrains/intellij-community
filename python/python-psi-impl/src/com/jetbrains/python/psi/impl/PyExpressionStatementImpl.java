@@ -8,9 +8,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyExpressionStatementImpl extends PyElementImpl implements PyExpressionStatement {
   public PyExpressionStatementImpl(ASTNode astNode) {
     super(astNode);

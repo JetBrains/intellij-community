@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.dvcs.commit.AmendCommitService
@@ -10,13 +10,14 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitVersionSpecialty
+import org.jetbrains.annotations.NonNls
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class GitAmendCommitService(project: Project) : AmendCommitService(project) {
   override fun isAmendCommitSupported(): Boolean = true
 
   @Throws(VcsException::class)
-  override fun getLastCommitMessage(root: VirtualFile): String? {
+  override fun getLastCommitMessage(root: VirtualFile): String {
     val h = GitLineHandler(project, root, GitCommand.LOG)
     h.addParameters("--max-count=1")
     h.addParameters("--encoding=UTF-8")
@@ -24,7 +25,7 @@ internal class GitAmendCommitService(project: Project) : AmendCommitService(proj
     return Git.getInstance().runCommand(h).getOutputOrThrow()
   }
 
-  private fun getCommitMessageFormatPattern(): String =
+  private fun getCommitMessageFormatPattern(): @NonNls String =
     if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project)) {
       "%B"
     }

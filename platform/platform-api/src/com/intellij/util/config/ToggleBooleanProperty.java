@@ -16,8 +16,10 @@
 
 package com.intellij.util.config;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +28,7 @@ public class ToggleBooleanProperty extends ToggleAction {
   private final AbstractProperty.AbstractPropertyContainer myProperties;
   private final AbstractProperty<Boolean> myProperty;
 
-  public ToggleBooleanProperty(String text, String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
+  public ToggleBooleanProperty(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
     super(text, description, icon);
     myProperties = properties;
     myProperty = property;
@@ -35,6 +37,11 @@ public class ToggleBooleanProperty extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     return myProperty.get(myProperties).booleanValue();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -51,7 +58,7 @@ public class ToggleBooleanProperty extends ToggleAction {
   }
 
   public static abstract class Disablable extends ToggleBooleanProperty {
-    public Disablable(String text, String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
+    public Disablable(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
       super(text, description, icon, properties, property);
     }
 

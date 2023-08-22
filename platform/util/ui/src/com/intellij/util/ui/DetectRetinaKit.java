@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,18 +10,18 @@ import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Utility class for retina routine
  */
 @ApiStatus.Internal
 public final class DetectRetinaKit {
-  private static final Map<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = ContainerUtil.createWeakMap();
+  private static final Map<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<>();
 
-  @NotNull
   // cannot be static because logging maybe not configured yet
-  private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.util.ui.DetectRetinaKit");
+  private static @NotNull Logger getLogger() {
+    return Logger.getInstance(DetectRetinaKit.class);
   }
 
   /**

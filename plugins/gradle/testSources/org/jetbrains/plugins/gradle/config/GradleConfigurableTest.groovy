@@ -20,9 +20,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.Before
 import org.junit.Test
 
-/**
- * @author Denis Zhdanov
- */
 class GradleConfigurableTest {
   
   static def VALID_GRADLE_HOME = "valid"
@@ -36,7 +33,7 @@ class GradleConfigurableTest {
   Map<Project, GradleSettings> settings = [:].withDefault { new GradleSettings() }
 
   @Before
-  void setUp() {
+  void before() {
     helper = [
       getSettings : { settings[it] },
       applySettings: {linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, autoImport, serviceDirectoryPath, project -> },

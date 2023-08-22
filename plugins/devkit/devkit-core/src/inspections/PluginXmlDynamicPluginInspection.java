@@ -1,17 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -21,22 +25,27 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 
-import javax.swing.*;
 import java.util.Objects;
 
-public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public final class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
   public boolean highlightNonDynamicEPUsages = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Highlight usage of non-dynamic extension points", this, "highlightNonDynamicEPUsages");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("highlightNonDynamicEPUsages", DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.option.highlight.usages.ep")));
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
+    if (!isAllowed(holder)) return;
+
     if (element instanceof ApplicationComponents ||
         element instanceof ProjectComponents ||
         element instanceof ModuleComponents) {
@@ -57,9 +66,16 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
   }
 
   private static void highlightComponents(DomElementAnnotationHolder holder, DomElement component) {
+
     holder.createProblem(component,
-                         "<html>Non-dynamic plugin due to using components, replace with " +
-                         "<a href=\"https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html\">alternatives</a></html>");
+                         new HtmlBuilder()
+                           .append(DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.component.usage"))
+                           .nbsp()
+                           .append(HtmlChunk
+                                     .link("https://plugins.jetbrains.com/docs/intellij/plugin-components.html?from=DevkitPluginXmlDynamicInspection",
+                                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.component.usage.docs.link.title")))
+                           .wrapWithHtmlBody()
+                           .toString());
   }
 
   private static void highlightExtensionPoint(DomElementAnnotationHolder holder, ExtensionPoint extensionPoint) {
@@ -68,11 +84,15 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
         createAnalyzeEPFix("AnalyzeEPUsage", extensionPoint),
         createAnalyzeEPFix("AnalyzeEPUsageIgnoreSafeClasses", extensionPoint)
       } : LocalQuickFix.EMPTY_ARRAY;
-      holder.createProblem(extensionPoint, "Non-dynamic extension point '" + extensionPoint.getEffectiveQualifiedName() + "'",
+      holder.createProblem(extensionPoint,
+                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.extension.point",
+                                                extensionPoint.getEffectiveQualifiedName()),
                            fixes);
     }
     else if (Boolean.FALSE == extensionPoint.getDynamic().getValue()) {
-      holder.createProblem(extensionPoint, "Explicit non-dynamic extension point '" + extensionPoint.getEffectiveQualifiedName() + "'");
+      holder.createProblem(extensionPoint,
+                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.explicit.non.dynamic.extension.point",
+                                                extensionPoint.getEffectiveQualifiedName()));
     }
   }
 
@@ -80,12 +100,20 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     assert action != null : actionId;
 
+    String name = DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.analyze.extension.point",
+                                       action.getTemplateText(), extensionPoint.getEffectiveQualifiedName());
     return new IntentionAndQuickFixAction() {
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+        return IntentionPreviewInfo.EMPTY;
+      }
+
       @Nls(capitalization = Nls.Capitalization.Sentence)
       @NotNull
       @Override
       public String getName() {
-        return action.getTemplateText() + " for '" + extensionPoint.getEffectiveQualifiedName() + "'";
+        return name;
       }
 
       @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -98,14 +126,15 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
       @Override
       public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
         assert editor != null;
-        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext()));
+        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, EditorUtil.getEditorDataContext(editor)));
       }
     };
   }
 
   private static void highlightGroup(DomElementAnnotationHolder holder, Group group) {
     if (!DomUtil.hasXml(group.getId())) {
-      holder.createProblem(group, "'id' must be specified for <group>", new AddDomElementQuickFix<>(group.getId()));
+      holder.createProblem(group, DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.id.required.for.group"),
+                           new AddDomElementQuickFix<>(group.getId()));
     }
   }
 
@@ -113,7 +142,9 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
 
     if (extensionPoint != null && Boolean.TRUE != extensionPoint.getDynamic().getValue()) {
-      holder.createProblem(extension, "Usage of non-dynamic extension point '" + extensionPoint.getEffectiveQualifiedName() + "'");
+      holder.createProblem(extension,
+                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.usage.of.non.dynamic.extension.point",
+                                                extensionPoint.getEffectiveQualifiedName()));
     }
   }
 }

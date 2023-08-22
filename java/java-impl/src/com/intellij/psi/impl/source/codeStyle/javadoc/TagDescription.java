@@ -19,21 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-*
-* @author Dmitry Skavish
-*/
-public class TagDescription {
-  @NotNull public final String name;
-  @Nullable public final String desc;
-
-  public TagDescription(@NotNull String name, @Nullable String desc) {
-    this.name = name;
-    this.desc = desc;
-  }
-
-  @NotNull
-  @Override
-  public String toString() {
-    return name;
-  }
+ * @author Dmitry Skavish
+ */
+public record TagDescription(@NotNull String name, @Nullable String desc) {
 }

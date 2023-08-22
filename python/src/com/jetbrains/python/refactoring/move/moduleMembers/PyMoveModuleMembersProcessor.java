@@ -34,10 +34,10 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -47,7 +47,6 @@ import java.util.List;
 /**
  * Group found usages by moved elements and move each of these elements using {@link PyMoveSymbolProcessor}.
  *
- * @author vlan
  * @author Mikhail Golubev
  *
  * @see PyMoveSymbolProcessor
@@ -98,7 +97,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final PyFile destination = PyRefactoringUtil.getOrCreateFile(myDestination, myProject);
+      final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
       final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
       for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
@@ -115,15 +114,15 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         }
         if (e instanceof PyClass && destination.findTopLevelClass(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.class.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.class", name));
         }
         if (e instanceof PyFunction && destination.findTopLevelFunction(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.function", name));
         }
         if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.global.variable.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.global.variable", name));
         }
         final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
         final boolean usedFromOutside = ContainerUtil.exists(usageInfos, usageInfo -> {
@@ -152,13 +151,12 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   private static class MyUsageInfo extends UsageInfo {
     private final PsiElement myMovedElement;
     MyUsageInfo(@NotNull UsageInfo usageInfo, @NotNull PsiElement element) {
-      super(usageInfo.getSmartPointer(), usageInfo.getPsiFileRange(), usageInfo.isDynamicUsage(), usageInfo.isNonCodeUsage);
+      super(usageInfo.getSmartPointer(), usageInfo.getPsiFileRange(), usageInfo.isDynamicUsage(), usageInfo.isNonCodeUsage, usageInfo.getReferenceClass());
       myMovedElement = element;
     }
   }
 
-  public static String getRefactoringName() {
+  public static @Nls String getRefactoringName() {
     return PyBundle.message("refactoring.move.module.members");
   }
 }
-

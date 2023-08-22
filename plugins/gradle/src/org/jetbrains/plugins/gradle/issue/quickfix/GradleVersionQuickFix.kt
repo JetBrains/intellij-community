@@ -1,13 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue.quickfix
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.actions.ShowLogAction
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.PathManager
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -23,9 +22,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.outputStream
+import org.gradle.internal.impldep.com.google.common.base.Charsets
 import org.gradle.internal.util.PropertiesUtils
-import org.gradle.util.GUtil
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperExecutor
 import org.jetbrains.annotations.ApiStatus
@@ -33,13 +33,15 @@ import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuic
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
-import java.io.File
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
+import kotlin.io.path.createFile
+import kotlin.io.path.inputStream
 
 /**
  * @author Vladislav.Soroka
@@ -51,17 +53,17 @@ class GradleVersionQuickFix(private val projectPath: String,
 
   override val id: String = "fix_gradle_version_in_wrapper"
 
-  override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     return updateOrCreateWrapper()
       .exceptionally {
         LOG.warn(it)
-        val msg = "Unable to update wrapper files"
-        val notification = NotificationData(msg, "See IDE log for the details.\n" +
-                                                 "<a href=\"#open_log\">" + ShowLogAction.getActionName() + "</a>", WARNING, PROJECT_SYNC)
+        val title = GradleBundle.message("gradle.version.quick.fix.error")
+        val message = GradleBundle.message("gradle.version.quick.fix.error.description", ShowLogAction.getActionName())
+        val notification = NotificationData(title, message, WARNING, PROJECT_SYNC)
           .apply {
             isBalloonNotification = true
-            balloonGroup = "Gradle Import"
-            setListener("#open_log") { _, _ -> RevealFileAction.openFile(File(PathManager.getLogPath(), "idea.log")) }
+            balloonGroup = NotificationGroupManager.getInstance().getNotificationGroup("Gradle Wrapper Update")
+            setListener("#open_log") { _, _ -> ShowLogAction.showLog() }
           }
         ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification)
         throw it
@@ -89,8 +91,8 @@ class GradleVersionQuickFix(private val projectPath: String,
       val distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
       if (wrapperPropertiesFile == null) {
         val wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
-        wrapperPropertiesPath.createFile()
-        wrapperPropertiesFile = wrapperPropertiesPath.toFile()
+        wrapperPropertiesPath.createParentDirectories().createFile()
+        wrapperPropertiesFile = wrapperPropertiesPath
         wrapperProperties = Properties()
         wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
         wrapperProperties[WrapperExecutor.DISTRIBUTION_BASE_PROPERTY] = "GRADLE_USER_HOME"
@@ -99,11 +101,16 @@ class GradleVersionQuickFix(private val projectPath: String,
         wrapperProperties[WrapperExecutor.ZIP_STORE_PATH_PROPERTY] = "wrapper/dists"
       }
       else {
-        wrapperProperties = GUtil.loadProperties(wrapperPropertiesFile)
+        wrapperProperties = wrapperPropertiesFile.inputStream().use { stream ->
+          Properties().also { it.load(stream) }
+        }
         wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
       }
-      PropertiesUtils.store(wrapperProperties, wrapperPropertiesFile)
-      LocalFileSystem.getInstance().refreshIoFiles(listOf(wrapperPropertiesFile))
+
+      wrapperPropertiesFile?.outputStream().use { out ->
+        PropertiesUtils.store(wrapperProperties, out, null as String?, Charsets.ISO_8859_1, "\n")
+      }
+      LocalFileSystem.getInstance().refreshNioFiles(listOf(wrapperPropertiesFile))
     }
   }
 
@@ -119,7 +126,7 @@ class GradleVersionQuickFix(private val projectPath: String,
 
     val gradleVmOptions = GradleSettings.getInstance(project).gradleVmOptions
     val settings = ExternalSystemTaskExecutionSettings()
-    settings.executionName = "Upgrade Gradle wrapper"
+    settings.executionName = GradleBundle.message("grable.execution.name.upgrade.wrapper")
     settings.externalProjectPath = projectPath
     settings.taskNames = listOf("wrapper")
     settings.vmOptions = gradleVmOptions
@@ -143,4 +150,3 @@ class GradleVersionQuickFix(private val projectPath: String,
     private val LOG = logger<GradleVersionQuickFix>()
   }
 }
-

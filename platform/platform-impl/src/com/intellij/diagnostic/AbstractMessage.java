@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,13 +21,13 @@ public abstract class AbstractMessage {
   private String myAdditionalInfo;
   private Integer myAssigneeId;
   private boolean myAssigneeVisible;
-  private Long myDevelopersTimestamp;
+  private Long myDevListTimestamp;
   private String myAppInfo;
 
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
 
-  /** Returns a user message (see {@link LogMessage#createEvent}), if present. */
+  /** Returns a user message (see {@link LogMessage#eventOf}), if present. */
   public abstract @Nullable String getMessage();
 
   /** Returns a (possibly empty) list of all attachments. */
@@ -108,19 +107,12 @@ public abstract class AbstractMessage {
     myAssigneeVisible = assigneeVisible;
   }
 
-  @Nullable Long getDevelopersTimestamp() {
-    return myDevelopersTimestamp;
+  @Nullable Long getDevListTimestamp() {
+    return myDevListTimestamp;
   }
 
-  void setDevelopersTimestamp(@Nullable Long developersTimestamp) {
-    myDevelopersTimestamp = developersTimestamp;
-  }
-
-  /** @deprecated use {@link #getIncludedAttachments()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public List<Attachment> getAttachments() {
-    return getIncludedAttachments();
+  void setDevListTimestamp(@Nullable Long timestamp) {
+    myDevListTimestamp = timestamp;
   }
 
   protected @Nullable String getAppInfo() {

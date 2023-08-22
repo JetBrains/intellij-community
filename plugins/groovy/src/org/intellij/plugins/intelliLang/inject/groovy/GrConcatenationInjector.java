@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.injection.MultiHostInjector;
@@ -43,7 +43,7 @@ public final class GrConcatenationInjector implements MultiHostInjector {
   public GrConcatenationInjector() {
     if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix())) {
       // fix https://code.google.com/p/android/issues/detail?id=201624
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
   }
 
@@ -82,8 +82,7 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
 
-      if (pparent instanceof GrCall) {
-        final GrCall call = (GrCall)pparent;
+      if (pparent instanceof GrCall call) {
         final GroovyResolveResult result = call.advancedResolve();
         if (result.getElement() != null) {
           final Map<GrExpression, Pair<PsiParameter, PsiType>> map =

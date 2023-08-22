@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.RearrangeCodeProcessor;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,16 +18,19 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Arranges content at the target file(s).
- * 
- * @author Denis Zhdanov
  */
-public class RearrangeCodeAction extends AnAction {
+public final class RearrangeCodeAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     boolean enabled = file != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null && CodeStyle.isFormattingEnabled(file);
     e.getPresentation().setEnabled(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

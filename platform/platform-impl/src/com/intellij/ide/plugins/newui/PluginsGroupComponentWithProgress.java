@@ -1,27 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Function;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
-  private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
-  private Runnable myVisibleRunnable;
+public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
+  private static final Logger LOG = Logger.getInstance(PluginsGroupComponentWithProgress.class);
 
-  public PluginsGroupComponentWithProgress(@NotNull LayoutManager layout,
-                                           @NotNull EventHandler eventHandler,
-                                           @NotNull Function<? super IdeaPluginDescriptor, ? extends ListPluginComponent> function) {
-    super(layout, eventHandler, function);
+  private AsyncProcessIcon myIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
+  private @Nullable Runnable myVisibleRunnable;
+
+  public PluginsGroupComponentWithProgress(@NotNull EventHandler eventHandler) {
+    super(eventHandler);
     myIcon.setOpaque(false);
     myIcon.setPaintPassiveIcon(false);
     add(myIcon);
@@ -47,6 +45,7 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   }
 
   public void startLoading() {
+    LOG.info("Marketplace tab: loading started");
     if (myIcon != null) {
       myIcon.setVisible(true);
       myIcon.resume();
@@ -55,6 +54,7 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   }
 
   public void stopLoading() {
+    LOG.info("Marketplace tab: loading stopped");
     if (myIcon != null) {
       myIcon.suspend();
       myIcon.setVisible(false);
@@ -71,7 +71,7 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   public void dispose() {
     if (myIcon != null) {
       remove(myIcon);
-      Disposer.dispose(myIcon);
+      myIcon.dispose();
       myIcon = null;
     }
   }

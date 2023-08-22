@@ -90,7 +90,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    public LocalQuickFix @Nullable [] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       final PsiElement element = getElement();
       final XmlElementFactory factory = XmlElementFactory.getInstance(element.getProject());
       final String value = ((XmlAttributeValue)element).getValue();
@@ -108,7 +108,9 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
-      return RelaxngBundle.message("undefined.namespace.prefix.0");
+      //The format substitution is performed at the call site
+      //noinspection UnresolvedPropertyKey
+      return RelaxngBundle.message("relaxng.annotator.unresolved-namespace-prefix");
     }
   }
 }

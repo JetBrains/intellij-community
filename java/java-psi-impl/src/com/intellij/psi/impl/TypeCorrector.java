@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
 class TypeCorrector extends PsiTypeMapper {
   private final Map<PsiClassType, PsiClassType> myResultMap = new IdentityHashMap<>();
   private final GlobalSearchScope myResolveScope;
@@ -128,7 +125,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedSubstitutor;
   }
 
-  private class PsiCorrectedClassType extends PsiClassType.Stub {
+  private final class PsiCorrectedClassType extends PsiClassType.Stub {
     private final PsiClassType myDelegate;
     private final CorrectedResolveResult myResolveResult;
 
@@ -172,7 +169,7 @@ class TypeCorrector extends PsiTypeMapper {
 
     @Override
     public int getParameterCount() {
-      return myDelegate.getParameters().length;
+      return myDelegate.getParameterCount();
     }
 
     @NotNull
@@ -205,6 +202,12 @@ class TypeCorrector extends PsiTypeMapper {
     @Override
     public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
       return new PsiCorrectedClassType(languageLevel, myDelegate, myResolveResult);
+    }
+
+    @Override
+    public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
+      PsiClassType newDelegate = myDelegate.annotate(provider);
+      return newDelegate == myDelegate ? this : new PsiCorrectedClassType(myLanguageLevel, newDelegate, myResolveResult);
     }
 
     @NotNull

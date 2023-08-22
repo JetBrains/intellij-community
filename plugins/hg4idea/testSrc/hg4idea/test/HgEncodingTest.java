@@ -19,9 +19,6 @@ import java.util.List;
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.echo;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgEncodingTest extends HgPlatformTest {
 
   //test for  default EncodingProject settings

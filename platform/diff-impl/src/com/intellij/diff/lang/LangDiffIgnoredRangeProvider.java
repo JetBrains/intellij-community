@@ -5,12 +5,12 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,14 +45,11 @@ public abstract class LangDiffIgnoredRangeProvider implements DiffIgnoredRangePr
     Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
     if (language != null) return language;
 
-    FileType type = content.getContentType();
-    if (type instanceof LanguageFileType) language = ((LanguageFileType)type).getLanguage();
-
-    if (language != null && content instanceof DocumentContent) {
-      VirtualFile highlightFile = ((DocumentContent)content).getHighlightFile();
-      if (highlightFile != null) language = LanguageSubstitutors.getInstance().substituteLanguage(language, highlightFile, project);
+    FileType fileType = content.getContentType();
+    VirtualFile file = content instanceof DocumentContent ? ((DocumentContent)content).getHighlightFile() : null;
+    if (file != null) {
+      return ReadAction.compute(() -> LanguageUtil.getLanguageForPsi(project, file, fileType));
     }
-
-    return language;
+    return fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType);
   }
 }

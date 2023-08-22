@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -9,11 +7,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import gnu.trove.THashSet;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,11 +21,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author spleaner
- */
 public class JavaRunConfigurationModule extends RunConfigurationModule {
-
   private final boolean myClassesInLibraries;
 
   public JavaRunConfigurationModule(@NotNull Project project, boolean classesInLibs) {
@@ -35,10 +30,39 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     myClassesInLibraries = classesInLibs;
   }
 
-  @Nullable
-  public PsiClass findClass(final String qualifiedName) {
+  public @Nullable PsiClass findClass(final String qualifiedName) {
     if (qualifiedName == null) return null;
-    return JavaExecutionUtil.findMainClass(getProject(), qualifiedName, getSearchScope());
+    Project project = getProject();
+    GlobalSearchScope searchScope = getSearchScope();
+    PsiClass mainClass = JavaExecutionUtil.findMainClass(project, qualifiedName, searchScope);
+    if (mainClass == null && !PsiNameHelper.getInstance(project).isQualifiedName(qualifiedName)) {
+      return findClass(StringUtil.getShortName(qualifiedName), StringUtil.getPackageName(qualifiedName), project, searchScope);
+    }
+    return mainClass;
+  }
+
+  private static PsiClass findClass(String shortName, String packageName, Project project, GlobalSearchScope searchScope) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
+    if (aPackage != null) {
+      int dollarIdx = shortName.indexOf("$");
+      String topLevelClassName = dollarIdx > 0 && dollarIdx < shortName.length() - 1 ? shortName.substring(0, dollarIdx) : shortName;
+      PsiClass topLevelClass = ContainerUtil.find(aPackage.getClasses(searchScope), aClass -> topLevelClassName.equals(aClass.getName()));
+      if (topLevelClass != null && !topLevelClassName.equals(shortName)) {
+        String innerClassName = shortName.substring(dollarIdx + 1);
+        return ClassUtil.findPsiClass(PsiManager.getInstance(project), innerClassName, topLevelClass, true);
+      }
+      return topLevelClass;
+    }
+
+    if (packageName.isEmpty()) {
+      return null;
+    }
+
+    PsiClass topClass = findClass(StringUtil.getShortName(packageName), StringUtil.getPackageName(packageName), project, searchScope);
+    if (topClass != null) {
+      return topClass.findInnerClassByName(shortName, true);
+    }
+    return null;
   }
 
   @NotNull
@@ -58,7 +82,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final PsiClass[] possibleClasses = className == null ? PsiClass.EMPTY_ARRAY : JavaPsiFacade.getInstance(project).findClasses(className, GlobalSearchScope.projectScope(project));
-    final Set<Module> modules = new THashSet<>();
+    final Set<Module> modules = new HashSet<>();
     for (PsiClass aClass : possibleClasses) {
       Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
       if (module != null) {
@@ -91,13 +115,12 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     return psiClass;
   }
 
-  public PsiClass checkModuleAndClassName(final String className, final String expectedClassMessage) throws RuntimeConfigurationException {
+  public PsiClass checkModuleAndClassName(final String className, final @NlsContexts.DialogMessage String expectedClassMessage) throws RuntimeConfigurationException {
     checkForWarning();
     return checkClassName(className, expectedClassMessage);
   }
 
-
-  public PsiClass checkClassName(final String className, final String errorMessage) throws RuntimeConfigurationException {
+  public PsiClass checkClassName(final String className, final @NlsContexts.DialogMessage String errorMessage) throws RuntimeConfigurationException {
     if (className == null || className.length() == 0) {
       throw new RuntimeConfigurationError(errorMessage);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.CommonActionsManager;
@@ -10,7 +10,9 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
@@ -44,7 +46,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     setModel(new AsyncTreeModel(myStructureTreeModel, this));
     setRootVisible(false);
     setShowsRootHandles(true);
-    PopupHandler.installPopupHandler(this, createPopupGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(this, createPopupGroup(), "ArtifactSourceItemTreePopup");
     installDnD();
   }
 
@@ -63,7 +65,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
 
     group.add(Separator.getInstance());
     group.add(new SourceItemNavigateAction(this));
-    group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getProject(), myArtifactsEditor.getContext().getParent()));
+    group.add(new SourceItemFindUsagesAction(this, myArtifactsEditor.getContext().getParent()));
 
     DefaultTreeExpander expander = new DefaultTreeExpander(this);
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
@@ -75,7 +77,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
 
   public void rebuildTree() {
     myTreeStructure.clearCaches();
-    myStructureTreeModel.invalidate();
+    myStructureTreeModel.invalidateAsync();
   }
 
   @Override
@@ -90,12 +92,12 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+  public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
     return !getSelectedItems().isEmpty();
   }
 
   @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+  public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
     List<PackagingSourceItem> items = getSelectedItems();
     return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[0])));
   }

@@ -26,6 +26,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Arrays;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QPUSH_ERROR;
+
 public class HgQPushCommand {
   @NotNull private final HgRepository myRepository;
 
@@ -39,7 +41,10 @@ public class HgQPushCommand {
       new HgCommandExecutor(project).executeInCurrentThread(myRepository.getRoot(), "qpush", Arrays.asList("--move", patchName));
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QPushAction.error"), HgBundle.message("action.hg4idea.QPushAction.error.msg", patchName));
+        .notifyError(QPUSH_ERROR,
+                     result,
+                     HgBundle.message("action.hg4idea.QPushAction.error"),
+                     HgBundle.message("action.hg4idea.QPushAction.error.msg", patchName));
     }
     myRepository.update();
   }

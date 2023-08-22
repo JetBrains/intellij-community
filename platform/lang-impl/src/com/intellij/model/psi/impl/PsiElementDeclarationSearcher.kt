@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
@@ -13,15 +13,13 @@ import com.intellij.psi.PsiTarget
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
-import com.intellij.util.ArrayQuery
-import com.intellij.util.Query
 
 class PsiElementDeclarationSearcher : PsiSymbolDeclarationSearcher {
 
-  override fun collectSearchRequests(parameters: PsiSymbolDeclarationSearchParameters): Collection<Query<out PsiSymbolDeclaration>> {
+  override fun collectImmediateResults(parameters: PsiSymbolDeclarationSearchParameters): Collection<PsiSymbolDeclaration> {
     val psi = PsiSymbolService.getInstance().extractElementFromSymbol(parameters.symbol) ?: return emptyList()
     val declaration = getDeclaration(psi, parameters.searchScope) ?: return emptyList()
-    return listOf(ArrayQuery(declaration))
+    return listOf(declaration)
   }
 
   private fun getDeclaration(psi: PsiElement, searchScope: SearchScope): PsiSymbolDeclaration? {
@@ -36,8 +34,9 @@ class PsiElementDeclarationSearcher : PsiSymbolDeclarationSearcher {
   private fun inLocalScope(psi: PsiElement, searchScope: LocalSearchScope): PsiSymbolDeclaration? {
     for (scopeElement in searchScope.scope) {
       val scopeFile = scopeElement.containingFile ?: continue
-      val declarationRange = HighlightUsagesHandler.getNameIdentifierRange(scopeFile, psi) ?: continue // call old implementation as is
-      return PsiElement2Declaration(psi, scopeFile, declarationRange)
+      val declarationRange = HighlightUsagesHandler.getNameIdentifierRangeInCurrentRoot(scopeFile, psi)
+                             ?: continue // call old implementation as is
+      return PsiElement2Declaration(psi, scopeFile, declarationRange.getSecond())
     }
     return null
   }

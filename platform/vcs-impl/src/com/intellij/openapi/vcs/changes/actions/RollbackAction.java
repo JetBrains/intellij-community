@@ -1,18 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
@@ -21,86 +26,93 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ThreeState;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.RollbackUtil;
+import com.intellij.vcs.commit.CommitMode;
+import com.intellij.vcs.commit.CommitModeManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
-import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
-import static com.intellij.util.containers.UtilKt.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.vcs.changes.actions.RollbackFilesAction.Manager.isPreferCheckboxesOverSelection;
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.filterIsInstance;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
+import static com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName;
+import static java.util.Collections.emptyList;
 
-public class RollbackAction extends AnAction implements DumbAware, UpdateInBackground {
+public class RollbackAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    final boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
-    e.getPresentation().setEnabledAndVisible(visible);
-    if (! visible) return;
+    e.getPresentation().setEnabledAndVisible(false);
 
-    final Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
-    boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
-                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
-                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
-                        Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES)) ||
-                        hasReversibleFiles(e) ||
-                        currentChangelistNotEmpty(project);
-    e.getPresentation().setEnabled(isEnabled);
-    String operationName = RollbackUtil.getRollbackOperationName(project);
-    e.getPresentation().setText(operationName + "...");
-    if (isEnabled) {
-      e.getPresentation().setDescription(VcsBundle.message("action.message.use.selected.changes.description", removeMnemonic(operationName)));
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return;
+    if (isPreferCheckboxesOverSelection() &&
+        CommitModeManager.getInstance(project).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode &&
+        CHANGES_VIEW_POPUP.equals(e.getPlace())) {
+      return;
     }
+
+    e.getPresentation().setVisible(true);
+    e.getPresentation().setEnabled(hasReversibleFiles(e));
+    e.getPresentation().setText(getRollbackOperationName(project) + ELLIPSIS);
   }
 
   private static boolean hasReversibleFiles(@NotNull AnActionEvent e) {
-    ChangeListManager manager = ChangeListManager.getInstance(e.getRequiredData(CommonDataKeys.PROJECT));
-    Set<VirtualFile> modifiedWithoutEditing = new HashSet<>(manager.getModifiedWithoutEditing());
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    ChangeListManager clmManager = ChangeListManager.getInstance(project);
 
-    return notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).anyMatch(
-      file -> manager.haveChangesUnder(file) != ThreeState.NO || manager.isFileAffected(file) || modifiedWithoutEditing.contains(file));
-  }
+    if (!clmManager.getAllChanges().isEmpty()) {
+      return true;
+    }
 
-  private static boolean currentChangelistNotEmpty(Project project) {
-    ChangeListManager clManager = ChangeListManager.getInstance(project);
-    ChangeList list = clManager.getDefaultChangeList();
-    return !list.getChanges().isEmpty();
+    List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
+    if (!ContainerUtil.isEmpty(missingFiles)) {
+      return true;
+    }
+
+    Set<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
+    if (!ContainerUtil.isEmpty(modifiedWithoutEditing)) {
+      return true;
+    }
+
+    return false;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      return;
-    }
-    final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace())
-                         ? null
-                         : VcsBundle.message("error.cant.perform.operation.now",
-                                             removeEllipsisSuffix(removeMnemonic(RollbackUtil.getRollbackOperationName(project))));
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
+    if (!RollbackFilesAction.Manager.checkClmActive(e)) return;
 
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
-    List<Change> changes = getChanges(project, e);
-    LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
+    Collection<Change> changes = getSelectedChanges(e);
+    Set<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
     if (modifiedWithoutEditing != null) {
-      changes = ContainerUtil.filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
+      changes = filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
     }
 
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
     boolean hasChanges = false;
-    if (missingFiles != null && !missingFiles.isEmpty()) {
+    if (!ContainerUtil.isEmpty(missingFiles)) {
       hasChanges = true;
       new RollbackDeletionAction().actionPerformed(e);
     }
 
-    if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
+    if (!ContainerUtil.isEmpty(modifiedWithoutEditing)) {
       hasChanges = true;
       rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
     }
@@ -109,52 +121,56 @@ public class RollbackAction extends AnAction implements DumbAware, UpdateInBackg
       RollbackChangesDialog.rollbackChanges(project, changes);
     }
     else if (!hasChanges) {
-      LocalChangeList currentChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
-      RollbackChangesDialog.rollbackChanges(project, currentChangeList);
+      RollbackChangesDialog.rollbackChanges(project);
     }
   }
 
-  @NotNull
-  private static List<Change> getChanges(final Project project, final AnActionEvent e) {
+  private static @NotNull Collection<Change> getSelectedChanges(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+
+    ChangesListView changesView = e.getData(ChangesListView.DATA_KEY);
+    if (isPreferCheckboxesOverSelection() && changesView != null) {
+      return filterIsInstance(changesView.getInclusionModel().getInclusion(), Change.class);
+    }
+
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if (changes == null) {
-      final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-      if (files != null) {
-        final ChangeListManager clManager = ChangeListManager.getInstance(project);
-        final List<Change> changesList = new ArrayList<>();
-        for (VirtualFile vf : files) {
-          changesList.addAll(clManager.getChangesIn(vf));
-        }
-        if (!changesList.isEmpty()) {
-          changes = changesList.toArray(new Change[0]);
-        }
+    if (changes != null) {
+      return Arrays.asList(changes);
+    }
+
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (!ArrayUtil.isEmpty(files)) {
+      ChangeListManager clmManager = ChangeListManager.getInstance(project);
+      List<Change> result = new ArrayList<>();
+      for (VirtualFile vf : files) {
+        result.addAll(clmManager.getChangesIn(vf));
       }
+      return result;
     }
-    if (changes != null && changes.length > 0) {
-      return ContainerUtil.newArrayList(changes);
-    }
-    return Collections.emptyList();
+
+    return emptyList();
   }
 
   @Nullable
-  private static LinkedHashSet<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
-    final List<VirtualFile> modifiedWithoutEditing = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
-    if (modifiedWithoutEditing != null && modifiedWithoutEditing.size() > 0) {
-      return new LinkedHashSet<>(modifiedWithoutEditing);
+  private static Set<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
+    final List<VirtualFile> selectedModifiedWithoutEditing = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    if (!ContainerUtil.isEmpty(selectedModifiedWithoutEditing)) {
+      return new HashSet<>(selectedModifiedWithoutEditing);
     }
 
     final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (virtualFiles != null && virtualFiles.length > 0) {
-      LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(Arrays.asList(virtualFiles));
-      result.retainAll(ChangeListManager.getInstance(project).getModifiedWithoutEditing());
-      return result;
+    if (!ArrayUtil.isEmpty(virtualFiles)) {
+      Set<VirtualFile> modifiedWithoutEditing = new HashSet<>(ChangeListManager.getInstance(project).getModifiedWithoutEditing());
+      Set<VirtualFile> files = ContainerUtil.newHashSet(virtualFiles);
+      modifiedWithoutEditing.retainAll(files);
+      return modifiedWithoutEditing;
     }
 
     return null;
   }
 
-  private static void rollbackModifiedWithoutEditing(final Project project, final LinkedHashSet<VirtualFile> modifiedWithoutEditing) {
-    final String operationName = StringUtil.decapitalize(removeMnemonic(RollbackUtil.getRollbackOperationName(project)));
+  private static void rollbackModifiedWithoutEditing(final Project project, final Set<? extends VirtualFile> modifiedWithoutEditing) {
+    final String operationName = StringUtil.decapitalize(removeMnemonic(getRollbackOperationName(project)));
     String message = (modifiedWithoutEditing.size() == 1)
                      ? VcsBundle.message("rollback.modified.without.editing.confirm.single",
                                          operationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())

@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Holds environment variables configuration:
@@ -17,8 +17,8 @@ import java.util.Map;
  * </ul>
  * Instances of this class are immutable objects, so it can be safely passed across threads.
  */
-public class EnvironmentVariablesData {
-  public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(ImmutableMap.of(), true);
+public final class EnvironmentVariablesData {
+  public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(Map.of(), true, null);
 
   private static final String ENVS = "envs";
   private static final String PASS_PARENT_ENVS = "pass-parent-envs";
@@ -26,20 +26,27 @@ public class EnvironmentVariablesData {
   private static final String NAME = EnvironmentVariablesComponent.NAME;
   private static final String VALUE = EnvironmentVariablesComponent.VALUE;
 
-  private final ImmutableMap<String, String> myEnvs;
+  private final Map<String, String> myEnvs;
+  private final String myEnvironmentFile;
   private final boolean myPassParentEnvs;
 
-  private EnvironmentVariablesData(@NotNull Map<String, String> envs, boolean passParentEnvs) {
-    myEnvs = ImmutableMap.copyOf(envs);
+  private EnvironmentVariablesData(@NotNull Map<String, String> envs, boolean passParentEnvs, @Nullable String environmentFile) {
+    // insertion order must be preserved - Map.copyOf cannot be used here
+    myEnvs = envs.isEmpty() ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(envs));
     myPassParentEnvs = passParentEnvs;
+    myEnvironmentFile = environmentFile;
   }
 
   /**
    * @return immutable Map instance containing user-defined environment variables (iteration order is reliable user-specified)
    */
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return myEnvs;
+  }
+
+  @Nullable
+  public String getEnvironmentFile() {
+    return myEnvironmentFile;
   }
 
   public boolean isPassParentEnvs() {
@@ -51,28 +58,31 @@ public class EnvironmentVariablesData {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     EnvironmentVariablesData data = (EnvironmentVariablesData)o;
-    return myPassParentEnvs == data.myPassParentEnvs && myEnvs.equals(data.myEnvs);
+    return myPassParentEnvs == data.myPassParentEnvs && myEnvs.equals(data.myEnvs) && Objects.equals(myEnvironmentFile, data.myEnvironmentFile);
   }
 
   @Override
   public int hashCode() {
+    final int prime = 31;
     int result = myEnvs.hashCode();
-    result = 31 * result + (myPassParentEnvs ? 1 : 0);
+    result = prime * result + (myPassParentEnvs ? 1 : 0);
+    if (myEnvironmentFile != null) {
+      result = prime * result + myEnvironmentFile.hashCode();
+    }
     return result;
   }
 
   @Override
   public String toString() {
-    return "envs=" + myEnvs + ", passParentEnvs=" + myPassParentEnvs;
+    return "envs=" + myEnvs + ", passParentEnvs=" + myPassParentEnvs + ", environmentFile=" + myEnvironmentFile;
   }
 
-  @NotNull
-  public static EnvironmentVariablesData readExternal(@NotNull Element element) {
+  public static @NotNull EnvironmentVariablesData readExternal(@NotNull Element element) {
     Element envsElement = element.getChild(ENVS);
     if (envsElement == null) {
       return DEFAULT;
     }
-    Map<String, String> envs = ImmutableMap.of();
+    Map<String, String> envs = Map.of();
     String passParentEnvsStr = envsElement.getAttributeValue(PASS_PARENT_ENVS);
     boolean passParentEnvs = passParentEnvsStr == null || Boolean.parseBoolean(passParentEnvsStr);
     for (Element envElement : envsElement.getChildren(ENV)) {
@@ -86,6 +96,12 @@ public class EnvironmentVariablesData {
       }
     }
     return create(envs, passParentEnvs);
+  }
+
+  public void writeExternalNoDefault(@NotNull Element parent) {
+    if (!DEFAULT.equals(this)) {
+      writeExternal(parent);
+    }
   }
 
   public void writeExternal(@NotNull Element parent) {
@@ -108,13 +124,34 @@ public class EnvironmentVariablesData {
     commandLine.withEnvironment(myEnvs);
   }
 
+  public static @NotNull EnvironmentVariablesData create(@NotNull Map<String, String> envs, boolean passParentEnvs) {
+    return create(envs, passParentEnvs, null);
+  }
+
   /**
    * @param envs Map instance containing user-defined environment variables
    *             (iteration order should be reliable user-specified, like {@link LinkedHashMap} or {@link ImmutableMap})
    * @param passParentEnvs true if system environment should be passed
+   * @param environmentFile path to .env file
    */
-  @NotNull
-  public static EnvironmentVariablesData create(@NotNull Map<String, String> envs, boolean passParentEnvs) {
-    return passParentEnvs && envs.isEmpty() ? DEFAULT : new EnvironmentVariablesData(envs, passParentEnvs);
+  public static @NotNull EnvironmentVariablesData create(@NotNull Map<String, String> envs,
+                                                         boolean passParentEnvs,
+                                                         @Nullable String environmentFile) {
+    if (passParentEnvs && envs.isEmpty() && environmentFile == null) {
+      return DEFAULT;
+    }
+    return new EnvironmentVariablesData(envs, passParentEnvs, environmentFile);
+  }
+
+  public @NotNull EnvironmentVariablesData with(@NotNull Map<String, String> envs) {
+    return create(envs, myPassParentEnvs, myEnvironmentFile);
+  }
+
+  public @NotNull EnvironmentVariablesData with(boolean passParentEnvs) {
+    return passParentEnvs == myPassParentEnvs ? this : create(myEnvs, passParentEnvs, myEnvironmentFile);
+  }
+
+  public @NotNull EnvironmentVariablesData with(@Nullable String environmentFile) {
+    return Objects.equals(environmentFile, myEnvironmentFile) ? this : create(myEnvs, myPassParentEnvs, environmentFile);
   }
 }

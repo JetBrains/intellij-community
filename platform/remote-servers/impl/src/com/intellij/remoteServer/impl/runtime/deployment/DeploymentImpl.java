@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.deployment;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.impl.runtime.ServerConnectionImpl;
 import com.intellij.remoteServer.runtime.Deployment;
@@ -10,6 +11,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +20,12 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
   private final String myName;
   private final DeploymentTask<D> myDeploymentTask;
   private volatile DeploymentState myState;
-  private String myPresentableName;
+  private @Nls String myPresentableName;
 
   public DeploymentImpl(@NotNull ServerConnectionImpl<D> connection,
                         @NotNull String name,
                         @NotNull DeploymentStatus status,
-                        @Nullable String statusText,
+                        @Nullable @Nls String statusText,
                         @Nullable DeploymentRuntime runtime,
                         @Nullable DeploymentTask<D> deploymentTask) {
     myConnection = connection;
@@ -34,6 +36,7 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
 
   @Override
   @NotNull
+  @NlsSafe
   public String getName() {
     return myName;
   }
@@ -46,6 +49,7 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
 
   @Override
   @NotNull
+  @Nls
   public String getStatusText() {
     String statusText = myState.getStatusText();
     return statusText != null ? statusText : myState.getStatus().getPresentableText();
@@ -73,7 +77,7 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
   }
 
   @Override
-  public void setStatus(@NotNull final DeploymentStatus status, @Nullable final String statusText) {
+  public void setStatus(@NotNull final DeploymentStatus status, @Nullable @Nls final String statusText) {
     myConnection.changeDeploymentState(this, getRuntime(), myState.getStatus(), status, statusText);
   }
 
@@ -90,7 +94,9 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     return runtime == null ? null : runtime.getParent();
   }
 
-  public boolean changeState(@NotNull DeploymentStatus oldStatus, @NotNull DeploymentStatus newStatus, @Nullable String statusText,
+  public boolean changeState(@NotNull DeploymentStatus oldStatus,
+                             @NotNull DeploymentStatus newStatus,
+                             @Nullable @Nls String statusText,
                              @Nullable DeploymentRuntime runtime) {
     if (myState.getStatus() == oldStatus) {
       myState = new DeploymentState(newStatus, statusText, runtime);
@@ -105,16 +111,16 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     return myPresentableName == null ? getName() : myPresentableName;
   }
 
-  public void setPresentableName(String presentableName) {
+  public void setPresentableName(@Nls String presentableName) {
     myPresentableName = presentableName;
   }
 
-  protected static class DeploymentState {
+  protected static final class DeploymentState {
     private final DeploymentStatus myStatus;
-    private final String myStatusText;
+    private final @Nls String myStatusText;
     private final DeploymentRuntime myRuntime;
 
-    private DeploymentState(@NotNull DeploymentStatus status, @Nullable String statusText, @Nullable DeploymentRuntime runtime) {
+    private DeploymentState(@NotNull DeploymentStatus status, @Nullable @Nls String statusText, @Nullable DeploymentRuntime runtime) {
       myStatus = status;
       myStatusText = statusText;
       myRuntime = runtime;
@@ -126,6 +132,7 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     }
 
     @Nullable
+    @Nls
     public String getStatusText() {
       return myStatusText;
     }

@@ -59,7 +59,7 @@ public class ConvertStringToMultilineIntention extends Intention {
       invokeImpl(expressions.get(expressions.size() - 1), project, editor);
     }
     else {
-      final Pass<GrExpression> callback = new Pass<GrExpression>() {
+      final Pass<GrExpression> callback = new Pass<>() {
         @Override
         public void pass(final GrExpression selectedValue) {
           invokeImpl(selectedValue, project, editor);
@@ -75,8 +75,7 @@ public class ConvertStringToMultilineIntention extends Intention {
     assert element instanceof GrExpression;
     List<GrExpression> result = new ArrayList<>();
     result.add((GrExpression)element);
-    while (element.getParent() instanceof GrBinaryExpression) {
-      final GrBinaryExpression binary = (GrBinaryExpression)element.getParent();
+    while (element.getParent() instanceof GrBinaryExpression binary) {
       if (!isAppropriateBinary(binary, element)) break;
 
       result.add(binary);
@@ -224,7 +223,7 @@ public class ConvertStringToMultilineIntention extends Intention {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
         return element instanceof GrLiteral && ("\"".equals(GrStringUtil.getStartQuote(element.getText())) ||
-                                                "\'".equals(GrStringUtil.getStartQuote(element.getText())))
+                                                "'".equals(GrStringUtil.getStartQuote(element.getText())))
                || element instanceof GrBinaryExpression && isAppropriateBinary((GrBinaryExpression)element, null);
       }
     };

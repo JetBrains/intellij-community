@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,15 +19,13 @@ import java.util.*;
 public final class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
   private final Map<Project, BusyContainer> myObjects = FactoryMap.create(this::create);
 
-  @NotNull
-  private BusyContainer create(Project key) {
+  private @NotNull BusyContainer create(Project key) {
     if (myObjects.isEmpty()) {
       installListener();
     }
-    return key == null ? new BusyContainer(null) : new BusyContainer(null) {
-          @NotNull
+    return key == null ? new BusyContainer(null) : new BusyContainer(key) {
           @Override
-          protected BusyImpl createBusyImpl(@NotNull Set<UiActivity> key) {
+          protected @NotNull BusyImpl createBusyImpl(@NotNull Set<UiActivity> key) {
             return new BusyImpl(key, this) {
               @Override
               public boolean isReady() {
@@ -48,8 +44,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
 
   private boolean myActive;
 
-  @NotNull
-  private final BusyObject myEmptyBusy = new BusyObject.Impl() {
+  private final @NotNull BusyObject myEmptyBusy = new BusyObject.Impl() {
     @Override
     public boolean isReady() {
       return true;
@@ -66,7 +61,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
   }
 
   @Override
-  public void beforeModalityStateChanged(boolean entering) {
+  public void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
     SwingUtilities.invokeLater(() -> maybeReady());
   }
 
@@ -76,31 +71,29 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
     }
   }
 
-  @NotNull
   @Override
-  public BusyObject getBusy(@NotNull Project project, UiActivity @NotNull ... toWatch) {
+  public @NotNull BusyObject getBusy(@NotNull Project project, UiActivity @NotNull ... toWatch) {
     if (!isActive()) return myEmptyBusy;
 
     return _getBusy(project, toWatch);
   }
 
-  @NotNull
   @Override
-  public BusyObject getBusy(UiActivity @NotNull ... toWatch) {
+  public @NotNull BusyObject getBusy(UiActivity @NotNull ... toWatch) {
     if (!isActive()) return myEmptyBusy;
 
     return _getBusy(null, toWatch);
   }
 
   @Override
-  public void addActivity(@NotNull final Project project, @NotNull final UiActivity activity) {
-    addActivity(project, activity, getDefaultModalityState());
+  public void addActivity(final @NotNull Project project, final @NotNull UiActivity activity) {
+    addActivity(project, activity, ModalityState.nonModal());
   }
 
   @Override
-  public void addActivity(@NotNull final Project project,
-                          @NotNull final UiActivity activity,
-                          @NotNull final ModalityState effectiveModalityState) {
+  public void addActivity(final @NotNull Project project,
+                          final @NotNull UiActivity activity,
+                          final @NotNull ModalityState effectiveModalityState) {
     if (!isActive()) return;
 
 
@@ -108,42 +101,36 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
   }
 
   @Override
-  public void removeActivity(@NotNull final Project project, @NotNull final UiActivity activity) {
+  public void removeActivity(final @NotNull Project project, final @NotNull UiActivity activity) {
     if (!isActive()) return;
 
     UIUtil.invokeLaterIfNeeded(() -> _getBusy(project).removeActivity(activity));
   }
 
   @Override
-  public void addActivity(@NotNull final UiActivity activity) {
-    addActivity(activity, getDefaultModalityState());
-  }
-
-  private static ModalityState getDefaultModalityState() {
-    return ApplicationManager.getApplication().getNoneModalityState();
+  public void addActivity(final @NotNull UiActivity activity) {
+    addActivity(activity, ModalityState.nonModal());
   }
 
   @Override
-  public void addActivity(@NotNull final UiActivity activity, @NotNull final ModalityState effectiveModalityState) {
+  public void addActivity(final @NotNull UiActivity activity, final @NotNull ModalityState effectiveModalityState) {
     if (!isActive()) return;
 
     UIUtil.invokeLaterIfNeeded(() -> getBusyContainer(null).addActivity(activity, effectiveModalityState));
   }
 
   @Override
-  public void removeActivity(@NotNull final UiActivity activity) {
+  public void removeActivity(final @NotNull UiActivity activity) {
     if (!isActive()) return;
 
     UIUtil.invokeLaterIfNeeded(() -> _getBusy(null).removeActivity(activity));
   }
 
-  @NotNull
-  private BusyImpl _getBusy(@Nullable Project key, UiActivity @NotNull ... toWatch) {
+  private @NotNull BusyImpl _getBusy(@Nullable Project key, UiActivity @NotNull ... toWatch) {
     return getBusyContainer(key).getOrCreateBusy(toWatch);
   }
 
-  @NotNull
-  private BusyContainer getBusyContainer(@Nullable Project key) {
+  private @NotNull BusyContainer getBusyContainer(@Nullable Project key) {
     BusyContainer container = myObjects.get(key);
     return container != null ? container : getGlobalBusy();
   }
@@ -183,21 +170,19 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
     return myActive;
   }
 
-  private static class ActivityInfo {
+  private static final class ActivityInfo {
     private final ModalityState myEffectiveState;
 
     private ActivityInfo(@NotNull ModalityState effectiveState) {
       myEffectiveState = effectiveState;
     }
 
-    @NotNull
-    public ModalityState getEffectiveState() {
+    public @NotNull ModalityState getEffectiveState() {
       return myEffectiveState;
     }
   }
 
-  @NotNull
-  private static ModalityState getCurrentState() {
+  private static @NotNull ModalityState getCurrentState() {
     return ModalityState.current();
   }
 
@@ -262,7 +247,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
       myContainer.onActivityAdded(activity);
     }
 
-    public void removeActivity(@NotNull final UiActivity activity) {
+    public void removeActivity(final @NotNull UiActivity activity) {
       if (!myActivities.containsKey(activity)) return;
 
       myQueuedToRemove.add(activity);
@@ -287,7 +272,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
     private final Set<UiActivity> myActivities = new HashSet<>();
 
     private boolean myRemovingActivityNow;
-    @Nullable private final Project myProject;
+    private final @Nullable Project myProject;
 
     public BusyContainer(@Nullable Project project) {
       myProject = project;
@@ -297,9 +282,8 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
       }
     }
 
-    @NotNull
-    public BusyImpl getOrCreateBusy(UiActivity @NotNull ... activities) {
-      Set<UiActivity> key = ContainerUtil.set(activities);
+    public @NotNull BusyImpl getOrCreateBusy(UiActivity @NotNull ... activities) {
+      Set<UiActivity> key = Set.of(activities);
 
       if (myActivities2Object.containsKey(key)) {
         return myActivities2Object.get(key);
@@ -307,16 +291,14 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
       return registerBusyObject(key);
     }
 
-    @NotNull
-    private BusyImpl registerBusyObject(@NotNull Set<UiActivity> key) {
+    private @NotNull BusyImpl registerBusyObject(@NotNull Set<UiActivity> key) {
       final BusyImpl busy = createBusyImpl(key);
       myActivities2Object.put(key, busy);
       myObject2Activities.put(busy, key);
       return busy;
     }
 
-    @NotNull
-    protected BusyImpl createBusyImpl(@NotNull Set<UiActivity> key) {
+    protected @NotNull BusyImpl createBusyImpl(@NotNull Set<UiActivity> key) {
       return new BusyImpl(key, this);
     }
 

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TextMateSelectorLexer {
+public final class TextMateSelectorLexer {
   public static List<TextMateSelectorToken> tokenize(@NotNull CharSequence selector) {
     ArrayList<TextMateSelectorToken> result = new ArrayList<>();
     StringBuilder currentSelector = new StringBuilder();
@@ -31,7 +31,7 @@ public class TextMateSelectorLexer {
         currentSelector = addPendingToken(result, currentSelector);
         result.add(TextMateSelectorToken.HAT);
       }
-      else if (c == '-') {
+      else if (c == '-' && currentSelector.isEmpty()) {
         currentSelector = addPendingToken(result, currentSelector);
         result.add(TextMateSelectorToken.MINUS);
       }
@@ -46,7 +46,7 @@ public class TextMateSelectorLexer {
           result.add(new PriorityToken(TextMateWeigh.Priority.LOW));
         }
         else if (c == 'L') {
-          result.add(new PriorityToken(TextMateWeigh.Priority.LOW));
+          result.add(new PriorityToken(TextMateWeigh.Priority.HIGH));
         }
       }
       else {
@@ -59,7 +59,7 @@ public class TextMateSelectorLexer {
 
   @NotNull
   private static StringBuilder addPendingToken(ArrayList<TextMateSelectorToken> result, StringBuilder currentSelector) {
-    if (currentSelector.length() > 0) {
+    if (!currentSelector.isEmpty()) {
       result.add(new SelectorToken(currentSelector.toString()));
       return new StringBuilder();
     }

@@ -20,43 +20,34 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.externalizer.StringCollectionExternalizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
-public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>> implements DocumentChangeDependentIndex {
+public class JavaFxIdsIndex extends ScalarIndexExtension<String> {
 
-  @NonNls public static final ID<String, Set<String>> KEY = ID.create("javafx.id.name");
-
-  private final FileBasedIndex.InputFilter myInputFilter = new JavaFxControllerClassIndex.MyInputFilter();
-  private final FxmlDataIndexer myDataIndexer = new FxmlDataIndexer();
-
-  @NotNull
-  @Override
-  public DataIndexer<String, Set<String>, FileContent> getIndexer() {
-    return myDataIndexer;
-  }
+  @NonNls public static final ID<String, Void> KEY = ID.create("javafx.id.name");
 
   @NotNull
   @Override
-  public DataExternalizer<Set<String>> getValueExternalizer() {
-    return StringCollectionExternalizer.STRING_SET_EXTERNALIZER;
+  public DataIndexer<String, Void, FileContent> getIndexer() {
+    return new FxmlDataIndexer();
   }
 
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return new JavaFxControllerClassIndex.MyInputFilter();
   }
 
   @NotNull
   @Override
-  public ID<String, Set<String>> getName() {
+  public ID<String, Void> getName() {
     return KEY;
   }
 
@@ -73,7 +64,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @NotNull
@@ -84,14 +75,9 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
     for (Iterator<String> iterator = results.iterator(); iterator.hasNext(); ) {
       final String id = iterator.next();
-      final List<Set<String>> values = FileBasedIndex.getInstance().getValues(KEY, id, searchScope);
-      if (!values.isEmpty()) {
-        final Set<String> pathSet = values.get(0);
-        if (pathSet != null) {
-          continue;
-        }
+      if (FileBasedIndex.getInstance().processValues(KEY, id, null, (file, value) -> false, searchScope)) {
+        iterator.remove();
       }
-      iterator.remove();
     }
     return results;
   }

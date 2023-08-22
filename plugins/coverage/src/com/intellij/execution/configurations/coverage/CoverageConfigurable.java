@@ -1,35 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.JavaCoverageEngine;
+import com.intellij.coverage.JavaCoverageRunner;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.PackageChooser;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiPackage;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +35,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.Objects;
 
 /**
  * Base {@link com.intellij.openapi.options.Configurable} for configuring code coverage
@@ -49,67 +45,22 @@ import java.util.stream.Stream;
  * group.addEditor(title, yourConfigurable);
  * group.addEditor(title, yourCoverageConfigurable);
  * </code>
- * @author ven
  */
-public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
+public final class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   private static final Logger LOG = Logger.getInstance(CoverageConfigurable.class);
 
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
-  Project myProject;
-  private MyClassFilterEditor myClassFilterEditor;
-  private MyClassFilterEditor myExcludeClassFilterEditor;
+  final Project myProject;
+  private CoverageClassFilterEditor myClassFilterEditor;
+  private CoverageClassFilterEditor myExcludeClassFilterEditor;
   private JLabel myCoverageNotSupportedLabel;
-  private JComboBox<CoverageRunnerItem> myCoverageRunnerCb;
+  private ComboBox<CoverageRunnerItem> myCoverageRunnerCb;
   private JPanel myRunnerPanel;
   private JCheckBox myTrackPerTestCoverageCb;
   private JCheckBox myTrackTestSourcesCb;
 
-  private JRadioButton myTracingRb;
-  private JRadioButton mySamplingRb;
+  private JCheckBox myBranchCoverageCb;
   private final RunConfigurationBase myConfig;
-
-  private static class MyClassFilterEditor extends ClassFilterEditor {
-    MyClassFilterEditor(Project project) {
-      super(project, new com.intellij.ide.util.ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          if (aClass.getContainingClass() != null) return false;
-          return true;
-        }
-      }, null);
-      myTable.setVisibleRowCount(4);
-    }
-
-    @Override
-    protected void addPatternFilter() {
-      PackageChooser chooser =
-        new PackageChooserDialog(JavaCoverageBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
-      if (chooser.showAndGet()) {
-        List<PsiPackage> packages = chooser.getSelectedPackages();
-        if (!packages.isEmpty()) {
-          for (final PsiPackage aPackage : packages) {
-            final String fqName = aPackage.getQualifiedName();
-            final String pattern = fqName.length() > 0 ? fqName + ".*" : "*";
-            myTableModel.addRow(createFilter(pattern));
-          }
-          int row = myTableModel.getRowCount() - 1;
-          myTable.getSelectionModel().setSelectionInterval(row, row);
-          myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
-        }
-      }
-    }
-
-    @Override
-    protected String getAddPatternButtonText() {
-      return JavaCoverageBundle.message("coverage.button.add.package");
-    }
-
-    @Override
-    protected Icon getAddPatternButtonIcon() {
-      return IconUtil.getAddPackageIcon();
-    }
-  }
 
   public CoverageConfigurable(RunConfigurationBase config) {
     myConfig = config;
@@ -137,7 +88,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       final String runnerId = configuration.getRunnerId();
       if (runnerId != null){
         final CoverageRunnerItem runnerItem = new CoverageRunnerItem(runnerId);
-        final DefaultComboBoxModel model = (DefaultComboBoxModel)myCoverageRunnerCb.getModel();
+        final DefaultComboBoxModel<CoverageRunnerItem> model = (DefaultComboBoxModel<CoverageRunnerItem>)myCoverageRunnerCb.getModel();
         if (model.getIndexOf(runnerItem) == -1) {
           model.addElement(runnerItem);
         }
@@ -145,30 +96,38 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       } else {
         myCoverageRunnerCb.setSelectedIndex(0);
       }
-      runner = ((CoverageRunnerItem)myCoverageRunnerCb.getSelectedItem()).getRunner();
+      runner = ((CoverageRunnerItem)Objects.requireNonNull(myCoverageRunnerCb.getSelectedItem())).getRunner();
     }
-    UIUtil.setEnabled(myRunnerPanel, isJre50, true);
+    myRunnerPanel.setEnabled(isJre50);
 
-
-    myClassFilterEditor.setFilters(getCoveragePatternStream(configuration).filter(classFilter -> classFilter.INCLUDE).toArray(ClassFilter[]::new));
-    myExcludeClassFilterEditor.setFilters(getCoveragePatternStream(configuration).filter(classFilter -> !classFilter.INCLUDE).toArray(ClassFilter[]::new));
-    final boolean isCoverageByTestApplicable = runner != null && runner.isCoverageByTestApplicable();
-    myTracingRb.setEnabled(myTracingRb.isEnabled() && isCoverageByTestApplicable);
-    mySamplingRb.setSelected(configuration.isSampling() || !isCoverageByTestApplicable);
-    myTracingRb.setSelected(!mySamplingRb.isSelected());
-
-    myTrackPerTestCoverageCb.setSelected(configuration.isTrackPerTestCoverage());
-    myTrackPerTestCoverageCb.setEnabled(myTracingRb.isEnabled() && myTracingRb.isSelected() && canHavePerTestCoverage());
-
+    myClassFilterEditor.setFilters(getCoveragePatterns(configuration, true));
+    myExcludeClassFilterEditor.setFilters(getCoveragePatterns(configuration, false));
+    setUpBranchCoverage(runner, configuration.isBranchCoverageEnabled(), configuration.isTrackPerTestCoverage());
     myTrackTestSourcesCb.setSelected(configuration.isTrackTestFolders());
   }
 
-  @NotNull
-  private static Stream<ClassFilter> getCoveragePatternStream(@NotNull JavaCoverageEnabledConfiguration configuration) {
-    return Arrays.stream(ObjectUtils.chooseNotNull(configuration.getCoveragePatterns(), ClassFilter.EMPTY_ARRAY));
+  private void setUpBranchCoverage(CoverageRunner runner, boolean branchCoverage, boolean testTracking) {
+    if (runner instanceof JavaCoverageRunner javaRunner) {
+      final boolean alwaysAvailable = javaRunner.isBranchInfoAvailable(false);
+      final boolean neverAvailable = !javaRunner.isBranchInfoAvailable(true);
+      myBranchCoverageCb.setEnabled(!(alwaysAvailable || neverAvailable));
+      myBranchCoverageCb.setSelected(javaRunner.isBranchInfoAvailable(branchCoverage));
+    } else {
+      myBranchCoverageCb.setEnabled(true);
+      myBranchCoverageCb.setSelected(branchCoverage);
+    }
+
+    final boolean isCoverageByTestApplicable = runner != null && runner.isCoverageByTestApplicable();
+    myTrackPerTestCoverageCb.setSelected(testTracking);
+    myTrackPerTestCoverageCb.setEnabled(isCoverageByTestApplicable && myBranchCoverageCb.isSelected() && canHavePerTestCoverage());
   }
 
-  protected boolean canHavePerTestCoverage() {
+  static ClassFilter[] getCoveragePatterns(@NotNull JavaCoverageEnabledConfiguration configuration, boolean include) {
+    return Arrays.stream(ObjectUtils.chooseNotNull(configuration.getCoveragePatterns(), ClassFilter.EMPTY_ARRAY))
+      .filter(classFilter -> classFilter.INCLUDE == include).toArray(ClassFilter[]::new);
+  }
+
+  private boolean canHavePerTestCoverage() {
     return CoverageEnabledConfiguration.getOrCreate(myConfig).canHavePerTestCoverage();
   }
 
@@ -184,7 +143,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     }
     configuration.setCoverageRunner(getSelectedRunner());
     configuration.setTrackPerTestCoverage(myTrackPerTestCoverageCb.isSelected());
-    configuration.setSampling(mySamplingRb.isSelected());
+    configuration.setBranchCoverage(myBranchCoverageCb.isSelected());
     configuration.setTrackTestFolders(myTrackTestSourcesCb.isSelected());
   }
 
@@ -193,8 +152,8 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   protected JComponent createEditor() {
     JPanel result = new JPanel(new GridBagLayout());
 
-    final DefaultComboBoxModel runnersModel = new DefaultComboBoxModel();
-    myCoverageRunnerCb = new JComboBox(runnersModel);
+    final DefaultComboBoxModel<CoverageRunnerItem> runnersModel = new DefaultComboBoxModel<>();
+    myCoverageRunnerCb = new ComboBox<>(runnersModel);
 
     final JavaCoverageEnabledConfiguration javaCoverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(myConfig);
     LOG.assertTrue(javaCoverageEnabledConfiguration != null);
@@ -208,58 +167,55 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myCoverageRunnerCb.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final CoverageRunner runner = getSelectedRunner();
-        enableTracingPanel(runner != null && runner.isCoverageByTestApplicable());
-        myTrackPerTestCoverageCb.setEnabled(myTracingRb.isSelected() && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());
+        setUpBranchCoverage(getSelectedRunner(), myBranchCoverageCb.isSelected(), myTrackPerTestCoverageCb.isSelected());
       }
     });
     myRunnerPanel = new JPanel(new GridBagLayout());
     myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     myRunnerPanel.add(new JLabel(JavaCoverageBundle.message("run.configuration.choose.coverage.runner")), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(10), 0, 0));
-    myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                                 JBInsets.emptyInsets(), 0, 0));
     final JPanel cPanel = new JPanel(new VerticalFlowLayout());
 
-    mySamplingRb = new JRadioButton(JavaCoverageBundle.message("run.configuration.coverage.sampling"));
-    cPanel.add(mySamplingRb);
-    myTracingRb = new JRadioButton(JavaCoverageBundle.message("run.configuration.coverage.tracing"));
-    cPanel.add(myTracingRb);
+    myBranchCoverageCb = new JCheckBox(JavaCoverageBundle.message("run.configuration.coverage.branches"));
+    final JPanel branchCoveragePanel = UI.PanelFactory.panel(myBranchCoverageCb)
+      .withComment(JavaCoverageBundle.message("run.configuration.coverage.branches.comment"))
+      .createPanel();
+    cPanel.add(branchCoveragePanel);
 
-    final ButtonGroup group = new ButtonGroup();
-    group.add(mySamplingRb);
-    group.add(myTracingRb);
-
-    ActionListener samplingListener = new ActionListener() {
+    final ActionListener branchCoverageListener = new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final CoverageRunner runner = getSelectedRunner();
-        myTrackPerTestCoverageCb.setEnabled(canHavePerTestCoverage() && myTracingRb.isSelected() && runner != null && runner.isCoverageByTestApplicable());
+        setUpBranchCoverage(getSelectedRunner(), myBranchCoverageCb.isSelected(), myTrackPerTestCoverageCb.isSelected());
       }
     };
 
-    mySamplingRb.addActionListener(samplingListener);
-    myTracingRb.addActionListener(samplingListener);
+    myBranchCoverageCb.addActionListener(branchCoverageListener);
 
     myTrackPerTestCoverageCb = new JCheckBox(JavaCoverageBundle.message("run.configuration.track.per.test.coverage"));
-    final JBPanel tracingPanel = JBUI.Panels.simplePanel(myTrackPerTestCoverageCb).withBorder(JBUI.Borders.emptyLeft(15));
-    cPanel.add(tracingPanel);
-    myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    final JBPanel<BorderLayoutPanel> testTrackingPanel = JBUI.Panels.simplePanel(myTrackPerTestCoverageCb).withBorder(JBUI.Borders.emptyLeft(15));
+    cPanel.add(testTrackingPanel);
+    myRunnerPanel.add(cPanel, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                     JBInsets.emptyInsets(), 0, 0));
 
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE,
                                                          1, 1, 1, 0,
                                                          GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                         JBUI.emptyInsets(), 0, 0);
+                                                         JBInsets.emptyInsets(), 0, 0);
     result.add(myRunnerPanel, gc);
 
     JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints bagConstraints =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                             JBUI.emptyInsets(), 0, 0);
+                             JBInsets.emptyInsets(), 0, 0);
+    //noinspection DialogTitleCapitalization
     panel.add(new TitledSeparator(JavaCoverageBundle.message("record.coverage.filters.title")), bagConstraints);
-    myClassFilterEditor = new MyClassFilterEditor(myProject);
+    myClassFilterEditor = new CoverageClassFilterEditor(myProject);
     panel.add(myClassFilterEditor, bagConstraints);
 
+    //noinspection DialogTitleCapitalization
     panel.add(new TitledSeparator(JavaCoverageBundle.message("exclude.coverage.filters.title")), bagConstraints);
-    myExcludeClassFilterEditor = new MyClassFilterEditor(myProject) {
+    myExcludeClassFilterEditor = new CoverageClassFilterEditor(myProject) {
       @NotNull
       @Override
       protected ClassFilter createFilter(String pattern) {
@@ -293,14 +249,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     return runnerItem != null ? runnerItem.getRunner() : null;
   }
 
-  private void enableTracingPanel(final boolean enabled) {
-    myTracingRb.setEnabled(enabled);
-    if (!enabled) {
-      mySamplingRb.setSelected(true);
-    }
-  }
-
-  private static class CoverageRunnerItem {
+  private static final class CoverageRunnerItem {
     private CoverageRunner myRunner;
     private @NotNull final String myRunnerId;
 
@@ -309,7 +258,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       myRunnerId = runner.getId();
     }
 
-    private CoverageRunnerItem(String runnerId) {
+    private CoverageRunnerItem(@NotNull String runnerId) {
       myRunnerId = runnerId;
     }
 
@@ -317,7 +266,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       return myRunner;
     }
 
-    public String getRunnerId() {
+    public @NotNull String getRunnerId() {
       return myRunnerId;
     }
 

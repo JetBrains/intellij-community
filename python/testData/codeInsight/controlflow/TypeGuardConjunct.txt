@@ -1,0 +1,33 @@
+0(1) element: null
+1(2) element: PyFromImportStatement
+2(3) WRITE ACCESS: List
+3(4) element: PyFromImportStatement
+4(5) WRITE ACCESS: TypeGuard
+5(6) element: PyImportStatement
+6(7) WRITE ACCESS: foo
+7(8) element: PyFunction('checkit')
+8(9) element: PySubscriptionExpression
+9(10) READ ACCESS: List
+10(11) READ ACCESS: int
+11(12) element: PySubscriptionExpression
+12(13) READ ACCESS: TypeGuard
+13(14) element: PySubscriptionExpression
+14(15) READ ACCESS: List
+15(16) READ ACCESS: str
+16(17) WRITE ACCESS: checkit
+17(18) element: PyAssignmentStatement
+18(19) READ ACCESS: foo
+19(20) WRITE ACCESS: x
+20(21) element: PyAssignmentStatement
+21(22) element: PyBinaryExpression
+22(23) READ ACCESS: checkit
+23(24,26) READ ACCESS: foo
+24(31) element: null. Condition: checkit(foo):false
+26(25) ASSERTTYPE ACCESS: foo
+25(27) element: null. Condition: checkit(foo):true
+27(28) element: PySubscriptionExpression
+28(29,30) READ ACCESS: foo
+29(31) element: null. Condition: foo[123]:false
+30(31) element: null. Condition: foo[123]:true
+31(32) WRITE ACCESS: y
+32() element: null

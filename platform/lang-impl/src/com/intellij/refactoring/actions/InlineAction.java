@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.actions;
 
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class InlineAction extends BasePlatformRefactoringAction {
+public final class InlineAction extends BasePlatformRefactoringAction {
 
   public InlineAction() {
     setInjectedContext(true);
@@ -85,7 +85,7 @@ public class InlineAction extends BasePlatformRefactoringAction {
   @Override
   protected String getActionName(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    PsiElement element = findRefactoringTargetInEditor(dataContext);
+    PsiElement element = findRefactoringTargetInEditor(dataContext, this::isAvailableForLanguage);
     if (element != null && editor != null) {
       for (InlineActionHandler handler: InlineActionHandler.EP_NAME.getExtensionList()) {
         if (handler.isEnabledOnElement(element, editor)) {

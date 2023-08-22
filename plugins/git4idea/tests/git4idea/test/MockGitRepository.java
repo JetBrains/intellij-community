@@ -15,13 +15,14 @@
  */
 package git4idea.test;
 
-import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.repo.*;
+import git4idea.status.GitStagingAreaHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,15 +50,14 @@ public class MockGitRepository implements GitRepository {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public GitUntrackedFilesHolder getUntrackedFilesHolder() {
+  public @NotNull GitStagingAreaHolder getStagingAreaHolder() {
     throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
-  public GitConflictsHolder getConflictsHolder() {
+  public GitUntrackedFilesHolder getUntrackedFilesHolder() {
     throw new UnsupportedOperationException();
   }
 
@@ -173,7 +173,7 @@ public class MockGitRepository implements GitRepository {
 
   @NotNull
   @Override
-  public VcsRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
+  public GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
     throw new UnsupportedOperationException();
   }
 

@@ -1,27 +1,30 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonConsoleClientUtil")
 
 package com.jetbrains.python.console
 
-import com.intellij.util.concurrency.SequentialTaskExecutor
-import com.jetbrains.python.PyBundle
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ReflectionUtil
 import com.jetbrains.python.console.protocol.PythonConsoleBackendService
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
-import java.lang.reflect.Proxy
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
+private const val PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME: String = "Python Console Command Executor"
+
 fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                     delegate: PythonConsoleBackendService.Iface,
                                     pythonConsoleProcess: Process): PythonConsoleBackendServiceDisposable {
-  val executorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(PyBundle.message("console.command.executor"))
-  // make the `PythonConsoleBackendService.Iface` process-aware and thread-safe
-  val proxy = Proxy.newProxyInstance(loader, arrayOf<Class<*>>(
-    PythonConsoleBackendService.Iface::class.java),
+  // DO NOT replace this ExecutorService with `SequentialTaskExecutor.createSequentialApplicationPoolExecutor()`!
+  // It may use different threads for executing different tasks in a sequence and it breaks the prerequisite of `PipedInputStream`
+  // that requires every read to be made from the same thread.
+  val executorService = ConcurrencyUtil.newSingleThreadExecutor(PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME)
+
+  val proxy = ReflectionUtil.proxy(loader, PythonConsoleBackendService.Iface::class.java,
                                      InvocationHandler { _, method, args ->
                                        // we evaluate the original method in the other thread in order to control it
                                        val future = executorService.submit(Callable {
@@ -47,7 +50,7 @@ fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                            throw e.cause ?: e
                                          }
                                        }
-                                     }) as PythonConsoleBackendService.Iface
+                                     })
   // make the `proxy` disposable
   return object : PythonConsoleBackendServiceDisposable, PythonConsoleBackendService.Iface by proxy {
     override fun dispose() {

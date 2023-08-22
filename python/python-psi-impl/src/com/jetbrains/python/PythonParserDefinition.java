@@ -21,10 +21,6 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- * @author Keith Lea
- */
 public class PythonParserDefinition implements ParserDefinition {
 
   @Override
@@ -34,7 +30,7 @@ public class PythonParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return PyFileElementType.INSTANCE;
   }
 
@@ -66,23 +62,22 @@ public class PythonParserDefinition implements ParserDefinition {
   @NotNull
   public PsiElement createElement(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
-    if (type instanceof PyElementType) {
-      PyElementType pyElType = (PyElementType)type;
+    if (type instanceof PyElementType pyElType) {
       return pyElType.createElement(node);
     }
     else if (type instanceof PyStubElementType) {
-      return ((PyStubElementType)type).createElement(node);
+      return ((PyStubElementType<?, ?>)type).createElement(node);
     }
     return new ASTWrapperPsiElement(node);
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new PyFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     // see LanguageTokenSeparatorGenerator instead
     return SpaceRequirements.MAY;
   }

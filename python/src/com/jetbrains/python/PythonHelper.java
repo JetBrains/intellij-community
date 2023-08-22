@@ -16,14 +16,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PythonHelpersLocator.getHelperFile;
 import static com.jetbrains.python.PythonHelpersLocator.getHelpersRoot;
 
 public enum PythonHelper implements HelperPackage {
   GENERATOR3("generator3/__main__.py"),
+  REMOTE_SYNC("remote_sync.py"),
 
-  COVERAGEPY("coveragepy", ""),
+  // Packaging tools
+  PACKAGING_TOOL("packaging_tool.py"),
+  VIRTUALENV_ZIPAPP("virtualenv-20.16.7.pyz"),
+  PY2_VIRTUALENV_ZIPAPP("virtualenv-20.13.0.pyz"),
+
+  COVERAGEPY_OLD("coveragepy_old", ""),
+  COVERAGEPY_NEW("coveragepy_new", ""),
   COVERAGE("coverage_runner", "run_coverage"),
   DEBUGGER("pydev", "pydevd", HelperDependency.THRIFTPY),
 
@@ -51,15 +59,13 @@ public enum PythonHelper implements HelperPackage {
   NOSE("pycharm", "_jb_nosetest_runner"),
 
   BEHAVE("pycharm", "behave_runner"),
-  LETTUCE("pycharm", "lettuce_runner"),
 
   DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
   DJANGO_MANAGE("pycharm", "django_manage"),
+  DJANGO_PROJECT_CREATOR("pycharm", "_jb_django_project_creator"),
   MANAGE_TASKS_PROVIDER("pycharm", "_jb_manage_tasks_provider"),
 
   APPCFG_CONSOLE("pycharm", "appcfg_fetcher"),
-
-  BUILDOUT_ENGULFER("pycharm", "buildout_engulfer"),
 
   DOCSTRING_FORMATTER("docstring_formatter.py"),
 
@@ -122,6 +128,17 @@ public enum PythonHelper implements HelperPackage {
       myDependencies.forEach(dependency -> dependency.addToPythonPath(environment));
       // then add helper script
       PythonEnvUtil.addToPythonPath(environment, getPythonPathEntry());
+    }
+
+    @Override
+    public @NotNull List<String> getPythonPathEntries() {
+      // at first add dependencies
+      ArrayList<String> entries = myDependencies.stream()
+        .flatMap(dependency -> dependency.getPythonPathEntries().stream())
+        .collect(Collectors.toCollection(ArrayList::new));
+      // then add helper script
+      entries.add(getPythonPathEntry());
+      return entries;
     }
 
     @Override
@@ -213,16 +230,21 @@ public enum PythonHelper implements HelperPackage {
     }
   }
 
-  private static class HelperDependency {
+  private static final class HelperDependency {
     private static final String THRIFTPY = "thriftpy";
 
     @NotNull
     private final String myPythonPath;
 
-    private HelperDependency(@NotNull String pythonPath) {myPythonPath = pythonPath;}
+    private HelperDependency(@NotNull String pythonPath) { myPythonPath = pythonPath; }
 
     public void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.addToPythonPath(environment, myPythonPath);
+    }
+
+    @NotNull
+    public List<String> getPythonPathEntries() {
+      return Collections.singletonList(myPythonPath);
     }
 
     @NotNull
@@ -249,6 +271,11 @@ public enum PythonHelper implements HelperPackage {
   @Override
   public String getPythonPathEntry() {
     return myModule.getPythonPathEntry();
+  }
+
+  @Override
+  public @NotNull List<String> getPythonPathEntries() {
+    return myModule.getPythonPathEntries();
   }
 
   @Override

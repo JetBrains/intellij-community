@@ -51,11 +51,10 @@ public final class FieldFormReference extends ReferenceInForm {
 
   @Override
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
-    if (!(element instanceof PsiField)) {
+    if (!(element instanceof PsiField field)) {
       throw new IncorrectOperationException();
     }
 
-    final PsiField field = (PsiField)element;
     PsiClass fieldClass = field.getContainingClass();
     if (fieldClass == null || !myClassReference.isReferenceTo(fieldClass)) {
       throw new IncorrectOperationException();

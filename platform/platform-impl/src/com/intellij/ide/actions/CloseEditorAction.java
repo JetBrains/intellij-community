@@ -1,11 +1,9 @@
 
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
@@ -14,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseEditorAction extends AnAction implements DumbAware {
+public class CloseEditorAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
@@ -32,7 +30,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
       file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     }
     if (file != null) {
-      editorManager.closeFile(file, window);
+      editorManager.closeFileWithChecks(file, window);
     }
   }
 
@@ -41,7 +39,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event){
+  public void update(final @NotNull AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
@@ -53,5 +51,10 @@ public class CloseEditorAction extends AnAction implements DumbAware {
       window = getEditorManager(project).getCurrentWindow();
     }
     presentation.setEnabled(window != null && window.getTabCount() > 0);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

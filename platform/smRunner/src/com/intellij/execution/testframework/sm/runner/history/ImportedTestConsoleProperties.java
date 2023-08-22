@@ -77,13 +77,6 @@ public class ImportedTestConsoleProperties extends SMTRunnerConsoleProperties im
     return myProperties == null ? null : myProperties.getErrorNavigatable(location, stacktrace);
   }
 
-  @Nullable
-  @Override
-  public Navigatable getErrorNavigatable(@NotNull Project project,
-                                         @NotNull String stacktrace) {
-    return myProperties == null ? null : myProperties.getErrorNavigatable(project, stacktrace);
-  }
-
   @Override
   public void addStackTraceFilter(Filter filter) {
     if (myProperties != null) {

@@ -5,12 +5,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class StartStopMacroRecordingAction extends AnAction implements DumbAware {
+final class StartStopMacroRecordingAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean isRecording = ActionMacroManager.getInstance().isRecording();
@@ -28,10 +29,15 @@ public class StartStopMacroRecordingAction extends AnAction implements DumbAware
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (!ActionMacroManager.getInstance().isRecording()) {
       final ActionMacroManager manager = ActionMacroManager.getInstance();
-      manager.startRecording(ActionMacroManager.NO_NAME_NAME);
+      manager.startRecording(e.getProject(), ActionMacroManager.NO_NAME_NAME);
     }
     else {
       ActionMacroManager.getInstance().stopRecording(e.getProject());

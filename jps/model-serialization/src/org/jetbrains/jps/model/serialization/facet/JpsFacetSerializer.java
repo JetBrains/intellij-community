@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization.facet;
 
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -26,19 +25,6 @@ public final class JpsFacetSerializer {
     if (facetManagerElement == null) return;
     FacetManagerState state = XmlSerializer.deserialize(facetManagerElement, FacetManagerState.class);
     addFacets(module, state.facets, null);
-  }
-
-  public static void saveFacets(JpsModule module, @NotNull Element facetManagerElement) {
-    FacetManagerState managerState = new FacetManagerState();
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsFacetConfigurationSerializer<?> serializer : extension.getFacetConfigurationSerializers()) {
-        if (serializer.hasExtension(module)) {
-          serializer.saveExtension(module, managerState.facets);
-        }
-      }
-    }
-
-    XmlSerializer.serializeInto(managerState, facetManagerElement, new SkipDefaultValuesSerializationFilters());
   }
 
   private static void addFacets(JpsModule module, List<FacetState> facets, @Nullable final JpsElement parentFacet) {

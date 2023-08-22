@@ -33,17 +33,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class HtmlScriptLanguageInjector implements MultiHostInjector {
-
-
+public final class HtmlScriptLanguageInjector implements MultiHostInjector {
   /**
    * Finds language to be injected into &lt;script&gt; tag
    *
    * @param xmlTag &lt;script&gt; tag
    * @return language to inject or null if no language found or not a script tag at all
    */
-  @Nullable
-  public static Language getScriptLanguageToInject(@NotNull XmlTag xmlTag) {
+  public static @Nullable Language getScriptLanguageToInject(@NotNull XmlTag xmlTag) {
     if (!HtmlUtil.isScriptTag(xmlTag)) {
       return null;
     }
@@ -82,9 +79,8 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(XmlText.class);
   }
 }

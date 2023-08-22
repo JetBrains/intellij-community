@@ -1,22 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.escapeXmlEntities
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.author
+import com.intellij.openapi.vcs.changes.authorDate
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.GridBag
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserEditor.Companion.getAllUsers
@@ -28,18 +31,14 @@ import git4idea.GitUtil.getRepositoryManager
 import git4idea.checkin.GitCheckinEnvironment.collectActiveMovementProviders
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
 import java.awt.Point
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
-import java.awt.event.KeyEvent.VK_G
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JPanel
 import javax.swing.UIManager
 
 private val COMMIT_AUTHOR_KEY = Key.create<VcsUser>("Git.Commit.Author")
@@ -47,13 +46,19 @@ private val COMMIT_AUTHOR_DATE_KEY = Key.create<Date>("Git.Commit.AuthorDate")
 private val IS_SIGN_OFF_COMMIT_KEY = Key.create<Boolean>("Git.Commit.IsSignOff")
 private val IS_COMMIT_RENAMES_SEPARATELY_KEY = Key.create<Boolean>("Git.Commit.IsCommitRenamesSeparately")
 
-internal var CommitContext.commitAuthor: VcsUser? by commitProperty(COMMIT_AUTHOR_KEY, null)
-internal var CommitContext.commitAuthorDate: Date? by commitProperty(COMMIT_AUTHOR_DATE_KEY, null)
-internal var CommitContext.isSignOffCommit: Boolean by commitProperty(IS_SIGN_OFF_COMMIT_KEY)
-internal var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(IS_COMMIT_RENAMES_SEPARATELY_KEY)
+var CommitContext.commitAuthor: VcsUser? by commitProperty(COMMIT_AUTHOR_KEY, null)
+  internal set
+var CommitContext.commitAuthorDate: Date? by commitProperty(COMMIT_AUTHOR_DATE_KEY, null)
+  internal set
+var CommitContext.isSignOffCommit: Boolean by commitProperty(IS_SIGN_OFF_COMMIT_KEY)
+  internal set
+var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(IS_COMMIT_RENAMES_SEPARATELY_KEY)
+  internal set
 
 private val HierarchyEvent.isShowingChanged get() = (changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L
 private val HierarchyEvent.isParentChanged get() = (changeFlags and HierarchyEvent.PARENT_CHANGED.toLong()) != 0L
+
+private val CheckinProjectPanel.commitAuthorTracker: CommitAuthorTracker? get() = commitWorkflowHandler.commitAuthorTracker
 
 class GitCommitOptionsUi(
   private val commitPanel: CheckinProjectPanel,
@@ -62,7 +67,7 @@ class GitCommitOptionsUi(
 ) : RefreshableOnComponent,
     CheckinChangeListSpecificComponent,
     AmendCommitModeListener,
-    ChangeListListener,
+    CommitAuthorListener,
     Disposable {
 
   private val project get() = commitPanel.project
@@ -71,17 +76,17 @@ class GitCommitOptionsUi(
   val amendHandler: AmendCommitHandler get() = commitPanel.commitWorkflowHandler.amendCommitHandler
 
   private var authorDate: Date? = null
-  private var currentChangeList: LocalChangeList? = null
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
 
-  private val panel = JPanel(GridBagLayout())
+  private val panel: JComponent
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
-  private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"), settings.shouldSignOffCommit()).apply {
-    mnemonic = VK_G
-
+  private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"),
+                                         settings.shouldSignOffCommit()).apply {
     val user = commitPanel.roots.mapNotNull { userRegistry.getUser(it) }.firstOrNull()
     val signature = user?.let { escapeXmlEntities(VcsUserUtil.toExactString(it)) }.orEmpty()
     toolTipText = XmlStringUtil.wrapInHtml(GitBundle.message("commit.options.sign.off.commit.message.line", signature))
+    addActionListener {
+      CommitSessionCollector.getInstance(project).logCommitOptionToggled(CommitOption.SIGN_OFF, isSelected)
+    }
   }
   private val commitRenamesSeparately = JBCheckBox(
     GitBundle.message("commit.options.create.extra.commit.with.file.movements"),
@@ -91,6 +96,8 @@ class GitCommitOptionsUi(
   private var authorWarning: Balloon? = null
 
   init {
+    panel = buildLayout()
+
     authorField.addFocusListener(object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
         updateCurrentCommitAuthor()
@@ -105,24 +112,34 @@ class GitCommitOptionsUi(
         }
       }
     })
+    if (commitPanel.isNonModalCommit) {
+      commitPanel.commitAuthorTracker?.addCommitAuthorListener(this, this)
 
-    buildLayout()
+      panel.addHierarchyListener { e ->
+        if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
+      }
+    }
 
     amendHandler.addAmendCommitModeListener(this, this)
   }
 
-  private fun buildLayout() = panel.apply {
-    val gb = GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultInsets(JBUI.insets(2))
-
-    val authorLabel = JBLabel(GitBundle.message("commit.author")).apply { labelFor = authorField }
-    add(authorLabel, gb.nextLine().next())
-    add(authorField, gb.next().fillCellHorizontally().weightx(1.0))
-
-    val amendOption = if (showAmendOption) ToggleAmendCommitOption(commitPanel, this@GitCommitOptionsUi) else null
-    amendOption?.let { add(it, gb.nextLine().next().coverLine()) }
-
-    add(signOffCommit, gb.nextLine().next().coverLine())
-    add(commitRenamesSeparately, gb.nextLine().next().coverLine())
+  private fun buildLayout() = panel {
+    val disposable = this@GitCommitOptionsUi
+    row(GitBundle.message("commit.author")) {
+      cell(authorField)
+        .align(AlignX.FILL)
+    }
+    if (showAmendOption) {
+      row {
+        cell(ToggleAmendCommitOption(commitPanel, disposable))
+      }
+    }
+    row {
+      cell(signOffCommit)
+    }
+    row {
+      cell(commitRenamesSeparately)
+    }
   }
 
   // called before popup size calculation => changing preferred size here will be correctly reflected by popup
@@ -135,50 +152,36 @@ class GitCommitOptionsUi(
   override fun getComponent(): JComponent = panel
 
   override fun restoreState() {
-    if (commitPanel.isNonModalCommit) {
-      changeListManager.addChangeListListener(this, this)
+    updateRenamesCheckboxState()
+    clearAuthorWarning()
 
-      panel.addHierarchyListener { e ->
-        if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
-      }
-    }
-    refresh()
+    commitAuthorChanged()
+    commitAuthorDateChanged()
   }
-
-  override fun refresh() = refresh(null)
 
   override fun saveState() {
     if (commitPanel.isNonModalCommit) updateRenamesCheckboxState()
     val author = getAuthor()
 
-    commitContext.apply {
-      commitAuthor = author
-      commitAuthorDate = authorDate
-      isSignOffCommit = signOffCommit.isSelected
-      isCommitRenamesSeparately = commitRenamesSeparately.run { isEnabled && isSelected }
-    }
+    commitContext.commitAuthor = author
+    commitContext.commitAuthorDate = authorDate
+    commitContext.isSignOffCommit = signOffCommit.isSelected
+    commitContext.isCommitRenamesSeparately = commitRenamesSeparately.run { isEnabled && isSelected }
 
-    settings.apply {
-      author?.let { saveCommitAuthor(it) }
-      setSignOffCommit(signOffCommit.isSelected)
-      isCommitRenamesSeparately = commitRenamesSeparately.isSelected
-    }
+    author?.let { settings.saveCommitAuthor(it) }
+    settings.setSignOffCommit(signOffCommit.isSelected)
+    settings.isCommitRenamesSeparately = commitRenamesSeparately.isSelected
   }
 
   override fun onChangeListSelected(list: LocalChangeList) {
-    refresh(list)
-
-    panel.revalidate()
-    panel.repaint()
-  }
-
-  private fun refresh(changeList: LocalChangeList?) {
     updateRenamesCheckboxState()
     clearAuthorWarning()
 
-    currentChangeList = changeList
-    setAuthor(changeList?.author)
-    authorDate = changeList?.authorDate
+    setAuthor(list.author)
+    authorDate = list.authorDate
+
+    panel.revalidate()
+    panel.repaint()
   }
 
   fun getAuthor(): VcsUser? = authorField.user
@@ -194,24 +197,17 @@ class GitCommitOptionsUi(
   }
 
   private fun updateCurrentCommitAuthor() {
-    if (!commitPanel.isNonModalCommit) return
-    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
-    val newAuthor = getAuthor()
-
-    if (newAuthor != changeList.author) {
-      changeListManager.editChangeListData(changeList.name, ChangeListData.of(newAuthor, authorDate))
-    }
+    commitPanel.commitAuthorTracker?.commitAuthor = getAuthor()
   }
 
-  override fun changeListDataChanged(list: ChangeList) =
-    runInEdt {
-      val changeList = list as? LocalChangeList ?: return@runInEdt
-      if (changeList.id != currentChangeList?.id) return@runInEdt
+  override fun commitAuthorChanged() {
+    val newAuthor = commitPanel.commitAuthorTracker?.commitAuthor
+    if (getAuthor() != newAuthor) setAuthor(newAuthor)
+  }
 
-      if (getAuthor() != changeList.author) {
-        setAuthor(changeList.author)
-      }
-    }
+  override fun commitAuthorDateChanged() {
+    authorDate = commitPanel.commitAuthorTracker?.commitAuthorDate
+  }
 
   private fun updateRenamesCheckboxState() {
     val providers = collectActiveMovementProviders(project)
@@ -227,7 +223,7 @@ class GitCommitOptionsUi(
     if (authorWarning?.isDisposed == false) return
 
     val builder = JBPopupFactory.getInstance()
-      .createBalloonBuilder(JLabel(GitBundle.getString("commit.author.diffs")))
+      .createBalloonBuilder(JLabel(GitBundle.message("commit.author.diffs")))
       .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")) // NON-NLS
       .setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor())
       .setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor())
@@ -250,6 +246,7 @@ class GitCommitOptionsUi(
     val repositoryManager = getRepositoryManager(project)
     val affectedRoots = commitPanel.roots.filter { repositoryManager.getRepositoryForRootQuick(it) != null }
 
-    return affectedRoots.map { userRegistry.getUser(it) }.all { it != null && isSamePerson(author, it) }
+    return affectedRoots.isNotEmpty() &&
+           affectedRoots.map { userRegistry.getUser(it) }.all { it != null && isSamePerson(author, it) }
   }
 }

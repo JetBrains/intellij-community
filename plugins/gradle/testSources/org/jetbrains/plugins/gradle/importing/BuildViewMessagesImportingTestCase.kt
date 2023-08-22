@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -20,10 +20,10 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
     buildViewTestFixture.setUp()
   }
 
-  override fun tearDown() = RunAll()
-    .append(ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() })
-    .append(ThrowableRunnable { super.tearDown() })
-    .run()
+  override fun tearDown() = RunAll(
+    ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
+    ThrowableRunnable { super.tearDown() }
+  ).run()
 
   protected fun assertSyncViewTreeEquals(executionTreeText: String) {
     buildViewTestFixture.assertSyncViewTreeEquals(executionTreeText)
@@ -33,12 +33,20 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
     buildViewTestFixture.assertSyncViewTreeSame(executionTreeText)
   }
 
+  protected fun assertSyncViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
+    buildViewTestFixture.assertSyncViewTreeEquals(treeTestPresentationChecker)
+  }
+
   protected fun assertBuildViewTreeEquals(executionTree: String) {
     buildViewTestFixture.assertBuildViewTreeEquals(executionTree)
   }
 
   protected fun assertBuildViewTreeSame(executionTree: String) {
     buildViewTestFixture.assertBuildViewTreeSame(executionTree)
+  }
+
+  protected fun assertBuildViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
+    buildViewTestFixture.assertBuildViewTreeEquals(treeTestPresentationChecker)
   }
 
   protected fun assertSyncViewSelectedNode(nodeText: String, consoleText: String) {

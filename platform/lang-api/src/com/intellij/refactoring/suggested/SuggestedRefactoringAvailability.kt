@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import org.jetbrains.annotations.Nls
 
 /**
  * A service determining available refactoring for a given [SuggestedRefactoringState].
@@ -58,7 +59,7 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
    */
   open class RenameOnly(refactoringSupport: SuggestedRefactoringSupport) : SuggestedRefactoringAvailability(refactoringSupport) {
     override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
-      val namedElement = state.declaration as? PsiNamedElement ?: return null
+      val namedElement = state.anchor as? PsiNamedElement ?: return null
       return SuggestedRenameData(namedElement, state.oldSignature.name)
     }
   }
@@ -113,8 +114,11 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
   }
 
   companion object {
-    @JvmField val USAGES = RefactoringBundle.message("suggested.refactoring.usages")
-    @JvmField val OVERRIDES = RefactoringBundle.message("suggested.refactoring.overrides")
-    @JvmField val IMPLEMENTATIONS = RefactoringBundle.message("suggested.refactoring.implementations")
+    @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.usages\") explicitly")
+    @JvmField val USAGES: @Nls String = RefactoringBundle.message("suggested.refactoring.usages")
+    @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.overrides\") explicitly")
+    @JvmField val OVERRIDES: @Nls String = RefactoringBundle.message("suggested.refactoring.overrides")
+    @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.implementations\") explicitly")
+    @JvmField val IMPLEMENTATIONS: @Nls String = RefactoringBundle.message("suggested.refactoring.implementations")
   }
 }

@@ -110,6 +110,9 @@ public class GrSyntheticTypeElement extends LightElement implements PsiTypeEleme
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitTypeElement(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
@@ -120,5 +123,10 @@ public class GrSyntheticTypeElement extends LightElement implements PsiTypeEleme
         PsiImplUtil.getOrCreateTypeElement((GrTypeElement)child).accept(visitor);
       }
     }
+  }
+
+  @Override
+  public boolean acceptsAnnotations() {
+    return false;
   }
 }

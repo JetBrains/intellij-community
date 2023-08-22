@@ -1,20 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class SubstitutedFileType extends LanguageFileType{
-  @NotNull private final FileType myOriginalFileType;
-  @NotNull private final FileType myFileType;
+public final class SubstitutedFileType extends LanguageFileType {
+  private final @NotNull FileType myOriginalFileType;
+  private final @NotNull FileType myFileType;
 
   private SubstitutedFileType(@NotNull FileType originalFileType,
                               @NotNull LanguageFileType substitutionFileType,
@@ -24,38 +24,34 @@ public class SubstitutedFileType extends LanguageFileType{
     myFileType = substitutionFileType;
   }
 
-  @NotNull
-  public static FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, @Nullable Project project) {
+  public static @NotNull FileType substituteFileType(@NotNull VirtualFile file, @NotNull FileType fileType, @Nullable Project project) {
     if (project == null) {
       return fileType;
     }
     if (fileType instanceof LanguageFileType) {
-      final Language language = ((LanguageFileType)fileType).getLanguage();
-      final Language substitutedLanguage = LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
-      LanguageFileType substFileType;
-      if (!substitutedLanguage.equals(language) && (substFileType = substitutedLanguage.getAssociatedFileType()) != null) {
-        return new SubstitutedFileType(fileType, substFileType, substitutedLanguage);
+      Language substLang = LanguageUtil.getLanguageForPsi(project, file, fileType);
+      LanguageFileType substFileType = substLang != null && substLang != ((LanguageFileType)fileType).getLanguage() ?
+                                       substLang.getAssociatedFileType() : null;
+      if (substFileType != null) {
+        return new SubstitutedFileType(fileType, substFileType, substLang);
       }
     }
 
     return fileType;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myFileType.getName();
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return myFileType.getDescription();
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return myFileType.getDefaultExtension();
   }
 
@@ -69,13 +65,11 @@ public class SubstitutedFileType extends LanguageFileType{
     return myFileType.getCharset(file, content);
   }
 
-  @NotNull
-  public FileType getOriginalFileType() {
+  public @NotNull FileType getOriginalFileType() {
     return myOriginalFileType;
   }
 
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return myFileType;
   }
 
@@ -86,5 +80,25 @@ public class SubstitutedFileType extends LanguageFileType{
   @Override
   public String toString() {
     return "SubstitutedFileType: original="+myOriginalFileType+"; substituted="+myFileType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SubstitutedFileType type = (SubstitutedFileType)o;
+
+    if (!myOriginalFileType.equals(type.myOriginalFileType)) return false;
+    if (!myFileType.equals(type.myFileType)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myOriginalFileType.hashCode();
+    result = 31 * result + myFileType.hashCode();
+    return result;
   }
 }

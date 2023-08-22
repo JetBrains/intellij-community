@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
@@ -7,8 +7,9 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -17,21 +18,22 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "PostfixTemplates", storages = @Storage("postfixTemplates.xml"))
-public class PostfixTemplateStorage extends SimpleModificationTracker implements PersistentStateComponent<Element> {
-  private static final String TEMPLATE_TAG = "template";
-  private static final String PROVIDER_ATTR_NAME = "provider";
-  private static final String ID_ATTR_NAME = "id";
-  private static final String KEY_ATTR_NAME = "key";
-  private static final String BUILTIN_ATTR_NAME = "builtin";
+@State(name = "PostfixTemplates", storages = @Storage("postfixTemplates.xml"), category = SettingsCategory.CODE)
+public final class PostfixTemplateStorage extends SimpleModificationTracker implements PersistentStateComponent<Element> {
+  private static final @NonNls String TEMPLATE_TAG = "template";
+  private static final @NonNls String PROVIDER_ATTR_NAME = "provider";
+  private static final @NonNls String ID_ATTR_NAME = "id";
+  private static final @NonNls String KEY_ATTR_NAME = "key";
+  private static final @NonNls String BUILTIN_ATTR_NAME = "builtin";
 
   private final Map<String, PostfixTemplateProvider> myTemplateProviders;
-  private final MultiMap<String, PostfixTemplate> myTemplates = MultiMap.createSmart();
+  private final MultiMap<String, PostfixTemplate> myTemplates = new MultiMap<>();
   private final List<Element> myUnloadedTemplates = new SmartList<>();
 
   public PostfixTemplateStorage() {
@@ -46,7 +48,7 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
 
   @NotNull
   public static PostfixTemplateStorage getInstance() {
-    return ServiceManager.getService(PostfixTemplateStorage.class);
+    return ApplicationManager.getApplication().getService(PostfixTemplateStorage.class);
   }
 
   @NotNull
@@ -95,7 +97,7 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
   }
 
   @Nullable
-  private static PostfixTemplate findBuiltinTemplate(@Nullable String id, @NotNull PostfixTemplateProvider provider) {
+  private static PostfixTemplate findBuiltinTemplate(@Nullable @NonNls String id, @NotNull PostfixTemplateProvider provider) {
     return ContainerUtil.find(provider.getTemplates(), p -> p.getId().equals(id));
   }
 
@@ -109,8 +111,7 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
       for (PostfixTemplate template : entry.getValue()) {
         PostfixTemplateProvider provider = template.getProvider();
         if (provider != null) {
-          if (template instanceof PostfixChangedBuiltinTemplate) {
-            PostfixChangedBuiltinTemplate changedBuiltinTemplate = (PostfixChangedBuiltinTemplate)template;
+          if (template instanceof PostfixChangedBuiltinTemplate changedBuiltinTemplate) {
             String builtin = changedBuiltinTemplate.getBuiltinTemplate().getId();
             element.addContent(writeTemplate(changedBuiltinTemplate.getDelegate(), provider, builtin));
           }

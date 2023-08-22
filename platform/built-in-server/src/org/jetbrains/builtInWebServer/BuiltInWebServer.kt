@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.builtInWebServer
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.net.InetAddresses
+import com.intellij.ide.SpecialConfigFiles.USER_WEB_TOKEN
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
@@ -11,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -21,8 +24,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.*
+import com.intellij.util.io.DigestUtil.randomToken
 import com.intellij.util.net.NetUtils
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -33,29 +38,29 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder
 import org.jetbrains.ide.BuiltInServerBundle
 import org.jetbrains.ide.BuiltInServerManagerImpl
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.io.orInSafeMode
+import org.jetbrains.ide.orInSafeMode
 import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
-import java.math.BigInteger
 import java.net.InetAddress
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 internal val LOG = logger<BuiltInWebServer>()
 
-// name is duplicated in the ConfigImportHelper
-private const val IDE_TOKEN_FILE = "user.web.token"
-
 private val notificationManager by lazy {
-  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION, null)
+  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP, NotificationType.INFORMATION)
 }
+
+private val WEB_SERVER_PATH_HANDLER_EP_NAME = ExtensionPointName.create<WebServerPathHandler>("org.jetbrains.webServerPathHandler")
 
 class BuiltInWebServer : HttpRequestHandler() {
   override fun isAccessible(request: HttpRequest): Boolean {
@@ -66,7 +71,7 @@ class BuiltInWebServer : HttpRequestHandler() {
   override fun isSupported(request: FullHttpRequest): Boolean = super.isSupported(request) || request.method() == HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
-    var hostName = request.hostName ?: return false
+    var hostName = getHostName(request) ?: return false
     val projectName: String?
     val isIpv6 = hostName[0] == '[' && hostName.length > 2 && hostName[hostName.length - 1] == ']'
     if (isIpv6) {
@@ -100,7 +105,7 @@ const val TOKEN_HEADER_NAME = "x-ijt"
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
   val configPath = PathManager.getConfigPath()
-  val file = Paths.get(configPath, IDE_TOKEN_FILE)
+  val file = Path.of(configPath, USER_WEB_TOKEN)
   var token: String? = null
   if (file.exists()) {
     try {
@@ -127,7 +132,7 @@ private val STANDARD_COOKIE by lazy {
 }
 
 // expire after access because we reuse tokens
-private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
+private val tokens = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
 fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
@@ -136,11 +141,6 @@ fun acquireToken(): String {
     tokens.put(token, java.lang.Boolean.TRUE)
   }
   return token
-}
-
-// http://stackoverflow.com/a/41156 - shorter than UUID, but secure
-private fun randomToken(): String {
-  return BigInteger(130, DigestUtil.random).toString(32)
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
@@ -161,7 +161,27 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
     isEmptyPath = offset == -1
   }
 
+  val referer = request.headers().get(HttpHeaderNames.REFERER)
+  val projectNameFromReferer =
+    if (!isCustomHost && referer != null) {
+      try {
+        val uri = URI.create(referer)
+        val refererPath = uri.path
+        if (refererPath != null && refererPath.startsWith('/')) {
+          val secondSlashOffset = refererPath.indexOf('/', 1)
+          if (secondSlashOffset > 1) refererPath.substring(1, secondSlashOffset)
+          else null
+        }
+        else null
+      }
+      catch (t: Throwable) {
+        null
+      }
+    }
+    else null
+
   var candidateByDirectoryName: Project? = null
+  var isCandidateFromReferer = false
   val project = ProjectManager.getInstance().openProjects.firstOrNull(fun(project: Project): Boolean {
     if (project.isDisposed) {
       return false
@@ -194,12 +214,24 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
     if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, project)) {
       candidateByDirectoryName = project
     }
+    if (candidateByDirectoryName == null &&
+        projectNameFromReferer != null &&
+        (projectNameFromReferer == name || compareNameAndProjectBasePath(projectNameFromReferer, project))) {
+      candidateByDirectoryName = project
+      isCandidateFromReferer = true
+    }
     return false
-  }) ?: candidateByDirectoryName ?: return false
+  }) ?: candidateByDirectoryName
 
   if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify(BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), null)
+    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project) { }
     return false
+  }
+
+  if (isCandidateFromReferer) {
+    projectName = projectNameFromReferer!!
+    offset = 0
+    isEmptyPath = false
   }
 
   if (isEmptyPath) {
@@ -214,7 +246,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
     return true
   }
 
-  for (pathHandler in WebServerPathHandler.EP_NAME.extensionList) {
+  for (pathHandler in WEB_SERVER_PATH_HANDLER_EP_NAME.extensionList) {
     LOG.runAndLogException {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
         return true
@@ -234,9 +266,11 @@ fun HttpRequest.isSignedRequest(): Boolean {
       ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
       ?: referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
 
-  // we don't invalidate token - allow to make subsequent requests using it (it is required for our javadoc DocumentationComponent)
+  // we don't invalidate token - allow making subsequent requests using it (it is required for our javadoc DocumentationComponent)
   return token != null && tokens.getIfPresent(token) != null
 }
+
+private val KNOWN_ICON_PATHS = listOf("favicon.ico", "apple-touch-icon.png", "apple-touch-icon-precomposed.png")
 
 fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
   if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
@@ -259,16 +293,17 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
   }
 
   val urlDecoder = QueryStringDecoder(request.uri())
-  if (!urlDecoder.path().endsWith("/favicon.ico")) {
+  if (KNOWN_ICON_PATHS.none { urlDecoder.path().endsWith("/$it") || !urlDecoder.path().endsWith("/$it/") }) {
     val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
     SwingUtilities.invokeAndWait {
       ProjectUtil.focusProjectWindow(null, true)
 
       if (MessageDialogBuilder
-          .yesNo("", BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50)))
+          // escape - see https://youtrack.jetbrains.com/issue/IDEA-287428
+          .yesNo("", Strings.escapeXmlEntities(BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50))))
           .icon(Messages.getWarningIcon())
           .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
-          .show() == Messages.YES) {
+          .guessWindowAndAsk()) {
         CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
       }
     }
@@ -294,7 +329,7 @@ fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolea
 
 fun findIndexFile(basedir: VirtualFile): VirtualFile? {
   val children = basedir.children
-  if (children == null || children.isEmpty()) {
+  if (children.isNullOrEmpty()) {
     return null
   }
 

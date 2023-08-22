@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.ui.Gray;
@@ -14,9 +14,6 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-/**
- * @author spleaner
- */
 public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonUI {
   private static final JBValue FONT_SIZE = new JBValue.Float(11.0f);
   private static final JBValue BW = new JBValue.Float(1);
@@ -78,22 +75,21 @@ public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonU
     super.paint(g, c);
   }
 
-  @Nullable
-  protected Color getUnfocusedBorderColor(@NotNull B button) { return null; }
+  protected @Nullable Color getUnfocusedBorderColor(@NotNull B button) { return null; }
 
   protected Color getFocusColor(@NotNull B button) {
     return Gray._100;
   }
 
-  protected Color getSelectionColor(@NotNull final B button) {
+  protected Color getSelectionColor(final @NotNull B button) {
     return JBColor.GRAY;
   }
 
-  protected Color getRolloverColor(@NotNull final B button) {
+  protected Color getRolloverColor(final @NotNull B button) {
     return JBColor.LIGHT_GRAY;
   }
 
-  protected Color getBackgroundColor(@NotNull final B button) {
+  protected Color getBackgroundColor(final @NotNull B button) {
     return null;
   }
 

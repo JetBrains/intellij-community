@@ -34,8 +34,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
 
     final SearchRequestCollector collector = parameters.getOptimizer();
     final SearchSession session = collector.getSearchSession();
-    if (target instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)target;
+    if (target instanceof PsiMethod method) {
       if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
         final PsiField field = GroovyPropertyUtils.findFieldForAccessor(method, true);
         if (field != null) {
@@ -87,8 +86,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
 
     @Nullable
     private static String getAlias(final PsiElement element) {
-      if (!(element.getParent() instanceof GrImportStatement)) return null;
-      final GrImportStatement importStatement = (GrImportStatement)element.getParent();
+      if (!(element.getParent() instanceof GrImportStatement importStatement)) return null;
       if (!importStatement.isAliasedImport()) return null;
       return importStatement.getImportedName();
     }

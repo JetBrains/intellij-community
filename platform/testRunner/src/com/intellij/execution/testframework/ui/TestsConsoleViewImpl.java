@@ -36,7 +36,7 @@ class TestsConsoleViewImpl extends ConsoleViewImpl {
           new ConsoleState.NotStartedStated() {
             @NotNull
             @Override
-            public ConsoleState attachTo(@NotNull ConsoleViewImpl console, ProcessHandler processHandler) {
+            public ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
               return new ConsoleViewRunningState(console, processHandler, this, false, !viewer);
             }
           },

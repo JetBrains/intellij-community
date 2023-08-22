@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
@@ -34,13 +19,11 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PlatformPatterns.psiFile;
 import static com.intellij.patterns.StandardPatterns.instanceOf;
 
-/**
- * @author yole
- */
-public class CustomFileTypeCompletionContributor extends CompletionContributor implements DumbAware {
+
+public final class CustomFileTypeCompletionContributor extends CompletionContributor implements DumbAware {
   public CustomFileTypeCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inFile(psiFile().withFileType(instanceOf(CustomSyntaxTableFileType.class))),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -66,14 +49,14 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor i
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords2());
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords3());
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords4());
-               
+
                WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, Collections.emptySet());
              }
            });
   }
 
   private static boolean inCommentOrLiteral(CompletionParameters parameters) {
-    HighlighterIterator iterator = ((EditorEx)parameters.getEditor()).getHighlighter().createIterator(parameters.getOffset());
+    HighlighterIterator iterator = parameters.getEditor().getHighlighter().createIterator(parameters.getOffset());
     if (iterator.atEnd()) return false;
 
     IElementType elementType = iterator.getTokenType();

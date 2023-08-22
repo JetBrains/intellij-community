@@ -38,7 +38,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * @see PsiBinaryFile
    * @see #isEventSystemEnabled()
    */
-  @Nullable
   Document getDocument();
 
   /**
@@ -73,8 +72,8 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   Set<Language> getLanguages();
 
   /**
-   * Check if given language is supported.
-   * Implementations may provide more effective way to check without getting all languages.
+   * Check if the given language is supported.
+   * Implementations may provide a more effective way to check without getting all languages.
    */
   default boolean hasLanguage(@NotNull Language language) {
     return getLanguages().contains(language);
@@ -87,8 +86,8 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
 
   /**
    * @return all PSI files for this view provider. In most cases, just one main file. For multi-root languages, several files. The files' languages
-   * should be the same as {@link #getLanguages()}. The main file which corresponds to {@link #getBaseLanguage()}, should be the first one. Otherwise
-   * the order is non-deterministic and should not be relied upon.
+   * should be the same as {@link #getLanguages()}. The main file which corresponds to {@link #getBaseLanguage()}, should be the first one.
+   * Otherwise, the order is non-deterministic and should not be relied upon.
    */
   @NotNull
   List<PsiFile> getAllFiles();
@@ -208,7 +207,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
   FileViewProvider createCopy(@NotNull VirtualFile copy);
 
   /**
-   * @return the PSI root for which stubs are to be built if supported. By default it's the main root.
+   * @return the PSI root for which stubs are to be built if supported. By default, it's the main root.
    * @see #getBaseLanguage()
    */
   @NotNull

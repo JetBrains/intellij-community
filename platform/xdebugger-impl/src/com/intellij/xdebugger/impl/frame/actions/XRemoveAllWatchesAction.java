@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.frame.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -24,6 +25,11 @@ public class XRemoveAllWatchesAction extends XWatchesTreeActionBase {
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
     return tree.getRoot().getChildCount() > 0;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

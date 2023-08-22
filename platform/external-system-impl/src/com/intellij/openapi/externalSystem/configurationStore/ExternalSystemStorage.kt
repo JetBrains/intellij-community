@@ -13,11 +13,11 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 
 internal class ExternalModuleStorage(private val module: Module,
                                      storageManager: StateStorageManager) : XmlElementStorage(StoragePathMacros.MODULE_FILE, "module", storageManager.macroSubstitutor, RoamingType.DISABLED) {
-  private val manager = StreamProviderFactory.EP_NAME.getExtensionList(module.project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+  private val manager = StreamProviderFactory.EP_NAME.getExtensions(module.project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
 
   override fun loadLocalData() = manager.readModuleData(module.name)
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalModuleStorage>(states, this) {
+  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalModuleStorage>(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       manager.moduleStorage.write(module.name, dataWriter)
     }
@@ -31,14 +31,18 @@ internal open class ExternalProjectStorage @JvmOverloads constructor(fileSpec: S
                                                                                                                                                                                                 rootElementName,
                                                                                                                                                                                                 storageManager.macroSubstitutor,
                                                                                                                                                                                                 RoamingType.DISABLED) {
-  protected val manager = StreamProviderFactory.EP_NAME.getExtensionList(project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+  protected val manager = StreamProviderFactory.EP_NAME.getExtensions(project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
 
   override fun loadLocalData() = manager.fileStorage.read(fileSpec)
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
+  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalProjectStorage>(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       manager.fileStorage.write(fileSpec, dataWriter)
     }
+  }
+
+  override fun toString(): String {
+    return "ExternalProjectStorage(fileSpec=$fileSpec)"
   }
 }
 
@@ -59,7 +63,7 @@ internal class ExternalProjectFilteringStorage(fileSpec: String,
     return JDOMUtil.merge(externalData, internalData)
   }
 
-  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
+  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<ExternalProjectStorage>(states, this) {
     override fun saveLocally(dataWriter: DataWriter?) {
       manager.fileStorage.write(fileSpec, dataWriter, filter)
     }

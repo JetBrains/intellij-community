@@ -1,32 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import static com.intellij.openapi.util.NotNullLazyValue.atomicLazy;
+import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
 public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiField, PsiVariableEx, ClsModifierListOwner {
   private final NotNullLazyValue<PsiTypeElement> myTypeElement;
@@ -34,25 +33,12 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   public ClsFieldImpl(@NotNull PsiFieldStub stub) {
     super(stub);
-    myTypeElement = new AtomicNotNullLazyValue<PsiTypeElement>() {
-      @NotNull
-      @Override
-      protected PsiTypeElement compute() {
-        PsiFieldStub stub = getStub();
-        String typeText = TypeInfo.createTypeText(stub.getType(false));
-        assert typeText != null : stub;
-        return new ClsTypeElementImpl(ClsFieldImpl.this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-      }
-    };
-    myInitializer = new VolatileNullableLazyValue<PsiExpression>() {
-      @Nullable
-      @Override
-      protected PsiExpression compute() {
+    myTypeElement = atomicLazy(() -> new ClsTypeElementImpl(this, getStub().getType()));
+    myInitializer = volatileLazyNullable(() -> {
         String initializerText = getStub().getInitializerText();
         return initializerText != null && !Objects.equals(PsiFieldStub.INITIALIZER_TOO_LONG, initializerText) ?
-               ClsParsingUtil.createExpressionFromText(initializerText, getManager(), ClsFieldImpl.this) : null;
-      }
-    };
+               ClsParsingUtil.createExpressionFromText(initializerText, getManager(), this) : null;
+    });
   }
 
   @Override
@@ -66,8 +52,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return Objects.requireNonNull(getTypeElement()).getType();
   }
 
@@ -98,15 +83,14 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   public Object computeConstantValue() {
-    return computeConstantValue(new THashSet<>());
+    return computeConstantValue(new HashSet<>());
   }
 
   @Override
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
-    if (!hasModifierProperty(PsiModifier.FINAL)) return null;
-
-    PsiExpression initializer = getInitializer();
-    if (initializer == null) return null;
+    if (!hasModifierProperty(PsiModifier.FINAL)) {
+      return null;
+    }
 
     PsiClass containingClass = getContainingClass();
     if (containingClass != null) {
@@ -123,6 +107,43 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
         if ("NEGATIVE_INFINITY".equals(name)) return Double.NEGATIVE_INFINITY;
         if ("NaN".equals(name)) return Double.NaN;
       }
+      // Wrapper classes have a TYPE field holding the Class object of the primitive type
+      if (qName != null && "TYPE".equals(getName())) {
+        switch (qName) {
+          case "java.lang.Byte": {
+            return PsiTypes.byteType();
+          }
+          case "java.lang.Character": {
+            return PsiTypes.charType();
+          }
+          case "java.lang.Double": {
+            return PsiTypes.doubleType();
+          }
+          case "java.lang.Float": {
+            return PsiTypes.floatType();
+          }
+          case "java.lang.Integer": {
+            return PsiTypes.intType();
+          }
+          case "java.lang.Long": {
+            return PsiTypes.longType();
+          }
+          case "java.lang.Short": {
+            return PsiTypes.shortType();
+          }
+          case "java.lang.Boolean": {
+            return PsiTypes.booleanType();
+          }
+          case "java.lang.Void": {
+            return PsiTypes.voidType();
+          }
+        }
+      }
+    }
+
+    PsiExpression initializer = getInitializer();
+    if (initializer == null) {
+      return null;
     }
 
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, getType(), visitedVars);
@@ -174,8 +195,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
         PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
@@ -208,8 +228,9 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
 
   @Override
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon baseIcon =
+      iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Field), ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
@@ -219,8 +240,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
 

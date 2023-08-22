@@ -1,12 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.ide.FileSelectInContext;
+import com.intellij.ide.SelectInManager;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -15,9 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * @author yole
- */
+
 public class PsiNavigationSupportImpl extends PsiNavigationSupport {
   @Nullable
   @Override
@@ -38,7 +41,13 @@ public class PsiNavigationSupportImpl extends PsiNavigationSupport {
 
   @Override
   public void navigateToDirectory(@NotNull PsiDirectory psiDirectory, boolean requestFocus) {
-    ProjectViewSelectInTarget.select(psiDirectory.getProject(), this, ProjectViewPane.ID, null, psiDirectory.getVirtualFile(), requestFocus);
+    if (Registry.is("ide.navigate.to.directory.into.project.pane")) {
+      ProjectViewSelectInTarget.select(psiDirectory.getProject(), this, ProjectViewPane.ID, null, psiDirectory.getVirtualFile(), requestFocus);
+    }
+    else {
+      SelectInTarget target = SelectInManager.findSelectInTarget(ToolWindowId.PROJECT_VIEW, psiDirectory.getProject());
+      if (target != null) target.selectIn(new FileSelectInContext(psiDirectory), requestFocus);
+    }
   }
 
   @Override

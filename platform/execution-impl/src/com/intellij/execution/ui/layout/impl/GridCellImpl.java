@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
 import com.intellij.execution.ui.layout.actions.CloseViewAction;
 import com.intellij.execution.ui.layout.actions.MinimizeViewAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -19,8 +20,6 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -178,8 +177,7 @@ public final class GridCellImpl implements GridCell {
     return tabInfo;
   }
 
-  @Nullable
-  private static TabInfo updatePresentation(TabInfo info, Content content) {
+  private static @Nullable TabInfo updatePresentation(TabInfo info, Content content) {
     if (info == null) {
       return null;
     }
@@ -189,7 +187,8 @@ public final class GridCellImpl implements GridCell {
       setText(content.getDisplayName()).
       setTooltipText(content.getDescription()).
       setActionsContextComponent(content.getActionsContextComponent()).
-      setActions(content.getActions(), content.getPlace());
+      setActions(content.getActions(), content.getPlace()).
+      setTabColor(content.getTabColor());
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
@@ -226,7 +225,7 @@ public final class GridCellImpl implements GridCell {
     return myTabs.getComponent().isAncestorOf(c);
   }
 
-  private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {
+  private static final class ProviderWrapper extends NonOpaquePanel implements DataProvider {
     Content myContent;
     ViewContext myContext;
 
@@ -238,8 +237,7 @@ public final class GridCellImpl implements GridCell {
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls final String dataId) {
+    public @Nullable Object getData(final @NotNull @NonNls String dataId) {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
         return new Content[]{myContent};
       }
@@ -255,8 +253,7 @@ public final class GridCellImpl implements GridCell {
     return myContents.getValue(content);
   }
 
-  @NotNull
-  private Content getContentFor(TabInfo tab) {
+  private @NotNull Content getContentFor(TabInfo tab) {
     return myContents.getKey(tab);
   }
 
@@ -328,7 +325,7 @@ public final class GridCellImpl implements GridCell {
     service.setSize(getDimensionKey(), size, myContext.getProject());
     if (myContext.getWindow() != 0) {
       final Window frame = SwingUtilities.getWindowAncestor(myPlaceholder);
-      if (frame != null) {
+      if (frame != null && frame.isShowing()) {
         service.setLocation(getDimensionKey(), frame.getLocationOnScreen());
       }
     }
@@ -398,13 +395,11 @@ public final class GridCellImpl implements GridCell {
     }
   }
 
-  @Nullable
-  public Point getLocation() {
+  public @Nullable Point getLocation() {
     return DimensionService.getInstance().getLocation(getDimensionKey(), myContext.getProject());
   }
 
-  @Nullable
-  public Dimension getSize() {
+  public @Nullable Dimension getSize() {
     return DimensionService.getInstance().getSize(getDimensionKey(), myContext.getProject());
   }
 
@@ -438,11 +433,11 @@ public final class GridCellImpl implements GridCell {
     myMinimizedContents.remove(content);
   }
 
-  private static class GridCellTabs extends SingleHeightTabs {
+  private static final class GridCellTabs extends SingleHeightTabs {
     private final ViewContextEx myContext;
 
     @Override
-    protected TabPainterAdapter createTabPainterAdapter() {
+    protected @NotNull TabPainterAdapter createTabPainterAdapter() {
       return new DefaultTabPainterAdapter(JBTabPainter.getDEBUGGER());
     }
 
@@ -455,39 +450,39 @@ public final class GridCellImpl implements GridCell {
     }
 
     @Override
+    protected @NotNull DragHelper createDragHelper(@NotNull JBTabsImpl tabs,
+                                                   @NotNull Disposable parentDisposable) {
+      return new DragHelper(tabs, parentDisposable) {
+        @Override
+        protected boolean canFinishDragging(@NotNull MouseEvent me) {
+          return true;
+        }
+      };
+    }
+
+    @Override
     public boolean useSmallLabels() {
       return true;
     }
 
     @Override
-    protected SingleRowLayout createSingleRowLayout() {
-      return new ScrollableSingleRowLayout(this);
-    }
-
-    @Override
-    public int tabMSize() {
-      return 12;
-    }
-
-    @Override
-    public void processDropOver(TabInfo over, RelativePoint point) {
+    public void processDropOver(@NotNull TabInfo over, @NotNull RelativePoint point) {
       ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
     }
 
     @Override
-    public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
+    public @NotNull Image startDropOver(@NotNull TabInfo tabInfo, @NotNull RelativePoint point) {
       return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
     }
 
     @Override
-    public void resetDropOver(TabInfo tabInfo) {
+    public void resetDropOver(@NotNull TabInfo tabInfo) {
       ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
     }
 
-    @NotNull
     @Override
-    protected TabLabel createTabLabel(@NotNull TabInfo info) {
-      return new SingleHeightTabs.SingleHeightLabel(this, info) {
+    protected @NotNull TabLabel createTabLabel(@NotNull TabInfo info) {
+      return new SingleHeightLabel(this, info) {
         @Override
         public void setAlignmentToCenter(boolean toCenter) {
           super.setAlignmentToCenter(false);

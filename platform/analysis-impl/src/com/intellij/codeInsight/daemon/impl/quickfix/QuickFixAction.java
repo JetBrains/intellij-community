@@ -6,54 +6,63 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * @author Alexey Kudravtsev
+ * utility class helping to register quick fixes with {@link HighlightInfo}
  */
 public final class QuickFixAction {
   private QuickFixAction() { }
 
-  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action, @Nullable HighlightDisplayKey key) {
-    registerQuickFixAction(info, null, action, key);
-  }
-
-  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action) {
-    registerQuickFixAction(info, null, action);
-  }
-
-  /** @deprecated This is used by TeamCity plugin */
+  /**
+   * @deprecated use {@link HighlightInfo.Builder#registerFix(IntentionAction, List, String, TextRange, HighlightDisplayKey)} instead
+   */
   @Deprecated
+  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable IntentionAction action) {
+    if (info != null) {
+      info.registerFix(action, null, null, null, null);
+    }
+  }
+
+  /**
+   * @deprecated use {@link HighlightInfo.Builder#registerFix(IntentionAction, List, String, TextRange, HighlightDisplayKey)} instead
+   */
+  @Deprecated(forRemoval = true)
   public static void registerQuickFixAction(@Nullable HighlightInfo info,
                                             @Nullable IntentionAction action,
-                                            @Nullable List<IntentionAction> options,
-                                            @Nullable String displayName) {
-    if (info == null) return;
-    info.registerFix(action, options, displayName, null, null);
+                                            @Nullable List<? extends IntentionAction> options,
+                                            @Nullable @Nls String displayName) {
+    if (info != null) {
+      info.registerFix(action, options, displayName, null, null);
+    }
   }
 
 
-  public static void registerQuickFixAction(@Nullable HighlightInfo info,
-                                            @Nullable TextRange fixRange,
-                                            @Nullable IntentionAction action,
-                                            @Nullable final HighlightDisplayKey key) {
-    if (info == null) return;
-    info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
+  public static void registerQuickFixActions(@Nullable HighlightInfo.Builder builder,
+                                             @Nullable TextRange fixRange,
+                                             @NotNull Iterable<? extends IntentionAction> actions) {
+    if (builder != null) {
+      for (IntentionAction action : actions) {
+        builder.registerFix(action, null, null, fixRange, null);
+      }
+    }
   }
 
-  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable TextRange fixRange, @Nullable IntentionAction action) {
-    if (info == null) return;
-    info.registerFix(action, null, null, fixRange, null);
-  }
-
+  /**
+   * @deprecated use {@link HighlightInfo.Builder#registerFix(IntentionAction, List, String, TextRange, HighlightDisplayKey)} instead
+   */
+  @Deprecated
   public static void registerQuickFixActions(@Nullable HighlightInfo info,
                                              @Nullable TextRange fixRange,
                                              @NotNull Iterable<? extends IntentionAction> actions) {
-    for (IntentionAction action : actions) {
-      registerQuickFixAction(info, fixRange, action);
+    if (info != null) {
+      for (IntentionAction action : actions) {
+        info.registerFix(action, null, null, fixRange, null);
+      }
     }
   }
 }

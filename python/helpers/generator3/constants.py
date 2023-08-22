@@ -213,8 +213,6 @@ DOC_FUNC_RE = re.compile(r"(?:.*\.)?(\w+)\(([^\)]*)\).*") # $1 = function name, 
 
 SANE_REPR_RE = re.compile(IDENT_PATTERN + r"(?:\(.*\))?") # identifier with possible (...), go catches
 
-IDENT_RE = re.compile("(" + IDENT_PATTERN + ")") # $1 = identifier
-
 STARS_IDENT_RE = re.compile(r"(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, maybe with a * or **
 
 IDENT_EQ_RE = re.compile("(" + IDENT_PATTERN + r"\s*=)") # $1 = identifier with a following '='
@@ -230,6 +228,12 @@ SIMPLE_VALUE_RE = re.compile(
     r"(True|False|None)"
 ) # $? = sane default value
 
+if version[0] < 3:
+    _PYTHON2_IDENT_RE = re.compile(IDENT_PATTERN + "$")
+
+    is_identifier = _PYTHON2_IDENT_RE.match
+else:
+    is_identifier = str.isidentifier
 
 # Some values are known to be of no use in source and needs to be suppressed.
 # Dict is keyed by module names, with "*" meaning "any module";

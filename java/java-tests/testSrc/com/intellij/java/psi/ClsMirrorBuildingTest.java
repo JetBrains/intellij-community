@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -18,7 +17,6 @@ import com.intellij.psi.impl.compiled.InnerClassSourceStrategy;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
@@ -50,10 +48,19 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testLocalClass() { doTest(); }
   public void testBounds() { doTest(); }
   public void testGroovy() { doTest(); }
+  public void testGroovyBaseObject() { doTest(); }
   public void testGrEnum() { doTest(); }
   public void testGrTrait() { doTest(); }
   public void testSuspiciousParameterNames() { doTest(); }
+  public void testTimeUnit() { doTest(); }
   public void testTypeAnnotations() { doTest(); }
+  public void testTypeAnno() { doTest(); }
+  public void testExtendsObjectAnnotated() { doTest(); }
+  public void testRecordTest() { doTest(); }
+  public void testRecordTestCustomHash() { doTest(); }
+  public void testInheritFromDollar() { doTest(); }
+  public void testInheritFromDollar$1() { doTest(); }
+  public void testSealed() { doTest(); }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options = CodeStyle.getSettings(getProject()).getIndentOptions(JavaFileType.INSTANCE);
@@ -82,7 +89,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     VirtualFile file = StandardFileSystems.jar().findFileByPath(path);
     assertNotNull(path, file);
 
-    InnerClassSourceStrategy<VirtualFile> strategy = new InnerClassSourceStrategy<VirtualFile>() {
+    InnerClassSourceStrategy<VirtualFile> strategy = new InnerClassSourceStrategy<>() {
       @Override
       public VirtualFile findInnerClass(String innerName, VirtualFile outerClass) {
         String baseName = outerClass.getNameWithoutExtension();
@@ -98,7 +105,8 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
           byte[] bytes = innerClass.contentsToByteArray();
           new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
         }
-        catch (IOException ignored) { }
+        catch (IOException ignored) {
+        }
       }
     };
     PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("java.lang", true);
@@ -185,15 +193,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).refreshAndFindFileByPath(clsPath);
     assertNotNull(clsPath, file);
 
-    String expected;
-    try {
-      expected = StringUtil.trimTrailing(PlatformTestUtil.loadFileText(txtPath));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    assertEquals(expected, ClsFileImpl.decompile(file).toString());
+    assertSameLinesWithFile(txtPath, ClsFileImpl.decompile(file).toString());
   }
 
   private static boolean isInner(String name) throws IOException {

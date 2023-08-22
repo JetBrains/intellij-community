@@ -106,7 +106,9 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
       myRmicSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
     }
     finally {
-      BuildManager.getInstance().clearState(myProject);
+      if (!myProject.isDefault()) {
+        BuildManager.getInstance().clearState(myProject);
+      }
     }
   }
 

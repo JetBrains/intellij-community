@@ -16,17 +16,19 @@ package com.intellij.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaCompilerConfigurationProxy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class JavaCompilerConfiguration extends JavaCompilerConfigurationProxy {
   @Override
-  public List<String> getAdditionalOptionsImpl(Project project, Module module) {
+  @NotNull
+  public List<String> getAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module) {
     return CompilerConfiguration.getInstance(project).getAdditionalOptions(module);
   }
 
   @Override
-  public void setAdditionalOptionsImpl(Project project, Module module, List<String> options) {
+  public void setAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module, @NotNull List<String> options) {
     CompilerConfiguration.getInstance(project).setAdditionalOptions(module, options);
   }
 }

@@ -1,4 +1,4 @@
-// "Initialize in constructor" "true"
+// "Initialize in constructor" "true-preview"
 class Main {
   private final int var;
 
@@ -7,6 +7,6 @@ class Main {
   }
 
   private Main(int var) {
-      this.var = 0;
+      this.var = 0<caret>;
   }
-}<caret>
+}

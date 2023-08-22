@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -8,6 +8,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.theoryinpractice.testng.TestngBundle;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.DataProvider;
@@ -25,6 +27,10 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
 
   @Override
   public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (JavaPsiFacade.getInstance(aClass.getProject())
+          .findClass(TestNGUtil.TEST_ANNOTATION_FQN, aClass.getResolveScope()) == null) {
+      return null;
+    }
     final String dataProviderFqn = DataProvider.class.getCanonicalName();
 
     final MultiMap<String, PsiMethod> dataProvidersByName = new MultiMap<>();
@@ -49,14 +55,15 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
       if (entry.getValue().size() > 1) {
         for (PsiMethod method : entry.getValue()) {
           if (method.getContainingClass() != aClass) continue; //don't highlight methods in super class
-          final String description = String.format("Data provider with name '%s' already exists in context", entry.getKey());
+          final String description =
+            TestngBundle.message("inspection.message.data.provider.with.name.already.exists.in.context", entry.getKey());
           final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
           LOG.assertTrue(annotation != null);
           final PsiAnnotationMemberValue nameElement = annotation.findAttributeValue(NAME_ATTRIBUTE);
           LOG.assertTrue(nameElement != null);
           PsiElement problemElement = PsiTreeUtil.isAncestor(aClass, nameElement, false) ? nameElement : method.getNameIdentifier();
           LOG.assertTrue(problemElement != null);
-          descriptors.add(manager.createProblemDescriptor(problemElement, description, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.ERROR));
+          descriptors.add(manager.createProblemDescriptor(problemElement, description, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
     }

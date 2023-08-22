@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.INTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -108,14 +107,14 @@ class ProjectStatusTest {
     assertEquals(INTERNAL, status.getModificationType())
 
     status.markSynchronized(30) as Synchronized
-    assertEquals(null, status.getModificationType())
+    assertEquals(UNKNOWN, status.getModificationType())
     status.markModified(40, EXTERNAL) as Modified
     assertEquals(EXTERNAL, status.getModificationType())
     status.markModified(50, INTERNAL) as Modified
     assertEquals(INTERNAL, status.getModificationType())
 
     status.markSynchronized(60) as Synchronized
-    assertEquals(null, status.getModificationType())
+    assertEquals(UNKNOWN, status.getModificationType())
     status.markDirty(70, INTERNAL) as Dirty
     assertEquals(INTERNAL, status.getModificationType())
     status.markModified(80, EXTERNAL) as Dirty
@@ -124,7 +123,7 @@ class ProjectStatusTest {
     assertEquals(INTERNAL, status.getModificationType())
 
     status.markSynchronized(100) as Synchronized
-    assertEquals(null, status.getModificationType())
+    assertEquals(UNKNOWN, status.getModificationType())
     status.markDirty(110, EXTERNAL) as Dirty
     assertEquals(EXTERNAL, status.getModificationType())
     status.markModified(120, INTERNAL) as Dirty

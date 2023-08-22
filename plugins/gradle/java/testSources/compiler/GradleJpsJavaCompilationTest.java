@@ -12,13 +12,45 @@ public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
     ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);
     createProjectSubFile("src/intTest/java/DepTest.java", "class DepTest extends CommonTest {}");
     createProjectSubFile("src/test/java/CommonTest.java", "public class CommonTest {}");
-    importProject("apply plugin: 'java'\n" +
-                  "sourceSets {\n" +
-                  "  intTest {\n" +
-                  "     compileClasspath += main.output + test.output" +
-                  "  }\n" +
-                  "}");
+    importProject("""
+                    apply plugin: 'java'
+                    sourceSets {
+                      intTest {
+                         compileClasspath += main.output + test.output  }
+                    }""");
     compileModules("project.main", "project.test", "project.intTest");
+  }
+
+  @Test
+  public void testDifferentTargetCompatibilityForProjectAndModules() throws IOException {
+    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);
+    createProjectSubFile(
+      "src/main/java/Main.java",
+      """
+        public class Main {
+            public static void main(String[] args) {
+                run(() -> System.out.println("Hello Home!"));
+            }
+
+            public static void run(Runnable runnable) {
+                runnable.run();
+            }
+        }
+        """);
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .sourceCompatibility("7")
+        .targetCompatibility("7")
+        .withPrefix(it -> {
+          it.call("compileJava", it1 -> {
+            it1.assign("sourceCompatibility", "8");
+            it1.assign("targetCompatibility", "8");
+          });
+        })
+        .generate()
+    );
+    compileModules("project.main");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -16,15 +16,14 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
+public final class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   public RecentFilesSEContributor(@NotNull AnActionEvent event) {
     super(event);
@@ -62,11 +61,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
     String searchString = filterControlSymbols(pattern);
     boolean preferStartMatches = !searchString.startsWith("*");
-    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher("*" + searchString);
-    if (preferStartMatches) {
-      builder = builder.preferringStartMatches();
-    }
-    MinusculeMatcher matcher = builder.build();
+    MinusculeMatcher matcher = createMatcher(searchString, preferStartMatches);
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
@@ -75,31 +70,41 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
       () -> {
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        Stream<VirtualFile> stream = history.stream();
+        StreamEx<VirtualFile> stream = StreamEx.of(history);
         if (!StringUtil.isEmptyOrSpaces(searchString)) {
           stream = stream.filter(file -> matcher.matches(file.getName()));
         }
-        res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
-                     .distinct()
-                     .map(vf -> {
-                       PsiFile f = psiManager.findFile(vf);
-                       return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(vf.getName()));
-                     })
-                     .filter(file -> file != null)
-                     .collect(Collectors.toList())
-        );
+        stream.filter(vf -> !opened.contains(vf) && vf.isValid())
+          .distinct()
+          .map(vf -> {
+            PsiFile f = psiManager.findFile(vf);
+            String name = vf.getName();
+            return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
+          })
+          .nonNull()
+          .into(res);
 
         ContainerUtil.process(res, consumer);
       }, progressIndicator);
   }
 
-  @Override
-  public boolean isEmptyPatternSupported() {
-    return true;
+  private static MinusculeMatcher createMatcher(String searchString, boolean preferStartMatches) {
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher("*" + searchString);
+    if (preferStartMatches) {
+      builder = builder.preferringStartMatches();
+    }
+    return builder.build();
   }
 
   @Override
   public boolean isShownInSeparateTab() {
     return false;
+  }
+
+  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
+    @Override
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent));
+    }
   }
 }

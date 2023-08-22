@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
+import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -18,6 +20,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -25,7 +28,20 @@ import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
+import static git4idea.GitNotificationIdsHolder.INIT_FAILED;
+
 public class GitInit extends DumbAwareAction {
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project == null || project.isDefault() || TrustedProjects.isTrusted(project));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -35,8 +51,8 @@ public class GitInit extends DumbAwareAction {
     }
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
-    fcd.setTitle(GitBundle.getString("init.destination.directory.title"));
-    fcd.setDescription(GitBundle.getString("init.destination.directory.description"));
+    fcd.setTitle(GitBundle.message("init.destination.directory.title"));
+    fcd.setDescription(GitBundle.message("init.destination.directory.description"));
     fcd.setHideIgnored(false);
     VirtualFile baseDir = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (baseDir == null || !baseDir.isDirectory()) {
@@ -48,19 +64,20 @@ public class GitInit extends DumbAwareAction {
   private static void doInit(@NotNull Project project, @NotNull FileChooserDescriptor fcd, VirtualFile baseDir) {
     FileChooser.chooseFile(fcd, project, baseDir, root -> {
       if (GitUtil.isUnderGit(root) && Messages.showYesNoDialog(project,
-                                                               GitBundle.message("init.warning.already.under.git",
-                                                                                 StringUtil.escapeXmlEntities(root.getPresentableUrl())),
-                                                               GitBundle.getString("init.warning.title"),
+                                                               XmlStringUtil.wrapInHtml(
+                                                                 GitBundle.message("init.warning.already.under.git",
+                                                                                   StringUtil.escapeXmlEntities(root.getPresentableUrl()))),
+                                                               GitBundle.message("init.warning.title"),
                                                                Messages.getWarningIcon()) != Messages.YES) {
         return;
       }
 
-      new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
+      new Task.Backgroundable(project, GitBundle.message("common.refreshing")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitCommandResult result = Git.getInstance().init(project, root);
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString(), true);
+            VcsNotifier.getInstance(project).notifyError(INIT_FAILED, GitBundle.message("action.Git.Init.error"), result.getErrorOutputAsHtmlString(), true);
             return;
           }
 
@@ -79,5 +96,10 @@ public class GitInit extends DumbAwareAction {
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, GitVcs.NAME));
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(root);
+  }
+
+  public static void configureVcsMappings(@NotNull Project project, @NotNull VirtualFile root) {
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), root.getPath(), GitVcs.NAME));
   }
 }

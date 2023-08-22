@@ -69,6 +69,9 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @Nullable
   String getBuildSrcGroup();
 
+  @Nullable
+  String getBuildSrcGroup(IdeaModule module);
+
   @ApiStatus.Experimental
   void report(@NotNull MessageEvent.Kind kind, @NotNull BuildIssue buildIssue);
 }

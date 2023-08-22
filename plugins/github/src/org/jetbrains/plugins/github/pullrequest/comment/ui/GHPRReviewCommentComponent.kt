@@ -1,216 +1,178 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.CommonBundle
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
-import icons.GithubIcons
-import net.miginfocom.layout.AC
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
-import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.ui.InlineIconButton
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.GithubUIUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
-import java.awt.event.ActionListener
+import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
+import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
-import javax.swing.JEditorPane
-import javax.swing.JPanel
-import javax.swing.text.BadLocationException
-import javax.swing.text.Utilities
 
 object GHPRReviewCommentComponent {
 
-  fun create(reviewDataProvider: GHPRReviewDataProvider,
-             thread: GHPRReviewThreadModel, comment: GHPRReviewCommentModel,
-             avatarIconsProvider: GHAvatarIconsProvider): JComponent {
+  fun create(project: Project,
+             thread: GHPRReviewThreadModel,
+             comment: GHPRReviewCommentModel,
+             ghostUser: GHUser,
+             reviewDataProvider: GHPRReviewDataProvider,
+             htmlImageLoader: AsyncHtmlImageLoader,
+             avatarIconsProvider: GHAvatarIconsProvider,
+             suggestedChangeHelper: GHPRSuggestedChangeHelper,
+             type: CodeReviewChatItemUIUtil.ComponentType,
+             showResolvedMarker: Boolean = true,
+             maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH): JComponent {
 
-    val avatarLabel: LinkLabel<*> = LinkLabel.create("") {
-      comment.authorLinkUrl?.let { BrowserUtil.browse(it) }
+    val author = comment.author ?: ghostUser
+    val titlePane = GHPRTimelineItemUIUtil.createTitleTextPane(author, comment.dateCreated).apply {
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    }
+
+    val pendingLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.pending.tag"))
+    val resolvedLabel = CollaborationToolsUIUtil.createTagLabel(CollaborationToolsBundle.message("review.thread.resolved.tag"))
+
+    val commentWrapper = Wrapper().apply {
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+      isOpaque = false
+    }
+
+    val maxTextWidth = maxContentWidth - type.contentLeftShift
+
+    Controller(project,
+               thread, comment,
+               suggestedChangeHelper, htmlImageLoader,
+               pendingLabel, resolvedLabel, commentWrapper,
+               showResolvedMarker,
+               maxTextWidth)
+
+    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, maxTextWidth, comment::body) {
+      reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
+    }
+
+    val editButton = CodeReviewCommentUIUtil.createEditButton {
+      editablePaneHandle.showAndFocusEditor()
     }.apply {
-      icon = avatarIconsProvider.getIcon(comment.authorAvatarUrl)
-      isFocusable = true
-      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-    }
-
-    val titlePane = HtmlEditorPane().apply {
-      foreground = UIUtil.getContextHelpForeground()
-      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-    }
-    val pendingLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.pending")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = JBUI.CurrentTheme.Validator.warningBackgroundColor()
-    }.andOpaque()
-    val resolvedLabel = JBLabel(" ${GithubBundle.message("pull.request.review.comment.resolved")} ", UIUtil.ComponentStyle.SMALL).apply {
-      foreground = UIUtil.getContextHelpForeground()
-      background = UIUtil.getPanelBackground()
-    }.andOpaque()
-
-    val textPane = HtmlEditorPane().apply {
-      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-    }
-
-
-    Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane)
-
-    val editorWrapper = Wrapper()
-    val editButton = createEditButton(reviewDataProvider, comment, editorWrapper, textPane).apply {
       isVisible = comment.canBeUpdated
     }
-    val deleteButton = createDeleteButton(reviewDataProvider, comment).apply {
+    val deleteButton = CodeReviewCommentUIUtil.createDeleteCommentIconButton {
+      reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
+    }.apply {
       isVisible = comment.canBeDeleted
     }
 
-    val contentPanel = BorderLayoutPanel().andTransparent().addToCenter(textPane).addToBottom(editorWrapper)
+    val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
+      isVisible = editButton.isVisible && deleteButton.isVisible
 
-    return JPanel(null).apply {
-      isOpaque = false
-      layout = MigLayout(LC().gridGap("0", "0")
-                           .insets("0", "0", "0", "0")
-                           .fill(),
-                         AC().gap("${UI.scale(8)}"))
+      add(editButton)
+      add(deleteButton)
+    }
 
-      add(avatarLabel, CC().pushY())
-      add(titlePane, CC().minWidth("0").split(5).alignX("left"))
-      add(pendingLabel, CC().hideMode(3).alignX("left"))
-      add(resolvedLabel, CC().hideMode(3).alignX("left"))
-      add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
-      add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
-      add(contentPanel, CC().newline().skip().grow().push().minWidth("0").minHeight("0"))
+    val title = HorizontalListPanel(CodeReviewCommentUIUtil.Title.HORIZONTAL_GAP).apply {
+      add(titlePane)
+      add(pendingLabel)
+      add(resolvedLabel)
+    }
+
+    return CodeReviewChatItemUIUtil.build(type,
+                                          { avatarIconsProvider.getIcon(author.avatarUrl, it) },
+                                          editablePaneHandle.panel) {
+      iconTooltip = author.getPresentableName()
+      withHeader(title, actionsPanel)
+      this.maxContentWidth = null
     }
   }
 
-  private fun createDeleteButton(reviewDataProvider: GHPRReviewDataProvider,
-                                 comment: GHPRReviewCommentModel): JComponent {
-    val icon = GithubIcons.Delete
-    val hoverIcon = GithubIcons.DeleteHovered
-    return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.delete")).apply {
-      actionListener = ActionListener {
-        if (Messages.showConfirmationDialog(this, GithubBundle.message("pull.request.review.comment.delete.dialog.msg"),
-                                            GithubBundle.message("pull.request.review.comment.delete.dialog.title"),
-                                            Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
-          reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
-        }
-      }
-    }
-  }
-
-  private fun createEditButton(reviewDataProvider: GHPRReviewDataProvider,
-                               comment: GHPRReviewCommentModel,
-                               editorWrapper: Wrapper,
-                               textPane: JEditorPane): JComponent {
-
-    val action = ActionListener {
-      val linesCount = calcLines(textPane)
-      val text = StringUtil.repeatSymbol('\n', linesCount - 1)
-
-      val model = GHPRSubmittableTextField.Model { newText ->
-        reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).handleOnEdt { _, _ ->
-          editorWrapper.setContent(null)
-          editorWrapper.revalidate()
-        }
-      }
-
-      with(model.document) {
-        runWriteAction {
-          setText(text)
-          setReadOnly(true)
-        }
-
-        reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
-          runWriteAction {
-            setReadOnly(false)
-            setText(it)
-          }
-        }
-      }
-
-      val editor = GHPRSubmittableTextField.create(model, CommonBundle.message("button.submit"), onCancel = {
-        editorWrapper.setContent(null)
-        editorWrapper.revalidate()
-      })
-      editorWrapper.setContent(editor)
-      GithubUIUtil.focusPanel(editor)
-    }
-    val icon = AllIcons.General.Inline_edit
-    val hoverIcon = AllIcons.General.Inline_edit_hovered
-    return InlineIconButton(icon, hoverIcon, tooltip = CommonBundle.message("button.edit")).apply {
-      actionListener = action
-    }
-  }
-
-
-  private fun calcLines(textPane: JEditorPane): Int {
-    var lineCount = 0
-    var offset = 0
-    while (true) {
-      try {
-        offset = Utilities.getRowEnd(textPane, offset) + 1
-        lineCount++
-      }
-      catch (e: BadLocationException) {
-        break
-      }
-    }
-    return lineCount
-  }
-
-  private class Controller(private val model: GHPRReviewCommentModel,
-                           private val titlePane: HtmlEditorPane,
+  private class Controller(private val project: Project,
+                           private val thread: GHPRReviewThreadModel,
+                           private val comment: GHPRReviewCommentModel,
+                           private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                           private val htmlmageLoader: AsyncHtmlImageLoader,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
-                           private val bodyPane: HtmlEditorPane) {
+                           private val commentWrapper: Wrapper,
+                           private val showResolvedMarker: Boolean,
+                           private val maxTextWidth: Int) {
     init {
-      model.addChangesListener {
+      comment.addAndInvokeChangesListener {
         update()
       }
-      update()
     }
 
     private fun update() {
-      bodyPane.setBody(model.body)
+      val commentComponent = createCommentBodyComponent(project, suggestedChangeHelper, thread, htmlmageLoader, comment.body, maxTextWidth)
+      commentWrapper.setContent(commentComponent)
+      commentWrapper.repaint()
 
-      val href = model.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
-      //language=HTML
-      val authorName = """<a $href>${model.authorUsername ?: "unknown"}</a>"""
-
-      when (model.state) {
+      when (comment.state) {
         GHPullRequestReviewCommentState.PENDING -> {
           pendingLabel.isVisible = true
-          titlePane.text = authorName
         }
+
         GHPullRequestReviewCommentState.SUBMITTED -> {
           pendingLabel.isVisible = false
-          titlePane.text = GithubBundle.message("pull.request.review.commented", authorName,
-                                                GithubUIUtil.formatActionDate(model.dateCreated))
         }
       }
 
-      resolvedLabel.isVisible = model.isFirstInResolvedThread
+      resolvedLabel.isVisible = comment.isFirstInResolvedThread && showResolvedMarker
     }
   }
 
-  fun factory(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider)
+  fun createCommentBodyComponent(project: Project,
+                                 suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                                 thread: GHPRReviewThreadModel,
+                                 htmlmageLoader: AsyncHtmlImageLoader,
+                                 commentBody: @Nls String,
+                                 maxTextWidth: Int): JComponent {
+    val commentComponentFactory = GHPRReviewCommentComponentFactory(project, htmlmageLoader)
+    val hunk = thread.patchHunk ?: PatchHunk(0, 0, 0, 0)
+    val lineIndex = thread.location?.second
+
+    val commentComponent = if (lineIndex != null && GHSuggestedChange.containsSuggestedChange(commentBody)) {
+      val startLineIndex = thread.startLocation?.second ?: lineIndex
+      val suggestedChange = GHSuggestedChange(commentBody, hunk, thread.filePath, startLineIndex, lineIndex)
+      commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper, maxTextWidth)
+    }
+    else {
+      commentComponentFactory.createCommentComponent(commentBody, maxTextWidth)
+    }
+    return commentComponent
+  }
+
+  fun factory(project: Project,
+              thread: GHPRReviewThreadModel,
+              ghostUser: GHUser,
+              reviewDataProvider: GHPRReviewDataProvider,
+              htmlmageLoader: AsyncHtmlImageLoader,
+              avatarIconsProvider: GHAvatarIconsProvider,
+              suggestedChangeHelper: GHPRSuggestedChangeHelper,
+              type: CodeReviewChatItemUIUtil.ComponentType,
+              showResolvedMarkerOnFirstComment: Boolean = true,
+              maxContentWidth: Int = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
-      create(reviewDataProvider, thread, comment, avatarIconsProvider)
+      create(
+        project,
+        thread, comment, ghostUser,
+        reviewDataProvider,
+        htmlmageLoader, avatarIconsProvider,
+        suggestedChangeHelper,
+        type,
+        showResolvedMarkerOnFirstComment,
+        maxContentWidth)
     }
   }
 }

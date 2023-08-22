@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
@@ -7,19 +7,16 @@ import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
-import com.intellij.util.containers.ContainerUtil.canonicalStrategy
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
-import gnu.trove.THashMap
-import gnu.trove.THashSet
-import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.annotations.CalledInAwt
 
 abstract class PartiallyExcludedFilesStateHolder<T>(
   project: Project,
-  private val hashingStrategy: TObjectHashingStrategy<T> = canonicalStrategy()
+  private val hashingStrategy: HashingStrategy<T>? = null
 ) : Disposable {
-
   private fun PartialLocalLineStatusTracker.setExcludedFromCommit(element: T, isExcluded: Boolean) =
     getChangeListId(element)?.let { setExcludedFromCommit(it, isExcluded) }
 
@@ -29,11 +26,21 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   protected val myUpdateQueue =
     MergingUpdateQueue(PartiallyExcludedFilesStateHolder::class.java.name, 300, true, MergingUpdateQueue.ANY_COMPONENT, this)
 
-  private val myIncludedElements = THashSet<T>(hashingStrategy)
-  private val myTrackerExclusionStates = THashMap<T, ExclusionState>(hashingStrategy)
+  private val myIncludedElements: MutableSet<T> = createElementsSet()
+  private val myTrackerExclusionStates: MutableMap<T, ExclusionState> = when (hashingStrategy) {
+    null -> HashMap()
+    else -> CollectionFactory.createCustomHashingStrategyMap(hashingStrategy)
+  }
 
   init {
     MyTrackerManagerListener().install(project)
+  }
+
+  private fun createElementsSet(elements: Collection<T> = emptyList()): MutableSet<T> {
+    return when (hashingStrategy) {
+      null -> HashSet(elements)
+      else -> CollectionFactory.createCustomHashingStrategySet(hashingStrategy).also { it.addAll(elements) }
+    }
   }
 
   override fun dispose() = Unit
@@ -46,7 +53,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   private val trackers
     get() = trackableElements.mapNotNull { element -> findTrackerFor(element)?.let { tracker -> element to tracker } }
 
-  @CalledInAwt
+  @RequiresEdt
   open fun updateExclusionStates() {
     myTrackerExclusionStates.clear()
 
@@ -60,7 +67,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     myTrackerExclusionStates[element] ?: if (element in myIncludedElements) ExclusionState.ALL_INCLUDED else ExclusionState.ALL_EXCLUDED
 
   private fun scheduleExclusionStatesUpdate() {
-    myUpdateQueue.queue(Update.create("updateExcludedFromCommit") { updateExclusionStates() })
+    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "updateExcludedFromCommit") { updateExclusionStates() })
   }
 
   private inner class MyTrackerListener : PartialLocalLineStatusTracker.ListenerAdapter() {
@@ -72,7 +79,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     private val trackerListener = MyTrackerListener()
     private val disposable get() = this@PartiallyExcludedFilesStateHolder
 
-    @CalledInAwt
+    @RequiresEdt
     fun install(project: Project) {
       with(LineStatusTrackerManager.getInstanceImpl(project)) {
         addTrackerListener(this@MyTrackerManagerListener, disposable)
@@ -107,7 +114,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   }
 
   fun getIncludedSet(): Set<T> {
-    val set = THashSet(myIncludedElements, hashingStrategy)
+    val set: MutableSet<T> = createElementsSet(myIncludedElements)
     myTrackerExclusionStates.forEach { (element, state) ->
       if (state == ExclusionState.ALL_EXCLUDED) set -= element else set += element
     }
@@ -115,7 +122,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   }
 
   fun setIncludedElements(elements: Collection<T>) {
-    val set = THashSet(elements, hashingStrategy)
+    val set: MutableSet<T> = createElementsSet(elements)
     trackers.forEach { (element, tracker) ->
       tracker.setExcludedFromCommit(element, element !in set)
     }
@@ -134,8 +141,23 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   }
 
   fun excludeElements(elements: Collection<T>) {
-    elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(it, true) }
-    myIncludedElements -= elements
+    elements.forEach {
+      findTrackerFor(it)?.setExcludedFromCommit(it, true)
+      myIncludedElements.remove(it)
+    }
+
+    updateExclusionStates()
+  }
+
+  fun retainElements(elements: Collection<T>) {
+    val toRetain = createElementsSet(elements)
+
+    myIncludedElements.retainAll(toRetain)
+    trackers.forEach { (element, tracker) ->
+      if (!toRetain.contains(element)) {
+        tracker.setExcludedFromCommit(element, true)
+      }
+    }
 
     updateExclusionStates()
   }

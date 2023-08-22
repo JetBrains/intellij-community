@@ -27,9 +27,6 @@ import javax.swing.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author vnikolaenko
- */
 public final class RegExpCompletionContributor extends CompletionContributor {
   private static final Icon emptyIcon = EmptyIcon.create(PlatformIcons.PROPERTY_ICON);
 
@@ -105,7 +102,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       for (String[] completion : RegExpLanguageHosts.getInstance().getPosixCharacterClasses(parameters.getPosition())) {
         result.addElement(
           LookupElementBuilder.create(completion[0]).withTypeText((completion.length > 1) ? completion[1] : null).withIcon(emptyIcon)
-            .withInsertHandler(new InsertHandler<LookupElement>() {
+            .withInsertHandler(new InsertHandler<>() {
               @Override
               public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
                 context.setAddCompletionChar(false);

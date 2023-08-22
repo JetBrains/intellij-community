@@ -18,14 +18,17 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
+import com.intellij.util.containers.ContainerUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
-import com.theoryinpractice.testng.util.TestNGUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -38,8 +41,7 @@ public class TestNGTestPackage extends TestNGTestObject {
   @Override
   public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
     final String packageName = myConfig.getPersistantData().getPackageName();
-    PsiPackage psiPackage =
-      ReadAction.compute(() -> JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(packageName));
+    PsiPackage psiPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(packageName));
     if (psiPackage == null) {
       throw CantRunException.packageNotFound(packageName);
     }
@@ -47,12 +49,20 @@ public class TestNGTestPackage extends TestNGTestObject {
       TestSearchScope scope = myConfig.getPersistantData().getScope();
       //TODO we should narrow this down by module really, if that's what's specified
       SourceScope sourceScope = scope.getSourceScope(myConfig);
-      TestClassFilter projectFilter =
-        new TestClassFilter(sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.projectScope(myConfig.getProject()), myConfig.getProject(), true, true);
+      TestClassFilter projectFilter = new TestClassFilter(
+        sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.projectScope(myConfig.getProject()),
+        myConfig.getProject(),
+        true,
+        true
+      );
       TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-      calculateDependencies(null, classes, getSearchScope(), TestNGUtil.getAllTestClasses(filter, false));
-      if (classes.size() == 0) {
-        throw new CantRunException("No tests found in the package \"" + packageName + '\"');
+      List<PsiClass> testClasses = ContainerUtil.filter(
+        PackageUtil.getClasses(psiPackage, true, filter.getScope()),
+        filter::isAccepted
+      );
+      calculateDependencies(null, classes, getSearchScope(), testClasses.toArray(PsiClass.EMPTY_ARRAY));
+      if (classes.isEmpty()) {
+        throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.package", packageName));
       }
     }
   }
@@ -60,18 +70,18 @@ public class TestNGTestPackage extends TestNGTestObject {
   @Override
   public String getGeneratedName() {
     final String packageName = myConfig.getPersistantData().getPackageName();
-    return packageName.length() == 0 ? "<default>" : packageName;
+    return packageName.isEmpty() ? TestRunnerBundle.message("default.package.presentable.name") : packageName;
   }
 
   @Override
   public String getActionName() {
     String s = myConfig.getName();
     if (!myConfig.isGeneratedName()) return '\"' + s + '\"';
-    if (myConfig.getPersistantData().getPackageName().trim().length() > 0) {
-      return "Tests in \"" + myConfig.getPersistantData().getPackageName() + '\"';
+    if (!myConfig.getPersistantData().getPackageName().trim().isEmpty()) {
+      return TestngBundle.message("action.text.tests.in.package", myConfig.getPersistantData().getPackageName());
     }
     else {
-      return "All Tests";
+      return TestRunnerBundle.message("all.tests.scope.presentable.text");
     }
   }
 
@@ -79,7 +89,8 @@ public class TestNGTestPackage extends TestNGTestObject {
   public void checkConfiguration() throws RuntimeConfigurationException {
     final TestData data = myConfig.getPersistantData();
     PsiPackage psiPackage = JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(data.getPackageName());
-    if (psiPackage == null) throw new RuntimeConfigurationException("Package '" + data.getPackageName() + "' not found");
+    if (psiPackage == null) throw new RuntimeConfigurationException(
+      TestngBundle.message("tetsng.dialog.message.package.not.found.exception", data.getPackageName()));
   }
 
   @Override

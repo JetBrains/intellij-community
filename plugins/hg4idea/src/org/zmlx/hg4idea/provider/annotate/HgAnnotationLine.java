@@ -43,10 +43,9 @@ public class HgAnnotationLine {
     if (this == obj) {
       return true;
     }
-    if (!(obj instanceof HgAnnotationLine)) {
+    if (!(obj instanceof HgAnnotationLine other)) {
       return false;
     }
-    HgAnnotationLine other = (HgAnnotationLine) obj;
     return fields.equals(other.fields);
   }
 

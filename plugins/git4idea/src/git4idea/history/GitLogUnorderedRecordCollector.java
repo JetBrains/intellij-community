@@ -1,42 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressedRecord> {
+final class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressedRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogUnorderedRecordCollector.class);
   private static final int STATUS_LINES_THRESHOLD = 200_000;
 
   @NotNull private final MultiMap<String, GitCompressedRecord> myHashToIncompleteRecords = MultiMap.createLinked();
   private int myIncompleteStatusLinesCount = 0;
 
-  protected GitLogUnorderedRecordCollector(@NotNull Project project,
-                                           @NotNull VirtualFile root,
-                                           @NotNull Consumer<? super List<GitCompressedRecord>> consumer) {
+  GitLogUnorderedRecordCollector(@NotNull Project project,
+                                 @NotNull VirtualFile root,
+                                 @NotNull Consumer<? super List<GitCompressedRecord>> consumer) {
     super(project, root, consumer);
   }
 
@@ -75,7 +61,8 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressed
 
   @Override
   protected GitCompressedRecord createEmptyCopy(@NotNull GitCompressedRecord record) {
-    return new GitCompressedRecord(record.getOptions(), new TIntObjectHashMap<>(), new TIntIntHashMap(), record.isSupportsRawBody());
+    return new GitCompressedRecord(record.getOptions(), new Int2ObjectOpenHashMap<>(), new Int2IntOpenHashMap(),
+                                   record.isSupportsRawBody());
   }
 
   @Override

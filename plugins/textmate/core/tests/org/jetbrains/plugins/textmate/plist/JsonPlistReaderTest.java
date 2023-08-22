@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.plist;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -19,7 +19,7 @@ public class JsonPlistReaderTest extends PlistReaderTestCase {
   @Test
   public void parseArray() throws Exception {
     Plist plist = read("{list:['alex','zolotov',42]}");
-    HashMap<String, PListValue> map = new HashMap<String, PListValue>() {{
+    HashMap<String, PListValue> map = new HashMap<>() {{
       put("list", array(string("alex"), string("zolotov"), integer(Long.valueOf(42))));
     }};
     assertEquals(Plist.fromMap(map), plist);
@@ -44,7 +44,7 @@ public class JsonPlistReaderTest extends PlistReaderTestCase {
   @NotNull
   @Override
   protected String prepareText(String string) {
-    return StringUtil.unescapeXmlEntities(string.replace("<dict><key>", "{").replace("</dict>", "}").
+    return Strings.unescapeXmlEntities(string.replace("<dict><key>", "{").replace("</dict>", "}").
                   replace("<key>", ",").replace("</key>", ": ").
                   replace("<integer>", "").replace("</integer>", "").
                   replace("<real>", "").replace("</real>", "").

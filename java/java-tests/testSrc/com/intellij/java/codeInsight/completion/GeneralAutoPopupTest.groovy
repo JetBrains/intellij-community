@@ -13,6 +13,7 @@ import com.intellij.psi.InjectedLanguagePlaces
 import com.intellij.psi.LanguageInjector
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * For tests checking platform behavior not related to Java language (but they may still use Java for code samples)
  */
+@NeedsIndex.SmartMode(reason = "AutoPopup shouldn't work in dumb mode")
 @CompileStatic
 class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   void "test no autopopup in the middle of word when the only variant is already in the editor"() {
@@ -54,7 +56,7 @@ class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
       @Override
       void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
         injectorCalled = true
-        assert !ApplicationManager.application.dispatchThread
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
       }
     }
     ExtensionTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, [injector] as List<LanguageInjector>, myFixture.testRootDisposable)
@@ -121,13 +123,9 @@ class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
 
   void "test skip autopopup if confidence needs non-ready index"() {
     myFixture.configureByText 'a.java', 'class C { int abc; { getClass().getDeclaredField("<caret>x"); }}'
-    edt { DumbServiceImpl.getInstance(project).setDumb(true) }
-    try {
+    DumbServiceImpl.getInstance(project).runInDumbModeSynchronously {
       type 'a'
       assert !lookup
-    }
-    finally {
-      edt { DumbServiceImpl.getInstance(project).setDumb(false) }
     }
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'abc'

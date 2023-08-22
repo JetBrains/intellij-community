@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -37,11 +38,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.JdomKt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,16 +49,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 import org.jetbrains.plugins.groovy.runner.util.CommonProgramRunConfigurationParametersDelegate;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.execution.util.ProgramParametersUtil.configureConfiguration;
 
-/**
- * @author peter
- */
 public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
 
@@ -83,7 +75,24 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
 
   @Nullable
   public Module getModule() {
-    return ObjectUtils.chooseNotNull(getConfigurationModule().getModule(), ContainerUtil.getFirstItem(getValidModules()));
+    Module module = getConfigurationModule().getModule();
+    if (module != null) return module;
+    return getFirstValidModule();
+  }
+
+  @Nullable
+  private Module getFirstValidModule() {
+    final GroovyScriptRunner scriptRunner = getScriptRunner();
+    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    if (scriptRunner == null) {
+      return modules[0];
+    }
+    for (Module module : modules) {
+      if (scriptRunner.isValidModule(module)) {
+        return module;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -110,9 +119,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     if (scriptFile == null) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (!(psiFile instanceof GroovyFile)) return null;
+    if (!(psiFile instanceof GroovyFile groovyFile)) return null;
 
-    final GroovyFile groovyFile = (GroovyFile)psiFile;
     if (groovyFile.isScript()) {
       return GroovyScriptUtil.getScriptType(groovyFile).getRunner();
     }
@@ -180,7 +188,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
               if (!ApplicationManager.getApplication().isDisposed()) {
-                VirtualFileManager.getInstance().asyncRefresh(null);
+                VirtualFileManager.getInstance().asyncRefresh();
               }
             }
           });
@@ -227,8 +235,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
       return new RefactoringElementAdapter() {
         @Override
         protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-          if (newElement instanceof GroovyFile) {
-            GroovyFile file = (GroovyFile)newElement;
+          if (newElement instanceof GroovyFile file) {
             setScriptPath(ScriptFileUtil.getScriptFilePath(file.getVirtualFile()));
           }
         }
@@ -293,25 +300,29 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     final String scriptPath = getScriptPath();
 
     final VirtualFile script = ScriptFileUtil.findScriptFileByPath(scriptPath);
-    if (script == null) throw new RuntimeConfigurationException("Cannot find script " + scriptPath);
+    if (script == null) {
+      throw new RuntimeConfigurationException(GroovyBundle.message("script.runner.cant.find.script", scriptPath));
+    }
 
     final GroovyScriptRunner scriptRunner = getScriptRunner();
-    if (scriptRunner == null) throw new RuntimeConfigurationException("Unknown script type " + scriptPath);
+    if (scriptRunner == null) {
+      throw new RuntimeConfigurationException(GroovyBundle.message("script.runner.unknown.script.type", scriptPath));
+    }
 
     scriptRunner.ensureRunnerConfigured(this);
 
     final PsiFile file = PsiManager.getInstance(getProject()).findFile(script);
     final PsiClass toRun = GroovyRunnerPsiUtil.getRunningClass(file);
     if (toRun == null) {
-      throw new RuntimeConfigurationWarning(GroovyBundle.message("class.does.not.exist"));
+      throw new RuntimeConfigurationWarning(GroovyBundle.message("script.runner.class.does.not.exist"));
     }
     if (toRun instanceof GrTypeDefinition) {
       if (!GroovyRunnerPsiUtil.canBeRunByGroovy(toRun)) {
-        throw new RuntimeConfigurationWarning(GroovyBundle.message("class.cannot.be.executed"));
+        throw new RuntimeConfigurationWarning(GroovyBundle.message("script.runner.class.cannot.be.executed"));
       }
     }
     else {
-      throw new RuntimeConfigurationWarning(GroovyBundle.message("script.file.is.not.groovy.file"));
+      throw new RuntimeConfigurationWarning(GroovyBundle.message("script.runner.file.is.not.groovy.file"));
     }
     JavaParametersUtil.checkAlternativeJRE(this);
   }
@@ -416,7 +427,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
   }
 
   @Nullable
-  public String getScriptPath() {
+  public @NlsSafe String getScriptPath() {
     return scriptPath;
   }
 

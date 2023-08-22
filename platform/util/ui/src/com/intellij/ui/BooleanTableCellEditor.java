@@ -7,14 +7,15 @@ import java.awt.*;
 public class BooleanTableCellEditor extends DefaultCellEditor {
   private final boolean myStringEditor;
 
+  /**
+   * @deprecated there seems to be no need to change default options, use {@link #BooleanTableCellEditor()} instead.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public BooleanTableCellEditor(boolean isStringEditor) {
-    this(isStringEditor, SwingConstants.CENTER);
-  }
-
-  public BooleanTableCellEditor(boolean isStringEditor, int horizontalAlignment) {
     super(new JCheckBox());
     myStringEditor = isStringEditor;
-    ((JCheckBox) editorComponent).setHorizontalAlignment(horizontalAlignment);
+    ((JCheckBox) editorComponent).setHorizontalAlignment(SwingConstants.CENTER);
   }
 
   public BooleanTableCellEditor() {
@@ -30,6 +31,8 @@ public class BooleanTableCellEditor extends DefaultCellEditor {
   public Object getCellEditorValue() {
     Object value = super.getCellEditorValue();
     if (myStringEditor && value instanceof Boolean) {
+      //this code is reachable only via deprecated constructors
+      //noinspection HardCodedStringLiteral
       return value.toString();
     } else {
       return value;

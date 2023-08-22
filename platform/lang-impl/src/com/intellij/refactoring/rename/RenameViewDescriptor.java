@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -12,24 +12,24 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
 public class RenameViewDescriptor implements UsageViewDescriptor{
-  private static final Logger LOG = Logger.getInstance(RenameViewDescriptor.class);
-  private final String myProcessedElementsHeader;
-  private final String myCodeReferencesText;
+  private final @NlsContexts.ListItem String myProcessedElementsHeader;
+  private final @Nls String myCodeReferencesText;
   private final PsiElement[] myElements;
 
   public RenameViewDescriptor(LinkedHashMap<PsiElement, String> renamesMap) {
 
     myElements = PsiUtilCore.toPsiElementArray(renamesMap.keySet());
 
-    Set<String> processedElementsHeaders = new THashSet<>();
-    Set<String> codeReferences = new THashSet<>();
+    Set<String> processedElementsHeaders = new HashSet<>();
+    Set<String> codeReferences = new HashSet<>();
 
     for (final PsiElement element : myElements) {
       PsiUtilCore.ensureValid(element);

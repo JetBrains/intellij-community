@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.builtInHelp
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -10,7 +11,6 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.builtInHelp.settings.SettingsPage
-import com.jetbrains.builtInHelp.settings.SettingsPage.DEFAULT_BROWSER
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import java.awt.Desktop
 import java.io.IOException
@@ -18,6 +18,7 @@ import java.net.InetAddress
 import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 /**
  * Created by Egor.Malyshev on 7/18/2017.
@@ -28,9 +29,11 @@ class BuiltInHelpManager : HelpManager() {
   override fun invokeHelp(helpId: String?) {
 
     try {
-      var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${if (helpId != null) URLEncoder.encode(
-        helpId, "UTF-8")
-      else "top"}"
+      var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
+        if (helpId != null) URLEncoder.encode(
+          helpId, StandardCharsets.UTF_8)
+        else "top"
+      }"
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
 
@@ -77,15 +80,16 @@ class BuiltInHelpManager : HelpManager() {
       }
 
       val browserName = java.lang.String.valueOf(
-        Utils.getStoredValue(SettingsPage.USE_BROWSER, DEFAULT_BROWSER))
-      if (browserName == DEFAULT_BROWSER) {
-        if (Desktop.isDesktopSupported()) {
-          Desktop.getDesktop().browse(URI(url))
-        }
-        else BrowserLauncher.instance.browse(url, WebBrowserManager.getInstance().firstActiveBrowser)
+        Utils.getStoredValue(SettingsPage.USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")))
 
+      val browser = WebBrowserManager.getInstance().findBrowserById(browserName)
+
+      if (browser == null || browserName == BuiltInHelpBundle.message("use.default.browser")) {
+        BrowserUtil.browse(URI(url))
       }
-      else BrowserLauncher.instance.browse(url, WebBrowserManager.getInstance().findBrowserById(browserName))
+      else {
+        BrowserLauncher.instance.browse(url, browser)
+      }
 
     }
     catch (e: URISyntaxException) {

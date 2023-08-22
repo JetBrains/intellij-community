@@ -1,3 +1,0 @@
-class UiControl {
-  public static final Color COLOR = <spot>new Color(100, 120, 140)</spot>;
-}

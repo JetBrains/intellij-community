@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
@@ -30,8 +17,6 @@ import java.lang.reflect.Type;
 
 /**
  * Base interface for DOM elements. Every DOM interface should extend this one.
- *
- * @author peter
  */
 public interface DomElement extends AnnotatedElement, UserDataHolder {
   DomElement[] EMPTY_ARRAY = new DomElement[0];
@@ -42,7 +27,7 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
   /**
    * Returns the underlying XML element/file.
    *
-   * @return {@link com.intellij.psi.xml.XmlFile}, {@link com.intellij.psi.xml.XmlTag} or {@link com.intellij.psi.xml.XmlAttribute}
+   * @return {@link com.intellij.psi.xml.XmlFile}, {@link XmlTag} or {@link com.intellij.psi.xml.XmlAttribute}
    */
   @Nullable
   XmlElement getXmlElement();
@@ -68,9 +53,9 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
   @NotNull
   DomGenericInfo getGenericInfo();
 
-  @NotNull @NonNls String getXmlElementName();
+  @NotNull @NlsSafe String getXmlElementName();
 
-  @NotNull @NonNls String getXmlElementNamespace();
+  @NotNull @NlsSafe String getXmlElementNamespace();
 
   /**
    * @return namespace key if this element or one of its ancestors is annotated with

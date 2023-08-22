@@ -1,13 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class FontComboBox extends ComboBox {
+public final class FontComboBox extends AbstractFontCombo {
 
   private Model myModel;
   private final JBDimension mySize;
@@ -39,7 +44,30 @@ public final class FontComboBox extends ComboBox {
     // preScaled=true as 'size' reflects already scaled font
     mySize = JBDimension.create(size, true);
     setSwingPopup(false);
-    setRenderer(new FontInfoRenderer());
+    //noinspection unchecked
+    setRenderer(new GroupedComboBoxRenderer(this) {
+      @Override
+      public @Nullable ListSeparator separatorFor(Object value) {
+        if (getModel() instanceof Model m && value instanceof FontInfo info) {
+          if (!m.myMonoFonts.isEmpty() && m.myMonoFonts.get(0) == info)
+            return new ListSeparator(ApplicationBundle.message("settings.editor.font.monospaced"));
+          if (!m.myAllFonts.isEmpty() && ContainerUtil.find(m.myAllFonts, f -> !f.isMonospaced()) == info)
+            return new ListSeparator(ApplicationBundle.message("settings.editor.font.proportional"));
+        }
+        return null;
+      }
+
+      @Override
+      public void customize(@NotNull SimpleColoredComponent item, Object value, int index, boolean isSelected, boolean hasFocus) {
+        if (value instanceof FontInfo info) {
+          item.setFont(index == -1 ? JBUI.Fonts.label() : info.getFont());
+          item.append(info.toString());
+        }
+        else if (value instanceof Model.NoFontItem nfi) {
+          item.append(nfi.toString());
+        }
+      }
+    });
     getModel().addListDataListener(new ListDataListener() {
       @Override
       public void intervalAdded(ListDataEvent e) {}
@@ -65,23 +93,33 @@ public final class FontComboBox extends ComboBox {
     return mySize.size();
   }
 
+  @Override
   public boolean isMonospacedOnly() {
     return myModel.myMonospacedOnly;
   }
 
+  @Override
+  public boolean isMonospacedOnlySupported() {
+    return true;
+  }
+
+  @Override
   public void setMonospacedOnly(boolean monospaced) {
     myModel.setMonospacedOnly(monospaced);
   }
 
+  @Override
   public String getFontName() {
     Object item = myModel.getSelectedItem();
     return item == null ? null : item.toString();
   }
 
-  public void setFontName(@Nullable String item) {
+  @Override
+  public void setFontName(@NlsSafe @Nullable String item) {
     myModel.setSelectedItem(item);
   }
 
+  @Override
   public boolean isNoFontSelected() {
     return myModel.isNoFontSelected();
   }
@@ -116,7 +154,7 @@ public final class FontComboBox extends ComboBox {
           application.invokeLater(() -> {
             setFonts(all, filterNonLatin);
             onModelToggled();
-          }, application.getAnyModalityState());
+          }, ModalityState.any());
         });
       }
     }
@@ -212,9 +250,9 @@ public final class FontComboBox extends ComboBox {
       return null;
     }
 
-    private final static class NoFontItem {
+    private static final class NoFontItem {
       @Override
-      public String toString() {
+      public @NlsSafe String toString() {
         return ApplicationBundle.message("settings.editor.font.none");
       }
     }

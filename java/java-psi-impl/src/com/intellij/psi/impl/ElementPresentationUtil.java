@@ -1,28 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
-import com.intellij.ui.IconWithToolTip;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
-import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.annotations.ApiStatus;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.swing.*;
 
-public final class ElementPresentationUtil implements PlatformIcons {
+public final class ElementPresentationUtil {
   private ElementPresentationUtil() {
   }
 
@@ -45,15 +43,6 @@ public final class ElementPresentationUtil implements PlatformIcons {
       }
     }
     return flags;
-  }
-
-  /**
-   * @deprecated obsolete API, to be removed
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static com.intellij.ui.RowIcon createLayeredIcon(Icon baseIcon, PsiModifierListOwner element, boolean isLocked) {
-    return (com.intellij.ui.RowIcon)IconManager.getInstance().createLayeredIcon(element, baseIcon, getFlags(element, isLocked));
   }
 
   private static final int CLASS_KIND_INTERFACE     = 10;
@@ -125,7 +114,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
     if (!DumbService.getInstance(aClass.getProject()).isDumb()) {
       final PsiManager manager = aClass.getManager();
       final PsiClass javaLangTrowable =
-        JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
+        JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
       final boolean isException = javaLangTrowable != null && InheritanceUtil.isInheritorOrSelf(aClass, javaLangTrowable, true);
       if (isException) {
         return CLASS_KIND_EXCEPTION;
@@ -141,26 +130,28 @@ public final class ElementPresentationUtil implements PlatformIcons {
     return CLASS_KIND_CLASS;
   }
 
-  private static final TIntObjectHashMap<Icon> BASE_ICON = new TIntObjectHashMap<>(20);
+  private static final Int2ObjectMap<Icon> BASE_ICON = new Int2ObjectOpenHashMap<>(20);
+
   static {
-    BASE_ICON.put(CLASS_KIND_CLASS, IconWithToolTip.tooltipOnlyIfComposite(CLASS_ICON));
-    BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_ANNOTATION, ANNOTATION_TYPE_ICON);
-    BASE_ICON.put(CLASS_KIND_ANNOTATION | FLAGS_ABSTRACT, ANNOTATION_TYPE_ICON);
-    BASE_ICON.put(CLASS_KIND_ANONYMOUS, ANONYMOUS_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_ANONYMOUS | FLAGS_ABSTRACT, ANONYMOUS_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_ASPECT, ASPECT_ICON);
-    BASE_ICON.put(CLASS_KIND_ASPECT | FLAGS_ABSTRACT, ASPECT_ICON);
-    BASE_ICON.put(CLASS_KIND_ENUM, ENUM_ICON);
-    BASE_ICON.put(CLASS_KIND_ENUM | FLAGS_ABSTRACT, ENUM_ICON);
-    BASE_ICON.put(CLASS_KIND_EXCEPTION, EXCEPTION_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, AllIcons.Nodes.AbstractException);
-    BASE_ICON.put(CLASS_KIND_INTERFACE, IconWithToolTip.tooltipOnlyIfComposite(INTERFACE_ICON));
-    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, IconWithToolTip.tooltipOnlyIfComposite(INTERFACE_ICON));
-    BASE_ICON.put(CLASS_KIND_JUNIT_TEST, IconWithToolTip.tooltipOnlyIfComposite(CLASS_ICON));
-    BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_RECORD, RECORD_ICON);
-    BASE_ICON.put(CLASS_KIND_RUNNABLE, CLASS_ICON);
+    IconManager iconManager = IconManager.getInstance();
+    BASE_ICON.put(CLASS_KIND_CLASS, iconManager.tooltipOnlyIfComposite(iconManager.getPlatformIcon(PlatformIcons.Class)));
+    BASE_ICON.put(CLASS_KIND_CLASS | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.AbstractClass));
+    BASE_ICON.put(CLASS_KIND_ANNOTATION, iconManager.getPlatformIcon(PlatformIcons.Annotation));
+    BASE_ICON.put(CLASS_KIND_ANNOTATION | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.Annotation));
+    BASE_ICON.put(CLASS_KIND_ANONYMOUS, iconManager.getPlatformIcon(PlatformIcons.AnonymousClass));
+    BASE_ICON.put(CLASS_KIND_ANONYMOUS | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.AnonymousClass));
+    BASE_ICON.put(CLASS_KIND_ASPECT, iconManager.getPlatformIcon(PlatformIcons.Aspect));
+    BASE_ICON.put(CLASS_KIND_ASPECT | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.Aspect));
+    BASE_ICON.put(CLASS_KIND_ENUM, iconManager.getPlatformIcon(PlatformIcons.Enum));
+    BASE_ICON.put(CLASS_KIND_ENUM | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.Enum));
+    BASE_ICON.put(CLASS_KIND_EXCEPTION, iconManager.getPlatformIcon(PlatformIcons.ExceptionClass));
+    BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.AbstractException));
+    BASE_ICON.put(CLASS_KIND_INTERFACE, iconManager.tooltipOnlyIfComposite(iconManager.getPlatformIcon(PlatformIcons.Interface)));
+    BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, iconManager.tooltipOnlyIfComposite(iconManager.getPlatformIcon(PlatformIcons.Interface)));
+    BASE_ICON.put(CLASS_KIND_JUNIT_TEST, iconManager.tooltipOnlyIfComposite(iconManager.getPlatformIcon(PlatformIcons.Class)));
+    BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, iconManager.getPlatformIcon(PlatformIcons.AbstractClass));
+    BASE_ICON.put(CLASS_KIND_RECORD, iconManager.getPlatformIcon(PlatformIcons.Record));
+    BASE_ICON.put(CLASS_KIND_RUNNABLE, iconManager.getPlatformIcon(PlatformIcons.Class));
   }
 
   public static Icon getClassIconOfKind(PsiClass aClass, int classKind) {
@@ -211,7 +202,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
       if (level != PsiUtil.ACCESS_LEVEL_PUBLIC) {
-        adj.append(" ").append(StringUtil.capitalize(JavaPsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level))));
+        adj.append(" ").append(Strings.capitalize(JavaPsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level))));
       }
     }
     return adj.toString();
@@ -220,19 +211,10 @@ public final class ElementPresentationUtil implements PlatformIcons {
 
   static {
     IconManager iconManager = IconManager.getInstance();
-    iconManager.registerIconLayer(FLAGS_STATIC, AllIcons.Nodes.StaticMark);
-    iconManager.registerIconLayer(FLAGS_FINAL, AllIcons.Nodes.FinalMark);
-    iconManager.registerIconLayer(FLAGS_JUNIT_TEST, AllIcons.Nodes.JunitTestMark);
-    iconManager.registerIconLayer(FLAGS_RUNNABLE, AllIcons.Nodes.RunnableMark);
-  }
-
-  /**
-   * @deprecated use {@link #addVisibilityIcon(PsiModifierListOwner, int, RowIcon)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static Icon addVisibilityIcon(PsiModifierListOwner element, final int flags, com.intellij.ui.RowIcon baseIcon) {
-    return addVisibilityIcon(element, flags, ((RowIcon)baseIcon));
+    iconManager.registerIconLayer(FLAGS_STATIC, iconManager.getPlatformIcon(PlatformIcons.StaticMark));
+    iconManager.registerIconLayer(FLAGS_FINAL, iconManager.getPlatformIcon(PlatformIcons.FinalMark));
+    iconManager.registerIconLayer(FLAGS_JUNIT_TEST, iconManager.getPlatformIcon(PlatformIcons.JunitTestMark));
+    iconManager.registerIconLayer(FLAGS_RUNNABLE, iconManager.getPlatformIcon(PlatformIcons.RunnableMark));
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {

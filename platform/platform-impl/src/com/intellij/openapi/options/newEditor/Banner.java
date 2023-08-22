@@ -2,14 +2,15 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.IdeUICustomization;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,53 +31,41 @@ final class Banner extends SimpleBanner {
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(UIUtil.getContextHelpForeground());
-    myProjectIcon.setVisible(false);
-    myLeftPanel.add(myBreadcrumbs, 0);
-    add(BorderLayout.CENTER, myProjectIcon);
-    add(BorderLayout.EAST, RelativeFont.BOLD.install(new SwingActionLink(action)));
+    showProject(false);
+    myLeftPanel.removeAll();
+    myLeftPanel.add(myBreadcrumbs);
+    myLeftPanel.add(myProjectIcon);
+    myLeftPanel.add(myProgress);
+    add(BorderLayout.EAST, RelativeFont.BOLD.install(new ActionLink(action)));
   }
 
-  void setText(@NotNull Collection<String> names) {
+  void setText(@NotNull Collection<@NlsContexts.ConfigurableName String> names) {
     List<Crumb> crumbs = new ArrayList<>();
     if (!names.isEmpty()) {
       List<Action> actions = CopySettingsPathAction.createSwingActions(() -> names);
-      for (String name : names) {
+      for (@NlsContexts.ConfigurableName String name : names) {
         crumbs.add(new Crumb.Impl(null, name, null, actions));
       }
     }
     myBreadcrumbs.setCrumbs(crumbs);
   }
 
-  void setProject(Project project) {
-    if (project == null) {
-      myProjectIcon.setVisible(false);
-    }
-    else {
-      myProjectIcon.setVisible(true);
-      myProjectIcon.setText(project.isDefault()
-                            ? IdeUICustomization.getInstance().projectMessage("configurable.default.project.tooltip")
-                            : IdeUICustomization.getInstance().projectMessage("configurable.current.project.tooltip"));
+  void setProjectText(@Nullable @Nls String projectText) {
+    boolean visible = projectText != null;
+    showProject(visible);
+    if (visible) {
+      myProjectIcon.setToolTipText(projectText);
     }
   }
 
-  @Override
-  void setCenterComponent(Component component) {
-    boolean addProjectIcon = myCenterComponent != null && component == null;
-    super.setCenterComponent(component);
-
-    if (addProjectIcon) {
-      getLayout().addLayoutComponent(BorderLayout.CENTER, myProjectIcon);
-    }
+  void showProject(boolean hasProject) {
+    myProjectIcon.setVisible(hasProject);
   }
 
   @Override
   void setLeftComponent(Component component) {
     super.setLeftComponent(component);
     myBreadcrumbs.setVisible(component == null);
-  }
-
-  @Override
-  void updateProgressBorder() {
   }
 
   @Override

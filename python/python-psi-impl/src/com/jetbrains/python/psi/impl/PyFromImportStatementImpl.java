@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -29,9 +30,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement{
   public PyFromImportStatementImpl(ASTNode astNode) {
     super(astNode);
@@ -246,7 +245,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       final int level = getRelativeLevel();
       if (level > 0) {
         final PsiDirectory upper = ResolveImportUtil.stepBackFrom(getContainingFile().getOriginalFile(), level);
-        return upper == null ? Collections.emptyList() : Collections.singletonList(upper);
+        return ContainerUtil.createMaybeSingletonList(upper);
       }
     }
     return ResolveImportUtil.resolveFromImportStatementSource(this, qName);

@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import java.util.*;
 
 public class ListTableModel<Item> extends TableViewModel<Item> implements EditableModel {
@@ -86,6 +87,11 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
     fireTableDataChanged();
   }
 
+  public void setItem(int rowIndex, @NotNull Item item) {
+    myItems.set(rowIndex, item);
+    fireTableCellUpdated(rowIndex, TableModelEvent.ALL_COLUMNS);
+  }
+
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     return myColumnInfos[columnIndex].valueOf(getItem(rowIndex));
@@ -107,9 +113,20 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
    */
   public void setValueAt(Object aValue, int rowIndex, int columnIndex, boolean notifyListeners) {
     if (rowIndex < myItems.size()) {
-      myColumnInfos[columnIndex].setValue(getItem(rowIndex), aValue);
+      //noinspection unchecked
+      setValue(aValue, rowIndex, myColumnInfos[columnIndex]);
     }
     if (notifyListeners) fireTableCellUpdated(rowIndex, columnIndex);
+  }
+
+  private <Aspect> void setValue(Aspect aValue, int rowIndex, ColumnInfo<Item, Aspect> info) {
+    Item item = getItem(rowIndex);
+    if (info instanceof ImmutableColumnInfo) {
+      setItem(rowIndex, ((ImmutableColumnInfo<Item, Aspect>)info).withValue(item, aValue));
+    }
+    else {
+      info.setValue(item, aValue);
+    }
   }
 
   /**
@@ -187,10 +204,10 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
   }
 
   public void addRows(@NotNull Collection<? extends Item> items) {
+    if (items.isEmpty()) return;
+
     myItems.addAll(items);
-    if (!myItems.isEmpty()) {
-      fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
-    }
+    fireTableRowsInserted(myItems.size() - items.size(), myItems.size() - 1);
   }
 
   public Item getItem(final int rowIndex) {

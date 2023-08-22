@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -59,8 +59,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
   }
 
   private Stream<LocalVariable> matchingVars(int index, int visibleOffset) {
-    return localVariables.stream()
-      .filter(v -> v.index == index && (visibleOffset >= v.start_pc && visibleOffset < v.start_pc + v.length));
+    return localVariables.stream().filter(v -> v.index == index && (visibleOffset >= v.start_pc && visibleOffset < v.start_pc + v.length));
   }
 
   public boolean containsName(String name) {
@@ -71,7 +70,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
     return localVariables.stream().filter(v -> v.start_pc == 0).collect(Collectors.toMap(v -> v.index, v -> v.name, (n1, n2) -> n2));
   }
 
-  private static class LocalVariable {
+  private static final class LocalVariable {
     final int start_pc;
     final int length;
     final String name;

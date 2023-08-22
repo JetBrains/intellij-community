@@ -1,0 +1,305 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.apache.maven</groupId>
+    <artifactId>maven-parent</artifactId>
+    <version>23</version>
+    <relativePath>../../pom/maven/pom.xml</relativePath>
+  </parent>
+
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-plugins</artifactId>
+  <version>24</version>
+  <packaging>pom</packaging>
+
+  <name>Maven Plugins</name>
+  <description>Maven Plugins</description>
+  <url>http://maven.apache.org/plugins/</url>
+
+  <scm>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/maven/plugins/tags/maven-plugins-24</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/maven/plugins/tags/maven-plugins-24</developerConnection>
+    <url>http://svn.apache.org/viewvc/maven/plugins/tags/maven-plugins-24</url>
+  </scm>
+  <ciManagement>
+    <system>Jenkins</system>
+    <url>https://builds.apache.org/job/maven-plugins/</url>
+  </ciManagement>
+
+  <distributionManagement>
+    <site>
+      <id>apache.website</id>
+      <url>scm:svn:https://svn.apache.org/repos/infra/websites/production/maven/content/plugins</url>
+    </site>
+  </distributionManagement>
+
+  <properties>
+    <maven.site.cache>${user.home}/maven-sites</maven.site.cache><!-- TODO remove when upgrading parent to 23 -->
+    <maven.site.path>plugins-archives/${project.artifactId}-${project.version}</maven.site.path>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>apache.snapshots</id>
+      <name>Apache Snapshot Repository</name>
+      <url>http://repository.apache.org/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+    </repository>
+  </repositories>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-changes-plugin</artifactId>
+          <version>2.7.1</version>
+          <configuration>
+            <issueManagementSystems>
+              <issueManagementSystem>JIRA</issueManagementSystem>
+            </issueManagementSystems>
+            <maxEntries>1000</maxEntries>
+            <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
+            <!-- Used by announcement-generate goal -->
+            <templateDirectory>org/apache/maven/plugins</templateDirectory>
+            <announcementFile>annoucement.txt</announcementFile>
+            <!-- Used by announcement-mail goal -->
+            <subject>[ANN] ${project.name} ${project.version} Released</subject>
+            <toAddresses>
+              <toAddress implementation="java.lang.String">announce@maven.apache.org</toAddress>
+              <toAddress implementation="java.lang.String">users@maven.apache.org</toAddress>
+            </toAddresses>
+            <ccAddresses>
+              <ccAddress implementation="java.lang.String">dev@maven.apache.org</ccAddress>
+            </ccAddresses>
+            <!-- These values need to be specified as properties in the profile apache-release in your settings.xml -->
+            <fromDeveloperId>${apache.availid}</fromDeveloperId>
+            <smtpHost>${smtp.host}</smtpHost>
+          </configuration>
+          <dependencies>
+            <!-- Used by announcement-generate goal -->
+            <dependency>
+              <groupId>org.apache.maven.shared</groupId>
+              <artifactId>maven-shared-resources</artifactId>
+              <version>1</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <artifactId>maven-release-plugin</artifactId>
+          <configuration>
+            <tagBase>https://svn.apache.org/repos/asf/maven/plugins/tags</tagBase>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.2</version><!-- TODO remove when upgrading parent to 23 -->
+          <configuration>
+            <skipDeploy>true</skipDeploy><!-- don't deploy site with maven-site-plugin -->
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-scm-publish-plugin</artifactId>
+        <version>1.0-beta-2</version>
+        <configuration>
+          <content>${project.reporting.outputDirectory}</content>
+          <pubScmUrl>scm:svn:https://svn.apache.org/repos/infra/websites/production/maven/content/${maven.site.path}</pubScmUrl>
+          <checkoutDirectory>${maven.site.cache}/${maven.site.path}</checkoutDirectory>
+          <tryUpdate>true</tryUpdate>
+        </configuration>
+        <executions>
+          <execution>
+            <id>scm-publish</id>
+            <phase>site-deploy</phase><!-- deploy site with maven-scm-publish-plugin -->
+            <goals>
+              <goal>publish-scm</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <id>ensure-no-container-api</id>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>org.codehaus.plexus:plexus-component-api</exclude>
+                  </excludes>
+                  <message>The new containers are not supported. You probably added a dependency that is missing the exclusions.</message>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generated-helpmojo</id>
+            <goals>
+              <goal>helpmojo</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>3.2</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.6</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <profiles>
+    <profile>
+      <id>quality-checks</id>
+      <activation>
+        <property>
+          <name>quality-checks</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-docck-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>docck-check</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>run-its</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-invoker-plugin</artifactId>
+            <configuration>
+              <debug>true</debug>
+              <projectsDirectory>src/it</projectsDirectory>
+              <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+              <preBuildHookScript>setup</preBuildHookScript>
+              <postBuildHookScript>verify</postBuildHookScript>
+              <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+              <settingsFile>src/it/settings.xml</settingsFile>
+              <pomIncludes>
+                <pomInclude>*/pom.xml</pomInclude>
+              </pomIncludes>
+            </configuration>
+            <executions>
+              <execution>
+                <id>integration-test</id>
+                <goals>
+                  <goal>install</goal>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>site-release</id>
+      <properties>
+        <maven.site.path>plugins/${project.artifactId}</maven.site.path>
+      </properties>
+    </profile>
+    <profile>
+      <id>reporting</id>
+      <reporting>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-invoker-plugin</artifactId>
+            <version>1.7</version>
+          </plugin>
+        </plugins>
+      </reporting>
+    </profile>
+    <profile>
+      <id>maven-3</id>
+      <activation>
+        <file>
+          <!-- This employs that the basedir expression is only recognized by Maven 3.x (see MNG-2363) -->
+          <exists>${basedir}</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <!-- if releasing current pom with Maven 3, site descriptor must be attached -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <id>attach-descriptor</id>
+                <goals>
+                  <goal>attach-descriptor</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>        
+      </build>   
+    </profile> 	
+  </profiles>
+</project>

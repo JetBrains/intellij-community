@@ -15,7 +15,7 @@ public interface FocusModeProvider {
    * <br>
    * For example:
    * <pre>(() ()) (() () ()) </pre>
-   * @see FocusModePassFactory#calcFocusZones
+   * @see com.intellij.openapi.fileEditor.impl.text.FocusModePassFactory#calcFocusZones(PsiFile)
    */
   @NotNull
   List<? extends Segment> calcFocusZones(@NotNull PsiFile file);

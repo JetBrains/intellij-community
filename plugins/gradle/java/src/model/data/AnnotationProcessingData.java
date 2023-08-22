@@ -1,43 +1,41 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.serialization.PropertyMapping;
-import com.intellij.util.containers.WeakInterner;
+import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.immutableList;
-
-public class AnnotationProcessingData {
+public final class AnnotationProcessingData {
   public static final Key<AnnotationProcessingData> KEY = Key.create(AnnotationProcessingData.class, ExternalSystemConstants.UNORDERED);
   public static final Key<AnnotationProcessorOutput> OUTPUT_KEY =
     Key.create(AnnotationProcessorOutput.class, ExternalSystemConstants.UNORDERED);
 
-  private static final WeakInterner<AnnotationProcessingData> ourInterner = new WeakInterner<>();
+  private static final Interner<AnnotationProcessingData> ourInterner = Interner.createWeakInterner();
 
   private final Collection<String> path;
   private final Collection<String> arguments;
 
-  public static AnnotationProcessingData create(@NotNull Collection<String> path,
-                       @NotNull Collection<String> arguments) {
+  public static AnnotationProcessingData create(@NotNull Collection<String> path, @NotNull Collection<String> arguments) {
     return ourInterner.intern(new AnnotationProcessingData(path, arguments));
   }
 
   @PropertyMapping({"path", "arguments"})
-  private AnnotationProcessingData(@NotNull Collection<String> path,
-                                  @NotNull Collection<String> arguments) {
-    this.path = immutableList(new ArrayList<>(path));
-    this.arguments = immutableList(new ArrayList<>(arguments));
+  private AnnotationProcessingData(@NotNull Collection<String> path, @NotNull Collection<String> arguments) {
+    this.path = List.copyOf(path);
+    this.arguments = List.copyOf(arguments);
   }
 
   /**
    * Annotation processor arguments
    * @return immutable collection of arguments
    */
+  @Unmodifiable
   public Collection<String> getArguments() {
     return arguments;
   }
@@ -46,6 +44,7 @@ public class AnnotationProcessingData {
    * Annotation processor path
    * @return immutable collection of path elements
    */
+  @Unmodifiable
   public Collection<String> getPath() {
     return path;
   }

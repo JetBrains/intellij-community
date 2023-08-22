@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeEditor.printing;
 
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-class PageSizes {
+final class PageSizes {
   private static final Logger LOG = Logger.getInstance(PageSizes.class);
   private static ArrayList<PageSize> myPageSizes = null;
   private static HashMap<String, PageSize> myNamesToPageSizes = null;
@@ -59,10 +59,9 @@ class PageSizes {
 
   public static String getName(Object item) {
     init();
-    if(!(item instanceof PageSize)) {
+    if(!(item instanceof PageSize pageSize)) {
       return null;
     }
-    PageSize pageSize = (PageSize)item;
     return pageSize.name;
   }
 
@@ -113,15 +112,15 @@ class PageSizes {
     int slashPos = sizeStr.indexOf('/');
     if (slashPos >= 0) {
       int spacePos = sizeStr.indexOf(' ');
-      int intPart = Integer.valueOf(sizeStr.substring(0, spacePos));
-      double numerator = Double.valueOf(sizeStr.substring(spacePos+1, slashPos));
-      double denominator = Double.valueOf(sizeStr.substring(slashPos+1));
+      int intPart = Integer.parseInt(sizeStr.substring(0, spacePos));
+      double numerator = Double.parseDouble(sizeStr.substring(spacePos + 1, slashPos));
+      double denominator = Double.parseDouble(sizeStr.substring(slashPos + 1));
       return intPart + numerator / denominator;
     }
-    return Integer.valueOf(sizeStr);
+    return Integer.parseInt(sizeStr);
   }
 
-  private static class PageSize {
+  private static final class PageSize {
     public double width;
     public double height;
     public String name;

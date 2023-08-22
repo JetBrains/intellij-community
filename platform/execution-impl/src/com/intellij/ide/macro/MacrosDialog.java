@@ -1,17 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
@@ -23,15 +28,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -41,18 +46,13 @@ public final class MacrosDialog extends DialogWrapper {
   private final DefaultListModel<Item> myMacrosModel = new DefaultListModel<>();
   private final JBList<Item> myMacrosList = new JBList<>(myMacrosModel);
   private final JTextArea myPreviewTextarea = new JTextArea();
-
-  public MacrosDialog(Project project) {
-    super(project, true);
-    MacroManager.getInstance().cacheMacrosPreview(SimpleDataContext.getProjectContext(project));
-    init();
-  }
+  private final DataContext myDataContext;
 
   public MacrosDialog(@NotNull Component parent,
                       @NotNull Predicate<? super Macro> filter,
                       @Nullable Map<String, String> userMacros) {
     super(parent, true);
-    MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
+    myDataContext = DataManager.getInstance().getDataContext(parent);
     init(filter, userMacros);
   }
 
@@ -66,6 +66,14 @@ public final class MacrosDialog extends DialogWrapper {
     textField.addExtension(ExtendableTextComponent.Extension.create(
       AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
       () -> show(textField, macroFilter, userMacros)));
+  }
+
+  public static void addMacroSupport(@NotNull ExtendableTextField textField,
+                                     @NotNull Predicate<? super Macro> macroFilter,
+                                     Computable<Boolean> hasModule) {
+    textField.addExtension(ExtendableTextComponent.Extension.create(
+      AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, ExecutionBundle.message("insert.macros"),
+      () -> show(textField, macroFilter, getPathMacros(hasModule.compute()))));
   }
 
   public static void show(@NotNull JTextComponent textComponent) {
@@ -98,6 +106,30 @@ public final class MacrosDialog extends DialogWrapper {
     IdeFocusManager.findInstance().requestFocus(textComponent, true);
   }
 
+  public static void show(@NotNull EditorTextField textComponent,
+                          @NotNull Predicate<? super Macro> filter,
+                          @Nullable Map<String, String> userMacros) {
+    MacrosDialog dialog = new MacrosDialog(textComponent, filter, userMacros);
+    if (dialog.showAndGet()) {
+      String macro = dialog.getSelectedMacroName();
+      Editor editor = textComponent.getEditor();
+      if (macro != null && editor != null) {
+        int selectionStart = editor.getSelectionModel().getSelectionStart();
+        int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+        final String nameToInsert = (macro.startsWith("$") || macro.startsWith("%")) ? macro : "$" + macro + "$";
+        int position = selectionStart < selectionEnd ? selectionStart : editor.getCaretModel().getOffset();
+        WriteCommandAction.writeCommandAction(textComponent.getProject()).run(() -> {
+          if (selectionStart < selectionEnd) {
+            editor.getDocument().deleteString(selectionStart, selectionEnd - selectionStart);
+          }
+          textComponent.getDocument().insertString(position, nameToInsert);
+        });
+        textComponent.setCaretPosition(position + nameToInsert.length());
+      }
+    }
+    IdeFocusManager.findInstance().requestFocus(textComponent, true);
+  }
+
   @Override
   protected void init() {
     throw new UnsupportedOperationException("Call init(...) overload accepting parameters");
@@ -106,12 +138,12 @@ public final class MacrosDialog extends DialogWrapper {
   private void init(@NotNull Predicate<? super Macro> filter, @Nullable Map<String, String> userMacros) {
     super.init();
 
-    setTitle(IdeBundle.message("title.macros"));
-    setOKButtonText(IdeBundle.message("button.insert"));
+    setTitle(IdeCoreBundle.message("title.macros"));
+    setOKButtonText(IdeCoreBundle.message("button.insert"));
 
-    List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
-                                              macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro));
-    macros.sort(new Comparator<Macro>() {
+    List<Macro> macros = ContainerUtil.sorted(ContainerUtil.filter(MacroManager.getInstance().getMacros(),
+                                              macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro)),
+    new Comparator<>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {
         String name1 = macro1.getName();
@@ -125,7 +157,7 @@ public final class MacrosDialog extends DialogWrapper {
         return name1.compareToIgnoreCase(name2);
       }
 
-      private final String ZERO = new String(new char[]{0});
+      private static final String ZERO = new String(new char[]{0});
     });
 
     if (userMacros != null && !userMacros.isEmpty()) {
@@ -143,10 +175,10 @@ public final class MacrosDialog extends DialogWrapper {
     }
 
     final Item finalFirstMacro = firstMacro;
-    myMacrosList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<Item>() {
+    myMacrosList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
       @Override
       public String getTextFor(Item value) {
-        return value.toString();
+        return value.toString(); //NON-NLS
       }
 
       @Override
@@ -156,7 +188,7 @@ public final class MacrosDialog extends DialogWrapper {
     }));
 
     addListeners();
-    if (myMacrosModel.size() > 0) {
+    if (!myMacrosModel.isEmpty()) {
       myMacrosList.setSelectedIndex(0);
     }
     else {
@@ -184,7 +216,7 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 0;
     constr.anchor = GridBagConstraints.WEST;
     constr.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.macros"), null), constr);
+    panel.add(SeparatorFactory.createSeparator(IdeCoreBundle.message("label.macros"), null), constr);
 
     // macros list
     constr = new GridBagConstraints();
@@ -203,7 +235,7 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 2;
     constr.anchor = GridBagConstraints.WEST;
     constr.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.macro.preview"), null), constr);
+    panel.add(SeparatorFactory.createSeparator(IdeCoreBundle.message("label.macro.preview"), null), constr);
 
     // preview
     constr = new GridBagConstraints();
@@ -223,6 +255,17 @@ public final class MacrosDialog extends DialogWrapper {
     return panel;
   }
 
+  @NotNull
+  public static HashMap<String, String> getPathMacros(boolean addModuleMacros) {
+    final HashMap<String, String> macros = new HashMap<>(PathMacros.getInstance().getUserMacros());
+    if (addModuleMacros) {
+      macros.put(PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacros.getInstance().getValue(PathMacroUtil.MODULE_DIR_MACRO_NAME));
+      macros.put(PathMacroUtil.MODULE_WORKING_DIR,
+                 PathMacros.getInstance().getValue(PathMacroUtil.MODULE_WORKING_DIR_NAME));
+    }
+    return macros;
+  }
+
   /**
    * Macro info shown in list
    */
@@ -234,7 +277,7 @@ public final class MacrosDialog extends DialogWrapper {
     @NotNull String toString();
   }
 
-  private static final class MacroWrapper implements Item {
+  private final class MacroWrapper implements Item {
     private final Macro myMacro;
 
     MacroWrapper(Macro macro) {
@@ -248,7 +291,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     @Override
     public @NotNull String getPreview() {
-      return StringUtil.notNullize(myMacro.preview());
+      return StringUtil.notNullize(myMacro.preview(myDataContext));
     }
 
     public @NotNull String toString() {
@@ -280,18 +323,15 @@ public final class MacrosDialog extends DialogWrapper {
 
   private void addListeners() {
     myMacrosList.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          Item item = myMacrosList.getSelectedValue();
-          if (item == null) {
-            myPreviewTextarea.setText("");
-            setOKActionEnabled(false);
-          }
-          else {
-            myPreviewTextarea.setText(item.getPreview());
-            setOKActionEnabled(true);
-          }
+      e -> {
+        Item item = myMacrosList.getSelectedValue();
+        if (item == null) {
+          myPreviewTextarea.setText("");
+          setOKActionEnabled(false);
+        }
+        else {
+          myPreviewTextarea.setText(item.getPreview());
+          setOKActionEnabled(true);
         }
       }
     );
@@ -306,18 +346,6 @@ public final class MacrosDialog extends DialogWrapper {
         return false;
       }
     }.installOn(myMacrosList);
-  }
-
-  /**
-   * @deprecated Doesn't support user-defined path macros, use {@link #getSelectedMacroName()} instead.
-   */
-  @Deprecated
-  public Macro getSelectedMacro() {
-    final Item item = myMacrosList.getSelectedValue();
-    if (item instanceof MacroWrapper) {
-      return ((MacroWrapper)item).myMacro;
-    }
-    return null;
   }
 
 
@@ -337,8 +365,8 @@ public final class MacrosDialog extends DialogWrapper {
 
     private static final Pattern CAMEL_HUMP_START_PATTERN = Pattern.compile("(?<=[\\p{Lower}\\p{Digit}])(?![\\p{Lower}\\p{Digit}])");
 
-    public static final @NotNull Predicate<? super Macro> ALL = m -> true;
-    public static final @NotNull Predicate<? super Macro> NONE = m -> false;
+    public static final @NotNull Predicate<? super Macro> ALL = Predicates.alwaysTrue();
+    public static final @NotNull Predicate<? super Macro> NONE = Predicates.alwaysFalse();
 
     public static final @NotNull Predicate<? super Macro> ANY_PATH =
       m -> nameContains(m, "File") ||

@@ -45,8 +45,7 @@ public class ConvertToStaticHandler implements RefactoringActionHandler {
       if (containingFile instanceof GroovyFile) {
         files.add((GroovyFile)containingFile);
       }
-      if (element instanceof PsiDirectory) {
-        PsiDirectory directory = (PsiDirectory)element;
+      if (element instanceof PsiDirectory directory) {
         Module module = ModuleUtilCore.findModuleForFile((directory).getVirtualFile(), element.getProject());
         if (module != null) {
           ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();

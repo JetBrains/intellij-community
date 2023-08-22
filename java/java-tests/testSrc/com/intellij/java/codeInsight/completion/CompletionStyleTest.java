@@ -10,10 +10,12 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +34,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @NeedsIndex.Full
   public void testGenericParametersReplace() {
     final String path = BASE_PATH;
 
@@ -43,44 +46,50 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
 
   public void testIDEADEV5935() {
     configureFromFileText("A.java",
-                          "public class A {\n" +
-                          "  public static void foo(String param1, String param2) {\n" +
-                          "  }\n" +
-                          "\n" +
-                          "  public static void main(String[] args) {\n" +
-                          "    String param1 = args[0];\n" +
-                          "    String param2 = args[1];\n" +
-                          "    foo(<caret>);\n" +
-                          "  }\n" +
-                          "}"
+                          """
+                            public class A {
+                              public static void foo(String param1, String param2) {
+                              }
+
+                              public static void main(String[] args) {
+                                String param1 = args[0];
+                                String param2 = args[1];
+                                foo(<caret>);
+                              }
+                            }"""
     );
     performSmartCompletion();
     select(Lookup.NORMAL_SELECT_CHAR, getSelected());
     checkResultByText(
-      "public class A {\n" +
-      "  public static void foo(String param1, String param2) {\n" +
-      "  }\n" +
-      "\n" +
-      "  public static void main(String[] args) {\n" +
-      "    String param1 = args[0];\n" +
-      "    String param2 = args[1];\n" +
-      "    foo(param1, <caret>);\n" +
-      "  }\n" +
-      "}"
+      """
+        public class A {
+          public static void foo(String param1, String param2) {
+          }
+
+          public static void main(String[] args) {
+            String param1 = args[0];
+            String param2 = args[1];
+            foo(param1, <caret>);
+          }
+        }"""
     );
   }
 
   public void testIDEADEV2878() {
     configureFromFileText(
       "A.java",
-      "class Bar<T> {}\n" +
-      "class Foo {\n" +
-      "public void createFoo(Bar<?> <caret>)\n" + "}");
+      """
+        class Bar<T> {}
+        class Foo {
+        public void createFoo(Bar<?> <caret>)
+        }""");
     performNormalCompletion();
     checkResultByText(
-      "class Bar<T> {}\n" +
-      "class Foo {\n" +
-      "public void createFoo(Bar<?> bar<caret>)\n" + "}");
+      """
+        class Bar<T> {}
+        class Foo {
+        public void createFoo(Bar<?> bar<caret>)
+        }""");
   }
 
   public void testMethodsParametersStyle1() {
@@ -91,6 +100,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after3.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodsParametersStyle2() {
     final String path = BASE_PATH;
 
@@ -108,6 +118,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after6.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testLocalVariablePreselect() {
 
     configureByFile(BASE_PATH + "/before5.java");
@@ -115,6 +126,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     assertEquals("xxxx", getSelected().getLookupString());
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodCompletionInsideInlineTags() {
     final String path = BASE_PATH;
 
@@ -151,6 +163,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after10.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testCaretPositionAfterCompletion1() {
     final String path = BASE_PATH;
 
@@ -160,6 +173,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after11.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testCaretPositionAfterCompletion2() {
     final String path = BASE_PATH;
 
@@ -169,6 +183,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after12.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testParensReuse() {
     final String path = BASE_PATH;
 
@@ -188,6 +203,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after22.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodReplacementReuseParens1() {
     final String path = BASE_PATH;
 
@@ -197,6 +213,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after15.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodReplacementReuseParens2() {
     final String path = BASE_PATH;
 
@@ -206,6 +223,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after16.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodReplacementReuseParens3() {
     final String path = BASE_PATH;
 
@@ -233,6 +251,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after31.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodParensStyle2() {
     final String path = BASE_PATH;
     CommonCodeStyleSettings styleSettings = getCodeStyleSettings();
@@ -249,6 +268,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
   }
 
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodParensStyle3() {
     final String path = BASE_PATH;
     CommonCodeStyleSettings styleSettings = getCodeStyleSettings();
@@ -336,6 +356,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     return LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem();
   }
 
+  @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testAfterNew15() {
     final LanguageLevelProjectExtension ll = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel old = ll.getLanguageLevel();
@@ -346,6 +367,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
       configureByFile(path + "/AfterNew15.java");
       performSmartCompletion();
       select('\n', getSelected());
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       checkResultByFile(path + "/AfterNew15-out.java");
     }
     finally {

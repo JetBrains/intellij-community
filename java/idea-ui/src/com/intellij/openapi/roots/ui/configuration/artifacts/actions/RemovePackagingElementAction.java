@@ -25,8 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class RemovePackagingElementAction extends LayoutTreeActionBase {
 
-  public RemovePackagingElementAction(ArtifactEditorEx artifactEditor) {
-    super(JavaUiBundle.message("action.name.remove.packaging.element"), JavaUiBundle.message("action.description.remove.packaging.elements"), PlatformIcons.DELETE_ICON,
+  public RemovePackagingElementAction(@NotNull ArtifactEditorEx artifactEditor) {
+    super(JavaUiBundle.message("action.name.remove.packaging.element"),
+          JavaUiBundle.message("action.description.remove.packaging.elements"),
+          PlatformIcons.DELETE_ICON,
           artifactEditor);
   }
 

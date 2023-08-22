@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
@@ -22,13 +23,13 @@ import org.jetbrains.idea.svn.treeConflict.TreeConflictRefreshablePanel;
 
 import javax.swing.*;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProvider {
   @NotNull
   @Override
   public ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
-    if (change1 instanceof ConflictedSvnChange && change2 instanceof ConflictedSvnChange) {
-      ConflictedSvnChange conflict1 = (ConflictedSvnChange)change1;
-      ConflictedSvnChange conflict2 = (ConflictedSvnChange)change2;
+    if (change1 instanceof ConflictedSvnChange conflict1 && change2 instanceof ConflictedSvnChange conflict2) {
 
       if (!conflict1.isTreeConflict() && !conflict2.isTreeConflict()) return ThreeState.UNSURE;
       if (!conflict1.isTreeConflict() || !conflict2.isTreeConflict()) return ThreeState.NO;
@@ -76,7 +77,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
     @NotNull
     @Override
     public String getName() {
-      return "SVN tree conflict viewer";
+      return message("svn.tree.conflict.viewer");
     }
 
     @Override
@@ -103,12 +104,11 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
       myContext = context;
       myRequest = request;
 
-      myQueue = new BackgroundTaskQueue(myContext.getProject(), "Loading change details");
+      myQueue = new BackgroundTaskQueue(myContext.getProject(), message("progress.title.loading.change.details"));
 
       // We don't need to listen on File/Document, because panel always will be the same for a single change.
       // And if Change will change - we'll create new DiffRequest and DiffViewer
-      myDelegate =
-        new TreeConflictRefreshablePanel(myContext.getProject(), "Loading tree conflict details", myQueue, myRequest.getChange());
+      myDelegate = new TreeConflictRefreshablePanel(myContext.getProject(), myQueue, myRequest.getChange());
       myDelegate.refresh();
       myPanel.setContent(myDelegate.getPanel());
     }

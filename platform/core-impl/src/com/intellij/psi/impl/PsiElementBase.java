@@ -1,19 +1,4 @@
-
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -22,6 +7,8 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationRequests;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -29,6 +16,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,8 +157,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return this;
   }
 
@@ -178,20 +167,29 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
+  }
+
+  @SuppressWarnings("deprecation")
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @Override
+  public @Nullable NavigationRequest navigationRequest() {
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "navigate", boolean.class) != PsiElementBase.class) {
+      return NavigatablePsiElement.super.navigationRequest(); // raw
+    }
+    return NavigationRequests.getInstance().psiNavigationRequest(this);
   }
 
   @Override
   public void navigate(boolean requestFocus) {
-    final Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
+    Navigatable descriptor = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (descriptor != null) {
       descriptor.navigate(requestFocus);
     }
@@ -208,9 +206,8 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
-    final PsiManager manager = getManager();
+  public @NotNull Project getProject() {
+    PsiManager manager = getManager();
     if (manager == null) {
       throw new PsiInvalidElementAccessException(this);
     }
@@ -225,26 +222,26 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return this == another;
   }  
 
   @Override
   public PsiFile getContainingFile() {
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
     if (parent == null) throw new PsiInvalidElementAccessException(this);
     return parent.getContainingFile();
   }
 
   @Override
   public boolean isPhysical() {
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
     return parent != null && parent.isPhysical();
   }
 
   @Override
   public boolean isWritable() {
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
     return parent != null && parent.isWritable();
   }
 
@@ -278,8 +275,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return null;
   }
 
-  @NotNull
-  protected <T> T notNullChild(T child) {
+  protected @NotNull <T> T notNullChild(T child) {
     if (child == null) {
       LOG.error(getText() + "\n parent=" + getParent().getText());
     }
@@ -294,16 +290,14 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
-  @Nullable
-  protected <T> T findChildByClass(Class<T> aClass) {
+  protected @Nullable <T> T findChildByClass(Class<T> aClass) {
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (aClass.isInstance(cur)) return (T)cur;
     }
     return null;
   }
 
-  @NotNull
-  protected <T> T findNotNullChildByClass(Class<T> aClass) {
+  protected @NotNull <T> T findNotNullChildByClass(Class<T> aClass) {
     return notNullChild(findChildByClass(aClass));
   }
 

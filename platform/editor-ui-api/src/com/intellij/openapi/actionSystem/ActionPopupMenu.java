@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * Represents a popup menu with a visual presentation.
@@ -35,6 +37,7 @@ public interface ActionPopupMenu {
    * Returns the place where the action group is displayed (the first parameter of {@link ActionManager#createActionPopupMenu(String, ActionGroup)}.
    */
   @NotNull
+  @NonNls
   String getPlace();
 
   /**
@@ -47,4 +50,9 @@ public interface ActionPopupMenu {
    * Will be used for data-context retrieval.
    */
   void setTargetComponent(@NotNull JComponent component);
+
+  /**
+   * Will be used for data-context retrieval.
+   */
+  void setDataContext(@NotNull Supplier<? extends DataContext> dataProvider);
 }

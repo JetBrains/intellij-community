@@ -3,25 +3,61 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class JavaHomeFinder {
+  public static class SystemInfoProvider {
+    @Nullable
+    public String getEnvironmentVariable(@NotNull String name) {
+      return EnvironmentUtil.getValue(name);
+    }
+
+    @NotNull
+    public Path getPath(String path, String... more) {
+      return Path.of(path, more);
+    }
+
+    @Nullable
+    public Path getUserHome() {
+      return Path.of(SystemProperties.getUserHome());
+    }
+
+    @NotNull
+    public Collection<@NotNull Path> getFsRoots() {
+      Iterable<Path> rootDirectories = FileSystems.getDefault().getRootDirectories();
+      return rootDirectories != null ? ContainerUtil.newArrayList(rootDirectories) : Collections.emptyList();
+    }
+
+    public String getPathSeparator() {
+      return File.pathSeparator;
+    }
+
+    public boolean isFileSystemCaseSensitive() {
+      return SystemInfoRt.isFileSystemCaseSensitive;
+    }
+  }
 
   /**
    * Tries to find existing Java SDKs on this computer.
-   * If no JDK found, returns possible folders to start file chooser.
+   * If no JDK found, returns possible directories to start file chooser.
    * @return suggested sdk home paths (sorted)
    */
-  @NotNull
-  public static List<String> suggestHomePaths() {
+  public static @NotNull List<String> suggestHomePaths() {
     return suggestHomePaths(false);
   }
 
@@ -30,13 +66,11 @@ public abstract class JavaHomeFinder {
    * for using in tests that are performed when the registry is not properly initialized
    * or that need the embedded JetBrains Runtime.
    */
-  @NotNull
-  public static List<String> suggestHomePaths(boolean forceEmbeddedJava) {
+  public static @NotNull List<String> suggestHomePaths(boolean forceEmbeddedJava) {
     JavaHomeFinderBasic javaFinder = getFinder(forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
-    Collection<String> foundPaths = javaFinder.findExistingJdks();
-    ArrayList<String> paths = new ArrayList<>(foundPaths);
+    ArrayList<String> paths = new ArrayList<>(javaFinder.findExistingJdks());
     paths.sort((o1, o2) -> Comparing.compare(JavaVersion.tryParse(o2), JavaVersion.tryParse(o1)));
     return paths;
   }
@@ -48,39 +82,43 @@ public abstract class JavaHomeFinder {
   private static JavaHomeFinderBasic getFinder(boolean forceEmbeddedJava) {
     if (!isDetectorEnabled(forceEmbeddedJava)) return null;
 
-    if (SystemInfo.isWindows) {
-      return new JavaHomeFinderWindows(forceEmbeddedJava);
-    }
-    if (SystemInfo.isMac) {
-      return new JavaHomeFinderMac(forceEmbeddedJava);
-    }
-    if (SystemInfo.isLinux) {
-      return new JavaHomeFinderBasic(forceEmbeddedJava, "/usr/java", "/opt/java", "/usr/lib/jvm");
-    }
-    if (SystemInfo.isSolaris) {
-      return new JavaHomeFinderBasic(forceEmbeddedJava, "/usr/jdk");
-    }
-
-    return new JavaHomeFinderBasic(forceEmbeddedJava);
+    return getFinder().checkEmbeddedJava(forceEmbeddedJava);
   }
 
-  @Nullable
-  public static String defaultJavaLocation() {
+  public static @NotNull JavaHomeFinderBasic getFinder() {
+    SystemInfoProvider systemInfoProvider = new SystemInfoProvider();
+
+    if (SystemInfo.isWindows) {
+      return new JavaHomeFinderWindows(true, true, systemInfoProvider);
+    }
+    if (SystemInfo.isMac) {
+      return new JavaHomeFinderMac(systemInfoProvider);
+    }
+    if (SystemInfo.isLinux) {
+      return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(DEFAULT_JAVA_LINUX_PATHS);
+    }
+    if (SystemInfo.isSolaris) {
+      return new JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths("/usr/jdk");
+    }
+
+    return new JavaHomeFinderBasic(systemInfoProvider);
+  }
+
+  public static @Nullable String defaultJavaLocation() {
     if (SystemInfo.isWindows) {
       return JavaHomeFinderWindows.defaultJavaLocation;
     }
     if (SystemInfo.isMac) {
       return JavaHomeFinderMac.defaultJavaLocation;
     }
-
     if (SystemInfo.isLinux) {
       return "/opt/java";
     }
-
     if (SystemInfo.isSolaris) {
       return "/usr/jdk";
     }
-
     return null;
   }
+
+  public static final String[] DEFAULT_JAVA_LINUX_PATHS = {"/usr/java", "/opt/java", "/usr/lib/jvm"};
 }

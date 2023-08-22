@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -9,29 +11,35 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface MarkupModelEx extends MarkupModel {
   void dispose();
 
+
   @Nullable
-  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
+  RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer);
 
-  void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged);
+  /**
+   * Consider using {@link #addPersistentLineHighlighter(TextAttributesKey, int, int)}
+   * unless it's really necessary.
+   * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
+   * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.
+   * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
+   */
+  @Nullable
+  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes);
 
-  void fireAfterAdded(@NotNull RangeHighlighterEx segmentHighlighter);
-
-  void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter);
-
+  /**
+   * @deprecated use {@code RangeHighlighterEx.setXXX()} methods to fire changes
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  default void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {}
+  
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
-
-  void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
-                           int start,
-                           int end,
-                           boolean greedyToLeft,
-                           boolean greedyToRight,
-                           int layer);
 
   void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener);
 
@@ -43,22 +51,41 @@ public interface MarkupModelEx extends MarkupModel {
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
-  @NotNull
-  MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
-                                                         int endOffset,
-                                                         boolean onlyRenderedInGutter,
-                                                         boolean onlyRenderedInScrollBar);
-
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
-  RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+  RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
+                                                            int startOffset,
                                                             int endOffset,
                                                             int layer,
-                                                            TextAttributes textAttributes,
                                                             @NotNull HighlighterTargetArea targetArea,
                                                             boolean isPersistent,
-                                                            Consumer<? super RangeHighlighterEx> changeAttributesAction);
+                                                            @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction);
 
-  // runs change attributes action and fires highlighterChanged event if there were changes
+  /**
+   * @deprecated use {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
+   * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
+   * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.
+   * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
+   */
+  @Deprecated
+  @NotNull
+  default RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+                                                                    int endOffset,
+                                                                    int layer,
+                                                                    TextAttributes textAttributes,
+                                                                    @NotNull HighlighterTargetArea targetArea,
+                                                                    boolean isPersistent,
+                                                                    @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+    return addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, layer, targetArea, isPersistent, ex -> {
+      if (textAttributes != null) {
+        ex.setTextAttributes(textAttributes);
+      }
+      if (changeAttributesAction != null) {
+        changeAttributesAction.consume(ex);
+      }
+    });
+  }
+
+  // run change attributes action and fire highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction);
 }

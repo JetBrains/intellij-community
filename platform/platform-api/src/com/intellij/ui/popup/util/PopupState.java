@@ -12,10 +12,13 @@ import static com.intellij.openapi.util.registry.Registry.intValue;
 
 /**
  * This helper class is intended to prevent opening a popup right after its closing.
+ *
+ * @see com.intellij.ui.popup.PopupState
+ * @deprecated use another PopupState instead
  */
+@Deprecated(forRemoval = true)
 public class PopupState implements JBPopupListener, PopupMenuListener {
-  private final long threshold = intValue("ide.popup.hide.show.threshold", 1000);
-  private boolean hidden;
+  private boolean hidden = true;
   private long time;
 
   private void markAsShown() {
@@ -30,7 +33,7 @@ public class PopupState implements JBPopupListener, PopupMenuListener {
   public boolean isRecentlyHidden() {
     if (!hidden) return false;
     hidden = false;
-    return (System.currentTimeMillis() - time) < threshold;
+    return (System.currentTimeMillis() - time) < intValue("ide.popup.hide.show.threshold", 200);
   }
 
   // JBPopupListener

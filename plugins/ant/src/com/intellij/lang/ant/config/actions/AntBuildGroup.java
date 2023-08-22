@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -10,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
+import static com.intellij.openapi.util.NlsActions.ActionText;
+
 public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
   @Override
@@ -17,6 +21,11 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(project != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -77,9 +86,9 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
   }
 
   private static AnAction getOrCreateAction(final AntBuildFile buildFile,
-                                            final String displayName,
+                                            final @ActionText String displayName,
                                             final List<String> targets,
-                                            final String targetDescription,
+                                            final @ActionDescription String targetDescription,
                                             final String actionId) {
     AnAction action = null;
     if (actionId != null) {
@@ -93,6 +102,6 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
   @Override
   public String getTemplateText() {
-    return "Ant Build Group";
+    return AntBundle.message("action.ant.build.group.text");
   }
 }

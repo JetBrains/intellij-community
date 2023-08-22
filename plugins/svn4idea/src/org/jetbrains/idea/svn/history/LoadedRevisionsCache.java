@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class LoadedRevisionsCache implements Disposable {
+public final class LoadedRevisionsCache implements Disposable {
   private static final Logger LOG = Logger.getInstance(LoadedRevisionsCache.class);
 
   private final Project myProject;
@@ -28,7 +27,7 @@ public class LoadedRevisionsCache implements Disposable {
   private final MessageBusConnection myConnection;
 
   public static LoadedRevisionsCache getInstance(final Project project) {
-    return ServiceManager.getService(project, LoadedRevisionsCache.class);
+    return project.getService(LoadedRevisionsCache.class);
   }
 
   private LoadedRevisionsCache(final Project project) {
@@ -121,7 +120,9 @@ public class LoadedRevisionsCache implements Disposable {
       consistent = true;
     }
 
-    myMap.put(location, bindToBunch);
+    if (bindToBunch != null) {
+      myMap.put(location, bindToBunch);
+    }
     return bindToBunch;
   }
 
@@ -134,7 +135,7 @@ public class LoadedRevisionsCache implements Disposable {
     return new BunchIterator(bunch);
   }
 
-  private class BunchIterator implements Iterator<ChangesBunch> {
+  private final class BunchIterator implements Iterator<ChangesBunch> {
     private final long myCreationTime;
     private Bunch myBunch;
 
@@ -171,7 +172,7 @@ public class LoadedRevisionsCache implements Disposable {
     }
   }
 
-  public static class Bunch extends ChangesBunch {
+  public static final class Bunch extends ChangesBunch {
     private final Bunch myNext;
 
     private Bunch(final List<CommittedChangeList> list, final boolean consistent, final Bunch next) {

@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -33,8 +20,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
-public class DetectedFrameworksComponent {
+public final class DetectedFrameworksComponent {
   private JPanel myMainPanel;
   private final DetectedFrameworksTree myTree;
   private JPanel myTreePanel;
@@ -52,7 +40,7 @@ public class DetectedFrameworksComponent {
     };
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     myGroupByComboBox.setModel(new EnumComboBoxModel<>(GroupByOption.class));
-    myGroupByComboBox.setRenderer(SimpleListCellRenderer.create("", value -> StringUtil.toLowerCase(value.name())));
+    myGroupByComboBox.setRenderer(SimpleListCellRenderer.create("", GroupByOption::getPresentableName));
     myGroupByComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -98,5 +86,17 @@ public class DetectedFrameworksComponent {
     getTree().processUncheckedNodes(node -> node.disableDetection(excludesConfiguration));
   }
 
-  public enum GroupByOption { TYPE, DIRECTORY }
+  public enum GroupByOption {
+    TYPE(ProjectBundle.messagePointer("list.item.group.by.type")),
+    DIRECTORY(ProjectBundle.messagePointer("list.item.group.by.directory"));
+    private final Supplier<@NlsContexts.ListItem String> myPresentableName;
+
+    GroupByOption(Supplier<String> presentableName) {
+      myPresentableName = presentableName;
+    }
+
+    @NlsContexts.ListItem String getPresentableName() {
+      return myPresentableName.get();
+    }
+  }
 }

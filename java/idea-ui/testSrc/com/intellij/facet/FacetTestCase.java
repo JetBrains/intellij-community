@@ -16,8 +16,8 @@ public abstract class FacetTestCase extends HeavyPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    FacetType.EP_NAME.getPoint(null).registerExtension(new MockFacetType(), getTestRootDisposable());
-    FacetType.EP_NAME.getPoint(null).registerExtension(new MockSubFacetType(), getTestRootDisposable());
+    FacetType.EP_NAME.getPoint().registerExtension(new MockFacetType(), getTestRootDisposable());
+    FacetType.EP_NAME.getPoint().registerExtension(new MockSubFacetType(), getTestRootDisposable());
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -21,7 +7,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public class ChangeToAppendUtil {
+public final class ChangeToAppendUtil {
   @Nullable
   public static PsiExpression buildAppendExpression(PsiExpression appendable, PsiExpression concatenation) {
     if (concatenation == null) return null;
@@ -39,38 +25,38 @@ public class ChangeToAppendUtil {
   public static StringBuilder buildAppendExpression(@Nullable PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out) {
     if (concatenation == null) return null;
     final PsiType type = concatenation.getType();
-    if (concatenation instanceof PsiPolyadicExpression && type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
+    if (concatenation instanceof PsiPolyadicExpression polyadicExpression && type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       final PsiExpression[] operands = polyadicExpression.getOperands();
       boolean isConstant = true;
+      boolean isPrimitiveOrBoxed = true;
       boolean isString = false;
       final StringBuilder builder = new StringBuilder();
       for (PsiExpression operand : operands) {
-        if (isConstant && PsiUtil.isConstantExpression(operand)) {
-          if (builder.length() != 0) {
+        final PsiType operandType = operand.getType();
+        isConstant &= PsiUtil.isConstantExpression(operand);
+        isPrimitiveOrBoxed &= PsiPrimitiveType.getOptionallyUnboxedType(operandType) != null;
+        if (isConstant || !isString && isPrimitiveOrBoxed) {
+          if (!builder.isEmpty()) {
             builder.append('+');
           }
-          final PsiType operandType = operand.getType();
           if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             isString = true;
           }
           builder.append(CommentTracker.textWithSurroundingComments(operand));
         }
         else if (!operand.textMatches("\"\"")) {
-          isConstant = false;
-          if (builder.length() != 0) {
+          if (!builder.isEmpty()) {
             append(builder, useStringValueOf && !isString, out);
             builder.setLength(0);
           }
           buildAppendExpression(operand, useStringValueOf, out);
         }
       }
-      if (builder.length() != 0) {
+      if (!builder.isEmpty()) {
         append(builder, false, out);
       }
     }
-    else if (concatenation instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)concatenation;
+    else if (concatenation instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression expression = parenthesizedExpression.getExpression();
       if (expression != null) {
         return buildAppendExpression(expression, useStringValueOf, out);

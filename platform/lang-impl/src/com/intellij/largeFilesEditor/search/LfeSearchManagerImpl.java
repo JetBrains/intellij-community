@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.find.FindUsagesCollector;
 import com.intellij.find.SearchReplaceComponent;
 import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.largeFilesEditor.Utils;
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.largeFilesEditor.editor.Page;
-import com.intellij.largeFilesEditor.search.actions.ToggleAction;
 import com.intellij.largeFilesEditor.search.actions.*;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearchCallback;
@@ -26,6 +26,9 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -33,18 +36,16 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBList;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
+public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
   private static final int CONTEXT_ONE_SIDE_LENGTH = 100;
   private static final long STATUS_TEXT_LIFE_TIME = 3000;
 
@@ -63,17 +64,17 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   private long lastProgressStatusUpdateTime = System.currentTimeMillis();
 
   private SearchReplaceComponent mySearchReplaceComponent;
-  private FindAllAction myFindAllAction;
+  private LargeFileFindAllAction myFindAllAction;
   private FindForwardBackwardAction myFindForwardAction;
   private FindForwardBackwardAction myFindBackwardAction;
-  private PrevNextOccurrenceAction myNextOccurrenceAction;
-  private PrevNextOccurrenceAction myPrevOccurrenceAction;
-  private ToggleAction myToggleCaseSensitiveAction;
-  private ToggleAction myToggleWholeWordsAction;
-  private ToggleAction myToggleRegularExpression;
-  private StatusTextAction myStatusTextAction;
+  private LargeFilePrevNextOccurrenceAction myNextOccurrenceAction;
+  private LargeFilePrevNextOccurrenceAction myPrevOccurrenceAction;
+  private LargeFileToggleAction myToggleCaseSensitiveAction;
+  private LargeFileToggleAction myToggleWholeWordsAction;
+  private LargeFileToggleAction myToggleRegularExpression;
+  private LargeFileStatusTextAction myStatusTextAction;
 
-  private String myStatusText;
+  private @NlsContexts.StatusText String myStatusText;
   private boolean myIsStatusTextHidden;
   private long myLastTimeStatusTextWasChanged;
 
@@ -128,9 +129,9 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
       .setSearchDirectionForward(forwardDirection)
       .setSearchBounds(fromPageNumber, SearchTaskOptions.NO_LIMIT,
                        toPageNumber, SearchTaskOptions.NO_LIMIT)
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected(null))
-      .setWholeWords(myToggleWholeWordsAction.isSelected(null))
-      .setRegularExpression(myToggleRegularExpression.isSelected(null))
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
+      .setWholeWords(myToggleWholeWordsAction.isSelected())
+      .setRegularExpression(myToggleRegularExpression.isSelected())
       .setContextOneSideLength(CONTEXT_ONE_SIDE_LENGTH);
 
     launchNewRangeSearch(options);
@@ -140,8 +141,8 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     showRegexSearchWarningIfNeed();
 
     RangeSearch rangeSearch = rangeSearchCreator.createContent(
-      largeFileEditor.getProject(), largeFileEditor.getVirtualFile(),
-      largeFileEditor.getVirtualFile().getName());
+      largeFileEditor.getProject(), largeFileEditor.getFile(),
+      largeFileEditor.getFile().getName());
     rangeSearch.runNewSearch(searchTaskOptions, fileDataProviderForSearch);
   }
 
@@ -173,7 +174,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void launchCloseSearch(SearchTaskOptions options) {
     if (StringUtil.isEmpty(options.stringToFind)) {
       return;
@@ -189,7 +190,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
   private void showRegexSearchWarningIfNeed() {
-    EditorNotifications.getInstance(largeFileEditor.getProject()).updateNotifications(largeFileEditor.getVirtualFile());
+    EditorNotifications.getInstance(largeFileEditor.getProject()).updateNotifications(largeFileEditor.getFile());
   }
 
   private boolean launchLoopedCloseSearchTaskIfNeeded(SearchTaskOptions normalCloseSearchOptions) {
@@ -244,9 +245,9 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     SearchTaskOptions options = new SearchTaskOptions()
       .setSearchDirectionForward(directionForward)
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected(null))
-      .setWholeWords(myToggleWholeWordsAction.isSelected(null))
-      .setRegularExpression(myToggleRegularExpression.isSelected(null))
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
+      .setWholeWords(myToggleWholeWordsAction.isSelected())
+      .setRegularExpression(myToggleRegularExpression.isSelected())
       .setContextOneSideLength(CONTEXT_ONE_SIDE_LENGTH);
 
     if (!myCloseSearchResultsList.isEmpty() && myCloseSearchResultsList.getSelectedIndex() != -1) {
@@ -295,7 +296,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
   @Override
-  public void tellClosestResultFound(CloseSearchTask caller, ArrayList<SearchResult> allMatchesAtFrame,
+  public void tellClosestResultFound(CloseSearchTask caller, List<? extends SearchResult> allMatchesAtFrame,
                                      int indexOfClosestResult) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!caller.isShouldStop()) {
@@ -345,7 +346,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     });
   }
 
-  private static void showSimpleHintInEditor(String message, Editor editor) {
+  private static void showSimpleHintInEditor(@NlsContexts.HintText String message, Editor editor) {
     JComponent hintComponent = HintUtil.createInformationLabel(message);
     final LightweightHint hint = new LightweightHint(hintComponent);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint,
@@ -393,7 +394,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
   @Override
-  public String getStatusText() {
+  public @NlsContexts.StatusText String getStatusText() {
     return myStatusText;
   }
 
@@ -420,7 +421,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public void onSearchParametersChanged() {
     if (lastExecutedCloseSearchTask != null) {
@@ -454,9 +455,9 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     SearchTaskOptions options = new SearchTaskOptions()
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected(null))
-      .setWholeWords(myToggleWholeWordsAction.isSelected(null))
-      .setRegularExpression(myToggleRegularExpression.isSelected(null))
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
+      .setWholeWords(myToggleWholeWordsAction.isSelected())
+      .setRegularExpression(myToggleRegularExpression.isSelected())
       .setSearchDirectionForward(true)
       .setSearchBounds(page.getPageNumber(), SearchTaskOptions.NO_LIMIT,
                        page.getPageNumber(), SearchTaskOptions.NO_LIMIT)
@@ -467,7 +468,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     }
 
     RangeSearch rangeSearch = new RangeSearch(
-      getLargeFileEditor().getVirtualFile(), getLargeFileEditor().getProject(),
+      getLargeFileEditor().getFile(), getLargeFileEditor().getProject(),
       new RangeSearchCallback() {
         @Override
         public FileDataProviderForSearch getFileDataProviderForSearch(boolean createIfNotExists, Project project, VirtualFile virtualFile) {
@@ -486,12 +487,12 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
 
   @Override
   public boolean isSearchWorkingNow() {
-    return (lastExecutedCloseSearchTask != null && !lastExecutedCloseSearchTask.isFinished());
+    return lastExecutedCloseSearchTask != null && !lastExecutedCloseSearchTask.isFinished();
   }
 
   @Override
   public boolean canShowRegexSearchWarning() {
-    if (!myToggleRegularExpression.isSelected(null)) return false;
+    if (!myToggleRegularExpression.isSelected()) return false;
 
     String stringToFind = mySearchReplaceComponent.getSearchTextComponent().getText();
 
@@ -503,13 +504,13 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
   private void createActions() {
-    myNextOccurrenceAction = new PrevNextOccurrenceAction(this, true);
-    myPrevOccurrenceAction = new PrevNextOccurrenceAction(this, false);
-    myFindAllAction = new FindAllAction(this);
+    myNextOccurrenceAction = new LargeFilePrevNextOccurrenceAction(this, true);
+    myPrevOccurrenceAction = new LargeFilePrevNextOccurrenceAction(this, false);
+    myFindAllAction = new LargeFileFindAllAction(this);
     myFindForwardAction = new FindForwardBackwardAction(true, this);
     myFindBackwardAction = new FindForwardBackwardAction(false, this);
-    myToggleCaseSensitiveAction = new ToggleAction(this, EditorBundle.message("large.file.editor.match.case.action.mnemonic.text"));
-    myToggleWholeWordsAction = new ToggleAction(this, EditorBundle.message("large.file.editor.words.action.mnemonic.text")) {
+    myToggleCaseSensitiveAction = new LargeFileToggleAction(this, EditorBundle.message("large.file.editor.match.case.action.mnemonic.text"));
+    myToggleWholeWordsAction = new LargeFileToggleAction(this, EditorBundle.message("large.file.editor.words.action.mnemonic.text")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         boolean enabled = myToggleRegularExpression != null && !myToggleRegularExpression.isSelected(e);
@@ -519,17 +520,26 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
         setSelected(e, isSelected(e) && enabled && visible);
         super.update(e);
       }
-    };
-    myToggleRegularExpression = new ToggleAction(this, EditorBundle.message("large.file.editor.regex.action.mnemonic.text")) {
+
       @Override
-      public void setSelected(@Nullable AnActionEvent e, boolean state) {
-        super.setSelected(e, state);
-        if (state && myToggleWholeWordsAction != null) {
-          myToggleWholeWordsAction.setSelected(e, false);
-        }
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return super.getActionUpdateThread();
       }
     };
-    myStatusTextAction = new StatusTextAction(this);
+    myToggleRegularExpression = new LargeFileToggleAction(this, EditorBundle.message("large.file.editor.regex.action.mnemonic.text")) {
+      @Override
+      public void setSelected(boolean state) {
+        super.setSelected(state);
+        if (state && myToggleWholeWordsAction != null) {
+          myToggleWholeWordsAction.setSelected(false);
+        }
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return super.getActionUpdateThread();
+      }
+    };
+    myStatusTextAction = new LargeFileStatusTextAction(this);
   }
 
   private void createSearchReplaceComponent() {
@@ -546,7 +556,9 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
                              myToggleWholeWordsAction,
                              myToggleRegularExpression,
                              new DefaultCustomComponentAction(
-                               () -> RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", null, null, "FindInFile")),
+                               () -> RegExHelpPopup.createRegExLink(
+                                 new HtmlBuilder().append(HtmlChunk.text("?").bold()).wrapWithHtmlBody().toString(),
+                                 null, FindUsagesCollector.FIND_IN_FILE)),
                              myStatusTextAction)
       //.addSearchFieldActions(new RestorePreviousSettingsAction())
       .withCloseAction(this::onEscapePressed)
@@ -583,7 +595,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     }
   }
 
-  private void setNewStatusText(String newStatusText) {
+  private void setNewStatusText(@NlsContexts.StatusText String newStatusText) {
     myStatusText = newStatusText;
     myLastTimeStatusTextWasChanged = System.currentTimeMillis();
 
@@ -653,7 +665,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
 
-  private class CloseSearchResultsListSelectionListener implements ListSelectionListener {
+  private final class CloseSearchResultsListSelectionListener implements ListSelectionListener {
     private final JBList<SearchResult> list;
 
     CloseSearchResultsListSelectionListener(JBList<SearchResult> list) {

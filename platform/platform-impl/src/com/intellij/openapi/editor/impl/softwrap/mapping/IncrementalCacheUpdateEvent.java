@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Encapsulates information about incremental soft wraps cache update.
- * 
- * @author Denis Zhdanov
  */
 public class IncrementalCacheUpdateEvent {
   private final int myStartOffset;
@@ -81,7 +79,7 @@ public class IncrementalCacheUpdateEvent {
     return new VisualLineInfo(visualLineStartOffset, prevSoftWrap != null && prevSoftWrap.getStart() == visualLineStartOffset);
   }
 
-  private static class VisualLineInfo {
+  private static final class VisualLineInfo {
     private final int startOffset;
     private final boolean startsWithSoftWrap;
 
@@ -106,7 +104,7 @@ public class IncrementalCacheUpdateEvent {
   }
 
   /**
-   * Returns offset, till which soft wrap recalculation actually was performed. It can be larger that the value returned by 
+   * Returns offset, till which soft wrap recalculation actually was performed. It can be larger that the value returned by
    * {@link #getMandatoryEndOffset()}.
    */
   public int getActualEndOffset() {

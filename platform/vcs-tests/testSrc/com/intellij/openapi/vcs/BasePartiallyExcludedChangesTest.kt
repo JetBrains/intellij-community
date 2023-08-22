@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.PartiallyExcludedFilesStateHolder
 import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTest() {
-  protected lateinit var stateHolder: MyStateHolder
+  private lateinit var stateHolder: MyStateHolder
 
   override fun setUp() {
     super.setUp()
@@ -80,17 +81,14 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
 
   protected fun PartialLocalLineStatusTracker.assertExcluded(index: Int, expected: Boolean) {
     val range = this.getRanges()!![index]
-    assertEquals(expected, range.isExcludedFromCommit)
+    assertEquals(expected, range.exclusionState == RangeExclusionState.Excluded)
   }
 
   protected fun String.assertExcludedState(holderState: ExclusionState, trackerState: ExclusionState = holderState) {
     val actual = stateHolder.getExclusionState(this.toFilePath)
     assertEquals(holderState, actual)
 
-    val tracker = this.toFilePath.virtualFile?.tracker as? PartialLocalLineStatusTracker
-    if (tracker != null) {
-      tracker.assertExcludedState(trackerState, DEFAULT)
-    }
+    (toFilePath.virtualFile?.tracker as? PartialLocalLineStatusTracker)?.assertExcludedState(trackerState, DEFAULT)
   }
 
   protected fun PartialLocalLineStatusTracker.exclude(index: Int, isExcluded: Boolean) {

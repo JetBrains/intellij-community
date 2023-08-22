@@ -14,8 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrClassTypeElement {
   public GrClassTypeElementImpl(@NotNull ASTNode node) {
@@ -35,7 +34,7 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
   @Override
   @NotNull
   public GrCodeReferenceElement getReferenceElement() {
-    return (GrCodeReferenceElement)findNotNullChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+    return findNotNullChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @Override

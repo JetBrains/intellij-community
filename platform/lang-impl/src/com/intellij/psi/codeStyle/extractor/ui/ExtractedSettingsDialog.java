@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.lang.LangBundle;
@@ -22,6 +22,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,10 +40,7 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Roman.Shein
- */
-public class ExtractedSettingsDialog extends DialogWrapper {
+public final class ExtractedSettingsDialog extends DialogWrapper {
   protected CodeStyleSettingsNameProvider myNameProvider;
   protected List<Value> myValues;
   protected DefaultMutableTreeNode myRoot;
@@ -58,11 +56,9 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     setTitle(LangBundle.message("dialog.title.extracted.code.style.settings"));
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
-    JComponent result = buildExtractedSettingsTree();
-    return result;
+  protected @Nullable JComponent createCenterPanel() {
+    return buildExtractedSettingsTree();
   }
 
   public boolean valueIsSelectedInTree(@NotNull Value value) {
@@ -73,8 +69,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
   protected boolean valueIsSelectedInTree(@NotNull TreeNode startNode, @NotNull Value value) {
     for (Enumeration children = startNode.children(); children.hasMoreElements();) {
       Object child = children.nextElement();
-      if (child instanceof SettingsTreeNode) {
-        SettingsTreeNode settingsChild = (SettingsTreeNode) child;
+      if (child instanceof SettingsTreeNode settingsChild) {
         if (settingsChild.accepted && value.equals(settingsChild.myValue)) {
           return true;
         }
@@ -86,19 +81,20 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     return false;
   }
 
-  public static class SettingsTreeNode extends DefaultMutableTreeNode {
+  public static final class SettingsTreeNode extends DefaultMutableTreeNode {
     protected CodeStyleSettingPresentation myRepresentation;
     protected boolean accepted = true;
-    protected final String valueString;
+    protected final @Nls String valueString;
     protected final boolean isGroupNode;
-    protected final String customTitle;
+    protected final @Nls String customTitle;
     protected Value myValue;
 
-    public SettingsTreeNode(String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, Value value) {
+    public SettingsTreeNode(@Nls String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, Value value) {
       this(valueString, representation, isGroupNode, null, value);
     }
 
-    public SettingsTreeNode(String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, String customTitle,
+    public SettingsTreeNode(@Nls String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode,
+                            @Nls String customTitle,
                             Value value) {
       this.valueString = valueString;
       this.myRepresentation = representation;
@@ -107,7 +103,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       this.myValue = value;
     }
 
-    public SettingsTreeNode(String title) {
+    public SettingsTreeNode(@Nls String title) {
       this(title, null, true, null);
     }
 
@@ -115,22 +111,19 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       return isGroupNode;
     }
 
-    @NotNull
-    public String getTitle() {
+    public @NotNull @Nls String getTitle() {
       return customTitle != null ? customTitle : (myRepresentation == null ? valueString : myRepresentation.getUiName());
     }
 
-    @Nullable
-    public String getValueString() {
+    public @Nullable @Nls String getValueString() {
       return myRepresentation == null ? null : valueString;
     }
   }
 
   protected static ColumnInfo getTitleColumnInfo() {
     return new ColumnInfo("TITLE") {
-      @Nullable
       @Override
-      public Object valueOf(Object o) {
+      public @Nullable Object valueOf(Object o) {
         if (o instanceof SettingsTreeNode) {
           return ((SettingsTreeNode) o).getTitle();
         } else {
@@ -145,7 +138,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     };
   }
 
-  protected static class ValueRenderer implements TableCellRenderer {
+  protected static final class ValueRenderer implements TableCellRenderer {
     private final JLabel myLabel = new JLabel();
     private final JCheckBox myCheckBox = new JCheckBox();
     private final JPanel myPanel = new JPanel(new HorizontalLayout(0));
@@ -154,19 +147,17 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       myPanel.add(myCheckBox);
     }
 
-    @NotNull
     @Override
-    public Component getTableCellRendererComponent(JTable table,
-                                                   Object value,
-                                                   boolean isSelected,
-                                                   boolean hasFocus,
-                                                   int row,
-                                                   int column) {
+    public @NotNull Component getTableCellRendererComponent(JTable table,
+                                                            Object value,
+                                                            boolean isSelected,
+                                                            boolean hasFocus,
+                                                            int row,
+                                                            int column) {
       if (table instanceof TreeTable) {
         table.setEnabled(true);
         DefaultMutableTreeNode valueNode = (DefaultMutableTreeNode)((TreeTable) table).getTree().getPathForRow(row).getLastPathComponent();
-        if (valueNode instanceof SettingsTreeNode) {
-          SettingsTreeNode settingsNode = (SettingsTreeNode) valueNode;
+        if (valueNode instanceof SettingsTreeNode settingsNode) {
           myLabel.setText(settingsNode.getValueString());
           myCheckBox.setEnabled(true);
           myCheckBox.setSelected(settingsNode.accepted);
@@ -179,7 +170,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     }
   }
 
-  protected static class ValueEditor extends AbstractTableCellEditor {
+  protected static final class ValueEditor extends AbstractTableCellEditor {
 
     private final JLabel myLabel = new JLabel();
     private final JCheckBox myCheckBox = new JCheckBox();
@@ -210,8 +201,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
     protected void updateAncestorsUi(boolean accepted, SettingsTreeNode node) {
       TreeNode parent = node.getParent();
-      if (parent instanceof SettingsTreeNode) {
-        SettingsTreeNode settingsParent = (SettingsTreeNode) parent;
+      if (parent instanceof SettingsTreeNode settingsParent) {
         settingsParent.accepted = false;
         if (!accepted) {
           //propagate disabled settings upwards
@@ -230,8 +220,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     protected void updateChildrenUi(SettingsTreeNode node) {
       for (Enumeration children = node.children(); children.hasMoreElements(); ) {
         Object child = children.nextElement();
-        if (child instanceof SettingsTreeNode) {
-          SettingsTreeNode settingsChild = (SettingsTreeNode) child;
+        if (child instanceof SettingsTreeNode settingsChild) {
           settingsChild.accepted = node.accepted;
           updateChildrenUi(settingsChild);
         }
@@ -265,9 +254,8 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
   protected static ColumnInfo getValueColumnInfo() {
     return new ColumnInfo("VALUE") {
-      @Nullable
       @Override
-      public Object valueOf(Object o) {
+      public @Nullable Object valueOf(Object o) {
         if (o instanceof SettingsTreeNode) {
           return ((SettingsTreeNode) o).getValueString();
         } else {
@@ -397,7 +385,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
         return editor == null ? super.getCellEditor(row, column) : editor;
       }
     };
-    new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
+    TreeTableSpeedSearch.installOn(treeTable).setComparator(new SpeedSearchComparator(false));
 
     treeTable.setRootVisible(false);
 
@@ -439,24 +427,23 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
   final TreeCellRenderer myTitleRenderer = new CellRenderer();
 
-  public static class CellRenderer implements TreeCellRenderer {
+  public static final class CellRenderer implements TreeCellRenderer {
 
     private final JLabel myLabel = new JLabel();
 
-    @NotNull
     @Override
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean selected,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      if (value instanceof SettingsTreeNode) {
-        SettingsTreeNode node = (SettingsTreeNode) value;
+    public @NotNull Component getTreeCellRendererComponent(JTree tree,
+                                                           Object value,
+                                                           boolean selected,
+                                                           boolean expanded,
+                                                           boolean leaf,
+                                                           int row,
+                                                           boolean hasFocus) {
+      if (value instanceof SettingsTreeNode node) {
         myLabel.setText(node.getTitle());
         myLabel.setFont(node.isGroupOrTypeNode() ? myLabel.getFont().deriveFont(Font.BOLD) : myLabel.getFont().deriveFont(Font.PLAIN));
       } else {
+        //noinspection HardCodedStringLiteral
         myLabel.setText(value.toString());
         myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
       }

@@ -32,8 +32,7 @@ public final class ErrorStripe implements Comparable<ErrorStripe> {
   @Override
   public boolean equals(Object object) {
     if (object == this) return true;
-    if (object instanceof ErrorStripe) {
-      ErrorStripe stripe = (ErrorStripe)object;
+    if (object instanceof ErrorStripe stripe) {
       return stripe.myLayer == myLayer && stripe.myColor.getRGB() == myColor.getRGB();
     }
     return false;

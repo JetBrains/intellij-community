@@ -1,4 +1,4 @@
-// "Copy 'switch' branch" "true"
+// "Copy 'switch' branch" "true-preview"
 class C {
     void foo(int n) {
         String s = "";

@@ -20,7 +20,7 @@ PyFile:MultilineFStringTerminatedByQuotesInsideParenthesizedExpression.py
                 PyNamedParameter('x')
                   PsiElement(Py:IDENTIFIER)('x')
               PsiElement(Py:COLON)(':')
-              PsiErrorElement:expression expected
+              PsiErrorElement:Expression expected
                 <empty list>
           PsiWhiteSpace(' ')
         PsiElement(Py:FSTRING_END)(''')

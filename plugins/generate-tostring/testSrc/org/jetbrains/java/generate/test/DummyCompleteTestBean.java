@@ -23,6 +23,7 @@ import java.util.*;
 /**
  * This is a dummy test bean for testing the toString() plugin. Has a long list of fields.
  */
+@SuppressWarnings({"rawtypes", "unused", "UseOfObsoleteCollectionType", "RedundantSuppression"})
 public class DummyCompleteTestBean implements Serializable {
 
     // Constants

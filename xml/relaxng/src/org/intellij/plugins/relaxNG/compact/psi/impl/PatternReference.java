@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -143,11 +144,11 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   @NotNull
   public String getUnresolvedMessagePattern() {
     //noinspection UnresolvedPropertyKey
-    return RelaxngBundle.message("unresolved.pattern.reference.0");
+    return RelaxngBundle.message("relaxng.annotator.unresolved-pattern-reference");
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     if (getScope() != null) {
       return new LocalQuickFix[] { new CreatePatternFix(this) };
     }
@@ -155,27 +156,29 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   }
 
   static class CreatePatternFix implements LocalQuickFix {
-    private final PatternReference myReference;
+
+    @IntentionName private final String myName;
 
     CreatePatternFix(PatternReference reference) {
-      myReference = reference;
+      myName = RelaxngBundle.message("relaxng.quickfix.create-pattern.name", reference.getCanonicalText());
     }
 
     @NotNull
     @Override
     public String getName() {
-      return RelaxngBundle.message("create.pattern.0", myReference.getCanonicalText());
+      return myName;
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return RelaxngBundle.message("create.pattern");
+      return RelaxngBundle.message("relaxng.quickfix.create-pattern.family");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final RncFile rncfile = (RncFile)PsiFileFactory.getInstance(myReference.getElement().getProject()).createFileFromText("dummy.rnc", RncFileType.getInstance(), "dummy = xxx");
+      PatternReference myReference = (PatternReference)descriptor.getPsiElement().getReference();
+      final RncFile rncfile = (RncFile)PsiFileFactory.getInstance(project).createFileFromText("dummy.rnc", RncFileType.getInstance(), "dummy = xxx");
 
       final RncGrammar grammar = rncfile.getGrammar();
       assert grammar != null;

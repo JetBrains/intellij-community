@@ -17,22 +17,22 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Assertion;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class FilteringIteratorTest extends TestCase {
   public static final Condition STRINGS_ONLY = FilteringIterator.instanceOf(String.class);
-  public static final Assertion CHECK = new Assertion();
   public static final Condition ANY = object -> true;
 
   public void testIteration() {
     Object[] values = new Object[]{"1", new Object(), "3", new Object()};
     Iterator iterator = FilteringIterator.create(Arrays.asList(values).iterator(), STRINGS_ONLY);
-    CHECK.compareAll(new String[]{"1", "3"}, ContainerUtil.collect(iterator));
+    assertThat(ContainerUtil.collect(iterator)).containsExactly("1", "3");
   }
 
   public void testRemove() {
@@ -51,7 +51,7 @@ public class FilteringIteratorTest extends TestCase {
   public void testIteratingNulls() {
     Object[] array = new Object[]{"1", null, "2", null};
     Iterator iterator = FilteringIterator.create(Arrays.asList(array).iterator(), ANY);
-    CHECK.compareAll(array, ContainerUtil.collect(iterator));
+    assertThat(ContainerUtil.collect(iterator)).containsExactly(array);
   }
 
   public void testCallsHashNextOncePerElement() {
@@ -85,7 +85,7 @@ public class FilteringIteratorTest extends TestCase {
     while (iterator.hasNext()) {
       if (iterator.next().equals("x")) iterator.remove();
     }
-    CHECK.compareAll(expected, collection);
+    assertThat(collection).containsExactly(expected);
   }
 
   private static class MockIterator implements Iterator {

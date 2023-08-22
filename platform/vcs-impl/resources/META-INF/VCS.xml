@@ -1,18 +1,19 @@
+<!--suppress PluginXmlDynamicPlugin -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-
   <module value="com.intellij.modules.vcs"/>
 
-  <extensionPoints>
-    <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-  </extensionPoints>
+  <xi:include href="/META-INF/VcsExtensionPoints.xml"/>
 
-  <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/VcsExtensions.xml"/>
+  <xi:include href="/META-INF/VcsActions.xml"/>
 
-  <xi:include href="/META-INF/vcs-log.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/vcs-log.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/dvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/dvcs.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/smart-update.xml">
     <xi:fallback/>
   </xi:include>
 
@@ -47,12 +48,21 @@
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
 
-    <projectService serviceImplementation="com.intellij.vcs.commit.CommitWorkflowManager"/>
-    <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitWorkflowManager$MyStartupActivity"/>
+    <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager"
+                    overrides="true"/>
+    <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
+
+    <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffComponentFactoryProvider"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.CombinedChangeDiffComponentFactoryProvider"/>
   </extensions>
 
   <projectListeners>
     <listener class="com.intellij.openapi.vcs.annotate.AnnotationsPreloader$AnnotationsPreloaderFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="com.intellij.openapi.vcs.changes.DiffEditorTabStateListener"
+              topic="com.intellij.openapi.vcs.changes.VcsEditorTabFilesListener"/>
+  </applicationListeners>
 </idea-plugin>

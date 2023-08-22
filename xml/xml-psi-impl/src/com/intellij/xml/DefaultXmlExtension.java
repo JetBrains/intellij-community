@@ -48,7 +48,7 @@ public class DefaultXmlExtension extends XmlExtension {
   @NotNull
   public List<TagInfo> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
-    final Set<String> namespaces = ContainerUtil.set(context.knownNamespaces());
+    final Set<String> namespaces = ContainerUtil.newHashSet(context.knownNamespaces());
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
     for (XmlSchemaProvider provider : providers) {
       namespaces.addAll(provider.getAvailableNamespaces(file, null));

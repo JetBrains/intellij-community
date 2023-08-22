@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -11,10 +11,17 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
+import com.intellij.execution.junit2.configuration.JUnitSettingsEditor;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeType;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -24,12 +31,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -37,6 +42,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +50,13 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
+public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport
+  implements InputRedirectAware, TargetEnvironmentAwareRunProfile {
+
   public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
@@ -72,7 +83,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   private final Data myData;
   private final InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
-  final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
+  final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -92,7 +103,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       setName(psiPackage.getQualifiedName());
     }
   };
-  final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
+  final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(@NotNull final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -113,7 +124,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
   };
 
-  final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<PsiClass>() {
+  final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(@NotNull final String qualifiedName) {
       setCategory(qualifiedName);
@@ -155,7 +166,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     TestObject testObject = TestObject.fromString(myData.TEST_OBJECT, this, env);
     DumbService dumbService = DumbService.getInstance(getProject());
     if (dumbService.isDumb() && !DumbService.isDumbAware(testObject)) {
-      throw new ExecutionException("Running tests is disabled during index update");
+      throw new ExecutionException(JUnitBundle.message("running.tests.disabled.during.index.update.error.message"));
     }
     return testObject;
   }
@@ -163,6 +174,9 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+    if (Registry.is("ide.new.run.config.junit", true)) {
+      return new JUnitSettingsEditor(this);
+    }
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JUnitConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
@@ -176,7 +190,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    final RefactoringElementListener listener = getTestObject().getListener(element, this);
+    final RefactoringElementListener listener = getTestObject().getListener(element);
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 
@@ -206,18 +220,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String suggestedName() {
-    String repeat;
-    switch (getRepeatMode()) {
-      case RepeatCount.UNLIMITED :
-      case RepeatCount.UNTIL_FAILURE :
-        repeat = " [*]";
-        break;
-      case RepeatCount.N:
-        repeat = " [" + getRepeatCount() + "]";
-        break;
-      default:
-        repeat = "";
-    }
+    String repeat = switch (getRepeatMode()) {
+      case RepeatCount.UNLIMITED, RepeatCount.UNTIL_FAILURE, RepeatCount.UNTIL_SUCCESS -> " [*]";
+      case RepeatCount.N -> " [" + getRepeatCount() + "]";
+      default -> "";
+    };
     String generatedName = myData.getGeneratedName(getConfigurationModule());
     if (generatedName == null) return null;
     return generatedName + repeat;
@@ -293,13 +300,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH;
+    return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH)
+                                        : null;
   }
 
   @Override
   public void setAlternativeJrePath(String path) {
-    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
-    ALTERNATIVE_JRE_PATH = path;
+    String collapsedPath = path != null ? new AlternativeJrePathConverter().toString(path) : null;
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, collapsedPath);
+    ALTERNATIVE_JRE_PATH = collapsedPath;
     ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
@@ -324,6 +333,21 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
     setGeneratedName();
+  }
+
+  @Override
+  public void withNestedClass(PsiClass aClass) {
+    String className = aClass.getName();
+    myData.MAIN_CLASS_NAME += "$" + className;
+    Set<@NlsSafe String> patterns = myData.getPatterns();
+    if (!patterns.isEmpty()) {
+      myData.setPatterns(patterns.stream().map(name -> {
+        if (name.contains(",")) {
+          return StringUtil.getPackageName(name, ',') + "$" + className + "," + StringUtil.getShortName(name, ',');
+        }
+        return name + "$" + className;
+      }).collect(Collectors.toCollection(() -> new LinkedHashSet<>())));
+    }
   }
 
   @Override
@@ -412,7 +436,10 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     if (patternsElement != null) {
       final LinkedHashSet<String> tests = new LinkedHashSet<>();
       for (Element patternElement : patternsElement.getChildren(PATTERN_EL_NAME)) {
-        tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
+        String value = patternElement.getAttributeValue(TEST_CLASS_ATT_NAME);
+        if (value != null) {
+          tests.add(value);
+        }
       }
       myData.setPatterns(tests);
     }
@@ -474,12 +501,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   public void writeExternal(@NotNull final Element element) {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
+    DefaultJDOMExternalizer.write(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<Data>(persistentData, new Data()) {
+    DefaultJDOMExternalizer.write(persistentData, element, new DifferenceFilter<>(persistentData, new Data()) {
       @Override
-      public boolean isAccept(@NotNull Field field) {
-        return "TEST_OBJECT".equals(field.getName()) || super.isAccept(field);
+      public boolean test(@NotNull Field field) {
+        return "TEST_OBJECT".equals(field.getName()) || super.test(field);
       }
     });
 
@@ -532,7 +559,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
 
     String tags = persistentData.getTags();
-    if (tags != null && tags.length() > 0) {
+    if (tags != null && !tags.isEmpty()) {
       Element tagsElement = new Element("tag");
       tagsElement.setAttribute("value", tags);
       element.addContent(tagsElement);
@@ -540,11 +567,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     myInputRedirectOptions.writeExternal(element);
   }
 
-  public String getForkMode() {
+  public @NonNls String getForkMode() {
     return myData.FORK_MODE;
   }
 
-  public void setForkMode(@NotNull String forkMode) {
+  public void setForkMode(@NotNull @NonNls String forkMode) {
     myData.FORK_MODE = forkMode;
   }
 
@@ -557,15 +584,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
     final LinkedHashSet<String> patterns = new LinkedHashSet<>();
-    final String methodSufiix;
+    final String methodSuffix;
     if (method != null) {
       myData.METHOD_NAME = Data.getMethodPresentation(method);
-      methodSufiix = "," + myData.METHOD_NAME;
+      methodSuffix = "," + myData.METHOD_NAME;
     } else {
-      methodSufiix = "";
+      methodSuffix = "";
     }
     for (PsiClass pattern : classes) {
-      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSufiix);
+      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSuffix);
     }
     myData.setPatterns(patterns);
     final Module module = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).findModule(this, getConfigurationModule()
@@ -587,18 +614,20 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     myData.REPEAT_COUNT = repeatCount;
   }
 
-  public String getRepeatMode() {
+  public @NonNls String getRepeatMode() {
     return myData.REPEAT_MODE;
   }
 
-  public void setRepeatMode(String repeatMode) {
+  public void setRepeatMode(@NonNls String repeatMode) {
     myData.REPEAT_MODE = repeatMode;
   }
 
   @NotNull
   @Override
   public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
-    return new JUnitConsoleProperties(this, executor);
+    JUnitConsoleProperties properties = new JUnitConsoleProperties(this, executor);
+    properties.setIdBasedTestTree(getTestObject().isIdBasedTestTree());
+    return properties;
   }
 
   @Override
@@ -606,9 +635,37 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     return FRAMEWORK_ID;
   }
 
+  @Override
+  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
+    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
+  }
+
+  @Nullable
+  @Override
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultTargetName() {
+    return getOptions().getRemoteTarget();
+  }
+
+  @Override
+  public void setDefaultTargetName(@Nullable String targetName) {
+    getOptions().setRemoteTarget(targetName);
+  }
+
+  @Override
+  public boolean needPrepareTarget() {
+    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk();
+  }
+
   public static class Data implements Cloneable {
+    private static final Pattern VALUE_SOURCE_PATTERN = Pattern.compile("valueSource\\s(\\d+)");
     public String PACKAGE_NAME;
-    public String MAIN_CLASS_NAME;
+    public @NlsSafe String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     private String[] UNIQUE_ID = ArrayUtilRt.EMPTY_STRING_ARRAY;
     private String TAGS;
@@ -622,15 +679,14 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     private String CATEGORY_NAME;
     private String FORK_MODE = FORK_NONE;
     private int REPEAT_COUNT = 1;
-    private String REPEAT_MODE = RepeatCount.ONCE;
+    private @NonNls String REPEAT_MODE = RepeatCount.ONCE;
     private LinkedHashSet<String> myPattern = new LinkedHashSet<>();
     private Map<String, String> myEnvs = new LinkedHashMap<>();
-    private String myChangeList = "All";
+    private @NlsSafe String myChangeList = JUnitBundle.message("combobox.changelists.all");
 
     @Override
     public boolean equals(final Object object) {
-      if (!(object instanceof Data)) return false;
-      final Data second = (Data)object;
+      if (!(object instanceof Data second)) return false;
       return Objects.equals(TEST_OBJECT, second.TEST_OBJECT) &&
              Objects.equals(getMainClassName(), second.getMainClassName()) &&
              Objects.equals(getPackageName(), second.getPackageName()) &&
@@ -689,35 +745,35 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
     }
 
-    public String getVMParameters() {
+    public @NlsSafe String getVMParameters() {
       return VM_PARAMETERS;
     }
 
-    public void setVMParameters(String value) {
+    public void setVMParameters(@NlsSafe String value) {
       VM_PARAMETERS = value;
     }
 
-    public String getProgramParameters() {
+    public @NlsSafe String getProgramParameters() {
       return PARAMETERS;
     }
 
-    public void setProgramParameters(String value) {
+    public void setProgramParameters(@NlsSafe String value) {
       PARAMETERS = value;
     }
 
-    public String getWorkingDirectory() {
+    public @NlsSafe String getWorkingDirectory() {
       return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
     }
 
-    public void setWorkingDirectory(String value) {
+    public void setWorkingDirectory(@NlsSafe String value) {
       WORKING_DIRECTORY = StringUtil.isEmptyOrSpaces(value) ? "" : FileUtilRt.toSystemIndependentName(value.trim());
     }
 
-    public void setUniqueIds(String... uniqueId) {
+    public void setUniqueIds(@NlsSafe String... uniqueId) {
       UNIQUE_ID = uniqueId;
     }
 
-    public String[] getUniqueIds() {
+    public @NlsSafe String[] getUniqueIds() {
       return UNIQUE_ID;
     }
 
@@ -728,102 +784,139 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
-    public String getTags() {
+    public void setTestMethodName(String methodName) {
+      METHOD_NAME = methodName;
+    }
+
+    public @NlsSafe String getTags() {
       return TAGS;
     }
 
-    public void setTags(String tags) {
+    public void setTags(@NlsSafe String tags) {
       TAGS = tags;
     }
 
-    public static String getMethodPresentation(PsiMethod method) {
-      if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
-        return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
+    public static @NlsSafe String getMethodPresentation(PsiMethod method) {
+      String methodName = method.getName();
+      if ((!method.getParameterList().isEmpty() || methodName.contains("(") || methodName.contains(")")) && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION_LIST)) {
+        return methodName + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {
-        return method.getName();
+        return methodName;
       }
     }
 
-    public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
+    public @Nls String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT) || TEST_DIRECTORY.equals(TEST_OBJECT)) {
         if (TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT) {
           return JUnitBundle.message("default.junit.config.name.whole.project");
         }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
-        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
-        if (packageName.length() == 0) {
-          if (moduleName.length() > 0) {
+        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT)
+                                   ? getPackageName()
+                                   : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
+        if (packageName.isEmpty()) {
+          if (!moduleName.isEmpty()) {
             return JUnitBundle.message("default.junit.config.name.all.in.module", moduleName);
           }
           return getDefaultPackageName();
         }
-        if (moduleName.length() > 0) {
+        if (!moduleName.isEmpty()) {
           return JUnitBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
         }
         return packageName;
       }
       if (TEST_PATTERN.equals(TEST_OBJECT)) {
         final int size = myPattern.size();
-        if (size == 0) return "Temp suite";
+        if (size == 0) return JUnitBundle.message("default.junit.config.name.temp.suite");
         String fqName = myPattern.iterator().next();
         String firstName =
           fqName.contains("*") ? fqName
                                : StringUtil.getShortName(fqName.contains("(") ? StringUtil.getPackageName(fqName, '(') : fqName);
-        return firstName + (size > 1 ? " and " + (size - 1) + " more" : "");
+        if (size == 1) {
+          return firstName;
+        }
+        else {
+          return TestRunnerBundle.message("test.config.first.pattern.and.few.more", firstName, size - 1);
+        }
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {
-        return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
+        String categoryName = StringUtil.isEmpty(CATEGORY_NAME)
+                              ? JUnitBundle.message("default.junit.config.empty.category")
+                              : CATEGORY_NAME;
+        return JUnitBundle.message("default.junit.config.name.category", categoryName);
       }
       if (TEST_UNIQUE_ID.equals(TEST_OBJECT)) {
-        return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
+        return UNIQUE_ID != null && UNIQUE_ID.length > 0
+               ? StringUtil.join(UNIQUE_ID, " ")
+               : JUnitBundle.message("default.junit.config.name.temp.suite");
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
-        return TAGS != null && TAGS.length() > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
+        return TAGS != null && !TAGS.isEmpty()
+               ? JUnitBundle.message("default.junit.config.name.tags", TAGS)
+               : JUnitBundle.message("default.junit.config.name.temp.suite");
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
-        return className + '.' + getMethodName();
+        Integer index = getIndexFromParameters(PARAMETERS);
+        String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
+        return className + '.' + getMethodName() + indexStr;
       }
 
       return className;
     }
 
-    public String getMainClassName() {
+    public static Integer getIndexFromParameters(String parameters) {
+      Integer index = null;
+      if (parameters != null && !parameters.isEmpty()) {
+        Matcher matcher = VALUE_SOURCE_PATTERN.matcher(parameters);
+        if (matcher.find()) {
+          String group = matcher.group(1);
+          try {
+            index = Integer.parseInt(group);
+          }
+          catch (NumberFormatException ignored) {
+          }
+        }
+      }
+      return index;
+    }
+
+    public @NlsSafe @NotNull String getMainClassName() {
       return MAIN_CLASS_NAME != null ? MAIN_CLASS_NAME : "";
     }
 
-    public String getPackageName() {
+    public @NlsSafe String getPackageName() {
       return PACKAGE_NAME != null ? PACKAGE_NAME : "";
     }
 
-    public String getMethodName() {
+    public @NlsSafe String getMethodName() {
       String signature = getMethodNameWithSignature();
       int paramsIdx = signature.lastIndexOf("(");
       return paramsIdx > -1 ? signature.substring(0, paramsIdx) : signature;
     }
 
-    public String getMethodNameWithSignature() {
+    public @NlsSafe String getMethodNameWithSignature() {
       return METHOD_NAME != null ? METHOD_NAME : "";
     }
 
-    public String getDirName() {
+    public @NlsSafe String getDirName() {
       return DIR_NAME != null ? DIR_NAME : "";
     }
 
-    public void setDirName(String dirName) {
+    public void setDirName(@NlsSafe String dirName) {
       DIR_NAME = dirName;
     }
 
-    public Set<String> getPatterns() {
+    public Set<@NlsSafe String> getPatterns() {
       return myPattern;
     }
 
-    public void setPatterns(LinkedHashSet<String> pattern) {
+    public void setPatterns(LinkedHashSet<@NlsSafe String> pattern) {
       myPattern = pattern;
     }
 
-    public String getPatternPresentation() {
+    public @NlsSafe String getPatternPresentation() {
       return StringUtil.join(myPattern, "||");
     }
 
@@ -835,8 +928,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
     public Module setMainClass(final PsiClass testClass) {
       MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(testClass);
-      PsiPackage containingPackage = JUnitUtil.getContainingPackage(testClass);
-      PACKAGE_NAME = containingPackage != null ? containingPackage.getQualifiedName() : "";
+      PACKAGE_NAME = StringUtil.getPackageName(Objects.requireNonNull(testClass.getQualifiedName()));
       return JavaExecutionUtil.findModule(testClass);
     }
 
@@ -848,24 +940,24 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       myEnvs = envs;
     }
 
-    public String getCategory() {
+    public @NlsSafe String getCategory() {
       return CATEGORY_NAME != null ? CATEGORY_NAME : "";
     }
 
-    public void setCategoryName(String categoryName) {
+    public void setCategoryName(@NlsSafe String categoryName) {
       CATEGORY_NAME = categoryName;
     }
 
-    public String getChangeList() {
+    public @NlsSafe String getChangeList() {
       return myChangeList;
     }
 
-    public void setChangeList(String changeList) {
+    public void setChangeList(@NlsSafe String changeList) {
       myChangeList = changeList;
     }
   }
 
-  public static String getDefaultPackageName() {
-    return JUnitBundle.message("default.package.presentable.name");
+  public static @Nls String getDefaultPackageName() {
+    return TestRunnerBundle.message("default.package.presentable.name");
   }
 }

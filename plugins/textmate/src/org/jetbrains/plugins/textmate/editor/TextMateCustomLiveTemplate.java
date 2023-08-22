@@ -11,7 +11,7 @@ import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,9 +20,11 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.preferences.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.psi.TextMateFile;
 
 import java.util.Collection;
@@ -65,10 +67,10 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     //todo parse content and build template/templates
     TextMateService service = TextMateService.getInstance();
     if (service != null) {
-      SnippetsRegistry snippetsRegistry = service.getSnippetsRegistry();
+      SnippetsRegistry snippetsRegistry = service.getSnippetRegistry();
       Editor editor = callback.getEditor();
-      CharSequence scopeSelector = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
-      Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet(key, scopeSelector);
+      TextMateScope scope = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
+      Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet(key, scope);
       if (snippets.size() > 1) {
         LookupImpl lookup = (LookupImpl)LookupManager.getInstance(callback.getProject())
           .createLookup(editor, LookupElement.EMPTY_ARRAY, "", new LookupArranger.DefaultArranger());
@@ -146,16 +148,16 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
   @NotNull
   @Override
   public String getTitle() {
-    return "TextMate snippet";
+    return TextMateBundle.message("textmate.live.template.name");
   }
 
   @NotNull
   private static Collection<TextMateSnippet> getAvailableSnippets(@NotNull Editor editor) {
     TextMateService service = TextMateService.getInstance();
     if (service != null) {
-      SnippetsRegistry snippetsRegistry = service.getSnippetsRegistry();
-      CharSequence scopeSelector = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
-      return snippetsRegistry.getAvailableSnippets(scopeSelector);
+      SnippetsRegistry snippetsRegistry = service.getSnippetRegistry();
+      TextMateScope scope = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
+      return snippetsRegistry.getAvailableSnippets(scope);
     }
     return Collections.emptyList();
   }
@@ -180,7 +182,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     int newOffset = Math.max(offset - key.length(), 0);
     editor.getDocument().deleteString(newOffset, offset);
     editor.getCaretModel().moveToOffset(newOffset);
-    EditorModificationUtil.insertStringAtCaret(editor, snippet.getContent());
+    EditorModificationUtilEx.insertStringAtCaret(editor, snippet.getContent());
   }
 
   private static class MyLookupAdapter implements LookupListener {
@@ -200,7 +202,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
       assert item instanceof CustomLiveTemplateLookupElement;
       if (myFile != null) {
         WriteCommandAction.runWriteCommandAction(myProject,
-                                                 "Expand template",
+                                                 TextMateBundle.message("textmate.expand.live.template.command.name"),
                                                  null,
                                                  () -> ((CustomLiveTemplateLookupElement)item).expandTemplate(myEditor, myFile),
                                                  myFile);
@@ -222,7 +224,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setTypeText(mySnippet.getName());
       presentation.setTypeGrayed(true);

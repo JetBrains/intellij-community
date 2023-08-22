@@ -24,7 +24,7 @@ public interface ExpressionEvaluator {
   /**
    * @deprecated obsolete API, use {@link #evaluate(EvaluationContext)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default Value getValue() {
     return null;
   }

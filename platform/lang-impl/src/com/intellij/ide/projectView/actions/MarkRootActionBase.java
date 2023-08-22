@@ -1,31 +1,19 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -35,18 +23,18 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class MarkRootActionBase extends DumbAwareAction {
   public MarkRootActionBase() {
   }
 
-  public MarkRootActionBase(@Nullable String text) {
+  public MarkRootActionBase(@Nullable @NlsActions.ActionText String text) {
     super(text);
   }
 
-  public MarkRootActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+  public MarkRootActionBase(@Nullable @NlsActions.ActionText String text,
+                            @Nullable @NlsActions.ActionDescription String description,
+                            @Nullable Icon icon) {
     super(text, description, icon);
   }
 
@@ -83,10 +71,8 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   static void commitModel(@NotNull Module module, ModifiableRootModel model) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      model.commit();
-      module.getProject().save();
-    });
+    ApplicationManager.getApplication().runWriteAction(model::commit);
+    SaveAndSyncHandler.getInstance().scheduleProjectSave(module.getProject());
   }
 
   protected abstract void modifyRoots(VirtualFile file, ContentEntry entry);
@@ -101,6 +87,11 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
       }
     }
     return null;
+  }
+
+  @Override
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -133,8 +124,8 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
         selection.mySelectedExcludeRoots.add(excludeFolder);
         continue;
       }
-      SourceFolder folder = ProjectRootsUtil.findSourceFolder(module, file);
-      if (folder != null) {
+      SourceFolder folder = ProjectRootsUtil.getModuleSourceRoot(file, module.getProject());
+      if (folder != null && folder.getContentEntry().getRootModel().getModule().equals(module)) {
         selection.mySelectedRoots.add(folder);
       }
       else {
@@ -150,7 +141,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   @Nullable
   static Module getModule(@NotNull AnActionEvent e, VirtualFile @Nullable [] files) {
     if (files == null) return null;
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       module = findParentModule(e.getProject(), files);
     }
@@ -161,9 +152,9 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   private static Module findParentModule(@Nullable Project project, VirtualFile @NotNull [] files) {
     if (project == null) return null;
     Module result = null;
-    DirectoryIndex index = DirectoryIndex.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     for (VirtualFile file : files) {
-      Module module = index.getInfoForFile(file).getModule();
+      Module module = index.getModuleForFile(file, false);
       if (module == null) return null;
       if (result == null) {
         result = module;
@@ -175,7 +166,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     return result;
   }
 
-  public static class RootsSelection {
+  public static final class RootsSelection {
     public static final RootsSelection EMPTY = new RootsSelection(null);
     public final Module myModule;
 

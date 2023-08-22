@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import org.jetbrains.annotations.NotNull;
@@ -10,12 +9,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class FindSymbolParameters {
+public final class FindSymbolParameters {
   private final String myCompletePattern;
   private final String myLocalPatternName;
   private final GlobalSearchScope mySearchScope;
   private final IdFilter myIdFilter;
 
+  /**
+   * @deprecated use {@link FindSymbolParameters#FindSymbolParameters(String, String, GlobalSearchScope)} instead.
+   * No one should pass `idFilter` explicitly. {@link FileBasedIndex} is responsible to find a proper `idFilter` for provided `scope`.
+   */
+  @Deprecated
   public FindSymbolParameters(@NotNull String pattern,
                               @NotNull String name,
                               @NotNull GlobalSearchScope scope,
@@ -24,6 +28,12 @@ public class FindSymbolParameters {
     myLocalPatternName = name;
     mySearchScope = scope;
     myIdFilter = idFilter;
+  }
+
+  public FindSymbolParameters(@NotNull String pattern,
+                              @NotNull String name,
+                              @NotNull GlobalSearchScope scope) {
+    this(pattern, name, scope, null);
   }
 
   public FindSymbolParameters withCompletePattern(@NotNull String pattern) {
@@ -82,9 +92,7 @@ public class FindSymbolParameters {
   }
 
   @NotNull
-  public static GlobalSearchScope searchScopeFor(@Nullable Project project, boolean searchInLibraries) {
-    return project == null ? new EverythingGlobalScope() :
-           searchInLibraries ? ProjectScope.getAllScope(project) :
-           ProjectScope.getProjectScope(project);
+  public static GlobalSearchScope searchScopeFor(@NotNull Project project, boolean searchInLibraries) {
+    return searchInLibraries ? ProjectScope.getAllScope(project) : ProjectScope.getProjectScope(project);
   }
 }

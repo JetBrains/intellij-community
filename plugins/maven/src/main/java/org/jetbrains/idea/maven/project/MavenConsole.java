@@ -19,38 +19,24 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.buildtool.BuildViewMavenConsole;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
-import org.jetbrains.idea.maven.server.MavenServerConsole;
+import org.jetbrains.idea.maven.server.MavenServerConsoleEvent;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
 import java.text.MessageFormat;
 import java.util.List;
 
 public abstract class MavenConsole {
-  private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+  private static final String LINE_SEPARATOR = System.lineSeparator();
   private final List<ProcessListener> myProcessListeners = new SmartList<>();
   private final List<AttachProcessListener> myAttachProcessListeners = new SmartList<>();
 
-
-  public static MavenConsole createGuiMavenConsole(@NotNull Project project,
-                                                   @NotNull String title,
-                                                   @NotNull String workingDir,
-                                                   @NotNull String toolWindowId,
-                                                   long executionId) {
-    if (Registry.is("maven.build.tool.window.enabled")) {
-      return new BuildViewMavenConsole(project, title, workingDir, toolWindowId, executionId);
-    } else {
-      return new MavenConsoleImpl(title, project);
-    }
-  }
 
   public enum OutputType {
     NORMAL, SYSTEM, ERROR
@@ -60,11 +46,11 @@ public abstract class MavenConsole {
   private boolean isFinished;
 
   private static final BiMap<String, Integer> PREFIX_TO_LEVEL = ImmutableBiMap.of(
-    "DEBUG", MavenServerConsole.LEVEL_DEBUG,
-    "INFO", MavenServerConsole.LEVEL_INFO,
-    "WARNING", MavenServerConsole.LEVEL_WARN,
-    "ERROR", MavenServerConsole.LEVEL_ERROR,
-    "FATAL_ERROR", MavenServerConsole.LEVEL_FATAL
+    "DEBUG", MavenServerConsoleIndicator.LEVEL_DEBUG,
+    "INFO", MavenServerConsoleIndicator.LEVEL_INFO,
+    "WARNING", MavenServerConsoleIndicator.LEVEL_WARN,
+    "ERROR", MavenServerConsoleIndicator.LEVEL_ERROR,
+    "FATAL_ERROR", MavenServerConsoleIndicator.LEVEL_FATAL
   );
 
   public interface AttachProcessListener {
@@ -116,11 +102,17 @@ public abstract class MavenConsole {
   }
 
   public void printException(Throwable throwable) {
-    systemMessage(MavenServerConsole.LEVEL_ERROR, RunnerBundle.message("embedded.build.failed"), throwable);
+    systemMessage(MavenServerConsoleIndicator.LEVEL_ERROR, RunnerBundle.message("embedded.build.failed"), throwable);
   }
 
   public void systemMessage(int level, String string, Throwable throwable) {
     printMessage(level, string, throwable);
+  }
+
+  public void handleConsoleEvents(@NotNull List<MavenServerConsoleEvent> consoleEvents) {
+    for (var e : consoleEvents) {
+      printMessage(e.getLevel(), e.getMessage(), e.getThrowable());
+    }
   }
 
   public void printMessage(int level, String string, Throwable throwable) {
@@ -128,25 +120,25 @@ public abstract class MavenConsole {
 
     OutputType type = OutputType.NORMAL;
     if (throwable != null
-        || level == MavenServerConsole.LEVEL_WARN
-        || level == MavenServerConsole.LEVEL_ERROR
-        || level == MavenServerConsole.LEVEL_FATAL) {
+        || level == MavenServerConsoleIndicator.LEVEL_WARN
+        || level == MavenServerConsoleIndicator.LEVEL_ERROR
+        || level == MavenServerConsoleIndicator.LEVEL_FATAL) {
       type = OutputType.ERROR;
     }
 
     doPrint(composeLine(level, string), type);
 
-    if (level == MavenServerConsole.LEVEL_FATAL) {
+    if (level == MavenServerConsoleIndicator.LEVEL_FATAL) {
       setOutputPaused(false);
     }
 
     if (throwable != null) {
       String throwableText = ExceptionUtil.getThrowableText(throwable);
-      if (Registry.is("maven.print.import.stacktraces") || ApplicationManager.getApplication().isUnitTestMode()) {
-        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsole.LEVEL_ERROR, throwableText), type);
+      if (Registry.is("maven.print.import.stacktraces") || ApplicationManager.getApplication().isUnitTestMode()) { //NO-UT-FIX
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwableText), type);
       }
       else {
-        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsole.LEVEL_ERROR, throwable.getMessage()), type);
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwable.getMessage()), type);
       }
     }
   }
@@ -210,7 +202,7 @@ public abstract class MavenConsole {
 
   private static int getLevelByPrefix(String prefix) {
     Integer level = PREFIX_TO_LEVEL.get(prefix);
-    return level != null ? level : MavenServerConsole.LEVEL_WARN;
+    return level != null ? level : MavenServerConsoleIndicator.LEVEL_WARN;
   }
 
   private static String composeLine(int level, String message) {

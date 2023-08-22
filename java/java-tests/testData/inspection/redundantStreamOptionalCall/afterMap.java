@@ -1,4 +1,4 @@
-// "Remove 'map' call" "true"
+// "Remove 'map()' call" "true"
 import java.util.stream.Stream;
 
 public class Test {

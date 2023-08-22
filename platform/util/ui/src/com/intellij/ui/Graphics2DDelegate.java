@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ui.paint.LinePainter2D;
@@ -52,9 +52,8 @@ public class Graphics2DDelegate extends Graphics2D{
     myDelegate.copyArea(x, y, width, height, dx, dy);
   }
 
-  @NotNull
   @Override
-  public Graphics create() {
+  public @NotNull Graphics create() {
     return new Graphics2DDelegate((Graphics2D)myDelegate.create());
   }
 
@@ -120,7 +119,7 @@ public class Graphics2DDelegate extends Graphics2D{
 
   @Override
   public void drawLine(int x1, int y1, int x2, int y2) {
-    LinePainter2D.paint((Graphics2D)myDelegate, x1, y1, x2, y2);
+    LinePainter2D.paint(myDelegate, x1, y1, x2, y2);
   }
 
   @Override

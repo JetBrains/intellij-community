@@ -57,9 +57,8 @@ abstract class SimpleAttributeReference implements PsiReference {
 
     @Override
     public boolean isReferenceTo(@NotNull PsiElement element) {
-        if (this instanceof PsiPolyVariantReference) {
-            final PsiPolyVariantReference reference = (PsiPolyVariantReference)this;
-            final ResolveResult[] results = reference.multiResolve(false);
+        if (this instanceof PsiPolyVariantReference reference) {
+          final ResolveResult[] results = reference.multiResolve(false);
             for (ResolveResult result : results) {
                 if (Comparing.equal(result.getElement(), element)) return true;
             }

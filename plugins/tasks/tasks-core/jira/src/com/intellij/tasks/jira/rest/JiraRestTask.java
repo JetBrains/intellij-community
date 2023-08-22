@@ -21,9 +21,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.jira.JiraTask;
-import com.intellij.tasks.jira.rest.model.JiraComment;
 import com.intellij.tasks.jira.rest.model.JiraIssue;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +60,7 @@ public class JiraRestTask extends JiraTask {
 
   @Override
   public Comment @NotNull [] getComments() {
-    return ContainerUtil.map2Array(myJiraIssue.getComments(), Comment.class, (Function<JiraComment, Comment>)comment -> new Comment() {
+    return ContainerUtil.map2Array(myJiraIssue.getComments(), Comment.class, comment -> new Comment() {
 
       @Override
       public String getText() {

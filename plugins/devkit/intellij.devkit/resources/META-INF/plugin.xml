@@ -1,0 +1,34 @@
+<!--suppress PluginXmlValidity -->
+<idea-plugin package="org.jetbrains.idea.devkit.dummy"
+             on-demand="true">
+  <id>DevKit</id>
+  <name>Plugin DevKit</name>
+  <category>Plugin Development</category>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    Supports development of plugins for IntelliJ IDEA and other products based on the IntelliJ Platform.
+    <br>
+    <a href="https://plugins.jetbrains.com/docs/intellij/?from=DevkitPluginDescription">IntelliJ Platform SDK Docs</a>
+  ]]></description>
+
+  <content>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.devkit.git"/>
+    <module name="intellij.devkit.gradle"/>
+    <module name="intellij.devkit.i18n"/>
+    <module name="intellij.devkit.images"/>
+    <module name="intellij.devkit.intelliLang"/>
+    <module name="intellij.devkit.themes"/>
+    <module name="intellij.devkit.uiDesigner"/>
+    <module name="intellij.devkit.workspaceModel"/>
+    <module name="intellij.java.devkit"/>
+    <module name="intellij.groovy.devkit"/>
+    <module name="intellij.kotlin.devkit"/>
+  </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport coordinate="com.jetbrains:ideaIC" kind="java" displayName="IntelliJ Platform Community"/>
+    <dependencySupport coordinate="com.jetbrains:ideaIU" kind="java" displayName="IntelliJ Platform Ultimate"/>
+  </extensions>
+</idea-plugin>

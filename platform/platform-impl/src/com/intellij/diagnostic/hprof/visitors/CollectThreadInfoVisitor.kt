@@ -18,13 +18,13 @@ package com.intellij.diagnostic.hprof.visitors
 import com.intellij.diagnostic.hprof.classstore.ThreadInfo
 import com.intellij.diagnostic.hprof.parser.HProfVisitor
 import com.intellij.diagnostic.hprof.parser.RecordType
-import gnu.trove.TLongObjectHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
-class CollectThreadInfoVisitor(private val threadsMap: TLongObjectHashMap<ThreadInfo>,
-                               private val stringIdMap: TLongObjectHashMap<String>) : HProfVisitor() {
-
-  private val stackFrameIdToStringMap = TLongObjectHashMap<String>()
-  private val classSerialNumberToNameMap = TLongObjectHashMap<String>()
+class CollectThreadInfoVisitor(private val threadsMap: Long2ObjectMap<ThreadInfo>,
+                               private val stringIdMap: Long2ObjectMap<String>) : HProfVisitor() {
+  private val stackFrameIdToStringMap = Long2ObjectOpenHashMap<String>()
+  private val classSerialNumberToNameMap = Long2ObjectOpenHashMap<String>()
 
   override fun preVisit() {
     disableAll()
@@ -80,8 +80,8 @@ class CollectThreadInfoVisitor(private val threadsMap: TLongObjectHashMap<Thread
 
   override fun visitStackTrace(stackTraceSerialNumber: Long, threadSerialNumber: Long, numberOfFrames: Int, stackFrameIds: LongArray) {
     val frames = ArrayList<String>(stackFrameIds.size)
-    for (i in 0 until stackFrameIds.size) {
-      frames.add(stackFrameIdToStringMap[stackFrameIds[i]])
+    for (id in stackFrameIds) {
+      frames.add(stackFrameIdToStringMap[id])
     }
     threadsMap.put(threadSerialNumber, ThreadInfo(frames))
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
@@ -21,12 +21,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -42,9 +40,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.function.Function;
 
 public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Disposable {
-  private static final Factory<Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = () -> new TreeSet<>((o1, o2) -> {
+  private static final Function<Object, Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = __ -> new TreeSet<>((o1, o2) -> {
     PostfixTemplate template1 = o1.getTemplate();
     PostfixTemplate template2 = o2.getTemplate();
     int compare = Comparing.compare(template1.getPresentableName(), template2.getPresentableName());
@@ -104,8 +103,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return new CheckboxTreeCellRenderer() {
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof CheckedTreeNode)) return;
-        CheckedTreeNode node = (CheckedTreeNode)value;
+        if (!(value instanceof CheckedTreeNode node)) return;
 
         Color background = UIUtil.getTreeBackground(selected, true);
         PostfixTemplateCheckedTreeNode templateNode = ObjectUtils.tryCast(node, PostfixTemplateCheckedTreeNode.class);
@@ -117,7 +115,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
         else {
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         }
-        getTextRenderer().append(StringUtil.notNullize(value.toString()),
+        getTextRenderer().append(StringUtil.notNullize(value.toString()), //NON-NLS
                                  new SimpleTextAttributes(background, attributes.getFgColor(), JBColor.RED, attributes.getStyle()));
 
         if (templateNode != null) {
@@ -140,7 +138,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     for (Map.Entry<PostfixTemplateProvider, Collection<PostfixTemplate>> entry : providerToTemplates.entrySet()) {
       PostfixTemplateProvider provider = entry.getKey();
       String languageId = getProvidersToLanguages().get(provider);
-      Set<PostfixTemplateCheckedTreeNode> nodes = ContainerUtil.getOrCreate(languageToNodes, languageId, myNodesComparator);
+      Set<PostfixTemplateCheckedTreeNode> nodes = languageToNodes.computeIfAbsent(languageId, myNodesComparator);
       for (PostfixTemplate template : entry.getValue()) {
         nodes.add(new PostfixTemplateCheckedTreeNode(template, provider, false));
       }
@@ -188,8 +186,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     final Map<String, Set<String>> result = new HashMap<>();
     visitTemplateNodes(template -> {
       if (!template.isChecked()) {
-        Set<String> templatesForProvider =
-          ContainerUtil.getOrCreate(result, template.getTemplateProvider().getId(), PostfixTemplatesSettings.SET_FACTORY);
+        Set<String> templatesForProvider = result.computeIfAbsent(template.getTemplateProvider().getId(), __ -> new HashSet<>());
         templatesForProvider.add(template.getTemplate().getId());
       }
     });
@@ -433,7 +430,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return myProviderToLanguage;
   }
 
-  private static class LangTreeNode extends CheckedTreeNode {
+  private static final class LangTreeNode extends CheckedTreeNode {
     @NotNull private final String myLanguageId;
 
     LangTreeNode(@NotNull String languageName, @NotNull String languageId) {

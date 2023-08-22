@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThrowableConsumer;
@@ -32,13 +33,15 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
   @NotNull protected final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
   @NotNull private final Project myProject;
 
-  public BackgroundTaskGroup(@NotNull Project project, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title) {
+  public BackgroundTaskGroup(@NotNull Project project, @ProgressTitle @NotNull String title) {
     super(project, title);
     myProject = project;
   }
 
   @Override
-  public void run(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
+  public void run(@NotNull Task.Backgroundable task,
+                  @NotNull ModalityState modalityState,
+                  @Nullable ProgressIndicator indicator) {
     throw new UnsupportedOperationException();
   }
 

@@ -21,12 +21,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class DTDParserDefinition extends XMLParserDefinition {
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, new DtdLexer(false));
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new XmlFileImpl(viewProvider, XmlElementType.DTD_FILE);
   }
 
@@ -43,7 +43,7 @@ public class DTDParserDefinition extends XMLParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return XmlElementType.DTD_FILE;
   }
 

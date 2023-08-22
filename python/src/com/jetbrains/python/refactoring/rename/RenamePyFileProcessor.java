@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiFileProcessor;
@@ -17,6 +14,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class RenamePyFileProcessor extends RenamePsiFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
@@ -78,6 +75,25 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
         }
       }
     }
+  }
+
+  @Override
+  public void prepareRenaming(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<PsiElement, String> allRenames) {
+
+    final PsiFile file = (PsiFile)element;
+    if (file instanceof PyiFile) {
+      final PsiElement originalElement = PyiUtil.getOriginalElement((PyiFile)file);
+      if (originalElement != null) {
+        allRenames.put(originalElement, newName.substring(0, newName.length() - 1));
+      }
+    }
+    else if (file instanceof PyFile) {
+      final PsiElement stubElement = PyiUtil.getPythonStub((PyFile)file);
+      if (stubElement != null) {
+        allRenames.put(stubElement, newName + "i");
+      }
+    }
+    super.prepareRenaming(element, newName, allRenames);
   }
 
   private static boolean isNotAliasedInImportElement(@NotNull PsiReference reference) {

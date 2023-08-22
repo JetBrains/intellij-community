@@ -16,14 +16,17 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.*;
+import com.intellij.lang.folding.CustomFoldingBuilder;
+import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.TestFileType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +39,7 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    init("Some plain text to fold", TestFileType.TEXT);
+    init("Some plain text to fold", PlainTextFileType.INSTANCE);
   }
 
   public void testAllowOnlyOneDescriptorPerTextRange() {
@@ -48,7 +51,7 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
 
     try {
       PsiFile file = getFile();
-      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, getEditor().getDocument(), false);
+      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, false);
       int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.element));
 
       assert regionCount == 1: "Only one descriptor allowed for the same text range. Descriptors: " + regionInfos;
@@ -66,7 +69,7 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
 
     try {
       PsiFile file = getFile();
-      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, getEditor().getDocument(), false);
+      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, false);
       int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.element));
       assertEquals("mountain", regionInfos.get(0).descriptor.getPlaceholderText());
 

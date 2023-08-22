@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.diff.util
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.containers.Interner
-import com.intellij.util.containers.StringInterner
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
 import junit.framework.TestCase
@@ -29,7 +14,7 @@ class DiffPerformanceTest : TestCase() {
     private var needWarmUp = true
   }
 
-  private val interner: Interner<String> = StringInterner()
+  private val interner: Interner<String> = Interner.createStringInterner()
 
   val data = generateData(2000000)
   private val arr_200000 = data.take(200000).toTypedArray()

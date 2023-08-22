@@ -31,8 +31,7 @@ import java.util.Set;
 public class ActionsWithInvalidTemplatePresentationTest extends LightPlatformTestCase {
   private static final List<String> KNOWN_FALSE_POSITIVES = Arrays.asList(
     "InsertRubyInjection",
-    "InsertRubyInjectionWithoutOutput",
-    "ClassTemplateNavigation"
+    "InsertRubyInjectionWithoutOutput"
   );
 
   public void testActionsPresentations() {

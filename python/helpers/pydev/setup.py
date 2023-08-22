@@ -114,6 +114,7 @@ args = dict(
         '_pydev_runfiles',
         '_pydevd_bundle',
         '_pydevd_frame_eval',
+        '_pydevd_asyncio_util',
         'pydev_ipython',
         # 'pydev_sitecustomize', -- Not actually a package (not added)
         'pydevd_attach_to_process',
@@ -155,10 +156,11 @@ args = dict(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Software Development :: Debuggers',
     ],
     entry_points={
-        'console_scripts':[
+        'console_scripts': [
             'pydevd = pydevd:main',
         ],
     },
@@ -179,13 +181,15 @@ if sys.platform not in ('darwin', 'win32'):
             Extension('_pydevd_bundle.pydevd_cython', ['_pydevd_bundle/pydevd_cython.c',])
         ]
     ))
-    if sys.version_info >= (3, 6):
+    if (3, 6) <= sys.version_info <= (3, 10):
+        from setup_cython import get_frame_eval_extension_name
+        frame_eval_extension_name = get_frame_eval_extension_name()
         args_with_binaries.update(dict(
             distclass=BinaryDistribution,
             ext_modules=[
                 # In this setup, don't even try to compile with cython, just go with the .c file which should've
                 # been properly generated from a tested version.
-                Extension('_pydevd_frame_eval.pydevd_frame_evaluator', ['_pydevd_frame_eval/pydevd_frame_evaluator.c',])
+                Extension('_pydevd_frame_eval.pydevd_frame_evaluator', ['_pydevd_frame_eval/%s.c' % frame_eval_extension_name,])
             ]
         ))
 

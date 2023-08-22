@@ -15,9 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author yole
- */
+
 public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExpression {
   public PyLambdaExpressionImpl(ASTNode astNode) {
     super(astNode);

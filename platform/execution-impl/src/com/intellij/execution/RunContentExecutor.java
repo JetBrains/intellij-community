@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.CommonBundle;
@@ -22,8 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +33,6 @@ import java.util.List;
 
 /**
  * Runs a process and prints the output in a content tab within the Run toolwindow.
- *
- * @author yole
  */
 public class RunContentExecutor implements Disposable {
   private final Project myProject;
@@ -45,9 +42,10 @@ public class RunContentExecutor implements Disposable {
   private Runnable myStopAction;
   private Runnable myAfterCompletion;
   private Computable<Boolean> myStopEnabled;
-  private String myTitle = "Output";
+  private @NlsContexts.TabTitle String myTitle = ExecutionBundle.message("output.tab.default.title");
   private String myHelpId = null;
   private boolean myActivateToolWindow = true;
+  private boolean myFocusToolWindow = true;
   /**
    * User-provided console that has to be used instead of newly created
    */
@@ -63,7 +61,7 @@ public class RunContentExecutor implements Disposable {
     return this;
   }
 
-  public RunContentExecutor withTitle(String title) {
+  public RunContentExecutor withTitle(@NlsContexts.TabTitle String title) {
     myTitle = title;
     return this;
   }
@@ -94,6 +92,11 @@ public class RunContentExecutor implements Disposable {
     return this;
   }
 
+  public RunContentExecutor withFocusToolWindow(boolean focusToolWindow) {
+    myFocusToolWindow = focusToolWindow;
+    return this;
+  }
+
   private ConsoleView createConsole() {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
     consoleBuilder.filters(myFilterList);
@@ -107,6 +110,8 @@ public class RunContentExecutor implements Disposable {
 
     final JComponent consolePanel = createConsolePanel(console, actions);
     RunContentDescriptor descriptor = new RunContentDescriptor(console, myProcess, consolePanel, myTitle);
+    descriptor.setActivateToolWindowWhenAdded(myActivateToolWindow);
+    descriptor.setAutoFocusContent(myFocusToolWindow);
 
     Disposer.register(descriptor, this);
     Disposer.register(descriptor, console);
@@ -116,11 +121,6 @@ public class RunContentExecutor implements Disposable {
     actions.add(new CloseAction(executor, descriptor, myProject));
 
     RunContentManager.getInstance(myProject).showRunContent(executor, descriptor);
-
-    if (myActivateToolWindow) {
-      activateToolWindow();
-    }
-
     return console;
   }
 
@@ -141,22 +141,14 @@ public class RunContentExecutor implements Disposable {
     myProcess.startNotify();
   }
 
-  public void activateToolWindow() {
-    ApplicationManager.getApplication().invokeLater(
-      () -> ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null));
-  }
-
   private static JComponent createConsolePanel(ConsoleView view, ActionGroup actions) {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
     panel.add(view.getComponent(), BorderLayout.CENTER);
-    panel.add(createToolbar(actions), BorderLayout.WEST);
-    return panel;
-  }
-
-  private static JComponent createToolbar(ActionGroup actions) {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("RunContentExecutor", actions, false);
-    return actionToolbar.getComponent();
+    actionToolbar.setTargetComponent(panel);
+    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+    return panel;
   }
 
   @Override
@@ -189,6 +181,11 @@ public class RunContentExecutor implements Disposable {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isDumbAware() {
       return true;
     }
@@ -209,6 +206,11 @@ public class RunContentExecutor implements Disposable {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myStopAction != null);
       e.getPresentation().setEnabled(myStopEnabled != null && myStopEnabled.compute());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

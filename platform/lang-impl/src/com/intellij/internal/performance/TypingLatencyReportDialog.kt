@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.performance
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -21,11 +22,19 @@ import com.intellij.unscramble.AnalyzeStacktraceUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.ActionEvent
+import java.nio.file.Path
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
 private class TypingLatencyReportAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     TypingLatencyReportDialog(project).show()
@@ -190,7 +199,7 @@ internal class TypingLatencyReportDialog(
     override fun actionPerformed(e: ActionEvent) {
       val descriptor = FileSaverDescriptor("Export Typing Latency Report", "File name:", "txt")
       val dialog = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, contentPane)
-      val virtualFileWrapper = dialog.save(null, "typing-latency.txt") ?: return
+      val virtualFileWrapper = dialog.save(null as Path?, "typing-latency.txt") ?: return
       FileUtil.writeToFile(virtualFileWrapper.file, formatReportAsText())
     }
   }

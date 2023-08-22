@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -8,16 +9,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
-import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Danila Ponomarenko
- */
 public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
-
   @NotNull
   @Override
   public String getText() {
@@ -41,16 +40,24 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = getElement(editor, file);
     final PsiField field = getField(element);
-    if (field == null) {
-      return;
+    if (field == null) return IntentionPreviewInfo.EMPTY;
+    RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler();
+    if (handler instanceof PreviewableRefactoringActionHandler previewableRefactoringActionHandler) {
+      return previewableRefactoringActionHandler.generatePreview(project, field);
     }
-
-    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
-    new EncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, dataContext);
+    return IntentionPreviewInfo.EMPTY;
   }
 
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiField field = getField(element);
+    if (field == null) return;
+    DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+    JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, dataContext);
+  }
 
   @Nullable
   protected static PsiField getField(@Nullable PsiElement element) {
@@ -59,10 +66,9 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
     }
 
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) {
+    if (!(parent instanceof PsiReferenceExpression ref)) {
       return null;
     }
-    final PsiReferenceExpression ref = (PsiReferenceExpression)parent;
     final PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null || qualifier instanceof PsiThisExpression) {
       return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.vcs.log.graph.api.GraphLayout;
@@ -7,15 +7,14 @@ import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class GraphLayoutImpl implements GraphLayout {
   @NotNull private final IntList myLayoutIndex;
 
-  @NotNull private final List<Integer> myHeadNodeIndex;
+  @NotNull private final it.unimi.dsi.fastutil.ints.IntList myHeadNodeIndex;
   private final int @NotNull [] myStartLayoutIndexForHead;
 
-  public GraphLayoutImpl(int @NotNull [] layoutIndex, @NotNull List<Integer> headNodeIndex, int @NotNull [] startLayoutIndexForHead) {
+  public GraphLayoutImpl(int @NotNull [] layoutIndex, @NotNull it.unimi.dsi.fastutil.ints.IntList headNodeIndex, int @NotNull [] startLayoutIndexForHead) {
     myLayoutIndex = CompressedIntList.newInstance(layoutIndex);
     myHeadNodeIndex = headNodeIndex;
     myStartLayoutIndexForHead = startLayoutIndexForHead;
@@ -32,12 +31,12 @@ public class GraphLayoutImpl implements GraphLayout {
   }
 
   public int getHeadNodeIndex(int layoutIndex) {
-    return myHeadNodeIndex.get(getHeadOrder(layoutIndex));
+    return myHeadNodeIndex.getInt(getHeadOrder(layoutIndex));
   }
 
   @Override
   @NotNull
-  public List<Integer> getHeadNodeIndex() {
+  public it.unimi.dsi.fastutil.ints.IntList getHeadNodeIndex() {
     return myHeadNodeIndex;
   }
 

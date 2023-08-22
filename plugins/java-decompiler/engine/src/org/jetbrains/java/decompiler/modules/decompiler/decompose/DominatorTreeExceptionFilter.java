@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
-import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
@@ -75,7 +76,7 @@ public class DominatorTreeExceptionFilter {
 
   private void buildExceptionRanges() {
     for (Statement stat : statement.getStats()) {
-      List<Statement> lstPreds = stat.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD);
+      List<Statement> lstPreds = stat.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
       if (!lstPreds.isEmpty()) {
 
         Set<Integer> set = new HashSet<>();
@@ -127,16 +128,15 @@ public class DominatorTreeExceptionFilter {
           Set<Integer> range = entry.getValue();
 
           if (range.contains(id)) {
-
             Integer exit;
-
             if (!range.contains(childid)) {
               exit = childid;
             }
+            else if (map.containsKey(handler)) {
+              exit = -1;
+            }
             else {
-              // after replacing 'new Integer(-1)' with '-1' Eclipse throws a NullPointerException on the following line
-              // could be a bug in Eclipse or some obscure specification glitch, FIXME: needs further investigation
-              exit = map.containsKey(handler) ? new Integer(-1) : mapChild.get(handler);
+              exit = mapChild.get(handler);
             }
 
             if (exit != null) {

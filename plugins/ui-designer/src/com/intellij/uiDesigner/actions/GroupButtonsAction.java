@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,9 +15,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class GroupButtonsAction extends AbstractGuiEditorAction {
   @Override
   protected void actionPerformed(final GuiEditor editor, final List<? extends RadComponent> selection, final AnActionEvent e) {
@@ -35,7 +33,7 @@ public class GroupButtonsAction extends AbstractGuiEditorAction {
     if (groupName == null) return;
     RadRootContainer rootContainer = editor.getRootContainer();
     RadButtonGroup group = rootContainer.createGroup(groupName);
-    for(RadComponent component: selectedComponents) {
+    for (RadComponent component : selectedComponents) {
       rootContainer.setGroupForComponent(component, group);
     }
     editor.refreshAndSave(true);
@@ -49,7 +47,7 @@ public class GroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   public static boolean allButtons(final List<? extends RadComponent> selection) {
-    for(RadComponent component: selection) {
+    for (RadComponent component : selection) {
       if (!(component.getDelegee() instanceof AbstractButton) ||
           component.getDelegee() instanceof JButton) {
         return false;

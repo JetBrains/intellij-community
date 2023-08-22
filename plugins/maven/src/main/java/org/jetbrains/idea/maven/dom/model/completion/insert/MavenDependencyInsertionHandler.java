@@ -22,6 +22,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.onlinecompletion.MavenScopeTable;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
+import static org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionTrackerKt.logMavenDependencyInsertion;
+
 public class MavenDependencyInsertionHandler implements InsertHandler<LookupElement> {
 
   public static final InsertHandler<LookupElement> INSTANCE = new MavenDependencyInsertionHandler();
@@ -32,13 +34,11 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
       return; // Don't brake the template.
     }*/
     Object object = item.getObject();
-    if (!(object instanceof MavenRepositoryArtifactInfo)) {
+    if (!(object instanceof MavenRepositoryArtifactInfo completionItem)) {
       return;
     }
-    MavenRepositoryArtifactInfo completionItem = (MavenRepositoryArtifactInfo)object;
     PsiFile contextFile = context.getFile();
-    if (!(contextFile instanceof XmlFile)) return;
-    XmlFile xmlFile = (XmlFile)contextFile;
+    if (!(contextFile instanceof XmlFile xmlFile)) return;
     PsiElement element = xmlFile.findElementAt(context.getStartOffset());
     XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (tag == null) {
@@ -50,6 +50,8 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
       return;
     }
     setDependency(context, completionItem, (XmlFile)contextFile, domCoordinates);
+
+    logMavenDependencyInsertion(context, item, completionItem);
   }
 
 
@@ -72,18 +74,7 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
   protected void setDependency(@NotNull InsertionContext context,
                                MavenRepositoryArtifactInfo completionItem,
                                XmlFile contextFile, MavenDomShortArtifactCoordinates domCoordinates) {
-    if (completionItem.getGroupId() == null) {
-      return;
-    }
     domCoordinates.getGroupId().setStringValue(completionItem.getGroupId());
-
-    if (completionItem.getArtifactId() == null) {
-      domCoordinates.getArtifactId().setStringValue("");
-      int position = domCoordinates.getArtifactId().getXmlTag().getValue().getTextRange().getStartOffset();
-      context.getEditor().getCaretModel().moveToOffset(position);
-      MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
-      return;
-    }
 
     domCoordinates.getArtifactId().setStringValue(completionItem.getArtifactId());
 
@@ -123,7 +114,7 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
   private static void insertVersion(@NotNull InsertionContext context,
                                     MavenRepositoryArtifactInfo completionItem,
                                     MavenDomArtifactCoordinates domCoordinates) {
-    if (completionItem.getItems() != null && completionItem.getItems().length == 1 && completionItem.getVersion() != null) {
+    if (completionItem.getItems().length == 1 && completionItem.getVersion() != null) {
       domCoordinates.getVersion().setStringValue(completionItem.getVersion());
     }
     else {

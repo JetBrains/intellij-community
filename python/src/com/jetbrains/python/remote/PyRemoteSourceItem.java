@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.remote;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteFile;
 import com.intellij.util.PathMappingSettings;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -75,12 +75,21 @@ public class PyRemoteSourceItem {
 
   public void addRootMappingTo(@NotNull PathMappingSettings settings, @NotNull String sourcesLocalPath) {
     settings.addMappingCheckUnique(
-      PathUtil.getCanonicalPath(new File(sourcesLocalPath, generateRootFolderName()).getAbsolutePath()), getRootPath());
+      FileUtil.toCanonicalPath(new File(sourcesLocalPath, generateRootFolderName()).getAbsolutePath()), getRootPath());
   }
 
   public static String localPathForRemoteRoot(@NotNull String sourcesLocalPath, @NotNull String remoteRoot) {
-    return
-      PathUtil.getCanonicalPath(new File(sourcesLocalPath, generateRootFolderNameFor(remoteRoot)).getAbsolutePath());
+    return FileUtil.toCanonicalPath(new File(sourcesLocalPath, generateRootFolderNameFor(normalize(remoteRoot))).getAbsolutePath());
+  }
+
+  private static @NotNull String normalize(@NotNull String path) {
+    String systemIndependentPathForm = FileUtil.toSystemIndependentName(path);
+    if (systemIndependentPathForm.equals("/")) {
+      return systemIndependentPathForm;
+    }
+    else {
+      return StringUtil.trimEnd(systemIndependentPathForm, "/");
+    }
   }
 
   public String generateRootFolderName() {

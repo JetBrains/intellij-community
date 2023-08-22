@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @deprecated Prefer using {@link SimpleAsyncChangesBrowser} instead.
+ */
+@Deprecated
 public class SimpleChangesBrowser extends ChangesBrowserBase {
   private final List<Change> myChanges = new ArrayList<>();
   @Nullable private ChangeNodeDecorator myChangeNodeDecorator;
@@ -29,8 +33,12 @@ public class SimpleChangesBrowser extends ChangesBrowserBase {
   }
 
 
+  /**
+   * @deprecated Consider overriding {@link ChangesBrowserBase} instead.
+   */
   @NotNull
   @Override
+  @Deprecated
   protected DefaultTreeModel buildTreeModel() {
     return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), myChanges, myChangeNodeDecorator);
   }

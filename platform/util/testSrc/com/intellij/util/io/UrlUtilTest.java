@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.io;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
@@ -57,6 +58,21 @@ public class UrlUtilTest {
   }
 
   @Test
+  public void urlToPath() {
+    String p1 = UrlClassLoader.urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar!/");
+    String p2 = UrlClassLoader.urlToFilePath("file:C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar");
+    String p3 = UrlClassLoader.urlToFilePath("C:\\Program%20Files\\JetBrains\\IntelliJ%20IDEA%20211.2638\\lib\\resources.jar");
+    assertThat(p1).isEqualTo(p2);
+    assertThat(p1).isEqualTo(p3);
+    assertThat(p1).isEqualTo("C:\\Program Files\\JetBrains\\IntelliJ IDEA 211.2638\\lib\\resources.jar");
+    assertThat(UrlClassLoader.urlToFilePath(
+      "file:/C:\\Program%20Files\\JetBrains\\resources.jar!/")).isEqualTo("C:\\Program Files\\JetBrains\\resources.jar");
+    assertThat(UrlClassLoader.urlToFilePath("file:/Users/foo/r.jar")).isEqualTo("/Users/foo/r.jar");
+    assertThat(UrlClassLoader.urlToFilePath("file:/Users/path with space/r.jar")).isEqualTo("/Users/path with space/r.jar");
+    assertThat(UrlClassLoader.urlToFilePath("/Users/path with space/r.jar")).isEqualTo("/Users/path with space/r.jar");
+  }
+
+  @Test
   public void resourceExistsForLocalFile() throws Exception {
     File dir = FileUtil.createTempDirectory("UrlUtilTest", "");
     File existingFile = new File(dir, "a.txt");
@@ -97,6 +113,12 @@ public class UrlUtilTest {
     for (String sshUrl : SSH_URL_VARIANTS) {
       assertEquals("github.com", URLUtil.parseHostFromSshUrl(sshUrl));
     }
+
+    // sanity checks
+    assertEquals("test", URLUtil.parseHostFromSshUrl("file://test"));
+    assertEquals("test1", URLUtil.parseHostFromSshUrl("test1:test2"));
+    assertEquals("@test", URLUtil.parseHostFromSshUrl("@test"));
+    assertEquals("", URLUtil.parseHostFromSshUrl("test@"));
   }
 
   @Test

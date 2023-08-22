@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.indentation;
 
 import com.intellij.lang.PsiBuilder;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 
 public class IndentPsiBuilder extends PsiBuilderAdapter {
-  protected boolean myNewLine = true;
+  protected boolean myNewLine;
   protected int myCurrentIndent;
 
   protected HashMap<Marker, Integer> myIndents = new HashMap<>();
@@ -18,6 +18,29 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
 
   public IndentPsiBuilder(PsiBuilder delegate) {
     super(delegate);
+    calcInitialIndent();
+  }
+
+  private void calcInitialIndent() {
+    final CharSequence contents = myDelegate.getOriginalText();
+    int pos = 0;
+    myNewLine = true;
+    myCurrentIndent = 0;
+    while (pos < contents.length()) {
+      char ch = contents.charAt(pos++);
+      switch (ch) {
+        case ' ':
+        case '\t':
+          myCurrentIndent++;
+          break;
+        case '\n':
+        case '\r':
+          myCurrentIndent = 0;
+          break;
+        default:
+          return;
+      }
+    }
   }
 
   @Override
@@ -40,15 +63,13 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
     }
   }
 
-  @NotNull
   @Override
-  public Marker mark() {
+  public @NotNull Marker mark() {
     Marker marker = super.mark();
     return createDelegateMarker(marker);
   }
 
-  @NotNull
-  public Marker markWithRollbackPossibility() {
+  public @NotNull Marker markWithRollbackPossibility() {
     Marker marker = super.mark();
     Marker result = createDelegateMarker(marker);
     myIndents.put(result, myCurrentIndent);
@@ -63,7 +84,6 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
   private void unregisterMarker(Marker marker) {
     myIndents.remove(marker);
     myNewLines.remove(marker);
-
   }
 
   public boolean isNewLine() {
@@ -121,9 +141,8 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
       super.drop();
     }
 
-    @NotNull
     @Override
-    public Marker precede() {
+    public @NotNull Marker precede() {
       unregisterMarker(this);
       return super.precede();
     }

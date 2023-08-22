@@ -71,7 +71,7 @@ public class PsiMethodNode extends BasePsiMemberNode<PsiMethod>{
         return aClass.getQualifiedName();
       }
       else {
-        return method.toString();
+        return method.getName();
       }
     }
     return super.getTitle();

@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
@@ -14,21 +15,15 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class RadContainer extends RadComponent implements IContainer {
   private static final Logger LOG = Logger.getInstance(RadContainer.class);
 
@@ -176,8 +171,7 @@ public class RadContainer extends RadComponent implements IContainer {
     myDelegeeLayout = layout;
     getDelegee().setLayout(layout);
 
-    if (layout instanceof AbstractLayout) {
-      AbstractLayout aLayout = (AbstractLayout)layout;
+    if (layout instanceof AbstractLayout aLayout) {
       for (int i = 0; i < getComponentCount(); i++) {
         final RadComponent c = getComponent(i);
         aLayout.addLayoutComponent(c.getDelegee(), c.getConstraints());
@@ -192,9 +186,9 @@ public class RadContainer extends RadComponent implements IContainer {
 
   /**
    * @param component component to be added.
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code component} is {@code null}
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code component} already exist in the
    *          container
    */
@@ -231,10 +225,10 @@ public class RadContainer extends RadComponent implements IContainer {
    * of invalid Swing hierarchy.
    *
    * @param component component to be removed.
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code component}
    *          is {@code null}
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code component}
    *          doesn't exist in the container
    */
@@ -300,7 +294,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
   @Nullable
   public RadComponent getComponentAtGrid(int row, int col) {
-    return getGridLayoutManager().getComponentAtGrid(this, row, col);
+    return RadAbstractGridLayoutManager.getComponentAtGrid(this, row, col);
   }
 
   public int getGridRowCount() {
@@ -325,7 +319,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
   /**
    * @return border's type.
-   * @see com.intellij.uiDesigner.shared.BorderType
+   * @see BorderType
    */
   @Override
   @NotNull
@@ -334,10 +328,10 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   /**
-   * @throws java.lang.IllegalArgumentException
+   * @throws IllegalArgumentException
    *          if {@code type}
    *          is {@code null}
-   * @see com.intellij.uiDesigner.shared.BorderType
+   * @see BorderType
    */
   public final void setBorderType(@NotNull final BorderType type) {
     if (myBorderType == type) {
@@ -439,7 +433,7 @@ public class RadContainer extends RadComponent implements IContainer {
    * Updates delegee's border
    */
   public boolean updateBorder() {
-    String title = null;
+    @NlsSafe String title = null;
     String oldTitle = null;
     if (myBorderTitle != null) {
       oldTitle = myBorderTitle.getResolvedValue();
@@ -625,56 +619,6 @@ public class RadContainer extends RadComponent implements IContainer {
     // Margin and border
     writeBorder(writer);
     writeChildren(writer);
-  }
-
-  @Override
-  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
-    getLayoutManager().createSnapshotLayout(context, component, this, component.getLayout());
-    importSnapshotBorder(component);
-    for (Component child : component.getComponents()) {
-      if (child instanceof JComponent) {
-        RadComponent childComponent = createSnapshotComponent(context, (JComponent)child);
-        if (childComponent != null) {
-          getLayoutManager().addSnapshotComponent(component, (JComponent)child, this, childComponent);
-        }
-      }
-    }
-  }
-
-  private void importSnapshotBorder(final JComponent component) {
-    Border border = component.getBorder();
-    if (border != null) {
-      if (border instanceof TitledBorder) {
-        TitledBorder titledBorder = (TitledBorder)border;
-        setBorderTitle(StringDescriptor.create(titledBorder.getTitle()));
-        setBorderTitleJustification(titledBorder.getTitleJustification());
-        setBorderTitlePosition(titledBorder.getTitlePosition());
-        final Font titleFont = titledBorder.getTitleFont();
-        if (titleFont != null) {
-          setBorderTitleFont(new FontDescriptor(titleFont.getName(), titleFont.getStyle(), titleFont.getSize()));
-        }
-        setBorderTitleColor(new ColorDescriptor(titledBorder.getTitleColor()));
-        border = titledBorder.getBorder();
-      }
-
-      if (border instanceof EtchedBorder) {
-        setBorderType(BorderType.ETCHED);
-      }
-      else if (border instanceof BevelBorder) {
-        BevelBorder bevelBorder = (BevelBorder)border;
-        setBorderType(bevelBorder.getBevelType() == BevelBorder.RAISED ? BorderType.BEVEL_RAISED : BorderType.BEVEL_LOWERED);
-      }
-      else if (border instanceof EmptyBorder) {
-        EmptyBorder emptyBorder = (EmptyBorder)border;
-        setBorderType(BorderType.EMPTY);
-        setBorderSize(emptyBorder.getBorderInsets());
-      }
-      else if (border instanceof LineBorder) {
-        LineBorder lineBorder = (LineBorder)border;
-        setBorderType(BorderType.LINE);
-        setBorderColor(new ColorDescriptor(lineBorder.getLineColor()));
-      }
-    }
   }
 
   public RadAbstractGridLayoutManager getGridLayoutManager() {

@@ -17,6 +17,7 @@ public class JsonObjectImpl extends JsonObjectMixin implements JsonObject {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitObject(this);
   }
@@ -33,8 +34,8 @@ public class JsonObjectImpl extends JsonObjectMixin implements JsonObject {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonProperty.class);
   }
 
-  @Nullable
-  public ItemPresentation getPresentation() {
+  @Override
+  public @Nullable ItemPresentation getPresentation() {
     return JsonPsiImplUtils.getPresentation(this);
   }
 

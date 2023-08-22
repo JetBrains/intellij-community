@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore.psi.util
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -71,8 +70,9 @@ private fun changeIgnoreFile(project: Project,
                              action: (IgnoredFileContentProvider) -> Unit) {
   val determinedVcs = (vcs ?: VcsUtil.getVcsFor(project, ignoreFile)?.keyInstanceMethod) ?: return
   val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, determinedVcs) ?: return
-  invokeAndWaitIfNeeded {
+  ApplicationManager.getApplication().invokeAndWait {
     runUndoTransparentWriteAction {
+      if (project.isDisposed) return@runUndoTransparentWriteAction
       if (PsiManager.getInstance(project).findFile(ignoreFile)?.language !is IgnoreLanguage) return@runUndoTransparentWriteAction
       action(ignoredFileContentProvider)
       ignoreFile.save()
@@ -163,12 +163,12 @@ private fun IgnoredFileDescriptor.toText(ignoredFileContentProvider: IgnoredFile
   val ignorePath = path
   val ignoreMask = mask
   return if (ignorePath != null) {
-    val ignoreFileContainingDir = ignoreEntryRoot ?: ignoreFile.parent ?: throw IllegalStateException(
-      "Cannot determine ignore file path for $ignoreFile")
+    val ignoreFileContainingDir = ignoreEntryRoot ?: ignoreFile.parent
+                                  ?: throw IllegalStateException("Cannot determine ignore file path for ${ignoreFile}")
     ignoredFileContentProvider.buildIgnoreEntryContent(ignoreFileContainingDir, this)
   }
   else {
-    ignoreMask ?: throw IllegalStateException("IgnoredFileBean: path and mask cannot be null at the same time")
+    ignoreMask ?: throw IllegalStateException("IgnoredFileBean: path and mask cannot be null at the same time") // NON-NLS
   }
 }
 

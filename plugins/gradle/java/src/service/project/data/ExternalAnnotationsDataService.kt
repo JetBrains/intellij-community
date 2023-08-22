@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle.service.project.data
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
@@ -19,9 +21,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl
+import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
@@ -37,13 +42,18 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
       return
     }
 
+    val externalAnnotationNotificationManager = ExternalAnnotationsProgressNotificationManagerImpl.getInstanceImpl()
+
     val providedAnnotations = imported.mapNotNull {
       val libData = it.data
       val lib = modelsProvider.getLibraryByName(libData.internalName) ?: return@mapNotNull null
       lookForLocations(project, lib, libData)
     }.toMap()
 
-    resolveProvidedAnnotations(providedAnnotations, project)
+    externalAnnotationNotificationManager.onStartResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
+    resolveProvidedAnnotations(providedAnnotations, project) {
+      externalAnnotationNotificationManager.onFinishResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
+    }
   }
   companion object {
     val LOG = Logger.getInstance(ExternalAnnotationsDataService::class.java)
@@ -62,25 +72,34 @@ class ExternalAnnotationsModuleLibrariesService: AbstractProjectDataService<Modu
       return
     }
 
+    val externalAnnotationNotificationManager = ExternalAnnotationsProgressNotificationManagerImpl.getInstanceImpl()
+
     val providedAnnotations = imported
       .flatMap { ExternalSystemApiUtil.findAll(it, GradleSourceSetData.KEY) + it }
       .flatMap { moduleNode ->
-      ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.LIBRARY_DEPENDENCY)
-        .filter { it.data.level == LibraryLevel.MODULE }
-        .mapNotNull {
-          val libData = it.data.target
-          val lib = (modelsProvider.findIdeModuleOrderEntry(it.data) as? LibraryOrderEntry)?.library ?: return@mapNotNull null
-          lookForLocations(project, lib, libData)
-        }
-    }.toMap()
+        val libraryDependencyDataList = ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.LIBRARY_DEPENDENCY)
+          .filter { it.data.level == LibraryLevel.MODULE }.map { it.data }
+        modelsProvider.findIdeModuleLibraryOrderEntries(moduleNode.data, libraryDependencyDataList)
+          .mapNotNull { (libraryOrderEntry, libraryDependencyData) ->
+            val library = libraryOrderEntry.library ?: return@mapNotNull null
+            lookForLocations(project, library, libraryDependencyData.target)
+          }
+      }.toMap()
 
-    resolveProvidedAnnotations(providedAnnotations, project)
+    externalAnnotationNotificationManager.onStartResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
+    resolveProvidedAnnotations(providedAnnotations, project) {
+      externalAnnotationNotificationManager.onFinishResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
+    }
   }
 }
 
 
 fun shouldImportExternalAnnotations(projectData: ProjectData?, project: Project): Boolean {
   if (projectData == null) {
+    return false
+  }
+
+  if (project.isDisposed) {
     return false
   }
 
@@ -106,26 +125,39 @@ fun lookForLocations(project: Project, lib: Library, libData: LibraryData): Pair
 }
 
 fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<AnnotationsLocation>>,
-                               project: Project) {
+                               project: Project, onResolveCompleted: () -> Unit = {}){
   val locationsToSkip = mutableSetOf<AnnotationsLocation>()
-
+  val storage = project.workspaceModel.currentSnapshot
+  val diff = MutableEntityStorage.from(storage);
   if (providedAnnotations.isNotEmpty()) {
     val total = providedAnnotations.map { it.value.size }.sum().toDouble()
     runBackgroundableTask(GradleBundle.message("gradle.tasks.annotations.title")) { indicator ->
-      indicator.isIndeterminate = false
-      val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
-      var index = 0
-      providedAnnotations.forEach { (lib, locations) ->
-        indicator.text = GradleBundle.message("gradle.tasks.annotations.looking.for", lib.name)
-        locations.forEach locations@ { location ->
-          if (locationsToSkip.contains(location)) return@locations
-          if (!resolvers.fold(false) { acc, res -> acc || res.resolve(project, lib, location) } ) {
-             locationsToSkip.add(location)
+      try {
+        indicator.isIndeterminate = false
+        val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
+        var index = 0
+        providedAnnotations.forEach { (lib, locations) ->
+          indicator.text = GradleBundle.message("gradle.tasks.annotations.looking.for", lib.name)
+          locations.forEach locations@ { location ->
+            if (locationsToSkip.contains(location)) return@locations
+            if (!resolvers.fold(false) { acc, res -> acc || res.resolve(project, lib, location, diff) } ) {
+               locationsToSkip.add(location)
+            }
+            index++
+            indicator.fraction = index / total
           }
-          index++
-          indicator.fraction = index / total
+        }
+        if (diff.hasChanges()) {
+          runInEdt {
+            runWriteAction { project.workspaceModel.updateProjectModel("Applying resolved annotations") { it.addDiff(diff) } }
+          }
         }
       }
+      finally {
+        onResolveCompleted()
+      }
     }
+  } else {
+    onResolveCompleted()
   }
 }

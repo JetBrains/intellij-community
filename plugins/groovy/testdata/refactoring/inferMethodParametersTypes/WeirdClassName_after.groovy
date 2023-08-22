@@ -2,7 +2,7 @@ class T {
   void x(){}
 }
 
-def <U> boolean f<caret>oo(List<U> a, U b, T c) {
+def <U> boolean f<caret>oo(ArrayList<U> a, U b, T c) {
   a.add(b)
 }
 

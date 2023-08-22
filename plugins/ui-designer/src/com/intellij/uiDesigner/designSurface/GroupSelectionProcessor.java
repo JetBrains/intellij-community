@@ -12,10 +12,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class GroupSelectionProcessor extends EventProcessor {
   private final GuiEditor myEditor;
   private final RadComponent myComponent;
@@ -121,8 +117,7 @@ public final class GroupSelectionProcessor extends EventProcessor {
       }
     }
 
-    if (component instanceof RadContainer){
-      final RadContainer container = (RadContainer)component;
+    if (component instanceof RadContainer container){
       // [anton] it is very important to iterate through a STORED array because setSelected can
       // change order of components so iteration via getComponent(i) is incorrect
       final RadComponent[] components = container.getComponents();

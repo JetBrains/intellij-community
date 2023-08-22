@@ -15,14 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import org.jetbrains.plugins.groovy.codeInspection.utils.InspectionUtil;
+import com.intellij.codeInspection.options.OptPane;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyOverlyComplexMethodInspection extends GroovyOverlyComplexMethodInspectionBase {
 
   @Override
-  public JComponent createOptionsPanel() {
-    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", "Method complexity limit:");
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      number("m_limit", GroovyBundle.message("overly.complex.method.complexity.limit.option"), 1, 1000));
   }
 }

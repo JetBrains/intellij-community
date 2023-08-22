@@ -1,16 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
 public final class DownloadUtil {
-  public static final String CONTENT_LENGTH_TEMPLATE = "${content-length}";
+  public static final @NonNls String CONTENT_LENGTH_TEMPLATE = "${content-length}";
   private static final Logger LOG = Logger.getInstance(DownloadUtil.class);
 
   /**
@@ -45,7 +47,7 @@ public final class DownloadUtil {
    * @param tempFile       temporary file to download to. This file is deleted on method exit.
    * @param contentChecker checks whether the downloaded content is OK or not
    * @throws IOException if an I/O error occurs
-   * @returns true if no {@code contentChecker} is provided or the provided one returned true
+   * @return true if no {@code contentChecker} is provided or the provided one returned true
    */
   public static boolean downloadAtomically(@Nullable ProgressIndicator indicator,
                                            @NotNull String url,
@@ -102,8 +104,8 @@ public final class DownloadUtil {
 
   public static @NotNull <V> Outcome<V> provideDataWithProgressSynchronously(
     @Nullable Project project,
-    @NotNull String progressTitle,
-    final @NotNull String actionShortDescription,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    final @NotNull @NlsContexts.ProgressText String actionShortDescription,
     final @NotNull Callable<? extends V> supplier,
     @Nullable Producer<Boolean> tryAgainProvider) {
     int attemptNumber = 1;
@@ -158,15 +160,15 @@ public final class DownloadUtil {
     String originalText = progress != null ? progress.getText() : null;
     substituteContentLength(progress, originalText, -1);
     if (progress != null) {
-      progress.setText2(IdeBundle.message("progress.download.0.title", location));
+      progress.setText2(IdeCoreBundle.message("progress.download.0.title", location));
     }
     HttpRequests.request(location)
       .productNameAsUserAgent()
-      .connect(new HttpRequests.RequestProcessor<Object>() {
+      .connect(new HttpRequests.RequestProcessor<>() {
         @Override
         public Object process(@NotNull HttpRequests.Request request) throws IOException {
           try {
-            int contentLength = request.getConnection().getContentLength();
+            long contentLength = request.getConnection().getContentLengthLong();
             substituteContentLength(progress, originalText, contentLength);
             NetUtils.copyStreamContent(progress, request.getInputStream(), output, contentLength);
           }
@@ -178,7 +180,8 @@ public final class DownloadUtil {
       });
   }
 
-  private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable String text, int contentLengthInBytes) {
+  private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable @NlsContexts.ProgressText String text,
+                                              long contentLengthInBytes) {
     if (progress != null && text != null) {
       int ind = text.indexOf(CONTENT_LENGTH_TEMPLATE);
       if (ind != -1) {
@@ -189,7 +192,7 @@ public final class DownloadUtil {
     }
   }
 
-  private static String formatContentLength(int contentLengthInBytes) {
+  private static String formatContentLength(long contentLengthInBytes) {
     if (contentLengthInBytes < 0) {
       return "";
     }

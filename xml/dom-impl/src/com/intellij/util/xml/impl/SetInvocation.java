@@ -18,9 +18,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.SubTag;
 
-/**
- * @author peter
- */
 public class SetInvocation implements Invocation {
   private final Converter myConverter;
 

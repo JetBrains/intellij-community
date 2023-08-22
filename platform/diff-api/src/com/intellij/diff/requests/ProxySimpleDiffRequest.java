@@ -3,7 +3,9 @@ package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,9 +14,9 @@ import java.util.List;
 public class ProxySimpleDiffRequest extends SimpleDiffRequest {
   @NotNull private final UserDataHolder myDataHolder;
 
-  public ProxySimpleDiffRequest(@Nullable String title,
+  public ProxySimpleDiffRequest(@Nullable @NlsContexts.DialogTitle String title,
                                 @NotNull List<DiffContent> contents,
-                                @NotNull List<String> titles,
+                                @NotNull List<@Nls String> titles,
                                 @NotNull UserDataHolder dataHolder) {
     super(title, contents, titles);
     myDataHolder = dataHolder;

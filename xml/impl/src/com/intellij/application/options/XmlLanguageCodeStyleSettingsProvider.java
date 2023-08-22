@@ -19,6 +19,7 @@ import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAcces
 import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PlatformUtils;
@@ -28,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @Override
   @NotNull
@@ -38,7 +36,7 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
                                                   @NotNull final CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, getConfigurableDisplayNameText()){
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
       }
 
@@ -50,7 +48,7 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   }
 
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new XmlCodeStyleSettings(settings);
   }
 
@@ -81,7 +79,8 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
     }
     if (settingsType == SettingsType.COMMENTER_SETTINGS) {
       consumer.showStandardOptions(CodeStyleSettingsCustomizable.CommenterOption.LINE_COMMENT_AT_FIRST_COLUMN.name(),
-                                   CodeStyleSettingsCustomizable.CommenterOption.BLOCK_COMMENT_AT_FIRST_COLUMN.name());
+                                   CodeStyleSettingsCustomizable.CommenterOption.BLOCK_COMMENT_AT_FIRST_COLUMN.name(),
+                                   CodeStyleSettingsCustomizable.CommenterOption.BLOCK_COMMENT_ADD_SPACE.name());
     }
   }
 
@@ -104,24 +103,38 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   @Override
   public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
                                             @NotNull Field field) {
-    if (codeStyleObject instanceof XmlCodeStyleSettings && "XML_WHITE_SPACE_AROUND_CDATA".equals(field.getName())) {
-      return new MagicIntegerConstAccessor(
-        codeStyleObject, field,
-        new int[]{
-          XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE,
-          XmlCodeStyleSettings.WS_AROUND_CDATA_NONE,
-          XmlCodeStyleSettings.WS_AROUND_CDATA_NEW_LINES
-        },
-        new String[]{
-          "preserve",
-          "none",
-          "new_lines"
-        });
+    if (codeStyleObject instanceof XmlCodeStyleSettings) {
+      if ("XML_WHITE_SPACE_AROUND_CDATA".equals(field.getName())) {
+        return new MagicIntegerConstAccessor(
+          codeStyleObject, field,
+          new int[]{
+            XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE,
+            XmlCodeStyleSettings.WS_AROUND_CDATA_NONE,
+            XmlCodeStyleSettings.WS_AROUND_CDATA_NEW_LINES
+          },
+          new String[]{
+            "preserve",
+            "none",
+            "new_lines"
+          });
+      }
+      else if ("XML_TEXT_WRAP".equals(field.getName())) {
+        return new MagicIntegerConstAccessor(
+          codeStyleObject, field,
+          new int[]{
+            CommonCodeStyleSettings.DO_NOT_WRAP,
+            CommonCodeStyleSettings.WRAP_AS_NEEDED
+          },
+          new String[]{
+            "off",
+            "normal"
+          });
+      }
     }
     return super.getAccessor(codeStyleObject, field);
   }
 
-  public static String getConfigurableDisplayNameText() {
+  public static @ConfigurableName String getConfigurableDisplayNameText() {
     return XmlBundle.message("title.xml");
   }
 }

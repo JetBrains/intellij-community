@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -55,6 +56,11 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   private boolean onlyJarsSelected() {
     for (PackagingSourceItem item : mySourceItemsTree.getSelectedItems()) {
       if (item.isProvideElements() && (!item.getKindOfProducedElements().containsJarFiles() || item.getKindOfProducedElements().containsDirectoriesWithClasses())) {
@@ -72,21 +78,25 @@ public class ExtractIntoDefaultLocationAction extends PutIntoDefaultLocationActi
       for (PackagingSourceItem item : mySourceItemsTree.getSelectedItems()) {
         final ArtifactEditorContext context = myArtifactEditor.getContext();
         final List<? extends PackagingElement<?>> elements = item.createElements(context);
-        ArtifactUtil.processElementsWithSubstitutions(elements, context, context.getArtifactType(), PackagingElementPath.EMPTY, new PackagingElementProcessor<PackagingElement<?>>() {
-          @Override
-          public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
-            if (element instanceof FileCopyPackagingElement) {
-              final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
-              if (file != null) {
-                final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-                if (jarRoot != null) {
-                  extracted.add(PackagingElementFactory.getInstance().createExtractedDirectory(jarRoot));
-                }
-              }
-            }
-            return true;
-          }
-        });
+        ArtifactUtil.processElementsWithSubstitutions(elements, context, context.getArtifactType(), PackagingElementPath.EMPTY,
+                                                      new PackagingElementProcessor<>() {
+                                                        @Override
+                                                        public boolean process(@NotNull PackagingElement<?> element,
+                                                                               @NotNull PackagingElementPath path) {
+                                                          if (element instanceof FileCopyPackagingElement) {
+                                                            final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
+                                                            if (file != null) {
+                                                              final VirtualFile jarRoot =
+                                                                JarFileSystem.getInstance().getJarRootForLocalFile(file);
+                                                              if (jarRoot != null) {
+                                                                extracted.add(
+                                                                  PackagingElementFactory.getInstance().createExtractedDirectory(jarRoot));
+                                                              }
+                                                            }
+                                                          }
+                                                          return true;
+                                                        }
+                                                      });
       }
       myArtifactEditor.getLayoutTreeComponent().putElements(pathForClasses, extracted);
     }

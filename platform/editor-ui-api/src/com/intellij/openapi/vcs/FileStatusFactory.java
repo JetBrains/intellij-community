@@ -1,95 +1,52 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Supplier;
 
-public class FileStatusFactory {
-  private static final FileStatusFactory ourInstance = new FileStatusFactory();
+public abstract class FileStatusFactory {
   public static final String FILESTATUS_COLOR_KEY_PREFIX = "FILESTATUS_";
-  private final List<FileStatus> myStatuses = new ArrayList<>();
 
-  private FileStatusFactory() {
+  public final FileStatus createFileStatus(@NonNls @NotNull String id,
+                                     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description) {
+    return createFileStatus(id, () -> description, null, null);
   }
 
-  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @Nls @NotNull String description) {
-    return createFileStatus(id, description, null);
-  }
-
-  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @Nls @NotNull String description, @Nullable Color color) {
-    FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey(FILESTATUS_COLOR_KEY_PREFIX + id, color), description);
-    myStatuses.add(result);
-    return result;
-  }
-
-  public synchronized FileStatus[] getAllFileStatuses() {
-    return myStatuses.toArray(new FileStatus[0]);
-  }
-
-  public static FileStatusFactory getInstance() {
-    return ourInstance;
+  public final FileStatus createFileStatus(@NonNls @NotNull String id,
+                                     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description,
+                                     @Nullable Color color) {
+    return createFileStatus(id, () -> description, color, null);
   }
 
   /**
-   * author: lesya
+   * @param pluginId if specified, returned status will be removed from global file status list on plugin unloading (to avoid unloading
+   *                 being blocked by plugin classes referenced via description supplier)
    */
-  private static class FileStatusImpl implements FileStatus {
-    private final String myStatus;
-    private final ColorKey myColorKey;
-    private final String myText;
+  public final FileStatus createFileStatus(@NonNls @NotNull String id,
+                                     @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String> description,
+                                     @Nullable PluginId pluginId) {
+    return createFileStatus(id, description, null, pluginId);
+  }
 
-    FileStatusImpl(@NotNull String status, @NotNull ColorKey key, String text) {
-      myStatus = status;
-      myColorKey = key;
-      myText = text;
-    }
+  /**
+   * @param pluginId if specified, returned status will be removed from global file status list on plugin unloading (to avoid unloading
+   *                 being blocked by plugin classes referenced via description supplier)
+   */
+  public abstract FileStatus createFileStatus(@NonNls @NotNull String id,
+                                              @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String> description,
+                                              @Nullable Color color,
+                                              @Nullable PluginId pluginId);
 
-    public String toString() {
-      return myStatus;
-    }
+  public abstract FileStatus[] getAllFileStatuses();
 
-    @Override
-    public String getText() {
-      return myText;
-    }
-
-    @Override
-    public Color getColor() {
-      return EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(getColorKey());
-    }
-
-    @NotNull
-    @Override
-    public ColorKey getColorKey() {
-      return myColorKey;
-    }
-
-    @NotNull
-    @Override
-    public String getId() {
-      return myStatus;
-    }
+  public static FileStatusFactory getInstance() {
+    return ApplicationManager.getApplication().getService(FileStatusFactory.class);
   }
 }

@@ -1,0 +1,6 @@
+-Xmx256m
+-XX:+UseG1GC
+-ea
+-Dsun.io.useCanonCaches=false
+--add-modules=jdk.jcmd
+--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED

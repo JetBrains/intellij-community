@@ -10,8 +10,8 @@ public class Test {
 
   void m() {
     String sss = IBundle.message(keyNameField, "");
+    String sss1 = IBundle.message(Holder.KEY);
   }
-
 }
 
 class IBundle {
@@ -24,4 +24,8 @@ class IBundle {
   @NonNls
   public static final String BUNDLE = "x.Bu";
   private static final ResourceBundle ourBundle = ResourceBundle.getBundle(bundleClassName);
+}
+
+class Holder {
+  private static final String KEY = "foo.bar";
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -11,7 +11,10 @@ import com.intellij.codeInspection.i18n.batch.I18nizedPropertyData;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -21,7 +24,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -37,17 +43,19 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
 
 import javax.swing.*;
 import java.util.*;
 
-public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeFormBatchFix.class);
   private static final List<DefaultPrefixSuggestion> PREFIX_SUGGESTIONS = Arrays.asList(
     new DefaultPrefixSuggestion(LinkLabel.class, "text", "link"),
@@ -60,15 +68,106 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
   );
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project,
                        CommonProblemDescriptor @NotNull [] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
-    List<I18nizedPropertyData<HardcodedStringInFormData>> dataList = new ArrayList<>();
-    HashSet<PsiFile> contextFiles = new HashSet<>();
-    Map<VirtualFile, RadRootContainer> containerMap = new HashMap<>();
-    UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
-    Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates = new HashMap<>();
+    final List<I18nizedPropertyData<HardcodedStringInFormData>> dataList = new ArrayList<>();
+    final HashSet<PsiFile> contextFiles = new HashSet<>();
+    final Map<VirtualFile, RadRootContainer> containerMap = new HashMap<>();
+    final Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates = new HashMap<>();
+
+    ReadAction
+      .nonBlocking(() -> {
+        fillDuplicates(project, descriptors, dataList, contextFiles, containerMap, duplicates);
+        return I18nizeMultipleStringsDialog.getResourceBundleManager(project, contextFiles);
+      })
+      .finishOnUiThread(ModalityState.nonModal(), bundleManager -> {
+        showI18nizeMultipleStringsDialog(project, dataList, contextFiles, bundleManager, containerMap, duplicates);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  private void showI18nizeMultipleStringsDialog(@NotNull Project project,
+                                                @NotNull List<I18nizedPropertyData<HardcodedStringInFormData>> dataList,
+                                                @NotNull HashSet<PsiFile> contextFiles,
+                                                @NotNull ResourceBundleManager bundleManager,
+                                                @NotNull Map<VirtualFile, RadRootContainer> containerMap,
+                                                @NotNull Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates) {
+    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog =
+      new I18nizeMultipleStringsDialog<>(project, dataList, contextFiles, bundleManager,
+                                         I18nizeFormBatchFix::createUsageInfo,
+                                         UIDesignerIcons.InspectionSuppression,
+                                         false);
+    if (dialog.showAndGet()) {
+      PropertiesFile propertiesFile = dialog.getPropertiesFile();
+      PsiManager manager = PsiManager.getInstance(project);
+      Set<PsiFile> files = new HashSet<>();
+      for (VirtualFile file : containerMap.keySet()) {
+        ContainerUtil.addIfNotNull(files, manager.findFile(file));
+      }
+      if (files.isEmpty()) {
+        return;
+      }
+      files.add(propertiesFile.getContainingFile());
+
+      String bundleName = I18nizeFormQuickFix.getBundleName(project, propertiesFile);
+      if (bundleName == null) {
+        return;
+      }
+      WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
+        for (I18nizedPropertyData<HardcodedStringInFormData> data : dataList) {
+          StringDescriptor valueDescriptor;
+          if (!data.markAsNonNls()) {
+            JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
+                                                                          Collections.singletonList(propertiesFile),
+                                                                          data.key(),
+                                                                          data.value(),
+                                                                          new UExpression[0]);
+            valueDescriptor = new StringDescriptor(bundleName, data.key());
+          }
+          else {
+            valueDescriptor = StringDescriptor.create(data.value());
+            valueDescriptor.setNoI18n(true);
+          }
+
+          setPropertyValue(data.contextData().getComponent(), data.contextData().getPropertyName(), valueDescriptor);
+          List<I18nizedPropertyData<HardcodedStringInFormData>> duplicateValues = duplicates.get(data.value());
+          if (duplicateValues != null) {
+            for (I18nizedPropertyData<HardcodedStringInFormData> duplicateBean : duplicateValues) {
+              setPropertyValue(duplicateBean.contextData().getComponent(), duplicateBean.contextData().getPropertyName(),
+                               valueDescriptor);
+            }
+          }
+        }
+
+        for (Map.Entry<VirtualFile, RadRootContainer> entry : containerMap.entrySet()) {
+          try {
+            final XmlWriter writer = new XmlWriter();
+            entry.getValue().write(writer);
+            VfsUtil.saveText(entry.getKey(), writer.getText());
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      }, files.toArray(PsiFile.EMPTY_ARRAY));
+    }
+  }
+
+  private void fillDuplicates(@NotNull Project project,
+                         CommonProblemDescriptor @NotNull [] descriptors,
+                         List<I18nizedPropertyData<HardcodedStringInFormData>> dataList,
+                         HashSet<PsiFile> contextFiles,
+                         Map<VirtualFile, RadRootContainer> containerMap,
+                         Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates) {
+    final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
+
     for (CommonProblemDescriptor descriptor : descriptors) {
       FormElementProblemDescriptor formElementProblemDescriptor = (FormElementProblemDescriptor)descriptor;
       PsiFile containingFile = formElementProblemDescriptor.getPsiElement().getContainingFile();
@@ -118,64 +217,6 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
         duplicates.put(value, null);
       }
     }
-
-    I18nizeMultipleStringsDialog<HardcodedStringInFormData> dialog = new I18nizeMultipleStringsDialog<>(project, dataList, contextFiles,
-                                                                                                        I18nizeFormBatchFix::createUsageInfo,
-                                                                                                        UIDesignerIcons.InspectionSuppression);
-    if (dialog.showAndGet()) {
-      PropertiesFile propertiesFile = dialog.getPropertiesFile();
-      PsiManager manager = PsiManager.getInstance(project);
-      Set<PsiFile> files = new HashSet<>();
-      for (VirtualFile file : containerMap.keySet()) {
-        ContainerUtil.addIfNotNull(files, manager.findFile(file));
-      }
-      if (files.isEmpty()) {
-        return;
-      }
-      files.add(propertiesFile.getContainingFile());
-
-      String bundleName = I18nizeFormQuickFix.getBundleName(project, propertiesFile);
-      if (bundleName == null) {
-        return;
-      }
-      WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
-        for (I18nizedPropertyData<HardcodedStringInFormData> data : dataList) {
-          StringDescriptor valueDescriptor;
-          if (!data.isMarkAsNonNls()) {
-            JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
-                                                                          Collections.singletonList(propertiesFile),
-                                                                          data.getKey(),
-                                                                          data.getValue(),
-                                                                          PsiExpression.EMPTY_ARRAY);
-            valueDescriptor = new StringDescriptor(bundleName, data.getKey());
-          }
-          else {
-            valueDescriptor = StringDescriptor.create(data.getValue());
-            valueDescriptor.setNoI18n(true);
-          }
-
-          setPropertyValue(data.getContextData().getComponent(), data.getContextData().getPropertyName(), valueDescriptor);
-          List<I18nizedPropertyData<HardcodedStringInFormData>> duplicateValues = duplicates.get(data.getValue());
-          if (duplicateValues != null) {
-            for (I18nizedPropertyData<HardcodedStringInFormData> duplicateBean : duplicateValues) {
-              setPropertyValue(duplicateBean.getContextData().getComponent(), duplicateBean.getContextData().getPropertyName(),
-                               valueDescriptor);
-            }
-          }
-        }
-
-        for (Map.Entry<VirtualFile, RadRootContainer> entry : containerMap.entrySet()) {
-          try {
-            final XmlWriter writer = new XmlWriter();
-            entry.getValue().write(writer);
-            VfsUtil.saveText(entry.getKey(), writer.getText());
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-        }
-      }, files.toArray(PsiFile.EMPTY_ARRAY));
-    }
   }
 
   @Nullable
@@ -199,7 +240,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     RadComponent component = data.getComponent();
     PsiFile file = data.getContainingFile();
     TextRange range = getComponentRange(component, file);
-    UsageInfo usageInfo = range != null ? new UsageInfo(file, range.getStartOffset(), range.getEndOffset()) : new UsageInfo(file);
+    UsageInfo usageInfo = range != null ? new UsageInfo(file, range, false) : new UsageInfo(file);
     return Collections.singletonList(usageInfo);
   }
 
@@ -265,7 +306,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) { }
 
-  private static class HardcodedStringInFormData {
+  private static final class HardcodedStringInFormData {
     private final RadComponent myComponent;
     private final String myPropertyName;
     private final PsiFile myContainingFile;
@@ -291,7 +332,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix<CommonP
     }
   }
 
-  private static class DefaultPrefixSuggestion {
+  private static final class DefaultPrefixSuggestion {
     private final Class<?> myComponentClass;
     private final String myPropertyName;
     private final String myDefaultPrefix;

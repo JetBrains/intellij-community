@@ -16,15 +16,15 @@
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.util.NlsSafe;
 
 import java.util.Collection;
 
-/**
- * @author cdr
- */
 public interface I18nizeQuickFixModel {
+  @NlsSafe
   String getValue();
 
+  @NlsSafe
   String getKey();
 
   boolean hasValidData();

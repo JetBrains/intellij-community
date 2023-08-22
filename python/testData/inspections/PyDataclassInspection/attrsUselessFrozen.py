@@ -1,4 +1,5 @@
 import attr
+import attrs
 
 
 @attr.dataclass(frozen=True)
@@ -43,3 +44,11 @@ class Derived2(Base2):
     d: int = 1
 
 # del Derived2(1).d
+
+
+@attrs.frozen
+class A5:
+    a: int = 1
+
+    def <warning descr="'__setattr__' is ignored if the class already defines 'frozen' parameter">__setattr__</warning>(self, key, value):
+        pass

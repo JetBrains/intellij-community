@@ -23,11 +23,6 @@ import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.SwingUtilities
 
-/**
- * @author Denis Fokin
- *
- */
-
 internal class Testable {
 
   private val isRun = AtomicBoolean(false)
@@ -114,7 +109,7 @@ internal class Testable {
         completenessLock.unlock()
       }
     }
-    return this;
+    return this
   }
 
   fun waitCompletion(condition: Condition, lock: ReentrantLock, timout: Long = 0) {

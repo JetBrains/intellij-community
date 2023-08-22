@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.refactoring;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
@@ -37,7 +36,7 @@ import java.util.*;
 /**
  * @author Dennis.Ushakov
  */
-public class PyDefUseUtil {
+public final class PyDefUseUtil {
   private PyDefUseUtil() {
   }
 
@@ -77,8 +76,7 @@ public class PyDefUseUtil {
                                 instruction -> {
                                   final PsiElement element = instruction.getElement();
                                   final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
-                                  if (instruction instanceof ReadWriteInstruction) {
-                                    final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+                                  if (instruction instanceof ReadWriteInstruction rwInstruction) {
                                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
                                     if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
                                       final String name = elementName(element);
@@ -121,7 +119,7 @@ public class PyDefUseUtil {
       return PyElement.EMPTY_ARRAY;
     }
     final boolean[] visited = new boolean[instructions.length];
-    final Collection<PyElement> result = Sets.newHashSet();
+    final Collection<PyElement> result = new HashSet<>();
     for (Instruction instruction : instructions[instr].allSucc()) {
       getPostRefs(var, instructions, instruction.num(), visited, result);
     }

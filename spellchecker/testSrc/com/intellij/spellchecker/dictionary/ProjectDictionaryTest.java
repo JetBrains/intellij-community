@@ -97,13 +97,13 @@ public class ProjectDictionaryTest extends SpellcheckerInspectionTestCase {
     assert PROJECT_WORDS.stream().allMatch(projectWord -> projectDictionary.contains(projectWord) == null);
   }
 
-  public void testGetSuggestions(){
+  public void testGetSuggestions() {
     final List<String> suggestions = new ArrayList<>();
     myProjectDictionary.consumeSuggestions("AAAB", suggestions::add);
     assert suggestions.isEmpty(); // TODO: change current behavior
   }
 
-  public void testNoSuggestions(){
+  public void testNoSuggestions() {
     final List<String> suggestions = new ArrayList<>();
     myProjectDictionary.consumeSuggestions("EEEE", suggestions::add);
     assert suggestions.isEmpty();

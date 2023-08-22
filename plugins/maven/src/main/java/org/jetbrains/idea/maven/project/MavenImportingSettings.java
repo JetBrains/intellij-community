@@ -16,12 +16,13 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 
 import java.util.LinkedHashSet;
@@ -46,15 +47,20 @@ public class MavenImportingSettings implements Cloneable {
   public static final String DEFAULT_DEPENDENCY_TYPES =
     "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
 
-  @NotNull private String dedicatedModuleDir = "";
+  private boolean useWorkspaceImport = true;
+  @Deprecated
+  private boolean importToTreeStructure = false;
+
+  @NotNull @NlsSafe private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
 
+  private boolean importAutomatically = false;
   private boolean createModulesForAggregators = true;
   private boolean createModuleGroups = false;
   private boolean excludeTargetFolder = true;
   private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
-  private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
+  @NlsSafe private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
@@ -66,9 +72,9 @@ public class MavenImportingSettings implements Cloneable {
   private String dependencyTypes = DEFAULT_DEPENDENCY_TYPES;
   private Set<String> myDependencyTypesAsSet;
 
-  @NotNull private String vmOptionsForImporter = "";
+  @NotNull @NlsSafe private String vmOptionsForImporter = "";
 
-  @NotNull private String jdkForImporter = MavenRunnerSettings.USE_INTERNAL_JAVA;
+  @NotNull @NlsSafe private String jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -84,16 +90,22 @@ public class MavenImportingSettings implements Cloneable {
       myMessageKey = messageKey;
     }
 
+    @NlsContexts.ListItem
     public String getTitle() {
       return MavenConfigurableBundle.message(myMessageKey);
     }
   }
 
+  @Deprecated
+  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
   @NotNull
+  @NlsSafe
   public String getDedicatedModuleDir() {
     return dedicatedModuleDir;
   }
 
+  @Deprecated
+  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
   public void setDedicatedModuleDir(@NotNull String dedicatedModuleDir) {
     this.dedicatedModuleDir = dedicatedModuleDir;
   }
@@ -109,20 +121,20 @@ public class MavenImportingSettings implements Cloneable {
   /**
    * @deprecated see {@link MavenImportingSettings#setImportAutomatically(boolean)} for details
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
   public boolean isImportAutomatically() {
-    return true;
+    return importAutomatically;
   }
 
   /**
    * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
    * @deprecated Auto-import cannot be disabled
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
   public void setImportAutomatically(@SuppressWarnings("unused") boolean importAutomatically) {
-    LOG.warn(new Throwable("Auto-import cannot be disabled"));
+    this.importAutomatically = importAutomatically;
   }
 
   @NotNull
@@ -149,13 +161,52 @@ public class MavenImportingSettings implements Cloneable {
     return myDependencyTypesAsSet;
   }
 
+  @ApiStatus.Internal
+  public boolean isWorkspaceImportEnabled() {
+    return useWorkspaceImport;
+  }
+
+  @ApiStatus.Internal
+  public void setWorkspaceImportEnabled(boolean enabled) {
+    boolean changedValue = useWorkspaceImport != enabled;
+    useWorkspaceImport = enabled;
+
+    // make sure workspace import is not re-enabled on restart, because of the enabled tree import
+    if (!useWorkspaceImport) {
+      importToTreeStructure = false;
+    }
+
+    if (changedValue) {
+      fireUpdateAllProjectStructure();
+    }
+  }
+
+  @Deprecated
+  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a defaul option
+  public boolean isImportToTreeStructure() {
+    return importToTreeStructure;
+  }
+
+  @Deprecated
+  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
+  public void setImportToTreeStructure(boolean importToTreeStructure) {
+    this.importToTreeStructure = importToTreeStructure;
+    // make sure users who enabled tree structure import have workspace import enabled, which supports the tree import.
+    if (importToTreeStructure) {
+      setWorkspaceImportEnabled(true);
+    }
+  }
+
   public boolean isCreateModuleGroups() {
     return createModuleGroups;
   }
 
   public void setCreateModuleGroups(boolean createModuleGroups) {
+    boolean changed = this.createModuleGroups != createModuleGroups;
     this.createModuleGroups = createModuleGroups;
-    fireCreateModuleGroupsChanged();
+    if (changed) {
+      fireCreateModuleGroupsChanged();
+    }
   }
 
   public boolean isCreateModulesForAggregators() {
@@ -163,8 +214,11 @@ public class MavenImportingSettings implements Cloneable {
   }
 
   public void setCreateModulesForAggregators(boolean createModulesForAggregators) {
+    boolean changed = this.createModulesForAggregators != createModulesForAggregators;
     this.createModulesForAggregators = createModulesForAggregators;
-    fireCreateModuleForAggregatorsChanged();
+    if (changed) {
+      fireCreateModuleForAggregatorsChanged();
+    }
   }
 
   public boolean isKeepSourceFolders() {
@@ -191,6 +245,7 @@ public class MavenImportingSettings implements Cloneable {
     this.useMavenOutput = useMavenOutput;
   }
 
+  @NlsSafe
   public String getUpdateFoldersOnImportPhase() {
     return updateFoldersOnImportPhase;
   }
@@ -261,6 +316,10 @@ public class MavenImportingSettings implements Cloneable {
     this.jdkForImporter = jdkForImporter;
   }
 
+
+  public void copyListeners(MavenImportingSettings another) {
+    myListeners.addAll(another.myListeners);
+  }
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -268,6 +327,7 @@ public class MavenImportingSettings implements Cloneable {
 
     MavenImportingSettings that = (MavenImportingSettings)o;
 
+    if (useWorkspaceImport != that.useWorkspaceImport) return false;
     if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (!dependencyTypes.equals(that.dependencyTypes)) return false;
@@ -275,6 +335,7 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
     if (autoDetectCompiler != that.autoDetectCompiler) return false;
+    if (importToTreeStructure != that.importToTreeStructure) return false;
     //if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
@@ -298,6 +359,8 @@ public class MavenImportingSettings implements Cloneable {
 
     //if (lookForNested) result++;
     //result <<= 1;
+    if (useWorkspaceImport) result++;
+    result <<= 1;
     if (createModulesForAggregators) result++;
     result <<= 1;
     if (createModuleGroups) result++;
@@ -313,6 +376,8 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadAnnotationsAutomatically) result++;
     result <<= 1;
     if (autoDetectCompiler) result++;
+    result <<= 1;
+    if (importToTreeStructure) result++;
     result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
@@ -355,17 +420,18 @@ public class MavenImportingSettings implements Cloneable {
     }
   }
 
-  public interface Listener {
+  private void fireUpdateAllProjectStructure() {
+    for (Listener each : myListeners) {
+      each.updateAllProjectStructure();
+    }
+  }
 
-    /**
-     * @deprecated see {@link MavenImportingSettings#setImportAutomatically(boolean)} for details
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-    default void autoImportChanged() {}
+  public interface Listener {
 
     void createModuleGroupsChanged();
 
     void createModuleForAggregatorsChanged();
+
+    void updateAllProjectStructure();
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -8,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -18,18 +20,20 @@ import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import java.awt.*;
+
 public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   @Override
-  protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+  protected void perform(@NotNull final XDebugSession session, DataContext dataContext) {
     final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     final XStackFrame stackFrame = session.getCurrentStackFrame();
     final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
@@ -37,6 +41,29 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       return;
     }
 
+    // replace data context, because we need to have it for the focused component, not the target component (if from the toolbar)
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+    if (focusOwner != null) {
+      dataContext = DataManager.getInstance().getDataContext(focusOwner);
+    }
+
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    XValueNodeImpl node = XDebuggerTreeActionBase.getSelectedNode(dataContext);
+    getSelectedTextAsync(evaluator, dataContext)
+            .onSuccess(pair -> {
+              Promise<XExpression> expressionPromise = Promises.resolvedPromise(null);
+              if (pair.first != null) {
+                expressionPromise = Promises.resolvedPromise(XExpressionImpl.fromText(pair.first, pair.second));
+              }
+              else if (node != null) {
+                expressionPromise = node.calculateEvaluationExpression();
+              }
+              expressionPromise.onSuccess(
+                expression -> AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression)));
+            });
+  }
+
+  public static Promise<Pair<@Nullable String, EvaluationMode>> getSelectedTextAsync(@NotNull XDebuggerEvaluator evaluator, @NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     EvaluationMode mode = EvaluationMode.EXPRESSION;
@@ -52,24 +79,10 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
 
     if (selectedText == null && editor != null) {
       expressionTextPromise = getExpressionText(evaluator, CommonDataKeys.PROJECT.getData(dataContext), editor);
-    } else if (editor != null) {
-      expressionTextPromise = evaluator.getWhenDataIsReady(editor, selectedText);
     }
 
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-
     EvaluationMode finalMode = mode;
-    XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
-    expressionTextPromise.onSuccess(expressionText -> {
-      if (expressionText == null && value != null) {
-          value.calculateEvaluationExpression().onSuccess(
-            expression -> AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression)));
-      }
-      else {
-        AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator,
-                                               XExpressionImpl.fromText(expressionText, finalMode)));
-      }
-    });
+    return expressionTextPromise.then(expression -> Pair.create(expression, finalMode));
   }
 
   private static void showDialog(@NotNull XDebugSession session,

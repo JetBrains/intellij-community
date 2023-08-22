@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
@@ -39,12 +27,13 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
-import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,28 +41,30 @@ import java.util.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-public class BuildRunner {
+public final class BuildRunner {
   private static final Logger LOG = Logger.getInstance(BuildRunner.class);
-  public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
-  public static final boolean PARALLEL_BUILD_AUTOMAKE_ENABLED = PARALLEL_BUILD_ENABLED && Boolean.parseBoolean(System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true"));
   private final JpsModelLoader myModelLoader;
   private List<String> myFilePaths = Collections.emptyList();
   private Map<String, String> myBuilderParams = Collections.emptyMap();
   private boolean myForceCleanCaches;
 
-  public BuildRunner(JpsModelLoader modelLoader) {
+  public BuildRunner(@NotNull JpsModelLoader modelLoader) {
     myModelLoader = modelLoader;
   }
 
-  public void setFilePaths(List<String> filePaths) {
+  public void setFilePaths(@Nullable List<String> filePaths) {
     myFilePaths = filePaths != null? filePaths : Collections.emptyList();
   }
 
-  public void setBuilderParams(Map<String, String> builderParams) {
+  public void setBuilderParams(@Nullable Map<String, String> builderParams) {
     myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
   }
 
-  public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
+  public @NotNull JpsProject loadModelAndGetJpsProject() throws IOException {
+    return myModelLoader.loadModel().getProject();
+  }
+
+  public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull File dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
     BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot);
     BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(jpsModel);
@@ -85,14 +76,15 @@ public class BuildRunner {
 
     PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject());
 
-    ProjectTimestamps projectStamps = null;
+    ProjectStamps projectStamps = null;
     BuildDataManager dataManager = null;
     try {
-      projectStamps = new ProjectTimestamps(dataStorageRoot, targetsState, relativizer);
+      projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
-        msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
+        msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
+                                                      JpsBuildBundle.message("build.message.dependency.data.format.has.changed.project.rebuild.required")));
       }
     }
     catch (Exception e) {
@@ -105,28 +97,48 @@ public class BuildRunner {
         dataManager.close();
       }
       myForceCleanCaches = true;
-      FileUtil.delete(dataStorageRoot);
+      NioFiles.deleteRecursively(dataStorageRoot.toPath());
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
-      projectStamps = new ProjectTimestamps(dataStorageRoot, targetsState, relativizer);
+      projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
       // second attempt succeeded
-      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
+      msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
+                                                    JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }
 
-    return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 targetIndex, buildRootIndex, ignoredFileIndex);
+    return new ProjectDescriptor(
+      jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
+    );
+  }
+
+  @NotNull
+  public static @Nls String getRootCompilerName() {
+    return JpsBuildBundle.message("builder.name.root");
   }
 
   public void setForceCleanCaches(boolean forceCleanCaches) {
     myForceCleanCaches = forceCleanCaches;
   }
 
+  /**
+   * @deprecated Use {@link #runBuild(ProjectDescriptor, CanceledStatus, MessageHandler, BuildType, List, boolean)} instead.
+   * constantSearch parameter is ignored
+   */
+  @Deprecated(forRemoval = true)
   public void runBuild(ProjectDescriptor pd,
                        CanceledStatus cs,
                        @Nullable Callbacks.ConstantAffectionResolver constantSearch,
                        MessageHandler msgHandler,
                        BuildType buildType,
                        List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
+    runBuild(pd, cs, msgHandler, buildType, scopes, includeDependenciesToScope);
+  }
+
+  public void runBuild(@NotNull ProjectDescriptor pd,
+                       @NotNull CanceledStatus cs,
+                       @NotNull MessageHandler msgHandler,
+                       @NotNull BuildType buildType,
+                       @NotNull List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
     for (int attempt = 0; attempt < 2 && !cs.isCanceled(); attempt++) {
       final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
       final CompileScope compileScope = createCompilationScope(pd, scopes, myFilePaths, forceClean, includeDependenciesToScope);
@@ -158,6 +170,11 @@ public class BuildRunner {
         }
       }
     }
+  }
+
+  public CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes) throws Exception {
+    final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
+    return createCompilationScope(pd, scopes, myFilePaths, forceClean, false);
   }
 
   private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes, Collection<String> paths,
@@ -213,7 +230,7 @@ public class BuildRunner {
         for (BuildRootDescriptor descriptor : descriptors) {
           Set<File> fileSet = files.get(descriptor.getTarget());
           if (fileSet == null) {
-            fileSet = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+            fileSet = FileCollectionFactory.createCanonicalFileSet();
             files.put(descriptor.getTarget(), fileSet);
           }
           final boolean added = fileSet.add(file);
@@ -259,5 +276,13 @@ public class BuildRunner {
       targets.addAll(next);
       current = next;
     }
+  }
+
+  public static boolean isParallelBuildEnabled() {
+    return SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false);
+  }
+
+  public static boolean isParallelBuildAutomakeEnabled() {
+    return isParallelBuildEnabled() && SystemProperties.getBooleanProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, true);
   }
 }

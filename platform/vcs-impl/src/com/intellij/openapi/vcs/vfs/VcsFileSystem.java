@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -27,10 +28,10 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
   /**
    * @deprecated Use {@link #getCouldNotImplementMessage()} instead
    */
-  @Deprecated
-  public static final String COULD_NOT_IMPLEMENT_MESSAGE = "Could not implement";
+  @Deprecated(forRemoval = true)
+  public static final String COULD_NOT_IMPLEMENT_MESSAGE = "Could not implement"; //NON-NLS
 
-  private static final String PROTOCOL = "vcs";
+  private static final String PROTOCOL = "vcs";  //NON-NLS
 
   public static VcsFileSystem getInstance() {
     return (VcsFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
@@ -61,21 +62,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
     super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 
-  @Override
-  protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
-    super.fireBeforeFileDeletion(requestor, file);
-  }
-
-  @Override
-  protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
-    super.fireFileDeleted(requestor, file, fileName, parent);
-  }
-
-  @Override
-  protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
-    super.fireBeforeContentsChange(requestor, file);
-  }
-
+  @Nls
   public static String getCouldNotImplementMessage() {
     return VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
   }

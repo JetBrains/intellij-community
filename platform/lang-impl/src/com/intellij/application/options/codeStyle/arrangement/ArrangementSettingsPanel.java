@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
@@ -33,9 +34,6 @@ import java.util.Collection;
 import java.util.List;
 
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @NotNull private final JPanel myContent = new JPanel(new GridBagLayout());
@@ -94,7 +92,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
@@ -108,7 +106,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(createSettings());
     if (myForceArrangementPanel != null) {
@@ -134,7 +132,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     StdArrangementSettings s = getSettings(settings);
     if (s == null) {
       myGroupingRulesPanel.setRules(null);
@@ -164,7 +162,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected String getTabTitle() {
+  protected @TabTitle @NotNull String getTabTitle() {
     return ApplicationBundle.message("arrangement.title.settings.tab");
   }
 

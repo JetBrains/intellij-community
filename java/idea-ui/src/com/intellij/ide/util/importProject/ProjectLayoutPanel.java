@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.CommonBundle;
@@ -12,7 +12,8 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -22,6 +23,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +61,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
     myInsight = insight;
 
-    myEntriesChooser = new ElementsChooser<T>(true) {
+    myEntriesChooser = new ElementsChooser<>(true) {
       @Override
       public String getItemText(@NotNull T element) {
         return getElementText(element);
@@ -71,7 +73,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     final JPanel entriesPanel = new JPanel(new BorderLayout());
     entriesPanel.add(myEntriesChooser, BorderLayout.CENTER);
-    entriesPanel.setBorder(IdeBorderFactory.createTitledBorder(StringUtil.capitalize(StringUtil.pluralize(getElementTypeName())), false));
+    entriesPanel.setBorder(IdeBorderFactory.createTitledBorder(getElementTypeNamePlural(), false));
     splitter.setFirstComponent(entriesPanel);
 
     final JScrollPane depsPane = ScrollPaneFactory.createScrollPane(myDependenciesList);
@@ -80,8 +82,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     depsPanel.setBorder(IdeBorderFactory.createTitledBorder(getDependenciesTitle(), false));
     splitter.setSecondComponent(depsPanel);
 
+    DefaultActionGroup toolbarActions = createEntriesToolbarActions();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectLayoutPanel.Entries", toolbarActions, true);
+    toolbar.setTargetComponent(myEntriesChooser);
+
     JPanel groupPanel = new JPanel(new BorderLayout());
-    groupPanel.add(createEntriesActionToolbar().getComponent(), BorderLayout.NORTH);
+    groupPanel.add(toolbar.getComponent(), BorderLayout.NORTH);
     groupPanel.add(splitter, BorderLayout.CENTER);
     groupPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
@@ -107,7 +113,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     });
   }
 
-  private ActionToolbar createEntriesActionToolbar() {
+  private DefaultActionGroup createEntriesToolbarActions() {
     final DefaultActionGroup entriesActions = new DefaultActionGroup();
 
     final RenameAction rename = new RenameAction();
@@ -122,7 +128,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     split.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0)), this);
     entriesActions.add(split);
 
-    return ActionManager.getInstance().createActionToolbar("ProjectLayoutPanel.Entries", entriesActions, true);
+    return entriesActions;
   }
 
   public final ModuleInsight getInsight() {
@@ -177,8 +183,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     if (element instanceof LibraryDescriptor) {
       return PlatformIcons.LIBRARY_ICON;
     }
-    if (element instanceof File) {
-      final File file = (File)element;
+    if (element instanceof File file) {
       return file.isDirectory()? PlatformIcons.FOLDER_ICON : PlatformIcons.JAR_ICON;
     }
     return null;
@@ -197,38 +202,17 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return Integer.MAX_VALUE;
   }
 
-  protected static String getElementText(Object element) {
+  protected static @NlsSafe String getElementText(Object element) {
     if (element instanceof LibraryDescriptor) {
-      final StringBuilder builder = new StringBuilder();
-      builder.append(((LibraryDescriptor)element).getName());
-      final Collection<File> jars = ((LibraryDescriptor)element).getJars();
-      if (jars.size() == 1) {
-        final File parentFile = jars.iterator().next().getParentFile();
-        if (parentFile != null) {
-          builder.append(" (");
-          builder.append(parentFile.getPath());
-          builder.append(")");
-        }
-      }
-      return builder.toString();
+      return getElementTextFromLibraryDescriptor((LibraryDescriptor)element);
     }
 
     if (element instanceof File) {
-      final StringBuilder builder = new StringBuilder();
-      builder.append(((File)element).getName());
-      final File parentFile = ((File)element).getParentFile();
-      if (parentFile != null) {
-        builder.append(" (");
-        builder.append(parentFile.getPath());
-        builder.append(")");
-      }
-      return builder.toString();
+      return getElementTextFromFile((File)element);
     }
 
-    if (element instanceof ModuleDescriptor) {
-      final ModuleDescriptor moduleDescriptor = (ModuleDescriptor)element;
-      final StringBuilder builder = new StringBuilder();
-      builder.append(moduleDescriptor.getName());
+    if (element instanceof ModuleDescriptor moduleDescriptor) {
+      final StringBuilder builder = new StringBuilder(moduleDescriptor.getName());
 
       final Set<File> contents = moduleDescriptor.getContentRoots();
       final int rootCount = contents.size();
@@ -255,6 +239,24 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return "";
   }
 
+  @NotNull
+  private static @NlsSafe String getElementTextFromFile(File element) {
+    final File parentFile = element.getParentFile();
+    if (parentFile == null) return element.getName();
+
+    return element.getName() + " (" + parentFile.getPath() + ")";
+  }
+
+  @NotNull
+  private static @NlsSafe String getElementTextFromLibraryDescriptor(LibraryDescriptor element) {
+    final Collection<File> jars = element.getJars();
+    if (jars.size() != 1) return element.getName();
+
+    final File parentFile = jars.iterator().next().getParentFile();
+
+    return element.getName() + " (" + parentFile.getPath() + ")";
+  }
+
   protected abstract List<T> getEntries();
 
   protected abstract Collection getDependencies(T entry);
@@ -267,21 +269,34 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected abstract Collection<File> getContent(T entry);
 
-  protected abstract String getElementName(T entry);
+  protected abstract @Nls String getElementName(T entry);
 
   protected abstract void setElementName(T entry, String name);
 
-  protected abstract String getSplitDialogChooseFilesPrompt();
+  protected abstract @NlsContexts.Label String getSplitDialogChooseFilesPrompt();
 
-  protected abstract String getNameAlreadyUsedMessage(final String name);
+  protected abstract @NlsContexts.DialogMessage String getNameAlreadyUsedMessage(final String name);
 
-  protected abstract String getStepDescriptionText();
+  protected abstract @NlsContexts.DialogMessage String getStepDescriptionText();
 
-  protected abstract String getEntriesChooserTitle();
+  protected abstract @NlsContexts.TabTitle String getEntriesChooserTitle();
 
-  protected abstract String getDependenciesTitle();
+  protected abstract @NlsContexts.BorderTitle String getDependenciesTitle();
 
-  protected abstract String getElementTypeName();
+  protected abstract @NotNull Set<String> getExistingNames();
+
+  enum ElementType {
+    LIBRARY(0), MODULE(1);
+    private final int id;
+
+    ElementType(int id) {
+      this.id = id;
+    }
+  }
+
+  protected @NlsContexts.BorderTitle abstract String getElementTypeNamePlural();
+
+  protected abstract ElementType getElementType();
 
   private boolean isNameAlreadyUsed(String entryName) {
     final Set<T> itemsToIgnore = new HashSet<>(myEntriesChooser.getSelectedElements());
@@ -293,7 +308,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         return true;
       }
     }
-    return false;
+    return getExistingNames().contains(entryName);
   }
 
   @NotNull
@@ -315,7 +330,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     };
   }
 
-  private class MergeAction extends AnAction {
+  private final class MergeAction extends AnAction {
     private MergeAction() {
       super(CommonBundle.messagePointer("action.text.merge"), () -> "", AllIcons.Vcs.Merge); // todo
     }
@@ -328,7 +343,9 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           ProjectLayoutPanel.this,
           JavaUiBundle.message("label.enter.new.name.for.merge.result"),
           JavaUiBundle.message("dialog.title.merge.module.or.library"),
-          Messages.getQuestionIcon(), getElementName(elements.get(0)), getValidator());
+          Messages.getQuestionIcon(),
+          getElementName(elements.get(0)),
+          getValidator());
         if (newName != null) {
           final T merged = merge(elements);
           setElementName(merged, newName);
@@ -347,9 +364,13 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() > 1);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
-  private class SplitAction extends AnAction {
+  private final class SplitAction extends AnAction {
     private SplitAction() {
       super(CommonBundle.messagePointer("action.text.split"), () -> "", AllIcons.Modules.Split); // todo
     }
@@ -384,9 +405,14 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       e.getPresentation().setEnabled(elements.size() == 1 && getContent(elements.get(0)).size() > 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
-  private class RenameAction extends AnAction {
+  private final class RenameAction extends AnAction {
     private RenameAction() {
       super(CommonBundle.messagePointer("action.text.rename"), () -> "", IconUtil.getEditIcon()); // todo
     }
@@ -397,8 +423,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       if (elements.size() == 1) {
         final T element = elements.get(0);
         final String newName = Messages.showInputDialog(ProjectLayoutPanel.this,
-                                                        JavaUiBundle.message("label.new.name.for.0.1", getElementTypeName(), getElementName(element)),
-                                                        JavaUiBundle.message("dialog.title.rename.module.or.library.0", StringUtil.capitalize(getElementTypeName())),
+                                                        JavaUiBundle.message("label.new.name.for.0.1", getElementType().id, getElementName(element)),
+                                                        JavaUiBundle.message("dialog.title.rename.module.or.library.0", getElementType().id),
                                                         Messages.getQuestionIcon(),
                                                         getElementName(element),
                                                         getValidator()
@@ -415,6 +441,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class MyListCellRenderer extends DefaultListCellRenderer {
@@ -427,16 +458,16 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     }
   }
 
-  private class SplitDialog extends DialogWrapper {
+  private final class SplitDialog extends DialogWrapper {
     final JTextField myNameField;
     final ElementsChooser<File> myChooser;
 
     private SplitDialog(final Collection<File> files) {
       super(myEntriesChooser, true);
-      setTitle(JavaUiBundle.message("dialog.title.split.module.or.library.0", StringUtil.capitalize(getElementTypeName())));
+      setTitle(JavaUiBundle.message("dialog.title.split.module.or.library.0", getElementType().id));
 
       myNameField = new JTextField();
-      myChooser = new ElementsChooser<File>(true) {
+      myChooser = new ElementsChooser<>(true) {
         @Override
         protected String getItemText(@NotNull final File value) {
           return getElementText(value);
@@ -451,7 +482,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         });
       }
       myChooser.selectElements(ContainerUtil.createMaybeSingletonList(ContainerUtil.getFirstItem(files)));
-      myChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<File>() {
+      myChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<>() {
         @Override
         public void elementMarkChanged(File element, boolean isMarked) {
           updateOkButton();

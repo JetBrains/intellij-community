@@ -1,28 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.externalSystem.ImportedLibraryProperties;
+import com.intellij.externalSystem.ImportedLibraryType;
+import com.intellij.java.library.MavenCoordinates;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import gnu.trove.THashSet;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenImportCollector;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
@@ -30,12 +34,12 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.*;
 
 public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInterface {
 
@@ -45,7 +49,8 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
 
-  private final Set<String> myOrderEntriesBeforeJdk = new THashSet<>();
+  private final Set<String> myOrderEntriesBeforeJdk = new HashSet<>();
+  private volatile Map<String, Library> myLibrariesTable;
 
   public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
@@ -75,7 +80,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   private void initContentRoots() {
     Url url = toUrl(myMavenProject.getDirectory());
     if (getContentRootFor(url) != null) return;
-    myRootModel.addContentEntry(url.getUrl());
+    myRootModel.addContentEntry(url.getUrl(), getMavenExternalSource());
   }
 
   private ContentEntry getContentRootFor(Url url) {
@@ -96,10 +101,16 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
       if (e instanceof LibraryOrderEntry) {
         if (Registry.is("maven.always.remove.bad.entries")) {
-          if (!isMavenLibrary((LibraryOrderEntry)e)) continue;
+          if (!isMavenLibrary((LibraryOrderEntry)e)) {
+            MavenImportCollector.HAS_USER_ADDED_LIBRARY_DEP.log(myRootModel.getProject());
+            continue;
+          }
         }
         else {
-          if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
+          if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) {
+            MavenImportCollector.HAS_USER_ADDED_LIBRARY_DEP.log(myRootModel.getProject());
+            continue;
+          }
         }
       }
       if (e instanceof ModuleOrderEntry) {
@@ -107,6 +118,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
         if (m != null &&
             !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m) &&
             ExternalSystemModulePropertyManager.getInstance(m).getExternalSystemId() == null) {
+          MavenImportCollector.HAS_USER_ADDED_MODULE_DEP.log(myRootModel.getProject());
           continue;
         }
       }
@@ -203,7 +215,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     ContentEntry e = getContentRootFor(url);
     if (e == null) return;
     if (e.getUrl().equals(url.getUrl())) return;
-    e.addExcludeFolder(url.getUrl());
+    e.addExcludeFolder(url.getUrl(), true);
   }
 
   @Override
@@ -260,8 +272,21 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public void useModuleOutput(String production, String test) {
     getCompilerExtension().inheritCompilerOutputPath(false);
-    getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
-    getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+    if (StringUtils.isEmpty(production) && StringUtils.isEmpty(test)) {
+      getCompilerExtension().inheritCompilerOutputPath(true);
+    }
+    else if (StringUtils.isEmpty(test)) {
+      getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
+      getCompilerExtension().setExcludeOutput(true);
+    }
+    else if (StringUtils.isEmpty(production)) {
+      getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+      getCompilerExtension().setExcludeOutput(true);
+    }
+    else {
+      getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
+      getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+    }
   }
 
   private CompilerModuleExtension getCompilerExtension() {
@@ -281,6 +306,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   public void addModuleDependency(@NotNull String moduleName,
                                   @NotNull DependencyScope scope,
                                   boolean testJar) {
+    myLibrariesTable = null;
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -338,6 +364,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
                                                 MavenProject project) {
     assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 
+    myLibrariesTable = null;
     String libraryName = artifact.getLibraryName();
 
     Library library = provider.getLibraryByName(libraryName);
@@ -345,9 +372,26 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     }
     Library.ModifiableModel libraryModel = provider.getModifiableLibraryModel(library);
 
+    if (library.getExternalSource() == null) {
+      ((LibraryEx.ModifiableModelEx)libraryModel).setExternalSource(getMavenExternalSource());
+    }
     updateUrl(libraryModel, OrderRootType.CLASSES, artifact, null, null, true);
     updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
     updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);
+
+    if (libraryModel != null) {
+      LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)libraryModel;
+      PersistentLibraryKind<ImportedLibraryProperties> importedLibraryKind = ImportedLibraryType.Companion.getIMPORTED_LIBRARY_KIND();
+      if (model.getKind() != importedLibraryKind) {
+        model.setKind(importedLibraryKind);
+        model.setProperties(new ImportedLibraryProperties(new MavenCoordinates(artifact.getGroupId(),
+                                                                               artifact.getArtifactId(),
+                                                                               artifact.getVersion(),
+                                                                               artifact.getPackaging(),
+                                                                               artifact.getClassifier())));
+      }
+    }
+
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setScope(scope);
@@ -412,29 +456,34 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   private static boolean isRepositoryUrl(MavenArtifact artifact, String url) {
-    return url.contains(artifact.getGroupId().replace('.', '/') + '/' + artifact.getArtifactId() + '/' + artifact.getBaseVersion() + '/' + artifact.getArtifactId() + '-');
+    return url.contains(artifact.getGroupId().replace('.', '/') +
+                        '/' +
+                        artifact.getArtifactId() +
+                        '/' +
+                        artifact.getBaseVersion() +
+                        '/' +
+                        artifact.getArtifactId() +
+                        '-');
   }
 
 
   @Override
   public Library findLibrary(@NotNull final MavenArtifact artifact) {
-    final String name = artifact.getLibraryName();
-    final Ref<Library> result = Ref.create(null);
-    myRootModel.orderEntries().forEachLibrary(library -> {
-      if (name.equals(library.getName())) {
-        result.set(library);
-      }
-      return true;
-    });
-    return result.get();
+    return getOrCreateLibrariesTable().get(artifact.getLibraryName());
   }
 
-  /**
-   * @deprecated use {@link MavenArtifact#getLibraryName()}
-   */
-  @Deprecated
-  public static String makeLibraryName(@NotNull MavenArtifact artifact) {
-    return artifact.getLibraryName();
+  private Map<String, Library> getOrCreateLibrariesTable() {
+    Map<String, Library> table = myLibrariesTable;
+    if (table == null) {
+      Map<String, Library> temp = new HashMap<>();
+      myRootModel.orderEntries().forEachLibrary(library -> {
+        temp.put(library.getName(), library);
+        return true;
+      });
+      myLibrariesTable = temp;
+      return temp;
+    }
+    return table;
   }
 
   public static boolean isMavenLibrary(@Nullable Library library) {
@@ -446,7 +495,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   public static ProjectModelExternalSource getMavenExternalSource() {
-    return ExternalProjectSystemRegistry.getInstance().getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID);
+    return ExternalProjectSystemRegistry.getInstance().getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID);
   }
 
   @Nullable
@@ -477,6 +526,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public void setLanguageLevel(LanguageLevel level) {
     try {
+      level = MavenImportUtil.adjustLevelAndNotify(myRootModel.getProject(), level);
       myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
     }
     catch (IllegalArgumentException e) {

@@ -17,16 +17,16 @@ package com.intellij.diagnostic.hprof.visitors
 
 import com.intellij.diagnostic.hprof.parser.HProfVisitor
 import com.intellij.diagnostic.hprof.parser.RecordType
-import gnu.trove.TLongObjectHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 
-class CollectStringValuesVisitor(val output: TLongObjectHashMap<String>) : HProfVisitor() {
+internal class CollectStringValuesVisitor(val output: Long2ObjectMap<String>) : HProfVisitor() {
   override fun preVisit() {
     disableAll()
     enable(RecordType.StringInUTF8)
   }
 
   override fun visitStringInUTF8(id: Long, s: String) {
-    assert(output[id] == null)
+    assert(output.get(id) == null)
     output.put(id, s)
   }
 }

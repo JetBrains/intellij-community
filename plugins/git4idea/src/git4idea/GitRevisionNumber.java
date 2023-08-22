@@ -13,6 +13,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
 
   @Override
   public String toShortString() {
-    return asString().substring(0, 7);
+    return DvcsUtil.getShortHash(myRevisionHash);
   }
 
   @NotNull
@@ -72,15 +73,14 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
 
   @NotNull
   public String getShortRev() {
-    return DvcsUtil.getShortHash(myRevisionHash);
+    return toShortString();
   }
 
   @Override
   public int compareTo(VcsRevisionNumber crev) {
     if (this == crev) return 0;
 
-    if (crev instanceof GitRevisionNumber) {
-      GitRevisionNumber other = (GitRevisionNumber)crev;
+    if (crev instanceof GitRevisionNumber other) {
       if (myRevisionHash.equals(other.myRevisionHash)) {
         return 0;
       }
@@ -166,7 +166,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
       return new GitRevisionNumber(tokenizer.nextToken(), timestamp);
     }
     catch (Exception e) {
-      throw new VcsException("Couldn't parse the output: ["  + output + "]", e);
+      throw new VcsException(GitBundle.message("revision.number.cannot.parse.output", output), e);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.ExecutionException;
@@ -19,8 +19,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +40,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class PyCythonExtensionWarning {
+public final class PyCythonExtensionWarning {
   private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
 
-  public static final String ERROR_TITLE = "Compile Cython Extensions Error";
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
-  private static final String WARNING_MESSAGE = "Cython extension speeds up Python debugging";
   public static final String SETUP_CYTHON_PATH = "pydev/setup_cython.py";
 
 
@@ -50,8 +52,10 @@ public class PyCythonExtensionWarning {
       return;
     }
     Notification notification =
-      new Notification(CYTHON_WARNING_GROUP_ID, PyBundle.message("compile.cython.extensions.notification"), WARNING_MESSAGE,
+      new Notification(CYTHON_WARNING_GROUP_ID, PyBundle.message("compile.cython.extensions.notification"),
+                       PyBundle.message("debugger.cython.extension.speeds.up.python.debugging"),
                        NotificationType.INFORMATION);
+    notification.setSuggestionType(true);
     notification.addAction(createInstallAction(notification, project));
     notification.addAction(createDocsAction());
     notification.notify(project);
@@ -79,22 +83,22 @@ public class PyCythonExtensionWarning {
   }
 
   private static boolean shouldSuppressNotification(@NotNull Project project) {
+    if (ProjectUtil.isNotificationSilentMode(project)) return true;
     final RunManager runManager = RunManager.getInstance(project);
     final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
     if (selectedConfiguration == null) {
       return true;
     }
     final RunConfiguration configuration = selectedConfiguration.getConfiguration();
-    if (!(configuration instanceof AbstractPythonRunConfiguration)) {
+    if (!(configuration instanceof AbstractPythonRunConfiguration runConfiguration)) {
       return true;
     }
-    AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
     // Temporarily disable notification for Remote interpreters
     return PythonSdkUtil.isRemote(runConfiguration.getSdk());
   }
 
-  private static void showErrorDialog(Project project, String message) {
-    Messages.showMessageDialog(project, message, ERROR_TITLE, null);
+  private static void showErrorDialog(Project project, @DialogMessage String message) {
+    Messages.showMessageDialog(project, message, PyBundle.message("compile.cython.extensions.error"), null);
   }
 
   private static void compileCythonExtension(@NotNull Project project) {
@@ -102,13 +106,12 @@ public class PyCythonExtensionWarning {
       final RunManager runManager = RunManager.getInstance(project);
       final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
       if (selectedConfiguration == null) {
-        throw new ExecutionException("Python Run Configuration should be selected");
+        throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
       final RunConfiguration configuration = selectedConfiguration.getConfiguration();
-      if (!(configuration instanceof AbstractPythonRunConfiguration)) {
-        throw new ExecutionException("Python Run Configuration should be selected");
+      if (!(configuration instanceof AbstractPythonRunConfiguration runConfiguration)) {
+        throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
-      AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
       final String interpreterPath = runConfiguration.getInterpreterPath();
       final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
 
@@ -135,7 +138,7 @@ public class PyCythonExtensionWarning {
       final boolean useSudo = !canCreate && !SystemInfo.isWindows;
       Process process;
       if (useSudo) {
-        process = ExecUtil.sudo(commandLine, "Please enter your password to compile cython extensions: ");
+        process = ExecUtil.sudo(commandLine, PyBundle.message("debugger.cython.please.enter.your.password.to.compile.cython.extensions"));
       }
       else {
         process = commandLine.createProcess();
@@ -152,7 +155,7 @@ public class PyCythonExtensionWarning {
               if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.STDERR) {
                 for (String line : StringUtil.splitByLines(event.getText())) {
                   if (isSignificantOutput(line)) {
-                    indicator.setText2(line.trim());
+                    indicator.setText2(line.trim()); //NON-NLS
                   }
                 }
               }
@@ -166,15 +169,50 @@ public class PyCythonExtensionWarning {
           final int exitCode = result.getExitCode();
           if (exitCode != 0) {
             final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr())
-                                   ? "Permission denied"
-                                   : "Non-zero exit code (" + exitCode + "): \n" + result.getStderr();
-            UIUtil.invokeLaterIfNeeded(() -> showErrorDialog(project, message));
+                                   ? PyBundle.message("debugger.cython.extension.permission.denied")
+                                   : PyBundle.message("debugger.cython.extension.non.zero.exit.code", exitCode, result.getStderr());
+            UIUtil.invokeLaterIfNeeded(() -> showClearErrorMessage(message, project));
           }
         }
       });
     }
     catch (IOException | ExecutionException e) {
-      showErrorDialog(project, e.getMessage());
+      showClearErrorMessage(e.getMessage(), project);
     }
+  }
+
+  private static void showClearErrorMessage(@DialogMessage String errMessage, Project project) {
+    String suggestion = "";
+    if (errMessage.contains(PyBundle.message("debugger.cython.extension.python.h"))) {
+      suggestion = PyBundle.message("debugger.cython.extension.python.h.not.found",
+                                    getInstallPythonCommand(project));
+    }
+    else if (errMessage.contains(PyBundle.message("debugger.cython.extension.gcc"))) {
+      suggestion = PyBundle.message("debugger.cython.extension.gcc.failed");
+    }
+    else if(errMessage.contains(PyBundle.message("debugger.cython.extension.gcc.not.found"))) {
+      suggestion = PyBundle.message("debugger.cython.extension.gcc.not.found.suggestion");
+    }
+    showErrorDialog(project, errMessage + suggestion);
+  }
+
+  private static String getInstallPythonCommand(Project project) {
+    String version = "";
+    int pythonStringLength = "Python ".length();
+    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
+      if (selectedConfiguration != null) {
+        RunConfiguration runConfiguration = selectedConfiguration.getConfiguration();
+        if (runConfiguration instanceof PythonRunConfiguration) {
+          Sdk pythonSdk = ((PythonRunConfiguration)runConfiguration ).getSdk();
+          if (pythonSdk != null) {
+            String versionString = pythonSdk.getVersionString();
+            if (versionString != null && versionString.length() > pythonStringLength) {
+              version = versionString.substring(pythonStringLength, versionString.lastIndexOf('.'));
+            }
+          }
+        }
+      }
+
+    return PyBundle.message("debugger.cython.extension.install.python.command", version);
   }
 }

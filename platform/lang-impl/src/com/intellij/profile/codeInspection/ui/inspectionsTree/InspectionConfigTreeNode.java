@@ -1,27 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.Getter;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
-import com.intellij.util.containers.Queue;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   private final ClearableLazyValue<Boolean> myProperSetting = ClearableLazyValue.create(this::calculateIsProperSettings);
 
-  public static class Group extends InspectionConfigTreeNode {
+  public static final class Group extends InspectionConfigTreeNode {
     public Group(@NotNull String label) {
       setUserObject(label);
     }
@@ -44,9 +40,9 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   }
 
   public static class Tool extends InspectionConfigTreeNode {
-    private final Getter<ToolDescriptors> myGetter;
+    private final Supplier<ToolDescriptors> myGetter;
 
-    public Tool(Getter<ToolDescriptors> getter) {
+    public Tool(Supplier<ToolDescriptors> getter) {
       myGetter = getter;
     }
 
@@ -119,20 +115,24 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   }
 
   public static void updateUpHierarchy(Collection<? extends InspectionConfigTreeNode> nodes) {
-    Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
-    Set<InspectionConfigTreeNode> alreadyUpdated = new THashSet<>();
+    Deque<InspectionConfigTreeNode> q = new ArrayDeque<>(nodes.size());
+    Set<InspectionConfigTreeNode> alreadyUpdated = new HashSet<>();
     for (InspectionConfigTreeNode node : nodes) {
       q.addLast(node);
     }
-    while (!q.isEmpty()) {
-      final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
-      if (!alreadyUpdated.add(inspectionConfigTreeNode)) continue;
+    while (true) {
+      InspectionConfigTreeNode inspectionConfigTreeNode = q.pollFirst();
+      if (inspectionConfigTreeNode == null) {
+        break;
+      }
+      if (!alreadyUpdated.add(inspectionConfigTreeNode)) {
+        continue;
+      }
       inspectionConfigTreeNode.dropCache();
-      final TreeNode parent = inspectionConfigTreeNode.getParent();
+      TreeNode parent = inspectionConfigTreeNode.getParent();
       if (parent != null && parent.getParent() != null) {
         q.addLast((InspectionConfigTreeNode)parent);
       }
     }
-
   }
 }

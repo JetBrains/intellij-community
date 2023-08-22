@@ -27,7 +27,7 @@ HtmlFile:test.html
           XmlToken:XML_START_TAG_START('<')
           XmlToken:XML_NAME('title')
           XmlToken:XML_TAG_END('>')
-          XmlText
+          HtmlRawText
             XmlToken:XML_DATA_CHARACTERS('Closer')
           XmlToken:XML_END_TAG_START('</')
           XmlToken:XML_NAME('title')

@@ -16,7 +16,7 @@ import javax.swing.tree.TreePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XDebuggerTreeState {
+public final class XDebuggerTreeState {
   private final NodeInfo myRootInfo;
   private Rectangle myLastVisibleNodeRect;
 
@@ -68,8 +68,7 @@ public class XDebuggerTreeState {
 
   @Nullable
   private static NodeInfo createNode(final XDebuggerTreeNode node, boolean selected) {
-    if (node instanceof RestorableStateNode) {
-      RestorableStateNode valueNode = (RestorableStateNode)node;
+    if (node instanceof RestorableStateNode valueNode) {
       if (valueNode.isComputed()) {
         return new NodeInfo(valueNode.getName(), valueNode.getRawValue(), selected);
       }

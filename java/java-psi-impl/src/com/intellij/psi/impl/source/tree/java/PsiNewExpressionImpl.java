@@ -36,6 +36,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance(PsiNewExpressionImpl.class);
 
@@ -121,9 +123,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
     else {
       LOG.assertTrue(expressions[0] == qualifier);
-      PsiExpression[] expressions1 = new PsiExpression[expressions.length - 1];
-      System.arraycopy(expressions, 1, expressions1, 0, expressions1.length);
-      return expressions1;
+      return Arrays.copyOfRange(expressions, 1, expressions.length);
     }
   }
 

@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo
 
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.messages.MessageBusConnection
@@ -14,8 +16,9 @@ open class TodoViewChangesSupport {
     return false
   }
 
+  @NlsContexts.TabTitle
   open fun getTabName(project: Project) : String {
-    return "Changes"
+    return LangBundle.message("tab.title.todo.view.changes")
   }
 
   open fun installListener(project: Project,
@@ -28,11 +31,11 @@ open class TodoViewChangesSupport {
     }
   }
 
-  open fun createPanel(project: Project, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory) : TodoPanel? {
+  open fun createPanel(todoView: TodoView, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory) : TodoPanel? {
     return null
   }
 
-  open fun createPanel(project: Project, settings: TodoPanelSettings, content: Content) : TodoPanel? {
+  open fun createPanel(todoView: TodoView, settings: TodoPanelSettings, content: Content) : TodoPanel? {
     return null
   }
 

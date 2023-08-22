@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -58,10 +59,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.*;
 
-/**
- * @author peter
- */
-public final class DomManagerImpl extends DomManager {
+public final class DomManagerImpl extends DomManager implements Disposable {
   private static final Key<Object> MOCK = Key.create("MockElement");
 
   static final Key<WeakReference<DomFileElementImpl<?>>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
@@ -106,12 +104,12 @@ public final class DomManagerImpl extends DomManager {
       public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
         return aspect instanceof TreeAspect;
       }
-    }, project);
+    }, this);
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         List<DomEvent> domEvents = new ArrayList<>();
         for (VFileEvent event : events) {
           if (shouldFireDomEvents(event)) {
@@ -135,8 +133,18 @@ public final class DomManagerImpl extends DomManager {
         }
         return event instanceof VFileMoveEvent || event instanceof VFileDeleteEvent;
       }
-    }, myProject);
+    }, this);
+
+    project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        DomUtil.clearCaches();
+      }
+    });
   }
+
+  @Override
+  public void dispose() { }
 
   public long getPsiModificationCount() {
     return PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount();
@@ -153,7 +161,7 @@ public final class DomManagerImpl extends DomManager {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML)) {
+        if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE)) {
           PsiFile psiFile = fileManager.getCachedPsiFile(file);
           DomFileElementImpl<?> domElement = psiFile instanceof XmlFile ? getCachedFileElement((XmlFile)psiFile) : null;
           if (domElement != null) {
@@ -186,16 +194,16 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final ConverterManager getConverterManager() {
-    return ServiceManager.getService(ConverterManager.class);
+  public ConverterManager getConverterManager() {
+    return ApplicationManager.getApplication().getService(ConverterManager.class);
   }
 
   @Override
-  public final ModelMerger createModelMerger() {
+  public ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }
 
-  final void fireEvent(@NotNull DomEvent event) {
+  void fireEvent(@NotNull DomEvent event) {
     if (isInsideAtomicChange()) return;
     clearCache();
     myListeners.getMulticaster().eventOccured(event);
@@ -208,7 +216,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final DomGenericInfo getGenericInfo(final Type type) {
+  public DomGenericInfo getGenericInfo(final Type type) {
     return myApplicationComponent.getStaticGenericInfo(type);
   }
 
@@ -250,13 +258,13 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final Project getProject() {
+  public Project getProject() {
     return myProject;
   }
 
   @Override
   @NotNull
-  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
+  public <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
       file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file.getViewProvider().getVirtualFile()));
       clearCache();
@@ -266,21 +274,21 @@ public final class DomManagerImpl extends DomManager {
     return fileElement;
   }
 
-  public final Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
+  public Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
     return myApplicationComponent.getFileDescriptions(rootTagName);
   }
 
-  public final Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
+  public Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
     return myApplicationComponent.getAcceptingOtherRootTagNameDescriptions();
   }
 
   @NotNull
   @NonNls
-  public final String getComponentName() {
+  public String getComponentName() {
     return getClass().getName();
   }
 
-  final void runChange(Runnable change) {
+  void runChange(Runnable change) {
     final boolean b = setChanging(true);
     try {
       change.run();
@@ -290,7 +298,7 @@ public final class DomManagerImpl extends DomManager {
     }
   }
 
-  final boolean setChanging(final boolean changing) {
+  boolean setChanging(final boolean changing) {
     boolean oldChanging = myChanging;
     if (changing) {
       assert !oldChanging;
@@ -301,7 +309,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   @Nullable
-  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
+  public <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
     if (file == null || !(file.getFileType() instanceof DomSupportEnabled)) return null;
     //noinspection unchecked
     return (DomFileElementImpl<T>)CachedValuesManager.getCachedValue(file, chooseKey(FILE_ELEMENT_KEY, FILE_ELEMENT_KEY_FOR_INDEX), () ->
@@ -320,7 +328,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   @Nullable
-  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
+  public <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
     DomFileDescription<?> description = getDomFileDescription(file);
     if (description != null && myApplicationComponent.assignabilityCache.isAssignable(domClass, description.getRootElementClass())) {
       return getFileElement(file);
@@ -330,7 +338,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   @Nullable
-  public final DomElement getDomElement(final XmlTag element) {
+  public DomElement getDomElement(final XmlTag element) {
     if (myChanging) return null;
 
     final DomInvocationHandler handler = getDomHandler(element);
@@ -373,13 +381,13 @@ public final class DomManagerImpl extends DomManager {
     return parentHandler.getGenericInfo().findChildrenDescription(parentHandler, tag);
   }
 
-  public final boolean isDomFile(@Nullable PsiFile file) {
+  public boolean isDomFile(@Nullable PsiFile file) {
     return file instanceof XmlFile && getFileElement((XmlFile)file) != null;
   }
 
   @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
   @Nullable
-  public final DomFileDescription<?> getDomFileDescription(PsiElement element) {
+  public DomFileDescription<?> getDomFileDescription(PsiElement element) {
     if (element instanceof XmlElement) {
       final PsiFile psiFile = element.getContainingFile();
       if (psiFile instanceof XmlFile) {
@@ -390,25 +398,25 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
-    final XmlFile file = (XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", StdFileTypes.XML, "", 0, physical);
+  public <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
+    final XmlFile file = (XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", XmlFileType.INSTANCE, "", 0, physical);
     file.putUserData(MOCK_ELEMENT_MODULE, module);
     file.putUserData(MOCK, new Object());
     return getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name").getRootElement();
   }
 
   @Override
-  public final boolean isMockElement(DomElement element) {
+  public boolean isMockElement(DomElement element) {
     return DomUtil.getFile(element).getUserData(MOCK) != null;
   }
 
   @Override
-  public final <T extends DomElement> T createStableValue(final Factory<? extends T> provider) {
+  public <T extends DomElement> T createStableValue(final Factory<? extends T> provider) {
     return createStableValue(provider, t -> t.isValid());
   }
 
   @Override
-  public final <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator) {
+  public <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator) {
     final T initial = provider.create();
     assert initial != null;
     StableInvocationHandler<?> handler = new StableInvocationHandler<>(initial, provider, validator);
@@ -423,28 +431,22 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @TestOnly
-  public final <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
-    registerFileDescription(description);
+  public <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
+    clearCache();
+    myApplicationComponent.registerFileDescription(description);
     Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
   }
 
   @Override
-  public final void registerFileDescription(DomFileDescription<?> description) {
-    clearCache();
-
-    myApplicationComponent.registerFileDescription(description);
-  }
-
-  @Override
   @NotNull
-  public final DomElement getResolvingScope(GenericDomValue<?> element) {
+  public DomElement getResolvingScope(GenericDomValue<?> element) {
     final DomFileDescription<?> description = DomUtil.getFileElement(element).getFileDescription();
     return description.getResolveScope(element);
   }
 
   @Override
   @NotNull
-  public final DomElement getIdentityScope(DomElement element) {
+  public DomElement getIdentityScope(DomElement element) {
     DomFileDescription<?> description = DomUtil.getFileElement(element).getFileDescription();
     return description.getIdentityScope(element);
   }

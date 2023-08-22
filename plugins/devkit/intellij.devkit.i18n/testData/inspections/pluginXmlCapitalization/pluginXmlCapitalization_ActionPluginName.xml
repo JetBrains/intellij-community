@@ -1,0 +1,107 @@
+<idea-plugin>
+
+  <name><warning descr="String 'I am not capitalized' is not properly capitalized. It should have title capitalization">I am not capitalized</warning></name>
+  
+  <resource-bundle>MyBundle</resource-bundle>
+
+  <actions>
+    <group text="Group Title"
+           description="Group description"/>
+    
+    <group text="<warning descr="String 'lower case' is not properly capitalized. It should have title capitalization">lower case</warning>"
+           description="<warning descr="String 'lower case' is not properly capitalized. It should have sentence capitalization">lower case</warning>"/>
+
+
+
+    <action text="Action Title"
+            description="Action description"/>
+
+    <group text="<warning descr="String 'lower case' is not properly capitalized. It should have title capitalization">lower case</warning>"
+           description="<warning descr="String 'lower case' is not properly capitalized. It should have sentence capitalization">lower case</warning>"/>
+
+    <action text="<warning descr="String 'lower case' is not properly capitalized. It should have title capitalization">lower case</warning>"
+            description="<warning descr="String 'lower case' is not properly capitalized. It should have sentence capitalization">lower case</warning>"/>
+
+
+
+    <!-- message keys -->
+    <action id="BundleAction"/>
+    <action id="BundleActionWithoutDescription"/>
+    <<warning descr="Missing resource bundle key 'action.ActionWithoutTextAndDescriptionKey.text'">action</warning> id="ActionWithoutTextAndDescriptionKey"/>
+
+    <<warning descr="String 'lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'lower case text' is not properly capitalized. It should have title capitalization">action</warning></warning> id="BundleActionWrongCasing"/>
+
+    <action id="BundleActionWithConstructor" class="MyAction"/>
+
+    <group id="BundleGroupWithoutAnyKeysButItsNotRequired"/>
+    <group id="BundleGroup"/>
+    <<warning descr="String 'group lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'group lower case text' is not properly capitalized. It should have title capitalization">group</warning></warning> id="BundleGroupWrongCasing"/>
+
+
+    <!-- override-text -->
+    <action id="OverrideAction" text="Override Action Text">
+      <override-text place="MainEditor" text="Main Editor Action Title"/>
+      <override-text place="MainEditorWrong" text="<warning descr="String 'lower case' is not properly capitalized. It should have title capitalization">lower case</warning>"/>
+    </action>
+
+    <action id="OverrideBundleAction" text="Override Bundle Action Text">
+      <override-text place="ViaBundle"/>
+      <override-text place="AnotherPlaceReusingExistingKey" use-text-of-place="ViaBundle"/>
+
+      <<warning descr="String 'Action Text Override Via Bundle lower case' is not properly capitalized. It should have title capitalization">override-text</warning> place="ViaBundleWrongCase"/>
+      <<warning descr="Missing resource bundle key 'action.OverrideBundleAction.ViaBundleMissingKey.text'">override-text</warning> place="ViaBundleMissingKey"/>
+    </action>
+
+
+    <group id="OverrideGroup">
+      <override-text place="GroupViaBundle"/>
+      
+      <<warning descr="String 'override group wrong case' is not properly capitalized. It should have title capitalization">override-text</warning> place="GroupViaBundleWrongCase"/>
+    </group>
+
+
+    <!-- separator / synonym-->
+    <group id="separatorGroup">
+      <separator/>
+      <separator text="Separator Title Case"/>
+      <separator text="<warning descr="String 'separator wrong case' is not properly capitalized. It should have title capitalization">separator wrong case</warning>"/>
+      
+      <separator key="titleCaseKey"/>
+      <separator key="<warning descr="String 'My key' is not properly capitalized. It should have title capitalization">sentenceCaseKey</warning>"/>
+
+      <action text="Synonym">
+        <synonym text="Synonym Title Case"/>
+        <synonym text="<warning descr="String 'synonym wrong case' is not properly capitalized. It should have title capitalization">synonym wrong case</warning>"/>
+
+        <synonym key="titleCaseKey"/>
+        <synonym key="<warning descr="String 'My key' is not properly capitalized. It should have title capitalization">sentenceCaseKey</warning>"/>
+      </action>
+    </group>
+  </actions>
+
+
+  <!-- Custom Bundle -->
+  <actions resource-bundle="AnotherBundle">
+    <action id="AnotherBundleAction">
+      <synonym key="AnotherBundleAction.Synonym"/>
+      <synonym key="<warning descr="String 'synonym wrong case' is not properly capitalized. It should have title capitalization">AnotherBundleAction.Synonym.WrongCase</warning>"/>
+    </action>
+
+    <<warning descr="String 'lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'lower case text' is not properly capitalized. It should have title capitalization">action</warning></warning> id="AnotherBundleActionWrongCasing"/>
+
+
+    <action id="AnotherBundleOverrideAction">
+      <override-text place="AnotherBundleCustomPlace"/>
+      <<warning descr="String 'another bundle override action wrong case text' is not properly capitalized. It should have title capitalization">override-text</warning> place="AnotherBundleCustomPlaceWrongCase"/>
+    </action>
+
+
+    <group id="separatorGroupWithCustomBundle">
+      <separator key="another.titleCaseKey"/>
+      <separator key="<warning descr="String 'My key is lowercase' is not properly capitalized. It should have title capitalization">another.sentenceCaseKey</warning>"/>
+
+      <override-text place="AnotherBundleCustomPlace"/>
+      <<warning descr="String 'another bundle custom place wrong case text' is not properly capitalized. It should have title capitalization">override-text</warning> place="AnotherBundleCustomPlaceWrongCase"/>
+    </group>
+  </actions>
+</idea-plugin>

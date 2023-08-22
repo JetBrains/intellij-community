@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.lang.ASTNode;
@@ -27,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.JShellFileImpl;
 import com.intellij.psi.impl.source.tree.IJShellElementType;
-import com.intellij.psi.impl.source.tree.JShellElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +20,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellParserDefinition extends JavaParserDefinition{
+public class JShellParserDefinition extends JavaParserDefinition {
+  public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("JSHELL_FILE", JShellLanguage.INSTANCE);
+
   private static final PsiParser PARSER = new PsiParser() {
     @NotNull
     @Override
@@ -49,13 +36,13 @@ public class JShellParserDefinition extends JavaParserDefinition{
   };
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new JShellFileImpl(viewProvider);
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
-    return JShellElementType.FILE;
+  public @NotNull IFileElementType getFileNodeType() {
+    return FILE_ELEMENT_TYPE;
   }
 
   @NotNull

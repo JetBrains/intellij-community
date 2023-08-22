@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.projectView.impl.NestingTreeStructureProvider;
@@ -39,7 +25,7 @@ import java.util.List;
  * suggests to delete child files as well. Example: when deleting foo.ts file user is suggested to delete generated foo.js and foo.js.map
  * files as well.
  */
-public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProcessorDelegate {
+public final class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProcessorDelegate {
   @Override
   public boolean handlesElement(final PsiElement element) {
     return element instanceof PsiFile &&
@@ -51,7 +37,7 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
 
   @Override
   public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element,
-                                                              @NotNull final Collection<PsiElement> allElementsToDelete,
+                                                              final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     if (!askUser || !(element instanceof PsiFile)) return Collections.emptyList();
 
@@ -63,7 +49,7 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
 
     final Collection<PsiElement> psiFiles = new ArrayList<>(relatedFileInfos.size());
     for (NestingTreeStructureProvider.ChildFileInfo info : relatedFileInfos) {
-      final PsiFile psiFile = element.getManager().findFile(info.file);
+      final PsiFile psiFile = element.getManager().findFile(info.file());
       if (psiFile != null && !allElementsToDelete.contains(psiFile)) {
         psiFiles.add(psiFile);
       }
@@ -87,13 +73,13 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
   @Override
   public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element,
                                            PsiElement @NotNull [] allElementsToDelete,
-                                           @NotNull List<UsageInfo> result) {
+                                           @NotNull List<? super UsageInfo> result) {
     return null;
   }
 
   @Override
   public Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
-                                                              @NotNull Collection<PsiElement> allElementsToDelete) {
+                                                              @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return Collections.singleton(element);
   }
 
@@ -103,12 +89,12 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
   }
 
   @Override
-  public UsageInfo[] preprocessUsages(Project project, final UsageInfo[] usages) {
+  public UsageInfo[] preprocessUsages(@NotNull Project project, final UsageInfo @NotNull [] usages) {
     return usages;
   }
 
   @Override
-  public void prepareForDeletion(PsiElement element) throws IncorrectOperationException {
+  public void prepareForDeletion(@NotNull PsiElement element) throws IncorrectOperationException {
   }
 
   @Override

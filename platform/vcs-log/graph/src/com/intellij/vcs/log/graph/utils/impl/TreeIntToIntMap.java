@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.vcs.log.graph.utils.impl;
 
-import com.intellij.util.BooleanFunction;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
-public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
+import java.util.function.Predicate;
 
-  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<? super Integer> thisIsVisible, final int longSize) {
+public final class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
+
+  public static UpdatableIntToIntMap newInstance(@NotNull final Predicate<? super Integer> thisIsVisible, final int longSize) {
     if (longSize < 0) throw new NegativeArraySizeException("size < 0: " + longSize);
 
     if (longSize == 0) return IDIntToIntMap.EMPTY;
@@ -50,13 +37,13 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     return count;
   }
 
-  @NotNull private final BooleanFunction<? super Integer> myThisIsVisible;
+  @NotNull private final Predicate<? super Integer> myThisIsVisible;
 
   private final int myLongSize;
   private final int myCountLevels;
   private final int[] myTree;
 
-  private TreeIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize, int countLevels, int[] tree) {
+  private TreeIntToIntMap(@NotNull Predicate<? super Integer> thisIsVisible, int longSize, int countLevels, int[] tree) {
     myThisIsVisible = thisIsVisible;
     myLongSize = longSize;
     myCountLevels = countLevels;
@@ -123,7 +110,7 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
 
   private int getCountInLastLevel(int node) {
     node -= myTree.length;
-    if (node < myLongSize && myThisIsVisible.fun(node)) {
+    if (node < myLongSize && myThisIsVisible.test(node)) {
       return 1;
     }
     else {

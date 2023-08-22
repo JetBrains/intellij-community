@@ -11,14 +11,16 @@ import java.rmi.RemoteException;
  * Defines interface for the entity that manages notifications about progress of long-running operations performed at external system API side.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public interface RemoteExternalSystemProgressNotificationManager extends Remote {
 
   RemoteExternalSystemProgressNotificationManager NULL_OBJECT = new RemoteExternalSystemProgressNotificationManager() {
     @Override
     public void onStart(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) {
+    }
+
+    @Override
+    public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
     }
 
     @Override
@@ -51,6 +53,8 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
   };
 
   void onStart(@NotNull ExternalSystemTaskId id, @NotNull String projectPath) throws RemoteException;
+
+  void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) throws RemoteException;
 
   void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) throws RemoteException;
 

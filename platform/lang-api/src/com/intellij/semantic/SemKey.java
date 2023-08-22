@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.semantic;
 
 import com.intellij.util.ArrayUtil;
@@ -14,10 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p/>
  * Use {@link #createKey(String, SemKey[])} to create a new "root" key, on which you can attach "sub"-keys via
  * {@link #subKey(String, SemKey[])}.
- *
- * @author peter
  */
-public class SemKey<T extends SemElement> {
+public final class SemKey<T extends SemElement> {
   private static final AtomicInteger counter = new AtomicInteger(0);
   private final String myDebugName;
   private final SemKey<? super T> @NotNull [] mySupers;

@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.classpath;
 
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -42,21 +28,24 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,29 +53,27 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
  */
-
 public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private final SimpleTree myTree = new SimpleTree();
-  private AbstractTreeBuilder myBuilder;
   private List<Library> myResult;
-  private final Map<Object, Object> myParentsMap = new THashMap<>();
+  private final Map<Object, Object> myParentsMap = new HashMap<>();
+  private StructureTreeModel<?> myModel;
 
-  protected ChooseLibrariesDialogBase(final JComponent parentComponent, final String title) {
+  protected ChooseLibrariesDialogBase(final JComponent parentComponent, final @NlsContexts.DialogTitle String title) {
     super(parentComponent, false);
     setTitle(title);
   }
 
-  protected ChooseLibrariesDialogBase(Project project, String title) {
+  protected ChooseLibrariesDialogBase(Project project, @NlsContexts.DialogTitle String title) {
     super(project, false);
     setTitle(title);
   }
@@ -97,8 +84,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     updateOKAction();
   }
 
-  private static String notEmpty(String nodeText) {
-    return StringUtil.isNotEmpty(nodeText) ? nodeText : "<unnamed>";
+  private static @Nls String notEmpty(@Nls String nodeText) {
+    return StringUtil.isNotEmpty(nodeText) ? nodeText : JavaUiBundle.message("unnamed.title");
   }
 
   @Override
@@ -135,11 +122,18 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   }
 
   protected void queueUpdateAndSelect(@NotNull final Library library) {
-    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.select(library));
+    myModel.invalidateAsync().thenRun(() -> {
+      ((AsyncTreeModel)myTree.getModel()).accept(path -> {
+        return TreeVisitor.Action.CONTINUE; // traverse to update myParentsMap
+      }).onProcessed(path -> {
+        myModel.select(library, myTree, p -> {});
+      });
+    });
   }
 
   private boolean processSelection(final Processor<? super Library> processor) {
-    for (Object element : myBuilder.getSelectedElements()) {
+    DefaultMutableTreeNode[] nodes = myTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
+    for (Object element : ContainerUtil.map(nodes, node -> ((NodeDescriptor<?>)node.getUserObject()).getElement())) {
       if (element instanceof Library) {
         if (!processor.process((Library)element)) return false;
       }
@@ -166,12 +160,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    myBuilder = new SimpleTreeBuilder(myTree, new DefaultTreeModel(new DefaultMutableTreeNode()),
-                                        new MyStructure(getProject()),
-                                        WeightBasedComparator.FULL_INSTANCE) {
-      // unique class to simplify search through the logs
-    };
-    myBuilder.initRootNode();
+    myModel = new StructureTreeModel<>(new MyStructure(getProject()), WeightBasedComparator.FULL_INSTANCE, myDisposable);
+    myTree.setModel(new AsyncTreeModel(myModel, myDisposable));
 
     myTree.setDragEnabled(false);
 
@@ -226,21 +216,13 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     }
     else if (element instanceof Module) {
       for (OrderEntry entry : ModuleRootManager.getInstance((Module)element).getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry) {
-          final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-          if (LibraryTableImplUtil.MODULE_LEVEL.equals(libraryOrderEntry.getLibraryLevel())) {
-            final Library library = libraryOrderEntry.getLibrary();
-            result.add(library);
-          }
+        if (entry instanceof LibraryOrderEntry libraryOrderEntry &&
+            LibraryTableImplUtil.MODULE_LEVEL.equals(libraryOrderEntry.getLibraryLevel())) {
+          final Library library = libraryOrderEntry.getLibrary();
+          result.add(library);
         }
       }
     }
-  }
-
-  @Override
-  protected void dispose() {
-    Disposer.dispose(myBuilder);
-    super.dispose();
   }
 
   protected static class LibrariesTreeNodeBase<T> extends SimpleNode {
@@ -348,7 +330,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   public boolean isEmpty() {
     List<Object> children = new ArrayList<>();
-    collectChildren(myBuilder.getTreeStructure().getRootElement(), children);
+    collectChildren(myModel.getTreeStructure().getRootElement(), children);
     return children.isEmpty();
   }
 
@@ -393,15 +375,14 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     @Override
     public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
       if (element instanceof Application) return new RootDescriptor(myProject);
-      if (element instanceof Project) return new ProjectDescriptor(myProject, (Project)element);
-      if (element instanceof Module) return new ModuleDescriptor(myProject, parentDescriptor, (Module)element);
-      if (element instanceof LibraryTable) {
-        final LibraryTable libraryTable = (LibraryTable)element;
+      if (element instanceof Project project) return new ProjectDescriptor(myProject, project);
+      if (element instanceof Module module) return new ModuleDescriptor(myProject, parentDescriptor, module);
+      if (element instanceof LibraryTable libraryTable) {
         return new LibraryTableDescriptor(myProject, parentDescriptor, libraryTable,
                                           getLibraryTableWeight(libraryTable),
                                           isAutoExpandLibraryTable(libraryTable));
       }
-      if (element instanceof Library) return createLibraryDescriptor(parentDescriptor, (Library)element);
+      if (element instanceof Library library) return createLibraryDescriptor(parentDescriptor, library);
       throw new AssertionError();
     }
 

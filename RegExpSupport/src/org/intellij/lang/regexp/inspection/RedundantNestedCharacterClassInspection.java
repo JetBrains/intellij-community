@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -38,18 +38,21 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
     public void visitRegExpClass(RegExpClass regExpClass) {
       super.visitRegExpClass(regExpClass);
       final PsiElement parent = regExpClass.getParent();
-      if (parent instanceof RegExpClass) {
-        final RegExpClass parentClass = (RegExpClass)parent;
-        if (parentClass.isNegated() == regExpClass.isNegated()) {
+      // In JDK 9 the behaviour of negated character classes was changed, so we can never warn about them
+      // JDK 8: [^a&&b] is the intersection of [^a] with [b], which equals [b]
+      // JDK 9: [^a&&b] is the intersection of [a] and [b] (which is nothing), inverted, which equals everything.
+      // see https://bugs.openjdk.org/browse/JDK-8189343
+      // and http://mail.openjdk.org/pipermail/core-libs-dev/2011-June/006957.html
+      if (parent instanceof RegExpClass parentClass) {
+        if (!parentClass.isNegated() && !regExpClass.isNegated()) {
           myHolder.registerProblem(regExpClass.getFirstChild(), RegExpBundle.message("inspection.warning.redundant.nested.character.class"),
                                    new RedundantNestedCharacterClassFix());
         }
       }
       else if (parent instanceof RegExpIntersection) {
         final PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof RegExpClass) {
-          final RegExpClass parentClass = (RegExpClass)grandParent;
-          if (parentClass.isNegated() == regExpClass.isNegated()) {
+        if (grandParent instanceof RegExpClass grandparentClass) {
+          if (!grandparentClass.isNegated() && !regExpClass.isNegated()) {
             myHolder.registerProblem(regExpClass.getFirstChild(), RegExpBundle.message("inspection.warning.redundant.nested.character.class"),
                                      new RedundantNestedCharacterClassFix());
           }
@@ -67,8 +70,7 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement().getParent();
-        if (element instanceof RegExpClass) {
-          final RegExpClass regExpClass = (RegExpClass)element;
+        if (element instanceof RegExpClass regExpClass) {
           final RegExpClassElement[] elements = regExpClass.getElements();
           final PsiElement parent = regExpClass.getParent();
           for (RegExpClassElement classElement : elements) {

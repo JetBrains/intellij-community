@@ -10,18 +10,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Stack;
 
-/**
- * @author Rustam Vishnyakov
- */
-public class CustomFoldingRegionsPopup {
+public final class CustomFoldingRegionsPopup {
   public static void show(@NotNull final Collection<? extends FoldingDescriptor> descriptors,
                           @NotNull final Editor editor,
                           @NotNull final Project project) {
@@ -42,7 +38,7 @@ public class CustomFoldingRegionsPopup {
       .showInBestPositionFor(editor);
   }
 
-  private static class MyFoldingDescriptorWrapper {
+  private static final class MyFoldingDescriptorWrapper {
     private final @NotNull FoldingDescriptor myDescriptor;
     private final int myIndent;
 
@@ -56,7 +52,6 @@ public class CustomFoldingRegionsPopup {
       return myDescriptor;
     }
 
-    @Nullable
     @Override
     public String toString() {
       return StringUtil.repeat("   ", myIndent) + myDescriptor.getPlaceholderText();

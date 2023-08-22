@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.junit2.refactoring;
 
+import com.intellij.execution.JUnitBundle;
 import com.intellij.refactoring.migration.PredefinedMigrationProvider;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -27,5 +29,10 @@ public class JUnit5Migration implements PredefinedMigrationProvider {
   @Override
   public URL getMigrationMap() {
     return JUnit5Migration.class.getResource("JUnit4__5.xml");
+  }
+
+  @Override
+  public @Nls String getDescription() {
+    return JUnitBundle.message("junit5.migration.description");
   }
 }

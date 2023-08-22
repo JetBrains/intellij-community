@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.AbstractBundle;
@@ -12,12 +12,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
 
-public final class IntentionActionBean extends CustomLoadingExtensionPointBean<IntentionAction> {
-  private static final Logger LOG = Logger.getInstance(IntentionActionBean.class);
-
+public final class IntentionActionBean extends CustomLoadingExtensionPointBean<CommonIntentionAction> {
   @Tag
   @RequiredElement
   public String className;
+
+  @Tag
+  public String language;
 
   @Tag public @Nls(capitalization = Nls.Capitalization.Sentence) String category;
 
@@ -28,6 +29,13 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
 
   @Tag
   public String descriptionDirectoryName;
+
+  /**
+   * Should be set to true only for intention actions that do not modify code and can't provide meaningful
+   * before/after examples.
+   */
+  @Tag
+  public boolean skipBeforeAfter;
 
   @Override
   protected @Nullable String getImplementationClassName() {
@@ -41,11 +49,11 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
 
     String baseName = bundleName != null ? bundleName : getPluginDescriptor().getResourceBundleBaseName();
     if (baseName == null) {
-      LOG.error("No resource bundle specified for " + getPluginDescriptor());
+      Logger.getInstance(IntentionActionBean.class).error("No resource bundle specified for " + getPluginDescriptor());
       return null;
     }
 
-    ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getLoaderForClass());
+    ResourceBundle bundle = DynamicBundle.getResourceBundle(getLoaderForClass(), baseName);
     String[] keys = categoryKey.split("/");
     if (keys.length > 1) {
       String[] result = new String[keys.length];

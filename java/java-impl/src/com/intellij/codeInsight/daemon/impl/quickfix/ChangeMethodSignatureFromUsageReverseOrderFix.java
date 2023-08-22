@@ -8,15 +8,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
 public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodSignatureFromUsageFix {
   public ChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
@@ -80,7 +78,6 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
       }
       else if (isArgumentInVarargPosition(expressions, ei, varargParam, substitutor)) {
         if (pi == parameters.length - 1) {
-          assert varargParam != null;
           final PsiType type = varargParam.getType();
           result.add(0, ParameterInfoImpl.create(pi).withName(varargParam.getName()).withType(type));
           params.add(0, escapePresentableType(type));
@@ -90,7 +87,7 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
       }
       else if (expression != null) {
         if (varargParam != null && pi >= parameters.length) return false;
-        PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
+        PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
         if (exprType == null) return false;
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);

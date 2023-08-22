@@ -4,4 +4,4 @@ class C:
 
 #noinspection PyUnresolvedReferences
 def foo():
-    print xxx
+    print(xxx)

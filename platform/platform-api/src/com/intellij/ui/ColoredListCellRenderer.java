@@ -14,8 +14,6 @@ import java.awt.*;
  *
  * @see SimpleListCellRenderer for a simpler JBLabel-based variant.
  * @see ListCellBackgroundSupplier for different background color.
- *
- * @author Vladimir Kondratyev
  */
 public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer<T> {
 
@@ -67,7 +65,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   }
 
   @Override
-  void revalidateAndRepaint() {
+  protected void revalidateAndRepaint() {
     // no need for this in a renderer
   }
 

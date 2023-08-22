@@ -1,0 +1,12 @@
+// "Change return type of enclosing function 'test' to 'String'" "true"
+fun test(i: Int) {
+    return when (i) {
+        0 -> {
+            ""
+        }
+        else -> {
+            ""<caret>
+        }
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

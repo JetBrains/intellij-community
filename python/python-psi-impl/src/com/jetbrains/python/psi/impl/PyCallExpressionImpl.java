@@ -15,9 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpression {
 
   public PyCallExpressionImpl(ASTNode astNode) {
@@ -27,6 +25,11 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyCallExpression(this);
+  }
+
+  @Override
+  public @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return PyCallExpressionHelper.getReceiver(this, resolvedCallee);
   }
 
   @Override
@@ -40,14 +43,14 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @NotNull
   @Override
-  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return PyCallExpressionHelper.multiResolveCallee(this, resolveContext, implicitOffset);
+  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
+    return PyCallExpressionHelper.multiResolveCallee(this, resolveContext);
   }
 
   @NotNull
   @Override
-  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return PyCallExpressionHelper.multiMapArguments(this, resolveContext, implicitOffset);
+  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
+    return PyCallExpressionHelper.mapArguments(this, resolveContext);
   }
 
   @Override

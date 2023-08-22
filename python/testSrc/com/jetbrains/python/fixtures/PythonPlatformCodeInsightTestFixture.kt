@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.fixtures
 
 import com.intellij.codeInsight.completion.CompletionType
@@ -11,19 +11,20 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixture.PythonCommonCodeInsightTestFixture
+import com.jetbrains.python.psi.LanguageLevel
 import junit.framework.TestCase.assertNotNull
 import java.io.File
-import java.lang.reflect.InvocationTargetException
 
-class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture {
-  private val myDelegateTestCase = PyDelegateTestCase()
+class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : PythonCommonCodeInsightTestFixture {
+  private val myDelegateTestCase = PyDelegateTestCase(languageLevel)
   private val myDelegateFixture: CodeInsightTestFixture
     get() = myDelegateTestCase.myFixture
 
@@ -41,6 +42,8 @@ class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture 
     get() = requireNotNull(myDelegateFixture.tempDirFixture.getFile("."))
   override val testRootDisposable: Disposable
     get() = myDelegateFixture.testRootDisposable
+  override val caretOffset: Int
+    get() = myDelegateFixture.caretOffset
 
   override fun setUp() {
     super.setUp()
@@ -71,7 +74,7 @@ class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture 
 
   override fun configureByText(fileName: String, text: String): PsiFile? = myDelegateFixture.configureByText(fileName, text)
 
-  override fun copyDirectoryToProject(sourceFilePath: String, targetPath: String): VirtualFile? =
+  override fun copyDirectoryToProject(sourceFilePath: String, targetPath: String): VirtualFile =
     myDelegateFixture.copyDirectoryToProject(sourceFilePath, targetPath)
 
   override fun addFileToProject(relativePath: String, fileText: String): PsiFile? =
@@ -81,7 +84,7 @@ class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture 
 
   override fun configureFromTempProjectFile(filePath: String): PsiFile? = myDelegateFixture.configureFromTempProjectFile(filePath)
 
-  override fun copyFileToProject(sourceFilePath: String): VirtualFile? = myDelegateFixture.copyFileToProject(sourceFilePath)
+  override fun copyFileToProject(sourceFilePath: String): VirtualFile = myDelegateFixture.copyFileToProject(sourceFilePath)
 
   override fun findFileInTempDir(filePath: String): VirtualFile? = myDelegateFixture.findFileInTempDir(filePath)
 
@@ -137,7 +140,11 @@ class PythonPlatformCodeInsightTestFixture : PythonCommonCodeInsightTestFixture 
   }
 }
 
-class PyDelegateTestCase : PyTestCase() {
+class PyDelegateTestCase(private val languageLevel: LanguageLevel = LanguageLevel.getLatest()) : PyTestCase() {
+
+  override fun getProjectDescriptor(): LightProjectDescriptor? {
+    return if (languageLevel.isPython2) ourPy2Descriptor else super.getProjectDescriptor()
+  }
 
   public override fun addSuppressedException(e: Throwable) {
     super.addSuppressedException(e)
@@ -145,30 +152,8 @@ class PyDelegateTestCase : PyTestCase() {
 
   @Throws(Exception::class)
   fun runTest(test: ThrowableRunnable<Throwable>) {
-    val throwables = arrayOfNulls<Throwable>(1)
-    invokeTestRunnable {
-      try {
-        TestLoggerFactory.onTestStarted()
-        test.run()
-        TestLoggerFactory.onTestFinished(true)
-      }
-      catch (e: InvocationTargetException) {
-        TestLoggerFactory.onTestFinished(false)
-        e.fillInStackTrace()
-        throwables[0] = e.targetException
-      }
-      catch (e: IllegalAccessException) {
-        TestLoggerFactory.onTestFinished(false)
-        e.fillInStackTrace()
-        throwables[0] = e
-      }
-      catch (e: Throwable) {
-        TestLoggerFactory.onTestFinished(false)
-        throwables[0] = e
-      }
+    runInEdtAndWait {
+      runTestRunnable(test)
     }
-
-    val throwable = throwables[0]
-    throwable?.let { throw it }
   }
 }

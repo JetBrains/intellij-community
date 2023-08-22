@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,7 +12,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static org.hamcrest.Matchers.*;
@@ -24,8 +22,8 @@ import static org.junit.Assert.assertThat;
 public class SvnExternalCommitNoticedTest extends SvnTestCase {
   @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -93,7 +91,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     refreshVfs();
     changeListManager.ensureUpToDate();
-    vcs.getCopiesRefreshManager().waitCurrentRequest();
+    refreshSvnMappingsSynchronously();
     infos = vcs.getSvnFileUrlMapping().getAllWcInfos();
     assertThat(map(infos, RootUrlInfo::getUrl), containsInAnyOrder(ar(parseUrl(branchUrl, false))));
   }

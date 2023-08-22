@@ -63,7 +63,10 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
                 final String fileName = descriptor.getFileName();
                 AllFileTemplatesConfigurable.editCodeTemplate(FileUtilRt.getNameWithoutExtension(fileName), project);
               } else {
-                HintManager.getInstance().showErrorHint(editor, "No template found for " + framework.getName() + ":" + BaseGenerateTestSupportMethodAction.this.getTemplatePresentation().getText());
+                String message = JavaBundle.message(
+                  "generate.test.support.method.error.no.template.found.for.framework", framework.getName(),
+                  BaseGenerateTestSupportMethodAction.this.getTemplatePresentation().getText());
+                HintManager.getInstance().showErrorHint(editor, message);
               }
             });
           }
@@ -176,21 +179,16 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
     private void doGenerate(final Editor editor, final PsiFile file, final PsiClass targetClass, final TestFramework framework) {
       if (framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isSingleConfig()) {
-        PsiElement alreadyExist = null;
-        switch (myMethodKind) {
-          case SET_UP:
-            alreadyExist = framework.findSetUpMethod(targetClass);
-            break;
-          case TEAR_DOWN:
-            alreadyExist = framework.findTearDownMethod(targetClass);
-            break;
-          default:
-            break;
-        }
+        PsiElement alreadyExist = switch (myMethodKind) {
+          case SET_UP -> framework.findSetUpMethod(targetClass);
+          case TEAR_DOWN -> framework.findTearDownMethod(targetClass);
+          default -> null;
+        };
 
         if (alreadyExist instanceof PsiMethod) {
           editor.getCaretModel().moveToOffset(alreadyExist.getNavigationElement().getTextOffset());
-          HintManager.getInstance().showErrorHint(editor, "Method " + ((PsiMethod)alreadyExist).getName() + " already exists");
+          String message = JavaBundle.message("generate.test.support.method.error.method.already.exists", ((PsiMethod)alreadyExist).getName());
+          HintManager.getInstance().showErrorHint(editor, message);
           return;
         }
       }
@@ -206,7 +204,8 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
           TestIntegrationUtils.runTestMethodTemplate(myMethodKind, framework, editor, targetClass, method, "name", false, null);
         }
         catch (IncorrectOperationException e) {
-          HintManager.getInstance().showErrorHint(editor, "Cannot generate method: " + e.getMessage());
+          String message = JavaBundle.message("generate.test.support.method.error.cannot.generate.method", e.getMessage());
+          HintManager.getInstance().showErrorHint(editor, message);
           LOG.warn(e);
         }
       });

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
@@ -12,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListenerImpl;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -22,6 +23,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
@@ -38,9 +40,6 @@ import java.awt.event.FocusEvent;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author peter
- */
 public abstract class CompletionPhase implements Disposable {
   private static final Logger LOG = Logger.getInstance(CompletionPhase.class);
 
@@ -48,6 +47,11 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       return time;
+    }
+
+    @Override
+    public String toString() {
+      return "NoCompletion";
     }
   };
 
@@ -63,7 +67,7 @@ public abstract class CompletionPhase implements Disposable {
 
   public abstract int newCompletionStarted(int time, boolean repeated);
 
-  public static class CommittingDocuments extends CompletionPhase {
+  public static final class CommittingDocuments extends CompletionPhase {
     private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Completion Preparation", 1);
     boolean replaced;
     private final ActionTracker myTracker;
@@ -104,7 +108,7 @@ public abstract class CompletionPhase implements Disposable {
                                                @Nullable Condition<? super PsiFile> condition,
                                                @NotNull Project project,
                                                @Nullable CompletionProgressIndicator prevIndicator) {
-      Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(_editor);
+      Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
       int offset = topLevelEditor.getCaretModel().getOffset();
 
       CommittingDocuments phase = new CommittingDocuments(prevIndicator, topLevelEditor);
@@ -146,11 +150,13 @@ public abstract class CompletionPhase implements Disposable {
         .submit(ourExecutor);
     }
 
-    private static void loadContributorsOutsideEdt(Editor editor, PsiFile file) {
+    @ApiStatus.Internal
+    public static void loadContributorsOutsideEdt(Editor editor, PsiFile file) {
       CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset()));
     }
 
-    private static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
+    @ApiStatus.Internal
+    public static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
       int offset = editor.getCaretModel().getOffset();
       int psiOffset = Math.max(0, offset - 1);
 
@@ -176,7 +182,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
   }
-  public static class Synchronous extends CompletionPhase {
+  public static final class Synchronous extends CompletionPhase {
     public Synchronous(CompletionProgressIndicator indicator) {
       super(indicator);
     }
@@ -188,33 +194,32 @@ public abstract class CompletionPhase implements Disposable {
       return time;
     }
   }
-  public static class BgCalculation extends CompletionPhase {
+  public static final class BgCalculation extends CompletionPhase {
     boolean modifiersChanged = false;
+    private final @NotNull ClientId ownerId = ClientId.getCurrent();
 
     public BgCalculation(final CompletionProgressIndicator indicator) {
       super(indicator);
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
-          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
+          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled() && ownerId.equals(ClientId.getCurrent())) {
             indicator.scheduleRestart();
           }
         }
       }, this);
       if (indicator.isAutopopupCompletion()) {
         // lookup is not visible, we have to check ourselves if editor retains focus
-        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListenerImpl() {
+        ((EditorEx)indicator.getEditor()).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
             // When ScreenReader is active the lookup gets focus on show and we should not close it.
             if (ScreenReader.isActive() &&
-                indicator.getLookup() != null &&
                 event.getOppositeComponent() != null &&
                 indicator.getLookup().getComponent() != null &&
                 // Check the opposite is in the lookup ancestor
-                (SwingUtilities.getWindowAncestor(event.getOppositeComponent())) ==
-                 SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent()))
-            {
+                SwingUtilities.getWindowAncestor(event.getOppositeComponent()) ==
+                SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent())) {
               return;
             }
             indicator.closeAndFinish(true);
@@ -229,7 +234,7 @@ public abstract class CompletionPhase implements Disposable {
       return indicator.nextInvocationCount(time, repeated);
     }
   }
-  public static class ItemsCalculated extends CompletionPhase {
+  public static final class ItemsCalculated extends CompletionPhase {
 
     public ItemsCalculated(CompletionProgressIndicator indicator) {
       super(indicator);
@@ -270,7 +275,7 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
 
-  public static class InsertedSingleItem extends ZombiePhase {
+  public static final class InsertedSingleItem extends ZombiePhase {
     public final Runnable restorePrefix;
 
     InsertedSingleItem(CompletionProgressIndicator indicator, Runnable restorePrefix) {
@@ -289,7 +294,7 @@ public abstract class CompletionPhase implements Disposable {
     }
 
   }
-  public static class NoSuggestionsHint extends ZombiePhase {
+  public static final class NoSuggestionsHint extends ZombiePhase {
     NoSuggestionsHint(@Nullable LightweightHint hint, CompletionProgressIndicator indicator) {
       super(indicator);
       expireOnAnyEditorChange(indicator.getEditor());
@@ -308,12 +313,12 @@ public abstract class CompletionPhase implements Disposable {
 
   }
 
-  public static class EmptyAutoPopup extends ZombiePhase {
+  public static final class EmptyAutoPopup extends ZombiePhase {
     private final ActionTracker myTracker;
     private final Editor myEditor;
-    private final Set<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;
+    private final Set<? extends Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions;
 
-    EmptyAutoPopup(Editor editor, Set<Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
+    EmptyAutoPopup(Editor editor, Set<? extends Pair<Integer, ElementPattern<String>>> restartingPrefixConditions) {
       super(null);
       myTracker = new ActionTracker(editor, this);
       myEditor = editor;

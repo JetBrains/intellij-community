@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyArgumentListImplTest extends PyClassRefactoringTest {
   private PyElementGeneratorImpl myGenerator;
-  private LanguageLevel myLanguagelevel;
 
   public PyArgumentListImplTest() {
     super("argumentList");
@@ -24,16 +23,14 @@ public class PyArgumentListImplTest extends PyClassRefactoringTest {
   public void setUp() throws Exception {
     super.setUp();
     myGenerator = new PyElementGeneratorImpl(myFixture.getProject());
-    myLanguagelevel = LanguageLevel.PYTHON34;
-    setLanguageLevel(myLanguagelevel);
   }
 
   /**
    * Ensures new keyword argument is set into appropriate place
    */
   public void testAddKeyArgument() {
-    final PyKeywordArgument classKeyword = myGenerator.createKeywordArgument(myLanguagelevel, "metaclass", "ABCMeta");
-    final PyKeywordArgument functionKeyword = myGenerator.createKeywordArgument(myLanguagelevel, "new_param", "spam");
+    final PyKeywordArgument classKeyword = myGenerator.createKeywordArgument(LanguageLevel.getLatest(), "metaclass", "ABCMeta");
+    final PyKeywordArgument functionKeyword = myGenerator.createKeywordArgument(LanguageLevel.getLatest(), "new_param", "spam");
 
 
     doTest(classKeyword, functionKeyword);

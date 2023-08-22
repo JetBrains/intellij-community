@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -20,10 +6,8 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 
-/**
- * @author yole
- */
-public class CompletionParameterTypeInferencePolicy extends ProcessCandidateParameterTypeInferencePolicy {
+
+public final class CompletionParameterTypeInferencePolicy extends ProcessCandidateParameterTypeInferencePolicy {
   public static final CompletionParameterTypeInferencePolicy INSTANCE = new CompletionParameterTypeInferencePolicy();
 
   private CompletionParameterTypeInferencePolicy() {
@@ -32,7 +16,7 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
   @Override
   public PsiType getDefaultExpectedType(PsiCallExpression methodCall) {
     ExpectedTypeInfo expectedType = ExpectedTypesProvider.getSingleExpectedTypeForCompletion(methodCall);
-    return expectedType == null ? PsiType.NULL : expectedType.getType();
+    return expectedType == null ? (PsiPrimitiveType)PsiTypes.nullType() : expectedType.getType();
   }
 
   @Override
@@ -52,7 +36,7 @@ public class CompletionParameterTypeInferencePolicy extends ProcessCandidatePara
 
   @Override
   public PsiType adjustInferredType(PsiManager manager, PsiType guess, ConstraintType constraintType) {
-    if (guess != null && !(guess instanceof PsiWildcardType) && guess != PsiType.NULL) {
+    if (guess != null && !(guess instanceof PsiWildcardType) && guess != PsiTypes.nullType()) {
       if (constraintType == ConstraintType.SUPERTYPE) return PsiWildcardType.createExtends(manager, guess);
       else if (constraintType == ConstraintType.SUBTYPE) return PsiWildcardType.createSuper(manager, guess);
     }

@@ -1,11 +1,10 @@
+// Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.invoke.MethodHandles;
+import org.jetbrains.annotations.Nullable;
 
 
 public abstract class AbstractCommand<T> {
@@ -64,6 +63,16 @@ public abstract class AbstractCommand<T> {
 
   public static final int CMD_GET_SMART_STEP_INTO_VARIANTS = 160;
 
+  public static final int CMD_SET_UNIT_TESTS_DEBUGGING_MODE = 170;
+
+  public static final int SET_USER_TYPE_RENDERERS = 190;
+
+  // Powerful DataViewer commands
+  public static final int CMD_DATAVIEWER_ACTION = 210;
+  public static final int CMD_TABLE_EXEC = 211;
+
+  public static final int INTERRUPT_DEBUG_CONSOLE = 212;
+
   /**
    * The code of the message that means that IDE received
    * {@link #PROCESS_CREATED} message from the Python debugger script.
@@ -82,7 +91,6 @@ public abstract class AbstractCommand<T> {
 
   private final ResponseProcessor<T> myResponseProcessor;
 
-  public static final Logger LOG = Logger.getInstance(MethodHandles.lookup().lookupClass());
 
   protected AbstractCommand(@NotNull final RemoteDebugger debugger, final int commandCode) {
     myDebugger = debugger;
@@ -141,18 +149,15 @@ public abstract class AbstractCommand<T> {
     if (processor == null && !isResponseExpected()) return;
 
     if (!frameSent) {
-      LOG.error("Couldn't send frame " + myCommandCode);
-      return;
+      throw new PyDebuggerException("Couldn't send frame " + myCommandCode);
     }
 
     frame = myDebugger.waitForResponse(sequence, getResponseTimeout());
     if (frame == null) {
-      String errorMessage = "Timeout waiting for response on " + myCommandCode;
       if (!myDebugger.isConnected()) {
-        errorMessage = "No connection (command:  " + myCommandCode + " )";
+        throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
       }
-      LOG.error(errorMessage);
-      return;
+      throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
     }
     if (processor != null) {
       processor.processResponse(frame);
@@ -195,7 +200,12 @@ public abstract class AbstractCommand<T> {
           }
           throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
         }
-        callback.ok(processor.processResponse(frame));
+        T exception_occurred = processor.parseException(frame);
+        if (exception_occurred != null && exception_occurred.equals("True")) {
+          callback.error(new PyDebuggerException("Exception occurred"));
+        } else {
+          callback.ok(processor.processResponse(frame));
+        }
       }
       catch (PyDebuggerException e) {
         callback.error(e);
@@ -216,15 +226,19 @@ public abstract class AbstractCommand<T> {
     return RemoteDebugger.RESPONSE_TIMEOUT;
   }
 
+  public static boolean isErrorCommand(int command) {
+    return command >= 900 && command < 1000;
+  }
+
   protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
-    if (response.getCommand() >= 900 && response.getCommand() < 1000) {
+    if (isErrorCommand(response.getCommand())) {
       throw new PyDebuggerException(response.getPayload());
     }
   }
 
   protected abstract static class ResponseProcessor<T> {
     protected T processResponse(final ProtocolFrame response) throws PyDebuggerException {
-      if (response.getCommand() >= 900 && response.getCommand() < 1000) {
+      if (isErrorCommand(response.getCommand())) {
         throw new PyDebuggerException(response.getPayload());
       }
 
@@ -232,6 +246,11 @@ public abstract class AbstractCommand<T> {
     }
 
     protected abstract T parseResponse(ProtocolFrame response) throws PyDebuggerException;
+
+    @Nullable
+    protected T parseException(ProtocolFrame frame) throws PyDebuggerException {
+      return null;
+    }
   }
 
   public static boolean isCallSignatureTrace(int command) {

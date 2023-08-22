@@ -16,7 +16,6 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspection;
@@ -28,10 +27,41 @@ import com.jetbrains.python.psi.LanguageLevel;
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyMakeFunctionReturnTypeQuickFixTest/")
 public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
     public void testOneReturn() {
-      doQuickFixTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.NAME.make.$0.return.$1", "f", "int"), LanguageLevel.PYTHON27);
+      doQuickFixTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "f", "int"), LanguageLevel.PYTHON27);
     }
 
     public void testPy3OneReturn() {
-      doQuickFixTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.NAME.make.$0.return.$1", "f", "int"), LanguageLevel.PYTHON34);
+      doQuickFixTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "f", "int"), LanguageLevel.PYTHON34);
     }
+
+  // PY-27128
+  public void testPy39UnionTypeImports() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[Union[X, Y]]"));
+    });
+  }
+
+  // PY-27128
+  public void testPy39BitwiseOrUnionFromFutureAnnotationsUnionTypeImports() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X | Y]"));
+    });
+  }
+
+  // PY-27128
+  public void testBitwiseOrUnionTypeImports() {
+    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X | Y]"));
+  }
+
+  // PY-27128
+  public void testAncestorAndInheritorReturn() {
+    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X]"));
+  }
+
+  // PY-27128 PY-48466
+  public void testLambda() {
+    doQuickFixTest(PyTypeCheckerInspection.class,
+                   PyPsiBundle.message("QFIX.make.function.return.type", "func", "Callable[[Any], int]"),
+                   LanguageLevel.getLatest());
+  }
 }

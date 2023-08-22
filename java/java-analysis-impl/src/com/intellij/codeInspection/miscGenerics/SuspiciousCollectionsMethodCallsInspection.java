@@ -6,7 +6,9 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
@@ -19,9 +21,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_CONVERTIBLE_METHOD_CALLS = true;
 
@@ -31,9 +32,9 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.suspicious.but.possibly.correct.method.calls"), this, "REPORT_CONVERTIBLE_METHOD_CALLS");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_CONVERTIBLE_METHOD_CALLS", JavaAnalysisBundle.message("report.suspicious.but.possibly.correct.method.calls")));
   }
 
   @Override
@@ -42,7 +43,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     final List<SuspiciousMethodCallUtil.PatternMethod> patternMethods = new ArrayList<>();
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
         final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
         if (args.length < 1) return;
         for (int idx = 0; idx < Math.min(2, args.length); idx ++) {
@@ -54,7 +55,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
         final PsiClassType.ClassResolveResult functionalInterfaceResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
@@ -82,16 +83,21 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     return "SuspiciousMethodCalls";
   }
 
-  private static String getSuspiciousMethodCallMessage(PsiMethodCallExpression methodCall,
-                                                       boolean reportConvertibleMethodCalls,
-                                                       List<SuspiciousMethodCallUtil.PatternMethod> patternMethods,
-                                                       PsiExpression arg,
-                                                       int i) {
+  private static @InspectionMessage String getSuspiciousMethodCallMessage(PsiMethodCallExpression methodCall,
+                                                                          boolean reportConvertibleMethodCalls,
+                                                                          List<SuspiciousMethodCallUtil.PatternMethod> patternMethods,
+                                                                          PsiExpression arg,
+                                                                          int i) {
     PsiType argType = arg.getType();
     boolean exactType = arg instanceof PsiNewExpression;
     final String plainMessage = SuspiciousMethodCallUtil
       .getSuspiciousMethodCallMessage(methodCall, arg, argType, exactType || reportConvertibleMethodCalls, patternMethods, i);
     if (plainMessage != null && !exactType) {
+      String methodName = methodCall.getMethodExpression().getReferenceName();
+      if (SuspiciousMethodCallUtil.isCollectionAcceptingMethod(methodName)) {
+        // DFA works on raw types, so anyway we cannot narrow the argument type
+        return plainMessage;
+      }
       TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
       PsiType type = constraint.getPsiType(methodCall.getProject());
       if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {

@@ -14,6 +14,8 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +33,6 @@ public class ConfigFilesTreeBuilder {
   }
 
   public Set<PsiFile> buildTree(DefaultMutableTreeNode root, ConfigFileSearcher... searchers) {
-    final Set<PsiFile> psiFiles = new HashSet<>();
 
     final MultiMap<Module, PsiFile> files = new MultiMap<>();
     final MultiMap<VirtualFile, PsiFile> jars = new MultiMap<>();
@@ -43,7 +44,7 @@ public class ConfigFilesTreeBuilder {
       virtualFiles.putAllValues(searcher.getVirtualFiles());
     }
 
-    psiFiles.addAll(buildModuleNodes(files, jars, root));
+    final Set<PsiFile> psiFiles = new HashSet<>(buildModuleNodes(files, jars, root));
 
     for (Map.Entry<VirtualFile, Collection<PsiFile>> entry : virtualFiles.entrySet()) {
       DefaultMutableTreeNode node = createFileNode(entry.getKey());
@@ -118,8 +119,9 @@ public class ConfigFilesTreeBuilder {
     return psiFiles;
   }
 
+  @Nls
   private static String getFileTypeNodeName(FileType fileType) {
-    return fileType.getName() + " files";
+    return XmlBundle.message("xml.tree.config.files.type", fileType.getName());
   }
 
   private static boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
@@ -146,21 +148,18 @@ public class ConfigFilesTreeBuilder {
   public static void renderNode(Object value, boolean expanded, ColoredTreeCellRenderer renderer) {
     if (!(value instanceof DefaultMutableTreeNode)) return;
     final Object object = ((DefaultMutableTreeNode)value).getUserObject();
-    if (object instanceof FileType) {
-      final FileType fileType = (FileType)object;
+    if (object instanceof FileType fileType) {
       final Icon icon = fileType.getIcon();
       renderer.setIcon(icon);
       renderer.append(getFileTypeNodeName(fileType), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    else if (object instanceof Module) {
-      final Module module = (Module)object;
+    else if (object instanceof Module module) {
       final Icon icon = ModuleType.get(module).getIcon();
       renderer.setIcon(icon);
       final String moduleName = module.getName();
       renderer.append(moduleName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    else if (object instanceof PsiFile) {
-      final PsiFile psiFile = (PsiFile)object;
+    else if (object instanceof PsiFile psiFile) {
       final Icon icon = psiFile.getIcon(0);
       renderer.setIcon(icon);
       final String fileName = psiFile.getName();
@@ -170,8 +169,7 @@ public class ConfigFilesTreeBuilder {
         renderPath(renderer, virtualFile);
       }
     }
-    else if (object instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)object;
+    else if (object instanceof VirtualFile file) {
       renderer.setIcon(VirtualFilePresentation.getIcon(file));
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       renderPath(renderer, file);
@@ -179,7 +177,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private static void renderPath(ColoredTreeCellRenderer renderer, VirtualFile virtualFile) {
-    String path = virtualFile.getPath();
+    String path = virtualFile.getPath(); //NON-NLS
     final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (i >= 0) {
       path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
@@ -189,7 +187,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   public static void installSearch(JTree tree) {
-    new TreeSpeedSearch(tree, treePath -> {
+    TreeSpeedSearch.installOn(tree, false, treePath -> {
       final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
       if (object instanceof Module) {
         return ((Module)object).getName();

@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -19,13 +19,13 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public String toString() {
-    return SelectInManager.getPackages();
+    return IdeBundle.message("select.in.packages");
   }
 
   @Override
   public boolean canSelect(PsiFileSystemItem file) {
     VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
-    vFile = BackedVirtualFile.getOriginFileIfBacked(vFile);
+    vFile = vFile == null ? null : BackedVirtualFile.getOriginFileIfBacked(vFile);
     if (vFile == null || !vFile.isValid()) return false;
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();

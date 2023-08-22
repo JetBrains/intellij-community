@@ -38,7 +38,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
 
   @Override
   public String getDescription(UnknownTask task) {
-    return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString();
+    return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString(); //NON-NLS
   }
 
   @Override
@@ -72,12 +72,12 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     public void writeExternal(@NotNull Element element) {
       if (myConfig != null) {
         element.removeContent();
-        final List attributes = myConfig.getAttributes();
-        for (Object attribute : attributes) {
-         element.setAttribute(((Attribute)attribute).clone());
+        final List<Attribute> attributes = myConfig.getAttributes();
+        for (Attribute attribute : attributes) {
+         element.setAttribute(attribute.clone());
         }
-        for (Object child : myConfig.getChildren()) {
-          element.addContent(((Element)child).clone());
+        for (Element child : myConfig.getChildren()) {
+          element.addContent(child.clone());
         }
       }
     }

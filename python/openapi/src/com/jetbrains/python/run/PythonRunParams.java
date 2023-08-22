@@ -2,6 +2,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.PathMappingSettings;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +17,29 @@ public interface PythonRunParams {
 
   void setWorkingDirectory(String workingDirectory);
 
+  /**
+   * @deprecated Use {@link #getSdk()} instead.
+   * The {@link #getSdkHome()} can be not unique for different interpreters if absolute path to python is the same.
+   */
+  @Deprecated
   @Nullable
   String getSdkHome();
 
+  /**
+   * @deprecated Use {@link #setSdk} instead.
+   * The {@link #setSdkHome} can be not unique for different interpreters if absolute path to python is the same.
+   */
+  @Deprecated
   void setSdkHome(String sdkHome);
+
+  @Nullable
+  default Sdk getSdk() {
+    return null;
+  }
+
+  default void setSdk(@Nullable Sdk sdk) {
+
+  }
 
   void setModule(Module module);
 

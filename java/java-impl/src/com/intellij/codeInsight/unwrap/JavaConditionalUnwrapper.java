@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class JavaConditionalUnwrapper extends JavaUnwrapper {
   public JavaConditionalUnwrapper() {
     super(JavaBundle.message("unwrap.conditional"));
@@ -23,7 +20,7 @@ public class JavaConditionalUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return e.getParent();
   }

@@ -1,19 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -23,8 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,28 +38,27 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
-public class VfsRootAccess {
+public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
     System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null && System.getProperty("NO_FS_ROOTS_ACCESS_CHECK") == null;
 
-  // we don't want test subclasses to accidentally remove allowed files, added by base classes
-  private static final Set<String> ourAdditionalRoots = Collections.synchronizedSet(new THashSet<>(FileUtil.PATH_HASHING_STRATEGY));
+  // we don't want test subclasses to accidentally remove allowed files added by base classes
+  private static final Set<String> ourAdditionalRoots = CollectionFactory.createFilePathSet(); // guarded by `ourAdditionalRoots`
   private static boolean insideGettingRoots;
 
   @TestOnly
-  static void assertAccessInTests(@NotNull VirtualFileSystemEntry child, @NotNull NewVirtualFileSystem delegate) {
-    Application application = ApplicationManager.getApplication();
+  static void assertAccessInTests(@NotNull VirtualFile child, @NotNull NewVirtualFileSystem delegate) {
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (SHOULD_PERFORM_ACCESS_CHECK &&
-        application.isUnitTestMode() &&
-        application instanceof ApplicationImpl &&
-        ((ApplicationImpl)application).getComponentCreated() &&
-        !ApplicationInfoImpl.isInStressTest()) {
-
+        app.isUnitTestMode() &&
+        app.isComponentCreated() &&
+        !ApplicationManagerEx.isInStressTest()) {
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
         return;
       }
@@ -68,20 +72,19 @@ public class VfsRootAccess {
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
-        String childPath = child.getPath();
+        VirtualFile local = child;
         if (delegate == JarFileSystem.getInstance()) {
-          VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(child);
+          local = JarFileSystem.getInstance().getVirtualFileForJar(child);
           assert local != null : child;
-          childPath = local.getPath();
         }
         for (String root : allowed) {
-          if (FileUtil.startsWith(childPath, root)) {
+          if (VfsUtilCore.isAncestorOrSelf(root, local)) {
             isUnder = true;
             break;
           }
           if (root.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
             String rootLocalPath = FileUtil.toSystemIndependentName(PathUtil.toPresentableUrl(root));
-            isUnder = FileUtil.startsWith(childPath, rootLocalPath);
+            isUnder = VfsUtilCore.isAncestorOrSelf(rootLocalPath, local);
             if (isUnder) break;
           }
         }
@@ -98,12 +101,12 @@ public class VfsRootAccess {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    Set<String> allowed = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
     // The following is to avoid errors in tests like "File accessed outside allowed roots: file://C:/Program Files/idea/lib/idea.jar"
-    final String homePath2 = PathManager.getHomePathFor(Application.class);
+    String homePath2 = PathManager.getHomePathFor(Application.class);
     if (homePath2 != null) {
       allowed.add(FileUtil.toSystemIndependentName(homePath2));
     }
@@ -115,41 +118,82 @@ public class VfsRootAccess {
         allowed.add(FileUtil.toSystemIndependentName(output));
       }
     }
-    catch (URISyntaxException|IllegalArgumentException ignored) { }
+    catch (URISyntaxException | IllegalArgumentException ignored) { }
 
     try {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
-      allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
+      allowed.add(FileUtil.toSystemIndependentName(FileUtil.getTempDirectory()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
-      allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
-      allowed.add(FileUtil.toSystemIndependentName(findInUserHome(".m2")));
-      allowed.add(FileUtil.toSystemIndependentName(findInUserHome(".gradle")));
 
-      // see IDEA-167037 The assertion "File accessed outside allowed root" is triggered by files symlinked from the the JDK installation folder
-      allowed.add("/etc"); // After recent update of Oracle JDK 1.8 under Ubuntu Certain files in the JDK installation are symlinked to /etc
-      allowed.add("/private/etc");
+      String userHome = FileUtil.toSystemIndependentName(SystemProperties.getUserHome());
+      allowed.add(userHome);
+
+      String mavenHome = resolvedPath(userHome + "/.m2");
+      if (!mavenHome.startsWith(userHome + '/')) {
+        allowed.add(mavenHome);
+      }
+      mavenHome = resolvedPath(userHome + "/.m2/repository");
+      if (!mavenHome.startsWith(userHome + '/')) {
+        allowed.add(mavenHome);
+      }
+
+      String gradleHome = resolvedPath(userHome + "/.gradle");
+      if (gradleHome.startsWith(userHome + '/')) {
+        allowed.add(gradleHome);
+      }
+      gradleHome = System.getenv("GRADLE_USER_HOME");
+      if (gradleHome != null) {
+        allowed.add(FileUtil.toSystemIndependentName(gradleHome));
+      }
+
+      if (SystemInfo.isWindows) {
+        String wslName = System.getProperty("wsl.distribution.name");
+        if (wslName != null) {
+          allowed.add(FileUtil.toSystemIndependentName("\\\\wsl$\\" + wslName));
+        }
+      }
+      else {
+        // see IDEA-167037 (The assertion "File accessed outside allowed root" is triggered by files symlinked from a JDK directory)
+        allowed.add("/etc");
+        allowed.add("/private/etc");
+      }
 
       for (final Project project : openProjects) {
         if (!project.isInitialized()) {
           return null; // all is allowed
         }
-        for (String url : ProjectRootManager.getInstance(project).getContentRootUrls()) {
-          allowed.add(VfsUtilCore.urlToPath(url));
-        }
-        for (String url : getAllRootUrls(project)) {
-          allowed.add(StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR));
-        }
-        String location = project.getBasePath();
-        assert location != null : project;
-        allowed.add(FileUtil.toSystemIndependentName(location));
+        ReadAction.run(() -> {
+          for (String url : ProjectRootManager.getInstance(project).getContentRootUrls()) {
+            allowed.add(VfsUtilCore.urlToPath(url));
+          }
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
+            if (moduleSdk != null) {
+              String homePath = moduleSdk.getHomePath();
+              if (homePath != null) {
+                allowed.add(homePath);
+              }
+            }
+          }
+          for (String url : getAllRootUrls(project)) {
+            allowed.add(StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR));
+          }
+          String location = project.getBasePath();
+          assert location != null : project;
+          allowed.add(FileUtil.toSystemIndependentName(location));
+        });
       }
     }
     catch (Error ignored) {
-      // sometimes library.getRoots() may crash if called from inside library modification
+      // sometimes `library.getRoots()` may crash if called during library modification
     }
 
-    allowed.addAll(ourAdditionalRoots);
+    synchronized (ourAdditionalRoots) {
+      allowed.addAll(ourAdditionalRoots);
+    }
 
+    assert !allowed.contains("/"): "Allowed roots should not contain '/'. " +
+                                   "You can disable roots access check explicitly if you don't need it.";
     return allowed;
   }
 
@@ -164,21 +208,19 @@ public class VfsRootAccess {
     return javaHome;
   }
 
-  private static String findInUserHome(String path) {
-    File file = new File(SystemProperties.getUserHome(), path);
+  private static String resolvedPath(String path) {
     try {
-      // in case if we have a symlink like ~/.m2 -> /opt/.m2
-      return file.getCanonicalPath();
+      return FileUtil.toSystemIndependentName(Path.of(path).toRealPath().toString());
     }
     catch (IOException e) {
-      return file.getPath();
+      return path;
     }
   }
 
   private static Collection<String> getAllRootUrls(Project project) {
     insideGettingRoots = true;
     try {
-      Set<String> roots = new THashSet<>();
+      Set<String> roots = CollectionFactory.createSmallMemoryFootprintSet();
       OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries().using(new DefaultModulesProvider(project));
       ContainerUtil.addAll(roots, enumerator.classes().getUrls());
       ContainerUtil.addAll(roots, enumerator.sources().getUrls());
@@ -192,27 +234,27 @@ public class VfsRootAccess {
   @TestOnly
   public static void allowRootAccess(@NotNull Disposable disposable, @NotNull String @NotNull ... roots) {
     if (roots.length == 0) return;
-    allowRootAccess(roots);
+    doAllow(roots);
     Disposer.register(disposable, () -> disallowRootAccess(roots));
   }
 
-  /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
-  @Deprecated
-  @TestOnly
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static void allowRootAccess(String @NotNull ... roots) {
-    for (String root : roots) {
-      ourAdditionalRoots.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+  private static void doAllow(String... roots) {
+    synchronized (ourAdditionalRoots) {
+      for (String root : roots) {
+        String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
+        if (path.isEmpty()) {
+          throw new IllegalArgumentException("Must not pass empty pat but got: '" + Arrays.toString(roots) + "'");
+        }
+        ourAdditionalRoots.add(path);
+      }
     }
   }
 
-  /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
-  @Deprecated
-  @TestOnly
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static void disallowRootAccess(String @NotNull ... roots) {
-    for (String root : roots) {
-      ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+  private static void disallowRootAccess(String... roots) {
+    synchronized (ourAdditionalRoots) {
+      for (String root : roots) {
+        ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+      }
     }
   }
 }

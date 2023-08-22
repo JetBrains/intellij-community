@@ -17,13 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractExternalSystemRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated
-  public AbstractExternalSystemRunConfigurationProducer(@NotNull AbstractExternalSystemTaskConfigurationType type) {
-    super(type);
-  }
 
   protected AbstractExternalSystemRunConfigurationProducer() {
     super(true);
@@ -76,7 +69,7 @@ public abstract class AbstractExternalSystemRunConfigurationProducer extends Run
 
   @Nullable
   private static ExternalSystemTaskExecutionSettings getTaskSettingsFromContext(ConfigurationContext context) {
-    final Location contextLocation = context.getLocation();
+    final Location<?> contextLocation = context.getLocation();
     if (!(contextLocation instanceof ExternalSystemTaskLocation)) {
       return null;
     }
@@ -85,7 +78,7 @@ public abstract class AbstractExternalSystemRunConfigurationProducer extends Run
 
   @Nullable
   private static Project getProjectFromContext(ConfigurationContext context) {
-    final Location contextLocation = context.getLocation();
+    final Location<?> contextLocation = context.getLocation();
     if (!(contextLocation instanceof ExternalSystemTaskLocation)) {
       return null;
     }

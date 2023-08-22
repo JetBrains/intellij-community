@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,37 +42,31 @@ public class PySkeletonHeader {
 
   @Nullable
   public static PySkeletonHeader readSkeletonHeader(@NotNull File file) {
-    try {
-      final LineNumberReader reader = new LineNumberReader(new FileReader(file));
-      try {
-        String line = null;
-        // Read 3 lines, skip first 2: encoding, module name
-        for (int i = 0; i < 3; i++) {
-          line = reader.readLine();
-          if (line == null) {
-            return null;
-          }
-        }
-        // Try the old whitespace-unsafe header format v1 first
-        final Matcher v1Matcher = VERSION_LINE_V1.matcher(line);
-        if (v1Matcher.matches()) {
-          return new PySkeletonHeader(v1Matcher.group(1), fromVersionString(v1Matcher.group(2)));
-        }
-        final Matcher fromMatcher = FROM_LINE_V2.matcher(line);
-        if (fromMatcher.matches()) {
-          final String binaryFile = fromMatcher.group(1);
-          line = reader.readLine();
-          if (line != null) {
-            final Matcher byMatcher = BY_LINE_V2.matcher(line);
-            if (byMatcher.matches()) {
-              final int version = fromVersionString(byMatcher.group(1));
-              return new PySkeletonHeader(binaryFile, version);
-            }
-          }
+    try (LineNumberReader reader = new LineNumberReader(new FileReader(file, StandardCharsets.UTF_8))) {
+      String line = null;
+      // Read 3 lines, skip first 2: encoding, module name
+      for (int i = 0; i < 3; i++) {
+        line = reader.readLine();
+        if (line == null) {
+          return null;
         }
       }
-      finally {
-        reader.close();
+      // Try the old whitespace-unsafe header format v1 first
+      final Matcher v1Matcher = VERSION_LINE_V1.matcher(line);
+      if (v1Matcher.matches()) {
+        return new PySkeletonHeader(v1Matcher.group(1), fromVersionString(v1Matcher.group(2)));
+      }
+      final Matcher fromMatcher = FROM_LINE_V2.matcher(line);
+      if (fromMatcher.matches()) {
+        final String binaryFile = fromMatcher.group(1);
+        line = reader.readLine();
+        if (line != null) {
+          final Matcher byMatcher = BY_LINE_V2.matcher(line);
+          if (byMatcher.matches()) {
+            final int version = fromVersionString(byMatcher.group(1));
+            return new PySkeletonHeader(binaryFile, version);
+          }
+        }
       }
     }
     catch (IOException ignored) {
@@ -82,7 +77,6 @@ public class PySkeletonHeader {
   /**
    * Transforms a string like "1.2" into an integer representing it.
    *
-   * @param input
    * @return an int representing the version: major number shifted 8 bit and minor number added. or 0 if version can't be parsed.
    */
   public static int fromVersionString(final String input) {

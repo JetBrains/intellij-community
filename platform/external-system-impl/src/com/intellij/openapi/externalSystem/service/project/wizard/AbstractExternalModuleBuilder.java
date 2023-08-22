@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -9,14 +9,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSettings> extends ModuleBuilder {
   @NotNull private final Icon myIcon;
   @NotNull private final ProjectSystemId myExternalSystemId;
@@ -32,7 +30,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
   }
 
   @Override
-  public String getBuilderId() {
+  public @NonNls String getBuilderId() {
     return getClass().getName();
   }
 

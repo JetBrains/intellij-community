@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -18,11 +19,16 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-class ServiceViewDeleteProvider implements DeleteProvider {
+final class ServiceViewDeleteProvider implements DeleteProvider {
   private final ServiceView myServiceView;
 
   ServiceViewDeleteProvider(@NotNull ServiceView serviceView) {
     myServiceView = serviceView;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -52,15 +58,15 @@ class ServiceViewDeleteProvider implements DeleteProvider {
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
-    if (myServiceView.getSelectedItems().stream().noneMatch(item -> item.getViewDescriptor().getRemover() != null)) {
+    if (!ContainerUtil.exists(myServiceView.getSelectedItems(), item -> item.getViewDescriptor().getRemover() != null)) {
       return false;
     }
     JComponent detailsComponent = myServiceView.getUi().getDetailsComponent();
-    return detailsComponent == null || !UIUtil.isAncestor(detailsComponent, dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    return detailsComponent == null || !UIUtil.isAncestor(detailsComponent, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
   @NotNull
-  private static List<Pair<ServiceViewItem, Runnable>> filterChildren(List<Pair<ServiceViewItem, Runnable>> items) {
+  private static List<Pair<ServiceViewItem, Runnable>> filterChildren(List<? extends Pair<ServiceViewItem, Runnable>> items) {
     return ContainerUtil.filter(items, item -> {
       ServiceViewItem parent = item.first.getParent();
       while (parent != null) {

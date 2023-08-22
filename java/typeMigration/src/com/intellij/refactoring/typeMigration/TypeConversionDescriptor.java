@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
@@ -14,9 +14,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Descriptor for structural search transformation
+ * 
+ * @see Replacer
+ */
 public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
-  private String myStringToReplace = null;
-  private String myReplaceByString = "$";
+  /**
+   * Represents structural search template to search
+   */
+  private @NonNls String myStringToReplace = null;
+  /**
+   * Represents structural search template for replacement
+   */
+  private @NonNls String myReplaceByString = "$";
   private PsiExpression myExpression;
   private PsiType myConversionType;
 
@@ -40,19 +51,19 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     return this;
   }
 
-  public void setStringToReplace(String stringToReplace) {
+  public void setStringToReplace(@NonNls String stringToReplace) {
     myStringToReplace = stringToReplace;
   }
 
-  public void setReplaceByString(String replaceByString) {
+  public void setReplaceByString(@NonNls String replaceByString) {
     myReplaceByString = replaceByString;
   }
 
-  public String getStringToReplace() {
+  public @NonNls String getStringToReplace() {
     return myStringToReplace;
   }
 
-  public String getReplaceByString() {
+  public @NonNls String getReplaceByString() {
     return myReplaceByString;
   }
 
@@ -89,7 +100,7 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     Project project = expression.getProject();
     final ReplaceOptions options = new ReplaceOptions();
     final MatchOptions matchOptions = options.getMatchOptions();
-    matchOptions.setFileType(StdFileTypes.JAVA);
+    matchOptions.setFileType(JavaFileType.INSTANCE);
     final String replacement = Replacer.testReplace(expression.getText(), stringToReplace, replaceByString, options, project);
     return (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(
       JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, expression)));

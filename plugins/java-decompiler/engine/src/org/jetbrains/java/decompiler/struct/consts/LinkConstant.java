@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.consts;
 
 public class LinkConstant extends PooledConstant {
@@ -26,10 +26,11 @@ public class LinkConstant extends PooledConstant {
     if (type == CONSTANT_Methodref ||
         type == CONSTANT_InterfaceMethodref ||
         type == CONSTANT_InvokeDynamic ||
-        type == CONSTANT_MethodHandle) {
+        (type == CONSTANT_MethodHandle && index1 != CONSTANT_MethodHandle_REF_getField && index1 != CONSTANT_MethodHandle_REF_putField)) {
       int parenth = descriptor.indexOf(')');
       if (descriptor.length() < 2 || parenth < 0 || descriptor.charAt(0) != '(') {
-        throw new IllegalArgumentException("Invalid descriptor: " + descriptor);
+        throw new IllegalArgumentException("Invalid descriptor: " + descriptor +
+                                           "; type = " + type + "; classname = " + classname + "; elementname = " + elementname);
       }
     }
   }
@@ -48,7 +49,7 @@ public class LinkConstant extends PooledConstant {
       descriptor = ref_info.descriptor;
     }
     else {
-      if (type != CONSTANT_InvokeDynamic) {
+      if (type != CONSTANT_InvokeDynamic && type != CONSTANT_Dynamic) {
         classname = pool.getPrimitiveConstant(index1).getString();
       }
 
@@ -63,9 +64,8 @@ public class LinkConstant extends PooledConstant {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof LinkConstant)) return false;
+    if (!(o instanceof LinkConstant cn)) return false;
 
-    LinkConstant cn = (LinkConstant)o;
     return this.type == cn.type &&
            this.elementname.equals(cn.elementname) &&
            this.descriptor.equals(cn.descriptor) &&

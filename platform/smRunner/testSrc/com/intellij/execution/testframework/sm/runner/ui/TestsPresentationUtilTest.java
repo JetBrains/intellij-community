@@ -83,7 +83,6 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     final Set<String> category = new LinkedHashSet<>();
 
-    category.clear();
     category.add("Scenarios");
     assertEquals("Running: Scenarios 0 of <...>  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, false));
@@ -679,7 +678,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testGetTestStatusPresentation_Progress() {
     mySimpleTest.setStarted();
-    assertEquals("Running...", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
+    assertEquals("Running…", TestsPresentationUtil.getTestStatusPresentation(mySimpleTest));
   }
 
   public void testGetTestStatusPresentation_Passed() {

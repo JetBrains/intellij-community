@@ -1,4 +1,4 @@
-// "Make 'I.foo' public" "true"
+// "Make 'I.foo()' public" "true-preview"
 interface I {
   private void foo() { }
 }

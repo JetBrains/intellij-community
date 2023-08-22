@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -18,9 +18,7 @@ import org.jetbrains.uast.*
  */
 class NonExtendableApiUsageInspection : LocalInspectionTool() {
 
-  private companion object {
-    val ANNOTATION_NAME = ApiStatus.NonExtendable::class.java.canonicalName!!
-  }
+  private val ANNOTATION_NAME: String = ApiStatus.NonExtendable::class.java.canonicalName!!
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     if (AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(ANNOTATION_NAME, holder.file)) {
@@ -29,7 +27,7 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
       PsiElementVisitor.EMPTY_VISITOR
     }
 
-  private class NonExtendableApiUsageProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
+  private inner class NonExtendableApiUsageProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
 
     private fun isLibraryElement(element: PsiElement): Boolean {
       val virtualFile = PsiUtilCore.getVirtualFile(element)
@@ -66,6 +64,10 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
       }
     }
 
+    override fun processLambda(sourceNode: ULambdaExpression, target: PsiModifierListOwner) {
+      processReference(sourceNode, target, null)
+    }
+
     override fun processMethodOverriding(method: UMethod, overriddenMethod: PsiMethod) {
       val elementToHighlight = method.uastAnchor.sourcePsiElement ?: return
       if (overriddenMethod.hasAnnotation(ANNOTATION_NAME) && isLibraryElement(overriddenMethod)) {
@@ -75,5 +77,4 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
       }
     }
   }
-
 }

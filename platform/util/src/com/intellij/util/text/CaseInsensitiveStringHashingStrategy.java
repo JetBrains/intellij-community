@@ -1,15 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createCaseInsensitiveStringMap()}
+ * or {@link com.intellij.util.containers.CollectionFactory#createCaseInsensitiveStringSet()} instead
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public final class CaseInsensitiveStringHashingStrategy implements TObjectHashingStrategy<String> {
   public static final CaseInsensitiveStringHashingStrategy INSTANCE = new CaseInsensitiveStringHashingStrategy();
 
   @Override
   public int computeHashCode(final String s) {
-    return StringUtil.stringHashCodeInsensitive(s);
+    return StringUtilRt.stringHashCodeInsensitive(s);
   }
 
   @Override

@@ -12,15 +12,17 @@ import java.util.Collection;
  * A stripped-down version of {@link com.intellij.util.ArrayUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
-@SuppressWarnings("SSBasedInspection")
 public final class ArrayUtilRt {
   public static final short[] EMPTY_SHORT_ARRAY = new short[0];
   public static final char[] EMPTY_CHAR_ARRAY = new char[0];
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final int[] EMPTY_INT_ARRAY = new int[0];
   public static final boolean[] EMPTY_BOOLEAN_ARRAY = new boolean[0];
+  @SuppressWarnings("SSBasedInspection")
   public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+  @SuppressWarnings("SSBasedInspection")
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
+  @SuppressWarnings("SSBasedInspection")
   public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
   public static final long[] EMPTY_LONG_ARRAY = new long[0];
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -12,11 +13,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Member>,
+public final class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Member>,
                                         Member extends PsiElement,
                                         Klass extends PsiElement> implements UsageViewDescriptor {
   private final PsiElement[] myMembers;
-  private final String myProcessedElementsHeader;
+  private final @NlsContexts.ListItem String myProcessedElementsHeader;
 
   public PushDownUsageViewDescriptor(Klass aClass) {
     this(aClass, null);

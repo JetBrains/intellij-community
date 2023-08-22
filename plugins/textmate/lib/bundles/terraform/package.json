@@ -1,0 +1,600 @@
+{
+  "name": "terraform",
+  "version": "2.26.0",
+  "description": "Syntax highlighting and autocompletion for Terraform",
+  "license": "MPL-2.0",
+  "contributes": {
+    "languages": [
+      {
+        "id": "terraform",
+        "aliases": [
+          "Terraform",
+          "terraform"
+        ],
+        "extensions": [
+          ".tf"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "terraform-vars",
+        "extensions": [
+          ".tfvars"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "json",
+        "extensions": [
+          ".tfstate"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "terraform",
+        "scopeName": "source.hcl.terraform",
+        "path": "./syntaxes/terraform.tmGrammar.json"
+      },
+      {
+        "language": "terraform-vars",
+        "scopeName": "source.hcl.terraform",
+        "path": "./syntaxes/terraform.tmGrammar.json"
+      }
+    ],
+    "semanticTokenTypes": [
+      {
+        "id": "hcl-attrName",
+        "superType": "property",
+        "description": "Attribute name"
+      },
+      {
+        "id": "hcl-blockType",
+        "superType": "type",
+        "description": "Block type"
+      },
+      {
+        "id": "hcl-blockLabel",
+        "superType": "enumMember",
+        "description": "Block label"
+      },
+      {
+        "id": "hcl-bool",
+        "superType": "keyword",
+        "description": "Boolean"
+      },
+      {
+        "id": "hcl-string",
+        "superType": "string",
+        "description": "String"
+      },
+      {
+        "id": "hcl-number",
+        "superType": "number",
+        "description": "Number"
+      },
+      {
+        "id": "hcl-objectKey",
+        "superType": "parameter",
+        "description": "Object key"
+      },
+      {
+        "id": "hcl-mapKey",
+        "superType": "parameter",
+        "description": "Map key"
+      },
+      {
+        "id": "hcl-keyword",
+        "superType": "variable",
+        "description": "Keyword"
+      },
+      {
+        "id": "hcl-traversalStep",
+        "superType": "variable",
+        "description": "Traversal step"
+      },
+      {
+        "id": "hcl-typeCapsule",
+        "superType": "keyword",
+        "description": "Type (complex)"
+      },
+      {
+        "id": "hcl-typePrimitive",
+        "superType": "keyword",
+        "description": "Type (primitive)"
+      },
+      {
+        "id": "hcl-functionName",
+        "superType": "function",
+        "description": "Function name"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "scopes": {
+          "hcl-attrName": [
+            "variable.other.property"
+          ],
+          "hcl-blockType": [
+            "entity.name.type"
+          ],
+          "hcl-blockLabel": [
+            "variable.other.enummember"
+          ],
+          "hcl-bool": [
+            "keyword.control"
+          ],
+          "hcl-string": [
+            "string"
+          ],
+          "hcl-number": [
+            "constant.numeric"
+          ],
+          "hcl-objectKey": [
+            "variable.parameter"
+          ],
+          "hcl-mapKey": [
+            "variable.parameter"
+          ],
+          "hcl-keyword": [
+            "keyword.control"
+          ],
+          "hcl-traversalStep": [
+            "variable.other.readwrite"
+          ],
+          "hcl-typeCapsule": [
+            "keyword.control"
+          ],
+          "hcl-typePrimitive": [
+            "keyword.control"
+          ],
+          "hcl-functionName": [
+            "support.function"
+          ]
+        }
+      }
+    ],
+    "semanticTokenModifiers": [
+      {
+        "id": "hcl-dependent",
+        "description": "Dependent"
+      },
+      {
+        "id": "terraform-data",
+        "description": "Data source"
+      },
+      {
+        "id": "terraform-locals",
+        "description": "Locals"
+      },
+      {
+        "id": "terraform-module",
+        "description": "Module"
+      },
+      {
+        "id": "terraform-output",
+        "description": "Output"
+      },
+      {
+        "id": "terraform-provider",
+        "description": "Provider"
+      },
+      {
+        "id": "terraform-resource",
+        "description": "Resource"
+      },
+      {
+        "id": "terraform-provisioner",
+        "description": "Provisioner"
+      },
+      {
+        "id": "terraform-connection",
+        "description": "Connection"
+      },
+      {
+        "id": "terraform-variable",
+        "description": "Variable"
+      },
+      {
+        "id": "terraform-terraform",
+        "description": "Terraform"
+      },
+      {
+        "id": "terraform-backend",
+        "description": "Backend"
+      },
+      {
+        "id": "terraform-name",
+        "description": "Name"
+      },
+      {
+        "id": "terraform-type",
+        "description": "Type"
+      },
+      {
+        "id": "terraform-requiredProviders",
+        "description": "Required providers"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "terraform",
+        "path": "./snippets/terraform.json"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "General",
+        "order": 0,
+        "properties": {
+          "terraform.codelens.referenceCount": {
+            "scope": "window",
+            "type": "boolean",
+            "default": false,
+            "description": "Display reference counts above top level blocks and attributes."
+          }
+        }
+      },
+      {
+        "title": "Language Server",
+        "order": 1,
+        "properties": {
+          "terraform.languageServer.enable": {
+            "scope": "window",
+            "order": "0",
+            "type": "boolean",
+            "default": true,
+            "description": "Enable Terraform Language Server"
+          },
+          "terraform.languageServer.path": {
+            "order": "1",
+            "scope": "machine",
+            "type": "string",
+            "default": "",
+            "description": "Path to the Terraform Language Server binary (optional)"
+          },
+          "terraform.languageServer.args": {
+            "order": "2",
+            "scope": "machine",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              "serve"
+            ],
+            "description": "Arguments to pass to language server binary"
+          },
+          "terraform.languageServer.tcp.port": {
+            "order": 4,
+            "type": [
+              "number",
+              null
+            ],
+            "scope": "machine",
+            "default": null,
+            "markdownDescription": "Language server TCP port to connect to. This is not compatible with `#terraform.languageServer.path#`. This is used when you want the extension to connect via TCP to an already running language server process."
+          },
+          "terraform.languageServer.ignoreSingleFileWarning": {
+            "order": "3",
+            "scope": "window",
+            "type": "boolean",
+            "default": false,
+            "description": "Enable warning when opening a single Terraform file instead of a Terraform folder. Enabling this will prevent the message being sent"
+          },
+          "terraform.languageServer.rootModules": {
+            "scope": "machine",
+            "type": "array",
+            "items": {
+              "type": "machine"
+            },
+            "default": [],
+            "description": "Per-workspace list of module directories for the language server to read",
+            "deprecationMessage": "Deprecated: This setting is not used by the extension and will be removed in a future release. Add a folder/path to your workspace instead, if you wish it to be indexed."
+          },
+          "terraform.languageServer.excludeRootModules": {
+            "scope": "machine",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Per-workspace list of module directories for the language server to exclude",
+            "deprecationMessage": "Moved: Use `#terraform.languageServer.indexing.ignorePaths#` instead."
+          },
+          "terraform.languageServer.indexing.ignorePaths": {
+            "scope": "machine",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Per-workspace list of paths for the language server to ignore when indexing files"
+          },
+          "terraform.languageServer.ignoreDirectoryNames": {
+            "scope": "machine",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Per-workspace list of directory names for the language server to ignore when indexing files",
+            "deprecationMessage": "Moved: Use `#terraform.languageServer.indexing.ignoreDirectoryNames#` instead."
+          },
+          "terraform.languageServer.indexing.ignoreDirectoryNames": {
+            "scope": "machine",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Per-workspace list of directory names for the language server to ignore when indexing files"
+          },
+          "terraform-ls.rootModules": {
+            "scope": "window",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Per-workspace list of module directories for the language server to read",
+            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.rootModules#` instead"
+          },
+          "terraform-ls.terraformExecPath": {
+            "scope": "window",
+            "type": "string",
+            "description": "Path to the Terraform binary",
+            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.terraform.path#` instead"
+          },
+          "terraform-ls.terraformExecTimeout": {
+            "scope": "window",
+            "type": "string",
+            "description": "Overrides Terraform execution timeout (e.g. 30s)",
+            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.terraform.timeout#` instead"
+          },
+          "terraform-ls.terraformLogFilePath": {
+            "scope": "window",
+            "type": "string",
+            "description": "Path to a file for Terraform executions to be logged into (TF_LOG_PATH) with support for variables (e.g. timestamp, pid, ppid) via Go template syntax {{varName}}",
+            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.terraform.logFilePath#` instead"
+          },
+          "terraform-ls.excludeRootModules": {
+            "scope": "window",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Per-workspace list of module directories for the language server to exclude",
+            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.indexing.ignorePaths#` instead"
+          },
+          "terraform-ls.ignoreDirectoryNames": {
+            "scope": "window",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Per-workspace list of directory names for the language server to ignore when indexing files",
+            "markdownDeprecationMessage": "Moved: Use `#terraform.languageServer.indexing.ignoreDirectoryNames#` instead"
+          }
+        }
+      },
+      {
+        "title": "Terraform Features",
+        "order": 3,
+        "properties": {
+          "terraform.languageServer.terraform.path": {
+            "order": 0,
+            "scope": "machine",
+            "type": "string",
+            "description": "Path to the Terraform binary used by the Terraform Language Server"
+          },
+          "terraform.languageServer.terraform.timeout": {
+            "order": 1,
+            "scope": "machine",
+            "type": "string",
+            "description": "Overrides Terraform execution timeout (e.g. 30s) used by the Terraform Language Server"
+          },
+          "terraform.languageServer.terraform.logFilePath": {
+            "order": 2,
+            "scope": "machine",
+            "type": "string",
+            "markdownDescription": "Path to a file (`TF_LOG_PATH`) for Terraform executions to be logged used by the the Terraform Language Server. Support for variables (e.g. timestamp, pid, ppid) via Go template syntax `{{varName}}`"
+          }
+        }
+      },
+      {
+        "title": "Experimental Features",
+        "order": 4,
+        "properties": {
+          "terraform.experimentalFeatures.validateOnSave": {
+            "description": "Enable validating the currently open file on save",
+            "scope": "window",
+            "type": "boolean",
+            "default": false
+          },
+          "terraform.experimentalFeatures.prefillRequiredFields": {
+            "markdownDescription": "Enable autocompletion for required fields when completing Terraform blocks. Combine with `#editor.suggest.preview#` and the editor will provide inline snippet suggestions for blocks of code",
+            "scope": "window",
+            "type": "boolean",
+            "default": false
+          },
+          "terraform-ls.experimentalFeatures": {
+            "scope": "window",
+            "type": "object",
+            "description": "Experimental (opt-in) terraform-ls features",
+            "deprecationMessage": "Moved: Use individual terraform.experimentalFeatures.* instead",
+            "properties": {
+              "validateOnSave": {
+                "scope": "window",
+                "markdownDeprecationMessage": "Moved: Use `#terraform.experimentalFeatures.validateOnSave#` instead",
+                "type": "boolean",
+                "default": false
+              },
+              "prefillRequiredFields": {
+                "scope": "window",
+                "markdownDeprecationMessage": "Moved: Use `#terraform.experimentalFeatures.prefillRequiredFields#` instead",
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "terraform.generateBugReport",
+        "title": "Terraform: Generate Bug Report"
+      },
+      {
+        "command": "terraform.enableLanguageServer",
+        "title": "Terraform: Enable Language Server"
+      },
+      {
+        "command": "terraform.disableLanguageServer",
+        "title": "Terraform: Disable Language Server"
+      },
+      {
+        "command": "terraform.init",
+        "title": "Terraform: init"
+      },
+      {
+        "command": "terraform.initCurrent",
+        "title": "Terraform: init current folder",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "terraform.validate",
+        "title": "Terraform: validate"
+      },
+      {
+        "command": "terraform.plan",
+        "title": "Terraform: plan"
+      },
+      {
+        "command": "terraform.modules.refreshList",
+        "title": "Refresh Module Calls",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "terraform.providers.refreshList",
+        "title": "Refresh Module Providers",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "terraform.modules.openDocumentation",
+        "title": "Open Documentation",
+        "icon": "$(book)"
+      },
+      {
+        "command": "terraform.providers.openDocumentation",
+        "title": "Open Documentation",
+        "icon": "$(book)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "terraform.enableLanguageServer",
+          "when": "config.terraform.languageServer.enable == false"
+        },
+        {
+          "command": "terraform.disableLanguageServer",
+          "when": "config.terraform.languageServer.enable == true"
+        },
+        {
+          "command": "terraform.init",
+          "when": "config.terraform.languageServer.enable == true"
+        },
+        {
+          "command": "terraform.initCurrent",
+          "when": "config.terraform.languageServer.enable == true"
+        },
+        {
+          "command": "terraform.validate",
+          "when": "config.terraform.languageServer.enable == true"
+        },
+        {
+          "command": "terraform.plan",
+          "when": "config.terraform.languageServer.enable == true"
+        },
+        {
+          "command": "terraform.modules.refreshList",
+          "when": "false"
+        },
+        {
+          "command": "terraform.providers.refreshList",
+          "when": "false"
+        },
+        {
+          "command": "terraform.modules.openDocumentation",
+          "when": "false"
+        },
+        {
+          "command": "terraform.providers.openDocumentation",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "terraform.modules.refreshList",
+          "when": "view == terraform.modules",
+          "group": "navigation"
+        },
+        {
+          "command": "terraform.providers.refreshList",
+          "when": "view == terraform.providers",
+          "group": "navigation"
+        },
+        {
+          "command": "terraform.initCurrent",
+          "when": "view == terraform.providers",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "terraform.modules.openDocumentation",
+          "when": "view == terraform.modules"
+        },
+        {
+          "command": "terraform.providers.openDocumentation",
+          "when": "view == terraform.providers && viewItem == moduleProviderHasDocs"
+        }
+      ]
+    },
+    "views": {
+      "terraform": [
+        {
+          "id": "terraform.providers",
+          "name": "Providers"
+        },
+        {
+          "id": "terraform.modules",
+          "name": "Module Calls"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "terraform",
+          "title": "HashiCorp Terraform",
+          "icon": "assets/icons/terraform.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "terraform.providers",
+        "contents": "The active editor cannot provide information about installed providers. [Learn more about providers](https://www.terraform.io/docs/language/providers/index.html). You may need to update your language server version."
+      },
+      {
+        "view": "terraform.modules",
+        "contents": "The active editor cannot provide information about installed modules. [Learn more about modules](https://www.terraform.io/docs/language/modules/develop/index.html) You may need to run 'terraform get' or update your language server version."
+      }
+    ]
+  }
+}

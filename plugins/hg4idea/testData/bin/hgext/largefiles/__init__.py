@@ -33,7 +33,7 @@ To start a new repository or add new large binary files, just add
 
   $ dd if=/dev/urandom of=randomdata count=2000
   $ hg add --large randomdata
-  $ hg commit -m 'add randomdata as a largefile'
+  $ hg commit -m "add randomdata as a largefile"
 
 When you push a changeset that adds/modifies largefiles to a remote
 repository, its largefile revisions will be uploaded along with it.
@@ -91,7 +91,7 @@ tracked as largefiles::
   [largefiles]
   patterns =
     *.jpg
-    re:.*\.(png|bmp)$
+    re:.*\\.(png|bmp)$
     library.zip
     content/audio/*
 
@@ -104,18 +104,97 @@ largefile. To add the first largefile to a repository, you must
 explicitly do so with the --large flag passed to the :hg:`add`
 command.
 '''
+from __future__ import absolute_import
 
-from mercurial import commands
+from mercurial import (
+    cmdutil,
+    extensions,
+    exthelper,
+    hg,
+    localrepo,
+    wireprotov1server,
+)
 
-import lfcommands
-import reposetup
-import uisetup
+from . import (
+    lfcommands,
+    overrides,
+    proto,
+    reposetup,
+)
 
-testedwith = 'internal'
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
 
+eh = exthelper.exthelper()
+eh.merge(lfcommands.eh)
+eh.merge(overrides.eh)
+eh.merge(proto.eh)
+
+eh.configitem(
+    b'largefiles',
+    b'minsize',
+    default=eh.configitem.dynamicdefault,
+)
+eh.configitem(
+    b'largefiles',
+    b'patterns',
+    default=list,
+)
+eh.configitem(
+    b'largefiles',
+    b'usercache',
+    default=None,
+)
+
+cmdtable = eh.cmdtable
+configtable = eh.configtable
+extsetup = eh.finalextsetup
 reposetup = reposetup.reposetup
-uisetup = uisetup.uisetup
+uisetup = eh.finaluisetup
 
-commands.norepo += " lfconvert"
 
-cmdtable = lfcommands.cmdtable
+def featuresetup(ui, supported):
+    # don't die on seeing a repo with the largefiles requirement
+    supported |= {b'largefiles'}
+
+
+@eh.uisetup
+def _uisetup(ui):
+    localrepo.featuresetupfuncs.add(featuresetup)
+    hg.wirepeersetupfuncs.append(proto.wirereposetup)
+
+    cmdutil.outgoinghooks.add(b'largefiles', overrides.outgoinghook)
+    cmdutil.summaryremotehooks.add(b'largefiles', overrides.summaryremotehook)
+
+    # create the new wireproto commands ...
+    wireprotov1server.wireprotocommand(b'putlfile', b'sha', permission=b'push')(
+        proto.putlfile
+    )
+    wireprotov1server.wireprotocommand(b'getlfile', b'sha', permission=b'pull')(
+        proto.getlfile
+    )
+    wireprotov1server.wireprotocommand(
+        b'statlfile', b'sha', permission=b'pull'
+    )(proto.statlfile)
+    wireprotov1server.wireprotocommand(b'lheads', b'', permission=b'pull')(
+        wireprotov1server.heads
+    )
+
+    extensions.wrapfunction(
+        wireprotov1server.commands[b'heads'], b'func', proto.heads
+    )
+    # TODO also wrap wireproto.commandsv2 once heads is implemented there.
+
+    # override some extensions' stuff as well
+    for name, module in extensions.extensions():
+        if name == b'rebase':
+            # TODO: teach exthelper to handle this
+            extensions.wrapfunction(
+                module, b'rebase', overrides.overriderebasecmd
+            )
+
+
+revsetpredicate = eh.revsetpredicate

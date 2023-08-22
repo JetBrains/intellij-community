@@ -6,10 +6,10 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 final class FileBasedIndexPluginListener implements DynamicPluginListener {
-  private final @NotNull FileBasedIndexSwitcher mySwitcher;
+  private final @NotNull FileBasedIndexTumbler mySwitcher;
 
-  FileBasedIndexPluginListener(@NotNull FileBasedIndexImpl index) {
-    mySwitcher = new FileBasedIndexSwitcher(index);
+  FileBasedIndexPluginListener() {
+    mySwitcher = new FileBasedIndexTumbler("Plugin loaded/unloaded");
   }
 
   @Override
@@ -37,6 +37,6 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
   }
 
   private void afterPluginSetChanged() {
-    mySwitcher.turnOn();
+    mySwitcher.turnOn(null);
   }
 }

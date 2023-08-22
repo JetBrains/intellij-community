@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
@@ -13,7 +13,7 @@ import java.util.Collections;
 @Deprecated
 public class ExternalDepsResolutionResult {
   public static final ExternalDepsResolutionResult
-    EMPTY = new ExternalDepsResolutionResult(Collections.<ExternalDependency>emptySet(), Collections.<File>emptySet());
+    EMPTY = new ExternalDepsResolutionResult(Collections.emptySet(), Collections.emptySet());
   private final Collection<ExternalDependency> externalDeps;
   private final Collection<File> resolvedFiles;
 

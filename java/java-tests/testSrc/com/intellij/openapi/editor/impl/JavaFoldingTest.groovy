@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
@@ -28,9 +27,6 @@ import com.intellij.util.DocumentUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("ALL") // too many warnings in injections
 class JavaFoldingTest extends JavaFoldingTestCase {
   @NotNull
@@ -139,7 +135,7 @@ class Test {
 public abstract class AroundTemplateMethod<T> {
   public abstract T execute();
 }
-private static abstract class SetupTimer<T> extends AroundTemplateMethod<T> {
+abstract class SetupTimer<T> extends AroundTemplateMethod<T> {
 }
 class Test {
     void test() {
@@ -382,6 +378,9 @@ class Test {
   }
 
   public void testCustomFolding() { doTest() }
+
+  public void testCustomFoldingIdea208441() {doTest()}
+
   public void testEmptyMethod() { doTest() }
 
   private doTest() {
@@ -848,7 +847,7 @@ class Foo {
 
     def document = (DocumentEx)myFixture.editor.document
     WriteCommandAction.runWriteCommandAction myFixture.project, {
-      DocumentUtil.executeInBulk(document, true, {
+      DocumentUtil.executeInBulk(document, {
         document.insertString(document.getText().indexOf("}") + 1, "\n");
       } as Closure)
     }

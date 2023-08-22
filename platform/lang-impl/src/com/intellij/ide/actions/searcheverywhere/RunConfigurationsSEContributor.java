@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.execution.Executor;
@@ -10,6 +10,8 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -37,7 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
+public final class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
 
   private final SearchEverywhereCommandInfo RUN_COMMAND =
     new SearchEverywhereCommandInfo("run", IdeBundle.message("searcheverywhere.runconfigurations.command.run.description"), this);
@@ -169,7 +171,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
   private final Renderer renderer = new Renderer();
 
-  private class Renderer extends JPanel implements ListCellRenderer<ChooseRunConfigurationPopup.ItemWrapper> {
+  private final class Renderer extends JPanel implements ListCellRenderer<ChooseRunConfigurationPopup.ItemWrapper> {
 
     private final SimpleColoredComponent runConfigInfo = new SimpleColoredComponent();
     private final SimpleColoredComponent executorInfo = new SimpleColoredComponent();
@@ -226,16 +228,16 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       KeyStroke enterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
       KeyStroke shiftEnterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
       if (debugExecutor != null) {
-        executorInfo.append(debugExecutor.getId(), commandAttributes);
+        executorInfo.append(debugExecutor.getActionName(), commandAttributes);
         executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         if (runExecutor != null) {
-          executorInfo.append(" / " + runExecutor.getId(), commandAttributes);
+          executorInfo.append(" / " + runExecutor.getActionName(), commandAttributes);
           executorInfo.append("(" + KeymapUtil.getKeystrokeText(shiftEnterStroke) + ")", shortcutAttributes);
         }
       }
       else {
         if (runExecutor != null) {
-          executorInfo.append(runExecutor.getId(), commandAttributes);
+          executorInfo.append(runExecutor.getActionName(), commandAttributes);
           executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         }
       }
@@ -246,7 +248,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       Optional.ofNullable(ObjectUtils.tryCast(wrapper.getValue(), RunnerAndConfigurationSettings.class))
         .map(settings -> findExecutor(settings, mode))
         .ifPresent(executor -> {
-          executorInfo.append(executor.getId(), attributes);
+          executorInfo.append(executor.getActionName(), attributes);
           executorInfo.setIcon(executor.getToolWindowIcon());
         });
     }
@@ -269,5 +271,22 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     }
 
     return executor;
+  }
+
+  public static final class Factory implements SearchEverywhereContributorFactory<ChooseRunConfigurationPopup.ItemWrapper> {
+    @Override
+    public @NotNull SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> createContributor(@NotNull AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      Supplier<String> commandSupplier = () -> {
+        SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
+        if (!manager.isShown()) return null;
+
+        return manager.getCurrentlyShownUI().getSearchField().getText();
+      };
+
+      return new RunConfigurationsSEContributor(project, contextComponent, commandSupplier);
+    }
+
   }
 }

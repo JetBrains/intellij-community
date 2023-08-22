@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -26,7 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +26,9 @@ import org.jetbrains.annotations.Nullable;
  * This helper is used to disable error highlighting and inspections in such files,
  * as they tend to be false-positive due to context differences.
  */
-public class OutsidersPsiFileSupport {
+public final class OutsidersPsiFileSupport {
   private static final Key<Boolean> KEY = Key.create("OutsidersPsiFileSupport");
-  private static final Key<String> FILE_PATH_KEY = Key.create("OutsidersPsiFileSupport.FilePath");
+  private static final Key<String> VFS_URL_KEY = Key.create("OutsidersPsiFileSupport.FilePath");
 
   public static class HighlightFilter implements HighlightInfoFilter {
     @Override
@@ -69,14 +57,22 @@ public class OutsidersPsiFileSupport {
 
 
   public static void markFile(@NotNull VirtualFile file) {
-    markFile(file, null);
+    markFileWithUrl(file, null);
   }
 
   public static void markFile(@NotNull VirtualFile file, @Nullable String originalPath) {
-    file.putUserData(KEY, Boolean.TRUE);
-    if (originalPath != null) file.putUserData(FILE_PATH_KEY, FileUtil.toSystemIndependentName(originalPath));
+    var vfsUrl = originalPath != null ? VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, originalPath) : null;
+    markFileWithUrl(file, vfsUrl);
   }
 
+  /**
+   * @param originalVfsUrl The VFS URL of the outsider file's original file as defined by {@link VirtualFile#getUrl}, or `null` if the
+   *                       outsider doesn't have an original file.
+   */
+  public static void markFileWithUrl(@NotNull VirtualFile file, @Nullable String originalVfsUrl) {
+    file.putUserData(KEY, Boolean.TRUE);
+    if (originalVfsUrl != null) file.putUserData(VFS_URL_KEY, FileUtil.toSystemIndependentName(originalVfsUrl));
+  }
 
   public static boolean isOutsiderFile(@Nullable PsiFile file) {
     return file != null && isOutsiderFile(file.getVirtualFile());
@@ -86,8 +82,18 @@ public class OutsidersPsiFileSupport {
     return file != null && file.getUserData(KEY) == Boolean.TRUE;
   }
 
+  /**
+   * @return The VFS URL of the outsider file's original file as defined by {@link VirtualFile#getUrl}, or `null` if the outsider doesn't
+   *         have an original file.
+   */
+  @Nullable
+  public static String getOriginalFileUrl(@NotNull VirtualFile file) {
+    return file.getUserData(VFS_URL_KEY);
+  }
+
   @Nullable
   public static String getOriginalFilePath(@NotNull VirtualFile file) {
-    return file.getUserData(FILE_PATH_KEY);
+    var vfsUrl = getOriginalFileUrl(file);
+    return vfsUrl != null ? VirtualFileManager.extractPath(vfsUrl) : null;
   }
 }

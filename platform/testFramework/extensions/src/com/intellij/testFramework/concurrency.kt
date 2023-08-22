@@ -16,7 +16,7 @@
 package com.intellij.testFramework
 
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.throwIfNotEmpty
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.concurrency.Promise
 import java.util.*
@@ -57,7 +57,7 @@ fun assertConcurrent(vararg runnables: () -> Any?, maxTimeoutSeconds: Int = 5) {
   finally {
     threadPool.shutdownNow()
   }
-  CompoundRuntimeException.throwIfNotEmpty(exceptions)
+  throwIfNotEmpty(exceptions)
 }
 
 fun assertConcurrentPromises(vararg runnables: () -> Promise<String>, maxTimeoutSeconds: Int = 5) {
@@ -68,7 +68,7 @@ fun assertConcurrentPromises(vararg runnables: () -> Promise<String>, maxTimeout
     val allExecutorThreadsReady = CountDownLatch(numThreads)
     val afterInitBlocker = CountDownLatch(1)
     val allDone = CountDownLatch(numThreads)
-    val promises: MutableList<Promise<String>> = Collections.synchronizedList(ArrayList<Promise<String>>())
+    val promises: MutableList<Promise<String>> = Collections.synchronizedList(ArrayList())
     for (submittedTestRunnable in runnables) {
       threadPool.submit {
         allExecutorThreadsReady.countDown()
@@ -95,6 +95,6 @@ fun assertConcurrentPromises(vararg runnables: () -> Promise<String>, maxTimeout
   finally {
     threadPool.shutdownNow()
   }
-  CompoundRuntimeException.throwIfNotEmpty(exceptions)
+  throwIfNotEmpty(exceptions)
 }
 

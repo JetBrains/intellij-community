@@ -16,6 +16,9 @@
             world
       ahahah: ppp
             fsfsdfs
+      map:
+        key1:   value1
+        key2:  value2
   -   bugaga
   
   -  &an
@@ -26,5 +29,5 @@
           - t
           - k
   -   &an3
-        longKey: v1
-        k: v2
+        longKey:            v1
+        k:            v2

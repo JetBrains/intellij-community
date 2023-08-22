@@ -1,0 +1,3 @@
+fun jj() {
+    JJ().test()
+}

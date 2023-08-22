@@ -9,7 +9,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class StubIdExternalizer implements DataExternalizer<StubIdList> {
+public final class StubIdExternalizer implements DataExternalizer<StubIdList> {
   public static final StubIdExternalizer INSTANCE = new StubIdExternalizer();
 
   @Override

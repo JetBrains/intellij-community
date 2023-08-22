@@ -1,0 +1,8 @@
+top:
+  subtop:
+    someKey1: some value 1
+    key1:
+      subKey: val1
+
+    key2: val2
+    <caret>someKey2: some value 1

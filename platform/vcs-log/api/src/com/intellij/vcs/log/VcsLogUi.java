@@ -15,11 +15,13 @@
  */
 package com.intellij.vcs.log;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsLogUi {
 
   @NotNull
+  @NonNls
   String getId();
 
   @NotNull
@@ -31,6 +33,4 @@ public interface VcsLogUi {
   void addLogListener(@NotNull VcsLogListener listener);
 
   void removeLogListener(@NotNull VcsLogListener listener);
-
-  boolean isHighlighterEnabled(@NotNull String id);
 }

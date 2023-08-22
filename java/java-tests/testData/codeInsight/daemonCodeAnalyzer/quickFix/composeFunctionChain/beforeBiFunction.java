@@ -1,4 +1,4 @@
-// "Replace nested function call with andThen call" "true"
+// "Replace nested function call with andThen call" "true-preview"
 
 import java.util.Collections;
 import java.util.function.BinaryOperator;

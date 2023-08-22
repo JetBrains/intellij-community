@@ -23,20 +23,20 @@ import com.intellij.openapi.application.PluginPathManager;
  */
 public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest {
   public void test1() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void test2() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void test3() {
-    doTest();
+    doTestWithPreview();
   }
 
   @Override
   protected String getActionName() {
-    return ConvertJavadocInspection.FIX_NAME;
+    return "Convert TestNG Javadoc to 1.5 annotations";
   }
 
   @Override

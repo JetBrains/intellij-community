@@ -2,6 +2,7 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -18,6 +19,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -28,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String TESTNG_PREFIX = "testng.";
-  static final String FIX_NAME = "Convert TestNG Javadoc to 1.5 annotations";
-  private static final String INSPECTION_NAME = "TestNG Javadoc can be converted to annotations";
 
   @Override
   @Nls
@@ -49,9 +49,9 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitDocTag(final PsiDocTag tag) {
+      @Override public void visitDocTag(final @NotNull PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
-          holder.registerProblem(tag, INSPECTION_NAME, new ConvertJavadocQuickfix());
+          holder.registerProblem(tag, TestngBundle.message("inspection.message.testng.javadoc.can.be.converted.to.annotations"), new ConvertJavadocQuickfix());
         }
       }
     };
@@ -63,12 +63,19 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getFamilyName() {
-      return FIX_NAME;
+      return TestngBundle.message("intention.family.name.convert.testng.javadoc.to.annotations");
     }
 
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiDocTag tag = (PsiDocTag)previewDescriptor.getPsiElement();
+      doFix(project, tag);
+      return IntentionPreviewInfo.DIFF;
     }
 
     @Override
@@ -156,8 +163,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
         for (PsiElement element : docComment.getChildren()) {
           //if it's anything other than a doc token, then it must stay
           if (element instanceof PsiWhiteSpace) continue;
-          if (!(element instanceof PsiDocToken)) return;
-          PsiDocToken docToken = (PsiDocToken)element;
+          if (!(element instanceof PsiDocToken docToken)) return;
           if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && !docToken.getText().trim().isEmpty()) {
             return;
           }

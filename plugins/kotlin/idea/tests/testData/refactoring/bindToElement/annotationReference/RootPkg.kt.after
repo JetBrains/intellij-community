@@ -1,0 +1,7 @@
+// BIND_TO B
+annotation class A { }
+
+annotation class B { }
+
+@B
+class C {}

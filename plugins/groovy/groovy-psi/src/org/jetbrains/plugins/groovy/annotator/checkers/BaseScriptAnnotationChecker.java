@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.Objects;
 
 public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
   @Override
@@ -37,6 +40,15 @@ public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
           holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("declared.type.0.have.to.extend.script", typeText)).range(annotation).create();
           return true;
         }
+        if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
+          String thisScriptQualifiedName = Objects.requireNonNull(((GroovyFile)file).getScriptClass()).getQualifiedName();
+          if (thisScriptQualifiedName != null && InheritanceUtil.isInheritor(type, thisScriptQualifiedName)) {
+            String typeText = type.getCanonicalText();
+            holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("declared.type.0.extends.1.which.is.circular.inheritance", typeText, thisScriptQualifiedName))
+              .range(annotation)
+              .create();
+          }
+        }
       }
       else if (pparent instanceof GrPackageDefinition || pparent instanceof GrImportStatement) {
         PsiClass clazz = GrAnnotationUtil.inferClassAttribute(annotation, "value");
@@ -51,6 +63,7 @@ public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
   }
 
   @NotNull
+  @NlsSafe
   public String getTypeText(@Nullable PsiClass clazz) {
     if (clazz == null) {
       return CommonClassNames.JAVA_LANG_OBJECT;

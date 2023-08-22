@@ -25,6 +25,7 @@ import com.intellij.packaging.impl.ui.ArtifactProblemsHolderBase;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
   }
 
   @Override
-  public void registerError(@NotNull String message,
+  public void registerError(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                             @NotNull String problemTypeId,
                             @Nullable List<PackagingElement<?>> pathToPlace,
                             ArtifactProblemQuickFix @NotNull ... quickFixes) {
@@ -53,13 +54,13 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
   }
 
   @Override
-  public void registerWarning(@NotNull String message,
+  public void registerWarning(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                               @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
                               ArtifactProblemQuickFix @NotNull ... quickFixes) {
     registerProblem(message, pathToPlace, ProjectStructureProblemType.warning(problemTypeId), quickFixes);
   }
 
-  private void registerProblem(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace,
+  private void registerProblem(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message, @Nullable List<PackagingElement<?>> pathToPlace,
                                final ProjectStructureProblemType problemType, ArtifactProblemQuickFix @NotNull ... quickFixes) {
     String parentPath;
     PackagingElement<?> element;

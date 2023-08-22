@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -24,19 +11,20 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyDebugSupportUtils {
-
-  public static final String DEBUGGER_WARNING_MESSAGE = "This option may slow down the debugger";
+public final class PyDebugSupportUtils {
 
   private PyDebugSupportUtils() {
   }
+
+  public static final @NonNls String ASYNCIO_ENV = "ASYNCIO_DEBUGGER_ENV";
 
   // can expression be evaluated, or should be executed
   public static boolean isExpression(final Project project, final String expression) {
@@ -72,8 +60,6 @@ public class PyDebugSupportUtils {
   private static boolean isSimpleEnough(final PsiElement element) {
     return element instanceof PyLiteralExpression ||
            element instanceof PyQualifiedExpression ||
-           element instanceof PyBinaryExpression ||
-           element instanceof PyPrefixExpression ||
            element instanceof PySliceExpression ||
            element instanceof PyNamedParameter;
   }
@@ -116,8 +102,8 @@ public class PyDebugSupportUtils {
     return false;
   }
 
-  public static boolean isCurrentPythonDebugProcess(@NotNull Project project) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+  public static boolean isCurrentPythonDebugProcess(@NotNull AnActionEvent event) {
+    XDebugSession session = DebuggerUIUtil.getSession(event);
     return session != null && session.getDebugProcess() instanceof PyDebugProcess;
   }
 }

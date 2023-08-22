@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -8,6 +8,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -35,6 +37,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -63,8 +66,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        if (value instanceof DiscoveredTestsTreeModel.Node) {
-          DiscoveredTestsTreeModel.Node node = (DiscoveredTestsTreeModel.Node)value;
+        if (value instanceof DiscoveredTestsTreeModel.Node node) {
           setIcon(node.getIcon());
           String name = node.getName();
           assert name != null;
@@ -75,12 +77,12 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
               append(FontUtil.spaceAndThinSpace() + packageName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             int testMethodCount = myModel.getChildren(value).size();
-            append(" / " + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append(JavaCompilerBundle.message("affected.tests.counts", testMethodCount, testMethodCount == 1 ? 0 : 1), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
           else if (node instanceof DiscoveredTestsTreeModel.Node.Method) {
             boolean isParametrized = !((DiscoveredTestsTreeModel.Node.Method)node).getParameters().isEmpty();
             if (isParametrized) {
-              append(FontUtil.spaceAndThinSpace() + "parametrized", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              append(FontUtil.spaceAndThinSpace() + JavaCompilerBundle.message("test.discovery.parametrized"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, false);
@@ -123,7 +125,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
                     SmartPsiElementPointer<PsiClass> pointer = element.getPointer();
                     return ModuleUtilCore.findModuleForFile(pointer.getVirtualFile(), pointer.getProject());
                   })
-                  .filter(module -> module != null)
+                  .filter(Objects::nonNull)
                   .collect(Collectors.toSet());
   }
 
@@ -156,8 +158,22 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      TreePath[] paths = getSelectionModel().getSelectionPaths();
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      TreePath[] paths = getSelectionPaths();
+      return (DataProvider)slowId -> getSlowData(slowId, paths);
+    }
+    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+      return PopupUtil.getPopupContainerFor(this);
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, TreePath @Nullable [] paths) {
+    if (paths == null || paths.length == 0) return null;
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return obj2psi(paths[0].getLastPathComponent());
+    }
+    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> result = new SmartList<>();
       TreeModel model = getModel();
       for (TreePath p : paths) {
@@ -179,12 +195,6 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
         }
       }
       return result.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return getSelectedElement();
-    }
-    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-      return PopupUtil.getPopupContainerFor(this);
     }
     return null;
   }

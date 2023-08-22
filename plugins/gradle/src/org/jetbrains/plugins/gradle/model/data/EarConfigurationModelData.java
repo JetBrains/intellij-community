@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -20,15 +20,15 @@ public final class EarConfigurationModelData extends AbstractExternalEntityData 
   @NotNull
   private final List<Ear> ears;
   @NotNull
-  private final Collection<DependencyData> deployDependencies;
+  private final Collection<DependencyData<?>> deployDependencies;
   @NotNull
-  private final Collection<DependencyData> earlibDependencies;
+  private final Collection<DependencyData<?>> earlibDependencies;
 
   @PropertyMapping({"owner", "ears", "deployDependencies", "earlibDependencies"})
   public EarConfigurationModelData(@NotNull ProjectSystemId owner,
                                    @NotNull List<Ear> ears,
-                                   @NotNull Collection<DependencyData> deployDependencies,
-                                   @NotNull Collection<DependencyData> earlibDependencies) {
+                                   @NotNull Collection<DependencyData<?>> deployDependencies,
+                                   @NotNull Collection<DependencyData<?>> earlibDependencies) {
     super(owner);
 
     this.ears = ears;
@@ -52,22 +52,20 @@ public final class EarConfigurationModelData extends AbstractExternalEntityData 
   }
 
   @NotNull
-  public Collection<DependencyData> getDeployDependencies() {
+  public Collection<DependencyData<?>> getDeployDependencies() {
     return deployDependencies;
   }
 
   @NotNull
-  public Collection<DependencyData> getEarlibDependencies() {
+  public Collection<DependencyData<?>> getEarlibDependencies() {
     return earlibDependencies;
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EarConfigurationModelData)) return false;
+    if (!(o instanceof EarConfigurationModelData data)) return false;
     if (!super.equals(o)) return false;
-
-    EarConfigurationModelData data = (EarConfigurationModelData)o;
 
     if (!ears.equals(data.ears)) return false;
 

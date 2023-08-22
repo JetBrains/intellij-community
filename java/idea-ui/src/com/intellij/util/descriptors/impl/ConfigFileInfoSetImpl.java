@@ -13,107 +13,113 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.descriptors.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 
-public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
+public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   private static final Logger LOG = Logger.getInstance(ConfigFileInfoSetImpl.class);
   @NonNls private static final String ELEMENT_NAME = "deploymentDescriptor";
   @NonNls private static final String ID_ATTRIBUTE = "name";
   @NonNls private static final String URL_ATTRIBUTE = "url";
-  private final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> myConfigFiles = new MultiValuesMap<>();
+  private final MultiMap<ConfigFileMetaData, ConfigFileInfo> configFiles = new MultiMap<>();
   private @Nullable ConfigFileContainerImpl myContainer;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
 
-  public ConfigFileInfoSetImpl(final ConfigFileMetaDataProvider metaDataProvider) {
+  public ConfigFileInfoSetImpl(@NotNull final ConfigFileMetaDataProvider metaDataProvider) {
     myMetaDataProvider = metaDataProvider;
   }
 
   @Override
-  public void addConfigFile(ConfigFileInfo descriptor) {
-    myConfigFiles.put(descriptor.getMetaData(), descriptor);
+  public void addConfigFile(@NotNull ConfigFileInfo descriptor) {
+    configFiles.putValue(descriptor.getMetaData(), descriptor);
     onChange();
   }
 
   @Override
-  public void addConfigFile(final ConfigFileMetaData metaData, final String url) {
+  public void addConfigFile(@NotNull final ConfigFileMetaData metaData, @NotNull final String url) {
     addConfigFile(new ConfigFileInfo(metaData, url));
   }
 
   @Override
-  public void removeConfigFile(ConfigFileInfo descriptor) {
-    myConfigFiles.remove(descriptor.getMetaData(), descriptor);
+  public void removeConfigFile(@NotNull ConfigFileInfo descriptor) {
+    configFiles.remove(descriptor.getMetaData(), descriptor);
     onChange();
   }
 
   @Override
-  public void replaceConfigFile(final ConfigFileMetaData metaData, final String newUrl) {
-    myConfigFiles.removeAll(metaData);
+  public void replaceConfigFile(@NotNull ConfigFileMetaData metaData, @NotNull String newUrl) {
+    configFiles.remove(metaData);
     addConfigFile(new ConfigFileInfo(metaData, newUrl));
   }
 
-  public ConfigFileInfo updateConfigFile(ConfigFile configFile) {
-    myConfigFiles.remove(configFile.getMetaData(), configFile.getInfo());
+  @Override
+  public void updateConfigFile(@NotNull ConfigFile configFile) {
+    configFiles.remove(configFile.getMetaData(), configFile.getInfo());
     ConfigFileInfo info = new ConfigFileInfo(configFile.getMetaData(), configFile.getUrl());
-    myConfigFiles.put(info.getMetaData(), info);
+    configFiles.putValue(info.getMetaData(), info);
     ((ConfigFileImpl)configFile).setInfo(info);
-    return info;
   }
 
   @Override
   public void removeConfigFiles(final ConfigFileMetaData... metaData) {
     for (ConfigFileMetaData data : metaData) {
-      myConfigFiles.removeAll(data);
+      configFiles.remove(data);
     }
     onChange();
   }
 
   @Override
-  @Nullable
-  public ConfigFileInfo getConfigFileInfo(ConfigFileMetaData metaData) {
-    final Collection<ConfigFileInfo> descriptors = myConfigFiles.get(metaData);
-    if (descriptors == null || descriptors.isEmpty()) {
-      return null;
-    }
-    return descriptors.iterator().next();
+  public @Nullable ConfigFileInfo getConfigFileInfo(@NotNull ConfigFileMetaData metaData) {
+    Collection<ConfigFileInfo> descriptors = configFiles.get(metaData);
+    return descriptors.isEmpty() ? null : descriptors.iterator().next();
   }
 
   @Override
-  public ConfigFileInfo[] getConfigFileInfos() {
-    final Collection<ConfigFileInfo> configurations = myConfigFiles.values();
-    return configurations.toArray(new ConfigFileInfo[0]);
+  public List<ConfigFileInfo> getConfigFileInfos() {
+    return List.copyOf(configFiles.values());
   }
 
   @Override
-  public void setConfigFileInfos(final Collection<? extends ConfigFileInfo> descriptors) {
-    myConfigFiles.clear();
+  public void setConfigFileInfos(Collection<? extends ConfigFileInfo> descriptors) {
+    configFiles.clear();
     for (ConfigFileInfo descriptor : descriptors) {
-      myConfigFiles.put(descriptor.getMetaData(), descriptor);
+      configFiles.putValue(descriptor.getMetaData(), descriptor);
     }
     onChange();
+  }
+
+  @Override
+  public void setConfigFileItems(@NotNull List<ConfigFileItem> configFileItems) {
+    var configFileInfos = new ArrayList<ConfigFileInfo>();
+    for (var configFileItem : configFileItems) {
+      var metadata = myMetaDataProvider.findMetaData(configFileItem.getId());
+      if (null != metadata) {
+        configFileInfos.add(new ConfigFileInfo(metadata, configFileItem.getUrl()));
+      }
+    }
+    setConfigFileInfos(configFileInfos);
   }
 
   private void onChange() {
     if (myContainer != null) {
-      myContainer.updateDescriptors(myConfigFiles);
+      myContainer.updateDescriptors(configFiles);
     }
   }
-
 
   @Override
   public ConfigFileMetaDataProvider getMetaDataProvider() {
@@ -122,7 +128,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
 
   @Override
   public void readExternal(final Element element) throws InvalidDataException {
-    myConfigFiles.clear();
+    configFiles.clear();
     List<Element> children = element.getChildren(ELEMENT_NAME);
     for (Element child : children) {
       final String id = child.getAttributeValue(ID_ATTRIBUTE);
@@ -131,7 +137,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
         if (metaData != null) {
           final String url = child.getAttributeValue(URL_ATTRIBUTE);
           if (url == null) throw new InvalidDataException(URL_ATTRIBUTE + " attribute not specified for " + id + " descriptor");
-          myConfigFiles.put(metaData, new ConfigFileInfo(metaData, url));
+          configFiles.putValue(metaData, new ConfigFileInfo(metaData, url));
         }
       }
     }
@@ -144,7 +150,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
       final int id = Comparing.compare(o1.getMetaData().getId(), o2.getMetaData().getId());
       return id != 0 ? id : Comparing.compare(o1.getUrl(), o2.getUrl());
     });
-    sortedConfigFiles.addAll(myConfigFiles.values());
+    sortedConfigFiles.addAll(configFiles.values());
     for (ConfigFileInfo configuration : sortedConfigFiles) {
       final Element child = new Element(ELEMENT_NAME);
       final ConfigFileMetaData metaData = configuration.getMetaData();
@@ -154,9 +160,10 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
     }
   }
 
-  public void setContainer(@NotNull ConfigFileContainerImpl container) {
+  @Override
+  public void setContainer(@NotNull ConfigFileContainer container) {
     LOG.assertTrue(myContainer == null);
-    myContainer = container;
-    myContainer.updateDescriptors(myConfigFiles);
+    myContainer = (ConfigFileContainerImpl)container;
+    myContainer.updateDescriptors(configFiles);
   }
 }

@@ -14,23 +14,18 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
-import java.io.CharArrayReader;
-import java.io.File;
-import java.io.StreamTokenizer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-public class InspectionTestUtil {
+import java.io.CharArrayReader;
+import java.io.File;
+import java.io.StreamTokenizer;
+import java.util.*;
+
+public final class InspectionTestUtil {
   private InspectionTestUtil() {
   }
 
@@ -67,15 +62,14 @@ public class InspectionTestUtil {
     }
   }
 
-  static boolean compareProblemWithExpected(Element reportedProblem, Element expectedProblem, boolean checkRange) throws Exception {
+  private static boolean compareProblemWithExpected(Element reportedProblem, Element expectedProblem, boolean checkRange) throws Exception {
     if (!compareFiles(reportedProblem, expectedProblem)) return false;
     if (!compareLines(reportedProblem, expectedProblem)) return false;
     if (!compareDescriptions(reportedProblem, expectedProblem)) return false;
-    if (checkRange && !compareTextRange(reportedProblem, expectedProblem)) return false;
-    return true;
+    return !checkRange || compareTextRange(reportedProblem, expectedProblem);
   }
 
-  static boolean compareTextRange(final Element reportedProblem, final Element expectedProblem) {
+  private static boolean compareTextRange(final Element reportedProblem, final Element expectedProblem) {
     Element reportedTextRange = reportedProblem.getChild("entry_point");
     if (reportedTextRange == null) return false;
     Element expectedTextRange = expectedProblem.getChild("entry_point");
@@ -83,13 +77,14 @@ public class InspectionTestUtil {
            Objects.equals(reportedTextRange.getAttributeValue("FQNAME"), expectedTextRange.getAttributeValue("FQNAME"));
   }
 
-  static boolean compareDescriptions(Element reportedProblem, Element expectedProblem) throws Exception {
+  private static boolean compareDescriptions(Element reportedProblem, Element expectedProblem) throws Exception {
     String expectedDescription = expectedProblem.getChildText("description");
     String reportedDescription = reportedProblem.getChildText("description");
     if (expectedDescription.equals(reportedDescription)) return true;
 
     StreamTokenizer tokenizer = new StreamTokenizer(new CharArrayReader(expectedDescription.toCharArray()));
     tokenizer.quoteChar('\'');
+    tokenizer.ordinaryChar('/');
 
     int idx = 0;
     while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
@@ -111,11 +106,11 @@ public class InspectionTestUtil {
     return true;
   }
 
-  static boolean compareLines(Element reportedProblem, Element expectedProblem) {
+  private static boolean compareLines(Element reportedProblem, Element expectedProblem) {
     return Objects.equals(reportedProblem.getChildText("line"), expectedProblem.getChildText("line"));
   }
 
-  static boolean compareFiles(Element reportedProblem, Element expectedProblem) {
+  private static boolean compareFiles(Element reportedProblem, Element expectedProblem) {
     String reportedFileName = reportedProblem.getChildText("file");
     if (reportedFileName == null) {
       return true;
@@ -126,7 +121,7 @@ public class InspectionTestUtil {
   }
 
   public static void compareToolResults(@NotNull GlobalInspectionContextImpl context,
-                                        @NotNull InspectionToolWrapper toolWrapper,
+                                        @NotNull InspectionToolWrapper<?,?> toolWrapper,
                                         boolean checkRange,
                                         @NotNull String testDir) {
     compareToolResults(context, checkRange, testDir, Collections.singletonList(toolWrapper));
@@ -135,10 +130,10 @@ public class InspectionTestUtil {
   static void compareToolResults(@NotNull GlobalInspectionContextImpl context,
                                  boolean checkRange,
                                  @NotNull String testDir,
-                                 @NotNull Collection<? extends InspectionToolWrapper> toolWrappers) {
+                                 @NotNull Collection<? extends InspectionToolWrapper<?,?>> toolWrappers) {
     final Element root = new Element(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
 
-    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+    for (InspectionToolWrapper<?,?> toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
       presentation.updateContent();  //e.g. dead code need check for reachables
       presentation.exportResults(p -> root.addContent(p), x -> false, x -> false);
@@ -154,7 +149,7 @@ public class InspectionTestUtil {
   }
 
   @TestOnly
-  public static void runTool(@NotNull InspectionToolWrapper toolWrapper,
+  public static void runTool(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                              @NotNull final AnalysisScope scope,
                              @NotNull final GlobalInspectionContextForTests globalContext) {
     final String shortName = toolWrapper.getShortName();
@@ -177,19 +172,20 @@ public class InspectionTestUtil {
   }
 
   public static <T extends InspectionProfileEntry> T instantiateTool(Class<? extends T> inspection) {
+    //noinspection unchecked
     return (T)instantiateTools(Collections.singleton(inspection)).get(0);
   }
 
   @NotNull
   public static List<InspectionProfileEntry> instantiateTools(Set<String> classNames) {
     List<InspectionProfileEntry> tools = JBIterable.of(LocalInspectionEP.LOCAL_INSPECTION, InspectionEP.GLOBAL_INSPECTION)
-      .flatten((o) -> o.getExtensionList())
-      .filter((o) -> classNames.contains(o.implementationClass))
+      .flatten(o -> o.getExtensionList())
+      .filter(o -> classNames.contains(o.implementationClass))
       .transform(InspectionEP::instantiateTool)
       .toList();
     if (tools.size() != classNames.size()) {
       Set<String> missing = new TreeSet<>(classNames);
-      missing.removeAll(JBIterable.from(tools).transform((o) -> o.getClass().getName()).toSet());
+      missing.removeAll(JBIterable.from(tools).transform(o -> o.getClass().getName()).toSet());
       throw new RuntimeException("Unregistered inspections requested: " + missing);
     }
     return tools;

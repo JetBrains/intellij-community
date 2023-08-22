@@ -23,21 +23,16 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-class CutLineActionHandler extends EditorWriteActionHandler {
+class CutLineActionHandler extends EditorWriteActionHandler.ForEachCaret {
   private final boolean myToLineStart;
 
   CutLineActionHandler(boolean toLineStart) {
-    super(true);
     myToLineStart = toLineStart;
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    if (caret == null) {
-      caret = editor.getCaretModel().getCurrentCaret();
-    }
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (caret.hasSelection()) {
       delete(editor, caret, caret.getSelectionStart(), caret.getSelectionEnd());
       return;

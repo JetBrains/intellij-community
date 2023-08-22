@@ -34,7 +34,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   public static final NullFileReferenceHelper INSTANCE = new NullFileReferenceHelper();
 
   @Override
-  public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {
+  public PsiFileSystemItem findRoot(final @NotNull Project project, @NotNull final VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile contentRootForFile = index.getContentRootForFile(file);
 
@@ -49,7 +49,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
 
   @Override
   @NotNull
-  public Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file) {
+  public Collection<PsiFileSystemItem> getContexts(final @NotNull Project project, @NotNull final VirtualFile file) {
     final PsiFileSystemItem item = getPsiFileSystemItem(project, file);
     if (item != null) {
       final PsiFileSystemItem parent = item.getParent();
@@ -61,7 +61,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public boolean isMine(final Project project, @NotNull final VirtualFile file) {
+  public boolean isMine(final @NotNull Project project, @NotNull final VirtualFile file) {
     return ProjectRootManager.getInstance(project).getFileIndex().isInContent(file);
   }
 

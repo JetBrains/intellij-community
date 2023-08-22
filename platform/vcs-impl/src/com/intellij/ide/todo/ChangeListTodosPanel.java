@@ -3,22 +3,27 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListAdapter;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public abstract class ChangeListTodosPanel extends TodoPanel{
+public abstract class ChangeListTodosPanel extends TodoPanel {
+
   private final Alarm myAlarm;
 
-  public ChangeListTodosPanel(Project project, TodoPanelSettings settings, Content content){
-    super(project,settings,false,content);
-    ChangeListManager.getInstance(project).addChangeListListener(new MyChangeListManagerListener(), this);
+  public ChangeListTodosPanel(@NotNull TodoView todoView,
+                              @NotNull TodoPanelSettings settings,
+                              @NotNull Content content) {
+    super(todoView, settings, false, content);
+
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListManagerListener(), this);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   }
 
@@ -26,17 +31,44 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     @Override
     public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
       rebuildWithAlarm(myAlarm);
-      AppUIUtil.invokeOnEdt(() -> setDisplayName(TodoView.getTabNameForChangeList(newDefaultList.getName())));
+      updateTabName();
     }
 
     @Override
     public void changeListRenamed(final ChangeList list, final String oldName) {
-      AppUIUtil.invokeOnEdt(() -> setDisplayName(TodoView.getTabNameForChangeList(list.getName())));
+      updateTabName();
     }
 
     @Override
-    public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+    public void changesMoved(final Collection<? extends Change> changes, final ChangeList fromList, final ChangeList toList) {
       rebuildWithAlarm(myAlarm);
+    }
+
+    @Override
+    public void allChangeListsMappingsChanged() {
+      updateTabName();
+    }
+
+    private void updateTabName() {
+      AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+        setDisplayName(getTabName(myProject));
+      });
+    }
+  }
+
+  @NotNull
+  @NlsContexts.TabTitle
+  static String getTabName(@NotNull Project project) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (changeListManager.areChangeListsEnabled()) {
+      LocalChangeList list = changeListManager.getDefaultChangeList();
+      String changelistName = list.getName().trim();
+      String suffix = VcsBundle.message("todo.tab.title.changelist.suffix");
+      return StringUtil.endsWithIgnoreCase(changelistName, suffix) ? changelistName
+                                                                   : changelistName + " " + suffix;
+    }
+    else {
+      return VcsBundle.message("todo.tab.title.all.changes");
     }
   }
 }

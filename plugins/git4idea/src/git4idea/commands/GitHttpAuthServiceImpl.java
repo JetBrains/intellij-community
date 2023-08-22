@@ -15,6 +15,8 @@
  */
 package git4idea.commands;
 
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +30,8 @@ class GitHttpAuthServiceImpl extends GitHttpAuthService {
   public GitHttpGuiAuthenticator createAuthenticator(@NotNull Project project,
                                                      @NotNull Collection<String> urls,
                                                      @NotNull File workingDirectory,
-                                                     @NotNull GitAuthenticationGate authenticationGate,
-                                                     @NotNull GitAuthenticationMode authenticationMode) {
+                                                     @NotNull AuthenticationGate authenticationGate,
+                                                     @NotNull AuthenticationMode authenticationMode) {
     return new GitHttpGuiAuthenticator(project, urls, workingDirectory, authenticationGate, authenticationMode);
   }
 }

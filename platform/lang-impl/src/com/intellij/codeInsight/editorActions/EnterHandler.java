@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -6,7 +6,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
@@ -58,7 +58,7 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   @Override
-  public void executeWriteAction(final Editor editor, final Caret caret, final DataContext dataContext) {
+  public void executeWriteAction(final @NotNull Editor editor, final Caret caret, final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && !project.isDefault()) {
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
@@ -190,11 +190,11 @@ public class EnterHandler extends BaseEnterHandler {
 
     String commentText = comment.getText();
     final boolean docComment = isDocComment(comment, commenter);
-    final String expectedCommentEnd = docComment ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
-    if (!commentText.endsWith(expectedCommentEnd)) return false;
+    final String expectedCommentEnd = docComment ? commenter.getDocumentationCommentSuffix() : commenter.getBlockCommentSuffix();
+    if (expectedCommentEnd != null && !commentText.endsWith(expectedCommentEnd)) return false;
 
     final PsiFile containingFile = comment.getContainingFile();
-    final Language language = containingFile.getLanguage();
+    final Language language = comment.getLanguage();
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition == null) {
       return true;
@@ -213,6 +213,7 @@ public class EnterHandler extends BaseEnterHandler {
       }
 
       if (javaLikeQuoteHandler != null &&
+          expectedCommentEnd != null &&
           javaLikeQuoteHandler.getStringTokenTypes() != null &&
           javaLikeQuoteHandler.getStringTokenTypes().contains(tokenType)) {
         String text = commentText.substring(lexer.getTokenStart(), lexer.getTokenEnd());
@@ -221,7 +222,7 @@ public class EnterHandler extends BaseEnterHandler {
         if (text.endsWith(expectedCommentEnd) &&
             endOffset < containingFile.getTextLength() &&
             containingFile.getText().charAt(endOffset) == '\n') {
-          return true;
+          return commentPrefix == null || !text.contains(commentPrefix);
         }
       }
       if (tokenType == commenter.getDocumentationCommentTokenType() || tokenType == commenter.getBlockCommentTokenType()) {
@@ -289,8 +290,7 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   private static boolean isDocComment(final PsiElement element, final CodeDocumentationAwareCommenter commenter) {
-    if (!(element instanceof PsiComment)) return false;
-    PsiComment comment = (PsiComment) element;
+    if (!(element instanceof PsiComment comment)) return false;
     return commenter.isDocumentationComment(comment);
   }
 
@@ -308,11 +308,11 @@ public class EnterHandler extends BaseEnterHandler {
     final CharSequence docChars = document.getCharsSequence();
     int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
     int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
-    String newIndent = CodeStyleFacade.getInstance(editor.getProject()).getLineIndent(editor, language, offset, false);
+    String newIndent = CodeStyle.getLineIndent(editor, language, offset, false);
     if (newIndent == null) {
       return -1;
     }
-    if (newIndent == LineIndentProvider.DO_NOT_ADJUST) {
+    if (Strings.areSameInstance(newIndent, LineIndentProvider.DO_NOT_ADJUST)) {
       return offset;
     }
     int delta = newIndent.length() - (indentEnd - indentStart);
@@ -320,7 +320,7 @@ public class EnterHandler extends BaseEnterHandler {
     return offset <= indentEnd ? (indentStart + newIndent.length()) : (offset + delta);
   }
 
-  private static class DoEnterAction implements Runnable {
+  private static final class DoEnterAction implements Runnable {
 
     private final DataContext myDataContext;
     private final PsiFile myFile;
@@ -366,8 +366,10 @@ public class EnterHandler extends BaseEnterHandler {
         Commenter langCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
         CodeDocumentationUtil.CommentContext commentContext
           = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, lineStart);
+        boolean isBeforeEof = myOffset > 0 && myOffset == chars.length() && chars.charAt(myOffset - 1) == '\n';
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
+        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
         if (commentContext.docStart) {
           psiDocumentManager.commitDocument(myDocument);
           PsiElement element = myFile.findElementAt(commentContext.lineStart);
@@ -380,7 +382,7 @@ public class EnterHandler extends BaseEnterHandler {
             PsiComment comment = isDocComment(parent, commentContext.commenter) ? (PsiComment)parent:(PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
 
-            if (myOffset >= commentEnd) {
+            if (myOffset > commentEnd || myOffset == commentEnd && !isBeforeEof) {
               commentContext.docStart = false;
             }
             else {
@@ -394,8 +396,12 @@ public class EnterHandler extends BaseEnterHandler {
                 }
                 commentContext.docStart = false;
               }
-              else {
+              else if (codeInsightSettings.CLOSE_COMMENT_ON_ENTER) {
                 generateJavadoc(commentContext.commenter);
+              }
+              else {
+                commentContext.docStart = false;
+                commentContext.docAsterisk = false;
               }
             }
           }
@@ -421,12 +427,11 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         if (commentContext.docAsterisk) {
-          commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, commentContext.docAsterisk,
+          commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, true,
                                                          !StringUtil.isEmpty(indentInsideJavadoc), commentContext.commenter);
         }
 
         boolean docIndentApplied = false;
-        CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
         if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk) {
           final int offset = adjustLineIndentNoCommit(getLanguage(myDataContext), myDocument, myEditor, myOffset);
           if (offset >= 0) {
@@ -448,7 +453,7 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         if ((commentContext.docAsterisk || commentContext.docStart) && !docIndentApplied) {
-          if (myInsertSpace) {
+          if (myInsertSpace && !(commentContext.docStart && isBeforeEof)) {
             if (myOffset == myDocument.getTextLength()) {
               myDocument.insertString(myOffset, " ");
             }

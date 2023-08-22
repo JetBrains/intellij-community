@@ -1,23 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.json.JsonBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import kotlin.NotImplementedError;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Irina.Chernushina on 2/24/2016.
- */
-public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderFactory {
+public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderFactory, DumbAware {
   public static final int TOTAL_PROVIDERS = 3;
   private static final String SCHEMA_JSON_FILE_NAME = "schema.json";
   private static final String SCHEMA06_JSON_FILE_NAME = "schema06.json";
@@ -31,10 +29,9 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
               new MyJsonSchemaFileProvider(project, SCHEMA07_JSON_FILE_NAME));
   }
 
-  public static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
+  public static final class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
     @NotNull private final Project myProject;
-    @NotNull private final NullableLazyValue<VirtualFile> mySchemaFile;
-    @NotNull private final String myFileName;
+    @NotNull private final @Nls String myFileName;
 
     public boolean isSchemaV4() {
       return SCHEMA_JSON_FILE_NAME.equals(myFileName);
@@ -46,11 +43,9 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
       return SCHEMA07_JSON_FILE_NAME.equals(myFileName);
     }
 
-    private MyJsonSchemaFileProvider(@NotNull final Project project, @NotNull String fileName) {
+    private MyJsonSchemaFileProvider(@NotNull Project project, @NotNull @Nls String fileName) {
       myProject = project;
       myFileName = fileName;
-      // schema file can not be static here, because in schema's user data we cache project-scope objects (i.e. which can refer to project)
-      mySchemaFile = NullableLazyValue.createValue(() -> JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/" + fileName));
     }
 
     @Override
@@ -60,16 +55,11 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
       if (!service.isApplicableToFile(file)) return false;
       JsonSchemaVersion schemaVersion = service.getSchemaVersion(file);
       if (schemaVersion == null) return false;
-      switch (schemaVersion) {
-        case SCHEMA_4:
-          return isSchemaV4();
-        case SCHEMA_6:
-          return isSchemaV6();
-        case SCHEMA_7:
-          return isSchemaV7();
-      }
-
-      throw new NotImplementedError("Unknown schema version: " + schemaVersion);
+      return switch (schemaVersion) {
+        case SCHEMA_4 -> isSchemaV4();
+        case SCHEMA_6 -> isSchemaV6();
+        case SCHEMA_7 -> isSchemaV7();
+      };
     }
 
     @Override
@@ -86,7 +76,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     @Nullable
     @Override
     public VirtualFile getSchemaFile() {
-      return mySchemaFile.getValue();
+      return JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/" + myFileName);
     }
 
     @NotNull
@@ -98,29 +88,23 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     @Nullable
     @Override
     public String getRemoteSource() {
-      switch (myFileName) {
-        case SCHEMA_JSON_FILE_NAME:
-          return "http://json-schema.org/draft-04/schema";
-        case SCHEMA06_JSON_FILE_NAME:
-          return "http://json-schema.org/draft-06/schema";
-        case SCHEMA07_JSON_FILE_NAME:
-          return "http://json-schema.org/draft-07/schema";
-      }
-      return null;
+      return switch (myFileName) {
+        case SCHEMA_JSON_FILE_NAME -> "http://json-schema.org/draft-04/schema";
+        case SCHEMA06_JSON_FILE_NAME -> "http://json-schema.org/draft-06/schema";
+        case SCHEMA07_JSON_FILE_NAME -> "http://json-schema.org/draft-07/schema";
+        default -> null;
+      };
     }
 
     @NotNull
     @Override
     public String getPresentableName() {
-      switch (myFileName) {
-        case SCHEMA_JSON_FILE_NAME:
-          return JsonBundle.message("schema.of.version", 4);
-        case SCHEMA06_JSON_FILE_NAME:
-          return JsonBundle.message("schema.of.version", 6);
-        case SCHEMA07_JSON_FILE_NAME:
-          return JsonBundle.message("schema.of.version", 7);
-      }
-      return getName();
+      return switch (myFileName) {
+        case SCHEMA_JSON_FILE_NAME -> JsonBundle.message("schema.of.version", 4);
+        case SCHEMA06_JSON_FILE_NAME -> JsonBundle.message("schema.of.version", 6);
+        case SCHEMA07_JSON_FILE_NAME -> JsonBundle.message("schema.of.version", 7);
+        default -> getName();
+      };
     }
   }
 }

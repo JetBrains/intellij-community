@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.remote
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -28,8 +28,7 @@ class CustomClassDeserializingResolver<S : ExternalSystemExecutionSettings>(
                                   settings: S?,
                                   resolverPolicy: ProjectResolverPolicy?): DataNode<ProjectData>? {
     val rawData = rawResolverDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, settings, resolverPolicy) ?: return null
-    val managerClassLoaders = (ExternalSystemManager.EP_NAME.iterable.asSequence()
-                               + ProjectDataService.EP_NAME.extensions.asSequence())
+    val managerClassLoaders = (ExternalSystemManager.EP_NAME.lazySequence() + ProjectDataService.EP_NAME.extensions.asSequence())
       .map { it.javaClass.classLoader }
       .toSet()
 

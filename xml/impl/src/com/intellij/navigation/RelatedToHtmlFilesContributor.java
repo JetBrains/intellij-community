@@ -16,19 +16,16 @@
 package com.intellij.navigation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class RelatedToHtmlFilesContributor {
   public static final ExtensionPointName<RelatedToHtmlFilesContributor> EP_NAME =
     ExtensionPointName.create("com.intellij.xml.relatedToHtmlFilesContributor");
 
   public abstract void fillRelatedFiles(@NotNull XmlFile xmlFile, @NotNull Set<? super PsiFile> resultSet);
-  public abstract String getGroupName();
+  public abstract @NlsContexts.Separator String getGroupName();
 }

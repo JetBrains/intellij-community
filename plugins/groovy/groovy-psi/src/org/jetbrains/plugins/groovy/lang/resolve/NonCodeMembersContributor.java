@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -31,6 +32,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributo
 import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor.processClassMixins;
 
 /**
+ * Allows to extend groovy programs with custom properties and methods.
+ * This is useful for implementing custom resolve algorithms and completion.
  * <p>
  * Contributor must check if the processor accepts the elements the contributor can offer.
  * Feeding processor with unnecessary elements which are then filtered away slows down the reference resolution.
@@ -38,7 +41,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContr
  *   <li>Ensure that the element name is right.
  *     <p>
  *       Ask processor for the name: {@code val nameHint = processor.getHint(NameHint.KEY)}. <br/>
- *       If the hint is {@code null} or the the name ({@code nameHint.getName(resolveState)}) is {@code null}
+ *       If the hint is {@code null} or the name ({@code nameHint.getName(resolveState)}) is {@code null}
  *       then processor doesn't care about the name, so the contributor is free to feed the processor with whatever elements.
  *       This usually happens when completion is in progress. <br/>
  *       If the name is not {@code null} then the contributor has to feed processor with properly named elements.
@@ -69,7 +72,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContr
  * }
  * </pre>
  *
- * @author peter
  * @see com.intellij.psi.scope.NameHint
  * @see com.intellij.psi.scope.ElementClassHint
  */
@@ -77,7 +79,7 @@ public abstract class NonCodeMembersContributor {
   public static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
 
   static {
-    EP_NAME.addExtensionPointListener(new ExtensionPointListener<NonCodeMembersContributor>() {
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull NonCodeMembersContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
         dropCache();
@@ -119,11 +121,12 @@ public abstract class NonCodeMembersContributor {
   @NotNull
   protected Collection<String> getClassNames() {
     String className = getParentClassName();
-    return className == null ? Collections.emptyList() : Collections.singletonList(className);
+    return ContainerUtil.createMaybeSingletonList(className);
   }
 
   private static void dropCache() {
     cache = null;
+    PatternCompilerFactory.getFactory().dropCache();
   }
 
   private static void ensureInit() {

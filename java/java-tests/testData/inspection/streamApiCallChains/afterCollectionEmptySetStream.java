@@ -1,4 +1,4 @@
-// "Replace Collections.emptySet().stream() with Stream.empty()" "true"
+// "Replace Collections.emptySet().stream() with Stream.empty()" "true-preview"
 
 import java.util.*;
 import java.util.stream.Stream;

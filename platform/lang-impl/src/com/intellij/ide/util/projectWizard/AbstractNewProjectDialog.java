@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -9,8 +9,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.impl.welcomeScreen.ActionGroupPanelWrapper;
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBDimension;
@@ -47,17 +47,17 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    setTitle(DirectoryProjectGenerator.EP_NAME.hasAnyExtensions() ? ProjectBundle.message("dialog.title.new.project")
+    setTitle(AbstractNewProjectStep.EP_NAME.hasAnyExtensions() ? ProjectBundle.message("dialog.title.new.project")
                                                                   : ProjectBundle.message("dialog.title.create.project"));
     DefaultActionGroup root = createRootStep();
     Disposer.register(getDisposable(), () -> root.removeAll());
 
-    Pair<JPanel, JBList<AnAction>> pair = FlatWelcomeFrame.createActionGroupPanel(root, null, getDisposable());
+    Pair<JPanel, JBList<AnAction>> pair = ActionGroupPanelWrapper.createActionGroupPanel(root, null, getDisposable());
     JPanel component = pair.first;
     myPair = pair;
     UiNotifyConnector.doWhenFirstShown(myPair.second, () -> ScrollingUtil.ensureSelectionExists(myPair.second));
 
-    FlatWelcomeFrame.installQuickSearch(pair.second);
+    ActionGroupPanelWrapper.installQuickSearch(pair.second);
     return component;
   }
 

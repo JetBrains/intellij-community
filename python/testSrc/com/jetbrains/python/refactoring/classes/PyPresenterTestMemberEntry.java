@@ -5,9 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Test only {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo} representation.
+ *
  * @author Ilya.Kazakevich
  */
-public class PyPresenterTestMemberEntry {
+public final class PyPresenterTestMemberEntry {
   @NonNls @NotNull
   private final String myName;
   private final boolean myEnabled;
@@ -37,12 +38,20 @@ public class PyPresenterTestMemberEntry {
            '}';
   }
 
+
+  public boolean mayBeAbstract() {
+    return myMayBeAbstract;
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof PyPresenterTestMemberEntry)) return false;
-
-    final PyPresenterTestMemberEntry entry = (PyPresenterTestMemberEntry)o;
+    if (!(o instanceof PyPresenterTestMemberEntry entry)) return false;
 
     if (myEnabled != entry.myEnabled) return false;
     if (myMayBeAbstract != entry.myMayBeAbstract) return false;

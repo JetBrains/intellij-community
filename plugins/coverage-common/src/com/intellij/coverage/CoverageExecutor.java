@@ -1,17 +1,18 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindowId;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class CoverageExecutor extends Executor {
 
-  public static final String EXECUTOR_ID = "Coverage";
+  public static final @NonNls String EXECUTOR_ID = "Coverage";
 
   @Override
   @NotNull
@@ -22,7 +23,8 @@ public class CoverageExecutor extends Executor {
   @NotNull
   @Override
   public String getStartActionText(@NotNull String configurationName) {
-    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
+    if (configurationName.isEmpty()) return getStartActionText();
+    String configName = shortenNameIfNeeded(configurationName);
     return TextWithMnemonic.parse(CoverageBundle.message("run.with.coverage.mnemonic")).replaceFirst("%s", configName).toString();
   }
 
@@ -35,7 +37,7 @@ public class CoverageExecutor extends Executor {
   @NotNull
   @Override
   public Icon getToolWindowIcon() {
-    return AllIcons.General.RunWithCoverage;
+    return AllIcons.Toolwindows.ToolWindowRunWithCoverage;
   }
 
   @Override
@@ -74,5 +76,10 @@ public class CoverageExecutor extends Executor {
   @Override
   public String getHelpId() {
     return null;//todo
+  }
+
+  @Override
+  public boolean isSupportedOnTarget() {
+    return EXECUTOR_ID.equalsIgnoreCase(getId());
   }
 }

@@ -24,9 +24,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonLexer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 class PyWordsScanner extends VersionedWordsScanner {
   private volatile DefaultWordsScanner myDelegate;
 

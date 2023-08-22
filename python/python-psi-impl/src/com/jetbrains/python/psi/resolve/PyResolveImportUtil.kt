@@ -17,6 +17,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
@@ -33,14 +34,12 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.util.*
-import java.util.regex.Pattern
 
 /**
  * Python resolve utilities for qualified names.
  *
  * TODO: Merge with ResolveImportUtil, maybe make these functions the methods of PyQualifiedNameResolveContext.
  *
- * @author vlan
  */
 
 
@@ -58,7 +57,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val relativeDirectory = context.containingDirectory
   val relativeResults = resolveWithRelativeLevel(name, context)
   val foundRelativeImport = relativeDirectory != null &&
-                            relativeResults.any { isRelativeImportResult(name, relativeDirectory, it, context) }
+                            relativeResults.any { isSameDirectoryOrRelativeImportResult(name, relativeDirectory, it, context) }
 
   val cache = findCache(context)
   val mayCache = cache != null && !foundRelativeImport
@@ -75,8 +74,21 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val pythonResults = listOf(relativeResults,
                              resolveModuleFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
-  val allResults = pythonResults + foreignResults
-  val results = if (name.componentCount > 0) filterTopPriorityResults(pythonResults, context.module) + foreignResults else allResults
+  val (sameDirectoryPython3Results, notSameDirectoryPython3Results) = pythonResults.partition {
+    if (relativeDirectory == null || LanguageLevel.forElement(relativeDirectory).isPython2) {
+      false
+    }
+    else {
+      isSameDirectoryResult(it, context, name)
+    }
+  }
+
+  val results = if (relativeDirectory != null && PyUtil.isExplicitPackage(relativeDirectory)) {
+    filterTopPriorityResultsWithFallback(notSameDirectoryPython3Results, sameDirectoryPython3Results, foreignResults, name, context)
+  }
+  else {
+    filterTopPriorityResultsWithFallback(sameDirectoryPython3Results, notSameDirectoryPython3Results, foreignResults, name, context)
+  }
 
   if (mayCache) {
     cache?.put(key, results)
@@ -109,6 +121,7 @@ fun resolveTopLevelMember(name: QualifiedName, context: PyQualifiedNameResolveCo
   val memberName = name.lastComponent ?: return null
   return resolveQualifiedName(name.removeLastComponent(), context)
     .asSequence()
+    .map { PyUtil.turnDirIntoInit(it) }
     .filterIsInstance(PyFile::class.java)
     .flatMap { it.multiResolveName(memberName).asSequence() }
     .map { it.element }
@@ -169,6 +182,9 @@ private fun cachePrefix(context: PyQualifiedNameResolveContext): QualifiedName {
   }
   if (context.withoutRoots) {
     results.add("without-roots")
+  }
+  if (context.withMembers) {
+    results.add("with-members")
   }
   return QualifiedName.fromComponents(results)
 }
@@ -326,20 +342,42 @@ private fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? 
   }
 }
 
-private fun isRelativeImportResult(name: QualifiedName, directory: PsiDirectory, result: PsiElement,
-                                   context: PyQualifiedNameResolveContext): Boolean {
+private fun isSameDirectoryResult(element: PsiElement, context: PyQualifiedNameResolveContext, name: QualifiedName): Boolean {
+  if (context.relativeLevel != 0) return false
+  val sameDirectoryImportsEnabled = !ResolveImportUtil.isAbsoluteImportEnabledFor(context.foothold)
+  if (!sameDirectoryImportsEnabled || element !is PsiFileSystemItem) return false
+  val shortestImportableQName = QualifiedNameFinder.findShortestImportableQName(element)
+  if (shortestImportableQName != null) {
+    return name != shortestImportableQName
+  }
+  else {
+    val footholdDir = context.containingDirectory ?: return false
+    return PsiTreeUtil.isAncestor(footholdDir, element, true)
+  }
+}
+
+private fun isSameDirectoryOrRelativeImportResult(name: QualifiedName, directory: PsiDirectory, result: PsiElement,
+                                                  context: PyQualifiedNameResolveContext): Boolean {
   if (context.relativeLevel > 0) {
     return true
   }
   else {
-    val py2 = LanguageLevel.forElement(directory).isPython2
-    return context.relativeLevel == 0 && py2 && PyUtil.isPackage(directory, false, null) &&
-           result is PsiFileSystemItem && name != QualifiedNameFinder.findShortestImportableQName(result)
+    return PyUtil.isPackage(directory, false, null) && isSameDirectoryResult(result, context, name)
   }
 }
 
 private fun checkAccess() {
   Preconditions.checkState(ApplicationManager.getApplication().isReadAccessAllowed, "This method requires read access")
+}
+
+private fun filterTopPriorityResultsWithFallback(primaryResults: List<PsiElement>, fallbackResults: List<PsiElement>,
+                                                 foreignResults: List<PsiElement>, name: QualifiedName,
+                                                 context: PyQualifiedNameResolveContext): List<PsiElement> {
+  val allResults = primaryResults + fallbackResults + foreignResults
+  if (name.componentCount <= 0) return allResults
+  val filteredPrimaryResults = filterTopPriorityResults(primaryResults, context.module)
+  if (filteredPrimaryResults.isNotEmpty()) return filteredPrimaryResults + foreignResults
+  return filterTopPriorityResults(fallbackResults, context.module) + foreignResults
 }
 
 /**
@@ -350,7 +388,7 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
   if (resolved.isEmpty()) return emptyList()
 
   val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
-  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList<PsiElement>()
+  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList()
 
   if (groupedResults.topResultIs(Priority.NAMESPACE_PACKAGE)) return groupedResults[Priority.NAMESPACE_PACKAGE]!! + skeletons
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)
@@ -380,16 +418,18 @@ private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<Psi
 /**
  * See [https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order].
  */
-private fun resolvedElementPriority(element: PsiElement, module: Module?) = when {
-  isNamespacePackage(element) -> Priority.NAMESPACE_PACKAGE
-  isUserFile(element, module) -> if (PyiUtil.isPyiFileOfPackage(element)) Priority.USER_STUB else Priority.USER_CODE
-  isInStubPackage(element) -> Priority.STUB_PACKAGE
-  isInTypeShed(element) -> Priority.TYPESHED
-  isInSkeletons(element) -> Priority.SKELETON
-  PyiUtil.isPyiFileOfPackage(element) -> Priority.PROVIDED_STUB
-  isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
-  isInProvidedSdk(element) -> Priority.THIRD_PARTY_SDK
-  else -> Priority.OTHER
+private fun resolvedElementPriority(element: PsiElement, module: Module?): Priority {
+  return when {
+    isNamespacePackage(element) -> Priority.NAMESPACE_PACKAGE
+    isUserFile(element, module) -> if (PyiUtil.isPyiFileOfPackage(element)) Priority.USER_STUB else Priority.USER_CODE
+    isInStubPackage(element) -> Priority.STUB_PACKAGE
+    isInTypeShed(element) -> Priority.TYPESHED
+    isInSkeletons(element) -> Priority.SKELETON
+    PyiUtil.isPyiFileOfPackage(element) -> Priority.PROVIDED_STUB
+    isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
+    isInProvidedSdk(element) -> Priority.THIRD_PARTY_SDK
+    else -> Priority.OTHER
+  }
 }
 
 fun isInSkeletons(element: PsiElement): Boolean {
@@ -399,43 +439,17 @@ fun isInSkeletons(element: PsiElement): Boolean {
 }
 
 private fun isInProvidedSdk(element: PsiElement): Boolean =
-  PyThirdPartySdkDetector.EP_NAME.extensions().anyMatch { it.isInThirdPartySdk(element) }
+  PyThirdPartySdkDetector.EP_NAME.extensionList.any { it.isInThirdPartySdk(element) }
 
-private fun isNamespacePackage(element: PsiElement): Boolean {
-  if (element is PsiDirectory) {
-    val level = LanguageLevel.forElement(element)
-    val initFile = PyUtil.turnDirIntoInit(element) ?: return !level.isPython2
-    val initLines = initFile.text.lineSequence()
-      .filterNot { line -> line.trim().let { it.isEmpty() || it.startsWith("#") } }
-      .take(2)
-      .toList()
-    return when (initLines.size) {
-      1 -> oneLineNamespaceDeclarations.any { it.matcher(initLines.first()).matches() }
-      2 -> multilineNamespaceDeclarations.any { it[0].matcher(initLines[0]).matches() && it[1].matcher(initLines[1]).matches() }
-      else -> false
-    }
-  }
-  return false
+private fun isUserFile(element: PsiElement, module: Module?): Boolean {
+  return module != null &&
+         element is PsiFileSystemItem &&
+         element.virtualFile.let { it != null && ModuleUtilCore.moduleContainsFile(module, it, false) }
 }
 
-private val oneLineNamespaceDeclarations = listOf(
-  Pattern.compile("^__path__[ ]?=[ ]?__import__\\(['\"]pkgutil['\"]\\).extend_path\\(__path__, __name__\\).*"),
-  Pattern.compile("^__import__\\(['\"]pkg_resources['\"]\\).declare_namespace\\(__name__\\).*"))
-
-private val multilineNamespaceDeclarations = listOf(
-  listOf(Pattern.compile("^from pkgutil import extend_path.*"), Pattern.compile("^__path__[ ]?=[ ]?extend_path\\(__path__,[ ]?__name__\\).*")),
-  listOf(Pattern.compile("^import pkgutil.*"), Pattern.compile("^__path__[ ]?=[ ]?pkgutil\\.extend_path\\(__path__,[ ]?__name__\\).*")),
-  listOf(Pattern.compile("^from pkg_resources import declare_namespace.*"), Pattern.compile("^declare_namespace\\(__name__\\).*")),
-  listOf(Pattern.compile("^import pkg_resources.*"), Pattern.compile("^pkg_resources.declare_namespace\\(__name__\\).*")))
-
-
-private fun isUserFile(element: PsiElement, module: Module?) =
-  module != null &&
-  element is PsiFileSystemItem &&
-  element.virtualFile.let { it != null && ModuleUtilCore.moduleContainsFile(module, it, false) }
-
-private fun isInTypeShed(element: PsiElement) =
-  PyiUtil.isPyiFileOfPackage(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
+private fun isInTypeShed(element: PsiElement): Boolean {
+  return PyiUtil.isPyiFileOfPackage(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
+}
 
 /**
  * See [https://www.python.org/dev/peps/pep-0561/#type-checker-module-resolution-order].

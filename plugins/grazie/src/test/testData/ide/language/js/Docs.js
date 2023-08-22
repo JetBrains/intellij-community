@@ -11,7 +11,7 @@
 class ExampleClassWithNoTypos {
     /**
      * Creates an empty group
-     * @param  {String} name the name of the group
+     * @param  {String} name the name of the group. And another sentence.
      */
     constructor(name) {
         /** @private */
@@ -29,14 +29,12 @@ class ExampleClassWithNoTypos {
 }
 
 /**
- * It is <warning descr="ARTICLE_MISSING">friend</warning> there
- *
- * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
+ * It is <warning descr="EN_A_VS_AN">an</warning> friend of human
  */
 class ExampleClassWithTypos {
     /**
      * Creates an empty group
-     * @param  {String} name the name which group
+     * @param  {String} name the <warning descr="COMMA_WHICH">name which</warning> group
      */
     constructor(name) {
         /** @private */

@@ -27,16 +27,11 @@ class ConjunctionPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrBinaryExpression)) {
-      return false;
+    if (element instanceof final GrBinaryExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      return (tokenType.equals(GroovyTokenTypes.mLAND) || tokenType.equals(GroovyTokenTypes.mLOR)) &&
+             !ErrorUtil.containsError(element);
     }
-    final GrBinaryExpression expression = (GrBinaryExpression) element;
-    final IElementType tokenType =  expression.getOperationTokenType();
-    if (tokenType == null) return false;
-    if (!tokenType.equals(GroovyTokenTypes.mLAND) &&
-        !tokenType.equals(GroovyTokenTypes.mLOR)) {
-      return false;
-    }
-    return !ErrorUtil.containsError(element);
+    return false;
   }
 }

@@ -62,10 +62,11 @@ fun processScopeVariables(scope: Scope,
 
     val functions = SmartList<Variable>()
     for (variable in variables) {
-      if (memberFilter.isMemberVisible(variable) && variable.name != RECEIVER_NAME && variable.name != memberFilter.sourceNameToRaw(RECEIVER_NAME)) {
+      if (memberFilter.isMemberVisible(variable)) {
         val value = variable.value
-        if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(
-          value.valueString).lookingAt()) {
+        val stringValue = value?.valueString
+        if (value != null && value.type == ValueType.FUNCTION && stringValue != null && !UNNAMED_FUNCTION_PATTERN.matcher(
+          stringValue).lookingAt()) {
           functions.add(variable)
         }
         else {
@@ -98,31 +99,6 @@ fun processScopeVariables(scope: Scope,
   }
 }
 
-fun processNamedObjectProperties(variables: List<Variable>,
-                                 node: XCompositeNode,
-                                 context: VariableContext,
-                                 memberFilter: MemberFilter,
-                                 maxChildrenToAdd: Int,
-                                 defaultIsLast: Boolean): List<Variable>? {
-  val list = filterAndSort(variables, memberFilter)
-  if (list.isEmpty()) {
-    if (defaultIsLast) {
-      node.addChildren(XValueChildrenList.EMPTY, true)
-    }
-    return null
-  }
-
-  val to = Math.min(maxChildrenToAdd, list.size)
-  val isLast = to == list.size
-  node.addChildren(createVariablesList(list, 0, to, context, memberFilter), defaultIsLast && isLast)
-  if (isLast) {
-    return null
-  }
-  else {
-    node.tooManyChildren(list.size - to)
-    return list
-  }
-}
 
 fun filterAndSort(variables: List<Variable>, memberFilter: MemberFilter): List<Variable> {
   if (variables.isEmpty()) {
@@ -246,8 +222,8 @@ private fun naturalCompare(string1: String?, string2: String?): Int {
     }
     else if (ch1 != ch2) {
       fun reverseCase(ch: Char) = when {
-        ch.isUpperCase() -> ch.toLowerCase()
-        ch.isLowerCase() -> ch.toUpperCase()
+        ch.isUpperCase() -> ch.lowercaseChar()
+        ch.isLowerCase() -> ch.uppercaseChar()
         else -> ch
       }
 

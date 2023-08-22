@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.upgrade;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
 public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
   private static final String STATUS = "\\s*(.+?)\\s*";
-  private static final String PATH = "\\s*\'(.*?)\'\\s*";
+  private static final String PATH = "\\s*'(.*?)'\\s*";
   private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH);
 
   @Override
@@ -58,6 +59,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
   }
 
   private static class UpgradeStatusConvertor implements Convertor<Matcher, ProgressEvent> {
+    private static final @NonNls String UPGRADED_CODE = "Upgraded";
 
     @Override
     public ProgressEvent convert(@NotNull Matcher matcher) {
@@ -71,7 +73,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     public static EventAction createAction(@NotNull String code) {
       EventAction result = null;
 
-      if ("Upgraded".equals(code)) {
+      if (UPGRADED_CODE.equals(code)) {
         result = EventAction.UPGRADED_PATH;
       }
 
@@ -79,7 +81,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     }
   }
 
-  private static class UpgradeLineCommandListener extends LineCommandAdapter {
+  private static final class UpgradeLineCommandListener extends LineCommandAdapter {
 
     @NotNull private final FileStatusResultParser parser;
     @NotNull private final AtomicReference<VcsException> exception;

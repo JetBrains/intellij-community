@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.HelpID;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
@@ -21,8 +22,12 @@ import javax.swing.*;
  * @author Eugene Zhuravlev
  */
 public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMethodBreakpointProperties> {
+  public JavaMethodBreakpointType(@NotNull String id, @Nls @NotNull String message) {
+    super(id, message);
+  }
+
   public JavaMethodBreakpointType() {
-    super("java-method", JavaDebuggerBundle.message("method.breakpoints.tab.title"));
+    this("java-method", JavaDebuggerBundle.message("method.breakpoints.tab.title"));
   }
 
   @NotNull
@@ -76,15 +81,16 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     return getText(breakpoint);
   }
 
+  @Nls
   static String getText(XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
     final StringBuilder buffer = new StringBuilder();
-    //if(isValid()) {
+    //if (isValid()) {
     final String className = breakpoint.getProperties().myClassPattern;
-    final boolean classNameExists = className != null && className.length() > 0;
+    final boolean classNameExists = className != null && !className.isEmpty();
     if (classNameExists) {
       buffer.append(className);
     }
-    if(breakpoint.getProperties().myMethodName != null) {
+    if (breakpoint.getProperties().myMethodName != null) {
       if (classNameExists) {
         buffer.append(".");
       }
@@ -94,6 +100,7 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     //else {
     //  buffer.append(JavaDebuggerBundle.message("status.breakpoint.invalid"));
     //}
+    //noinspection HardCodedStringLiteral
     return buffer.toString();
   }
 
@@ -115,6 +122,9 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
     JavaMethodBreakpointProperties properties = new JavaMethodBreakpointProperties();
     if (Registry.is("debugger.emulate.method.breakpoints")) {
       properties.EMULATED = true; // create all new emulated
+    }
+    if (Registry.is("debugger.method.breakpoints.entry.default")) {
+      properties.WATCH_EXIT = false;
     }
     return properties;
   }

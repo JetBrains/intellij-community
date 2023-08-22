@@ -15,23 +15,46 @@
  */
 package org.jetbrains.idea.maven.aether;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.repository.RemoteRepository;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.ZipFile;
 
 public class ArtifactRepositoryManagerTest extends UsefulTestCase {
+  private static final RemoteRepository mavenLocal;
+
+  static {
+    System.setProperty("org.jetbrains.idea.maven.aether.strictValidation", "true");
+    File mavenLocalDir = new File(SystemProperties.getUserHome(), ".m2/repository");
+    mavenLocal = new RemoteRepository
+      .Builder("mavenLocal", "default", "file://" + mavenLocalDir.getAbsolutePath())
+      .build();
+  }
+
   private ArtifactRepositoryManager myRepositoryManager;
+  private File localRepository;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
-    myRepositoryManager = new ArtifactRepositoryManager(localRepo);
+    localRepository = new File(FileUtil.getTempDirectory());
+    List<RemoteRepository> repositories = new ArrayList<>();
+    repositories.add(mavenLocal);
+    repositories.addAll(ArtifactRepositoryManager.createDefaultRemoteRepositories());
+    myRepositoryManager = new ArtifactRepositoryManager(localRepository, repositories, ProgressConsumer.DEAF);
   }
 
   public void testResolveTransitively() throws Exception {
@@ -73,9 +96,24 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     ArtifactDependencyNode second = result.getDependencies().get(1);
     assertCoordinates(first.getArtifact(), "org.apache.httpcomponents", "httpclient", "4.5.5");
     assertCoordinates(second.getArtifact(), "commons-logging", "commons-logging", "1.2");
-    assertEquals(2, first.getDependencies().size());
+    assertEquals(3, first.getDependencies().size());
     assertCoordinates(first.getDependencies().get(0).getArtifact(), "org.apache.httpcomponents", "httpcore", "4.4.9");
-    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-codec", "commons-codec", "1.10");
+    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-logging", "commons-logging", "1.2");
+    assertCoordinates(first.getDependencies().get(2).getArtifact(), "commons-codec", "commons-codec", "1.10");
+  }
+
+  public void testTransitiveSnapshotDependenciesExcluded() throws Exception {
+    // version of this excluded dependency is [0.8.1,)
+    String excludedArtifact = "sshj";
+    List<String> excluded = Collections.singletonList("net.schmizz:" + excludedArtifact);
+    myRepositoryManager.resolveDependency("com.jcraft", "jsch.agentproxy.sshj", "0.0.9", true, excluded);
+    try (Stream<Path> files = Files.walk(localRepository.toPath())) {
+      assertEmpty(files.filter(file -> {
+        String fileName = file.getFileName().toString();
+        return fileName.startsWith(excludedArtifact + "-") &&
+               (fileName.endsWith(".pom") || fileName.endsWith(".jar"));
+      }).collect(Collectors.toList()));
+    }
   }
 
   private static void assertCoordinates(Artifact artifact, String groupId, String artifactId, String version) {

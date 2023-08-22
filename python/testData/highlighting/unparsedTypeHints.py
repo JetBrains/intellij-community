@@ -1,4 +1,5 @@
 from typing import Union
+from typing_extensions import TypeAlias
 
 
 def a(b: 'Union[int<error descr="']' expected">'</error>) -> 'Union[str<error descr="']' expected">'</error>:
@@ -18,3 +19,6 @@ def f(g: Union[int<error descr="']' expected">)</error> -> Union[str:<EOLError d
 
 
 h: Union[str<EOLError descr="']' expected"></EOLError>
+
+A1: TypeAlias = 'Union[str'<EOLError descr="End of statement expected"></EOLError>
+A2 = 'Union[str<error descr="']' expected">'</error>   # type: TypeAlias

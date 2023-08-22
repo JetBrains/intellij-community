@@ -3,7 +3,7 @@ package com.intellij.lang.xhtml;
 
 import com.intellij.lang.xml.XMLLanguage;
 
-public class XHTMLLanguage extends XMLLanguage {
+public final class XHTMLLanguage extends XMLLanguage {
 
   public static final XHTMLLanguage INSTANCE = new XHTMLLanguage();
 

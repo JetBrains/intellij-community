@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 
-public class NewInstanceFactory<T> implements Factory<T> {
+public final class NewInstanceFactory<T> implements Factory<T> {
   private static final Logger LOG = Logger.getInstance(NewInstanceFactory.class);
 
   private final Constructor<? extends T> myConstructor;
@@ -29,7 +29,7 @@ public class NewInstanceFactory<T> implements Factory<T> {
     }
   }
 
-  public static <T> Factory<T> fromClass(@NotNull final Class<? extends T> clazz) {
+  public static <T> Factory<T> fromClass(final @NotNull Class<? extends T> clazz) {
     try {
       return new NewInstanceFactory<>(clazz.getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY), ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     }
@@ -37,7 +37,8 @@ public class NewInstanceFactory<T> implements Factory<T> {
       return () -> {
         try {
           return clazz.newInstance();
-        } catch (Exception e1) {
+        }
+        catch (Exception e1) {
           LOG.error(e1);
           return null;
         }

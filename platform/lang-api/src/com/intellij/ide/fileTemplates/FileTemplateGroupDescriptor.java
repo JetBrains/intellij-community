@@ -1,61 +1,54 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FileTemplateGroupDescriptor extends FileTemplateDescriptor {
-  private final String myTitle;
+  private final @Nls String myTitle;
   private final List<FileTemplateDescriptor> myTemplates = new ArrayList<>();
 
-  public FileTemplateGroupDescriptor(String title, Icon icon, FileTemplateDescriptor... children) {
+  public FileTemplateGroupDescriptor(@NotNull @Nls String title, @Nullable Icon icon, FileTemplateDescriptor... children) {
     this(title, icon);
-    for (final FileTemplateDescriptor child : children) {
+    for (FileTemplateDescriptor child : children) {
       addTemplate(child);
     }
   }
 
-  public FileTemplateGroupDescriptor(String title, Icon icon) {
-    super(null, icon);
+  public FileTemplateGroupDescriptor(@NotNull @Nls String title, @Nullable Icon icon) {
+    super("-", icon);
     myTitle = title;
   }
 
-  public String getTitle() {
+  public @NotNull @Nls String getTitle() {
     return myTitle;
   }
 
-  public FileTemplateDescriptor[] getTemplates() {
-    return myTemplates.toArray(new FileTemplateDescriptor[0]);
+  public @NotNull List<FileTemplateDescriptor> getTemplates() {
+    return Collections.unmodifiableList(myTemplates);
   }
 
-  @Override
-  public String getDisplayName() {
-    return getTitle();
-  }
-
-  public void addTemplate(FileTemplateDescriptor descriptor) {
+  public void addTemplate(@NotNull FileTemplateDescriptor descriptor) {
     myTemplates.add(descriptor);
   }
 
-  public void addTemplate(@NonNls String fileName) {
-    addTemplate(new FileTemplateDescriptor(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon()));
+  public void addTemplate(@NotNull String fileName) {
+    addTemplate(new FileTemplateDescriptor(fileName));
+  }
+
+  @Override
+  public @NotNull String getDisplayName() {
+    return getTitle();
+  }
+
+  @Override
+  public @NotNull String getFileName() {
+    return getTitle();
   }
 }

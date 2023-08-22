@@ -18,6 +18,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -218,7 +219,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myVersionEventDispatcher.getMulticaster().versionChanged(getSelectedVersion(id));
   }
 
-  public String getFrameworkVersion(String id) {
+  public @NlsSafe String getFrameworkVersion(String id) {
     FrameworkVersion version = mySelectedVersions.get(id);
     return version == null ? myFrameworkVersions.get(id) : version.getVersionNumber();
   }

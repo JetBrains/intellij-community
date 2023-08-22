@@ -25,6 +25,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
@@ -40,8 +41,7 @@ public class ImportOnDemandIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    if (!(element instanceof GrReferenceElement)) return;
-    final GrReferenceElement ref = (GrReferenceElement)element;
+    if (!(element instanceof GrReferenceElement<?> ref)) return;
     final PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiClass)) return;
 
@@ -56,10 +56,9 @@ public class ImportOnDemandIntention extends Intention {
 
     for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
       final PsiElement refElement = reference.getElement();
-      if (refElement == null) continue;
       final PsiElement parent = refElement.getParent();
       if (parent instanceof GrQualifiedReference<?>) {
-        org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)parent);
+        GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)parent);
       }
     }
   }
@@ -70,8 +69,7 @@ public class ImportOnDemandIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceElement)) return false;
-        final GrReferenceElement ref = (GrReferenceElement)element;
+        if (!(element instanceof GrReferenceElement ref)) return false;
         final PsiElement parent = ref.getParent();
         if (!(parent instanceof GrReferenceElement)) return false;
         final PsiElement resolved = ref.resolve();

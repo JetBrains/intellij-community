@@ -17,7 +17,9 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.pointers.FacetPointersManager;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -42,8 +44,8 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return "Facet '" + myFacet.getName() + "' in module '" + myFacet.getModule().getName() + "'";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableText() {
+    return JavaUiBundle.message("facet.project.structure.display.text", myFacet.getName(), myFacet.getModule().getName());
   }
 
   @Override
@@ -52,8 +54,8 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public String getTypeName() {
-    return "Facet";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName() {
+    return JavaUiBundle.message("facet.title");
   }
 
   @Override

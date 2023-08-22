@@ -18,7 +18,7 @@ public interface LightEditorManager {
 
   LightEditorInfo saveAs(@NotNull LightEditorInfo info, @NotNull VirtualFile targetFile);
 
-  @NotNull LightEditorInfo createEditor();
+  @NotNull LightEditorInfo createEmptyEditor(@Nullable String preferredName);
 
   @Nullable LightEditorInfo createEditor(@NotNull VirtualFile file);
 
@@ -30,6 +30,9 @@ public interface LightEditorManager {
 
   @NotNull
   Collection<VirtualFile> getOpenFiles();
+
+  @NotNull
+  Collection<LightEditorInfo> getEditors(@NotNull VirtualFile virtualFile);
 
   boolean isFileOpen(@NotNull VirtualFile file);
 }

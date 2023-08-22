@@ -1,37 +1,41 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author irengrig
+ * Allows storing additional per-file data in patch files that IDE creates.
  */
 public interface PatchEP {
-  ProjectExtensionPointName<PatchEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.patch.extension");
+  ExtensionPointName<PatchEP> EP_NAME = new ExtensionPointName<>("com.intellij.patch.extension");
 
-  @NotNull
-  String getName();
   /**
-   * @param path - before path, if exist, otherwise after path
-   * @param commitContext
+   * EP 'id' that is written into the Patch file header
    */
-  @Nullable
-  CharSequence provideContent(@NotNull final String path, CommitContext commitContext);
+  @NotNull String getName();
+
   /**
-   * @param path - before path, if exist, otherwise after path
-   * @param commitContext
-   * @deprecated it's better not to use PatchEP at all
+   * Called when writing a patch file.
+   * EP should read relevant data from CommitContext and return string to be preserved in patch file.
+   *
+   * @param path path relative to the ProjectBasePath
+   * @return content to be stored in a patch file
    */
-  @Deprecated
-  void consumeContent(@NotNull final String path, @NotNull final CharSequence content, @Nullable CommitContext commitContext);
+  @Nullable CharSequence provideContent(@NotNull Project project, @NotNull String path, @Nullable CommitContext commitContext);
+
   /**
-   * @param path - before path, if exist, otherwise after path
-   * @param commitContext
+   * Called when EP data was read from a patch file.
+   * EP should store it in CommitContext for later use.
+   *
+   * @param path    path relative to the ProjectBasePath
+   * @param content content that was stored in a patch file
    */
-  void consumeContentBeforePatchApplied(@NotNull final String path,
-                                        @NotNull final CharSequence content,
+  void consumeContentBeforePatchApplied(@NotNull Project project,
+                                        @NotNull String path,
+                                        @NotNull CharSequence content,
                                         @Nullable CommitContext commitContext);
 }

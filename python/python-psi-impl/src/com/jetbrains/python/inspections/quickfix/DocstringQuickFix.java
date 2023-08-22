@@ -19,10 +19,11 @@ import org.jetbrains.annotations.Nullable;
  * User : catherine
  */
 public class DocstringQuickFix implements LocalQuickFix {
+  @SafeFieldForPreview
   private final SmartPsiElementPointer<PyNamedParameter> myMissingParam;
   private final String myUnexpectedParamName;
 
-  public DocstringQuickFix(@Nullable PyNamedParameter missing, @Nullable  String unexpectedParamName) {
+  public DocstringQuickFix(@Nullable PyNamedParameter missing, @Nullable String unexpectedParamName) {
     if (missing != null) {
       myMissingParam = SmartPointerManager.getInstance(missing.getProject()).createSmartPsiElementPointer(missing);
     }
@@ -40,10 +41,10 @@ public class DocstringQuickFix implements LocalQuickFix {
       if (param == null) {
         throw new IncorrectOperationException("Parameter was invalidates before quickfix is called");
       }
-      return PyPsiBundle.message("QFIX.docstring.add.$0", param.getName());
+      return PyPsiBundle.message("QFIX.docstring.add.parameter", param.getName());
     }
     else if (myUnexpectedParamName != null) {
-      return PyPsiBundle.message("QFIX.docstring.remove.$0", myUnexpectedParamName);
+      return PyPsiBundle.message("QFIX.docstring.remove.parameter", myUnexpectedParamName);
     }
     else {
       return PyPsiBundle.message("QFIX.docstring.insert.stub");
@@ -53,7 +54,7 @@ public class DocstringQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.fix.docstring");
+    return PyPsiBundle.message("QFIX.NAME.docstring");
   }
 
   @Override

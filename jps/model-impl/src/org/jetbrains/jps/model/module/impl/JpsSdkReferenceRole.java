@@ -21,7 +21,7 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
-public class JpsSdkReferenceRole<P extends JpsElement> extends JpsElementChildRoleBase<JpsSdkReference<P>> {
+public final class JpsSdkReferenceRole<P extends JpsElement> extends JpsElementChildRoleBase<JpsSdkReference<P>> {
   private final JpsSdkType<P> myType;
 
   public JpsSdkReferenceRole(@NotNull JpsSdkType<P> type) {

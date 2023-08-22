@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -36,11 +35,9 @@ import java.util.List;
 public class HgUpdateEnvironment implements UpdateEnvironment {
 
   private final Project project;
-  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
-    updateConfiguration = ServiceManager.getService(project, HgUpdateConfigurationSettings.class);
   }
 
   @Override
@@ -67,6 +64,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       }
       try {
         result &= ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+          HgUpdateConfigurationSettings updateConfiguration = project.getService(HgUpdateConfigurationSettings.class);
           HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
           return updater.update(updatedFiles, indicator, exceptions);
         });
@@ -81,6 +79,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   public Configurable createConfigurable(Collection<FilePath> contentRoots) {
+    HgUpdateConfigurationSettings updateConfiguration = project.getService(HgUpdateConfigurationSettings.class);
     return new UpdateConfigurable(updateConfiguration);
   }
 

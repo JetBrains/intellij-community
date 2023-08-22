@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -6,10 +6,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VFileCreateEvent extends VFileEvent {
+public final class VFileCreateEvent extends VFileEvent {
   private final @NotNull VirtualFile myParent;
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
@@ -18,6 +19,7 @@ public class VFileCreateEvent extends VFileEvent {
   private final int myChildNameId;
   private VirtualFile myCreatedFile;
 
+  @ApiStatus.Internal
   public VFileCreateEvent(Object requestor,
                           @NotNull VirtualFile parent,
                           @NotNull String childName,
@@ -35,8 +37,7 @@ public class VFileCreateEvent extends VFileEvent {
     myChildNameId = VirtualFileManager.getInstance().storeName(childName);
   }
 
-  @NotNull
-  public String getChildName() {
+  public @NotNull String getChildName() {
     return VirtualFileManager.getInstance().getVFileName(myChildNameId).toString();
   }
 
@@ -44,18 +45,15 @@ public class VFileCreateEvent extends VFileEvent {
     return myDirectory;
   }
 
-  @NotNull
-  public VirtualFile getParent() {
+  public @NotNull VirtualFile getParent() {
     return myParent;
   }
 
-  @Nullable
-  public FileAttributes getAttributes() {
+  public @Nullable FileAttributes getAttributes() {
     return myAttributes;
   }
 
-  @Nullable
-  public String getSymlinkTarget() {
+  public @Nullable String getSymlinkTarget() {
     return mySymlinkTarget;
   }
 
@@ -64,9 +62,8 @@ public class VFileCreateEvent extends VFileEvent {
     return isDirectory() && myChildren != null && myChildren.length == 0;
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     String parentPath = myParent.getPath();
     // jar file returns "x.jar!/"
     return StringUtil.endsWithChar(parentPath, '/') ?  parentPath + getChildName() : parentPath + "/" + getChildName();
@@ -89,9 +86,8 @@ public class VFileCreateEvent extends VFileEvent {
     myCreatedFile = null;
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myParent.getFileSystem();
   }
 
@@ -121,7 +117,7 @@ public class VFileCreateEvent extends VFileEvent {
   @Override
   public String toString() {
     String kind = myDirectory ? (isEmptyDirectory() ? "(empty) " : "") + "dir " : "file ";
-    return "VfsEvent[create " + kind + myParent.getUrl() + "/"+ getChildName() +"]"
+    return "VfsEvent[create " + kind + "'"+myParent.getUrl() + "/"+ getChildName() +"']"
            + (myChildren == null ? "" : " with "+myChildren.length+" children");
   }
 

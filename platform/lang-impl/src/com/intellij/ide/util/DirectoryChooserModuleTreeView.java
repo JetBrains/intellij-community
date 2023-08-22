@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -22,11 +8,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -40,10 +23,7 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.util.*;
 
-/**
- * @author dsl
- */
-public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
+public final class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (node1, node2) -> {
     final Object o1 = node1.getUserObject();
     final Object o2 = node2.getUserObject();
@@ -68,19 +48,17 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private final Map<Module, DefaultMutableTreeNode> myModuleNodes = new HashMap<>();
   private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<>();
   private final DefaultMutableTreeNode myRootNode;
-  private final ProjectFileIndex myFileIndex;
   private final ModuleGrouper myModuleGrouper;
 
   DirectoryChooserModuleTreeView(@NotNull Project project) {
     myRootNode = new DefaultMutableTreeNode();
     myTree = new Tree(myRootNode);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myModuleGrouper = ModuleGrouper.instanceFor(project);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
-    new TreeSpeedSearch(myTree, o -> {
+    TreeSpeedSearch.installOn(myTree, true, o -> {
       final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       if (userObject instanceof Module) {
         return ((Module)userObject).getName();
@@ -89,7 +67,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
         if (userObject == null) return "";
         return userObject.toString();
       }
-    }, true);
+    });
   }
 
   @Override
@@ -150,8 +128,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   @Override
   public void addItem(DirectoryChooser.ItemWrapper itemWrapper) {
     myItems.add(itemWrapper);
-    final PsiDirectory directory = itemWrapper.getDirectory();
-    final Module module = myFileIndex.getModuleForFile(directory.getVirtualFile());
+    final Module module = itemWrapper.getModule();
     DefaultMutableTreeNode node = myModuleNodes.get(module);
     if (node == null) {
       node = new DefaultMutableTreeNode(module, true);
@@ -159,11 +136,13 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
       if (groupPath == null || groupPath.isEmpty()) {
         insertNode(node, myRootNode);
       } else {
-        final DefaultMutableTreeNode parentNode = ModuleGroupUtil.buildModuleGroupPath(new ModuleGroup(groupPath),
-                                                                                       myRootNode,
-                                                                                       myModuleGroupNodes,
-                                                                                       parentChildRelation -> insertNode(parentChildRelation.getChild(), parentChildRelation.getParent()),
-                                                                                       moduleGroup -> new DefaultMutableTreeNode(moduleGroup, true));
+        final DefaultMutableTreeNode parentNode = ModuleGroupUtil.buildModuleGroupPath(
+          new ModuleGroup(groupPath),
+          myRootNode,
+          myModuleGroupNodes,
+          parentChildRelation -> insertNode(parentChildRelation.getChild(), parentChildRelation.getParent()),
+          moduleGroup -> new DefaultMutableTreeNode(moduleGroup, true)
+        );
         insertNode(node, parentNode);
       }
       myModuleNodes.put(module, node);
@@ -204,25 +183,23 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   }
 
 
-  private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object nodeValue, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final Object value = ((DefaultMutableTreeNode)nodeValue).getUserObject();
-      if (value instanceof DirectoryChooser.ItemWrapper) {
-        DirectoryChooser.ItemWrapper wrapper = (DirectoryChooser.ItemWrapper)value;
+      if (value instanceof DirectoryChooser.ItemWrapper wrapper) {
         DirectoryChooser.PathFragment[] fragments = wrapper.getFragments();
         for (DirectoryChooser.PathFragment fragment : fragments) {
           append(fragment.getText(),
                  fragment.isCommon() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
-        setIcon(wrapper.getIcon(myFileIndex));
+        setIcon(wrapper.getIcon());
       }
-      else if (value instanceof Module) {
-        final Module module = (Module)value;
+      else if (value instanceof Module module) {
         append(myModuleGrouper.getShortenedName(module), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(ModuleType.get(module).getIcon());
-      } else if (value instanceof ModuleGroup) {
-        append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      } else if (value instanceof ModuleGroup moduleGroup) {
+        append(moduleGroup.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
       }
     }

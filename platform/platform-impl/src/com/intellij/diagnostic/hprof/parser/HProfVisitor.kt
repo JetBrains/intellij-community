@@ -42,7 +42,7 @@ open class HProfVisitor {
     return myHeapDumpVisits[type.value]
   }
 
-  fun enableAll() {
+  private fun enableAll() {
     for (recordType in RecordType.values()) {
       myTopLevelVisits[recordType.value] = true
     }
@@ -127,7 +127,8 @@ open class HProfVisitor {
   open fun visitPrimitiveArrayDump(
     arrayObjectId: Long, stackTraceSerialNumber: Long,
     numberOfElements: Long,
-    elementType: Type) {
+    elementType: Type,
+    primitiveArrayData: ByteBuffer) {
   }
 
   open fun visitClassDump(

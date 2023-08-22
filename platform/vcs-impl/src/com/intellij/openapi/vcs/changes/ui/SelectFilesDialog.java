@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -7,6 +7,7 @@ import com.intellij.ide.actions.DeleteAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
@@ -14,33 +15,21 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.setupAction;
 
-/**
- * @author yole
- */
+
 public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   @NotNull private final VirtualFileList myFileList;
   private final boolean myDeletableFiles;
 
-  @Deprecated
   protected SelectFilesDialog(Project project,
                               @NotNull List<? extends VirtualFile> files,
-                              @Nullable String prompt,
-                              @Nullable VcsShowConfirmationOption confirmationOption,
-                              boolean selectableFiles,
-                              boolean showDoNotAskOption,
-                              boolean deletableFiles) {
-    this(project, files, prompt, showDoNotAskOption ? confirmationOption : null, selectableFiles, deletableFiles);
-  }
-
-  protected SelectFilesDialog(Project project,
-                              @NotNull List<? extends VirtualFile> files,
-                              @Nullable String prompt,
+                              @Nullable @NlsContexts.Label String prompt,
                               @Nullable VcsShowConfirmationOption confirmationOption,
                               boolean selectableFiles,
                               boolean deletableFiles) {
@@ -50,10 +39,10 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   }
 
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable String prompt,
+                                       @Nullable @NlsContexts.Label String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
                                        boolean showDoNotAskOption,
@@ -64,7 +53,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable String prompt,
+                                       @Nullable @NlsContexts.Label String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
                                        boolean deletableFiles) {
@@ -76,12 +65,12 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable String prompt,
+                                       @Nullable @NlsContexts.Label String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
                                        boolean deletableFiles,
-                                       @NotNull String okActionName,
-                                       @NotNull String cancelActionName) {
+                                       @NotNull @NlsContexts.Button String okActionName,
+                                       @NotNull @NlsContexts.Button String cancelActionName) {
     final SelectFilesDialog dlg = init(project, originalFiles, prompt, confirmationOption, selectableFiles, deletableFiles);
     dlg.setOKButtonText(okActionName);
     dlg.setCancelButtonText(cancelActionName);
@@ -112,7 +101,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           super.actionPerformed(e);
-          myFileList.refresh();
+          myFileList.rebuildTree();
         }
       };
       setupAction(deleteAction, IdeActions.ACTION_DELETE, getFileList());
@@ -121,12 +110,12 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
     return defaultGroup;
   }
 
-  public static class VirtualFileList extends ChangesTreeImpl.VirtualFiles {
+  public static class VirtualFileList extends AsyncChangesTreeImpl.VirtualFiles {
     @Nullable private final DeleteProvider myDeleteProvider;
 
     public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<? extends VirtualFile> files) {
       super(project, selectableFiles, true, files);
-      myDeleteProvider = (deletableFiles ?  new VirtualFileDeleteProvider() : null);
+      myDeleteProvider = (deletableFiles ? new VirtualFileDeleteProvider() : null);
     }
 
     @Nullable
@@ -142,8 +131,10 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
       return super.getData(dataId);
     }
 
-    public void refresh() {
-      setChangesToDisplay(ContainerUtil.filter(getChanges(), VirtualFile::isValid));
+    @Override
+    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping,
+                                                       @NotNull List<? extends VirtualFile> changes) {
+      return super.buildTreeModel(grouping, ContainerUtil.filter(changes, VirtualFile::isValid));
     }
   }
 }

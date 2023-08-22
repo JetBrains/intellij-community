@@ -1,24 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
+import java.util.function.Predicate;
 
-/**
- * @author: db
- */
-public class ClassRepr extends ClassFileRepr {
+public final class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;
-  private final Set<TypeRepr.AbstractType> myInterfaces;
+  private final Set<TypeRepr.ClassType> myInterfaces;
   private final Set<ElemType> myAnnotationTargets;
   private final RetentionPolicy myRetentionPolicy;
 
@@ -28,6 +26,7 @@ public class ClassRepr extends ClassFileRepr {
   private final int myOuterClassName;
   private final boolean myIsLocal;
   private final boolean myIsAnonymous;
+  private final boolean myIsGenerated;
   private boolean myHasInlinedConstants;
 
   public Set<MethodRepr> getMethods() {
@@ -48,6 +47,10 @@ public class ClassRepr extends ClassFileRepr {
 
   public boolean isAnonymous() {
     return myIsAnonymous;
+  }
+
+  public boolean isGenerated() {
+    return myIsGenerated;
   }
 
   public boolean hasInlinedConstants() {
@@ -75,13 +78,17 @@ public class ClassRepr extends ClassFileRepr {
     return (access & Opcodes.ACC_INTERFACE) != 0;
   }
 
+  public boolean isEnum() {
+    return (access & Opcodes.ACC_ENUM) != 0;
+  }
+
   public abstract static class Diff extends DifferenceImpl {
 
     Diff(@NotNull Difference delegate) {
       super(delegate);
     }
 
-    public abstract Specifier<TypeRepr.AbstractType, Difference> interfaces();
+    public abstract Specifier<TypeRepr.ClassType, Difference> interfaces();
 
     public abstract Specifier<FieldRepr, Difference> fields();
 
@@ -121,7 +128,7 @@ public class ClassRepr extends ClassFileRepr {
     if (hasInlinedConstants() != pastClass.hasInlinedConstants()) {
       base |= Difference.CONSTANT_REFERENCES;
     }
-    
+
     final int d = base;
 
     return new Diff(diff) {
@@ -135,7 +142,7 @@ public class ClassRepr extends ClassFileRepr {
       }
 
       @Override
-      public Difference.Specifier<TypeRepr.AbstractType, Difference> interfaces() {
+      public Difference.Specifier<TypeRepr.ClassType, Difference> interfaces() {
         return Difference.make(pastClass.myInterfaces, myInterfaces);
       }
 
@@ -165,9 +172,11 @@ public class ClassRepr extends ClassFileRepr {
       public boolean targetAttributeCategoryMightChange() {
         final Specifier<ElemType, Difference> targetsDiff = targets();
         if (!targetsDiff.unchanged()) {
-          return targetsDiff.added().contains(ElemType.TYPE_USE) ||
-                 targetsDiff.removed().contains(ElemType.TYPE_USE) ||
-                 pastClass.getAnnotationTargets().contains(ElemType.TYPE_USE);
+          for (ElemType elemType : Set.of(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
+            if (targetsDiff.added().contains(elemType) || targetsDiff.removed().contains(elemType) || pastClass.getAnnotationTargets().contains(elemType) ) {
+              return true;
+            }
+          }
         }
         return false;
       }
@@ -184,17 +193,8 @@ public class ClassRepr extends ClassFileRepr {
     };
   }
 
-  public int @NotNull [] getSupers() {
-    final int[] result = new int[myInterfaces.size() + 1];
-
-    result[0] = mySuperClass.className;
-
-    int i = 1;
-    for (TypeRepr.AbstractType t : myInterfaces) {
-      result[i++] = ((TypeRepr.ClassType)t).className;
-    }
-
-    return result;
+  public Iterable<TypeRepr.ClassType> getSuperTypes() {
+    return Iterators.flat(Iterators.asIterable(mySuperClass), myInterfaces);
   }
 
   @Override
@@ -225,38 +225,40 @@ public class ClassRepr extends ClassFileRepr {
                    final int outerClassName,
                    final boolean localClassFlag,
                    final boolean anonymousClassFlag,
-                   final Set<UsageRepr.Usage> usages) {
+                   final Set<UsageRepr.Usage> usages, boolean isGenerated) {
     super(access, sig, name, annotations, fileName, context, usages);
     mySuperClass = TypeRepr.createClassType(context, superClass);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<>(1));
+    myInterfaces = TypeRepr.createClassType(context, interfaces, new HashSet<>(1));
     myFields = fields;
     myMethods = methods;
-    this.myAnnotationTargets = annotationTargets;
-    this.myRetentionPolicy = policy;
-    this.myOuterClassName = outerClassName;
-    this.myIsLocal = localClassFlag;
-    this.myIsAnonymous = anonymousClassFlag;
+    myAnnotationTargets = annotationTargets;
+    myRetentionPolicy = policy;
+    myOuterClassName = outerClassName;
+    myIsLocal = localClassFlag;
+    myIsAnonymous = anonymousClassFlag;
+    myIsGenerated = isGenerated;
     updateClassUsages(context, usages);
   }
 
   public ClassRepr(final DependencyContext context, final DataInput in) {
     super(context, in);
     try {
-      mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
-      myFields = RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
-      myMethods = RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
+      mySuperClass = TypeRepr.<TypeRepr.ClassType>externalizer(context).read(in);
+      myInterfaces = RW.read(TypeRepr.externalizer(context), new HashSet<>(1), in);
+      myFields = RW.read(FieldRepr.externalizer(context), new HashSet<>(), in);
+      myMethods = RW.read(MethodRepr.externalizer(context), new HashSet<>(), in);
       myAnnotationTargets = RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = RW.readUTF(in);
 
-      myRetentionPolicy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
+      myRetentionPolicy = s.isEmpty()? null : RetentionPolicy.valueOf(s);
 
       myOuterClassName = DataInputOutputUtil.readINT(in);
       int flags = DataInputOutputUtil.readINT(in);
       myIsLocal = (flags & LOCAL_MASK) != 0;
       myIsAnonymous = (flags & ANONYMOUS_MASK) != 0;
       myHasInlinedConstants = (flags & HAS_INLINED_CONSTANTS_MASK) != 0;
+      myIsGenerated = (flags & IS_GENERATED_MASK) != 0;
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -266,6 +268,7 @@ public class ClassRepr extends ClassFileRepr {
   private static final int LOCAL_MASK = 1;
   private static final int ANONYMOUS_MASK = 2;
   private static final int HAS_INLINED_CONSTANTS_MASK = 4;
+  private static final int IS_GENERATED_MASK = 8;
 
   @Override
   public void save(final DataOutput out) {
@@ -279,7 +282,7 @@ public class ClassRepr extends ClassFileRepr {
       RW.writeUTF(out, myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
       DataInputOutputUtil.writeINT(out, myOuterClassName);
       DataInputOutputUtil.writeINT(
-        out, (myIsLocal ? LOCAL_MASK:0) | (myIsAnonymous ? ANONYMOUS_MASK : 0) | (myHasInlinedConstants ? HAS_INLINED_CONSTANTS_MASK : 0)
+        out, (myIsLocal ? LOCAL_MASK:0) | (myIsAnonymous ? ANONYMOUS_MASK : 0) | (myHasInlinedConstants ? HAS_INLINED_CONSTANTS_MASK : 0) | (myIsGenerated ? IS_GENERATED_MASK : 0)
       );
     }
     catch (IOException e) {
@@ -335,11 +338,11 @@ public class ClassRepr extends ClassFileRepr {
   }
 
   @NotNull
-  public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
+  public Collection<MethodRepr> findMethods(final Predicate<? super MethodRepr> p) {
     final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {
-      if (p.satisfy(mm)) {
+      if (p.test(mm)) {
         result.add(mm);
       }
     }
@@ -348,7 +351,7 @@ public class ClassRepr extends ClassFileRepr {
   }
 
   public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
-    return new DataExternalizer<ClassRepr>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull final DataOutput out, final ClassRepr value) throws IOException {
         value.save(out);
@@ -366,7 +369,7 @@ public class ClassRepr extends ClassFileRepr {
     super.toStream(context, stream);
 
     stream.print("      Superclass : ");
-    stream.println(mySuperClass == null ? "<null>" : mySuperClass.getDescr(context));
+    stream.println(mySuperClass.getDescr(context));
 
     stream.print("      Interfaces : ");
     final TypeRepr.AbstractType[] is = myInterfaces.toArray(TypeRepr.AbstractType.EMPTY_TYPE_ARRAY);
@@ -398,6 +401,8 @@ public class ClassRepr extends ClassFileRepr {
     stream.println(myIsAnonymous);
     stream.print("      Has inlined constants: ");
     stream.println(myHasInlinedConstants);
+    stream.print("      IsGenerated: ");
+    stream.println(myIsGenerated);
 
     stream.println("      Fields:");
     final FieldRepr[] fs = myFields.toArray(new FieldRepr[0]);
@@ -406,7 +411,7 @@ public class ClassRepr extends ClassFileRepr {
         return o1.myType.getDescr(context).compareTo(o2.myType.getDescr(context));
       }
 
-      return context.getValue(o1.name).compareTo(context.getValue(o2.name));
+      return Objects.requireNonNull(context.getValue(o1.name)).compareTo(Objects.requireNonNull(context.getValue(o2.name)));
     });
     for (final FieldRepr f : fs) {
       f.toStream(context, stream);
@@ -447,7 +452,7 @@ public class ClassRepr extends ClassFileRepr {
         return c;
       }
 
-      return context.getValue(o1.name).compareTo(context.getValue(o2.name));
+      return Objects.requireNonNull(context.getValue(o1.name)).compareTo(Objects.requireNonNull(context.getValue(o2.name)));
     });
     for (final MethodRepr m : ms) {
       m.toStream(context, stream);

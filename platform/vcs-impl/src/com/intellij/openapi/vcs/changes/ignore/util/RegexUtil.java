@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 /**
  * Util class for regex operation on the files paths.
  */
-public class RegexUtil {
+public final class RegexUtil {
 
   /**
    * Extracts alphanumeric parts from the regex pattern and checks if any of them is contained in the tested path.

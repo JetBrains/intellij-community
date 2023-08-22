@@ -68,8 +68,7 @@ class MojoAnnotationInfo implements JavadocTagInfo {
 
   @Override
   public boolean isValidInContext(PsiElement element) {
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)element;
+    if (element instanceof PsiClass psiClass) {
       return InheritanceUtil.isInheritor(psiClass, BASE_CLASS);
     }
     return false;

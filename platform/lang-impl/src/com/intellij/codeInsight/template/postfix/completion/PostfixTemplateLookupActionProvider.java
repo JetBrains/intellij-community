@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.completion;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -16,12 +16,12 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
-public class PostfixTemplateLookupActionProvider implements LookupActionProvider {
+public final class PostfixTemplateLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(LookupElement element, final Lookup lookup, Consumer<LookupElementAction> consumer) {
-    if (element instanceof PostfixTemplateLookupElement) {
-      final PostfixTemplateLookupElement templateLookupElement = (PostfixTemplateLookupElement)element;
+  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
+    if (element instanceof PostfixTemplateLookupElement templateLookupElement) {
       final PostfixTemplate template = templateLookupElement.getPostfixTemplate();
 
       consumer.consume(new LookupElementAction(PlatformIcons.EDIT, CodeInsightBundle.message("action.text.edit.postfix.templates.settings")) {
@@ -45,7 +45,8 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
 
       PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
       if (settings.isTemplateEnabled(template, templateLookupElement.getProvider())) {
-        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel, String.format("Disable '%s' template", template.getKey())) {
+        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel,
+                                                 CodeInsightBundle.message("action.text.disable.live.template", template.getKey())) {
           @Override
           public Result performLookupAction() {
             ApplicationManager.getApplication().invokeLater(() -> settings.disableTemplate(template, templateLookupElement.getProvider()));

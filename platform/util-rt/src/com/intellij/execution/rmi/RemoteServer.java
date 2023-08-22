@@ -18,6 +18,7 @@ package com.intellij.execution.rmi;
 import com.intellij.execution.rmi.ssl.SslKeyStore;
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
 import com.intellij.execution.rmi.ssl.SslTrustStore;
+import com.intellij.execution.rmi.ssl.SslUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +42,13 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RemoteServer {
 
   public static final String SERVER_HOSTNAME = "java.rmi.server.hostname";
+  private static final Pattern REF_ENDPOINT_PATTERN = Pattern.compile("endpoint:\\[.*:(\\d+)]");
 
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
@@ -53,9 +57,18 @@ public class RemoteServer {
 
   private static Remote ourRemote;
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   protected static void start(Remote remote) throws Exception {
-    setupRMI();
+    start(remote, true, false);
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  protected static void start(Remote remote, boolean localHostOnly, boolean spinForever) throws Exception {
+    IdeaWatchdog watchdog = new IdeaWatchdogImpl();
+    if (remote instanceof IdeaWatchdogAware) {
+      ((IdeaWatchdogAware)remote).setWatchdog(watchdog);
+    }
+
+    setupRMI(localHostOnly);
     banJNDI();
     setupSSL();
 
@@ -64,14 +77,22 @@ public class RemoteServer {
 
     Registry registry;
     int port;
-    for (Random random = new Random(); ;) {
+    for (Random random = new Random(); ; ) {
       port = random.nextInt(0xffff);
       if (port < 4000) continue;
       try {
-        registry = LocateRegistry.createRegistry(port);
+        if (localHostOnly) {
+          registry = LocateRegistry.createRegistry(port);
+        }
+        else {
+          registry = LocateRegistry.createRegistry(port, null, RMISocketFactory.getSocketFactory());
+        }
+
+
         break;
       }
-      catch (ExportException ignored) { }
+      catch (ExportException ignored) {
+      }
     }
 
     try {
@@ -79,19 +100,19 @@ public class RemoteServer {
       String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
       registry.bind(name, stub);
 
-      String id = port + "/" + name;
-      System.out.println("Port/ID: " + id);
+      // the first used port will be reused for all further exported objects,
+      // unless they're exported with explicit port other than 0, or with custom socket factories
+      Matcher matcher = REF_ENDPOINT_PATTERN.matcher(stub.toString());
+      String servicesPort = matcher.find() ? matcher.group(1) : "0";
 
-      long waitTime = RemoteDeadHand.PING_TIMEOUT;
-      Object lock = new Object();
-      //noinspection InfiniteLoopStatement
-      while (true) {
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (lock) {
-          lock.wait(waitTime);
-        }
-        RemoteDeadHand deadHand = (RemoteDeadHand)registry.lookup(RemoteDeadHand.BINDING_NAME);
-        waitTime = deadHand.ping(id);
+      Remote watchdogStub = UnicastRemoteObject.exportObject(watchdog, 0);
+      registry.bind(IdeaWatchdog.BINDING_NAME, watchdogStub);
+
+      System.out.println("Port/ServicesPort/ID: " + (port + "/" + servicesPort + "/" + name));
+      System.out.println();
+
+      if (!spinForever) {
+        spinWhileWatchdogAlive(watchdog);
       }
     }
     catch (Throwable e) {
@@ -100,7 +121,21 @@ public class RemoteServer {
     }
   }
 
-  public static void setupRMI() {
+  private static void spinWhileWatchdogAlive(IdeaWatchdog watchdog) throws Exception {
+    long waitTime = watchdog.getWaitTimeoutMillis();
+    Object lock = new Object();
+    while (true) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (lock) {
+        lock.wait(waitTime);
+      }
+      if (!watchdog.isAlive()) {
+        System.exit(1);
+      }
+    }
+  }
+
+  public static void setupRMI(final boolean localHostOnly) {
     // this properties are necessary for RMI servers to work in some cases:
     // if we are behind a firewall, if the network connection is lost, etc.
 
@@ -112,13 +147,15 @@ public class RemoteServer {
     System.setProperty("java.rmi.server.disableHttp", "true");
 
     if (RMISocketFactory.getSocketFactory() != null) return;
-    // bind to localhost only
     try {
       RMISocketFactory.setSocketFactory(new RMISocketFactory() {
-        final InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
+        final InetAddress loopbackAddress = InetAddress.getByName(getListenAddress(localHostOnly));
+
         @Override
         public Socket createSocket(String host, int port) throws IOException {
-          return new Socket(host, port);
+          Socket socket = new Socket(host, port);
+          socket.setKeepAlive(true);
+          return socket;
         }
 
         @Override
@@ -139,29 +176,61 @@ public class RemoteServer {
   }
 
   private static void setupSSL() {
-    boolean caCert = System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null;
-    boolean clientCert = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH) != null;
-    boolean clientKey = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH) != null;
-    boolean useFactory = "true".equals(System.getProperty(SslSocketFactory.SSL_USE_FACTORY));
+    setupDisabledAlgorithms();
+    String caCertPath = System.getProperty(SslUtil.SSL_CA_CERT_PATH);
+    boolean caCert = caCertPath != null;
+    String clientCertPath = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH);
+    String clientKeyPath = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH);
+    boolean clientKey = clientKeyPath != null;
+    boolean deferred = "true".equals(System.getProperty(SslKeyStore.SSL_DEFERRED_KEY_LOADING));
+    boolean deferredCa = "true".equals(System.getProperty(SslKeyStore.SSL_DEFERRED_CA_LOADING));
+    boolean useFactory = "true".equals(System.getProperty(SslUtil.SSL_USE_FACTORY));
     if (useFactory) {
-      if (caCert || clientCert && clientKey) {
+      if (caCert || clientKey) {
         Security.setProperty("ssl.SocketFactory.provider", SslSocketFactory.class.getName());
       }
     }
     else {
-      if (caCert) SslTrustStore.setDefault();
-      if (clientCert && clientKey) SslKeyStore.setDefault();
+      if (caCert || deferredCa) SslTrustStore.setDefault();
+      if (clientKey || deferred) SslKeyStore.setDefault();
     }
+    if (caCert) {
+      SslTrustStore.appendUserCert("user-provided-ca", caCertPath);
+    }
+    if (clientKey) {
+      SslKeyStore.loadKey("user-provided-key", clientKeyPath, clientCertPath, null);
+    }
+  }
+
+  private static void setupDisabledAlgorithms() {
+    passSecurityProperty("jdk.certpath.disabledAlgorithms");
+    passSecurityProperty("jdk.tls.disabledAlgorithms");
+  }
+
+  private static void passSecurityProperty(String propertyName) {
+    String value = System.getProperty(propertyName);
+    if (value != null) Security.setProperty(propertyName, value);
+  }
+
+  private static String getListenAddress(boolean localHostOnly) {
+    if (localHostOnly) {
+      return getLoopbackAddress();
+    }
+    return isIpV6() ? "::/0" : "0.0.0.0";
   }
 
   @NotNull
   private static String getLoopbackAddress() {
-    boolean ipv6 = false;
+    return isIpV6() ? "::1" : "127.0.0.1";
+  }
+
+  private static boolean isIpV6() {
     try {
-      ipv6 = InetAddress.getByName(null) instanceof Inet6Address;
+      return InetAddress.getByName(null) instanceof Inet6Address;
     }
-    catch (IOException ignore) {}
-    return ipv6 ? "::1" : "127.0.0.1";
+    catch (IOException ignore) {
+      return false;
+    }
   }
 
   @SuppressWarnings("UnusedDeclaration")

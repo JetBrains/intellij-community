@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -11,7 +11,8 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkException;
@@ -25,19 +26,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> extends DialogWrapper implements RemoteSdkEditorContainer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.remote.ui.CreateRemoteSdkDialog");
-  @Nullable
-  protected final Project myProject;
+public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>> extends DialogWrapper implements RemoteSdkEditorContainer {
+  private static final Logger LOG = Logger.getInstance(CreateRemoteSdkDialog.class);
+  protected final @Nullable Project myProject;
   private CreateRemoteSdkForm<T> myInterpreterForm;
   private Sdk mySdk;
-  protected final AtomicNotNullLazyValue<RemoteSdkFactoryImpl<T>> mySdkFactoryProvider =
-    AtomicNotNullLazyValue.createValue(() -> createRemoteSdkFactory());
-  @Nullable
-  private T myOriginalData;
+  protected final NotNullLazyValue<RemoteSdkFactoryImpl<T>> mySdkFactoryProvider = NotNullLazyValue.atomicLazy(this::createRemoteSdkFactory);
+  private @Nullable T myOriginalData;
   protected final Collection<Sdk> myExistingSdks;
 
-  public CreateRemoteSdkDialog(@Nullable final Project project, Collection<Sdk> existingSdks) {
+  public CreateRemoteSdkDialog(final @Nullable Project project, Collection<Sdk> existingSdks) {
     super(project, true);
     myProject = project == null || !project.isDefault() ? project : null;
     myExistingSdks = existingSdks;
@@ -49,23 +47,20 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     myExistingSdks = existingSdks;
   }
 
-  @NotNull
-  protected abstract RemoteSdkFactoryImpl<T> createRemoteSdkFactory();
+  protected abstract @NotNull RemoteSdkFactoryImpl<T> createRemoteSdkFactory();
 
   protected RemoteSdkFactoryImpl<T> getSdkFactory() {
     return mySdkFactoryProvider.getValue();
   }
 
-  @NotNull
-  private CreateRemoteSdkForm<T> getInterpreterForm() {
+  private @NotNull CreateRemoteSdkForm<T> getInterpreterForm() {
     if (myInterpreterForm == null) {
       myInterpreterForm = createRemoteSdkForm();
     }
     return myInterpreterForm;
   }
 
-  @NotNull
-  protected abstract CreateRemoteSdkForm<T> createRemoteSdkForm();
+  protected abstract @NotNull CreateRemoteSdkForm<T> createRemoteSdkForm();
 
   public final void onValidationPress() {
     initValidation();
@@ -88,21 +83,19 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     return getInterpreterForm().getPreferredFocusedComponent();
   }
 
-  @NotNull
-  public final Sdk getSdk() {
+  public final @NotNull Sdk getSdk() {
     assert mySdk != null;
     assert mySdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData;
     return mySdk;
   }
 
-  protected void initSdk(@NotNull final Sdk sdk) throws RemoteSdkException {
+  protected void initSdk(final @NotNull Sdk sdk) throws RemoteSdkException {
     getSdkFactory().initSdk(sdk, myProject, getContentPane());
   }
 
   protected abstract boolean isModified(@NotNull T oldData, @NotNull T newData);
 
-  @NotNull
-  private Sdk createSdk(T remoteSdkData) throws RemoteSdkException {
+  private @NotNull Sdk createSdk(T remoteSdkData) throws RemoteSdkException {
     return createRemoteSdk(remoteSdkData);
   }
 
@@ -111,8 +104,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
   }
 
 
-  @Nullable
-  private Sdk saveUnfinished() {
+  private @Nullable Sdk saveUnfinished() {
     final T data;
     try {
       data = getInterpreterForm().createSdkData();
@@ -156,7 +148,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
       assert newData instanceof RemoteSdkAdditionalData;
 
       //noinspection unchecked
-      if (((RemoteSdkAdditionalData)newData).isValid() &&
+      if (((RemoteSdkAdditionalData<?>)newData).isValid() &&
           (myOriginalData == null || !myOriginalData.isValid() ||
            (myOriginalData.getClass().isInstance(newData) && isModified(myOriginalData, (T)newData)))
       ) {
@@ -178,14 +170,14 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
   protected boolean validateRemoteSdkData(T data) {
     for (Sdk sdk : myExistingSdks) {
       if (StringUtil.equals(sdk.getHomePath(), getSdkFactory().generateSdkHomePath(data))) {
-        validationFailed("There is already the same interpreter:\n" + sdk.getName(), false);
+        validationFailed(IdeBundle.message("dialog.message.there.already.same.interpreter", sdk.getName()), false);
         return false;
       }
     }
     return true;
   }
 
-  private void onCreateFail(String validation) {
+  private void onCreateFail(@NlsContexts.DialogMessage String validation) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final boolean saveAnyway = validationFailed(validation, getSdkFactory().canSaveUnfinished());
       if (saveAnyway) {
@@ -203,13 +195,14 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     }
   }
 
-  protected boolean validationFailed(String validation, boolean askSaveUnfinished) {
+  protected boolean validationFailed(@NlsContexts.DialogMessage String validation, boolean askSaveUnfinished) {
     if (StringUtil.isEmpty(validation)) {
-      validation = "Communication error";
+      validation = IdeBundle.message("dialog.message.communication.error");
     }
     if (askSaveUnfinished) {
       if (Messages
-            .showOkCancelDialog(validation, IdeBundle.message("dialog.title.can.t.create.0.sdk", getSdkFactory().sdkName()), IdeBundle.message("button.save.anyway"),
+            .showOkCancelDialog(validation, IdeBundle.message("dialog.title.can.t.create.0.sdk", getSdkFactory().sdkName()),
+                                IdeBundle.message("button.save.anyway"),
                                 IdeBundle.message("button.continue.editing"),
                                 Messages.getWarningIcon()) ==
           Messages.OK) {
@@ -222,14 +215,12 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     return false;
   }
 
-  @Nullable
-  private String validateInterpreterForm() {
+  private @NlsContexts.DialogMessage @Nullable String validateInterpreterForm() {
     return getInterpreterForm().validateFinal();
   }
 
   @Override
-  @Nullable
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     return getInterpreterForm().validateRemoteInterpreter();
   }
 
@@ -238,8 +229,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     myOriginalData = originalData;
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 

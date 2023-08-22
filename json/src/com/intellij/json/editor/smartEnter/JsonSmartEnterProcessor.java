@@ -70,8 +70,7 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
     @Override
     public void apply(@NotNull Editor editor, @NotNull JsonSmartEnterProcessor processor, @NotNull PsiElement element)
       throws IncorrectOperationException {
-      if (element instanceof JsonValue && element.getParent() instanceof JsonArray) {
-        final JsonValue arrayElement = (JsonValue)element;
+      if (element instanceof JsonValue arrayElement && element.getParent() instanceof JsonArray) {
         if (terminatedOnCurrentLine(editor, arrayElement) && !isFollowedByTerminal(element, COMMA)) {
           editor.getDocument().insertString(arrayElement.getTextRange().getEndOffset(), ",");
           processor.myShouldAddNewline = true;

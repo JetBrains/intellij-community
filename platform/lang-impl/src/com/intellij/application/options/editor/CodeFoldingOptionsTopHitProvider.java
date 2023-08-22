@@ -1,9 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
+import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.ConfigurableBuilder;
 import com.intellij.openapi.options.ConfigurableWithOptionDescriptors;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -25,8 +29,25 @@ final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvi
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions() {
-    String byDefault = ApplicationBundle.message("label.fold.by.default");
     List<OptionDescription> result = new ArrayList<>();
+
+    EditorSettingsExternalizable instance = EditorSettingsExternalizable.getInstance();
+    result.add(
+      new BooleanOptionDescription(ApplicationBundle.message("checkbox.show.code.folding.outline"), CodeFoldingConfigurable.ID) {
+        @Override
+        public boolean isOptionEnabled() {
+          return instance.isFoldingOutlineShown();
+        }
+
+        @Override
+        public void setOptionState(boolean enabled) {
+          instance.setFoldingOutlineShown(enabled);
+          ApplicationManager.getApplication().invokeLater(() -> CodeFoldingConfigurable.applyCodeFoldingSettingsChanges(), ModalityState.nonModal());
+        }
+      }
+    );
+
+    String byDefault = ApplicationBundle.message("label.fold.by.default");
     CodeFoldingOptionsProviderEP.EP_NAME.forEachExtensionSafe(ep -> {
       CodeFoldingOptionsProvider wrapper = ConfigurableWrapper.wrapConfigurable(ep);
       UnnamedConfigurable configurable =

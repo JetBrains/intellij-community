@@ -1,21 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene Zhuravlev
  */
-class ExecuteJShellAction extends AnAction{
+final class ExecuteJShellAction extends AnAction{
   private static class Holder {
     private static final AnAction ourInstance = new ExecuteJShellAction();
   }
@@ -44,44 +44,42 @@ class ExecuteJShellAction extends AnAction{
     if (editor == null) {
       return;
     }
-    final VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (vFile == null) {
+
+    final FileEditor fileEditor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
+    if (fileEditor == null) {
+      return;
+    }
+    final SnippetEditorDecorator.ConfigurationPane config =
+      SnippetEditorDecorator.ConfigurationPane.getJShellConfiguration(fileEditor);
+    if (config == null) {
       return;
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
     try {
-      JShellHandler handler = JShellHandler.getAssociatedHandler(vFile);
-      if (handler == null) {
-        final SnippetEditorDecorator.ConfigurationPane config = SnippetEditorDecorator.getJShellConfiguration(e.getDataContext());
-        final Module module = config != null ? config.getContextModule() : null;
-        final Sdk sdk = config != null ? config.getRuntimeSdk() : null;
-        handler = JShellHandler.create(project, vFile, module, sdk);
-      }
-      if (handler != null) {
-        handler.toFront();
-        boolean hasDataToEvaluate = false;
+      JShellHandler handler = config.getJShellHandler();
+      handler.toFront();
+      boolean hasDataToEvaluate = false;
 
-        final Document document = editor.getDocument();
-        final TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
-        if (selectedRange.isEmpty()) {
-          final PsiElement snippet = getSnippetFromContext(project, e);
-          if (snippet instanceof PsiJShellFile) {
-            for (PsiElement element : ((PsiJShellFile)snippet).getExecutableSnippets()) {
-              hasDataToEvaluate |= scheduleEval(handler, element.getText());
-            }
-          }
-          else if (snippet != null){
-            hasDataToEvaluate = scheduleEval(handler, snippet.getText());
+      final Document document = editor.getDocument();
+      final TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
+      if (selectedRange.isEmpty()) {
+        final PsiElement snippet = getSnippetFromContext(project, e);
+        if (snippet instanceof PsiJShellFile) {
+          for (PsiElement element : ((PsiJShellFile)snippet).getExecutableSnippets()) {
+            hasDataToEvaluate |= scheduleEval(handler, element.getText());
           }
         }
-        else {
-          hasDataToEvaluate = scheduleEval(handler, document.getText(selectedRange));
+        else if (snippet != null){
+          hasDataToEvaluate = scheduleEval(handler, snippet.getText());
         }
-        if (!hasDataToEvaluate) {
-          JShellDiagnostic.notifyInfo("Nothing to execute", project);
-        }
+      }
+      else {
+        hasDataToEvaluate = scheduleEval(handler, document.getText(selectedRange));
+      }
+      if (!hasDataToEvaluate) {
+        JShellDiagnostic.notifyInfo(JavaCompilerBundle.message("jshell.nothing.to.execute"), project);
       }
     }
     catch (Exception ex) {
@@ -99,7 +97,7 @@ class ExecuteJShellAction extends AnAction{
   }
 
   @Nullable
-  private PsiElement getSnippetFromContext(Project project, AnActionEvent e) {
+  private static PsiElement getSnippetFromContext(Project project, @NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

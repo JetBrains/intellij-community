@@ -50,7 +50,7 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    moduleChooser = new ElementsChooser<Module>(true) {
+    moduleChooser = new ElementsChooser<>(true) {
       @Override
       protected String getItemText(@NotNull final Module module) {
         return module.getName();

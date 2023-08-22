@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.icons.AllIcons;
@@ -22,7 +22,7 @@ import java.awt.*;
 /**
  * @author Evgeny Zakrevsky
  */
-public class TaskCellRenderer extends DefaultListCellRenderer {
+public final class TaskCellRenderer extends DefaultListCellRenderer {
   private final Project myProject;
 
   public TaskCellRenderer(Project project) {

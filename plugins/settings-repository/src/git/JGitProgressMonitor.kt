@@ -1,33 +1,23 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
-import org.eclipse.jgit.lib.NullProgressMonitor
+import com.intellij.openapi.progress.progressSink
+import kotlinx.coroutines.job
 import org.eclipse.jgit.lib.ProgressMonitor
+import org.jetbrains.annotations.Nls
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
-fun ProgressIndicator?.asProgressMonitor(): ProgressMonitor = if (this == null || this is EmptyProgressIndicator) NullProgressMonitor.INSTANCE else JGitProgressMonitor(this)
+suspend fun progressMonitor(): ProgressMonitor {
+  return JGitCoroutineProgressMonitor(coroutineContext)
+}
 
-private class JGitProgressMonitor(private val indicator: ProgressIndicator) : ProgressMonitor {
+private class JGitCoroutineProgressMonitor(private val context: CoroutineContext) : ProgressMonitor {
   override fun start(totalTasks: Int) {
   }
 
-  override fun beginTask(title: String, totalWork: Int) {
-    indicator.text2 = title
+  override fun beginTask(@Nls title: String, totalWork: Int) {
+    context.progressSink?.details(title)
   }
 
   override fun update(completed: Int) {
@@ -35,8 +25,11 @@ private class JGitProgressMonitor(private val indicator: ProgressIndicator) : Pr
   }
 
   override fun endTask() {
-    indicator.text2 = ""
+    context.progressSink?.details("")
   }
 
-  override fun isCancelled() = indicator.isCanceled
+  override fun isCancelled() = context.job.isCancelled
+  override fun showDuration(enabled: Boolean) {
+    // todo
+  }
 }

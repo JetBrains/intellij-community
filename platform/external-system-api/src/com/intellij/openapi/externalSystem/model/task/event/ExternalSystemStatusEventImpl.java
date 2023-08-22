@@ -28,13 +28,20 @@ public class ExternalSystemStatusEventImpl<T extends OperationDescriptor> extend
   private final long myTotal;
   private final long myProgress;
   private final String myUnit;
+  private final String myDescription;
 
   public ExternalSystemStatusEventImpl(@NotNull String eventId, @Nullable String parentEventId, @NotNull T descriptor,
                                        long total, long progress, String unit) {
+    this(eventId, parentEventId, descriptor, total, progress, unit, null);
+  }
+
+  public ExternalSystemStatusEventImpl(@NotNull String eventId, @Nullable String parentEventId, @NotNull T descriptor,
+                                       long total, long progress, String unit, @Nullable  String description) {
     super(eventId, parentEventId, descriptor);
     myTotal = total;
     myProgress = progress;
     myUnit = unit;
+    myDescription = description;
   }
 
   @Override
@@ -50,5 +57,11 @@ public class ExternalSystemStatusEventImpl<T extends OperationDescriptor> extend
   @Override
   public String getUnit() {
     return myUnit;
+  }
+
+  @Nullable
+  @Override
+  public String getDescription() {
+    return myDescription;
   }
 }

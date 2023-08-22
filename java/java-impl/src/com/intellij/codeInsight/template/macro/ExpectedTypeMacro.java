@@ -21,7 +21,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
@@ -36,11 +35,6 @@ public class ExpectedTypeMacro extends Macro {
   @Override
   public String getName() {
     return "expectedType";
-  }
-
-  @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.expected.type");
   }
 
   @Override

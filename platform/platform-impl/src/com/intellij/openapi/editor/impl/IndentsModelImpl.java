@@ -1,31 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.util.IntPair;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public final class IndentsModelImpl implements IndentsModel {
-  private final Object2ObjectOpenHashMap<IntPair, IndentGuideDescriptor> myIndentsByLines = new Object2ObjectOpenHashMap<>();
+  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = CollectionFactory.createSmallMemoryFootprintMap();
   private List<IndentGuideDescriptor> myIndents = new ArrayList<>();
-  @NotNull private final EditorImpl myEditor;
+  private final @NotNull EditorImpl myEditor;
 
   public IndentsModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
   }
 
-  @NotNull
-  public List<IndentGuideDescriptor> getIndents() {
+  public @NotNull List<IndentGuideDescriptor> getIndents() {
     return myIndents;
   }
 

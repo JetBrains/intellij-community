@@ -1,32 +1,119 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntProcedure;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.AbstractObjectIterator;
+import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jetbrains.annotations.NotNull;
 
-public class TrigramBuilder {
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.function.IntPredicate;
+
+public final class TrigramBuilder {
   private TrigramBuilder() {
   }
 
-  public static boolean processTrigrams(CharSequence text, TrigramProcessor consumer) {
+  public abstract static class TrigramProcessor implements IntPredicate {
+    public boolean consumeTrigramsCount(@SuppressWarnings("unused") int count) {
+      return true;
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public static boolean processTrigrams(@NotNull CharSequence text, @NotNull TrigramProcessor consumer) {
+    IntSet trigrams = getTrigrams(text);
+    if (!consumer.consumeTrigramsCount(trigrams.size())) {
+      return false;
+    }
+    IntIterator iterator = trigrams.intIterator();
+    while (iterator.hasNext()) {
+      int trigram = iterator.nextInt();
+      if (!consumer.test(trigram)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text) {
+    return new AbstractInt2ObjectMap<Void>() {
+      final IntSet trigrams = getTrigrams(text);
+
+      @Override
+      public int size() {
+        return trigrams.size();
+      }
+
+      @Override
+      public boolean containsKey(int k) {
+        return trigrams.contains(k);
+      }
+
+      @Override
+      public boolean containsValue(Object v) {
+        return v == null && !isEmpty();
+      }
+
+      @Override
+      public ObjectSet<Entry<Void>> int2ObjectEntrySet() {
+        return new AbstractObjectSet<Entry<Void>>() {
+          @Override
+          public ObjectIterator<Entry<Void>> iterator() {
+            IntIterator iterator = trigrams.intIterator();
+            return new AbstractObjectIterator<Entry<Void>>() {
+              @Override
+              public boolean hasNext() {
+                return iterator.hasNext();
+              }
+
+              @Override
+              public Entry<Void> next() {
+                int key = iterator.nextInt();
+
+                return new Entry<Void>() {
+                  @Override
+                  public int getIntKey() {
+                    return key;
+                  }
+
+                  @Override
+                  public Void getValue() {
+                    return null;
+                  }
+
+                  @Override
+                  public Void setValue(Void value) {
+                    throw new UnsupportedOperationException();
+                  }
+                };
+              }
+            };
+          }
+
+          @Override
+          public int size() {
+            return trigrams.size();
+          }
+        };
+      }
+
+      @Override
+      public Void get(int key) {
+        return null;
+      }
+    };
+  }
+
+  /**
+   * Produces <a href="https://en.wikipedia.org/wiki/Trigram">trigrams</a> from a given text.
+   * <p>
+   * Every single trigram is represented by single integer where char bytes are stored with 8 bit offset.
+   */
+  public static @NotNull IntSet getTrigrams(@NotNull CharSequence text) {
     final AddonlyIntSet set = new AddonlyIntSet();
     int index = 0;
     final char[] fileTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
@@ -66,99 +153,144 @@ public class TrigramBuilder {
       }
     }
 
-    return consumer.consumeTrigramsCount(set.size()) && set.forEach(consumer);
+    return set;
   }
 
-  public static abstract class TrigramProcessor implements TIntProcedure {
-    public boolean consumeTrigramsCount(int count) { return true; }
-  }
-}
+  private static final class AddonlyIntSet extends AbstractIntSet {
+    private int size;
+    private int[] data;
+    private int mask;
+    private boolean hasZeroKey;
 
-class AddonlyIntSet {
-  //private static final int MAGIC = 0x9E3779B9;
-  private int size;
-  private int[] data;
-  private int shift;
-  private int mask;
-  private boolean hasZeroKey;
-
-  AddonlyIntSet() {
-    this(21);
-  }
-
-  AddonlyIntSet(int expectedSize) {
-    int powerOfTwo = Integer.highestOneBit((3 * expectedSize) / 2) << 1;
-    shift = Integer.numberOfLeadingZeros(powerOfTwo) + 1;
-    mask = powerOfTwo - 1;
-    data = new int[powerOfTwo];
-  }
-
-  public int size() {
-    return size;
-  }
-
-  private int hash(int h, int[] a) {
-    h ^= (h >>> 20) ^ (h >>> 12);
-    return (h ^ (h >>> 7) ^ (h >>> 4)) & mask;
-    //int idx = (id * MAGIC) >>> shift;
-    //if (idx >= a.length) {
-    //  idx %= a.length;
-    //}
-    //return idx;
-  }
-
-  public void add(int key) {
-    if (key == 0) {
-      if (!hasZeroKey) ++size;
-      hasZeroKey = true;
-      return;
+    AddonlyIntSet() {
+      this(21);
     }
-    if (size >= (2 * data.length) / 3) rehash();
-    if (doPut(data, key)) size++;
+
+    @Override
+    public IntIterator iterator() {
+      return new AbstractIntIterator() {
+        private int pos = -1;
+
+        @Override
+        public int nextInt() {
+          if (pos == -1 && hasZeroKey) {
+            pos = 0;
+            return 0;
+          }
+
+          for (int i = Math.max(0, pos); i < data.length; i++) {
+            if (data[i] != 0) {
+              pos = i + 1;
+              return data[i];
+            }
+          }
+
+          throw new NoSuchElementException();
+        }
+
+        @Override
+        public boolean hasNext() {
+          if (pos == -1 && hasZeroKey) {
+            return true;
+          }
+
+          for (int i = Math.max(0, pos); i < data.length; i++) {
+            if (data[i] != 0) {
+              pos = i;
+              return true;
+            }
+          }
+
+          return false;
+        }
+      };
+    }
+
+    AddonlyIntSet(int expectedSize) {
+      int powerOfTwo = Integer.highestOneBit((3 * expectedSize) / 2) << 1;
+      mask = powerOfTwo - 1;
+      data = new int[powerOfTwo];
+    }
+
+    @Override
+    public int size() {
+      return size;
+    }
+
+    private int hash(int h) {
+      h ^= (h >>> 20) ^ (h >>> 12);
+      return (h ^ (h >>> 7) ^ (h >>> 4)) & mask;
+    }
+
+    @Override
+    public boolean add(int key) {
+      if (key == 0) {
+        if (!hasZeroKey) {
+          hasZeroKey = true;
+          ++size;
+          return true;
+        }
+        return false;
+      }
+      if (size >= (2 * data.length) / 3) rehash();
+      boolean updated = doPut(data, key);
+      if (updated) {
+        size++;
+      }
+      return updated;
+    }
+
+    private boolean doPut(int[] a, int o) {
+      int index = hash(o);
+      int obj;
+      while ((obj = a[index]) != 0) {
+        if (obj == o) break;
+        if (index == 0) index = a.length;
+        index--;
+      }
+      a[index] = o;
+      return obj == 0;
+    }
+
+    private void rehash() {
+      int[] b = new int[data.length << 1];
+      mask = b.length - 1;
+      for (int i = data.length; --i >= 0;) {
+        int ns = data[i];
+        if (ns != 0) doPut(b, ns);
+      }
+      data = b;
+    }
+
+    @Override
+    public boolean contains(int key) {
+      if (key == 0) return hasZeroKey;
+      int index = hash(key);
+      int v;
+      while ((v = data[index]) != 0) {
+        if (v == key) return true;
+        if (index == 0) index = data.length;
+        index--;
+      }
+      return false;
+    }
+
+    public boolean forEach(@NotNull IntPredicate consumer) {
+      if (hasZeroKey && !consumer.test(0)) {
+        return false;
+      }
+
+      for (int o : data) {
+        if (o == 0) {
+          continue;
+        }
+        if (!consumer.test(o)) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
-  private boolean doPut(int[] a, int o) {
-    int index = hash(o, a);
-    int obj;
-    while ((obj = a[index]) != 0) {
-      if (obj == o) break;
-      if (index == 0) index = a.length;
-      index--;
-    }
-    a[index] = o;
-    return obj == 0;
-  }
-
-  private void rehash() {
-    --shift;
-    int[] b = new int[data.length << 1];
-    mask = b.length - 1;
-    for (int i = data.length; --i >= 0;) {
-      int ns = data[i];
-      if (ns != 0) doPut(b, ns);
-    }
-    data = b;
-  }
-
-  public boolean contains(int key) {
-    if (key == 0) return hasZeroKey;
-    int index = hash(key, data);
-    int v;
-    while ((v = data[index]) != 0) {
-      if (v == key) return true;
-      if (index == 0) index = data.length;
-      index--;
-    }
-    return false;
-  }
-
-  public boolean forEach(TIntProcedure consumer) {
-    if (hasZeroKey && !consumer.execute(0)) return false;
-    for(int o:data) {
-      if (o == 0) continue;
-      if(!consumer.execute(o)) return false;
-    }
-    return true;
-  }
 }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.palette;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -53,7 +54,7 @@ public class PaletteGroupComponent extends JCheckBox {
   @Override
   public Color getForeground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionForeground();
+      return NamedColorUtil.getListSelectionForeground(true);
     }
     return super.getForeground();
   }
@@ -108,8 +109,7 @@ public class PaletteGroupComponent extends JCheckBox {
         Component next = myMoveDown
                          ? policy.getComponentAfter(container, PaletteGroupComponent.this)
                          : policy.getComponentBefore(container, PaletteGroupComponent.this);
-        if (next instanceof PaletteItemsComponent) {
-          PaletteItemsComponent list = (PaletteItemsComponent)next;
+        if (next instanceof PaletteItemsComponent list) {
           if (list.getModel().getSize() != 0) {
             list.takeFocusFrom(list == myItemsComponent ? 0 : -1);
             return;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util;
 
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
@@ -6,11 +6,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Iterator;
+import java.io.File;
+import java.util.*;
 
-public class GradleContainerUtil {
-
+public final class GradleContainerUtil {
   public static final ImmutableDomainObjectSet<?> EMPTY_DOMAIN_OBJECT_SET = ImmutableDomainObjectSet.of(Collections.emptyList());
 
   @NotNull
@@ -39,5 +38,31 @@ public class GradleContainerUtil {
       currentResult = function.fun(currentResult, e);
     }
     return currentResult;
+  }
+
+  @Contract("!null -> !null; null -> null")
+  public static Set<File> unmodifiableFileSet(@Nullable Collection<String> paths) {
+    if (paths == null) return null;
+    if (paths.isEmpty()) return Collections.emptySet();
+    LinkedHashSet<File> files = new LinkedHashSet<>(paths.size());
+    for (String path : paths) {
+      if (path != null) {
+        files.add(new File(path));
+      }
+    }
+    return Collections.unmodifiableSet(files);
+  }
+
+  @Contract("!null -> !null; null -> null")
+  public static Set<String> unmodifiablePathSet(@Nullable Collection<File> files) {
+    if (files == null) return null;
+    if (files.isEmpty()) return Collections.emptySet();
+    LinkedHashSet<String> paths = new LinkedHashSet<>(files.size());
+    for (File file : files) {
+      if (file != null) {
+        paths.add(file.getPath());
+      }
+    }
+    return Collections.unmodifiableSet(paths);
   }
 }

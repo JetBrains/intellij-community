@@ -1,0 +1,7 @@
+// "Change type of 'complex' to '(Int) -> Long'" "true"
+
+val complex: (Int) -> Long
+    get() = { it.toLong() }
+/* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

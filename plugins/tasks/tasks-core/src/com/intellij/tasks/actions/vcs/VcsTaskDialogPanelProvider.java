@@ -17,7 +17,6 @@ package com.intellij.tasks.actions.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.tasks.ui.TaskDialogPanelProvider;
@@ -28,11 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public class VcsTaskDialogPanelProvider extends TaskDialogPanelProvider {
-  @Nullable
-  @Override
-  public TaskDialogPanel getOpenTaskPanel(@NotNull Project project, @NotNull Task task) {
-    return null;
-  }
 
   @Nullable
   @Override

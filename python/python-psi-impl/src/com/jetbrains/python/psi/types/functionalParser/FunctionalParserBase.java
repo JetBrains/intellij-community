@@ -16,19 +16,18 @@
 package com.jetbrains.python.psi.types.functionalParser;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-* @author vlan
-*/
+import static com.intellij.reference.SoftReference.dereference;
+
 public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, T> {
   @Nullable private String myName = null;
 
@@ -203,7 +202,7 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
         myCache.clear();
       }
       final SoftReference<Pair<R, State>> ref = myCache.get(state.getPos());
-      final Pair<R, State> cached = SoftReference.dereference(ref);
+      final Pair<R, State> cached = dereference(ref);
       if (cached != null) {
         return cached;
       }

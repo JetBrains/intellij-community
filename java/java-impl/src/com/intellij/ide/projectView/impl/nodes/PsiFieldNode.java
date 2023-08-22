@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
@@ -64,7 +65,8 @@ public class PsiFieldNode extends BasePsiMemberNode<PsiField>{
         return aClass.getQualifiedName();
       }
       else {
-        return field.toString();
+        @NlsSafe String fieldText = field.toString();
+        return fieldText;
       }
     }
     return super.getTitle();

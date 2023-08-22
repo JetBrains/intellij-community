@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.CredentialsType
 import com.intellij.util.PathMappingSettings
+import org.jetbrains.annotations.Nls
 import java.io.File
 import java.util.function.Consumer
 
@@ -51,7 +52,7 @@ interface PyProjectSynchronizer {
    * @return null if sync is available or error message if something prevents project from sync.
    */
 
-  fun checkSynchronizationAvailable(syncCheckStrategy: PySyncCheckStrategy): String?
+  @Nls fun checkSynchronizationAvailable(syncCheckStrategy: PySyncCheckStrategy): String?
 
   /**
    * if remote box allows user to configure remote path, this method returns default path
@@ -121,7 +122,7 @@ interface PyProjectSynchronizerProvider {
  * Several strategies to be used for [PyProjectSynchronizer.checkSynchronizationAvailable].
  * See concrete impls.
  */
-interface PySyncCheckStrategy
+sealed interface PySyncCheckStrategy
 
 /**
  * Checks if specific folder could be synced with remote interpreter.

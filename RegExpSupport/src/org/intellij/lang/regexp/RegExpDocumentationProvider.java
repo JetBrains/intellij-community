@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.ASTNode;
@@ -10,16 +10,12 @@ import org.intellij.lang.regexp.psi.RegExpProperty;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vnikolaenko
- */
 public final class RegExpDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   @Nullable
   @Nls
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    if (element instanceof RegExpProperty) {
-      final RegExpProperty prop = (RegExpProperty)element;
+    if (element instanceof RegExpProperty prop) {
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
         final String description = RegExpLanguageHosts.getInstance().getPropertyDescription(node.getPsi(), node.getText());
@@ -37,9 +33,8 @@ public final class RegExpDocumentationProvider extends AbstractDocumentationProv
 
   @Override
   @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    if (element instanceof RegExpGroup) {
-      final RegExpGroup group = (RegExpGroup)element;
+  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    if (element instanceof RegExpGroup group) {
       return StringUtil.escapeXmlEntities(group.getUnescapedText());
     } else {
       return null;

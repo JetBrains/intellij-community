@@ -8,9 +8,7 @@ import com.jetbrains.python.psi.PyLoopStatement;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyBreakStatementImpl extends PyElementImpl implements PyBreakStatement {
   public PyBreakStatementImpl(ASTNode astNode) {
     super(astNode);

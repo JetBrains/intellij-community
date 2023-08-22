@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.google.common.base.Preconditions;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 
 /**
@@ -20,7 +21,7 @@ import java.util.Map;
  * in {@link AnActionEvent#getDataContext()} with the key {@link TestDialogBuilder.TestAnswers#KEY}.
  */
 @TestOnly
-public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
+public final class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
   private final TestAnswers myAnswers;
   private InputValidator myValidator;
 
@@ -34,13 +35,24 @@ public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
   }
 
   @Override
+  public CreateFileFromTemplateDialog.Builder setDefaultText(String text) {
+    return this;
+  }
+
+  @Override
   public CreateFileFromTemplateDialog.Builder setValidator(InputValidator validator) {
     myValidator = validator;
     return this;
   }
 
   @Override
-  public CreateFileFromTemplateDialog.Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+  public CreateFileFromTemplateDialog.Builder setDialogOwner(@Nullable Component owner) {
+    return this;
+  }
+
+  @Override
+  public CreateFileFromTemplateDialog.Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName,
+                                                      @Nullable InputValidator extraValidator) {
     return this;
   }
 
@@ -54,8 +66,8 @@ public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
                                                  @Nullable String selectedItem,
                                                  @NotNull CreateFileFromTemplateDialog.FileCreator<T> creator) {
     if (myValidator != null) {
-      Preconditions.checkState(myValidator.checkInput(myAnswers.myName), "The answer '%s' is not valid.", myAnswers.myName);
-      Preconditions.checkState(myValidator.canClose(myAnswers.myName), "Can't close dialog with the answer '%s'.", myAnswers.myName);
+      Preconditions.checkState(myValidator.checkInput(myAnswers.myName), "The answer '%s' is not valid.", myAnswers.myName); //NON-NLS
+      Preconditions.checkState(myValidator.canClose(myAnswers.myName), "Can't close dialog with the answer '%s'.", myAnswers.myName); //NON-NLS
     }
     if (myAnswers.myName != null && myAnswers.myTemplateName != null) {
       return creator.createFile(myAnswers.myName, myAnswers.myTemplateName);
@@ -72,7 +84,7 @@ public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
   }
 
   @TestOnly
-  public static class TestAnswers {
+  public static final class TestAnswers {
     public static final DataKey<TestAnswers> KEY = DataKey.create("CreateFileFromTemplateDialog.TestDataContext");
 
     private final String myName;

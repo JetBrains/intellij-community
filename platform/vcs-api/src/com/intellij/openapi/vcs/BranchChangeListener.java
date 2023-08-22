@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,9 @@ public interface BranchChangeListener extends EventListener {
 
   Topic<BranchChangeListener> VCS_BRANCH_CHANGED = Topic.create("VCS branch changed", BranchChangeListener.class);
 
+  @RequiresEdt
   void branchWillChange(@NotNull String branchName);
 
+  @RequiresEdt
   void branchHasChanged(@NotNull String branchName);
 }

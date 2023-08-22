@@ -1,0 +1,3 @@
+fun constructorUsage() {
+    MainClass().NestedClass()
+}

@@ -20,13 +20,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExpression {
   public PyPrefixExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -34,7 +31,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PyExpression getOperand() {
-    return (PyExpression)childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @Nullable
@@ -59,7 +56,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull
@@ -85,15 +82,13 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       }
     }
 
-    return Ref.deref(
-      StreamEx
-      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext().withTypeEvalContext(context)))
+    return StreamEx
+      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext(context)))
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
       .nonNull()
       .map(callableType -> callableType.getCallType(context, this))
       .map(callType -> isAwait ? Ref.deref(getGeneratorReturnType(callType)) : callType)
-      .collect(PyTypeUtil.toUnion())
-    );
+      .collect(PyTypeUtil.toUnion());
   }
 
   @Override
@@ -153,12 +148,10 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       }
     }
     else if (type instanceof PyUnionType) {
-      final List<PyType> memberReturnTypes = new ArrayList<>();
-      final PyUnionType unionType = (PyUnionType)type;
-      for (PyType member : unionType.getMembers()) {
-        memberReturnTypes.add(Ref.deref(getGeneratorReturnType(member)));
-      }
-      return Ref.create(PyUnionType.union(memberReturnTypes));
+      return PyTypeUtil
+        .toStream(type)
+        .map(PyPrefixExpressionImpl::getGeneratorReturnType)
+        .collect(PyTypeUtil.toUnionFromRef());
     }
     return null;
   }

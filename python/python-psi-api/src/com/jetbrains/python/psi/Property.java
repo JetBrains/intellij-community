@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * Describes a property, result of either a call to property() or application of @property and friends.
  * This is <i>not</i> a node of PSI tree.
  * <br/>
- * User: dcheryasov
  */
 public interface Property {
   String getName();

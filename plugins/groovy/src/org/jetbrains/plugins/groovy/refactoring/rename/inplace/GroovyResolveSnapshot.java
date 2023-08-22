@@ -78,8 +78,7 @@ public class GroovyResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapsh
   }
 
   private static void qualify(PsiElement referent, PsiElement referee, String hidingLocalName) {
-    if (referent instanceof GrReferenceExpression && referee instanceof GrMember) {
-      GrReferenceExpression ref = ((GrReferenceExpression)referent);
+    if (referent instanceof GrReferenceExpression ref && referee instanceof GrMember) {
       if (!ref.isQualified() && hidingLocalName.equals(ref.getReferenceName())) {
         PsiUtil.qualifyMemberReference(ref, (GrMember)referee, hidingLocalName);
       }

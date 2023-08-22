@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,7 +36,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   DocumentReferenceManagerImpl() {
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         List<VirtualFile> deletedFiles = new NotNullList<>();
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
@@ -79,7 +79,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     }, ApplicationManager.getApplication());
   }
 
-  private static void collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> files) {
+  private static void collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<? super VirtualFile> files) {
     if (!(f instanceof NewVirtualFile)) return;
 
     ProgressManager.checkCanceled();
@@ -93,17 +93,15 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     }
   }
 
-  @NotNull
   @Override
-  public DocumentReference create(@NotNull Document document) {
+  public @NotNull DocumentReference create(@NotNull Document document) {
     assertIsWriteThread();
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file == null ? createFromDocument(document) : create(file);
+    return file == null || !file.isValid() ? createFromDocument(document) : create(file);
   }
 
-  @NotNull
-  private DocumentReference createFromDocument(@NotNull final Document document) {
+  private @NotNull DocumentReference createFromDocument(final @NotNull Document document) {
     DocumentReference result = myDocToRef.get(document);
     if (result == null) {
       result = new DocumentReferenceByDocument(document);
@@ -112,9 +110,8 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     return result;
   }
 
-  @NotNull
   @Override
-  public DocumentReference create(@NotNull VirtualFile file) {
+  public @NotNull DocumentReference create(@NotNull VirtualFile file) {
     assertIsWriteThread();
 
     if (!file.isInLocalFileSystem()) { // we treat local files differently from non local because we can undo their deletion
@@ -136,7 +133,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   }
 
   private static void assertIsWriteThread() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
   }
 
   @TestOnly

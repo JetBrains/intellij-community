@@ -22,5 +22,9 @@ class AddChangeListAction : AbstractChangeListAction() {
     }
   }
 
-  override fun update(e: AnActionEvent) = updateEnabledAndVisible(e, e.project != null, !getChangeLists(e).none())
+  override fun update(e: AnActionEvent) {
+    val project = e.project
+    val enabled = project != null && ChangeListManager.getInstance(project).areChangeListsEnabled()
+    updateEnabledAndVisible(e, enabled, !getChangeLists(e).none())
+  }
 }

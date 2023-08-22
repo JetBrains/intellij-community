@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.ProblemsView;
+import com.intellij.compiler.impl.BuildUsageCollector;
 import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Key;
@@ -22,11 +24,10 @@ import org.jetbrains.jps.api.GlobalOptions;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
-/**
-* @author Eugene Zhuravlev
-*/
 class AutoMakeMessageHandler extends DefaultMessageHandler {
   private static final Key<Notification> LAST_AUTO_MAKE_NOTIFICATION = Key.create("LAST_AUTO_MAKE_NOTIFICATION");
   private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
@@ -34,6 +35,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   private final WolfTheProblemSolver myWolf;
   private volatile boolean myUnprocessedFSChangesDetected = false;
   private final AutomakeCompileContext myContext;
+  private final Map<UUID, Long> myStartStamps = Collections.synchronizedMap(new HashMap<>());
 
   AutoMakeMessageHandler(@NotNull Project project) {
     super(project);
@@ -49,23 +51,31 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
+  public void buildStarted(@NotNull UUID sessionId) {
+    myStartStamps.put(sessionId, System.currentTimeMillis());
+    ProblemsView view = ProblemsView.getInstanceIfCreated(myProject);
+    if (view != null) {
+      view.buildStarted(sessionId);
+    }
+  }
+
+  @Override
   protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
     if (myProject.isDisposed()) {
       return;
     }
     switch (event.getEventType()) {
-      case BUILD_COMPLETED:
+      case BUILD_COMPLETED -> {
         myContext.getProgressIndicator().stop();
         if (event.hasCompletionStatus()) {
           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status = event.getCompletionStatus();
-          myBuildStatus = status;
+          updateBuildStatus(status);
           if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED) {
             myContext.getProgressIndicator().cancel();
           }
         }
         final int errors = myContext.getMessageCount(CompilerMessageCategory.ERROR);
         final int warnings = myContext.getMessageCount(CompilerMessageCategory.WARNING);
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           if (myProject.isDisposed()) {
             return;
@@ -73,27 +83,25 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
           final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
           publisher.automakeCompilationFinished(errors, warnings, myContext);
         });
-        return;
-
-      case FILES_GENERATED:
+      }
+      case FILES_GENERATED -> {
         final CompilationStatusListener publisher = myProject.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
         for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : event.getGeneratedFilesList()) {
           final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
           final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
           publisher.fileGenerated(root, relativePath);
         }
-        return;
-
-      case CUSTOM_BUILDER_MESSAGE:
-         if (event.hasCustomBuilderMessage()) {
-           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
-           if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) && GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
-             myUnprocessedFSChangesDetected = true;
-           }
-         }
-         return;
-
-      default:
+      }
+      case CUSTOM_BUILDER_MESSAGE -> {
+        if (event.hasCustomBuilderMessage()) {
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
+          if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) &&
+              GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
+            myUnprocessedFSChangesDetected = true;
+          }
+        }
+      }
+      default -> {}
     }
   }
 
@@ -119,7 +127,8 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         final String url = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(sourceFilePath)) : null;
         final long line = message.hasLine() ? message.getLine() : -1;
         final long column = message.hasColumn() ? message.getColumn() : -1;
-        final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null);
+        //noinspection HardCodedStringLiteral
+        final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null, message.getModuleNamesList());
         if (category == CompilerMessageCategory.ERROR || kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
           if (category == CompilerMessageCategory.ERROR) {
             ReadAction.run(() -> informWolf(message));
@@ -134,6 +143,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
 
   @Override
   public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+    updateBuildStatus(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS);
     if (myProject.isDisposed()) {
       return;
     }
@@ -141,8 +151,8 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     if (descr == null) {
       descr = failure.hasStacktrace()? failure.getStacktrace() : "";
     }
-    final String msg = "Auto build failure: " + descr;
-    CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO);
+    final String msg = JavaCompilerBundle.message("notification.compiler.auto.build.failure", descr);
+    CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO).notify(myProject);
     ProblemsView.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, msg), sessionId);
   }
 
@@ -150,18 +160,22 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   public void sessionTerminated(@NotNull UUID sessionId) {
     String statusMessage = null/*"Auto make completed"*/;
     switch (myBuildStatus) {
-      case SUCCESS:
+      case SUCCESS -> {
         //statusMessage = "Auto make completed successfully";
-        break;
-      case UP_TO_DATE:
+        final Long startStamp = myStartStamps.remove(sessionId);
+        if (startStamp != null) {
+          BuildUsageCollector.logBuildCompleted(Math.abs(System.currentTimeMillis() - startStamp), false, true);
+        }
+      }
+      case UP_TO_DATE -> {
         //statusMessage = "All files are up-to-date";
-        break;
-      case ERRORS:
-        statusMessage = "Auto build completed with errors";
-        break;
-      case CANCELED:
+      }
+      case ERRORS -> {
+        statusMessage = JavaCompilerBundle.message("notification.compiler.auto.build.completed.with.errors");
+      }
+      case CANCELED -> {
         //statusMessage = "Auto make has been canceled";
-        break;
+      }
     }
     if (statusMessage != null) {
       final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
@@ -186,6 +200,11 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     }
   }
 
+  @Override
+  public @NotNull ProgressIndicator getProgressIndicator() {
+    return myContext.getProgressIndicator();
+  }
+
   private void informWolf(CmdlineRemoteProto.Message.BuilderMessage.@NotNull CompileMessage message) {
     final String srcPath = message.getSourceFilePath();
     if (srcPath != null && !myProject.isDisposed()) {
@@ -201,6 +220,19 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
           myWolf.queue(vFile);
         }
       }
+    }
+  }
+
+  private void updateBuildStatus(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status) {
+    switch (myBuildStatus) {
+      case ERRORS -> {
+        if (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED.equals(status)) {
+          myBuildStatus = status;
+        }
+      }
+      case CANCELED -> {
+      }
+      default -> myBuildStatus = status;
     }
   }
 }

@@ -21,4 +21,9 @@ public interface PyDataclassFieldStub extends CustomTargetExpressionStub {
    * @return true if field is used in `__init__`.
    */
   boolean initValue();
+
+  /**
+   * @return true if field is used in `__init__` as a keyword-only parameter (attrs).
+   */
+  boolean kwOnly();
 }

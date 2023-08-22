@@ -1,4 +1,4 @@
-// "Insert '.doSomething' to call functional interface method" "true"
+// "Insert '.doSomething' to call functional interface method" "true-preview"
 public class Test {
   interface MyFn {
     void doSomething(String s, int i);

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -64,10 +63,10 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
       return;
     }
     myHighlighter = editor.getMarkupModel().addRangeHighlighter(
+      EditorColors.SEARCH_RESULT_ATTRIBUTES,
       start,
       end,
       HighlighterLayer.SELECTION - 100,
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES),
       HighlighterTargetArea.EXACT_RANGE
     );
   }

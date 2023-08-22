@@ -21,5 +21,5 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface FrameworkDetectionIndexListener extends EventListener {
-  void fileUpdated(@NotNull VirtualFile file, @NotNull Integer detectorId);
+  void fileUpdated(@NotNull VirtualFile file, @NotNull String detectorId);
 }

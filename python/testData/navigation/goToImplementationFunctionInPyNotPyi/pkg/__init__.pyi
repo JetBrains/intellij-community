@@ -1,0 +1,4 @@
+def foo():
+    ...
+
+aaa = foo

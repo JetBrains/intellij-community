@@ -1,0 +1,7 @@
+import org.jetbrains.annotations.TestOnly
+
+// "Import class 'TestOnly'" "true"
+
+@TestOnly
+fun foo() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

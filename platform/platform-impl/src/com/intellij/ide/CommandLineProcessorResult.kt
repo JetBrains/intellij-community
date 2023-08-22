@@ -1,30 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import java.util.concurrent.Future
+import com.intellij.openapi.util.NlsContexts
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.jetbrains.annotations.ApiStatus
 
-internal data class CommandLineProcessorResult(val project: Project?, val future: Future<CliResult>) {
+@OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Internal
+data class CommandLineProcessorResult(val project: Project?, val future: Deferred<CliResult>) {
+  constructor(project: Project?, result: CliResult) : this(project, CompletableDeferred(value = result))
+
   companion object {
-    @JvmStatic
-    fun createError(message: String): CommandLineProcessorResult {
-      return CommandLineProcessorResult(null, CliResult.error(1, message))
-    }
+    fun createError(@NlsContexts.DialogMessage message : String): CommandLineProcessorResult =
+      CommandLineProcessorResult(project = null, future = CompletableDeferred(CliResult(1, message)))
   }
 
   val hasError: Boolean
-    get() = future.isDone && future.get().exitCode == 1
+    get() = future.isCompleted && future.getCompleted().exitCode == 1
 
-  fun showErrorIfFailed(): Boolean {
-    if (future.isDone) {
-      val result = future.get()
-      if (result.exitCode == 1) {
-        Messages.showErrorDialog(result.message, "Cannot execute command")
-        return true
-      }
-    }
-
-    return false
+  internal fun showError() {
+    Messages.showErrorDialog(future.getCompleted().message, IdeBundle.message("dialog.title.cannot.execute.command"))
   }
 }

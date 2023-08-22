@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.rulerguide;
 
 import com.intellij.openapi.Disposable;
@@ -5,8 +6,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -95,7 +100,19 @@ final class RulerGuidePainter extends AbstractPainter implements Disposable {
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
-        Graphics2D g2d = (Graphics2D) g.create(0, 0, component.getWidth(), component.getHeight());
+        int y = 0;
+        if (SystemInfoRt.isMac) {
+          var window = ComponentUtil.getWindow(component);
+          if (window != null && window.getType() == Window.Type.NORMAL) {
+            var pane = ComponentUtil.getParentOfType(JRootPane.class, component);
+            ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper(window);
+            if ((helper == null || !helper.isInFullScreen()) && pane != null) {
+              y -= UIUtil.getTransparentTitleBarHeight(pane);
+            }
+          }
+        }
+
+        Graphics2D g2d = (Graphics2D) g.create(0, y, component.getWidth(), component.getHeight() - y);
         GraphicsUtil.setupAntialiasing(g2d, false, false);
         ComponentBoundsFinder.Result result = finder.getLastResult();
 
@@ -161,7 +178,7 @@ final class RulerGuidePainter extends AbstractPainter implements Disposable {
     }
 
     // steal own glass pane and using our
-    private class ThiefGlassPane extends JComponent {
+    private final class ThiefGlassPane extends JComponent {
         private final Component realGlassPane;
 
         private ThiefGlassPane(Component realGlassPane) {

@@ -1,34 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.util.ListSelection;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 public class ShowDiffAction implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return true; // order="last"
@@ -72,7 +60,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
 
-    List<Change> result = ContainerUtil.newArrayList(changes);
+    List<Change> result = List.of(changes);
     showDiffForChange(project, result, 0);
   }
 
@@ -113,13 +101,15 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   public static void showDiffForChange(@Nullable Project project,
                                        @NotNull ListSelection<? extends Change> changes,
                                        @NotNull ShowDiffContext context) {
-    ListSelection<ChangeDiffRequestProducer> presentables = changes.map(change -> ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change)));
+    ListSelection<ChangeDiffRequestProducer> presentables =
+      changes.map(change -> ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change)));
     if (presentables.isEmpty()) return;
 
-    DiffRequestChain chain = new ChangeDiffRequestChain(presentables.getList(), presentables.getSelectedIndex());
+    DiffRequestChain chain = new ChangeDiffRequestChain(presentables);
 
-    for (Map.Entry<Key, Object> entry : context.getChainContext().entrySet()) {
-      chain.putUserData(entry.getKey(), entry.getValue());
+    for (Map.Entry<Key<?>, Object> entry : context.getChainContext().entrySet()) {
+      //noinspection unchecked,rawtypes
+      chain.putUserData((Key)entry.getKey(), entry.getValue());
     }
     chain.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, context.getActions());
 

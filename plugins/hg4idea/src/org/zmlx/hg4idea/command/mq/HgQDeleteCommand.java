@@ -26,6 +26,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QDELETE_ERROR;
+
 public class HgQDeleteCommand {
   @NotNull private final HgRepository myRepository;
 
@@ -39,7 +41,9 @@ public class HgQDeleteCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qdelete", patchNames);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QDelete.error"),
+        .notifyError(QDELETE_ERROR,
+                     result,
+                     HgBundle.message("action.hg4idea.QDelete.error"),
                      HgBundle.message("action.hg4idea.QDelete.error.msg", patchNames.size()));
     }
     myRepository.update();

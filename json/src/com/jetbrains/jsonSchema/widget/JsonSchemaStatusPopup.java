@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.json.JsonBundle;
@@ -6,12 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -19,12 +21,30 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class JsonSchemaStatusPopup {
+public final class JsonSchemaStatusPopup {
   static final JsonSchemaInfo ADD_MAPPING = new JsonSchemaInfo("") {
     @NotNull
     @Override
     public String getDescription() {
       return JsonBundle.message("schema.widget.add.mapping");
+    }
+  };
+
+  static final JsonSchemaInfo IGNORE_FILE = new JsonSchemaInfo("") {
+
+    @Nls
+    @Override
+    public @NotNull String getDescription() {
+      return JsonBundle.message("schema.widget.no.mapping");
+    }
+  };
+
+  static final JsonSchemaInfo STOP_IGNORE_FILE = new JsonSchemaInfo("") {
+
+    @Nls
+    @Override
+    public @NotNull String getDescription() {
+      return JsonBundle.message("schema.widget.stop.ignore.file");
     }
   };
 
@@ -62,7 +82,7 @@ public class JsonSchemaStatusPopup {
     UserDefinedJsonSchemaConfiguration mapping = configuration.findMappingForFile(virtualFile);
     if (!showOnlyEdit || mapping == null) {
       List<JsonSchemaInfo> infos = service.getAllUserVisibleSchemas();
-      Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareTo);
+      Comparator<JsonSchemaInfo> comparator = Comparator.comparing(JsonSchemaInfo::getDescription, String::compareToIgnoreCase);
       Stream<JsonSchemaInfo> registered = infos.stream().filter(i -> i.getProvider() != null).sorted(comparator);
       List<JsonSchemaInfo> otherList = ContainerUtil.emptyList();
 
@@ -76,7 +96,14 @@ public class JsonSchemaStatusPopup {
       allSchemas.add(0, mapping == null ? ADD_MAPPING : EDIT_MAPPINGS);
     }
     else {
-      allSchemas = ContainerUtil.createMaybeSingletonList(EDIT_MAPPINGS);
+      allSchemas = new SmartList<>(EDIT_MAPPINGS);
+    }
+
+    if (configuration.isIgnoredFile(virtualFile)) {
+      allSchemas.add(0, STOP_IGNORE_FILE);
+    }
+    else {
+      allSchemas.add(0, IGNORE_FILE);
     }
     return new JsonSchemaInfoPopupStep(allSchemas, project, virtualFile, service, null);
   }

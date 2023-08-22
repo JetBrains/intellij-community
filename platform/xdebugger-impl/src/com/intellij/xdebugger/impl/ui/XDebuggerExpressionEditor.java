@@ -1,10 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -44,7 +42,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
     myEditorTextField =
       new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType(), false, !multiline) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         editor.setHorizontalScrollbarVisible(multiline);
         editor.setVerticalScrollbarVisible(multiline);
@@ -52,6 +50,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         editor.getSettings().setLineCursorWidth(EditorUtil.getDefaultCaretWidth());
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
+        prepareEditor(editor);
         if (multiline) {
           editor.getContentComponent().setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2)));
           editor.setContextMenuGroupId("XDebugger.Evaluate.Code.Fragment.Editor.Popup");
@@ -65,16 +64,24 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         return editor;
       }
 
-      @Override
-      public Object getData(@NotNull String dataId) {
-        if (LangDataKeys.CONTEXT_LANGUAGES.is(dataId)) {
-          return new Language[]{myExpression.getLanguage()};
-        } else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-          return PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument());
+        @Override
+        public Object getData(@NotNull String dataId) {
+          if (LangDataKeys.CONTEXT_LANGUAGES.is(dataId)) {
+            return new Language[]{myExpression.getLanguage()};
+          }
+          else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+            return (DataProvider)slowId -> getSlowData(slowId);
+          }
+          return super.getData(dataId);
         }
-        return super.getData(dataId);
-      }
-    };
+
+        private @Nullable Object getSlowData(@NotNull String dataId) {
+          if (CommonDataKeys.PSI_FILE.is(dataId)) {
+            return PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument());
+          }
+          return null;
+        }
+      };
     if (editorFont) {
       myEditorTextField.setFontInheritedFromLAF(false);
       myEditorTextField.setFont(EditorUtil.getEditorFont());

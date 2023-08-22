@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -28,6 +29,10 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowDiffWithLocalFromTableHistoryAction implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {

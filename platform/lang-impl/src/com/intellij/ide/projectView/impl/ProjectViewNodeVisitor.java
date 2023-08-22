@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.tree.AbstractTreeNodeVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -16,13 +17,27 @@ import java.util.function.Predicate;
 import static com.intellij.psi.SmartPointerManager.createPointer;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 
-class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
+final class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
   private final VirtualFile file;
 
   ProjectViewNodeVisitor(@NotNull PsiElement element, @Nullable VirtualFile file, @Nullable Predicate<? super TreePath> predicate) {
     super(createPointer(element)::getElement, predicate);
     this.file = file;
-    LOG.debug("create visitor for element: " + element);
+    LOG.debug("create visitor for element: ", element);
+  }
+
+  ProjectViewNodeVisitor(@NotNull SmartPsiElementPointer<?> pointer, @Nullable VirtualFile file, @Nullable Predicate<? super TreePath> predicate) {
+    super(pointer::getElement, predicate);
+    this.file = file;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("create visitor for element: ", pointer.getElement());
+    }
+  }
+
+  ProjectViewNodeVisitor(@NotNull SmartPsiElementPointer<?> pointer) {
+    super(pointer::getElement, null);
+    this.file = null;
+    LOG.debug("create visitor for pointer: ", pointer);
   }
 
   /**
@@ -35,6 +50,7 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
 
   @Override
   protected boolean contains(@NotNull AbstractTreeNode node, @NotNull PsiElement element) {
+    if (!node.mayContain(element)) return false;
     return node instanceof ProjectViewNode && contains((ProjectViewNode)node, element) || super.contains(node, element);
   }
 

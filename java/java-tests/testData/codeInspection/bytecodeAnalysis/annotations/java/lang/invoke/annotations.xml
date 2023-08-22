@@ -567,6 +567,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.lang.invoke.MemberName boolean referenceKindIsConsistentWith(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MemberName boolean testAllFlags(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -797,6 +802,11 @@
     </item>
     <item name='java.lang.invoke.MethodHandle java.lang.invoke.MethodHandle rebind()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodHandle java.lang.invoke.MethodHandle reinvokerTarget()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;fail&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandle java.lang.invoke.MethodHandle setVarargs(java.lang.invoke.MemberName)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1307,7 +1317,8 @@
     </item>
     <item name='java.lang.invoke.MethodHandleStatics java.lang.Error NYI()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;-&gt;fail&quot;"/>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleStatics java.lang.Error uncaughtException(java.lang.Throwable)'>
@@ -1948,7 +1959,6 @@
     </item>
     <item name='java.lang.invoke.MethodType java.util.List&lt;java.lang.Class&lt;?&gt;&gt; parameterList()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

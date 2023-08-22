@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -42,7 +43,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
   @Override
   public boolean reduce(InferenceSession session, List<? super ConstraintFormula> constraints) {
     if (!LambdaUtil.isFunctionalType(myT)) {
-      session.registerIncompatibleErrorMessage(session.getPresentableText(myT) + " is not a functional interface");
+      session.registerIncompatibleErrorMessage(
+        JavaPsiBundle.message("error.incompatible.type.not.a.functional.interface", session.getPresentableText(myT)));
       return false;
     }
 
@@ -50,7 +52,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(groundTargetType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(classResolveResult);
     if (interfaceMethod == null) {
-      session.registerIncompatibleErrorMessage("No valid function type can be found for " + session.getPresentableText(myT));
+      session.registerIncompatibleErrorMessage(
+        JavaPsiBundle.message("error.incompatible.type.no.valid.function.type.found", session.getPresentableText(myT)));
       return false;
     }
 
@@ -98,18 +101,20 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
       else {
-        session.registerIncompatibleErrorMessage("Incompatible parameter types in method reference expression");
+        session.registerIncompatibleErrorMessage(
+          JavaPsiBundle.message("error.incompatible.type.incompatible.parameter.types.in.method.reference"));
         return false;
       }
-      if (!PsiType.VOID.equals(returnType) && returnType != null) {
+      if (!PsiTypes.voidType().equals(returnType) && returnType != null) {
         PsiType applicableMethodReturnType = null;
         if (applicableMember instanceof PsiMethod) {
           final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(myExpression, (PsiMethod)applicableMember);
           applicableMethodReturnType = getClassReturnType != null ? getClassReturnType : ((PsiMethod)applicableMember).getReturnType();
         }
 
-        if (PsiType.VOID.equals(applicableMethodReturnType)) {
-          session.registerIncompatibleErrorMessage("Incompatible types: expected not void but compile-time declaration for the method reference has void return type");
+        if (PsiTypes.voidType().equals(applicableMethodReturnType)) {
+          session.registerIncompatibleErrorMessage(
+            JavaPsiBundle.message("error.incompatible.type.incompatible.types.expected.not.void.got.void.method.reference"));
           return false;
         }
 
@@ -142,11 +147,12 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     JavaResolveResult resolve = myExpression.advancedResolve(false);
     final PsiElement element = resolve.getElement();
     if (element == null || resolve instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolve).isApplicable()) {
-      session.registerIncompatibleErrorMessage("No compile-time declaration for the method reference is found");
+      session.registerIncompatibleErrorMessage(
+        JavaPsiBundle.message("error.incompatible.type.declaration.for.the.method.reference.not.found"));
       return false;
     }
 
-    if (PsiType.VOID.equals(returnType) || returnType == null) {
+    if (PsiTypes.voidType().equals(returnType) || returnType == null) {
       return true;
     }
 
@@ -186,8 +192,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
 
-      if (PsiType.VOID.equals(referencedMethodReturnType)) {
-        session.registerIncompatibleErrorMessage("Incompatible types: expected not void but compile-time declaration for the method reference has void return type");
+      if (PsiTypes.voidType().equals(referencedMethodReturnType)) {
+        session.registerIncompatibleErrorMessage(
+          JavaPsiBundle.message("error.incompatible.type.expected.non.void.got.void.method.reference"));
         return false;
       }
  
@@ -202,7 +209,12 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       if (qContainingClass != null && PsiUtil.isRawSubstitutor(qContainingClass, qualifierResolveResult.getSubstitutor())) {
         //15.13.1 If there exist a parameterization, then it would be used to search, the *raw type* would be used otherwise
         if (getParameterization(signature, qualifierResolveResult, method, myExpression, qContainingClass) == null) {
-          session.initBounds(myExpression, qContainingClass.getTypeParameters());
+          if (!PsiMethodReferenceUtil.isSecondSearchPossible(signature.getParameterTypes(), qualifierResolveResult, myExpression)) {
+            session.initBounds(myExpression, qContainingClass.getTypeParameters());
+          }
+          else {
+            referencedMethodReturnType = TypeConversionUtil.erasure(referencedMethodReturnType);
+          }
         }
       }
 

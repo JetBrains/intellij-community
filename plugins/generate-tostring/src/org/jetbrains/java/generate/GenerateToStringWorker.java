@@ -20,6 +20,7 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -56,7 +57,7 @@ public class GenerateToStringWorker {
   /**
    * Creates the {@code toString} method.
    *
-   * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
+   * @param selectedMembers the selected members as both {@link PsiField} and {@link PsiMethod}.
    * @param policy          conflict resolution policy
    * @param params          additional parameters stored with key/value in the map.
    * @param template        the template to use
@@ -114,8 +115,8 @@ public class GenerateToStringWorker {
     }
     catch (IncorrectOperationException e) {
       logger.info(e);
-      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
-                                                      template.getFileName() + '\'');
+      HintManager.getInstance().showErrorHint(editor, JavaBundle
+        .message("hint.text.tostring.method.could.not.be.created.from.template", template.getFileName()));
       return null;
     }
   }
@@ -141,16 +142,11 @@ public class GenerateToStringWorker {
   }
 
   private static InsertNewMethodStrategy getStrategy(InsertWhere option) {
-    switch (option) {
-      case AFTER_EQUALS_AND_HASHCODE:
-        return InsertAfterEqualsHashCodeStrategy.getInstance();
-      case AT_CARET:
-        return InsertAtCaretStrategy.getInstance();
-      case AT_THE_END_OF_A_CLASS:
-        return InsertLastStrategy.getInstance();
-    }
-
-    return InsertLastStrategy.getInstance();
+    return switch (option) {
+      case AFTER_EQUALS_AND_HASHCODE -> InsertAfterEqualsHashCodeStrategy.getInstance();
+      case AT_CARET -> InsertAtCaretStrategy.getInstance();
+      case AT_THE_END_OF_A_CLASS -> InsertLastStrategy.getInstance();
+    };
   }
 
   /**
@@ -207,8 +203,7 @@ public class GenerateToStringWorker {
    */
   private void afterCreateToStringMethod(PsiMethod method, Map<String, String> params, TemplateResource template) {
     PsiFile containingFile = clazz.getContainingFile();
-    if (containingFile instanceof PsiJavaFile) {
-      final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+    if (containingFile instanceof PsiJavaFile javaFile) {
       if (params.get("autoImportPackages") != null) {
         // keep this for old user templates
         autoImportPackages(javaFile, params.get("autoImportPackages"));

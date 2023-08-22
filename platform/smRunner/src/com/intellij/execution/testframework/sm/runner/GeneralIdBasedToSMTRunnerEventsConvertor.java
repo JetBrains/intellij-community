@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
@@ -8,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +17,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent.NodePropertyKey.PRESENTABLE_NAME;
+
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
 
   private final Map<String, Node> myNodeByIdMap = new ConcurrentHashMap<>();
-  private final Set<Node> myRunningTestNodes = ContainerUtil.newConcurrentSet();
-  private final Set<Node> myRunningSuiteNodes = ContainerUtil.newConcurrentSet();
+  private final Set<Node> myRunningTestNodes = ConcurrentCollectionFactory.createConcurrentSet();
+  private final Set<Node> myRunningSuiteNodes = ConcurrentCollectionFactory.createConcurrentSet();
   private final Node myTestsRootNode;
 
   private boolean myIsTestingFinished = false;
@@ -225,7 +227,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
       // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
       // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
-      fireOnTestFinished(testProxy);
+      if (testProxy.isSuite()) {
+        fireOnSuiteFinished(testProxy, node.getId());
+      }
+      else {
+        fireOnTestFinished(testProxy, node.getId());
+      }
     }
   }
 
@@ -241,7 +248,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       }
       SMTestProxy suiteProxy = node.getProxy();
       suiteProxy.setFinished();
-      fireOnSuiteFinished(suiteProxy);
+      fireOnSuiteFinished(suiteProxy, suiteFinishedEvent.getId());
       terminateNode(node, State.FINISHED);
     }
   }
@@ -261,6 +268,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     Node activeNode = findActiveNode();
     SMTestProxy activeProxy = activeNode.getProxy();
     activeProxy.addOutput(text, outputType);
+    myEventPublisher.onUncapturedOutput(activeProxy, text, outputType);
   }
 
   @Override
@@ -319,13 +327,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
                    + comparisonFailureExpectedText + "\n"
                    + "Actual:\n"
                    + comparisonFailureActualText);
+        testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
       }
       long duration = testFailedEvent.getDurationMillis();
       if (duration >= 0) {
         testProxy.setDuration(duration);
       }
 
-      fireOnTestFailed(testProxy);
+      fireOnTestFailed(testProxy, node.getId());
       fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.FAILED);
@@ -343,7 +352,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       SMTestProxy testProxy = node.getProxy();
       testProxy.setTestIgnored(testIgnoredEvent.getIgnoreComment(), testIgnoredEvent.getStacktrace());
 
-      fireOnTestIgnored(testProxy);
+      fireOnTestIgnored(testProxy, node.getId());
       fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.IGNORED);
@@ -358,13 +367,33 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       logProblem("Test wasn't started! But " + testOutputEvent + "!");
       return;
     }
-    node.getProxy().addOutput(testOutputEvent.getText(), testOutputEvent.getOutputType());
+    SMTestProxy proxy = node.getProxy();
+    proxy.addOutput(testOutputEvent.getText(), testOutputEvent.getOutputType());
+    myEventPublisher.onTestOutput(proxy, testOutputEvent);
   }
 
   @Override
   public void onTestsCountInSuite(final int count) {
     LOG.debug("onTestsCountInSuite");
     fireOnTestsCountInSuite(count);
+  }
+
+  @Override
+  public void onSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
+    LOG.debug("onSetNodeProperty", " ", event);
+    final Node node = findNode(event);
+    if (node == null) {
+      logProblem("Node not found: " + event);
+      return;
+    }
+    final SMTestProxy nodeProxy = node.getProxy();
+    if (event.getPropertyKey() == PRESENTABLE_NAME) {
+      nodeProxy.setPresentableName(event.getPropertyValue());
+    }
+    else {
+      logProblem("Unhandled event: " + event);
+    }
+    myEventPublisher.onSetNodeProperty(nodeProxy, event);
   }
 
   private @Nullable String validateAndGetNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
@@ -409,12 +438,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       node.setState(State.RUNNING, this);
       SMTestProxy proxy = node.getProxy();
       proxy.setStarted();
+      Node parentNode = node.getParentNode();
       if (proxy.isSuite()) {
         myRunningSuiteNodes.add(node);
-        fireOnSuiteStarted(proxy);
+        fireOnSuiteStarted(proxy, node.getId(), parentNode != null ? parentNode.getId() : null);
       } else {
         myRunningTestNodes.add(lowestNode);
-        fireOnTestStarted(proxy);
+        fireOnTestStarted(proxy, node.getId(), parentNode != null ? parentNode.getId() : null);
       }
       node = node.getParentNode();
     }
@@ -497,7 +527,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
       Node node = (Node)o;
 
-      return myId == node.myId;
+      return myId.equals(node.myId);
     }
 
     @Override

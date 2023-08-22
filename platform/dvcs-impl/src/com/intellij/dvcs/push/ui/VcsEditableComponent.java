@@ -19,7 +19,7 @@ package com.intellij.dvcs.push.ui;
 /**
  * Event on this component should start edit mode for appropriate path in JTree
  *
- * @see com.intellij.dvcs.push.ui.PushLog
+ * @see PushLog
  */
 public interface VcsEditableComponent {
 }

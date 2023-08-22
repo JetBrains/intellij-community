@@ -19,27 +19,24 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class ExpandLiveTemplateCustomAction extends EditorAction {
+public class ExpandLiveTemplateCustomAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExpandLiveTemplateCustomAction() {
     super(createExpandTemplateHandler(TemplateSettings.CUSTOM_CHAR));
     setInjectedContext(true);
   }
 
   public static EditorWriteActionHandler createExpandTemplateHandler(final char shortcutChar) {
-    return new EditorWriteActionHandler(true) {
+    return new EditorWriteActionHandler.ForEachCaret() {
       @Override
-      public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
         Project project = editor.getProject();
         assert project != null;
         TemplateManager.getInstance(project).startTemplate(editor, shortcutChar);

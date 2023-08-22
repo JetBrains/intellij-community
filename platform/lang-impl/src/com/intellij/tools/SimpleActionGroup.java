@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
+/** @deprecated Use {@link com.intellij.openapi.actionSystem.DefaultActionGroup} or {@link ActionGroup} directly */
+@Deprecated
 public class SimpleActionGroup extends ActionGroup {
   private final ArrayList<AnAction> myChildren = new ArrayList<>();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
 import com.intellij.psi.PsiElement;
@@ -11,15 +11,18 @@ import org.jetbrains.annotations.NotNull;
  * If you absolutely must, clear the state upon exit from the {@link #annotate(PsiElement, AnnotationHolder)} method.
  * <p/>
  * See <a href="https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support/syntax_highlighting_and_error_highlighting.html#annotator">Syntax Highlighting and Error Highlighting</a> for an overview.
+ * <p>
+ * Please note: annotators are executed in arbitrary order.
+ * <p>
+ * Implement {@link com.intellij.openapi.project.DumbAware} to allow running during index updates.
  *
- * @author max
  * @see com.intellij.lang.LanguageAnnotators
  */
 public interface Annotator {
   /**
    * Annotates the specified PSI element.
    * It is guaranteed to be executed in non-reentrant fashion.
-   * I.e there will be no call of this method for this instance before previous call get completed.
+   * I.e, there will be no call of this method for this instance before previous call get completed.
    * Multiple instances of the annotator might exist simultaneously, though.
    *
    * @param element to annotate.

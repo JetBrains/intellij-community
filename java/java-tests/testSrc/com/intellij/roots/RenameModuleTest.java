@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
 import com.intellij.ide.projectView.impl.RenameModuleHandler;
@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.ui.TestInputDialog;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,21 +18,24 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.refactoring.rename.RenameModuleAndDirectoryHandler;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
+import org.junit.runner.RunWith;
 
 /**
  * @author Vladislav.Soroka
  */
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class RenameModuleTest extends JavaModuleTestCase {
-
   @Override
   protected void tearDown() throws Exception {
     try {
-      Messages.setTestInputDialog(TestInputDialog.DEFAULT);
+      TestDialogManager.setTestInputDialog(TestInputDialog.DEFAULT);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -81,7 +84,11 @@ public class RenameModuleTest extends JavaModuleTestCase {
     context.put(CommonDataKeys.PSI_ELEMENT, directory);
     context.put(PsiElementRenameHandler.DEFAULT_NAME, "newName");
     RenameHandler renameHandler = chooseHandler(context, RenameModuleAndDirectoryHandler.class);
-    assertNotNull(renameHandler);
+    Assume.assumeNotNull(
+      "Other languages might have their own implementation of a processor that renames a directory. " +
+      "In this case, the test fails under ultimate.tests.main.", 
+      renameHandler
+    );
     renameHandler.invoke(myProject, PsiElement.EMPTY_ARRAY, context);
     assertEquals("newName", module.getName());
     assertEquals("newName", directory.getName());
@@ -112,7 +119,7 @@ public class RenameModuleTest extends JavaModuleTestCase {
   }
 
   private void rename(RenameHandler renameHandler, String newName, DataContext context) {
-    Messages.setTestInputDialog(new TestInputDialog() {
+    TestDialogManager.setTestInputDialog(new TestInputDialog() {
       @Override
       public String show(String message) {
         return null;

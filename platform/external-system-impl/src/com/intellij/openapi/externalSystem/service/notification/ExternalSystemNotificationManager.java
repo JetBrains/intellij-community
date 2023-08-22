@@ -1,18 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.build.issue.BuildIssueQuickFix;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -26,6 +28,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,12 +42,11 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,9 +65,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  * Thread-safe.
  *
- * @author Denis Zhdanov, Vladislav Soroka
+ * @author Vladislav Soroka
  */
-public class ExternalSystemNotificationManager implements Disposable {
+@Service(Service.Level.PROJECT)
+public final class ExternalSystemNotificationManager implements Disposable {
+  private static final Logger LOG = Logger.getInstance(ExternalSystemNotificationManager.class);
 
   private static final @NotNull Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
   private final @NotNull MergingUpdateQueue myUpdateQueue;
@@ -77,15 +81,15 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   public ExternalSystemNotificationManager(final @NotNull Project project) {
     myProject = project;
-    myNotifications = ContainerUtil.newConcurrentSet();
+    myNotifications = ConcurrentCollectionFactory.createConcurrentSet();
     myUniqueNotifications = new ConcurrentHashMap<>();
-    initializedExternalSystem = ContainerUtil.newConcurrentSet();
+    initializedExternalSystem = ConcurrentCollectionFactory.createConcurrentSet();
     myMessageCounter = new MessageCounter();
     myUpdateQueue = new MergingUpdateQueue(getClass() + " updates", 500, true, null, this, null, false);
   }
 
   public static @NotNull ExternalSystemNotificationManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExternalSystemNotificationManager.class);
+    return project.getService(ExternalSystemNotificationManager.class);
   }
 
   /**
@@ -93,11 +97,11 @@ public class ExternalSystemNotificationManager implements Disposable {
    *
    * @return {@link NotificationData} or null for not user-friendly errors.
    */
-  public @Nullable NotificationData createNotification(@NotNull String title,
-                                             @NotNull Throwable error,
-                                             @NotNull ProjectSystemId externalSystemId,
-                                             @NotNull Project project,
-                                             @NotNull DataProvider dataProvider) {
+  public @Nullable NotificationData createNotification(@NotNull @NotificationTitle String title,
+                                                       @NotNull Throwable error,
+                                                       @NotNull ProjectSystemId externalSystemId,
+                                                       @NotNull Project project,
+                                                       @NotNull DataContext dataContext) {
     if (isInternalError(error, externalSystemId)) {
       return null;
     }
@@ -109,8 +113,7 @@ public class ExternalSystemNotificationManager implements Disposable {
     Integer column = null;
 
     Throwable unwrapped = RemoteUtil.unwrap(error);
-    if (unwrapped instanceof LocationAwareExternalSystemException) {
-      LocationAwareExternalSystemException locationAwareExternalSystemException = (LocationAwareExternalSystemException)unwrapped;
+    if (unwrapped instanceof LocationAwareExternalSystemException locationAwareExternalSystemException) {
       filePath = locationAwareExternalSystemException.getFilePath();
       line = locationAwareExternalSystemException.getLine();
       column = locationAwareExternalSystemException.getColumn();
@@ -125,9 +128,10 @@ public class ExternalSystemNotificationManager implements Disposable {
       BuildIssue buildIssue = ((BuildIssueException)unwrapped).getBuildIssue();
       for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
         notificationData.setListener(quickFix.getId(), (notification, event) -> {
-          quickFix.runQuickFix(project, dataProvider);
+          quickFix.runQuickFix(project, dataContext);
         });
       }
+      notificationData.setNavigatable(buildIssue.getNavigatable(project));
       return notificationData;
     }
 
@@ -144,7 +148,7 @@ public class ExternalSystemNotificationManager implements Disposable {
   private static boolean isInternalError(@NotNull Throwable error,
                                          @NotNull ProjectSystemId externalSystemId) {
     if (RemoteUtil.unwrap(error) instanceof BuildIssueException) return false;
-    return ExternalSystemNotificationExtension.EP_NAME.extensions()
+    return ExternalSystemNotificationExtension.EP_NAME.getExtensionList().stream()
       .anyMatch(extension -> externalSystemId.equals(extension.getTargetExternalSystemId()) && extension.isInternalError(error));
   }
 
@@ -161,6 +165,14 @@ public class ExternalSystemNotificationManager implements Disposable {
                                final @NotNull NotificationData notificationData,
                                @Nullable Key<String> notificationKey) {
     Disposer.register(this, notificationData);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (notificationData.getNotificationCategory() == NotificationCategory.INFO) {
+        LOG.debug(notificationData.getMessage());
+      } else {
+        LOG.warn(notificationData.getMessage());
+      }
+    }
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       @SuppressWarnings("UseOfSystemOutOrSystemErr")
       PrintStream out = notificationData.getNotificationCategory() == NotificationCategory.INFO ? System.out : System.err;
@@ -195,14 +207,13 @@ public class ExternalSystemNotificationManager implements Disposable {
                     ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
           }
           else {
-            final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
-            group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+            group = notificationData.getBalloonGroup();
           }
           if (group == null) return;
 
-          final Notification notification = group.createNotification(
-            notificationData.getTitle(), notificationData.getMessage(),
-            notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+          final Notification notification = group
+            .createNotification(notificationData.getTitle(), notificationData.getMessage(), notificationData.getNotificationCategory().getNotificationType())
+            .setListener(notificationData.getListener());
 
           if (notificationKey == null) {
             myNotifications.add(notification);
@@ -227,14 +238,6 @@ public class ExternalSystemNotificationManager implements Disposable {
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void clearNotifications(final @NotNull NotificationSource notificationSource,
-                                 final @NotNull ProjectSystemId externalSystemId) {
-    clearNotifications(null, notificationSource, externalSystemId);
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void clearNotifications(final @Nullable String groupName,
                                  final @NotNull NotificationSource notificationSource,
                                  final @NotNull ProjectSystemId externalSystemId) {
@@ -269,7 +272,7 @@ public class ExternalSystemNotificationManager implements Disposable {
         final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         if (toolWindow == null) return;
 
-        final MessageView messageView = ServiceManager.getService(project, MessageView.class);
+        final MessageView messageView = project.getService(MessageView.class);
         UIUtil.invokeLaterIfNeeded(() -> {
           if (project.isDisposed()) return;
           for (Content content: messageView.getContentManager().getContents()) {
@@ -365,7 +368,6 @@ public class ExternalSystemNotificationManager implements Disposable {
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public @NotNull NewErrorTreeViewPanel prepareMessagesView(final @NotNull ProjectSystemId externalSystemId,
                                                             final @NotNull NotificationSource notificationSource,
                                                             boolean activateView) {
@@ -377,10 +379,10 @@ public class ExternalSystemNotificationManager implements Disposable {
     Content targetContent = findContent(contentIdPair, contentDisplayName);
 
     assert myProject != null;
-    final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
+    final MessageView messageView = myProject.getService(MessageView.class);
     if (targetContent == null || !contentIdPair.equals(targetContent.getUserData(CONTENT_ID_KEY))) {
       errorTreeView = new NewEditableErrorTreeViewPanel(myProject, null, true, true, null);
-      targetContent = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, contentDisplayName, true);
+      targetContent = ContentFactory.getInstance().createContent(errorTreeView, contentDisplayName, true);
       targetContent.putUserData(CONTENT_ID_KEY, contentIdPair);
 
       messageView.getContentManager().addContent(targetContent);
@@ -402,7 +404,7 @@ public class ExternalSystemNotificationManager implements Disposable {
   private @Nullable Content findContent(@NotNull Pair<NotificationSource, ProjectSystemId> contentIdPair, @NotNull String contentDisplayName) {
     Content targetContent = null;
     assert myProject != null;
-    final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
+    final MessageView messageView = myProject.getService(MessageView.class);
     for (Content content: messageView.getContentManager().getContents()) {
       if (contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))
           && StringUtil.equals(content.getDisplayName(), contentDisplayName) && !content.isPinned()) {
@@ -413,23 +415,14 @@ public class ExternalSystemNotificationManager implements Disposable {
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static @NotNull String getContentDisplayName(final @NotNull NotificationSource notificationSource,
-                                                      final @NotNull ProjectSystemId externalSystemId) {
-    final String contentDisplayName;
-    switch (notificationSource) {
-      case PROJECT_SYNC:
-        contentDisplayName =
-          ExternalSystemBundle.message("notification.messages.project.sync.tab.name", externalSystemId.getReadableName());
-        break;
-      case TASK_EXECUTION:
-        contentDisplayName =
-          ExternalSystemBundle.message("notification.messages.task.execution.tab.name", externalSystemId.getReadableName());
-        break;
-      default:
-        throw new AssertionError("unsupported notification source found: " + notificationSource);
-    }
-    return contentDisplayName;
+  public static @NotNull @Nls String getContentDisplayName(
+    final @NotNull NotificationSource notificationSource,
+    final @NotNull ProjectSystemId externalSystemId
+  ) {
+    return ExternalSystemBundle.message(switch (notificationSource) {
+      case PROJECT_SYNC -> "notification.messages.project.sync.tab.name";
+      case TASK_EXECUTION -> "notification.messages.task.execution.tab.name";
+    }, externalSystemId.getReadableName());
   }
 
   @Override

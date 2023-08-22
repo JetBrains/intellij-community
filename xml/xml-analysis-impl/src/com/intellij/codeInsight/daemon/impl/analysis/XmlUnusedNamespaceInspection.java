@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -37,13 +37,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool {
+public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         PsiFile file = holder.getFile();
         if (!(file instanceof XmlFile)) return;
 
@@ -78,8 +78,8 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
           else if (!refCountHolder.isUsedNamespace(namespace)) {
             for (PsiReference reference : getLocationReferences(namespace, parent)) {
               if (!XmlHighlightVisitor.hasBadResolve(reference, false))
-              holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"),
-                                                 new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
+                holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, XmlAnalysisBundle.message("xml.inspections.unused.schema.location"),
+                                                   new RemoveNamespaceDeclarationFix(declaredPrefix, true, true));
             }
           }
         }
@@ -108,7 +108,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
 
     // trimming the result
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    Document document = documentManager.getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     assert document != null;
     documentManager.commitDocument(document);
     String trimmed = element.getValue().trim();
@@ -221,7 +221,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlAnalysisBundle.message("xml.inspections.unused.schema.remove");
+      return XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl");
     }
 
     @Override
@@ -255,7 +255,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
       PsiFile file = pointer.getContainingFile();
       assert file != null;
-      Document document = manager.getDocument(file);
+      Document document = file.getViewProvider().getDocument();
       assert document != null;
       manager.commitDocument(document);
       XmlTag tag = pointer.getElement();
@@ -278,7 +278,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       String prefix = getDeclaredPrefix(attribute);
 
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      Document document = documentManager.getDocument(parent.getContainingFile());
+      Document document = parent.getContainingFile().getViewProvider().getDocument();
       assert document != null;
       attribute.delete();
       if (myRemoveLocation) {
@@ -301,10 +301,9 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       PsiElement element = ref.getElement();
       PsiFile file = element.getContainingFile();
       TextRange range = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
-      PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-      Document document = manager.getDocument(file);
+      Document document = file.getViewProvider().getDocument();
       assert document != null;
-      manager.doPostponedOperationsAndUnblockDocument(document);
+      PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(document);
       document.deleteString(range.getStartOffset(), range.getEndOffset());
     }
 
@@ -321,9 +320,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     }
   }
 
-  public static class RemoveNamespaceLocationFix extends RemoveNamespaceDeclarationFix {
-
-    public static final String NAME = "Remove unused namespace location";
+  public static final class RemoveNamespaceLocationFix extends RemoveNamespaceDeclarationFix {
 
     private RemoveNamespaceLocationFix(String namespace) {
       super(namespace, true, true);
@@ -332,7 +329,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     @NotNull
     @Override
     public String getName() {
-      return NAME;
+      return XmlAnalysisBundle.message("xml.intention.remove.unused.namespace.location");
     }
 
     @Override

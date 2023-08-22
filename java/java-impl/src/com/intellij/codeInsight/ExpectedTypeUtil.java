@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ExpectedTypeUtil {
+public final class ExpectedTypeUtil {
   private static final Logger LOG = Logger.getInstance(ExpectedTypeUtil.class);
 
   public static ExpectedTypeInfo @NotNull [] intersect(List<ExpectedTypeInfo[]> typeInfos) {
@@ -121,21 +107,17 @@ public class ExpectedTypeUtil {
 
   public static boolean matches (PsiType type, ExpectedTypeInfo info) {
     PsiType infoType = info.getType();
-    switch (info.getKind()) {
-      case ExpectedTypeInfo.TYPE_STRICTLY:
-        return type.equals(infoType);
-      case ExpectedTypeInfo.TYPE_OR_SUBTYPE:
-        return infoType.isAssignableFrom(type);
-      case ExpectedTypeInfo.TYPE_OR_SUPERTYPE:
-        return type.isAssignableFrom(infoType);
-      case ExpectedTypeInfo.TYPE_BETWEEN:
-        return type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
-      case ExpectedTypeInfo.TYPE_SAME_SHAPED:
-        return true;
-    }
-
-    LOG.error("Unexpected ExpectedInfo kind");
-    return false;
+    return switch (info.getKind()) {
+      case ExpectedTypeInfo.TYPE_STRICTLY -> type.equals(infoType);
+      case ExpectedTypeInfo.TYPE_OR_SUBTYPE -> infoType.isAssignableFrom(type);
+      case ExpectedTypeInfo.TYPE_OR_SUPERTYPE -> type.isAssignableFrom(infoType);
+      case ExpectedTypeInfo.TYPE_BETWEEN -> type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
+      case ExpectedTypeInfo.TYPE_SAME_SHAPED -> true;
+      default -> {
+        LOG.error("Unexpected ExpectedInfo kind");
+        yield false;
+      }
+    };
   }
 
   public static class ExpectedClassesFromSetProvider implements ExpectedTypesProvider.ExpectedClassProvider {
@@ -175,7 +157,7 @@ public class ExpectedTypeUtil {
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method.getContainingClass())) {
       PsiType type = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, args, PsiSubstitutor.EMPTY, callExpr.getParent(),
                                                             forCompletion ? CompletionParameterTypeInferencePolicy.INSTANCE : DefaultParameterTypeInferencePolicy.INSTANCE);
-      if (PsiType.NULL.equals(type)) return null;
+      if (PsiTypes.nullType().equals(type)) return null;
       result = result.put(typeParameter, type);
     }
 

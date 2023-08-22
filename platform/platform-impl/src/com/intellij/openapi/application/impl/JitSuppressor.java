@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.sun.tools.attach.VirtualMachine;
+import org.jetbrains.annotations.NonNls;
 import sun.tools.attach.HotSpotVirtualMachine;
 
 import java.io.File;
@@ -23,7 +24,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
   // Limit C2 compilation to the given packages only. The package set was computed by test performance analysis:
   // it's supposed to make performance tests (not all yet) timing comparable with full C2
   // and at same time the IDE does not load CPU heavily with this limitation.
-  private static final String[] C2_WHITELIST = {
+  private static final @NonNls String[] C2_WHITELIST = {
     "com/intellij/openapi/application/*.*",
     "com/intellij/openapi/editor/*.*",
     "com/intellij/openapi/project/*.*",
@@ -46,7 +47,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
   };
 
   // masks matching methods with longest compilation durations which we have no control over
-  private static final String[] C2_BLACKLIST = {
+  private static final @NonNls String[] C2_BLACKLIST = {
     "javax/swing/*.*",
     "javax/awt/*.*",
     "sun/awt/*.*",
@@ -56,7 +57,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
 
   @Override
   public void componentsInitialized() {
-    if (!SystemProperties.getBooleanProperty("enable.jit.suppressor", false)) {
+    if (!Boolean.getBoolean("enable.jit.suppressor")) {
       return;
     }
 
@@ -73,7 +74,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
 
     if (!"true".equals(System.getProperty(SELF_ATTACH_PROP))) {
       String msg = "JitSuppressor wasn't registered. Please ensure the command line contains -D" + SELF_ATTACH_PROP + "=true";
-      if (ApplicationInfoImpl.isInStressTest()) {
+      if (ApplicationManagerEx.isInStressTest()) {
         LOG.warn(msg + " to get production-like performance");
       }
       else if (!ApplicationManager.getApplication().isUnitTestMode()) {

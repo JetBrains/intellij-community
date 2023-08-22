@@ -1,0 +1,13 @@
+>
+  Template(div{class=recording})
+  +
+    >
+      Template(h2{class=recording__title})
+      >
+        EMPTY_NODE
+        Template(span)
+    >
+      Template(div{class=recording__image})
+      >
+        EMPTY_NODE
+        Template(p{class=recording__meta})

@@ -1,0 +1,1 @@
+[link](topDir/renamed.md)

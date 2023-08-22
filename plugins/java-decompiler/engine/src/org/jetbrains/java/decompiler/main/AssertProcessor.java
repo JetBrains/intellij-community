@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -10,8 +10,10 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.SecondaryFunctionsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -21,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AssertProcessor {
+public final class AssertProcessor {
 
   private static final VarType CLASS_ASSERTION_ERROR = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/AssertionError");
 
@@ -83,8 +85,8 @@ public class AssertProcessor {
                 if (invexpr.getInstance() != null &&
                     invexpr.getInstance().type == Exprent.EXPRENT_CONST &&
                     "desiredAssertionStatus".equals(invexpr.getName()) &&
-                    "java/lang/Class".equals(invexpr.getClassname()) &&
-                    invexpr.getLstParameters().isEmpty()) {
+                    "java/lang/Class".equals(invexpr.getClassName()) &&
+                    invexpr.getParameters().isEmpty()) {
 
                   ConstExprent cexpr = (ConstExprent)invexpr.getInstance();
                   if (VarType.VARTYPE_CLASS.equals(cexpr.getConstType())) {
@@ -127,7 +129,7 @@ public class AssertProcessor {
       replaced = false;
 
       for (Statement st : statement.getStats()) {
-        if (st.type == Statement.TYPE_IF) {
+        if (st.type == StatementType.IF) {
           if (replaceAssertion(statement, (IfStatement)st, classname, key)) {
             replaced = true;
             break;
@@ -181,8 +183,8 @@ public class AssertProcessor {
 
 
     lstParams.add(retcond == null ? ascond : retcond);
-    if (!throwError.getLstParameters().isEmpty()) {
-      lstParams.add(throwError.getLstParameters().get(0));
+    if (!throwError.getParameters().isEmpty()) {
+      lstParams.add(throwError.getParameters().get(0));
     }
 
     AssertExprent asexpr = new AssertExprent(lstParams);
@@ -217,7 +219,7 @@ public class AssertProcessor {
       sequence.setAllParent();
 
       for (int i = 0; i < sequence.getStats().size() - 1; i++) {
-        sequence.getStats().get(i).addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR,
+        sequence.getStats().get(i).addSuccessor(new StatEdge(EdgeType.REGULAR,
                                                              sequence.getStats().get(i), sequence.getStats().get(i + 1)));
       }
 

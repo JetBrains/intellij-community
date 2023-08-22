@@ -18,10 +18,8 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
@@ -29,17 +27,16 @@ public class JavaExpectedHighlightingData extends ExpectedHighlightingData {
   public JavaExpectedHighlightingData(@NotNull Document document,
                                       boolean checkWarnings,
                                       boolean checkWeakWarnings,
-                                      boolean checkInfos, @Nullable PsiFile file) {
-    super(document, checkWarnings, checkWeakWarnings, checkInfos, file);
+                                      boolean checkInfos) {
+    super(document, checkWarnings, checkWeakWarnings, checkInfos);
   }
   
   public JavaExpectedHighlightingData(@NotNull Document document,
                                       boolean checkWarnings,
                                       boolean checkWeakWarnings,
                                       boolean checkInfos,
-                                      boolean ignoreExtraHighlighting,
-                                      @Nullable PsiFile file) {
-    super(document, checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, file);
+                                      boolean ignoreExtraHighlighting) {
+    super(document, checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting);
   }
 
   @Override

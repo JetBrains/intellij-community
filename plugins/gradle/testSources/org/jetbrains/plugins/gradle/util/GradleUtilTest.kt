@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 
@@ -14,7 +13,6 @@ class GradleUtilTest: UsefulTestCase() {
 
   private lateinit var rootDir: File
 
-  @Before
   override fun setUp() {
     super.setUp()
     rootDir = FileUtil.createTempDirectory("gradleRoot", null)
@@ -65,15 +63,15 @@ class GradleUtilTest: UsefulTestCase() {
 
   @Test
   fun `test parsing Gradle distribution version`() {
-    assertNull(GradleInstallationManager.parseDistributionVersion(""));
-    assertNull(GradleInstallationManager.parseDistributionVersion("abc"));
-    assertNull(GradleInstallationManager.parseDistributionVersion("gradle"));
+    assertNull(GradleInstallationManager.parseDistributionVersion(""))
+    assertNull(GradleInstallationManager.parseDistributionVersion("abc"))
+    assertNull(GradleInstallationManager.parseDistributionVersion("gradle"))
 
-    assertEquals(GradleVersion.version("5.2.1"), GradleInstallationManager.parseDistributionVersion("abc/gradle-5.2.1-bin.zip"));
-    assertEquals(GradleVersion.version("5.2.1"), GradleInstallationManager.parseDistributionVersion("abc/abc-gradle-5.2.1-bin.zip"));
-    assertEquals(GradleVersion.version("5.2"), GradleInstallationManager.parseDistributionVersion("abc/abc-gradle-5.2-bin.zip"));
-    assertEquals(GradleVersion.version("5.2-rc-1"), GradleInstallationManager.parseDistributionVersion("abc/abc-gradle-5.2-rc-1-bin.zip"));
+    assertEquals(GradleVersion.version("5.2.1"), GradleInstallationManager.parseDistributionVersion("abc/gradle-5.2.1-bin.zip"))
+    assertEquals(GradleVersion.version("5.2.1"), GradleInstallationManager.parseDistributionVersion("abc/abc-gradle-5.2.1-bin.zip"))
+    assertEquals(GradleVersion.version("5.2"), GradleInstallationManager.parseDistributionVersion("abc/abc-gradle-5.2-bin.zip"))
+    assertEquals(GradleVersion.version("5.2-rc-1"), GradleInstallationManager.parseDistributionVersion("abc/abc-gradle-5.2-rc-1-bin.zip"))
 
-    assertNull(GradleInstallationManager.parseDistributionVersion("abc/gradle-unexpected-bin.zip"));
+    assertNull(GradleInstallationManager.parseDistributionVersion("abc/gradle-unexpected-bin.zip"))
   }
 }

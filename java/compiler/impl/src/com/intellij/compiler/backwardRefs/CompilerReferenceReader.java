@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.StorageException;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
@@ -14,10 +13,11 @@ import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class CompilerReferenceReader<Index extends CompilerReferenceIndex<?>> {
   protected final Index myIndex;
-  protected final File myBuildDir;
+  private final File myBuildDir;
 
   public CompilerReferenceReader(File buildDir, Index index) {
     myIndex = index;
@@ -41,10 +41,9 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
   }
 
   @Nullable
-  public abstract TIntHashSet findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
+  public abstract Set<VirtualFile> findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
 
-  @Nullable
-  public abstract TIntHashSet findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException;
+  public abstract @Nullable Set<VirtualFile> findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException;
 
   @Nullable
   public abstract Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull CompilerRef searchElement,
@@ -62,4 +61,7 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
                                                                                                                                                                   boolean checkBaseClassAmbiguity,
                                                                                                                                                                   boolean includeAnonymous,
                                                                                                                                                                   int interruptNumber);
+  public @NotNull SearchId @Nullable[] getDirectInheritorsNames(CompilerRef hierarchyElement) throws StorageException {
+    return null;
+  }
 }

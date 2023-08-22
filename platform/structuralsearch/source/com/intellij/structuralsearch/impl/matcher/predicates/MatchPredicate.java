@@ -17,6 +17,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class MatchPredicate {
   /**
@@ -25,9 +26,9 @@ public abstract class MatchPredicate {
    * @param context of the matching
    * @return true if matching was successful, false otherwise
    */
-  public abstract boolean match(PsiElement matchedNode, int start, int end, MatchContext context);
+  public abstract boolean match(@NotNull PsiElement matchedNode, int start, int end, @NotNull MatchContext context);
 
-  public final boolean match(PsiElement matchedNode, MatchContext context) {
+  public final boolean match(@NotNull PsiElement matchedNode, @NotNull MatchContext context) {
     return match(matchedNode, 0, -1, context);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.customFolding;
 
 import com.intellij.ide.IdeBundle;
@@ -25,15 +25,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Rustam Vishnyakov
- */
-public class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
+public final class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
+    if (Boolean.TRUE.equals(e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT))) {
       return;
     }
     if (project != null && editor != null) {
@@ -66,6 +63,11 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
     final Project project = e.getProject();
     boolean isAvailable = editor != null && project != null;
     presentation.setEnabledAndVisible(isAvailable);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @NotNull

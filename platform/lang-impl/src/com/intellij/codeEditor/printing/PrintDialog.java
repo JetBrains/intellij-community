@@ -1,14 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +20,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-class PrintDialog extends DialogWrapper {
+final class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;
   private JRadioButton myRbSelectedText = null;
   private JRadioButton myRbCurrentPackage = null;
@@ -60,9 +63,9 @@ class PrintDialog extends DialogWrapper {
   private final String myDirectoryName;
   private final boolean isSelectedTextEnabled;
   private final int mySelectedFileCount;
-  private final String mySelectedText;
+  private final @NlsSafe String mySelectedText;
 
-  PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
+  PrintDialog(String fileName, String directoryName, @NlsSafe String selectedText, int selectedFileCount, Project project) {
     super(project, true);
     mySelectedText = selectedText;
     setOKButtonText(EditorBundle.message("print.print.button"));
@@ -87,7 +90,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
 
     gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
 
     Object @NotNull [] params1 = new Object[]{(myFileName != null ? myFileName : "")};
     myRbCurrentFile = new JRadioButton(mySelectedFileCount > 1 ? EditorBundle.message("print.files.radio", mySelectedFileCount)
@@ -96,14 +99,14 @@ class PrintDialog extends DialogWrapper {
 
     myRbSelectedText = new JRadioButton(mySelectedText != null ? mySelectedText : EditorBundle.message("print.selected.text.radio"));
     gbConstraints.gridy++;
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
     panel.add(myRbSelectedText, gbConstraints);
 
     Object @NotNull [] params = new Object[]{(myDirectoryName != null ? myDirectoryName : "")};
     myRbCurrentPackage = new JRadioButton(
       EditorBundle.message("print.all.files.in.directory.radio", params));
     gbConstraints.gridy++;
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
     panel.add(myRbCurrentPackage, gbConstraints);
 
     myCbIncludeSubpackages = new JCheckBox(EditorBundle.message("print.include.subdirectories.checkbox"));
@@ -399,7 +402,7 @@ class PrintDialog extends DialogWrapper {
     return panel;
   }
 
-  private static JPanel createLinePanel(String name,
+  private static JPanel createLinePanel(@NlsContexts.BorderTitle String name,
                                         JTextField lineTextField,
                                         JComboBox<PrintSettings.Placement> linePlacementCombo,
                                         JComboBox<PrintSettings.Alignment> lineAlignmentCombo) {
@@ -465,7 +468,7 @@ class PrintDialog extends DialogWrapper {
     return pageSizesCombo;
   }
 
-  private static class MyTailPanel extends JPanel {
+  private static final class MyTailPanel extends JPanel {
     MyTailPanel(){
       setFocusable(false);
     }
@@ -615,7 +618,7 @@ class PrintDialog extends DialogWrapper {
     return HelpID.PRINT;
   }
 
-  private class ApplyAction extends AbstractAction{
+  private final class ApplyAction extends AbstractAction{
     ApplyAction(){
       putValue(Action.NAME, EditorBundle.message("print.apply.button"));
     }
@@ -626,7 +629,7 @@ class PrintDialog extends DialogWrapper {
     }
   }
 
-  private static class MyTextField extends JTextField {
+  private static final class MyTextField extends JTextField {
     MyTextField(int size) {
      super(size);
     }
@@ -637,8 +640,8 @@ class PrintDialog extends DialogWrapper {
     }
   }
 
-  private static class MyLabel extends JLabel {
-    MyLabel(String text) {
+  private static final class MyLabel extends JLabel {
+    MyLabel(@NlsContexts.Label String text) {
      super(text);
     }
 

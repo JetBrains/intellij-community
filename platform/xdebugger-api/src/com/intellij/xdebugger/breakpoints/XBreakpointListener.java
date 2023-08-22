@@ -2,7 +2,9 @@
 package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.util.messages.Topic;
+import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
@@ -16,5 +18,8 @@ public interface XBreakpointListener<B extends XBreakpoint<?>> extends EventList
   }
 
   default void breakpointChanged(@NotNull B breakpoint) {
+  }
+
+  default void breakpointPresentationUpdated(@NotNull B breakpoint, @Nullable XDebugSession session) {
   }
 }

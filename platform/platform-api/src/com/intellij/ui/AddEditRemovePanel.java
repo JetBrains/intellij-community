@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
@@ -41,13 +43,13 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   private final TableModel myModel;
   private List<T> myData;
   private AbstractTableModel myTableModel;
-  private final String myLabel;
+  private final @NlsContexts.Label String myLabel;
 
   public AddEditRemovePanel(TableModel<T> model, List<T> data) {
     this(model, data, null);
   }
 
-  public AddEditRemovePanel(TableModel<T> model, List<T> data, @Nullable String label) {
+  public AddEditRemovePanel(TableModel<T> model, List<T> data, @Nullable @NlsContexts.Label String label) {
     myModel = model;
     myData = data;
     myLabel = label;
@@ -72,6 +74,35 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   protected void initPanel() {
     setLayout(new BorderLayout());
 
+    ToolbarDecorator decorator = createToolbarDecorator();
+
+    final JPanel panel = decorator.createPanel();
+    add(panel, BorderLayout.CENTER);
+    final String label = getLabelText();
+    if (label != null) {
+      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false, JBUI.insetsTop(8)).setShowLine(false));
+    }
+  }
+
+  @Override
+  protected String getLabelText() {
+    return myLabel;
+  }
+
+  @NotNull
+  @Override
+  public StatusText getEmptyText() {
+    return myTable.getEmptyText();
+  }
+
+  @Override
+  protected JComponent createMainComponent() {
+    initTable();
+
+    return ScrollPaneFactory.createScrollPane(myTable);
+  }
+
+  protected ToolbarDecorator createToolbarDecorator() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -113,31 +144,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     else {
       decorator.disableUpAction().disableDownAction();
     }
-
-    final JPanel panel = decorator.createPanel();
-    add(panel, BorderLayout.CENTER);
-    final String label = getLabelText();
-    if (label != null) {
-      UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(label, false, JBUI.insetsTop(8)).setShowLine(false));
-    }
-  }
-
-  @Override
-  protected String getLabelText(){
-    return myLabel;
-  }
-
-  @NotNull
-  @Override
-  public StatusText getEmptyText() {
-    return myTable.getEmptyText();
-  }
-
-  @Override
-  protected JComponent createMainComponent(){
-    initTable();
-
-    return ScrollPaneFactory.createScrollPane(myTable);
+    return decorator;
   }
 
   private void initTable() {
@@ -183,7 +190,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     myTable.setModel(myTableModel);
     myTable.setShowColumns(false);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    myTable.setStriped(true);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
@@ -287,7 +293,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
     public abstract int getColumnCount();
     @Nullable
-    public abstract String getColumnName(int columnIndex);
+    public abstract @ColumnName String getColumnName(int columnIndex);
     public abstract Object getField(T o, int columnIndex);
 
     public Class getColumnClass(int columnIndex) { return String.class; }

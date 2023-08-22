@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -12,6 +12,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -19,18 +20,19 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -39,27 +41,35 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.task.RunConfigurationTaskState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
+import java.net.*;
+import java.util.Arrays;
+import java.util.Enumeration;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {
+
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunnableState.class);
+
   @ApiStatus.Internal
   public static final Key<Integer> DEBUGGER_DISPATCH_PORT_KEY = Key.create("DEBUGGER_DISPATCH_PORT");
+  @ApiStatus.Internal
+  public static final Key<String> DEBUGGER_PARAMETERS_KEY = Key.create("DEBUGGER_PARAMETERS");
+  @ApiStatus.Internal
+  public static final Key<String> DEBUGGER_DISPATCH_ADDR_KEY = Key.create("DEBUGGER_DISPATCH_ADDR");
   @ApiStatus.Internal
   public static final Key<Integer> BUILD_PROCESS_DEBUGGER_PORT_KEY = Key.create("BUILD_PROCESS_DEBUGGER_PORT");
 
@@ -87,8 +97,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         port = NetUtils.findAvailableSocketPort();
       }
       catch (IOException e) {
-        ExternalSystemRunConfiguration.LOG
-          .warn("Unexpected I/O exception occurred on attempt to find a free port to use for external system task debugging", e);
+        LOG.warn("Unexpected I/O exception occurred on attempt to find a free port to use for external system task debugging", e);
         port = 0;
       }
     }
@@ -104,15 +113,55 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
   @Nullable
   public ServerSocket getForkSocket() {
-    if (myForkSocket == null && !ExternalSystemRunConfiguration.DISABLE_FORK_DEBUGGER) {
+    if (myForkSocket == null && !Boolean.getBoolean("external.system.disable.fork.debugger")) {
       try {
-        myForkSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
+        boolean isRemoteRun = ContainerUtil.exists(
+          ExternalSystemExecutionAware.getExtensions(mySettings.getExternalSystemId()),
+          aware -> aware.isRemoteRun(myConfiguration, myProject)
+        );
+        myForkSocket = new ServerSocket(0, 0, findAddress(isRemoteRun));
       }
       catch (IOException e) {
-        ExternalSystemRunConfiguration.LOG.error(e);
+        LOG.error(e);
       }
     }
     return myForkSocket;
+  }
+
+  private static InetAddress findAddress(boolean remoteRun) throws UnknownHostException, SocketException {
+    if (remoteRun) {
+      String host = Registry.stringValue("external.system.remote.debugger.dispatch.host");
+      if (!StringUtil.isEmpty(host) && !"0".equals(host)) {
+        return InetAddress.getByName(host);
+      }
+      Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+      while (interfaces.hasMoreElements()) {
+        NetworkInterface networkInterface = interfaces.nextElement();
+        try {
+          boolean isLoopbackInterface = networkInterface.isLoopback();
+          if (isLoopbackInterface) continue;
+          Enumeration<InetAddress> candidates = networkInterface.getInetAddresses();
+          while (candidates.hasMoreElements()) {
+            InetAddress candidate = candidates.nextElement();
+            if (candidate instanceof Inet4Address && !candidate.isLoopbackAddress()) {
+              return candidate;
+            }
+          }
+        }
+        catch (SocketException e) {
+          LOG.debug("Error while querying interface " + networkInterface + " for IP addresses", e);
+        }
+      }
+    }
+    return InetAddress.getByName("127.0.0.1");
+  }
+
+  public boolean isReattachDebugProcess() {
+    return myConfiguration.isReattachDebugProcess();
+  }
+
+  public boolean isDebugServerProcess() {
+    return myConfiguration.isDebugServerProcess();
   }
 
   @Nullable
@@ -120,12 +169,18 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     if (myProject.isDisposed()) return null;
 
+    ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
+    if (!ExternalSystemUtil.confirmLoadingUntrustedProject(myProject, externalSystemId)) {
+      String externalSystemName = externalSystemId.getReadableName();
+      throw new ExecutionException(ExternalSystemBundle.message("untrusted.project.notification.execution.error", externalSystemName));
+    }
+
     String jvmParametersSetup = getJvmParametersSetup();
 
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmParametersSetup);
+    ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmParametersSetup, myConfiguration);
     copyUserDataTo(task);
     addDebugUserDataTo(task);
 
@@ -133,7 +188,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
                                  ? mySettings.getExecutionName()
                                  : StringUtil.isNotEmpty(myConfiguration.getName())
                                    ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
-                                   myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
+                                   myProject, externalSystemId, mySettings.getExternalProjectPath(),
                                    mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
 
     final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
@@ -142,51 +197,56 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     final ExecutionConsole consoleView =
       consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
-    AnAction[] restartActions;
+    AnAction[] customActions, restartActions, contextActions;
     if (consoleView == null) {
+      customActions = AnAction.EMPTY_ARRAY;
       restartActions = AnAction.EMPTY_ARRAY;
+      contextActions = AnAction.EMPTY_ARRAY;
       Disposer.register(myProject, processHandler);
     }
     else {
       Disposer.register(myProject, consoleView);
       Disposer.register(consoleView, processHandler);
+      customActions = consoleManager.getCustomActions(myProject, task, myEnv);
       restartActions = consoleManager.getRestartActions(consoleView);
+      contextActions = consoleManager.getCustomContextActions(myProject, task, myEnv);
     }
+    DefaultBuildDescriptor buildDescriptor =
+      new DefaultBuildDescriptor(task.getId(), executionName, task.getExternalProjectPath(), System.currentTimeMillis());
     Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY);
+    Filter[] filters = consoleManager.getCustomExecutionFilters(myProject, task, myEnv);
+    Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
     final BuildProgressListener progressListener =
-      progressListenerClazz != null ? ServiceManager.getService(myProject, progressListenerClazz)
-                                    : createBuildView(task.getId(), executionName, task.getExternalProjectPath(), consoleView);
+      progressListenerClazz != null ? myProject.getService(progressListenerClazz)
+                                    : createBuildView(buildDescriptor, consoleView);
 
-    ExternalSystemRunConfiguration.EP_NAME
-      .forEachExtensionSafe(extension -> extension.attachToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings()));
+    var runnerSettings = myEnv.getRunnerSettings();
+    var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
+    runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-      final String greeting;
-      final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings.toString());
-      if (mySettings.getTaskNames().size() > 1) {
-        greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, settingsDescription) + "\n";
-      }
-      else {
-        greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
-      }
+      final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings);
+      final String greeting = ExternalSystemBundle.message("run.text.starting.task", startDateTime, settingsDescription) + "\n";
       processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
+
       try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
           @Override
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             if (progressListener != null) {
-              long eventTime = System.currentTimeMillis();
               AnAction rerunTaskAction = new ExternalSystemRunConfiguration.MyTaskRerunAction(progressListener, myEnv, myContentDescriptor);
               BuildViewSettingsProvider viewSettingsProvider =
                 consoleView instanceof BuildViewSettingsProvider ?
                 new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView) : null;
-              BuildDescriptor buildDescriptor = new DefaultBuildDescriptor(id, executionName, workingDir, eventTime)
+              buildDescriptor
                 .withProcessHandler(processHandler, view -> ExternalSystemRunConfiguration
                   .foldGreetingOrFarewell(consoleView, greeting, true))
                 .withContentDescriptor(() -> myContentDescriptor)
+                .withActions(customActions)
                 .withRestartAction(rerunTaskAction)
                 .withRestartActions(restartActions)
+                .withContextActions(contextActions)
                 .withExecutionEnvironment(myEnv);
               progressListener.onEvent(id,
                                        new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.status.running"))
@@ -208,11 +268,18 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-            DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, progressListener);
-            FailureResult failureResult =
-              ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject, dataProvider);
+            DataContext dataContext = BuildConsoleUtils.getDataContext(id, progressListener);
+            FailureResult failureResult = ExternalSystemUtil.createFailureResult(
+              executionName + " " + BuildBundle.message("build.status.failed"), e, id.getProjectSystemId(), myProject, dataContext);
             eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
                                                                  BuildBundle.message("build.status.failed"), failureResult));
+            processHandler.notifyProcessTerminated(1);
+          }
+
+          @Override
+          public void onCancel(@NotNull ExternalSystemTaskId id) {
+            eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
+                                                                 BuildBundle.message("build.status.cancelled"), new FailureResultImpl()));
             processHandler.notifyProcessTerminated(1);
           }
 
@@ -224,6 +291,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+            if (consoleView != null) {
+              consoleManager.onStatusChange(consoleView, event);
+            }
             if (event instanceof ExternalSystemBuildEvent) {
               eventDispatcher.onEvent(event.getId(), ((ExternalSystemBuildEvent)event).getBuildEvent());
             }
@@ -236,19 +306,21 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           @Override
           public void onEnd(@NotNull ExternalSystemTaskId id) {
             final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-            final String farewell;
-            if (mySettings.getTaskNames().size() > 1) {
-              farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, settingsDescription);
-            }
-            else {
-              farewell = ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, settingsDescription);
-            }
+            final String farewell = ExternalSystemBundle.message("run.text.ended.task", endDateTime, settingsDescription);
             processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
             ExternalSystemRunConfiguration.foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
           }
+
+          @Override
+          public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+            RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
+            if (taskState != null && consoleView != null) {
+              taskState.processExecutionResult(processHandler, consoleView);
+            }
+          }
         };
-        task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
+        task.execute(taskListener);
         Throwable taskError = task.getError();
         if (taskError != null && !(taskError instanceof Exception)) {
           FinishBuildEventImpl failureEvent = new FinishBuildEventImpl(task.getId(), null, System.currentTimeMillis(),
@@ -264,6 +336,11 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
       actionGroup.add(BuildTreeFilters.createFilteringActionsGroup((BuildView)executionConsole));
     }
+    RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
+    if (taskState != null && consoleView != null) {
+      actionGroup.addAll(taskState.createCustomActions(processHandler, consoleView, executor));
+    }
+
     DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
     executionResult.setRestartActions(restartActions);
     return executionResult;
@@ -272,18 +349,20 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   private void addDebugUserDataTo(UserDataHolderBase holder) {
     if (myDebugPort > 0) {
       holder.putUserData(BUILD_PROCESS_DEBUGGER_PORT_KEY, myDebugPort);
-      if (getForkSocket() != null) {
-        holder.putUserData(DEBUGGER_DISPATCH_PORT_KEY, getForkSocket().getLocalPort());
+      ServerSocket forkSocket = getForkSocket();
+      if (forkSocket != null) {
+        holder.putUserData(DEBUGGER_DISPATCH_ADDR_KEY, forkSocket.getInetAddress().getHostAddress());
+        holder.putUserData(DEBUGGER_DISPATCH_PORT_KEY, forkSocket.getLocalPort());
       }
     }
   }
 
   @Nullable
   private String getJvmParametersSetup() throws ExecutionException {
-    final SimpleJavaParameters extensionsJP = new SimpleJavaParameters();
-    for (ExternalSystemRunConfigurationExtension extension : ExternalSystemRunConfiguration.EP_NAME.getExtensionList()) {
-      extension.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
-    }
+    var extensionsJP = new SimpleJavaParameters();
+    var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
+    runConfigurationExtensionManager.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
+
     String jvmParametersSetup = "";
     if (myDebugPort <= 0) {
       final ParametersList allVMParameters = new ParametersList();
@@ -303,23 +382,15 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     return nullize(jvmParametersSetup);
   }
 
-  private BuildProgressListener createBuildView(ExternalSystemTaskId id,
-                                                String executionName,
-                                                String workingDir,
-                                                ExecutionConsole executionConsole) {
-    BuildDescriptor buildDescriptor = new DefaultBuildDescriptor(id, executionName, workingDir, System.currentTimeMillis());
-    return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state",
-                         new ViewManager() {
-                           @Override
-                           public boolean isConsoleEnabledByDefault() {
-                             return true;
-                           }
-
-                           @Override
-                           public boolean isBuildContentView() {
-                             return false;
-                           }
-                         });
+  protected BuildView createBuildView(DefaultBuildDescriptor buildDescriptor, ExecutionConsole executionConsole) {
+    ExternalSystemRunConfigurationViewManager viewManager = myProject.getService(ExternalSystemRunConfigurationViewManager.class);
+    return new BuildView(myProject, executionConsole, buildDescriptor, "build.toolwindow.run.selection.state", viewManager) {
+      @Override
+      public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+        super.onEvent(buildId, event);
+        viewManager.onEvent(buildId, event);
+      }
+    };
   }
 
   public void setContentDescriptor(@Nullable RunContentDescriptor contentDescriptor) {
@@ -329,13 +400,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       RunnerAndConfigurationSettings settings = myEnv.getRunnerAndConfigurationSettings();
       if (settings != null) {
         contentDescriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());
+        contentDescriptor.setAutoFocusContent(settings.isFocusToolWindowBeforeRun());
       }
     }
-  }
-
-  @Nullable
-  public XDebugProcess startDebugProcess(@NotNull XDebugSession session,
-                                         @NotNull ExecutionEnvironment env) {
-    return null;
   }
 }

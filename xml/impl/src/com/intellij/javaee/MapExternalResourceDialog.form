@@ -17,7 +17,7 @@
         </constraints>
         <properties>
           <labelFor value="3a92c"/>
-          <text value="&amp;URI:"/>
+          <text resource-bundle="messages/XmlBundle" key="xml.map.resource.dialog.label.uri"/>
         </properties>
       </component>
       <component id="3a92c" class="javax.swing.JTextField" binding="myUri">
@@ -38,7 +38,7 @@
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
           <html.disable class="java.lang.Boolean" value="false"/>
         </clientProperties>
-        <border type="etched" title="Project &amp;Schemas"/>
+        <border type="etched" title-resource-bundle="messages/XmlBundle" title-key="xml.map.resource.dialog.border.title.project.schemas"/>
         <children>
           <scrollpane id="ec831" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
@@ -67,7 +67,7 @@
         </constraints>
         <properties>
           <labelFor value="83ad2"/>
-          <text value="&amp;File:"/>
+          <text resource-bundle="messages/XmlBundle" key="xml.map.resource.dialog.label.file"/>
         </properties>
       </component>
     </children>

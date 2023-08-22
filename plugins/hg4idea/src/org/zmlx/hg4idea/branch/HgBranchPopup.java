@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -10,7 +10,7 @@ import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -42,7 +42,7 @@ import static org.zmlx.hg4idea.util.HgUtil.getDisplayableBranchOrBookmarkText;
  * Use {@link #asListPopup()} to achieve the {@link com.intellij.openapi.ui.popup.ListPopup} itself.
  * </p>
  */
-public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
+public final class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   private static final String DIMENSION_SERVICE_KEY = "Hg.Branch.Popup";
   static final String SHOW_ALL_BRANCHES_KEY = "Hg.Branch.Popup.ShowAllBranches";
   static final String SHOW_ALL_BOOKMARKS_KEY = "Hg.Branch.Popup.ShowAllBookmarks";
@@ -51,20 +51,22 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
    */
-  public static HgBranchPopup getInstance(@NotNull Project project, @NotNull HgRepository currentRepository) {
+  public static HgBranchPopup getInstance(@NotNull Project project, @NotNull HgRepository currentRepository, @NotNull DataContext dataContext) {
 
     HgRepositoryManager manager = HgUtil.getRepositoryManager(project);
-    HgProjectSettings hgProjectSettings = ServiceManager.getService(project, HgProjectSettings.class);
+    HgProjectSettings hgProjectSettings = project.getService(HgProjectSettings.class);
     HgMultiRootBranchConfig hgMultiRootBranchConfig = new HgMultiRootBranchConfig(manager.getRepositories());
 
-    return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings, Conditions.alwaysFalse());
+    return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings, Conditions.alwaysFalse(), dataContext);
   }
 
   private HgBranchPopup(@NotNull HgRepository currentRepository,
                         @NotNull HgRepositoryManager repositoryManager,
                         @NotNull HgMultiRootBranchConfig hgMultiRootBranchConfig, @NotNull HgProjectSettings vcsSettings,
-                        @NotNull Condition<AnAction> preselectActionCondition) {
-    super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition, DIMENSION_SERVICE_KEY);
+                        @NotNull Condition<AnAction> preselectActionCondition,
+                        @NotNull DataContext dataContext) {
+    super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition, DIMENSION_SERVICE_KEY,
+          dataContext);
   }
 
   @Override

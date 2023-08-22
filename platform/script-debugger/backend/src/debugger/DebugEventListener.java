@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,6 @@ public interface DebugEventListener extends EventListener {
   /**
    * Reports the virtual machine has resumed. This can happen
    * asynchronously, due to a user action in the browser (without explicitly resuming the VM through
-   * @param vm
    */
   default void resumed(@NotNull Vm vm) {
   }
@@ -66,7 +66,7 @@ public interface DebugEventListener extends EventListener {
   default void navigated(String newUrl) {
   }
 
-  default void errorOccurred(@NotNull String errorMessage) {
+  default void errorOccurred(@NotNull @NlsContexts.NotificationContent String errorMessage) {
   }
 
   default void childVmAdded(@NotNull Vm childVm) {

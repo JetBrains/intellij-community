@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryFile;
@@ -52,15 +49,11 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull Class<Psi> requiredClass) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
-      //TODO shared stub indexes are overcomplicated for kotlin for some reason.
-      //TODO dmitro.batko: it must! be investigated as soon as possible
-      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId("intellij.indexing.shared"));
-      if (plugin == null || !plugin.isEnabled()) {
-        LOG.error("Stub index points to a file without PSI: " +
-                  getFileTypeInfo(file, project) + ", " +
-                  "used scope = " + scope);
-        onInternalError(file);
-      }
+      LOG.error("Stub index points to a file without PSI: " +
+                getFileTypeInfo(file, project) + ", " +
+                "indexing stamp info = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
+                "used scope = " + scope);
+      onInternalError(file);
       return true;
     }
 
@@ -88,16 +81,22 @@ public abstract class StubProcessingHelperBase {
     if (!(psiFile instanceof PsiFileImpl) && psiFile instanceof PsiFileWithStubSupport) {
       return Collections.singletonList(((PsiFileWithStubSupport)psiFile).getStubbedSpine());
     }
-    
+
     return ContainerUtil.map(StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider()), t -> ((PsiFileImpl)t.second).getStubbedSpine());
   }
 
-  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, PsiElement psiElement) {
+  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement) {
     if (requiredClass.isInstance(psiElement)) return true;
-    
+
+    String extraMessage = "psiElement is not instance of requiredClass.\n" +
+                          "psiElement=" + psiElement +
+                          (psiElement != null ? ", psiElement.class=" + psiElement.getClass() : "") +
+                          ", requiredClass=" + requiredClass +
+                          ".\nref: 50cf572587cf";
+
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
     if (stubTree == null && psiFile instanceof PsiFileImpl) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
-    inconsistencyDetected(stubTree, (PsiFileWithStubSupport)psiFile);
+    inconsistencyDetected(stubTree, (PsiFileWithStubSupport)psiFile, extraMessage);
     return false;
   }
 
@@ -127,10 +126,10 @@ public abstract class StubProcessingHelperBase {
     }
 
     if (psiFile instanceof PsiBinaryFile) {
-      // a file can be indexed as containing stubs, 
-      // but then in a specific project FileViewProviderFactory can decide not to create stub-aware PSI 
+      // a file can be indexed as containing stubs,
+      // but then in a specific project FileViewProviderFactory can decide not to create stub-aware PSI
       // because the file isn't in expected location
-      return true; 
+      return true;
     }
 
     ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
@@ -145,17 +144,24 @@ public abstract class StubProcessingHelperBase {
       return true;
     }
     if (!requiredClass.isInstance(psiFile)) {
-      inconsistencyDetected(objectStubTree, (PsiFileWithStubSupport)psiFile);
+      String extraMessage = "psiFile is not instance of requiredClass.\n" +
+                            "psiFile=" + psiFile +
+                            ", psiFile.class=" + psiFile.getClass() +
+                            ", requiredClass=" + requiredClass +
+                            ".\nref: 50cf572587cf";
+      inconsistencyDetected(objectStubTree, (PsiFileWithStubSupport)psiFile, extraMessage);
       return true;
     }
     //noinspection unchecked
     return processor.process((Psi)psiFile);
   }
 
-  private void inconsistencyDetected(@Nullable ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+  private void inconsistencyDetected(@Nullable ObjectStubTree stubTree,
+                                     @NotNull PsiFileWithStubSupport psiFile,
+                                     @NotNull String extraMessage) {
     try {
       StubTextInconsistencyException.checkStubTextConsistency(psiFile);
-      LOG.error(StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
+      LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
     }
     finally {
       onInternalError(psiFile.getVirtualFile());
@@ -164,9 +170,11 @@ public abstract class StubProcessingHelperBase {
 
   protected abstract void onInternalError(VirtualFile file);
 
-  protected static String getFileTypeInfo(VirtualFile file, Project project) {
-    return "file type = " + file.getFileType() + ", " +
-           "indexed file type =  " + FileTypeIndex.getIndexedFileType(file, project);
+  @NotNull
+  protected static String getFileTypeInfo(@NotNull VirtualFile file, @NotNull Project project) {
+    return "file = "+file + (file.isValid() ? "" : " (invalid)") +", " +
+           "file type = " + file.getFileType() + ", " +
+           "indexed file type = " + FileTypeIndex.getIndexedFileType(file, project);
   }
 
 }

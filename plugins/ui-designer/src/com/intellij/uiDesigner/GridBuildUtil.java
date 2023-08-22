@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,10 +17,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/**
- * @author yole
- */
-public class GridBuildUtil {
+
+public final class GridBuildUtil {
   private static final Logger LOG = Logger.getInstance(GridBuildUtil.class);
 
   private final static int HORIZONTAL_GRID = 1;
@@ -53,10 +37,9 @@ public class GridBuildUtil {
     if (selection.size() != 1){
       return;
     }
-    if (!(selection.get(0) instanceof RadContainer)) {
+    if (!(selection.get(0) instanceof RadContainer container)) {
       return;
     }
-    final RadContainer container = (RadContainer)selection.get(0);
     if (
       container instanceof RadScrollPane ||
       container instanceof RadSplitPane ||
@@ -318,8 +301,8 @@ public class GridBuildUtil {
 
 
     return Couple.of(
-      new Integer(Util.eliminate(y, rowSpans, null)),
-      new Integer(Util.eliminate(x, colSpans, null))
+      Integer.valueOf(Util.eliminate(y, rowSpans, null)),
+      Integer.valueOf(Util.eliminate(x, colSpans, null))
     );
   }
 

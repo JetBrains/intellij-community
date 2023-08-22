@@ -1,14 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -23,13 +25,11 @@ import java.util.stream.Stream;
 /**
  * A method contract which is described by {@link ValueConstraint} constraints on arguments.
  * Such contract can be created from {@link org.jetbrains.annotations.Contract} annotation.
- *
- * @author peter
  */
 public final class StandardMethodContract extends MethodContract {
-  private final ValueConstraint @NotNull [] myParameters;
+  private final @NotNull ValueConstraint @NotNull [] myParameters;
 
-  public StandardMethodContract(ValueConstraint @NotNull [] parameters, @NotNull ContractReturnValue returnValue) {
+  public StandardMethodContract(@NotNull ValueConstraint @NotNull [] parameters, @NotNull ContractReturnValue returnValue) {
     super(returnValue);
     myParameters = parameters;
   }
@@ -43,7 +43,7 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   public List<ValueConstraint> getConstraints() {
-    return ContainerUtil.immutableList(myParameters);
+    return List.of(myParameters);
   }
 
   public @NotNull StandardMethodContract withReturnValue(@NotNull ContractReturnValue returnValue) {
@@ -144,7 +144,7 @@ public final class StandardMethodContract extends MethodContract {
    * @return list of equivalent non-intersecting contracts or null if the result is too big or the input list contains errors
    * (e.g. contracts with different parameter count)
    */
-  public static @Nullable("When result is too big or contracts are erroneous") List<StandardMethodContract> 
+  public static @Nullable("When result is too big or contracts are erroneous") List<StandardMethodContract>
   toNonIntersectingStandardContracts(List<StandardMethodContract> contracts) {
     if (contracts.isEmpty()) return contracts;
     int paramCount = contracts.get(0).getParameterCount();
@@ -153,7 +153,7 @@ public final class StandardMethodContract extends MethodContract {
     for (StandardMethodContract contract : contracts) {
       if (contract.getParameterCount() != paramCount) return null;
       StreamEx.of(leftovers).map(c -> c.intersect(contract)).nonNull().into(result);
-      if (result.size() >= DataFlowRunner.MAX_STATES_PER_BRANCH) return null;
+      if (result.size() >= StandardDataFlowInterpreter.DEFAULT_MAX_STATES_PER_BRANCH) return null;
       leftovers = StreamEx.of(leftovers).flatMap(c -> c.excludeContract(contract)).toList();
       if (leftovers.isEmpty()) break;
     }
@@ -285,8 +285,8 @@ public final class StandardMethodContract extends MethodContract {
 
     @Nullable
     DfaValue getComparisonValue(DfaValueFactory factory) {
-      if (this == NULL_VALUE || this == NOT_NULL_VALUE) return factory.getNull();
-      if (this == TRUE_VALUE || this == FALSE_VALUE) return factory.getBoolean(true);
+      if (this == NULL_VALUE || this == NOT_NULL_VALUE) return factory.fromDfType(DfTypes.NULL);
+      if (this == TRUE_VALUE || this == FALSE_VALUE) return factory.fromDfType(DfTypes.TRUE);
       return null;
     }
 
@@ -328,14 +328,13 @@ public final class StandardMethodContract extends MethodContract {
      * @see #canBeNegated()
      */
     public ValueConstraint negate() {
-      switch (this) {
-        case NULL_VALUE: return NOT_NULL_VALUE;
-        case NOT_NULL_VALUE: return NULL_VALUE;
-        case TRUE_VALUE: return FALSE_VALUE;
-        case FALSE_VALUE: return TRUE_VALUE;
-        default:
-          throw new IllegalStateException("ValueConstraint = " + this);
-      }
+      return switch (this) {
+        case NULL_VALUE -> NOT_NULL_VALUE;
+        case NOT_NULL_VALUE -> NULL_VALUE;
+        case TRUE_VALUE -> FALSE_VALUE;
+        case FALSE_VALUE -> TRUE_VALUE;
+        default -> throw new IllegalStateException("ValueConstraint = " + this);
+      };
     }
 
     @Override
@@ -355,6 +354,11 @@ public final class StandardMethodContract extends MethodContract {
     ParseException(@InspectionMessage String message, @Nullable TextRange range) {
       super(message);
       myRange = range != null && range.isEmpty() ? null : range;
+    }
+
+    @Override
+    public @NlsSafe String getMessage() {
+      return super.getMessage();
     }
 
     public @Nullable TextRange getRange() {

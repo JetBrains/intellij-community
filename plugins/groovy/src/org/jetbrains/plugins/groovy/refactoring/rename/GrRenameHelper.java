@@ -54,7 +54,6 @@ public interface GrRenameHelper {
   }
 
   /**
-   * @param manager
    * @param before element to which the reference resolved before rename
    * @param after  element to which the reference resolves after rename
    */

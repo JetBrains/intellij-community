@@ -1,104 +1,115 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.concurrency.SequentialTaskExecutor
-import java.util.concurrent.CompletableFuture
-import java.io.File
-import java.io.IOException
-import java.util.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import java.util.concurrent.*
 
 open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val sessionId: String,
+                                     private val headless: Boolean,
                                      private val build: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
-                                     private val writer: StatisticsEventLogWriter) : StatisticsEventLogger, Disposable {
-  protected val logExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId")
+                                     private val writer: StatisticsEventLogWriter,
+                                     private val systemEventIdProvider: StatisticsSystemEventIdProvider,
+                                     private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet()),
+                                     private val ideMode: String? = null
+) : StatisticsEventLogger, Disposable {
+  protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger", 1)
 
-  private var lastEvent: LogEvent? = null
+  private var lastEvent: FusEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
-  private var systemEventId: Long = 0
-  private val systemEventIdFile: File?
-  private val log = logger<StatisticsFileEventLogger>()
+  private val eventMergeTimeoutMs: Long = if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) 500L else 10000L
+  private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
+  private val escapeCharsInData: Boolean = StatisticsRecorderUtil.isCharsEscapingRequired(recorderId)
 
-  init {
-    systemEventIdFile = try {
-      val file = EventLogConfiguration.getEventLogSettingsPath()
-        .resolve("${StringUtil.toLowerCase(recorderId)}_system_event_id")
-        .toFile()
-      if (file.exists()) {
-        systemEventId = file.readText().toLongOrNull() ?: 0
-      }
-      file
-    }
-    catch (e: IOException) {
-      log.warn("Unable to read event sequence number file", e)
-      null
-    }
-  }
-
-  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
+  override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
     group.validateEventId(eventId)
-
-    return CompletableFuture.runAsync(Runnable {
-      val context = EventContext.create(eventId, data)
-      val validator = SensitiveDataValidator.getInstance(recorderId)
-      val validatedEventId = validator.guaranteeCorrectEventId(group, context)
-      val validatedEventData = validator.guaranteeCorrectEventData(group, context)
-
-      val creationTime = System.currentTimeMillis()
-      val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion,
-                              validatedEventId, isState)
-      for (datum in validatedEventData) {
-        event.event.addData(datum.key, datum.value)
-      }
-      log(event, creationTime)
-    }, logExecutor)
+    return try {
+      CompletableFuture.runAsync(Runnable {
+        val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
+        if (!validator.isGroupAllowed(group)) return@Runnable
+        val data = dataProvider() ?: return@Runnable
+        val event = LogEvent(sessionId, build, bucket, eventTime,
+                             LogEventGroup(group.id, group.version.toString()),
+                             recorderVersion,
+                             LogEventAction(eventId, isState, HashMap(data)))
+          .also { if (escapeCharsInData) it.escape() else it.escapeExceptData() }
+        val validatedEvent = validator.validateEvent(event)
+        if (validatedEvent != null) {
+          log(validatedEvent, System.currentTimeMillis(), eventId, data)
+        }
+      }, logExecutor)
+    }
+    catch (e: RejectedExecutionException) {
+      //executor is shutdown
+      CompletableFuture<Void>().also { it.completeExceptionally(e) }
+    }
   }
 
-  private fun log(event: LogEvent, createdTime: Long) {
-    if (lastEvent != null && event.time - lastEventTime <= 10000 && lastEvent!!.shouldMerge(event)) {
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {
+    computation(logExecutor)
+  }
+
+  override fun logAsync(group: EventLogGroup,
+                        eventId: String,
+                        data: Map<String, Any>,
+                        isState: Boolean): CompletableFuture<Void> {
+    return logAsync(group, eventId, { data }, isState)
+  }
+
+  private fun log(event: LogEvent, createdTime: Long, rawEventId: String, rawData: Map<String, Any>) {
+    if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && mergeStrategy.shouldMerge(lastEvent!!.validatedEvent, event)) {
       lastEventTime = event.time
-      lastEvent!!.event.increment()
+      lastEvent!!.validatedEvent.event.increment()
     }
     else {
       logLastEvent()
-      lastEvent = event
+      lastEvent =
+        if (StatisticsRecorderUtil.isTestModeEnabled(recorderId))
+          FusEvent(event, rawEventId, rawData)
+        else FusEvent(event, null, null)
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
+    }
+
+    if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
+      lastEventFlushFuture?.cancel(false)
+      // call flush() instead of logLastEvent() directly so that logLastEvent is executed on the logExecutor thread and not on scheduled executor pool thread
+      lastEventFlushFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(this::flush, eventMergeTimeoutMs, TimeUnit.MILLISECONDS)
     }
   }
 
   private fun logLastEvent() {
     lastEvent?.let {
-      if (it.event.isEventGroup()) {
-        it.event.addData("last", lastEventTime)
+      val event = it.validatedEvent.event
+      if (event.isEventGroup()) {
+        event.data["last"] = lastEventTime
       }
-      it.event.addData("created", lastEventCreatedTime)
-      it.event.addData("system_event_id", systemEventId)
-      systemEventId++
-      saveSystemEventId()
-      writer.log(it)
+      event.data["created"] = lastEventCreatedTime
+      var systemEventId = systemEventIdProvider.getSystemEventId(recorderId)
+      event.data["system_event_id"] = systemEventId
+      systemEventIdProvider.setSystemEventId(recorderId, ++systemEventId)
+
+      if (headless) {
+        event.data["system_headless"] = true
+      }
+      ideMode?.let { event.data["ide_mode"] = ideMode }
+      writer.log(it.validatedEvent)
+      ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
+        .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData)
     }
     lastEvent = null
-  }
-
-  private fun saveSystemEventId() {
-    try {
-      if (systemEventIdFile != null) {
-        FileUtil.writeToFile(systemEventIdFile, systemEventId.toString())
-      }
-    }
-    catch (ignored: IOException) {
-    }
   }
 
   override fun getActiveLogFile(): EventLogFile? {
@@ -118,13 +129,17 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   override fun dispose() {
+    lastEventFlushFuture?.cancel(false)
     flush()
     logExecutor.shutdown()
+    Disposer.dispose(writer)
   }
 
   fun flush(): CompletableFuture<Void> {
-    return CompletableFuture.runAsync(Runnable {
-      logLastEvent()
-    }, logExecutor)
+    return CompletableFuture.runAsync({ logLastEvent() }, logExecutor)
   }
+
+  private data class FusEvent(val validatedEvent: LogEvent,
+                              val rawEventId: String?,
+                              val rawData: Map<String, Any>?)
 }

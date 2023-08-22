@@ -1,20 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.utils
 
 import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import kotlin.test.assertEquals
 
 class GraphUtilTests {
   private fun assertCorrespondingParent(startNode: Int, endNode: Int, expectedParent: Int, graphBuilder: TestGraphBuilder.() -> Unit) {
     val graph = graph(graphBuilder)
     val actualParent = LinearGraphUtils.asLiteLinearGraph(graph).getCorrespondingParent(startNode, endNode, BitSetFlags(graph.nodesCount()))
-    assertEquals(expectedParent, actualParent,
-                 "Incorrect parent found when walking from ${startNode} to ${endNode} in ${graph.asString(true)}")
+    assertThat(actualParent)
+      .describedAs("Incorrect parent found when walking from ${startNode} to ${endNode} in ${graph.asString(true)}")
+      .isEqualTo(expectedParent)
   }
 
   @Test
@@ -50,11 +52,12 @@ class GraphUtilTests {
     }
   }
 
-  private fun assertSubgraphDifference(node1: Int, node2: Int, expectedDifference: TIntHashSet, graphBuilder: TestGraphBuilder.() -> Unit) {
+  private fun assertSubgraphDifference(node1: Int, node2: Int, expectedDifference: IntSet, graphBuilder: TestGraphBuilder.() -> Unit) {
     val graph = graph(graphBuilder)
     val actualDifference = graph.subgraphDifference(node1, node2)
-    assertEquals(expectedDifference, actualDifference,
-                 "Incorrect subgraph difference calculated between ${node1} to ${node2} in ${graph.asString(true)}")
+    assertThat(actualDifference)
+      .describedAs("Incorrect subgraph difference calculated between ${node1} to ${node2} in ${graph.asString(true)}")
+      .isEqualTo(expectedDifference)
   }
 
   /*
@@ -72,7 +75,7 @@ class GraphUtilTests {
    */
   @Test
   fun `single branches`() {
-    assertSubgraphDifference(0, 1, troveSetOf(0, 2, 4, 6)) {
+    assertSubgraphDifference(0, 1, intSetOf(0, 2, 4, 6)) {
       0(2)
       1(3)
       2(4)
@@ -101,7 +104,7 @@ class GraphUtilTests {
    */
   @Test
   fun ancestor() {
-    assertSubgraphDifference(0, 3, troveSetOf(0, 1, 2, 4, 5)) {
+    assertSubgraphDifference(0, 3, intSetOf(0, 1, 2, 4, 5)) {
       0(1, 2)
       1(3, 4)
       2(5)
@@ -129,7 +132,7 @@ class GraphUtilTests {
   */
   @Test
   fun descendant() {
-    assertSubgraphDifference(3, 0, TIntHashSet()) {
+    assertSubgraphDifference(3, 0, IntOpenHashSet()) {
       0(1, 2)
       1(3, 4)
       2(5)
@@ -161,7 +164,7 @@ class GraphUtilTests {
    */
   @Test
   fun `multiple bases`() {
-    assertSubgraphDifference(0, 1, troveSetOf(0, 2)) {
+    assertSubgraphDifference(0, 1, intSetOf(0, 2)) {
       0(2)
       1(3)
       2(4, 6)
@@ -175,12 +178,13 @@ class GraphUtilTests {
     }
   }
 
-  private fun assertExclusiveNodes(node: Int, expectedExclusiveNodes: TIntHashSet,
-                                   otherHeads: TIntHashSet, graphBuilder: TestGraphBuilder.() -> Unit) {
+  private fun assertExclusiveNodes(node: Int, expectedExclusiveNodes: IntSet,
+                                   otherHeads: IntSet, graphBuilder: TestGraphBuilder.() -> Unit) {
     val graph = graph(graphBuilder)
     val actualExclusiveNodes = graph.exclusiveNodes(node) { n -> otherHeads.contains(n) }
-    assertEquals(expectedExclusiveNodes, actualExclusiveNodes,
-                 "Incorrect exclusive nodes for ${node} ${graph.asString(true)}")
+    assertThat(actualExclusiveNodes)
+      .describedAs("Incorrect exclusive nodes for ${node} ${graph.asString(true)}")
+      .isEqualTo(expectedExclusiveNodes)
   }
 
   /*
@@ -210,10 +214,10 @@ class GraphUtilTests {
       8(9)
       9()
     }
-    assertExclusiveNodes(0, troveSetOf(0, 2, 4, 6), TIntHashSet(), graphBuilder)
-    assertExclusiveNodes(0, troveSetOf(0, 2), troveSetOf(0, 1, 4), graphBuilder)
-    assertExclusiveNodes(1, troveSetOf(1, 3, 5), TIntHashSet(), graphBuilder)
-    assertExclusiveNodes(1, troveSetOf(1, 3), troveSetOf(0, 1, 5), graphBuilder)
+    assertExclusiveNodes(0, intSetOf(0, 2, 4, 6), IntOpenHashSet(), graphBuilder)
+    assertExclusiveNodes(0, intSetOf(0, 2), intSetOf(0, 1, 4), graphBuilder)
+    assertExclusiveNodes(1, intSetOf(1, 3, 5), IntOpenHashSet(), graphBuilder)
+    assertExclusiveNodes(1, intSetOf(1, 3), intSetOf(0, 1, 5), graphBuilder)
   }
 
   /*
@@ -242,11 +246,11 @@ class GraphUtilTests {
       7(8)
       8()
     }
-    assertExclusiveNodes(0, troveSetOf(0, 2, 3, 4, 6), TIntHashSet(), graphBuilder)
-    assertExclusiveNodes(0, troveSetOf(0, 2, 4), troveSetOf(0, 1, 3), graphBuilder)
-    assertExclusiveNodes(1, troveSetOf(1, 5), TIntHashSet(), graphBuilder)
-    assertExclusiveNodes(1, troveSetOf(1), troveSetOf(0, 1, 5), graphBuilder)
+    assertExclusiveNodes(0, intSetOf(0, 2, 3, 4, 6), IntOpenHashSet(), graphBuilder)
+    assertExclusiveNodes(0, intSetOf(0, 2, 4), intSetOf(0, 1, 3), graphBuilder)
+    assertExclusiveNodes(1, intSetOf(1, 5), IntOpenHashSet(), graphBuilder)
+    assertExclusiveNodes(1, intSetOf(1), intSetOf(0, 1, 5), graphBuilder)
   }
 
-  private fun troveSetOf(vararg elements: Int) = TIntHashSet(intArrayOf(*elements))
+  private fun intSetOf(vararg elements: Int) = IntOpenHashSet(intArrayOf(*elements))
 }

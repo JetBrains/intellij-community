@@ -20,7 +20,7 @@ Groovy script
       Argument label
         PsiElement(identifier)('f')
       PsiElement(:)(':')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Literal
         PsiElement(Integer)('5')
     PsiElement(,)(',')

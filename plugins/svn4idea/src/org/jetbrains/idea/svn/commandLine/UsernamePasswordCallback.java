@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.AuthenticationData;
@@ -15,16 +16,14 @@ import java.util.regex.Pattern;
 /**
  * Special callback for svn 1.8 credentials request as --non-interactive does not return authentication realm (just url) - so we
  * could not create temp cache
- *
- * @author Konstantin Kolosovsky.
  */
 public class UsernamePasswordCallback extends AuthCallbackCase {
 
-  private static final String COULD_NOT_AUTHENTICATE_TO_SERVER_MESSAGE = "could not authenticate to server";
-  private static final String UNABLE_TO_CONNECT_MESSAGE = "Unable to connect to a repository";
-  private static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
-  private static final String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get";
-  private static final String PASSWORD_STRING = "password";
+  private static final @NonNls String COULD_NOT_AUTHENTICATE_TO_SERVER_MESSAGE = "could not authenticate to server";
+  private static final @NonNls String UNABLE_TO_CONNECT_MESSAGE = "Unable to connect to a repository";
+  private static final @NonNls String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
+  private static final @NonNls String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get";
+  private static final @NonNls String PASSWORD_STRING = "password";
   private static final Pattern UNABLE_TO_CONNECT_TO_URL_PATTERN = Pattern.compile("Unable to connect to a repository at URL '(.*)'");
 
   protected AuthenticationData myAuthentication;
@@ -61,8 +60,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
 
   @Override
   public void updateParameters(@NotNull Command command) {
-    if (myAuthentication instanceof PasswordAuthenticationData) {
-      PasswordAuthenticationData auth = (PasswordAuthenticationData)myAuthentication;
+    if (myAuthentication instanceof PasswordAuthenticationData auth) {
 
       command.put("--username");
       command.put(auth.getUserName());

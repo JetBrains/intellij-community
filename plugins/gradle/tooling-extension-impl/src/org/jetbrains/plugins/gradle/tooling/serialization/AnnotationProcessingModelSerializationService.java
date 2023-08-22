@@ -1,29 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
-import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.intellij.openapi.util.Getter;
-import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
 
-public class AnnotationProcessingModelSerializationService implements SerializationService<AnnotationProcessingModel> {
-
+public final class AnnotationProcessingModelSerializationService implements SerializationService<AnnotationProcessingModel> {
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
 
@@ -31,24 +29,16 @@ public class AnnotationProcessingModelSerializationService implements Serializat
   public byte[] write(AnnotationProcessingModel annotationProcessingModel, Class<? extends AnnotationProcessingModel> modelClazz)
     throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = IonBinaryWriterBuilder.standard().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, annotationProcessingModel);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public AnnotationProcessingModel read(byte[] object, Class<? extends AnnotationProcessingModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -70,17 +60,7 @@ public class AnnotationProcessingModelSerializationService implements Serializat
   private static void writeConfigs(final IonWriter writer,
                                    final WriteContext context,
                                    Map<String, AnnotationProcessingConfig> configs) throws IOException {
-    writeMap(writer, "configs", configs, new ThrowableConsumer<String, IOException>() {
-      @Override
-      public void consume(String s) throws IOException {
-        writer.writeString(s);
-      }
-    }, new ThrowableConsumer<AnnotationProcessingConfig, IOException>() {
-      @Override
-      public void consume(AnnotationProcessingConfig config) throws IOException {
-        writeConfig(writer, context, config);
-      }
-    });
+    writeMap(writer, "configs", configs, s -> writer.writeString(s), config -> writeConfig(writer, context, config));
   }
 
   private static void writeConfig(final IonWriter writer,
@@ -121,12 +101,12 @@ public class AnnotationProcessingModelSerializationService implements Serializat
   }
 
   private static Map<String, AnnotationProcessingConfig> readConfigs(final IonReader reader, final ReadContext context) {
-    return readMap(reader, new Getter<String>() {
+    return readMap(reader, new Supplier<String>() {
       @Override
       public String get() {
         return readString(reader, null);
       }
-    }, new Getter<AnnotationProcessingConfig>() {
+    }, new Supplier<AnnotationProcessingConfig>() {
       @Override
       public AnnotationProcessingConfig get() {
         return readConfig(reader, context);
@@ -143,7 +123,7 @@ public class AnnotationProcessingModelSerializationService implements Serializat
           @Override
           public AnnotationProcessingConfigImpl create() {
             List<String> args = readStringList(reader);
-            List<String> files = readStringList(reader);
+            List<File> files = readFiles(reader);
             String output = readString(reader, "output");
             boolean isTest = readBoolean(reader,"isTestSources");
             return new AnnotationProcessingConfigImpl(files, args, output, isTest);
@@ -160,14 +140,14 @@ public class AnnotationProcessingModelSerializationService implements Serializat
 
   private static class WriteContext {
     private final ObjectCollector<AnnotationProcessingModel, IOException> objectCollector =
-      new ObjectCollector<AnnotationProcessingModel, IOException>();
+      new ObjectCollector<>();
 
     private final ObjectCollector<AnnotationProcessingConfig, IOException> configCollector =
-      new ObjectCollector<AnnotationProcessingConfig, IOException>();
+      new ObjectCollector<>();
   }
 
   private static class ReadContext {
-    private final IntObjectMap<AnnotationProcessingModelImpl> objectMap = new IntObjectMap<AnnotationProcessingModelImpl>();
-    private final IntObjectMap<AnnotationProcessingConfigImpl> configMap = new IntObjectMap<AnnotationProcessingConfigImpl>();
+    private final IntObjectMap<AnnotationProcessingModelImpl> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<AnnotationProcessingConfigImpl> configMap = new IntObjectMap<>();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.AbstractBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +32,7 @@ final class ConfigurableGroupEP implements PluginAware {
    * @see com.intellij.openapi.options.ConfigurableEP#parentId
    * @see com.intellij.openapi.options.ConfigurableEP#groupId
    */
-  @NonNls
-  @RequiredElement
-  @Attribute("id")
-  public String id;
+  @RequiredElement @Attribute("id") public @NonNls String id;
 
   /**
    * This attribute is used to create a hierarchy of settings.
@@ -43,9 +41,7 @@ final class ConfigurableGroupEP implements PluginAware {
    * @see com.intellij.openapi.options.ConfigurableEP#parentId
    * @see com.intellij.openapi.options.ConfigurableEP#groupId
    */
-  @NonNls
-  @Attribute("parentId")
-  public String parentId;
+  @Attribute("parentId") public @NonNls String parentId;
 
   /**
    * This attribute specifies the weight of the configurable group within a parent group.
@@ -60,9 +56,7 @@ final class ConfigurableGroupEP implements PluginAware {
    *
    * @see com.intellij.openapi.options.Configurable#getHelpTopic
    */
-  @NonNls
-  @Attribute("helpTopic")
-  public String helpTopic;
+  @Attribute("helpTopic") public @NonNls String helpTopic;
 
   /**
    * This attribute specifies the resource bundle that contains display name and description.
@@ -77,17 +71,13 @@ final class ConfigurableGroupEP implements PluginAware {
    *
    * @see com.intellij.openapi.options.Configurable#getDisplayName
    */
-  @RequiredElement
-  @Attribute("displayNameKey")
-  public String displayNameKey;
+  @RequiredElement @Attribute("displayNameKey") public @NlsContexts.ConfigurableName String displayNameKey;
 
   /**
    * This attribute specifies the key to retrieve a description from the given {@link #bundle}.
    * Note that it should be HTML-based text to layout a long text in a proper way.
    */
-  @RequiredElement
-  @Attribute("descriptionKey")
-  public String descriptionKey;
+  @RequiredElement @Attribute("descriptionKey") public @NlsContexts.DetailedDescription String descriptionKey;
 
   private PluginDescriptor myPluginDescriptor;
 
@@ -96,11 +86,11 @@ final class ConfigurableGroupEP implements PluginAware {
     myPluginDescriptor = descriptor;
   }
 
-  @NotNull String getDisplayName() {
+  @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
     return getResourceValue(displayNameKey);
   }
 
-  @NotNull String getDescription() {
+  @NlsContexts.DetailedDescription @NotNull String getDescription() {
     return getResourceValue(descriptionKey);
   }
 
@@ -111,12 +101,11 @@ final class ConfigurableGroupEP implements PluginAware {
       if (descriptor != null) pathToBundle = descriptor.getResourceBundleBaseName();
       if (pathToBundle == null) return OptionsBundle.INSTANCE.getResourceBundle();
     }
-    ClassLoader classLoader = descriptor == null ? null : descriptor.getPluginClassLoader();
-    if (classLoader == null) classLoader = getClass().getClassLoader();
-    return DynamicBundle.INSTANCE.getResourceBundle(pathToBundle, classLoader);
+    ClassLoader classLoader = descriptor != null ? descriptor.getPluginClassLoader() : null;
+    return DynamicBundle.getResourceBundle(classLoader != null ? classLoader : getClass().getClassLoader(), pathToBundle);
   }
 
-  @NotNull String getResourceValue(@NotNull String key) {
+  @NotNull @NlsContexts.ConfigurableName String getResourceValue(@NotNull String key) {
     String message = AbstractBundle.messageOrNull(getResourceBundle(), key);
     return message != null ? message : OptionsBundle.message(key);
   }

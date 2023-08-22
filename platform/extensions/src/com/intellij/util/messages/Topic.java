@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 @ApiStatus.NonExtendable
 public class Topic<L> {
   /**
-   * Indicates that messages the of annotated topic are published to a application level message bus.
+   * Indicates that messages the of annotated topic are published to an application level message bus.
    */
   @Retention(RetentionPolicy.SOURCE)
   @Target(ElementType.FIELD)
@@ -31,15 +31,18 @@ public class Topic<L> {
   @Target(ElementType.FIELD)
   public @interface ProjectLevel {}
 
-  private final String name;
+  private final String myDisplayName;
   private final Class<L> myListenerClass;
   private final BroadcastDirection myBroadcastDirection;
-  private final boolean immediateDelivery;
+  private final boolean myImmediateDelivery;
 
   public Topic(@NonNls @NotNull String name, @NotNull Class<L> listenerClass) {
     this(name, listenerClass, BroadcastDirection.TO_CHILDREN);
   }
 
+  /**
+   * Consider using {@link #Topic(Class, BroadcastDirection)} and {@link BroadcastDirection#NONE}.
+   */
   public Topic(@NotNull Class<L> listenerClass) {
     this(listenerClass.getSimpleName(), listenerClass, BroadcastDirection.TO_CHILDREN);
   }
@@ -48,19 +51,18 @@ public class Topic<L> {
     this(listenerClass.getSimpleName(), listenerClass, broadcastDirection);
   }
 
-  @ApiStatus.Experimental
   public Topic(@NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection, boolean immediateDelivery) {
-    name = listenerClass.getSimpleName();
+    myDisplayName = listenerClass.getSimpleName();
     myListenerClass = listenerClass;
     myBroadcastDirection = broadcastDirection;
-    this.immediateDelivery = immediateDelivery;
+    myImmediateDelivery = immediateDelivery;
   }
 
   public Topic(@NonNls @NotNull String name, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
-    this.name = name;
+    myDisplayName = name;
     myListenerClass = listenerClass;
     myBroadcastDirection = broadcastDirection;
-    immediateDelivery = false;
+    myImmediateDelivery = false;
   }
 
   /**
@@ -68,7 +70,7 @@ public class Topic<L> {
    */
   @NonNls
   public @NotNull String getDisplayName() {
-    return name;
+    return myDisplayName;
   }
 
   /**
@@ -92,19 +94,17 @@ public class Topic<L> {
 
   @Override
   public String toString() {
-    return "Topic(" +
-           "name='" + name + '\'' +
-           ", listenerClass=" + myListenerClass +
-           ", broadcastDirection=" + myBroadcastDirection +
-           ", immediateDelivery=" + immediateDelivery +
-           ')';
+    return "Topic('" + myDisplayName + "'" +
+           (myBroadcastDirection == BroadcastDirection.NONE ? "" : ", direction=" + myBroadcastDirection) +
+           (myImmediateDelivery ? ", immediateDelivery" : "") +
+           ", listenerClass=" + myListenerClass + ')';
   }
 
   public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
     return new Topic<>(displayName, listenerClass);
   }
 
-  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection direction) {
     return new Topic<>(displayName, listenerClass, direction);
   }
 
@@ -119,7 +119,7 @@ public class Topic<L> {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public boolean isImmediateDelivery() {
-    return immediateDelivery;
+    return myImmediateDelivery;
   }
 
   /**
@@ -149,11 +149,10 @@ public class Topic<L> {
     /**
      * Use only for application level publishers. To avoid collection subscribers from modules.
      */
-    @ApiStatus.Experimental
     TO_DIRECT_CHILDREN,
 
     /**
-     * No broadcasting is performed for the
+     * No broadcasting is performed.
      */
     NONE,
 

@@ -22,8 +22,9 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.AbstractNamedData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.util.Couple;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,10 +61,11 @@ public class ExternalProjectStructureCustomizerImpl extends ExternalProjectStruc
 
   @NotNull
   @Override
-  public Couple<String> getRepresentationName(@NotNull DataNode node) {
+  public Couple<@Nls String> getRepresentationName(@NotNull DataNode node) {
     if(ProjectKeys.PROJECT.equals(node.getKey())) {
       ProjectData projectData = (ProjectData)node.getData();
-      return Couple.of("Project: " + projectData.getExternalName(), projectData.getDescription());
+      String text = ExternalSystemBundle.message("external.project.structure.project") + " " + projectData.getExternalName();
+      return Couple.of(text, projectData.getDescription());
     } else if(ProjectKeys.MODULE.equals(node.getKey())) {
       ModuleData moduleData = (ModuleData)node.getData();
       return Couple.of(moduleData.getId(), moduleData.getDescription());
@@ -73,6 +75,6 @@ public class ExternalProjectStructureCustomizerImpl extends ExternalProjectStruc
 
   @NotNull
   private static Set<? extends Key<? extends AbstractNamedData>> getDataKeys() {
-    return ContainerUtil.set(ProjectKeys.PROJECT, ProjectKeys.MODULE);
+    return Set.of(ProjectKeys.PROJECT, ProjectKeys.MODULE);
   }
 }

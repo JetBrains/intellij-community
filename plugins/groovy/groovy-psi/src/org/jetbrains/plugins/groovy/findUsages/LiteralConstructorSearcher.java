@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
-/**
-* @author peter
-*/
 public class LiteralConstructorSearcher {
   private final PsiMethod myConstructor;
   private final Processor<? super PsiReference> myConsumer;

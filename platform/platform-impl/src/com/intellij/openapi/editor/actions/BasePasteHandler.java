@@ -52,7 +52,7 @@ public class BasePasteHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (myTransferable != null) {
       EditorCopyPasteHelper.getInstance().pasteTransferable(editor, myTransferable);
     }

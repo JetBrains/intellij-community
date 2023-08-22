@@ -1,7 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -22,15 +26,20 @@ public class ConfigurationCellRenderer extends SimpleListCellRenderer<Configurat
                         int index,
                         boolean selected,
                         boolean hasFocus) {
+    final MatchOptions matchOptions = value.getMatchOptions();
+    final LanguageFileType fileType = matchOptions.getFileType();
+    setIcon((fileType == null) ? AllIcons.FileTypes.Unknown : fileType.getIcon());
+    final String text;
+    @NlsSafe final String searchPattern = collapseWhiteSpace(matchOptions.getSearchPattern());
     if (value instanceof ReplaceConfiguration) {
-      setIcon(AllIcons.Actions.Replace);
-      setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 49, 0, true)
-              + " ⇒ "
-              + shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
+      text = SSRBundle.message("replace.configuration.display.text",
+                               shortenTextWithEllipsis(searchPattern, 49, 0, true),
+                               shortenTextWithEllipsis(collapseWhiteSpace(value.getReplaceOptions().getReplacement()), 49, 0, true));
     }
     else {
-      setIcon(AllIcons.Actions.Find);
-      setText(shortenTextWithEllipsis(collapseWhiteSpace(value.getMatchOptions().getSearchPattern()), 100, 0, true));
+      text = shortenTextWithEllipsis(searchPattern, 100, 0, true);
     }
+    setText(text);
+    setEnabled(list.isEnabled());
   }
 }

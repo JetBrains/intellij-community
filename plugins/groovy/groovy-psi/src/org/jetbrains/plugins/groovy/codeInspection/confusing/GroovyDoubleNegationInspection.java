@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -39,7 +40,7 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return "Double negation #ref #loc";
+    return GroovyBundle.message("inspection.message.double.negation.ref");
   }
 
   @Override
@@ -53,23 +54,21 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Remove double negation";
+      return GroovyBundle.message("intention.family.name.remove.double.negation");
     }
 
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrUnaryExpression expression = (GrUnaryExpression)descriptor.getPsiElement();
       GrExpression operand = (GrExpression)PsiUtil.skipParentheses(expression.getOperand(), false);
-      if (operand instanceof GrUnaryExpression) {
-        final GrUnaryExpression prefixExpression = (GrUnaryExpression)operand;
+      if (operand instanceof GrUnaryExpression prefixExpression) {
         final GrExpression innerOperand = prefixExpression.getOperand();
         if (innerOperand == null) {
           return;
         }
         replaceExpression(expression, innerOperand.getText());
       }
-      else if (operand instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression = (GrBinaryExpression)operand;
+      else if (operand instanceof GrBinaryExpression binaryExpression) {
         final GrExpression lhs = binaryExpression.getLeftOperand();
         final String lhsText = lhs.getText();
         final StringBuilder builder = new StringBuilder(lhsText);
@@ -115,10 +114,9 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
       while (parent instanceof GrParenthesizedExpression) {
         parent = parent.getParent();
       }
-      if (!(parent instanceof GrUnaryExpression)) {
+      if (!(parent instanceof GrUnaryExpression prefixExpression)) {
         return;
       }
-      final GrUnaryExpression prefixExpression = (GrUnaryExpression)parent;
       final IElementType parentTokenType = prefixExpression.getOperationTokenType();
       if (!T_NOT.equals(parentTokenType)) {
         return;

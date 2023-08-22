@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -7,6 +7,10 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -14,7 +18,9 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -23,8 +29,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,22 +50,32 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.FileSystemException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
-public class DeleteHandler {
+public final class DeleteHandler {
+
+  private static Boolean ourOverrideNeedsConfirmation;
+
   private DeleteHandler() { }
 
-  public static class DefaultDeleteProvider implements DeleteProvider {
+  public static final class DefaultDeleteProvider implements DeleteProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (CommonDataKeys.PROJECT.getData(dataContext) == null) {
@@ -107,33 +124,34 @@ public class DeleteHandler {
 
   public static void deletePsiElement(final PsiElement[] elementsToDelete, final Project project, boolean needConfirmation) {
     if (elementsToDelete == null || elementsToDelete.length == 0) return;
+    needConfirmation = ourOverrideNeedsConfirmation != null ? ourOverrideNeedsConfirmation : needConfirmation;
 
     final PsiElement[] elements = PsiTreeUtil.filterAncestors(elementsToDelete);
 
-    boolean safeDeleteApplicable = Arrays.stream(elements).allMatch(SafeDeleteProcessor::validElement);
+    boolean safeDeleteApplicable = ContainerUtil.and(elements, SafeDeleteProcessor::validElement);
 
     final boolean dumb = DumbService.getInstance(project).isDumb();
     if (safeDeleteApplicable && !dumb) {
-      final Ref<Boolean> exit = Ref.create(false);
-      final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
-        @Override
-        public void run(final SafeDeleteDialog dialog) {
-          if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
-
-          SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
-            exit.set(true);
-            dialog.close(DialogWrapper.OK_EXIT_CODE);
-          }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
-
-          processor.run();
-        }
-      }) {
-        @Override
-        protected boolean isDelete() {
-          return true;
-        }
-      };
       if (needConfirmation) {
+        final Ref<Boolean> exit = Ref.create(false);
+        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
+          @Override
+          public void run(final SafeDeleteDialog dialog) {
+            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
+
+            SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
+              exit.set(true);
+              dialog.close(DialogWrapper.OK_EXIT_CODE);
+            }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
+
+            processor.run();
+          }
+        }) {
+          @Override
+          protected boolean isDelete() {
+            return true;
+          }
+        };
         dialog.setTitle(RefactoringBundle.message("delete.title"));
         if (!dialog.showAndGet() || exit.get()) {
           return;
@@ -141,8 +159,7 @@ public class DeleteHandler {
       }
     }
     else {
-      @SuppressWarnings({"UnresolvedPropertyKey"})
-      String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("prompt.delete.elements"), elements);
+      String warningMessage = DeleteUtil.generateWarningMessage("prompt.delete.elements", elements);
 
       boolean anyDirectories = false;
       String directoryName = null;
@@ -163,9 +180,8 @@ public class DeleteHandler {
       }
 
       if (safeDeleteApplicable) {
-        warningMessage += "\n\nWarning:\n  Safe delete is not available while " +
-                          ApplicationNamesInfo.getInstance().getFullProductName() +
-                          " updates indices,\n  no usages will be checked.";
+        warningMessage +=
+          LangBundle.message("dialog.message.warning.safe.delete.not.available.while.updates.indices.no.usages.will.be.checked", ApplicationNamesInfo.getInstance().getFullProductName());
       }
 
       if (needConfirmation) {
@@ -203,7 +219,7 @@ public class DeleteHandler {
         CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       }
 
-      if (Stream.of(elements).allMatch(DeleteHandler::isLocalFile)) {
+      if (ContainerUtil.and(elements, DeleteHandler::isLocalFile)) {
         doDeleteFiles(project, elements);
       }
       else {
@@ -296,7 +312,16 @@ public class DeleteHandler {
     LocalFilesDeleteTask task = new LocalFilesDeleteTask(project, fileElements);
     ProgressManager.getInstance().run(task);
     if (task.error != null) {
-      Messages.showMessageDialog(project, task.error.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      String file = task.error instanceof FileSystemException ? ((FileSystemException)task.error).getFile() : null;
+      if (file != null) {
+        String message = IoErrorText.message(task.error), yes = RevealFileAction.getActionName(), no = CommonBundle.getCloseButtonText();
+        if (Messages.showYesNoDialog(project, message, CommonBundle.getErrorTitle(), yes, no, Messages.getErrorIcon()) == Messages.YES) {
+          RevealFileAction.openFile(Paths.get(file));
+        }
+      }
+      else {
+        Messages.showMessageDialog(project, IoErrorText.message(task.error), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+      }
     }
     if (task.aborted != null) {
       VfsUtil.markDirtyAndRefresh(true, true, false, task.aborted);
@@ -347,11 +372,18 @@ public class DeleteHandler {
     return true;
   }
 
-  private static class LocalFilesDeleteTask extends Task.Modal {
+  @TestOnly
+  public static void overrideNeedsConfirmationInTests(boolean needsConfirmation, @NotNull Disposable disposable) {
+    ourOverrideNeedsConfirmation = needsConfirmation;
+    Disposer.register(disposable, () -> ourOverrideNeedsConfirmation = null);
+  }
+
+  private static final class LocalFilesDeleteTask extends Task.Modal {
     private final PsiElement[] myFileElements;
+
     List<PsiElement> processed = new ArrayList<>();
     VirtualFile aborted = null;
-    IOException error = null;
+    Throwable error = null;
 
     LocalFilesDeleteTask(Project project, PsiElement[] fileElements) {
       super(project, IdeBundle.message("progress.deleting"), true);
@@ -363,47 +395,28 @@ public class DeleteHandler {
       indicator.setIndeterminate(true);
 
       try {
-        for (PsiElement e : myFileElements) {
+        for (PsiElement element : myFileElements) {
           if (indicator.isCanceled()) break;
 
-          VirtualFile file = ((PsiFileSystemItem)e).getVirtualFile();
+          VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
           aborted = file;
-          Path path = Paths.get(file.getPath());
+          Path path = file.toNioPath();
           indicator.setText(path.toString());
 
-          Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-              if (SystemInfo.isWindows && attrs.isOther()) {  // a junction
-                visitFile(dir, null);
-                return FileVisitResult.SKIP_SUBTREE;
-              }
-              else {
-                return FileVisitResult.CONTINUE;
-              }
-            }
-
-            @Override
-            public FileVisitResult visitFile(Path file, @Nullable BasicFileAttributes attrs) throws IOException {
-              indicator.setText2(path.relativize(file).toString());
-              Files.delete(file);
-              return indicator.isCanceled() ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-              return visitFile(dir, null);
-            }
-          });
-
-          if (!indicator.isCanceled()) {
-            processed.add(e);
+          try {
+            NioFiles.deleteRecursively(path, p -> {
+              indicator.checkCanceled();
+              indicator.setText2(path.relativize(p).toString());
+            });
+            processed.add(element);
             aborted = null;
           }
+          catch (ProcessCanceledException ignored) { }
         }
       }
-      catch (IOException e) {
-        error = e;
+      catch (Throwable t) {
+        Logger.getInstance(getClass()).info(t);
+        error = t;
       }
     }
   }

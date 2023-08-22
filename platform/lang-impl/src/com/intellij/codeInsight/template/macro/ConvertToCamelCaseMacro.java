@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
@@ -11,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,7 +54,7 @@ public class ConvertToCamelCaseMacro extends MacroBase {
     return NameUtilCore.nameToWords(text);
   }
 
-  public static class ReplaceUnderscoresToCamelCaseMacro extends ConvertToCamelCaseMacro {
+  public static final class ReplaceUnderscoresToCamelCaseMacro extends ConvertToCamelCaseMacro {
     public ReplaceUnderscoresToCamelCaseMacro() {
       super("underscoresToCamelCase", CodeInsightBundle.message("macro.underscoresToCamelCase.string"));
     }

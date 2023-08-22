@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
@@ -14,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +29,8 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Thread-safe.
  */
+@Service(Service.Level.APP)
 public final class ExternalSystemProcessingManager implements ExternalSystemTaskNotificationListener, Disposable {
-
   /**
    * We receive information about the tasks being enqueued to the slave processes which work directly with external systems here.
    * However, there is a possible situation when particular task has been sent to execution but remote side has not been responding
@@ -49,23 +51,18 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
   private final @NotNull Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   private final @NotNull ExternalSystemFacadeManager myFacadeManager;
-  private final @NotNull ExternalSystemProgressNotificationManager myProgressNotificationManager;
 
   public ExternalSystemProcessingManager() {
     Application app = ApplicationManager.getApplication();
-
     myFacadeManager = app.getService(ExternalSystemFacadeManager.class);
-    myProgressNotificationManager = app.getService(ExternalSystemProgressNotificationManager.class);
     if (app.isUnitTestMode()) {
       return;
     }
-
-    myProgressNotificationManager.addNotificationListener(this);
+    app.getService(ExternalSystemProgressNotificationManager.class).addNotificationListener(this, this);
   }
 
   @Override
   public void dispose() {
-    myProgressNotificationManager.removeNotificationListener(this);
     myAlarm.cancelAllRequests();
   }
 
@@ -86,12 +83,15 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
     return false;
   }
 
+  public @Nullable ExternalSystemTask findTask(@NotNull ExternalSystemTaskId id) {
+    return myTasksDetails.get(id);
+  }
+
   public @Nullable ExternalSystemTask findTask(@NotNull ExternalSystemTaskType type,
                                                @NotNull ProjectSystemId projectSystemId,
                                                final @NotNull String externalProjectPath) {
     for(ExternalSystemTask task : myTasksDetails.values()) {
-      if(task instanceof AbstractExternalSystemTask) {
-        AbstractExternalSystemTask externalSystemTask = (AbstractExternalSystemTask)task;
+      if(task instanceof AbstractExternalSystemTask externalSystemTask) {
         if(externalSystemTask.getId().getType() == type &&
            externalSystemTask.getExternalSystemId().getId().equals(projectSystemId.getId()) &&
            externalSystemTask.getExternalProjectPath().equals(externalProjectPath)){
@@ -107,8 +107,7 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
                                                             ExternalSystemTaskState @NotNull ... taskStates) {
     List<ExternalSystemTask> result = new SmartList<>();
     for (ExternalSystemTask task : myTasksDetails.values()) {
-      if (task instanceof AbstractExternalSystemTask) {
-        AbstractExternalSystemTask externalSystemTask = (AbstractExternalSystemTask)task;
+      if (task instanceof AbstractExternalSystemTask externalSystemTask) {
         if (externalSystemTask.getExternalSystemId().getId().equals(projectSystemId.getId()) &&
             ArrayUtil.contains(externalSystemTask.getState(), taskStates)) {
           result.add(task);
@@ -203,5 +202,11 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(() -> update(), delay);
     }
+  }
+
+  @TestOnly
+  public static ExternalSystemProcessingManager getInstance() {
+    Application application = ApplicationManager.getApplication();
+    return application.getService(ExternalSystemProcessingManager.class);
   }
 }

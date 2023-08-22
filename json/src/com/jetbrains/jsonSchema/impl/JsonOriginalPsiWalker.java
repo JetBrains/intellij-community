@@ -7,6 +7,7 @@ import com.intellij.json.JsonElementTypes;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,9 +30,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 2/16/2017.
- */
 public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   public static final JsonOriginalPsiWalker INSTANCE = new JsonOriginalPsiWalker();
 
@@ -83,8 +81,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     while (! (current instanceof PsiFile)) {
       final PsiElement position = current;
       current = current.getParent();
-      if (current instanceof JsonArray) {
-        JsonArray array = (JsonArray)current;
+      if (current instanceof JsonArray array) {
         final List<JsonValue> list = array.getValueList();
         int idx = -1;
         for (int i = 0; i < list.size(); i++) {
@@ -257,5 +254,15 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   @Override
   public PsiElement getPropertyNameElement(PsiElement property) {
     return property instanceof JsonProperty ? ((JsonProperty)property).getNameElement() : null;
+  }
+
+  @Override
+  public TextRange adjustErrorHighlightingRange(@NotNull PsiElement element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof JsonFile) {
+      PsiElement child = PsiTreeUtil.skipMatching(element.getFirstChild(), e -> e.getNextSibling(), e -> !(e instanceof JsonElement));
+      return child == null ? element.getTextRange() : child.getTextRange();
+    }
+    return element.getTextRange();
   }
 }

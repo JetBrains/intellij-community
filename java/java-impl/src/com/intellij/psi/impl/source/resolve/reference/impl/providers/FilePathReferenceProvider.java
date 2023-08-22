@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.module.Module;
@@ -17,9 +17,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public class FilePathReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myEndingSlashNotAllowed;
@@ -62,7 +59,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       @Override
       public boolean absoluteUrlNeedsStartSlash() {
         final String s = getPathString();
-        return s != null && !s.isEmpty() && s.charAt(0) == '/';
+        return !s.isEmpty() && s.charAt(0) == '/';
       }
 
       @Override
@@ -92,8 +89,15 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
+  public boolean acceptsHints(@NotNull PsiElement element, PsiReferenceService.@NotNull Hints hints) {
+    if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) return false;
+
+    return super.acceptsHints(element, hints);
+  }
+
+  @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return target instanceof PsiFileSystemItem;
+    return target instanceof PsiFileSystemItem || target instanceof PsiDirectoryContainer;
   }
 
   protected boolean isPsiElementAccepted(PsiElement element) {
@@ -130,6 +134,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     if (includingClasses) {
       VirtualFile[] libraryUrls = moduleRootManager.orderEntries().getAllLibrariesAndSdkClassesRoots();
       for (VirtualFile file : libraryUrls) {
+        if (!file.isValid()) continue;
         PsiDirectory directory = psiManager.findDirectory(file);
         if (directory != null) {
           result.add(directory);
@@ -141,6 +146,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       .withoutSdk().withoutLibraries()
       .sources().usingCache().getRoots();
     for (VirtualFile root : sourceRoots) {
+      if (!root.isValid()) continue;
       final PsiDirectory directory = psiManager.findDirectory(root);
       if (directory != null) {
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);

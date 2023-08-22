@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment;
+import com.intellij.codeInsight.hints.InlayHintsUtilsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -25,8 +26,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class ParameterHintsPresentationManager implements Disposable {
+@Service
+public final class ParameterHintsPresentationManager implements Disposable {
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
+  private static final Key<Boolean> PREVIEW_MODE = Key.create("ParameterHintsPreviewMode");
 
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
@@ -34,13 +37,13 @@ public class ParameterHintsPresentationManager implements Disposable {
   private final Alarm myAlarm = new Alarm(this);
 
   public static ParameterHintsPresentationManager getInstance() {
-    return ServiceManager.getService(ParameterHintsPresentationManager.class);
+    return ApplicationManager.getApplication().getService(ParameterHintsPresentationManager.class);
   }
 
   private ParameterHintsPresentationManager() {
   }
 
-  public List<Inlay> getParameterHintsInRange(@NotNull Editor editor, int startOffset, int endOffset) {
+  public List<Inlay<?>> getParameterHintsInRange(@NotNull Editor editor, int startOffset, int endOffset) {
     //noinspection unchecked
     return (List)editor.getInlayModel().getInlineElementsInRange(startOffset, endOffset, MyRenderer.class);
   }
@@ -69,7 +72,7 @@ public class ParameterHintsPresentationManager implements Disposable {
       updateRenderer(editor, hint, null, null,true);
     }
     else {
-      Disposer.dispose(hint);  
+      Disposer.dispose(hint);
     }
   }
 
@@ -110,6 +113,10 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer.current;
   }
 
+  public void setPreviewMode(Editor editor, boolean b) {
+    PREVIEW_MODE.set(editor, b);
+  }
+
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText, HintWidthAdjustment widthAdjuster,
                               boolean useAnimation) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
@@ -143,7 +150,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     return editor.getUserData(ANIMATION_STEP) != null;
   }
 
-  private static class MyRenderer extends HintRenderer {
+  private static final class MyRenderer extends HintRenderer {
     private int startWidth;
     private int steps;
     private int step;
@@ -155,38 +162,44 @@ public class ParameterHintsPresentationManager implements Disposable {
       updateState(editor, text, widthAdjustment, animated);
     }
 
+    @Override
+    public String toString() {
+      return "[" + this.getText() + "]";
+    }
+
     public void update(Editor editor, String newText, HintWidthAdjustment widthAdjustment, boolean animated) {
       updateState(editor, newText, widthAdjustment, animated);
     }
 
-    @Nullable
     @Override
-    protected TextAttributes getTextAttributes(@NotNull Editor editor) {
+    protected @Nullable TextAttributes getTextAttributes(@NotNull Editor editor) {
       if (step > steps || startWidth != 0) {
-        return editor.getColorsScheme().getAttributes(current 
-                                                      ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT 
-                                                      : highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
-                                                                    : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+        TextAttributes attributes = editor.getColorsScheme().getAttributes(current
+                                                                           ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT
+                                                                           : highlighted
+                                                                             ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
+                                                                             : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+        Boolean aBoolean = PREVIEW_MODE.get(editor);
+        return aBoolean != null && aBoolean ? InlayHintsUtilsKt.strikeOutBuilder(editor).applyTo(attributes.clone()) : attributes;
       }
       return null;
     }
 
-    @Nullable
     @Override
-    public String getContextMenuGroupId(@NotNull Inlay inlay) {
+    public @NotNull String getContextMenuGroupId(@NotNull Inlay inlay) {
       return "ParameterNameHints";
     }
 
     private void updateState(Editor editor, String text, HintWidthAdjustment widthAdjustment, boolean animated) {
       setWidthAdjustment(widthAdjustment);
-      FontMetrics metrics = getFontMetrics(editor).getMetrics();
+      FontMetrics metrics = getFontMetrics(editor, useEditorFont()).getMetrics();
       startWidth = calcHintTextWidth(getText(), metrics);
       setText(text);
       int endWidth = calcHintTextWidth(getText(), metrics);
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
       step = animated ? 1 : steps + 1;
     }
-    
+
     public boolean nextStep() {
       return ++step <= steps;
     }
@@ -198,7 +211,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     }
   }
 
-  private class AnimationStep implements Runnable {
+  private final class AnimationStep implements Runnable {
     private final Editor myEditor;
     private final Set<Inlay> inlays = new HashSet<>();
 

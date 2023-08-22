@@ -6,8 +6,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
+
+import java.io.File;
 
 public class GradleAutoImportAwareTest extends GradleImportingTestCase {
 
@@ -30,5 +34,55 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
     assertNull(gradleAutoImportAware.getAffectedExternalProjectPath(testDataOutputDir, myProject));
 
     assertNotNull(gradleAutoImportAware.getAffectedExternalProjectPath(file.getPath(), myProject));
+  }
+
+  @Test
+  @TargetVersions("7.0.0+")
+  public void testLibsVersionTomlIsWatched() throws Exception {
+    createProjectSubFile("gradle/libs.versions.toml", """
+      [libraries]
+      jb-annotations = { module = "org.jetbrains:annotations", version = "16.0.2" }
+      """);
+
+    if(getCurrentGradleVersion().compareTo(GradleVersion.version("7.0.2")) <= 0){
+      createSettingsFile("enableFeaturePreview('VERSION_CATALOGS')");
+    }
+
+    importProject();
+
+    final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), myProject),
+                  new File(getProjectPath() + "/gradle/libs.versions.toml"));
+  }
+
+  @Test
+  @TargetVersions("7.0.2+")
+  public void testCustomVersionCatalogTomlIsWatched() throws Exception {
+    var settingsFile = new StringBuilder();
+
+    if(getCurrentGradleVersion().compareTo(GradleVersion.version("7.0.2")) == 0){
+      settingsFile.append("enableFeaturePreview('VERSION_CATALOGS')\n\n");
+    }
+
+    createSettingsFile(settingsFile.append("""
+                         dependencyResolutionManagement {
+                             versionCatalogs {
+                                 create("libs2") {
+                                     from(files("gradle/custom.versions.toml"))
+                                 }
+                             }
+                         }
+                         """).toString());
+
+    createProjectSubFile("gradle/custom.versions.toml", """
+      [libraries]
+      jb-annotations = { module = "org.jetbrains:annotations", version = "16.0.2" }
+      """);
+
+    importProject();
+
+    final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), myProject),
+                  new File(getProjectPath() + "/gradle/custom.versions.toml"));
   }
 }

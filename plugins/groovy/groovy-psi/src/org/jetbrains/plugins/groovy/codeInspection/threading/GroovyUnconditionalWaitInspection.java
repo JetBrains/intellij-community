@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
@@ -36,7 +37,7 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return "Unconditional call to <code>#ref()</code> #loc";
+    return GroovyBundle.message("inspection.message.unconditional.call.to.ref");
   }
 
   @NotNull
@@ -71,24 +72,18 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
 
     private void checkBody(GrCodeBlock body) {
       final GrStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return;
-      }
       for (final GrStatement statement : statements) {
         if (isConditional(statement)) {
           return;
         }
 
-        if (!(statement instanceof GrMethodCallExpression)) {
+        if (!(statement instanceof GrMethodCallExpression methodCallExpression)) {
           continue;
         }
-        final GrMethodCallExpression methodCallExpression =
-            (GrMethodCallExpression) statement;
         final GrExpression methodExpression = methodCallExpression.getInvokedExpression();
-        if (!(methodExpression instanceof GrReferenceExpression)) {
+        if (!(methodExpression instanceof GrReferenceExpression reference)) {
           return;
         }
-        final GrReferenceExpression reference = (GrReferenceExpression) methodExpression;
         final String name = reference.getReferenceName();
         if (!"wait".equals(name)) {
           return;

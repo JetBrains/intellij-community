@@ -27,7 +27,8 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 public class PathRelativizerService {
   private static final Logger LOG = Logger.getInstance(PathRelativizerService.class);
 
-  private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
+  private static final String PROJECT_DIR_FOR_SUB_PATH_IDENTIFIER = "$PROJECT_DIR$";
+  private static final String PROJECT_DIR_FOR_ANY_PATH_IDENTIFIER = "$PROJECT_DIR_FOR_ANY_PATH$";
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
 
   private final List<PathRelativizer> myRelativizers = new SmartList<>();
@@ -51,14 +52,15 @@ public class PathRelativizerService {
     initialize(null, null, null);
   }
 
-  private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<JpsSdk<?>> javaSdks) {
+  private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<? extends JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
     String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
-    myRelativizers.add(new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER));
-    myRelativizers.add(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER));
+    myRelativizers.add(new SubPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER));
+    myRelativizers.add(new SubPathRelativizer(normalizedProjectPath, PROJECT_DIR_FOR_SUB_PATH_IDENTIFIER));
     myRelativizers.add(new JavaSdkPathRelativizer(javaSdks));
     myRelativizers.add(new MavenPathRelativizer());
     myRelativizers.add(new GradlePathRelativizer());
+    myRelativizers.add(new AnyPathRelativizer(normalizedProjectPath, PROJECT_DIR_FOR_ANY_PATH_IDENTIFIER));
   }
 
   /**
@@ -100,7 +102,7 @@ public class PathRelativizerService {
     if (LOG.isDebugEnabled()) {
       final StringBuilder logBuilder = new StringBuilder();
       myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
-      LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());
+      LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder);
       myUnhandledPaths.clear();
     }
   }

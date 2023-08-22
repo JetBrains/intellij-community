@@ -21,9 +21,6 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
   private final PsiMigrationImpl myMigration;
 

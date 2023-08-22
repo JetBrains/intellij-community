@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public interface CoverageAnnotator {
   /**
    *
-   * @param directory  {@link com.intellij.psi.PsiDirectory} to obtain coverage information for
-   * @param manager
+   * @param directory  {@link PsiDirectory} to obtain coverage information for
    * @return human-readable coverage information
    */
   @Nullable
@@ -23,8 +22,7 @@ public interface CoverageAnnotator {
 
   /**
    *
-   * @param file {@link com.intellij.psi.PsiFile} to obtain coverage information for
-   * @param manager
+   * @param file {@link PsiFile} to obtain coverage information for
    * @return human-readable coverage information
    */
   @Nullable
@@ -35,4 +33,9 @@ public interface CoverageAnnotator {
   void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite);
 
   void renewCoverageData(@NotNull CoverageSuitesBundle suite, @NotNull CoverageDataManager dataManager);
+
+  /**
+   * A flag whether annotator is in progress of data collection.
+   */
+  boolean isLoading();
 }

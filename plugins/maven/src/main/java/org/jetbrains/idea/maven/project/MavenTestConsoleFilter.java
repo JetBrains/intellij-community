@@ -29,7 +29,7 @@ public class MavenTestConsoleFilter implements Filter {
       return new Result(entireLength - line.length() + matcherReportDir.start(1), entireLength - line.length() + matcherReportDir.end(1),
                         new HyperlinkInfo() {
                           @Override
-                          public void navigate(Project project) {
+                          public void navigate(@NotNull Project project) {
                             File f = new File(path);
                             if (f.isDirectory()) {
                               RevealFileAction.openDirectory(f);

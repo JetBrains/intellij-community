@@ -18,28 +18,34 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.CommenterForm;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.function.Predicate;
+
+import static com.intellij.openapi.options.Configurable.isCheckboxModified;
+import static com.intellij.openapi.options.Configurable.isFieldModified;
 
 public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private final JavaVisibilityPanel myJavaVisibilityPanel;
@@ -73,6 +79,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private JTextField mySubclassPrefix;
   private JTextField mySubclassSuffix;
   private JBCheckBox myReplaceSumCb;
+  private JCheckBox myCbDeclareVarType;
   private CommenterForm myCommenterForm;
   private SortedListModel<String> myRepeatAnnotationsModel;
 
@@ -88,10 +95,11 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     GridBagConstraints gc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHEAST, GridBagConstraints.BOTH,
                              new JBInsets(0, 0, 0, 0), 0, 0);
-    final Condition<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
+    Predicate<PsiClass> isApplicable = PsiClass::isAnnotationType;
     //noinspection Convert2Diamond
     myRepeatAnnotationsModel = new SortedListModel<String>(Comparator.naturalOrder());
-    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Copy", false, isApplicable, myRepeatAnnotationsModel), gc);
+    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl(JavaBundle.message("separator.annotations.to.copy"), 
+                                                                                   false, myRepeatAnnotationsModel, isApplicable), gc);
     return myPanel;
   }
 
@@ -126,6 +134,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
     myCbGenerateFinalLocals.setSelected(javaSettings.GENERATE_FINAL_LOCALS);
     myCbGenerateFinalParameters.setSelected(javaSettings.GENERATE_FINAL_PARAMETERS);
+    myCbDeclareVarType.setSelected(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE);
 
     myCbUseExternalAnnotations.setSelected(javaSettings.USE_EXTERNAL_ANNOTATIONS);
     myInsertOverrideAnnotationCheckBox.setSelected(javaSettings.INSERT_OVERRIDE_ANNOTATION);
@@ -167,6 +176,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
     javaSettings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
     javaSettings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
+    JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = myCbDeclareVarType.isSelected();
 
     javaSettings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
     javaSettings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
@@ -191,7 +201,10 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     text = text.trim();
     if (text.isEmpty()) return text;
     if (!StringUtil.isJavaIdentifier(text)) {
-      throw new ConfigurationException("Not a valid java identifier part in " + (prefix ? "prefix" : "suffix") + " \'" + text + "\'");
+      final @Nls String message = JavaBundle.message(prefix
+                                                     ? "code.style.generation.settings.error.not.valid.identifier.part.in.prefix"
+                                                     : "code.style.generation.settings.error.not.valid.identifier.part.in.suffix", text);
+      throw new ConfigurationException(message);
     }
     return text;
   }
@@ -203,32 +216,33 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
 
   public boolean isModified(CodeStyleSettings settings) {
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    boolean isModified = isModified(myCbPreferLongerNames, javaSettings.PREFER_LONGER_NAMES);
+    boolean isModified = isCheckboxModified(myCbPreferLongerNames, javaSettings.PREFER_LONGER_NAMES);
 
-    isModified |= isModified(myFieldPrefixField, javaSettings.FIELD_NAME_PREFIX);
-    isModified |= isModified(myStaticFieldPrefixField, javaSettings.STATIC_FIELD_NAME_PREFIX);
-    isModified |= isModified(myParameterPrefixField, javaSettings.PARAMETER_NAME_PREFIX);
-    isModified |= isModified(myLocalVariablePrefixField, javaSettings.LOCAL_VARIABLE_NAME_PREFIX);
-    isModified |= isModified(mySubclassPrefix, javaSettings.SUBCLASS_NAME_PREFIX);
-    isModified |= isModified(myTestClassPrefix, javaSettings.TEST_NAME_PREFIX);
+    isModified |= isFieldModified(myFieldPrefixField, javaSettings.FIELD_NAME_PREFIX);
+    isModified |= isFieldModified(myStaticFieldPrefixField, javaSettings.STATIC_FIELD_NAME_PREFIX);
+    isModified |= isFieldModified(myParameterPrefixField, javaSettings.PARAMETER_NAME_PREFIX);
+    isModified |= isFieldModified(myLocalVariablePrefixField, javaSettings.LOCAL_VARIABLE_NAME_PREFIX);
+    isModified |= isFieldModified(mySubclassPrefix, javaSettings.SUBCLASS_NAME_PREFIX);
+    isModified |= isFieldModified(myTestClassPrefix, javaSettings.TEST_NAME_PREFIX);
 
-    isModified |= isModified(myFieldSuffixField, javaSettings.FIELD_NAME_SUFFIX);
-    isModified |= isModified(myStaticFieldSuffixField, javaSettings.STATIC_FIELD_NAME_SUFFIX);
-    isModified |= isModified(myParameterSuffixField, javaSettings.PARAMETER_NAME_SUFFIX);
-    isModified |= isModified(myLocalVariableSuffixField, javaSettings.LOCAL_VARIABLE_NAME_SUFFIX);
-    isModified |= isModified(mySubclassSuffix, javaSettings.SUBCLASS_NAME_SUFFIX);
-    isModified |= isModified(myTestClassSuffix, javaSettings.TEST_NAME_SUFFIX);
+    isModified |= isFieldModified(myFieldSuffixField, javaSettings.FIELD_NAME_SUFFIX);
+    isModified |= isFieldModified(myStaticFieldSuffixField, javaSettings.STATIC_FIELD_NAME_SUFFIX);
+    isModified |= isFieldModified(myParameterSuffixField, javaSettings.PARAMETER_NAME_SUFFIX);
+    isModified |= isFieldModified(myLocalVariableSuffixField, javaSettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    isModified |= isFieldModified(mySubclassSuffix, javaSettings.SUBCLASS_NAME_SUFFIX);
+    isModified |= isFieldModified(myTestClassSuffix, javaSettings.TEST_NAME_SUFFIX);
 
-    isModified |= isModified(myCbGenerateFinalLocals, javaSettings.GENERATE_FINAL_LOCALS);
-    isModified |= isModified(myCbGenerateFinalParameters, javaSettings.GENERATE_FINAL_PARAMETERS);
+    isModified |= isCheckboxModified(myCbGenerateFinalLocals, javaSettings.GENERATE_FINAL_LOCALS);
+    isModified |= isCheckboxModified(myCbGenerateFinalParameters, javaSettings.GENERATE_FINAL_PARAMETERS);
+    isModified |= isCheckboxModified(myCbDeclareVarType, JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE);
 
-    isModified |= isModified(myCbUseExternalAnnotations, javaSettings.USE_EXTERNAL_ANNOTATIONS);
-    isModified |= isModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);
-    isModified |= isModified(myRepeatSynchronizedCheckBox, javaSettings.REPEAT_SYNCHRONIZED);
+    isModified |= isCheckboxModified(myCbUseExternalAnnotations, javaSettings.USE_EXTERNAL_ANNOTATIONS);
+    isModified |= isCheckboxModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);
+    isModified |= isCheckboxModified(myRepeatSynchronizedCheckBox, javaSettings.REPEAT_SYNCHRONIZED);
 
-    isModified |= isModified(myReplaceInstanceOfCb, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
-    isModified |= isModified(myReplaceNullCheckCb, javaSettings.REPLACE_NULL_CHECK);
-    isModified |= isModified(myReplaceSumCb, javaSettings.REPLACE_SUM);
+    isModified |= isCheckboxModified(myReplaceInstanceOfCb, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
+    isModified |= isCheckboxModified(myReplaceNullCheckCb, javaSettings.REPLACE_NULL_CHECK);
+    isModified |= isCheckboxModified(myReplaceSumCb, javaSettings.REPLACE_SUM);
 
     isModified |= !javaSettings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
 

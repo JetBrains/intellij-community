@@ -13,8 +13,7 @@ public class CompletionContributorEP extends LanguageExtensionPoint<CompletionCo
   /**
    * @deprecated {@link #CompletionContributorEP(String, String, PluginDescriptor)} must be used to ensure that plugin descriptor is set.
    */
-  @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public CompletionContributorEP() {
   }
 

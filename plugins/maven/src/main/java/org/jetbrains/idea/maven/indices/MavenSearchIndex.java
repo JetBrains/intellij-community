@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -28,27 +30,27 @@ public interface MavenSearchIndex {
     LOCAL, REMOTE, ONLINE
   }
 
-  void registerId(String repositoryId) throws MavenIndexException;
-
   void close(boolean releaseIndexContext);
 
+  @NlsSafe
   String getRepositoryId();
 
   File getRepositoryFile();
 
+  @NlsSafe
   String getRepositoryUrl();
 
+  @NlsSafe
   String getRepositoryPathOrUrl();
 
   Kind getKind();
 
-  boolean isFor(Kind kind, String pathOrUrl);
-
   long getUpdateTimestamp();
 
+  @NlsSafe
   String getFailureMessage();
 
-  void updateOrRepair(boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
+  void updateOrRepair(boolean fullUpdate, @Nullable MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException;
 
   interface IndexListener {

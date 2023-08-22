@@ -1,13 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.refactoring.rename;
 
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.*;
 import com.intellij.lang.properties.structureView.PropertiesPrefixGroup;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +35,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
     if (bundle == null) {
       return false;
     }
-    final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+    final FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
     if (!(fileEditor instanceof ResourceBundleEditor)) {
       return false;
     }
@@ -47,13 +45,12 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(final @NotNull Project project, Editor editor, final PsiFile file, DataContext dataContext) {
-    final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+    final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
     assert resourceBundleEditor != null;
-    final ResourceBundleEditorViewElement selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
+    final Object selectedElement = resourceBundleEditor.getSelectedElementIfOnlyOne();
     if (selectedElement != null) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-        if (selectedElement instanceof PropertiesPrefixGroup) {
-          final PropertiesPrefixGroup group = (PropertiesPrefixGroup)selectedElement;
+        if (selectedElement instanceof PropertiesPrefixGroup group) {
           ResourceBundleRenameUtil.renameResourceBundleKeySection(getPsiElementsFromGroup(group),
                                                                   group.getPresentableName(),
                                                                   group.getPrefix().length() - group.getPresentableName().length());
@@ -75,7 +72,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
   }
 
   private static List<PsiElement> getPsiElementsFromGroup(final PropertiesPrefixGroup propertiesPrefixGroup) {
-    return ContainerUtil.mapNotNull(propertiesPrefixGroup.getChildren(), (NullableFunction<TreeElement, PsiElement>)treeElement -> {
+    return ContainerUtil.mapNotNull(propertiesPrefixGroup.getChildren(), treeElement -> {
       if (treeElement instanceof PropertyStructureViewElement) {
         return ((PropertyStructureViewElement)treeElement).getPsiElement();
       }

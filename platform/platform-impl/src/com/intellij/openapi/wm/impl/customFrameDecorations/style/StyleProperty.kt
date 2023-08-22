@@ -9,6 +9,8 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
 
+const val HOVER_KEY = "STYLE_HOVER"
+
 sealed class StyleProperty(
   private val setProperty: (JComponent, Any?) -> Unit,
   val getProperty: (JComponent) -> Any?,
@@ -38,6 +40,12 @@ sealed class StyleProperty(
     Color::class.java
   )
 
+  object HOVER : StyleProperty(
+    { component, background -> component.putClientProperty(HOVER_KEY, background as Color?) },
+    { component -> component.getClientProperty(HOVER_KEY) },
+    Color::class.java
+  )
+
   object FOREGROUND : StyleProperty(
     { component, foreground -> component.foreground = foreground as Color? },
     { component -> component.foreground },
@@ -64,7 +72,7 @@ sealed class StyleProperty(
     AbstractButton::class.java
   )
 
-  protected val log = Logger.getInstance(StyleProperty::class.java)
+  protected val log: Logger = Logger.getInstance(StyleProperty::class.java)
   private fun checkTypes(component: JComponent, value: Any?): Boolean {
     if (!componentType.isInstance(component)) {
       log.warn(

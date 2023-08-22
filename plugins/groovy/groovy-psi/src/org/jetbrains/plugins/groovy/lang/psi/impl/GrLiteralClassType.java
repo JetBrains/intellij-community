@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.project.Project;
@@ -16,9 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.intellij.openapi.util.text.StringUtil.getShortName;
 
-/**
- * @author peter
- */
 public abstract class GrLiteralClassType extends PsiClassType {
   protected final GlobalSearchScope myScope;
   protected final JavaPsiFacade myFacade;
@@ -48,13 +45,9 @@ public abstract class GrLiteralClassType extends PsiClassType {
     return new ClassResolveResult() {
       private final PsiClass myBaseClass = resolve();
 
-      private final NotNullLazyValue<PsiSubstitutor> mySubstitutor = new NotNullLazyValue<PsiSubstitutor>() {
-        @NotNull
-        @Override
-        protected PsiSubstitutor compute() {
-          return inferSubstitutor(myBaseClass);
-        }
-      };
+      private final NotNullLazyValue<PsiSubstitutor> mySubstitutor = NotNullLazyValue.lazy(() -> {
+        return inferSubstitutor(myBaseClass);
+      });
 
       @Override
       public PsiClass getElement() {

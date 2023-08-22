@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -12,6 +13,7 @@ import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.IconManager;
@@ -62,9 +64,6 @@ import java.util.function.Function;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
-/**
- * @author ilyas
- */
 public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> implements GrMethod, StubBasedPsiElement<GrMethodStub> {
 
   private static final Logger LOG = Logger.getInstance(GrMethodBaseImpl.class);
@@ -135,7 +134,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       }
     }
 
-    return (GrTypeElement)findChildByType(TokenSets.TYPE_ELEMENTS);
+    return findChildByType(TokenSets.TYPE_ELEMENTS);
   }
 
   @Override
@@ -143,7 +142,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     if (isConstructor()) {
       return null;
     }
-    return TypeInferenceHelper.inTopContext(() -> GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator));
+    return TypeInferenceHelper.inTopContext(() -> CachedValuesManager.getProjectPsiDependentCache(this, ourTypesCalculator));
   }
 
   @Override
@@ -201,7 +200,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     if (block != null) {
       PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
       if (inferred != null) {
-        if (nominal == null || (nominal.isAssignableFrom(inferred) && !inferred.equals(PsiType.NULL))) {
+        if (nominal == null || (nominal.isAssignableFrom(inferred) && !inferred.equals(PsiTypes.nullType()))) {
           return inferred;
         }
       }
@@ -230,7 +229,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Nullable
   private PsiType getNominalType() {
     if (PsiImplUtil.isMainMethod(this)) {
-      return PsiType.VOID;
+      return PsiTypes.voidType();
     }
 
     final GrTypeElement element = getReturnTypeElementGroovy();
@@ -244,7 +243,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Nullable
   public GrTypeElement setReturnType(@Nullable PsiType newReturnType) {
     GrTypeElement typeElement = getReturnTypeElementGroovy();
-    if (newReturnType == null || newReturnType == PsiType.NULL) {
+    if (newReturnType == null || newReturnType == PsiTypes.nullType()) {
       if (typeElement != null) typeElement.delete();
       insertPlaceHolderToModifierList();
       return null;
@@ -388,8 +387,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     final GrMethodStub stub = getStub();
     if (stub != null) {
       return stub.getName();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -7,44 +7,42 @@ import com.intellij.diagnostic.hprof.action.AnalysisRunnable
 import com.intellij.diagnostic.hprof.action.getHeapDumpReportText
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.diagnostic.report.MemoryReportReason
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.startup.ProjectActivity
 import java.awt.Component
-import java.io.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
-/**
- * @author yole
- */
-open class HeapDumpAnalysisSupport {
+internal open class HeapDumpAnalysisSupport {
   companion object {
-    fun getInstance(): HeapDumpAnalysisSupport = ServiceManager.getService(HeapDumpAnalysisSupport::class.java)
+    fun getInstance(): HeapDumpAnalysisSupport = service<HeapDumpAnalysisSupport>()
   }
 
-  open fun getPrivacyPolicyUrl(): String {
-    return "https://www.jetbrains.com/company/privacy.html";
-  }
+  open fun getPrivacyPolicyUrl(): String = "https://www.jetbrains.com/company/privacy.html"
 
   open fun uploadReport(reportText: String, heapReportProperties: HeapReportProperties, parentComponent: Component) {
     val text = getHeapDumpReportText(reportText, heapReportProperties)
     val attachment = Attachment("report.txt", text)
     attachment.isIncluded = true
-    val loggingEvent = LogMessage.createEvent(OutOfMemoryError(), "Heap analysis results", attachment)
+    val loggingEvent = LogMessage.eventOf(OutOfMemoryError(), "Heap analysis results", listOf(attachment))
     ITNReporter().submit(arrayOf(loggingEvent), null, parentComponent) { }
   }
 
   /**
    * Checks if there's already a snapshot saved for analysis after restart and notifies the user if needed.
-   * Returns true if there's a pending snapshot and a new one should not be saved.
+   * Returns true if there's a pending snapshot and a new one shouldn't be saved.
    */
-  open fun checkPendingSnapshot(): Boolean {
-    return false
-  }
+  open fun checkPendingSnapshot(): Boolean = false
 
   /**
    * Saves the given snapshot for analysis after restart.
@@ -67,39 +65,47 @@ open class HeapDumpAnalysisSupport {
   }
 }
 
-class AnalyzePendingSnapshotActivity: StartupActivity {
-  override fun runActivity(project: Project) {
+internal class AnalyzePendingSnapshotActivity: ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override suspend fun execute(project: Project) {
+    val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
+    if (!Files.isRegularFile(jsonPath)) {
+      return
+    }
+
     var path: String? = null
     var liveStats: String? = null
     var reason: MemoryReportReason? = null
-
-    val jsonPath = File(PathManager.getSystemPath(), "pending-snapshot.json")
-    if (jsonPath.exists()) {
-      try {
-        val reader = JsonReader(InputStreamReader(FileInputStream(jsonPath)))
-        reader.use {
-          it.beginObject()
-          while (it.hasNext()) {
-            val name = it.nextName()
-            when (name) {
-              "path" -> path = it.nextString()
-              "reason" -> reason = MemoryReportReason.valueOf(it.nextString())
-              "liveStats" -> liveStats = it.nextString()
-            }
+    try {
+      val reader = JsonReader(Files.newBufferedReader(jsonPath))
+      reader.use {
+        it.beginObject()
+        while (it.hasNext()) {
+          when (it.nextName()) {
+            "path" -> path = it.nextString()
+            "reason" -> reason = MemoryReportReason.valueOf(it.nextString())
+            "liveStats" -> liveStats = it.nextString()
           }
-          it.endObject()
         }
+        it.endObject()
+      }
 
-        FileUtil.delete(jsonPath)
-      }
-      catch (e: Exception) {
-        // ignore
-      }
+      Files.deleteIfExists(jsonPath)
+    }
+    catch (ignore: Exception) {
     }
 
     path?.let {
-      val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "")
-      AnalysisRunnable(Paths.get(it), heapProperties, true).run()
+      val hprofPath = Paths.get(it)
+      if (hprofPath.exists()) {
+        val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "")
+        AnalysisRunnable(hprofPath, heapProperties, true).run()
+      }
     }
   }
 }

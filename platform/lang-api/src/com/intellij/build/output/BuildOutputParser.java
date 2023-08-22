@@ -2,12 +2,21 @@
 package com.intellij.build.output;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.openapi.util.NlsSafe;
 
 import java.util.function.Consumer;
 
 /**
- * @author Vladislav.Soroka
+ * Parses output messages and creates build events from those.
  */
 public interface BuildOutputParser {
-  boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer);
+  /**
+   * Parses output line.
+   *
+   * @param line            is line to parse
+   * @param reader          is source reader of {@code line}.
+   * @param messageConsumer is consumer of parsed build events.
+   * @return true if line is successfully parsed
+   */
+  boolean parse(@NlsSafe String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer);
 }

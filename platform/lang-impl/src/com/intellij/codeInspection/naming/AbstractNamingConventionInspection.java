@@ -1,35 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.naming;
 
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.options.OptCheckboxPanel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.serialization.SerializationException;
-import com.intellij.ui.CheckBoxList;
-import com.intellij.ui.CheckBoxListListener;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -49,7 +46,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   private final Set<String> myDisabledShortNames = new HashSet<>();
   @Nullable private final String myDefaultConventionShortName;
 
-  protected AbstractNamingConventionInspection(Iterable<NamingConvention<T>> extensions, @Nullable final String defaultConventionShortName) {
+  protected AbstractNamingConventionInspection(Iterable<? extends NamingConvention<T>> extensions, @Nullable final String defaultConventionShortName) {
     for (NamingConvention<T> convention : extensions) {
       registerConvention(convention);
     }
@@ -79,9 +76,14 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     myDisabledShortNames.remove(shortName);
   }
 
-  protected void registerConventionsListener(ExtensionPointName<NamingConvention<T>> epName) {
-    Application application = ApplicationManager.getApplication();
-    epName.getPoint(application).addExtensionPointListener(new ExtensionPointListener<NamingConvention<T>>() {
+  protected void registerConventionsListener(@NotNull ExtensionPointName<NamingConvention<T>> epName) {
+    Disposable disposable = ExtensionPointUtil.createExtensionDisposable(
+      this,
+      LocalInspectionEP.LOCAL_INSPECTION.getPoint(),
+      inspectionEP -> this.getClass().getName().equals(inspectionEP.implementationClass)
+    );
+
+    epName.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull NamingConvention<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
         registerConvention(extension);
@@ -91,7 +93,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
       public void extensionRemoved(@NotNull NamingConvention<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
         unregisterConvention(extension);
       }
-    }, false, application);
+    }, disposable);
   }
 
   @Nullable
@@ -115,7 +117,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   }
 
   @NotNull
-  protected String createErrorMessage(String name, String shortName) {
+  protected @InspectionMessage String createErrorMessage(String name, String shortName) {
     return myNamingConventions.get(shortName).createErrorMessage(name, myNamingConventionBeans.get(shortName));
   }
 
@@ -137,9 +139,10 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
       catch (SerializationException e) {
         throw new InvalidDataException(e);
       }
-      String enabled = extension.getAttributeValue("enabled");
-      if (Boolean.parseBoolean(enabled)) {
+      if (Boolean.parseBoolean(extension.getAttributeValue("enabled"))) {
         myDisabledShortNames.remove(shortName);
+      } else {
+        myDisabledShortNames.add(shortName);
       }
     }
   }
@@ -171,7 +174,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
       XmlSerializer.serializeInto(conventionBean, element);
     }
     else {
-      if (disabled) return null;
+      if (disabled != convention.isEnabledByDefault()) return null;
     }
     return element;
   }
@@ -226,43 +229,29 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new BorderLayout(JBUIScale.scale(2), JBUIScale.scale(2)));
-    CardLayout layout = new CardLayout();
-    JPanel descriptionPanel = new JPanel(layout);
-    descriptionPanel.setBorder(JBUI.Borders.empty(2));
-    panel.add(descriptionPanel, BorderLayout.CENTER);
-    CheckBoxList<NamingConvention<T>> list = new CheckBoxList<>();
-    list.setBorder(JBUI.Borders.empty(2));
+  public @NotNull OptPane getOptionsPane() {
     List<NamingConvention<T>> values = new ArrayList<>(myNamingConventions.values());
     Collections.reverse(values);
-    for (NamingConvention<T> convention : values) {
+    return OptPane.pane(new OptCheckboxPanel(ContainerUtil.map(values, convention -> {
       String shortName = convention.getShortName();
-      list.addItem(convention, convention.getElementDescription(), !myDisabledShortNames.contains(shortName));
-      descriptionPanel.add(myNamingConventionBeans.get(shortName).createOptionsPanel(), shortName);
+      NamingConventionBean bean = myNamingConventionBeans.get(shortName);
+      //noinspection LanguageMismatch
+      return bean.getOptionsPane().prefix(shortName).asCheckbox(shortName, convention.getElementDescription());
+    })));
+  }
+
+  @NotNull
+  @Override
+  public OptionController getOptionController() {
+    OptionController controller = OptionController.of(
+      shortName -> !myDisabledShortNames.contains(shortName),
+      (shortName, value) -> setEnabled((boolean)value, shortName)
+    );
+    for (Map.Entry<String, NamingConventionBean> entry : myNamingConventionBeans.entrySet()) {
+      controller = controller.onPrefix(entry.getKey(), entry.getValue().getOptionController());
     }
-    list.addListSelectionListener((e) -> {
-      int selectedIndex = list.getSelectedIndex();
-      NamingConvention<T> item = list.getItemAt(selectedIndex);
-      if (item != null) {
-        String shortName = item.getShortName();
-        layout.show(descriptionPanel, shortName);
-        UIUtil.setEnabled(descriptionPanel, list.isItemSelected(selectedIndex), true);
-      }
-    });
-    list.setCheckBoxListListener(new CheckBoxListListener() {
-      @Override
-      public void checkBoxSelectionChanged(int index, boolean value) {
-        NamingConvention<T> convention = values.get(index);
-        setEnabled(value, convention.getShortName());
-        UIUtil.setEnabled(descriptionPanel, value, true);
-      }
-    });
-    list.setSelectedIndex(0);
-    panel.add(new JBScrollPane(list), BorderLayout.WEST);
-    return panel;
+    return controller;
   }
 
   public void setEnabled(boolean value, String conventionShortName) {

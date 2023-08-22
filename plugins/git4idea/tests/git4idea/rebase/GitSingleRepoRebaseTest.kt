@@ -1,19 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.LineSeparator
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.config.GitVersionSpecialty
+import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.repo.GitRepository
 import git4idea.test.*
+import junit.framework.TestCase
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
@@ -42,7 +49,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     ensureUpToDateAndRebaseOnMaster()
 
-    assertSuccessfulRebaseNotification("feature is up-to-date with master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     repo.`assert feature rebased on master`()
     assertNoRebaseInProgress(repo)
   }
@@ -52,7 +59,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     ensureUpToDateAndRebaseOnMaster()
 
-    assertSuccessfulRebaseNotification("Fast-forwarded feature to master")
+    assertSuccessfulRebaseNotification("Rebased feature on master")
     repo.`assert feature rebased on master`()
     assertNoRebaseInProgress(repo)
   }
@@ -92,6 +99,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
         repo.assertConflict("c.txt")
       repo.resolveConflicts()
     }
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -106,6 +114,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     vcsHelper.onMerge {
         repo.resolveConflicts()
     }
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -211,7 +220,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     ensureUpToDateAndRebaseOnMaster()
 
-    assertErrorNotification("Rebase Failed",
+    assertErrorNotification("Rebase failed",
         """
         $UNKNOWN_ERROR_TEXT<br/>
         $LOCAL_CHANGES_WARNING
@@ -268,6 +277,141 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     localChange.verify()
   }
 
+  fun `test local changelists are restored after successful abort`() {
+    touch("file.txt", "1\n2\n3\n4\n5\n")
+    touch("file1.txt", "content")
+    touch("file2.txt", "content")
+    touch("file3.txt", "content")
+    repo.addCommit("initial")
+
+    repo.`prepare simple conflict`()
+
+
+    val testChangelist1 = changeListManager.addChangeList("TEST_1", null)
+    val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
+
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(Executor.child("file.txt"))!!
+    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { document, tracker ->
+      val ranges = tracker.getRanges()!!
+      TestCase.assertEquals(3, ranges.size)
+      tracker.moveToChangelist(ranges[1], testChangelist1)
+      tracker.moveToChangelist(ranges[2], testChangelist2)
+    }
+
+    overwrite("file1.txt", "new content")
+    overwrite("file2.txt", "new content")
+    overwrite("file3.txt", "new content")
+    VfsUtil.markDirtyAndRefresh(false, false, true, repo.root)
+    changeListManager.ensureUpToDate()
+    changeListManager.moveChangesTo(testChangelist1, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file2.txt"))!!)
+    changeListManager.moveChangesTo(testChangelist2, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file3.txt"))!!)
+
+    `do nothing on merge`()
+    dialogManager.onMessage { Messages.YES }
+
+    ensureUpToDateAndRebaseOnMaster()
+
+    `assert conflict not resolved notification with link to stash`()
+
+    GitRebaseUtils.abort(project, EmptyProgressIndicator())
+
+    assertNoRebaseInProgress(repo)
+    repo.`assert feature not rebased on master`()
+
+    val changelists = changeListManager.changeLists
+    assertEquals(3, changelists.size)
+    for (changeList in changelists) {
+      assertTrue("${changeList.name} - ${changeList.changes}", changeList.changes.size == 2)
+    }
+  }
+
+  fun `test local changelists are restored after successful rebase`() {
+    touch("file.txt", "1\n2\n3\n4\n5\n")
+    touch("file1.txt", "content")
+    touch("file2.txt", "content")
+    touch("file3.txt", "content")
+    repo.addCommit("initial")
+
+    repo.`diverge feature and master`()
+
+    val testChangelist1 = changeListManager.addChangeList("TEST_1", null)
+    val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
+
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(Executor.child("file.txt"))!!
+    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { document, tracker ->
+      val ranges = tracker.getRanges()!!
+      TestCase.assertEquals(3, ranges.size)
+      tracker.moveToChangelist(ranges[1], testChangelist1)
+      tracker.moveToChangelist(ranges[2], testChangelist2)
+    }
+
+    overwrite("file1.txt", "new content")
+    overwrite("file2.txt", "new content")
+    overwrite("file3.txt", "new content")
+    VfsUtil.markDirtyAndRefresh(false, false, true, repo.root)
+    changeListManager.ensureUpToDate()
+    changeListManager.moveChangesTo(testChangelist1, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file2.txt"))!!)
+    changeListManager.moveChangesTo(testChangelist2, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file3.txt"))!!)
+
+    ensureUpToDateAndRebaseOnMaster()
+
+    assertSuccessfulRebaseNotification("Rebased feature on master")
+    assertNoRebaseInProgress(repo)
+    repo.`assert feature rebased on master`()
+
+    val changelists = changeListManager.changeLists
+    assertEquals(3, changelists.size)
+    for (changeList in changelists) {
+      assertTrue("${changeList.name} - ${changeList.changes}", changeList.changes.size == 2)
+    }
+  }
+
+  fun `test local changelists are restored after successful rebase with resolved conflict`() {
+    touch("file.txt", "1\n2\n3\n4\n5\n")
+    touch("file1.txt", "content")
+    touch("file2.txt", "content")
+    touch("file3.txt", "content")
+    repo.addCommit("initial")
+
+    repo.`prepare simple conflict`()
+
+    val testChangelist1 = changeListManager.addChangeList("TEST_1", null)
+    val testChangelist2 = changeListManager.addChangeList("TEST_2", null)
+
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(Executor.child("file.txt"))!!
+    withPartialTracker(file, "1A\n2\n3A\n4\n5A\n") { document, tracker ->
+      val ranges = tracker.getRanges()!!
+      TestCase.assertEquals(3, ranges.size)
+      tracker.moveToChangelist(ranges[1], testChangelist1)
+      tracker.moveToChangelist(ranges[2], testChangelist2)
+    }
+
+    overwrite("file1.txt", "new content")
+    overwrite("file2.txt", "new content")
+    overwrite("file3.txt", "new content")
+    VfsUtil.markDirtyAndRefresh(false, false, true, repo.root)
+    changeListManager.ensureUpToDate()
+    changeListManager.moveChangesTo(testChangelist1, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file2.txt"))!!)
+    changeListManager.moveChangesTo(testChangelist2, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file3.txt"))!!)
+
+    vcsHelper.onMerge {
+      repo.resolveConflicts()
+    }
+    keepCommitMessageAfterConflict()
+
+    ensureUpToDateAndRebaseOnMaster()
+
+    assertSuccessfulRebaseNotification("Rebased feature on master")
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
+
+    val changelists = changeListManager.changeLists
+    assertEquals(3, changelists.size)
+    for (changeList in changelists) {
+      assertTrue("${changeList.name} - ${changeList.changes}", changeList.changes.size == 2)
+    }
+  }
+
   fun `test local changes are not restored after failed abort`() {
     repo.`prepare simple conflict`()
     LocalChange(repo, "new.txt", "content").generate()
@@ -284,11 +428,11 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.assertRebaseInProgress()
     repo.`assert feature not rebased on master`()
     repo.assertConflict("c.txt")
-    assertErrorNotification("Rebase Abort Failed",
-        """
-        unknown error<br/>
-        $LOCAL_CHANGES_WARNING
-        """)
+    assertErrorNotification(GitBundle.message("rebase.abort.notification.failed.title"),
+                            """
+                            unknown error<br/>
+                            $LOCAL_CHANGES_WARNING
+                            """)
   }
 
   // git rebase --continue should be either called from a commit dialog, either from the GitRebaseProcess.
@@ -346,6 +490,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   fun `test unresolved conflict should lead to conflict resolver with continue rebase`() {
     repo.`prepare simple conflict`()
     `do nothing on merge`()
+    keepCommitMessageAfterConflict()
 
     ensureUpToDateAndRebaseOnMaster()
     repo.assertConflict("c.txt")
@@ -372,8 +517,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
       }
     }
 
-    val hash2skip = DvcsUtil.getShortHash(git("log -2 --pretty=%H").lines()[1])
-
     vcsHelper.onMerge {
       file("c.txt").write("base\nmaster")
       repo.resolveConflicts()
@@ -384,12 +527,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertRebased(repo, "feature", "master")
     assertNoRebaseInProgress(repo)
 
-    assertSuccessfulRebaseNotification(
-        """
-        Rebased feature on master<br/>
-        The following commit was skipped during rebase:<br/>
-        <a>$hash2skip</a> commit to be skipped
-        """)
+    assertSuccessfulRebaseNotification("Rebased feature on master")
   }
 
   fun `test interactive rebase stopped for editing`() {
@@ -416,7 +554,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseInteractively()
 
-    assertSuccessfulNotification("Rebase Stopped for Editing", "")
+    assertSuccessfulNotification("Rebase stopped for editing", "")
     assertEquals("The repository must be in the 'SUSPENDED' state", repo, repositoryManager.ongoingRebaseSpec!!.ongoingRebase)
 
     GitRebaseUtils.continueRebase(project)
@@ -533,13 +671,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`diverge feature and master`()
     checkCheckoutAndRebase {
       "Checked out feature and rebased it on master"
-    }
-  }
-
-  fun `test checkout with fast-forward`() {
-    repo.`place feature below master`()
-    checkCheckoutAndRebase {
-      "Checked out feature and fast-forwarded it to master"
     }
   }
 

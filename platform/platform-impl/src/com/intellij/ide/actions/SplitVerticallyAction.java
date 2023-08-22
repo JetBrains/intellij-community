@@ -17,16 +17,8 @@ package com.intellij.ide.actions;
 
 import javax.swing.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class SplitVerticallyAction extends SplitAction{
   public SplitVerticallyAction() {
     super(SwingConstants.VERTICAL);
-  }
-
-  @Override
-  protected boolean isProhibitionAllowed() {
-    return true;
   }
 }

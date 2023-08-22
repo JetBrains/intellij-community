@@ -40,8 +40,7 @@ public class DtdSelectioner extends ExtendWordSelectionHandlerBase {
     PsiElement first = null;
     PsiElement last = null;
     for (PsiElement child : children) {
-      if (child instanceof XmlToken) {
-        XmlToken token = (XmlToken)child;
+      if (child instanceof XmlToken token) {
         if (token.getTokenType() == XmlTokenType.XML_TAG_END) {
           last = token;
           break;
@@ -58,7 +57,7 @@ public class DtdSelectioner extends ExtendWordSelectionHandlerBase {
     if (first != null && last != null) {
       final int offset = last.getTextRange().getEndOffset() + 1;
         result.addAll(ExtendWordSelectionHandlerBase.expandToWholeLine(editorText,
-                                        new TextRange(first.getTextRange().getStartOffset(), offset < editorText.length() ? offset:editorText.length()),
+                                        new TextRange(first.getTextRange().getStartOffset(), Math.min(offset, editorText.length())),
                                         false));
     }
 

@@ -1,26 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.util.Enumeration;
 
 /**
  * author: lesya
  */
-public class SmartExpander {
+public final class SmartExpander {
   public static void installOn(final JTree tree){
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillCollapse(TreeExpansionEvent event) {
         TreePath path = event.getPath();
-        Enumeration children = ((TreeNode)path.getLastPathComponent()).children();
-        while (children.hasMoreElements()) {
-          TreePath childPath = path.pathByAddingChild(children.nextElement());
+        TreeModel model = tree.getModel();
+        Object lastPathComponent = path.getLastPathComponent();
+        int childCount = model.getChildCount(lastPathComponent);
+        for (int i = 0; i < childCount; i++) {
+          Object child = model.getChild(lastPathComponent, i);
+          TreePath childPath = path.pathByAddingChild(child);
           if (tree.isExpanded(childPath)) {
             tree.collapsePath(childPath);
           }
@@ -40,9 +42,10 @@ public class SmartExpander {
       @Override
       public void treeExpanded(TreeExpansionEvent event) {
         TreePath path = event.getPath();
-        TreeNode lastPathComponent = (TreeNode)path.getLastPathComponent();
-        if (lastPathComponent.getChildCount() == 1) {
-          TreePath firstChildPath = path.pathByAddingChild(lastPathComponent.getChildAt(0));
+        TreeModel model = tree.getModel();
+        Object lastPathComponent = path.getLastPathComponent();
+        if (model.getChildCount(lastPathComponent) == 1) {
+          TreePath firstChildPath = path.pathByAddingChild(model.getChild(lastPathComponent, 0));
           tree.expandPath(firstChildPath);
         }
       }

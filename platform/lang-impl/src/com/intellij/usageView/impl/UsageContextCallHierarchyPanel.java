@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView.impl;
 
 import com.intellij.ide.hierarchy.*;
@@ -31,6 +16,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +24,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
+public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
   private HierarchyBrowser myBrowser;
 
-  public static class Provider implements UsageContextPanel.Provider {
+  public static final class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
@@ -58,8 +44,10 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
       if (element == null || !element.isValid()) return false;
 
       Project project = element.getProject();
-      DataContext context = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element,
-                                                               SimpleDataContext.getProjectContext(project));
+      DataContext context = SimpleDataContext.builder()
+        .add(CommonDataKeys.PROJECT, project)
+        .add(CommonDataKeys.PSI_ELEMENT, element)
+        .build();
       HierarchyProvider provider = BrowseHierarchyActionBase.findBestHierarchyProvider(LanguageCallHierarchy.INSTANCE, element, context);
       if (provider == null) return false;
       PsiElement providerTarget = provider.getTarget(context);
@@ -84,7 +72,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
 
   @Override
   public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
-    PsiElement element = infos == null ? null : getElementToSliceOn(infos);
+    PsiElement element = ContainerUtil.isEmpty(infos) ? null : getElementToSliceOn(infos);
     if (myBrowser instanceof Disposable) {
       Disposer.dispose((Disposable)myBrowser);
       myBrowser = null;
@@ -98,7 +86,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
 
     removeAll();
     if (element == null) {
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
     }
     else {
@@ -113,15 +101,17 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
 
   @Nullable
   private static HierarchyBrowser createCallHierarchyPanel(@NotNull PsiElement element) {
-    DataContext context = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, SimpleDataContext.getProjectContext(element.getProject()));
+    DataContext context = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, element.getProject())
+      .add(CommonDataKeys.PSI_ELEMENT, element)
+      .build();
     HierarchyProvider provider = BrowseHierarchyActionBase.findBestHierarchyProvider(LanguageCallHierarchy.INSTANCE, element, context);
     if (provider == null) return null;
     PsiElement providerTarget = provider.getTarget(context);
     if (providerTarget == null) return null;
 
     HierarchyBrowser browser = provider.createHierarchyBrowser(providerTarget);
-    if (browser instanceof HierarchyBrowserBaseEx) {
-      HierarchyBrowserBaseEx browserEx = (HierarchyBrowserBaseEx)browser;
+    if (browser instanceof HierarchyBrowserBaseEx browserEx) {
       // do not steal focus when scrolling through nodes
       browserEx.changeView(CallHierarchyBrowserBase.getCallerType(), false);
     }

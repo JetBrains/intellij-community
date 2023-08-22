@@ -16,6 +16,7 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ import java.util.Map;
 public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance(TypeHierarchyBrowser.class);
 
-  public TypeHierarchyBrowser(final Project project, final PsiClass psiClass) {
+  public TypeHierarchyBrowser(Project project, PsiClass psiClass) {
     super(project, psiClass);
   }
 
@@ -37,7 +38,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
+  protected void createTrees(@NotNull Map<? super @Nls String, ? super JTree> trees) {
     createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 
@@ -70,7 +71,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected boolean isApplicableElement(@NotNull final PsiElement element) {
+  protected boolean isApplicableElement(@NotNull PsiElement element) {
     return element instanceof PsiClass;
   }
 
@@ -86,7 +87,7 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
     if (getSupertypesHierarchyType().equals(typeName)) {
       return new SupertypesHierarchyTreeStructure(myProject, (PsiClass)psiElement);
     }
@@ -103,12 +104,12 @@ public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected boolean canBeDeleted(final PsiElement psiElement) {
+  protected boolean canBeDeleted(PsiElement psiElement) {
     return psiElement instanceof PsiClass && !(psiElement instanceof PsiAnonymousClass);
   }
 
   @Override
-  protected String getQualifiedName(final PsiElement psiElement) {
+  protected String getQualifiedName(PsiElement psiElement) {
     if (psiElement instanceof PsiClass) {
       return ((PsiClass)psiElement).getQualifiedName();
     }

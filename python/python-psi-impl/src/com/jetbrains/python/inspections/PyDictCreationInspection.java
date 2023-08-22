@@ -22,17 +22,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.DictCreationQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyDictCreationInspection extends PyInspection {
 
   @NotNull
@@ -40,16 +39,15 @@ public class PyDictCreationInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       if (node.getAssignedValue() instanceof PyDictLiteralExpression) {
         if (node.getTargets().length != 1) {
           return;
@@ -62,13 +60,14 @@ public class PyDictCreationInspection extends PyInspection {
 
         PyStatement statement = PsiTreeUtil.getNextSiblingOfType(node, PyStatement.class);
 
-        while (statement instanceof PyAssignmentStatement) {
-          final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)statement;
+        while (statement instanceof PyAssignmentStatement assignmentStatement) {
           final List<Pair<PyExpression, PyExpression>> targets = getDictTargets(target, name, assignmentStatement);
           if (targets == null)
             return;
           if (!targets.isEmpty()) {
-            registerProblem(node, "This dictionary creation could be rewritten as a dictionary literal", new DictCreationQuickFix(node));
+            registerProblem(node,
+                            PyPsiBundle.message("INSP.dict.creation.this.dictionary.creation.could.be.rewritten.as.dictionary.literal"),
+                            new DictCreationQuickFix());
             break;
           }
           statement = PsiTreeUtil.getNextSiblingOfType(assignmentStatement, PyStatement.class);
@@ -83,8 +82,7 @@ public class PyDictCreationInspection extends PyInspection {
                                                                       @NotNull final PyAssignmentStatement assignmentStatement) {
     final List<Pair<PyExpression, PyExpression>> targets = new ArrayList<>();
     for (Pair<PyExpression, PyExpression> targetToValue : assignmentStatement.getTargetsToValuesMapping()) {
-      if (targetToValue.first instanceof PySubscriptionExpression) {
-        final PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targetToValue.first;
+      if (targetToValue.first instanceof PySubscriptionExpression subscriptionExpression) {
         if (name.equals(subscriptionExpression.getOperand().getName()) &&
             subscriptionExpression.getIndexExpression() != null &&
             !referencesTarget(targetToValue.second, target)) {
@@ -101,7 +99,7 @@ public class PyDictCreationInspection extends PyInspection {
     final List<PsiElement> refs = new ArrayList<>();
     expression.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
         final PsiPolyVariantReference ref = node.getReference();
         if (ref.isReferenceTo(target)) {

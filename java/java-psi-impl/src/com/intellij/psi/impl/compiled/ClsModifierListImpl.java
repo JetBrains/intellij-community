@@ -116,6 +116,9 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     if (hasModifierProperty(PsiModifier.FINAL) && !isEnum && !isInterfaceField && !isEnumConstant) {
       buffer.append(PsiModifier.FINAL).append(' ');
     }
+    if (hasModifierProperty(PsiModifier.SEALED)) {
+      buffer.append(PsiModifier.SEALED).append(' ');
+    }
     if (hasModifierProperty(PsiModifier.NATIVE)) {
       buffer.append(PsiModifier.NATIVE).append(' ');
     }
@@ -145,7 +148,13 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
-    setMirrors(getAnnotations(), SourceTreeToPsiMap.<PsiModifierList>treeToPsiNotNull(element).getAnnotations());
+    PsiAnnotation[] annotations = getAnnotations();
+    PsiAnnotation[] mirrorAnnotations = SourceTreeToPsiMap.<PsiModifierList>treeToPsiNotNull(element).getAnnotations();
+    if (annotations.length == mirrorAnnotations.length) {
+      // Annotations could be inconsistent, as in stubs all type annotations are attached to the types
+      // not to modifier list
+      setMirrors(annotations, mirrorAnnotations);
+    }
   }
 
   @Override

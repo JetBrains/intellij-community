@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
@@ -39,7 +26,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.util.XmlResourceResolver;
@@ -48,9 +34,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
 
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author maxim
@@ -83,16 +72,7 @@ public class ExternalDocumentValidator {
   @NonNls
   private static final String ATTRIBUTE_MESSAGE_PREFIX = "cvc-attribute.";
 
-  private static class ValidationInfo {
-    final PsiElement element;
-    final String message;
-    final Validator.ValidationHost.ErrorType type;
-
-    private ValidationInfo(PsiElement element, String message, Validator.ValidationHost.ErrorType type) {
-      this.element = element;
-      this.message = message;
-      this.type = type;
-    }
+  private record ValidationInfo(PsiElement element, @InspectionMessage String message, Validator.ValidationHost.ErrorType type) {
   }
 
   private WeakReference<List<ValidationInfo>> myInfos; // last jaxp validation result
@@ -104,7 +84,7 @@ public class ExternalDocumentValidator {
     if (myFile == file &&
         myModificationStamp == file.getModificationStamp() &&
         !ValidateXmlActionHandler.isValidationDependentFilesOutOfDate((XmlFile)file) &&
-        SoftReference.dereference(myInfos)!=null // we have validated before
+        dereference(myInfos)!=null // we have validated before
         ) {
       addAllInfos(host,myInfos.get());
       return;
@@ -320,10 +300,10 @@ public class ExternalDocumentValidator {
     }
   }
 
-  private PsiElement addProblemToTagName(PsiElement currentElement,
-                                     final PsiElement originalElement,
-                                     final String localizedMessage,
-                                     final ValidateXmlActionHandler.ProblemType problemType) {
+  private void addProblemToTagName(PsiElement currentElement,
+                                   final PsiElement originalElement,
+                                   final @InspectionMessage String localizedMessage,
+                                   final ValidateXmlActionHandler.ProblemType problemType) {
     currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlTag.class,false);
     if (currentElement==null) {
       currentElement = PsiTreeUtil.getParentOfType(originalElement,XmlElementDecl.class,false);
@@ -336,8 +316,6 @@ public class ExternalDocumentValidator {
     if (currentElement!=null) {
       myHost.addMessage(currentElement,localizedMessage, getProblemType(problemType));
     }
-
-    return currentElement;
   }
 
   private static void assertValidElement(PsiElement currentElement, PsiElement originalElement, String message) {
@@ -384,7 +362,7 @@ public class ExternalDocumentValidator {
     if (!profile.isToolEnabled(HighlightDisplayKey.find(INSPECTION_SHORT_NAME), containingFile)) return;
 
     SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
-    ExternalDocumentValidator validator = SoftReference.dereference(validatorReference);
+    ExternalDocumentValidator validator = dereference(validatorReference);
 
     if(validator == null) {
       validator = new ExternalDocumentValidator();

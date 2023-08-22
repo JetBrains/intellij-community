@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
@@ -62,6 +63,10 @@ public class KeyboardModifierListener implements Disposable {
   }
 
   private void onKeyEvent(KeyEvent e) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      return;
+    }
+
     final int keyCode = e.getKeyCode();
     if (keyCode == KeyEvent.VK_SHIFT) {
       myShiftPressed = e.getID() == KeyEvent.KEY_PRESSED;

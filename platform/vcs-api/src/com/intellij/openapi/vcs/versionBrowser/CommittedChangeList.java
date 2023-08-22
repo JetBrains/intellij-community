@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.versionBrowser;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -11,6 +12,7 @@ import java.util.Collection;
 import java.util.Date;
 
 public interface CommittedChangeList extends ChangeList {
+  @NlsSafe
   String getCommitterName();
   Date getCommitDate();
   long getNumber();
@@ -21,6 +23,7 @@ public interface CommittedChangeList extends ChangeList {
    *
    * @return the branch of this changelist, or null if not applicable.
    */
+  @NlsSafe
   @Nullable
   String getBranch();
 

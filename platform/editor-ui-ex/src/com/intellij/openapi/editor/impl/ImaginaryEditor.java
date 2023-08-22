@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -17,15 +18,24 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
-import java.util.Collections;
-import java.util.List;
 
+/**
+ * This class is intended to simplify implementation of dummy editors needed only to pass to place which expect {@link Editor}
+ * but do nothing complicate with it, only simple things like getting document/project/caret/selection.<p></p>
+ * <p>
+ * Since Imaginary* classes are intended to be used by multiple parties,
+ * they should be as free as possible of simplified versions of any real Editor's logic.
+ * Simplification involves making some assumptions what the clients would need, and different clients may disagree on that.
+ * Having a simplified version that "almost always" works would make it hard to notice when it's not enough,
+ * so the default implementation of most methods is to throw an exception to make the problem obvious immediately.
+ * Clients can add simplified logic themselves via subclassing, if they really need to.
+ */
 public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   private final ImaginaryCaretModel myCaretModel;
   private final ImaginarySelectionModel mySelectionModel;
   private final Project myProject;
   @NotNull private final Document myDocument;
-  private final ImaginarySoftWrapModel mySoftWrapModel = new ImaginarySoftWrapModel();
+  private static final Logger LOG = Logger.getInstance(ImaginaryEditor.class);
 
   public ImaginaryEditor(@NotNull Project project, @NotNull Document document) {
     myProject = project;
@@ -105,7 +115,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @NotNull
   @Override
   public SoftWrapModel getSoftWrapModel() {
-    return mySoftWrapModel;
+    return new EmptySoftWrapModel();
   }
 
   @NotNull
@@ -133,17 +143,13 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    Document document = getDocument();
-    int lineStart = document.getLineStartOffset(pos.line);
-    int lineEnd = document.getLineEndOffset(pos.line);
-    return Math.min(lineEnd, lineStart + pos.column);
+    throw notImplemented();
   }
 
   @NotNull
   @Override
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
-    // No folding support: logicalPos is always the same as visual pos
-    return new VisualPosition(logicalPos.line, logicalPos.column);
+    throw notImplemented();
   }
 
   @NotNull
@@ -161,16 +167,13 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @NotNull
   @Override
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-    return new LogicalPosition(visiblePos.line, visiblePos.column);
+    throw notImplemented();
   }
 
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    Document document = getDocument();
-    int line = document.getLineNumber(offset);
-    int col = document.getLineStartOffset(line);
-    return new LogicalPosition(line, col);
+    throw notImplemented();
   }
 
   @NotNull
@@ -205,12 +208,12 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public void addEditorMouseListener(@NotNull EditorMouseListener listener) {
-    throw notImplemented();
+    LOG.info("Called ImaginaryEditor#addEditorMouseListener which is stubbed and has no implementation");
   }
 
   @Override
   public void removeEditorMouseListener(@NotNull EditorMouseListener listener) {
-    throw notImplemented();
+    LOG.info("Called ImaginaryEditor#removeEditorMouseListener which is stubbed and has no implementation");
   }
 
   @Override
@@ -236,7 +239,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public boolean isInsertMode() {
-    return false;
+    return true;
   }
 
   @Override
@@ -292,54 +295,6 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   @NotNull
   @Override
   public EditorKind getEditorKind() {
-    throw notImplemented();
-  }
-
-  // No soft-wraps at all
-  private static class ImaginarySoftWrapModel implements SoftWrapModel {
-    @Override
-    public boolean isSoftWrappingEnabled() {
-      return false;
-    }
-
-    @Override
-    public @Nullable SoftWrap getSoftWrap(int offset) {
-      return null;
-    }
-
-    @Override
-    public @NotNull List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public @NotNull List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public boolean isVisible(SoftWrap softWrap) {
-      return false;
-    }
-
-    @Override
-    public void beforeDocumentChangeAtCaret() {
-
-    }
-
-    @Override
-    public boolean isInsideSoftWrap(@NotNull VisualPosition position) {
-      return false;
-    }
-
-    @Override
-    public boolean isInsideOrBeforeSoftWrap(@NotNull VisualPosition visual) {
-      return false;
-    }
-
-    @Override
-    public void release() {
-
-    }
+    return EditorKind.UNTYPED;
   }
 }

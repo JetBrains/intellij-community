@@ -1,17 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -31,11 +42,17 @@ import java.util.Set;
 @State(name = "ResourceBundleManager", storages = @Storage("resourceBundles.xml"))
 public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState>, Disposable {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
+  private static final String BUNDLE_EDITOR_PLUGIN_ID = "com.intellij.properties.bundle.editor";
+  private static final String SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN = "suggest.resource.bundle.editor.plugin";
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
 
+  private final SingletonNotificationManager myNotificationManager = new SingletonNotificationManager(PluginsAdvertiser.getNotificationGroup().getDisplayId(), 
+                                                                                                      NotificationType.INFORMATION);
+  
   public ResourceBundleManager(@NotNull Project project) {
-    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+    PsiManager manager = PsiManager.getInstance(project);
+    manager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
       public void childMoved(@NotNull final PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
@@ -43,13 +60,9 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           if (child instanceof PsiDirectory) {
             if (event.getOldParent() instanceof PsiDirectory && event.getNewParent() instanceof PsiDirectory) {
               final String fromDirUrl = ((PsiDirectory)event.getOldParent()).getVirtualFile().getUrl() + "/";
-              final NotNullLazyValue<String> toDirUrl = new NotNullLazyValue<String>() {
-                @NotNull
-                @Override
-                protected String compute() {
-                  return ((PsiDirectory)event.getNewParent()).getVirtualFile().getUrl() + "/";
-                }
-              };
+              final NotNullLazyValue<String> toDirUrl = NotNullLazyValue.lazy(() -> {
+                return ((PsiDirectory)event.getNewParent()).getVirtualFile().getUrl() + "/";
+              });
               for (String dissociatedFileUrl : new SmartList<>(myState.getDissociatedFiles())) {
                 if (dissociatedFileUrl.startsWith(fromDirUrl)) {
                   myState.getDissociatedFiles().remove(dissociatedFileUrl);
@@ -81,14 +94,10 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           return;
         }
 
-        final NotNullLazyValue<Pair<String, String>> oldAndNewUrls = new NotNullLazyValue<Pair<String, String>>() {
-          @NotNull
-          @Override
-          protected Pair<String, String> compute() {
-            final String newUrl = propertiesFile.getVirtualFile().getUrl();
-            return Pair.create(oldParentUrl + newUrl.substring(newParentUrl.length()), newUrl);
-          }
-        };
+        final NotNullLazyValue<Pair<String, String>> oldAndNewUrls = NotNullLazyValue.lazy(() -> {
+          final String newUrl = propertiesFile.getVirtualFile().getUrl();
+          return new Pair<>(oldParentUrl + newUrl.substring(newParentUrl.length()), newUrl);
+        });
 
         if (!myState.getDissociatedFiles().isEmpty()) {
           if (myState.getDissociatedFiles().remove(oldAndNewUrls.getValue().getFirst())) {
@@ -113,7 +122,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
       @Override
       public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
-        if (!(child instanceof PsiFile)) {
+        if (!(child instanceof PsiFile psiFile)) {
           if (child instanceof PsiDirectory) {
             final String deletedDirUrl = ((PsiDirectory)child).getVirtualFile().getUrl() + "/";
             for (String dissociatedFileUrl : new SmartList<>(myState.getDissociatedFiles())) {
@@ -134,17 +143,10 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           }
           return;
         }
-        PsiFile psiFile = (PsiFile)child;
         if (!PropertiesImplUtil.canBePropertyFile(psiFile)) return;
 
         final VirtualFile virtualFile = psiFile.getVirtualFile();
-        final NotNullLazyValue<String> url = new NotNullLazyValue<String>() {
-          @NotNull
-          @Override
-          protected String compute() {
-            return virtualFile.getUrl();
-          }
-        };
+        final NotNullLazyValue<String> url = NotNullLazyValue.lazy(() -> virtualFile.getUrl());
         if (!myState.getDissociatedFiles().isEmpty()) {
           myState.getDissociatedFiles().remove(url.getValue());
         }
@@ -159,6 +161,39 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
         }
       }
     }, this);
+  
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (file.getFileType() == PropertiesFileType.INSTANCE &&
+            PropertiesComponent.getInstance().getBoolean(SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN, true)) {
+          PsiFile psiFile = manager.findFile(file);
+          if (psiFile != null && !file.getNameWithoutExtension().equals(PropertiesUtil.getDefaultBaseName(psiFile))) {
+            PluginId pluginId = PluginId.getId(BUNDLE_EDITOR_PLUGIN_ID);
+            IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
+            if (pluginDescriptor == null || !pluginDescriptor.isEnabled()) {
+              myNotificationManager.notify(IdeBundle.message("plugins.advertiser.plugins.suggestions.title"),
+                                           PropertiesBundle.message("notification.content.resource.bundle.plugin.advertisement"), project, notification -> {
+                notification.setSuggestionType(true);
+                notification.setDisplayId("resource.bundle.editor");
+                if (pluginDescriptor == null) {
+                  notification.addAction(NotificationAction.createSimpleExpiring(PropertiesBundle.message("notification.content.install.plugin"), () -> {
+                    PluginsAdvertiser.installAndEnable(project, Collections.singleton(pluginId), true, () -> {});
+                  }));
+                }
+                else {
+                  notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.enable.plugin"), 
+                                                                                 () -> PluginManagerConfigurable.showPluginConfigurableAndEnable(project, Set.of(pluginDescriptor))));
+                }
+                notification.addAction(NotificationAction.createSimpleExpiring(
+                  PropertiesBundle.message("notification.content.ignore.plugin"),
+                  () -> PropertiesComponent.getInstance().setValue(SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN, false)));
+              });
+            }
+          }
+        }
+      }
+    });
   }
 
   @Override
@@ -166,7 +201,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
   }
 
   public static ResourceBundleManager getInstance(final Project project) {
-    return ServiceManager.getService(project, ResourceBundleManager.class);
+    return project.getService(ResourceBundleManager.class);
   }
 
   @Nullable

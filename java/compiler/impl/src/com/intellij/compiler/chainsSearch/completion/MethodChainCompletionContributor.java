@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -14,6 +14,7 @@ import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -22,33 +23,29 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
-public class MethodChainCompletionContributor extends CompletionContributor {
+public final class MethodChainCompletionContributor extends CompletionContributor implements DumbAware {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
   private static final Logger LOG = Logger.getInstance(MethodChainCompletionContributor.class);
   private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
 
   public MethodChainCompletionContributor() {
     ElementPattern<PsiElement> pattern = or(patternForMethodCallArgument(), patternForVariableAssignment(), patternForReturnExpression());
-    extend(CompletionType.SMART, pattern, new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, pattern, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         try {
           if (!Registry.is(REGISTRY_KEY)) return;
-          final Set<PsiMethod> alreadySuggested = new THashSet<>();
+          final Set<PsiMethod> alreadySuggested = new HashSet<>();
           CompletionResultSet finalResult = result;
           result.runRemainingContributors(parameters, completionResult -> {
             LookupElement lookupElement = completionResult.getLookupElement();
@@ -79,8 +76,11 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   }
 
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
-    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(context.getProject());
-    if (compilerReferenceService == null) return Collections.emptyList();
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(context.getProject());
+    if (compilerReferenceService == null) {
+      return Collections.emptyList();
+    }
+
     CompilerReferenceServiceEx compilerReferenceServiceEx = (CompilerReferenceServiceEx) compilerReferenceService;
     ChainSearchTarget target = context.getTarget();
     List<OperationChain> searchResult =
@@ -176,7 +176,7 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   @NotNull
   private static ElementPattern<PsiElement> patternForMethodCallArgument() {
     return psiElement().withSuperParent(3, PsiMethodCallExpression.class).withParent(psiReferenceExpression().with(
-      new PatternCondition<PsiReferenceExpression>("QualifierIsNull") {
+      new PatternCondition<>("QualifierIsNull") {
         @Override
         public boolean accepts(@NotNull PsiReferenceExpression referenceExpression, ProcessingContext context) {
           return referenceExpression.getQualifierExpression() == null;

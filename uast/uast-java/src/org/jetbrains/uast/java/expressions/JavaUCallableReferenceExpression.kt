@@ -16,16 +16,18 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMultiResolvable
 
+@ApiStatus.Internal
 class JavaUCallableReferenceExpression(
   override val sourcePsi: PsiMethodReferenceExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression, UMultiResolvable {
-  override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(sourcePsi.qualifierExpression, this) }
+  override val qualifierExpression: UExpression? by lazyPub { JavaConverter.convertOrNull(sourcePsi.qualifierExpression, this) }
 
   override val qualifierType: PsiType?
     get() = sourcePsi.qualifierType?.type
@@ -40,9 +42,8 @@ class JavaUCallableReferenceExpression(
   override val resolvedName: String?
     get() = (sourcePsi.resolve() as? PsiNamedElement)?.name
 
-  override val referenceNameElement: UElement? by lz {
+  override val referenceNameElement: UElement? by lazyPub {
     sourcePsi.referenceNameElement?.let { JavaUSimpleNameReferenceExpression(it, callableName, this, it.reference) }
   }
-
 
 }

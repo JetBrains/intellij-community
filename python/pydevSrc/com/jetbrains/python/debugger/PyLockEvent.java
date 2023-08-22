@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.jetbrains.python.debugger;
 
@@ -15,24 +16,13 @@ public class PyLockEvent extends PyConcurrencyEvent {
   @NotNull
   @Override
   public String getEventActionName() {
-    StringBuilder sb = new StringBuilder();
-    switch (myType) {
-      case CREATE:
-        sb.append(" created");
-        break;
-      case ACQUIRE_BEGIN:
-        sb.append(" acquire started");
-        break;
-      case ACQUIRE_END:
-        sb.append(" acquired");
-        break;
-      case RELEASE:
-        sb.append(" released");
-        break;
-      default:
-        sb.append(" unknown command");
-    }
-    return sb.toString();
+    return switch (myType) {
+      case CREATE -> " created";
+      case ACQUIRE_BEGIN -> " acquire started";
+      case ACQUIRE_END -> " acquired";
+      case RELEASE -> " released";
+      default -> " unknown command";
+    };
   }
 
   @NotNull

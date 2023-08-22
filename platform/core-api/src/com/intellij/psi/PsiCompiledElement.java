@@ -12,7 +12,7 @@ public interface PsiCompiledElement extends PsiElement {
    * Returns the corresponding PSI element in a decompiled file created by the IDE from
    * the library element.
    *
-   * @return the counterpart of the element in decompiled file.
+   * @return the counterpart of the element in the decompiled file.
    */
   PsiElement getMirror();
 }

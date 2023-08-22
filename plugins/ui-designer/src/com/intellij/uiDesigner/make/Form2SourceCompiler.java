@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.impl.CompilerUtil;
@@ -7,17 +7,18 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
@@ -64,7 +65,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   @Override
-  public ProcessingItem @NotNull [] getProcessingItems(final CompileContext context) {
+  public ProcessingItem @NotNull [] getProcessingItems(final @NotNull CompileContext context) {
     final Project project = context.getProject();
     if (GuiDesignerConfiguration.getInstance(project).INSTRUMENT_CLASSES) {
       return ProcessingItem.EMPTY_ARRAY;
@@ -75,7 +76,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       final CompileScope scope = context.getCompileScope();
       final CompileScope projectScope = context.getProjectCompileScope();
 
-      final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
+      final VirtualFile[] formFiles = projectScope.getFiles(GuiFormFileType.INSTANCE, true);
       final CompilerManager compilerManager = CompilerManager.getInstance(project);
       final BindingsCache bindingsCache = new BindingsCache(project);
 
@@ -139,7 +140,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   @Override
-  public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
+  public ProcessingItem[] process(final @NotNull CompileContext context, final ProcessingItem @NotNull [] items) {
     final ArrayList<ProcessingItem> compiledItems = new ArrayList<>();
 
     context.getProgressIndicator().setText(UIDesignerBundle.message("progress.compiling.ui.forms"));
@@ -201,7 +202,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           }
         }), "", null);
         FileDocumentManager.getInstance().saveAllDocuments();
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
 
     CompilerUtil.refreshIOFiles(filesToRefresh);
@@ -209,14 +210,15 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   private static void addError(final CompileContext context, final FormErrorInfo e, final VirtualFile formFile) {
+    @NlsSafe String message = e.getErrorMessage();
     if (formFile != null) {
       FormElementNavigatable navigatable = new FormElementNavigatable(context.getProject(), formFile, e.getComponentId());
       context.addMessage(CompilerMessageCategory.ERROR,
-                         formFile.getPresentableUrl() + ": " + e.getErrorMessage(),
+                         formFile.getPresentableUrl() + ": " + message,
                          formFile.getUrl(), -1, -1, navigatable);
     }
     else {
-      context.addMessage(CompilerMessageCategory.ERROR, e.getErrorMessage(), null, -1, -1);
+      context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
     }
   }
 

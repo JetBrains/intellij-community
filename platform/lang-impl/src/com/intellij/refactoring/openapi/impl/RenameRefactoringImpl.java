@@ -4,6 +4,8 @@ package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -14,11 +16,20 @@ import java.util.Set;
 
 public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> implements RenameRefactoring {
   public RenameRefactoringImpl(Project project,
+                             PsiElement element,
+                             String newName,
+                             boolean toSearchInComments,
+                             boolean toSearchInNonJavaFiles) {
+    this(project, element, newName, GlobalSearchScope.projectScope(project), toSearchInComments, toSearchInNonJavaFiles);
+  }
+
+  public RenameRefactoringImpl(Project project,
                                PsiElement element,
                                String newName,
+                               SearchScope scope,
                                boolean toSearchInComments,
                                boolean toSearchInNonJavaFiles) {
-    super(new RenameProcessor(project, element, newName, toSearchInComments, toSearchInNonJavaFiles));
+    super(new RenameProcessor(project, element, newName, scope, toSearchInComments, toSearchInNonJavaFiles));
   }
 
   @Override

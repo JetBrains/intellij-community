@@ -4,7 +4,7 @@
 package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.annotations.CalledInBackground;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +18,10 @@ import java.util.List;
  * <p>
  * Implement either {@link #getAvailableRepositories(ProgressIndicator)} to load everything in a single request
  * or {@link #getAvailableRepositoriesFromMultipleSources(ProgressIndicator)} to load in several requests
+ *
+ * @deprecated deprecated with the removal of completion from an old clone dialog
  */
+@Deprecated
 public interface RepositoryListLoader {
   /**
    * Check if this loader is configured (e.g. has necessary authentication data)
@@ -35,13 +38,13 @@ public interface RepositoryListLoader {
   /**
    * @deprecated parent component is required for dialogs to not fall through on welcome screen
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean enable() { return false; }
 
   /**
    * Load repository urls in a single requests
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   @NotNull
   default List<String> getAvailableRepositories(@NotNull ProgressIndicator progressIndicator) throws RepositoryListLoadingException {
     return Collections.emptyList();
@@ -50,7 +53,7 @@ public interface RepositoryListLoader {
   /**
    * Load repository urls in multiple requests with ability to show partial result
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   @NotNull
   default Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
     try {

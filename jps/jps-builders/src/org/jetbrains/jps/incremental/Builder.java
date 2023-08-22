@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class Builder {
   @NotNull
-  public abstract String getPresentableName();
+  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName();
 
   public void buildStarted(CompileContext context) {
   }

@@ -5,12 +5,10 @@ Behave formatter that supports TC
 import datetime
 import traceback
 from collections import deque
-from distutils import version
 
 from behave.formatter.base import Formatter
 from behave.model import Step, Feature, Scenario
 from behave.model_core import Status
-from behave import __version__ as behave_version
 
 from teamcity.messages import TeamcityServiceMessages
 
@@ -35,7 +33,6 @@ class TeamcityFormatter(Formatter):
 
     def __init__(self, stream_opener, config):
         super(TeamcityFormatter, self).__init__(stream_opener, config)
-        assert version.LooseVersion(behave_version) >= version.LooseVersion("1.2.6"), "Only 1.2.6+ is supported"
         self._messages = TeamcityServiceMessages()
 
         self.__feature = None

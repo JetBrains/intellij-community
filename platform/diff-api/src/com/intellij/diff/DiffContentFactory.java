@@ -1,34 +1,22 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /*
  * Use ProgressManager.executeProcessUnderProgress() to pass modality state if needed
@@ -36,7 +24,7 @@ import java.io.IOException;
 public abstract class DiffContentFactory {
   @NotNull
   public static DiffContentFactory getInstance() {
-    return ServiceManager.getService(DiffContentFactory.class);
+    return ApplicationManager.getApplication().getService(DiffContentFactory.class);
   }
 
   /**
@@ -68,6 +56,9 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type);
 
+  /**
+   * @param respectLineSeparators Whether {@link DocumentContent#getLineSeparator()} shall be set from {@code text} or be left 'Undefined'.
+   */
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type,
                                          boolean respectLineSeparators);
@@ -81,6 +72,9 @@ public abstract class DiffContentFactory {
 
   @NotNull
   public abstract DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FilePath filePath);
 
 
   @NotNull
@@ -96,12 +90,19 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile highlightFile);
 
+  /**
+   * @param referent content that should be used to infer highlighting and navigation from.
+   *                 Ex: to be used for 'Compare File with Clipboard' action, as clipboard lacks context naturally.
+   */
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent);
 
 
   @NotNull
   public abstract DiffContent create(@Nullable Project project, @NotNull VirtualFile file);
+
+  @NotNull
+  public abstract DiffContent create(@Nullable Project project, @NotNull VirtualFile file, @Nullable VirtualFile highlightFile);
 
   @Nullable
   public abstract DocumentContent createDocument(@Nullable Project project, @NotNull VirtualFile file);
@@ -139,6 +140,17 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
                                               byte @NotNull [] content,
+                                              @NotNull FilePath filePath,
+                                              @Nullable Charset defaultCharset) throws IOException;
+
+  @NotNull
+  public abstract DiffContent createFromBytes(@Nullable Project project,
+                                              byte @NotNull [] content,
+                                              @NotNull FilePath filePath) throws IOException;
+
+  @NotNull
+  public abstract DiffContent createFromBytes(@Nullable Project project,
+                                              byte @NotNull [] content,
                                               @NotNull VirtualFile highlightFile) throws IOException;
 
   @NotNull
@@ -146,22 +158,4 @@ public abstract class DiffContentFactory {
                                            byte @NotNull [] content,
                                            @NotNull FileType type,
                                            @NotNull String fileName) throws IOException;
-
-
-  @NotNull
-  @Deprecated
-  public DiffContent createFromBytes(@Nullable Project project,
-                                     @NotNull VirtualFile highlightFile,
-                                     byte @NotNull [] content) throws IOException {
-    return createFromBytes(project, content, highlightFile);
-  }
-
-  @NotNull
-  @Deprecated
-  public DiffContent createBinary(@Nullable Project project,
-                                  @NotNull String fileName,
-                                  @NotNull FileType type,
-                                  byte @NotNull [] content) throws IOException {
-    return createBinary(project, content, type, fileName);
-  }
 }

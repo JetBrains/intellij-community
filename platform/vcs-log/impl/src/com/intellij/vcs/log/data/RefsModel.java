@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +8,8 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,10 +20,10 @@ import java.util.stream.Stream;
 public class RefsModel implements VcsLogRefs {
   private static final Logger LOG = Logger.getInstance(RefsModel.class);
 
-  @NotNull private final VcsLogStorage myStorage;
-  @NotNull private final Map<VirtualFile, CompressedRefs> myRefs;
-  @NotNull private final TIntObjectHashMap<VcsRef> myBestRefForHead;
-  @NotNull private final TIntObjectHashMap<VirtualFile> myRootForHead;
+  private final @NotNull VcsLogStorage myStorage;
+  private final @NotNull Map<VirtualFile, CompressedRefs> myRefs;
+  private final @NotNull Int2ObjectMap<VcsRef> myBestRefForHead;
+  private final @NotNull Int2ObjectMap<VirtualFile> myRootForHead;
 
   public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
                    @NotNull Set<Integer> heads,
@@ -30,10 +32,11 @@ public class RefsModel implements VcsLogRefs {
     myRefs = refs;
     myStorage = storage;
 
-    myBestRefForHead = new TIntObjectHashMap<>();
-    myRootForHead = new TIntObjectHashMap<>();
+    myBestRefForHead = new Int2ObjectOpenHashMap<>();
+    myRootForHead = new Int2ObjectOpenHashMap<>();
+    Map<@NotNull Integer, @NotNull CommitId> commitIds = myStorage.getCommitIds(heads);
     for (int head : heads) {
-      CommitId commitId = myStorage.getCommitId(head);
+      CommitId commitId = commitIds.get(head);
       if (commitId != null) {
         VirtualFile root = commitId.getRoot();
         myRootForHead.put(head, root);
@@ -49,23 +52,19 @@ public class RefsModel implements VcsLogRefs {
     }
   }
 
-  @Nullable
-  public VcsRef bestRefToHead(int headIndex) {
+  public @Nullable VcsRef bestRefToHead(int headIndex) {
     return myBestRefForHead.get(headIndex);
   }
 
-  @NotNull
-  public VirtualFile rootAtHead(int headIndex) {
+  public @NotNull VirtualFile rootAtHead(int headIndex) {
     return myRootForHead.get(headIndex);
   }
 
-  @NotNull
-  public Map<VirtualFile, CompressedRefs> getAllRefsByRoot() {
+  public @NotNull Map<VirtualFile, CompressedRefs> getAllRefsByRoot() {
     return myRefs;
   }
 
-  @NotNull
-  public List<VcsRef> refsToCommit(int index) {
+  public @NotNull List<VcsRef> refsToCommit(int index) {
     if (myRefs.size() <= 10) {
       for (CompressedRefs refs : myRefs.values()) {
         if (refs.contains(index)) {
@@ -81,20 +80,17 @@ public class RefsModel implements VcsLogRefs {
   }
 
   @Override
-  @NotNull
-  public Collection<VcsRef> getBranches() {
+  public @NotNull Collection<VcsRef> getBranches() {
     return myRefs.values().stream().flatMap(CompressedRefs::streamBranches).collect(Collectors.toList());
   }
 
   @Override
-  @NotNull
-  public Stream<VcsRef> stream() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+  public @NotNull Stream<VcsRef> stream() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     return myRefs.values().stream().flatMap(CompressedRefs::stream);
   }
 
-  @NotNull
-  public static RefsModel createEmptyInstance(@NotNull VcsLogStorage storage) {
+  public static @NotNull RefsModel createEmptyInstance(@NotNull VcsLogStorage storage) {
     return new RefsModel(Collections.emptyMap(), Collections.emptySet(), storage, Collections.emptyMap());
   }
 }

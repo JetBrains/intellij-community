@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,6 +20,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -30,6 +31,8 @@ import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfoStorage
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
  * @author Max Medvedev
@@ -113,7 +116,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
 
 
     mySubclass = aClass;
-    GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<GrMember>() {
+    GrMemberInfoStorage memberInfoStorage = new GrMemberInfoStorage((GrTypeDefinition)mySubclass, new MemberInfoBase.Filter<>() {
       @Override
       public boolean includeMember(GrMember element) {
         return true;
@@ -177,7 +180,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }
 
-  public static String getRefactoringName() {
+  public static @Nls(capitalization = Title) String getRefactoringName() {
     return RefactoringBundle.message("pull.members.up.title");
   }
 }

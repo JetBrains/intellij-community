@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.ui.Divider;
@@ -7,9 +7,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.ui.tree.ui.PlainSelectionTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableModelAdapter;
@@ -25,10 +27,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.*;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -66,29 +65,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
   public JBTreeTable(@NotNull TreeTableModel model) {
     setLayout(new BorderLayout());
 
-    myTree = new Tree() {
-      @Override
-      public void repaint(long tm, int x, int y, int width, int height) {
-        if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
-          super.repaint(tm, x, y, width, height);
-        }
-      }
-
-      @Override
-      public void treeDidChange() {
-        super.treeDidChange();
-        if (myTable != null) {
-          myTable.revalidate();
-          myTable.repaint();
-        }
-      }
-
-      @Nullable
-      @Override
-      public Color getPathBackground(@NotNull TreePath path, int row) {
-        return JBTreeTable.this.getPathBackground(path, row);
-      }
-    };
+    myTree = new MyTree();
     myTable = new Table();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setRootVisible(false);
@@ -182,13 +159,11 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     setModel(model);
   }
 
-  @NotNull
-  public Tree getTree() {
+  public @NotNull Tree getTree() {
     return myTree;
   }
 
-  @NotNull
-  public JBTable getTable() {
+  public @NotNull JBTable getTable() {
     return myTable;
   }
 
@@ -196,8 +171,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     myTable.setDefaultRenderer(columnClass,renderer);
   }
 
-  @NotNull
-  public TableCellRenderer getDefaultRenderer(@NotNull Class<?> columnClass) {
+  public @NotNull TableCellRenderer getDefaultRenderer(@NotNull Class<?> columnClass) {
     return myTable.getDefaultRenderer(columnClass);
   }
 
@@ -236,9 +210,22 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     return myModel;
   }
 
-  @Nullable
+  /**
+   * Enable sorting by columns in this tree-table.
+   * Use this method only if this RowSorter or your model support tree sorting.
+   * For example, com.intellij.ui.tree.StructureTreeModel supports sorting via setComparator method,
+   * so in this case a RowSorter may just redirect sorting requests to the StructureTreeModel.
+   */
+  public void setRowSorter(RowSorter<? extends TableModel> sorter) {
+    myTable.setRowSorter(sorter);
+
+    final JTable ref = myTreeTableHeader.getTable();
+    ref.setModel(myTable.getModel());
+    ref.setRowSorter(sorter);
+  }
+
   @Override
-  public Color getPathBackground(@NotNull TreePath path, int row) {
+  public @Nullable Color getPathBackground(@NotNull TreePath path, int row) {
     return null;
   }
 
@@ -315,6 +302,9 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
       myTreeTableHeader.setColumnModel(new TreeColumnModel());
       myTreeTableHeader.setReorderingAllowed(false);
       myTreeTableHeader.setResizingAllowed(false);
+
+      // do not paint hover for table row separately from tree
+      TableHoverListener.DEFAULT.removeFrom(this);
     }
 
     @Override
@@ -322,13 +312,6 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
       super.setRowHeight(rowHeight);
       if (myTree != null && myTree.getRowHeight() < rowHeight) {
         myTree.setRowHeight(getRowHeight());
-      }
-    }
-
-    @Override
-    public void repaint(long tm, int x, int y, int width, int height) {
-      if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
-        super.repaint(tm, x, y, width, height);
       }
     }
 
@@ -354,7 +337,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     }
   }
 
-  private class TreeColumnModel extends DefaultTableColumnModel {
+  private final class TreeColumnModel extends DefaultTableColumnModel {
 
     private int treeColumnIndex = -1;
 
@@ -388,6 +371,29 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     @Override
     public int getTotalColumnWidth() {
       return myTree.getVisibleRect().width + 1;
+    }
+  }
+
+  private class MyTree extends Tree implements PlainSelectionTree {
+    @Override
+    public void repaint(long tm, int x, int y, int width, int height) {
+      if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
+        super.repaint(tm, x, y, width, height);
+      }
+    }
+
+    @Override
+    public void treeDidChange() {
+      super.treeDidChange();
+      if (myTable != null) {
+        myTable.revalidate();
+        myTable.repaint();
+      }
+    }
+
+    @Override
+    public @Nullable Color getPathBackground(@NotNull TreePath path, int row) {
+      return JBTreeTable.this.getPathBackground(path, row);
     }
   }
 }

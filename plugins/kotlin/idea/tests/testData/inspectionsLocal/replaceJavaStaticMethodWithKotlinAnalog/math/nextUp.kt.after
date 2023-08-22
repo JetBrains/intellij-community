@@ -1,0 +1,6 @@
+import kotlin.math.nextUp
+
+// WITH_STDLIB
+fun test(x: Double) {
+    x.nextUp()
+}

@@ -262,11 +262,11 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   public void testMethodNotImportableDestinationFile() throws IOException {
-    doMultiFileTest("not-importable.py", PyBundle.message("refactoring.move.error.cannot.use.module.name.$0", "not-importable.py"));
+    doMultiFileTest("not-importable.py", PyBundle.message("refactoring.move.error.cannot.use.module.name", "not-importable.py"));
   }
 
   public void testLocalFunctionNameCollision() {
-    doTestFailure(PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", "nested"));
+    doTestFailure(PyBundle.message("refactoring.move.error.destination.file.contains.function", "nested"));
   }
 
   public void testMethodInsertionPositionSameFileClassAndUsageNotTopLevel() {

@@ -1,0 +1,3 @@
+<!ELEMENT tag (tag)*>
+<!ATTLIST t<caret>ag
+    id CDATA #IMPLIED>

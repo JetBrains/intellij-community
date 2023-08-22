@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.facet;
 
 import com.intellij.openapi.project.Project;
@@ -15,14 +15,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PythonSdkComboBox extends ComboboxWithBrowseButton {
   private Project myProject;
 
   public PythonSdkComboBox() {
-    getComboBox().setRenderer(new PySdkListCellRenderer(null));
+    getComboBox().setRenderer(new PySdkListCellRenderer());
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

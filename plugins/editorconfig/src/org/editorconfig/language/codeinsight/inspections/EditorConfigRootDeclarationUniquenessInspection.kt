@@ -19,7 +19,7 @@ class EditorConfigRootDeclarationUniquenessInspection : LocalInspectionTool() {
 
       holder.registerProblem(
         declaration,
-        EditorConfigBundle["inspection.root-declaration.uniqueness.message"],
+        EditorConfigBundle.get("inspection.root-declaration.uniqueness.message"),
         EditorConfigRemoveRootDeclarationQuickFix()
       )
     }

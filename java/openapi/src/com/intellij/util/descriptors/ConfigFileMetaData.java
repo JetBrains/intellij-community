@@ -16,15 +16,17 @@
 
 package com.intellij.util.descriptors;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Arrays;
 
 public class ConfigFileMetaData {
   private static final Logger LOG = Logger.getInstance(ConfigFileMetaData.class);
-  private final String myTitle;
+  @Nls private final String myTitle;
   private final String myId;
   private final String myFileName;
   private final String myDirectoryPath;
@@ -34,7 +36,7 @@ public class ConfigFileMetaData {
   private final boolean myFileNameFixed;
   private final boolean myUnique;
 
-  public ConfigFileMetaData(final String title,
+  public ConfigFileMetaData(@Nls final String title,
                             final @NonNls String id,
                             final @NonNls String fileName,
                             final @NonNls String directoryPath,
@@ -56,7 +58,7 @@ public class ConfigFileMetaData {
     LOG.assertTrue(Arrays.asList(myVersions).contains(myDefaultVersion));
   }
 
-  public ConfigFileMetaData(final String title,
+  public ConfigFileMetaData(final @Nls String title,
                             final @NonNls String fileName,
                             final @NonNls String directoryPath,
                             final ConfigFileVersion[] versions,
@@ -67,6 +69,7 @@ public class ConfigFileMetaData {
     this(title, fileName, fileName, directoryPath, versions, defaultVersion, optional, fileNameFixed, unique);
   }
 
+  @Nls
   public String getTitle() {
     return myTitle;
   }
@@ -75,6 +78,7 @@ public class ConfigFileMetaData {
     return myId;
   }
 
+  @NlsSafe
   public String getFileName() {
     return myFileName;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.list
 
 import com.intellij.util.ui.JBUI
@@ -14,10 +14,10 @@ import javax.swing.ListCellRenderer
  * [mainRenderer] component is aligned to the left, [rightRenderer] component is aligned to the right.
  * This renderer uses background from [mainRenderer] component.
  */
-abstract class LeftRightRenderer<T> : ListCellRenderer<T> {
-
-  protected abstract val mainRenderer: ListCellRenderer<T>
-  protected abstract val rightRenderer: ListCellRenderer<T>
+class LeftRightRenderer<T>(
+  private val mainRenderer: ListCellRenderer<T>,
+  private val rightRenderer: ListCellRenderer<T>,
+) : ListCellRenderer<T> {
 
   private val spacer = JPanel().apply {
     border = JBUI.Borders.empty(0, 2)
@@ -25,11 +25,11 @@ abstract class LeftRightRenderer<T> : ListCellRenderer<T> {
 
   private val component = JPanel(BorderLayout())
 
-  final override fun getListCellRendererComponent(list: JList<out T>,
-                                                  value: T,
-                                                  index: Int,
-                                                  isSelected: Boolean,
-                                                  cellHasFocus: Boolean): Component {
+  override fun getListCellRendererComponent(list: JList<out T>,
+                                            value: T,
+                                            index: Int,
+                                            isSelected: Boolean,
+                                            cellHasFocus: Boolean): Component {
     val mainComponent = mainRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     val rightComponent = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     mainComponent.background.let {
@@ -42,6 +42,10 @@ abstract class LeftRightRenderer<T> : ListCellRenderer<T> {
       add(mainComponent, BorderLayout.WEST)
       add(spacer, BorderLayout.CENTER)
       add(rightComponent, BorderLayout.EAST)
+      accessibleContext.accessibleName = listOfNotNull(
+        mainComponent.accessibleContext?.accessibleName,
+        rightComponent.accessibleContext?.accessibleName
+      ).joinToString(separator = " ")
     }
     return component
   }

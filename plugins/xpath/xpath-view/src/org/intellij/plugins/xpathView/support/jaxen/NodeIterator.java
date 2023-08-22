@@ -105,8 +105,8 @@ public abstract class NodeIterator implements Iterator {
      */
     private boolean isXPathNode(PsiElement node) {
         // null is usable, because it means end
-        if (node == null)
-            return true;
+        //if (node == null)
+        //    return true;
 
         // TODO: FIXME
         return true;

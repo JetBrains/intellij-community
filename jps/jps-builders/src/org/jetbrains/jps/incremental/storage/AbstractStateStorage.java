@@ -1,17 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   private PersistentHashMap<Key, T> myMap;
@@ -33,14 +38,6 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
     }
   }
 
-  public void dropMemoryCache() {
-    synchronized (myDataLock) {
-      if (myMap.isDirty()) {
-        myMap.dropMemoryCaches();
-      }
-    }
-  }
-
   @Override
   public void close() throws IOException {
     synchronized (myDataLock) {
@@ -55,7 +52,10 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   public boolean wipe() {
     synchronized (myDataLock) {
-      PersistentHashMap.deleteMap(myMap);
+      try {
+        myMap.closeAndClean();
+      } catch (IOException ignored) {
+      }
       try {
         myMap = createMap(myBaseFile);
       }
@@ -79,9 +79,9 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   public void appendData(final Key key, final T data) throws IOException {
     synchronized (myDataLock) {
-      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(DataOutput out) throws IOException {
+        public void append(@NotNull DataOutput out) throws IOException {
           myStateExternalizer.save(out, data);
         }
       });
@@ -103,16 +103,19 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   public Collection<Key> getKeys() throws IOException {
     synchronized (myDataLock) {
-      return myMap.getAllKeysWithExistingMapping();
+      List<Key> result = new ArrayList<>();
+      myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+      return result;
     }
   }
 
   public Iterator<Key> getKeysIterator() throws IOException {
     synchronized (myDataLock) {
-      return myMap.getAllKeysWithExistingMapping().iterator();
+      List<Key> result = new ArrayList<>();
+      myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+      return result.iterator();
     }
   }
-
 
   private PersistentHashMap<Key, T> createMap(final File file) throws IOException {
     FileUtil.createIfDoesntExist(file); //todo assert
@@ -121,10 +124,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   @Override
   public void flush(boolean memoryCachesOnly) {
-    if (memoryCachesOnly) {
-      dropMemoryCache();
-    }
-    else {
+    if (!memoryCachesOnly) {
       force();
     }
   }

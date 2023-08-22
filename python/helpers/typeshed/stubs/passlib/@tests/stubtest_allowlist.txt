@@ -1,0 +1,36 @@
+# proxy module that uses some import magic incompatible with stubtest
+passlib.hash
+
+# django unsupported in stubs
+passlib.ext.django.models
+
+# uses @memoized_property at runtime, but @property in the stubs
+passlib.crypto.digest.HashInfo.supported
+passlib.crypto.digest.HashInfo.supported_by_fastpbkdf2
+passlib.crypto.digest.HashInfo.supported_by_hashlib_pbkdf2
+passlib.pwd.PhraseGenerator.symbol_count
+passlib.pwd.SequenceGenerator.entropy
+passlib.pwd.SequenceGenerator.entropy_per_symbol
+passlib.pwd.SequenceGenerator.symbol_count
+passlib.pwd.WordGenerator.symbol_count
+passlib.totp.TotpMatch.cache_seconds
+passlib.totp.TotpMatch.cache_time
+passlib.totp.TotpMatch.expected_counter
+passlib.totp.TotpMatch.expire_time
+passlib.totp.TotpMatch.skipped
+passlib.totp.TotpToken.expire_time
+passlib.totp.TotpToken.start_time
+
+# "hybrid" method that can be called on an instance or class
+passlib.totp.TOTP.normalize_token
+
+# import problem
+passlib.utils.compat._ordered_dict
+
+# initialized to None, but set by concrete sub-classes
+passlib.handlers.pbkdf2.Pbkdf2DigestHandler.default_rounds
+passlib.utils.handlers.GenericHandler.setting_kwds
+
+# set to None on class level, but initialized in __init__
+passlib.utils.handlers.HasManyIdents.ident
+passlib.utils.handlers.HasRounds.rounds

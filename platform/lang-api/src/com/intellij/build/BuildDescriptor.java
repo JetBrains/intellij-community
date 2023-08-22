@@ -16,9 +16,9 @@
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEventsNls;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -26,6 +26,16 @@ import org.jetbrains.annotations.NotNull;
 public interface BuildDescriptor {
   @NotNull
   Object getId();
+
+  /**
+   * The existence of a group id signalizes that
+   * this descriptor is associated with some other
+   * builds which have the same groupId.
+   */
+  @Nullable
+  default Object getGroupId() {
+    return null;
+  }
 
   @NotNull
   @BuildEventsNls.Title

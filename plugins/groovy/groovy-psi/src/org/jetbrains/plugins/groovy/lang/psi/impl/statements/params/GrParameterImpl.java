@@ -109,13 +109,11 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   private boolean isMainMethodFirstUntypedParameter() {
     if (getTypeElementGroovy() != null) return false;
-    if (!(getParent() instanceof GrParameterList)) return false;
+    if (!(getParent() instanceof GrParameterList parameterList)) return false;
     if (isOptional()) return false;
 
-    GrParameterList parameterList = (GrParameterList)getParent();
-    if (!(parameterList.getParent() instanceof GrMethod)) return false;
+    if (!(parameterList.getParent() instanceof GrMethod method)) return false;
 
-    GrMethod method = (GrMethod)parameterList.getParent();
     return PsiImplUtil.isMainMethod(method);
   }
 
@@ -174,8 +172,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     }
 
     final PsiElement scope = getDeclarationScope();
-    if (scope instanceof GrDocCommentOwner) {
-      GrDocCommentOwner owner = (GrDocCommentOwner)scope;
+    if (scope instanceof GrDocCommentOwner owner) {
       final GrDocComment comment = owner.getDocComment();
       if (comment != null) {
         return new LocalSearchScope(new PsiElement[]{scope, comment});

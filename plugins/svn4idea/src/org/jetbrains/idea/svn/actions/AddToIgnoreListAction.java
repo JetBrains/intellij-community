@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,24 +8,25 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
+import org.jetbrains.idea.svn.ignore.FileGroupInfo;
+import org.jetbrains.idea.svn.ignore.IgnoreGroupHelperAction;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class AddToIgnoreListAction extends BasicAction {
-  private String myActionName;
   private final boolean myUseCommonExtension;
-  @NotNull private final IgnoreInfoGetter myInfoGetter;
 
-  public AddToIgnoreListAction(@NotNull IgnoreInfoGetter infoGetter, boolean useCommonExtension) {
-    myInfoGetter = infoGetter;
+  public AddToIgnoreListAction(boolean useCommonExtension) {
     myUseCommonExtension = useCommonExtension;
   }
 
-  public void setActionText(String name) {
-    myActionName = name;
+  @Override
+  protected VirtualFile @Nullable [] getSelectedFiles(@NotNull AnActionEvent e) {
+    return IgnoreGroupHelperAction.getSelectedFiles(e);
   }
 
   @NotNull
@@ -37,12 +38,28 @@ public class AddToIgnoreListAction extends BasicAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    IgnoreGroupHelperAction helper = IgnoreGroupHelperAction.createFor(e);
+    if (helper == null || !helper.allCanBeIgnored()) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
 
-    presentation.setEnabledAndVisible(true);
-    presentation.setText(myActionName, false);
-    presentation.setDescription(message(
-      myUseCommonExtension ? "action.Subversion.Ignore.MatchExtension.description" : "action.Subversion.Ignore.ExactMatch.description",
-      myActionName));
+    FileGroupInfo fileGroupInfo = helper.getFileGroupInfo();
+    if (myUseCommonExtension) {
+      String actionName = fileGroupInfo.getExtensionMask();
+      presentation.setEnabledAndVisible(fileGroupInfo.sameExtension());
+      presentation.setText(actionName, false);
+      presentation.setDescription(messagePointer("action.Subversion.Ignore.MatchExtension.description", actionName));
+    }
+    else {
+      if (fileGroupInfo.oneFileSelected()) {
+        presentation.setText(fileGroupInfo.getFileName(), false);
+      }
+      else {
+        presentation.setText(messagePointer("action.Subversion.Ignore.ExactMatch.text"));
+      }
+      presentation.setDescription(messagePointer("action.Subversion.Ignore.ExactMatch.description"));
+    }
   }
 
   @Override
@@ -55,7 +72,7 @@ public class AddToIgnoreListAction extends BasicAction {
 
   @Override
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
-    return true;
+    return IgnoreGroupHelperAction.isUnversioned(vcs, file);
   }
 
   @Override
@@ -64,7 +81,11 @@ public class AddToIgnoreListAction extends BasicAction {
 
   @Override
   protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException {
-    SvnPropertyService.doAddToIgnoreProperty(vcs, myUseCommonExtension, files, myInfoGetter);
+    FileGroupInfo groupInfo = new FileGroupInfo();
+    for (VirtualFile file : files) {
+      groupInfo.onFileEnabled(file);
+    }
+    SvnPropertyService.doAddToIgnoreProperty(vcs, myUseCommonExtension, files, groupInfo);
   }
 
   @Override

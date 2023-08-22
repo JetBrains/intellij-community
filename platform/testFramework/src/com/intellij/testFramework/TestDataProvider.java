@@ -1,14 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -18,12 +17,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashSet;
 
-/**
- * @author peter
- */
-public class TestDataProvider implements DataProvider, DataContext {
+import static com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT;
+
+public class TestDataProvider implements DataProvider {
   private final Project myProject;
   private final boolean myWithRules;
   private final TestDataProvider myDelegateWithoutRules;
@@ -51,41 +48,40 @@ public class TestDataProvider implements DataProvider, DataContext {
   public Object getData(@NotNull @NonNls String dataId) {
     if (myProject.isDisposed()) {
       throw new RuntimeException("TestDataProvider is already disposed for " + myProject + "\n" +
-                                 "If you closed a project in test, please reset IdeaTestApplication.setDataProvider.");
+                                 "If you closed a project in test, please reset TestApplicationManager.setDataProvider.");
     }
 
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-    if (manager == null) {
-      return null;
-    }
     if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
       return manager instanceof FileEditorManagerImpl ? ((FileEditorManagerImpl)manager).getSelectedTextEditor(true) : manager.getSelectedTextEditor();
     }
-    else if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+    else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       Editor editor = manager.getSelectedTextEditor();
       return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
     }
     else {
-      Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
+      Editor editor = CommonDataKeys.EDITOR.getData(this);
       if (editor != null) {
         Object managerData = manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
         if (managerData != null) {
           return managerData;
         }
-        JComponent component = editor.getContentComponent();
-        if (component instanceof EditorComponentImpl) {
-          Object editorComponentData = ((EditorComponentImpl)component).getData(dataId);
-          if (editorComponentData != null) {
-            return editorComponentData;
+        if (!(editor instanceof ImaginaryEditor)) {
+          JComponent component = editor.getContentComponent();
+          if (component instanceof EditorComponentImpl) {
+            Object editorComponentData = ((EditorComponentImpl)component).getData(dataId);
+            if (editorComponentData != null) {
+              return editorComponentData;
+            }
           }
         }
       }
 
       if (myWithRules) {
-        return ((DataManagerImpl)DataManager.getInstance()).getDataFromProvider(myDelegateWithoutRules, dataId, new HashSet<>());
+        return DataManager.getInstance().getCustomizedData(dataId, EMPTY_CONTEXT, myDelegateWithoutRules);
       }
       return null;
     }

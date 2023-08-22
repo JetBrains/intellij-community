@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Objects;
 
-public class RunAnythingManager {
+public final class RunAnythingManager {
   private static final String LOCATION_SETTINGS_KEY = "run.anything.popup";
   private final Project myProject;
   private JBPopup myBalloon;
@@ -32,7 +31,7 @@ public class RunAnythingManager {
   }
 
   public static RunAnythingManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, RunAnythingManager.class);
+    return project.getService(RunAnythingManager.class);
   }
 
   public void show(@Nullable String searchText, @NotNull AnActionEvent initEvent) {
@@ -69,7 +68,6 @@ public class RunAnythingManager {
 
         return true;
       })
-      .addUserData("SIMPLE_WINDOW")
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(myProject, LOCATION_SETTINGS_KEY, true)

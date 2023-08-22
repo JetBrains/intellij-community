@@ -19,9 +19,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	script.attrs.integrity?
 		&	embedded.content.attrs.crossorigin?
 		&	referrerpolicy?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 	script.elem.imported =
 		element script { script.inner.imported & script.attrs.imported }
@@ -36,10 +33,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	script.attrs.language? # restricted in Schematron
 		&	script.attrs.integrity?
 		&	embedded.content.attrs.crossorigin?
+		&	common.attrs.blocking?
 		&	referrerpolicy?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		script.attrs.src =
 			attribute src {
@@ -55,7 +50,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			} & v5only
 		script.attrs.type =
 			attribute type {
-				w:string "module" | w:string "" | common.data.scripttype # XXX without charset parameter!
+				w:string "module" | w:string "importmap" | w:string "" | common.data.scripttype # XXX without charset parameter!
 			}
 		script.attrs.nomodule =
 			attribute nomodule {
@@ -77,12 +72,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( common.inner.anything )
 	script.inner.imported =
 		( common.inner.anything )
-		
-	script.elem = 
+
+	script.elem =
 		(	script.elem.embedded
 		|	script.elem.imported
 		)
-		
+
 	common.elem.metadata |= script.elem
 	common.elem.phrasing |= script.elem
 
@@ -91,7 +86,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	noscript.elem.head =
 		element noscript { noscript.inner.head & noscript.attrs }
 		& HTMLonly
-		noscript.inner.head = 
+		noscript.inner.head =
 			(	link.elem
 			|	meta.http-equiv.default-style.elem
 			|	meta.http-equiv.refresh.elem
@@ -108,11 +103,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	noscript.inner.flow =
 		( common.inner.flow )
 	noscript.attrs =
-		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
-		)
+		( common.attrs )
 
 	common.elem.metadata |= noscript.elem.head
 	common.elem.phrasing |= noscript.elem.phrasing
@@ -123,8 +114,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	common.attrs.scripting &=
 		(	scripting.attr.onabort?
-		&	scripting.attr.onautocomplete?
-		&	scripting.attr.onautocompleteerror?
+		&	scripting.attr.onauxclick?
+		&	scripting.attr.onbeforeinput?
+		&	scripting.attr.onbeforematch?
 		&	scripting.attr.onblur?
 		&	scripting.attr.oncancel?
 		&	scripting.attr.oncanplay?
@@ -132,13 +124,16 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	scripting.attr.onchange?
 		&	scripting.attr.onclick?
 		&	scripting.attr.onclose?
-		&	scripting.attr.oncuechange?
+		&	scripting.attr.oncontextlost?
 		&	scripting.attr.oncontextmenu?
+		&	scripting.attr.oncontextrestored?
+		&	scripting.attr.oncopy?
+		&	scripting.attr.oncuechange?
+		&	scripting.attr.oncut?
 		&	scripting.attr.ondblclick?
 		&	scripting.attr.ondrag?
 		&	scripting.attr.ondragend?
 		&	scripting.attr.ondragenter?
-		&	scripting.attr.ondragexit?
 		&	scripting.attr.ondragleave?
 		&	scripting.attr.ondragover?
 		&	scripting.attr.ondragstart?
@@ -150,6 +145,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	scripting.attr.onfocus?
 		&	scripting.attr.onfocusin?
 		&	scripting.attr.onfocusout?
+		&	scripting.attr.onformdata?
 		&	scripting.attr.oninput?
 		&	scripting.attr.oninvalid?
 		&	scripting.attr.onkeydown?
@@ -166,7 +162,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	scripting.attr.onmouseout?
 		&	scripting.attr.onmouseover?
 		&	scripting.attr.onmouseup?
-		&	scripting.attr.onwheel?
+		&	scripting.attr.onpaste?
 		&	scripting.attr.onpause?
 		&	scripting.attr.onplay?
 		&	scripting.attr.onplaying?
@@ -175,33 +171,42 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	scripting.attr.onreset?
 		&	scripting.attr.onresize?
 		&	scripting.attr.onscroll?
+		&	scripting.attr.onscrollend?
+		&	scripting.attr.onsecuritypolicyviolation?
 		&	scripting.attr.onseeked?
 		&	scripting.attr.onseeking?
 		&	scripting.attr.onselect?
-		&	scripting.attr.onsort?
+		&	scripting.attr.onslotchange?
 		&	scripting.attr.onstalled?
 		&	scripting.attr.onsubmit?
 		&	scripting.attr.onsuspend?
 		&	scripting.attr.ontimeupdate?
 		&	scripting.attr.ontoggle?
+		&	scripting.attr.ontransitioncancel?
+		&	scripting.attr.ontransitionend?
+		&	scripting.attr.ontransitionrun?
+		&	scripting.attr.ontransitionstart?
 		&	scripting.attr.onvolumechange?
 		&	scripting.attr.onwaiting?
+		&	scripting.attr.onwheel?
 		)
-		
+
 	common.attrs.other &= common.attrs.scripting
 
 	scripting.attr.onabort =
 		attribute onabort { common.data.functionbody }
-	scripting.attr.onautocomplete =
-		attribute onautocomplete { common.data.functionbody }
-	scripting.attr.onautocompleteerror =
-		attribute onautocompleteerror { common.data.functionbody }
+	scripting.attr.onauxclick =
+		attribute onauxclick { common.data.functionbody }
+	scripting.attr.onbeforeinput =
+		attribute onbeforeinput { common.data.functionbody }
+	scripting.attr.onbeforematch =
+		attribute onbeforematch { common.data.functionbody }
 	scripting.attr.onblur =
 		attribute onblur { common.data.functionbody }
-	scripting.attr.oncanplay =
-		attribute oncanplay { common.data.functionbody }
 	scripting.attr.oncancel =
 		attribute oncancel { common.data.functionbody }
+	scripting.attr.oncanplay =
+		attribute oncanplay { common.data.functionbody }
 	scripting.attr.oncanplaythrough =
 		attribute oncanplaythrough { common.data.functionbody }
 	scripting.attr.onchange =
@@ -210,10 +215,18 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute onclick { common.data.functionbody }
 	scripting.attr.onclose =
 		attribute onclose { common.data.functionbody }
+	scripting.attr.oncontextlost =
+		attribute oncontextlost { common.data.functionbody }
 	scripting.attr.oncontextmenu =
 		attribute oncontextmenu { common.data.functionbody }
+	scripting.attr.oncontextrestored =
+		attribute oncontextrestored { common.data.functionbody }
+	scripting.attr.oncopy =
+		attribute oncopy { common.data.functionbody }
 	scripting.attr.oncuechange =
 		attribute oncuechange { common.data.functionbody }
+	scripting.attr.oncut =
+		attribute oncut { common.data.functionbody }
 	scripting.attr.ondblclick =
 		attribute ondblclick { common.data.functionbody }
 	scripting.attr.ondrag =
@@ -222,8 +235,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute ondragend { common.data.functionbody }
 	scripting.attr.ondragenter =
 		attribute ondragenter { common.data.functionbody }
-	scripting.attr.ondragexit =
-		attribute ondragexit { common.data.functionbody }
 	scripting.attr.ondragleave =
 		attribute ondragleave { common.data.functionbody }
 	scripting.attr.ondragover =
@@ -248,6 +259,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute onfocusout { common.data.functionbody }
 	scripting.attr.onformchange =
 		attribute onformchange { common.data.functionbody }
+	scripting.attr.onformdata =
+		attribute onformdata { common.data.functionbody }
 	scripting.attr.onforminput =
 		attribute onforminput { common.data.functionbody }
 	scripting.attr.oninput =
@@ -282,8 +295,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute onmouseover { common.data.functionbody }
 	scripting.attr.onmouseup =
 		attribute onmouseup { common.data.functionbody }
-	scripting.attr.onwheel =
-		attribute onwheel { common.data.functionbody }
+	scripting.attr.onpaste =
+		attribute onpaste { common.data.functionbody }
 	scripting.attr.onpause =
 		attribute onpause { common.data.functionbody }
 	scripting.attr.onplay =
@@ -300,14 +313,18 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute onresize { common.data.functionbody }
 	scripting.attr.onscroll =
 		attribute onscroll { common.data.functionbody }
+	scripting.attr.onscrollend =
+		attribute onscrollend { common.data.functionbody }
+	scripting.attr.onsecuritypolicyviolation =
+		attribute onsecuritypolicyviolation { common.data.functionbody }
 	scripting.attr.onseeked =
 		attribute onseeked { common.data.functionbody }
 	scripting.attr.onseeking =
 		attribute onseeking { common.data.functionbody }
 	scripting.attr.onselect =
 		attribute onselect { common.data.functionbody }
-	scripting.attr.onsort =
-		attribute onsort { common.data.functionbody }
+	scripting.attr.onslotchange =
+		attribute onslotchange { common.data.functionbody }
 	scripting.attr.onstalled =
 		attribute onstalled { common.data.functionbody }
 	scripting.attr.onsubmit =
@@ -318,17 +335,65 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute ontimeupdate { common.data.functionbody }
 	scripting.attr.ontoggle =
 		attribute ontoggle { common.data.functionbody }
+	scripting.attr.ontransitioncancel =
+		attribute ontransitioncancel { common.data.functionbody }
+	scripting.attr.ontransitionend =
+		attribute ontransitionend { common.data.functionbody }
+	scripting.attr.ontransitionrun =
+		attribute ontransitionrun { common.data.functionbody }
+	scripting.attr.ontransitionstart =
+		attribute ontransitionstart { common.data.functionbody }
 	scripting.attr.onvolumechange =
 		attribute onvolumechange { common.data.functionbody }
 	scripting.attr.onwaiting =
 		attribute onwaiting { common.data.functionbody }
+	scripting.attr.onwheel =
+		attribute onwheel { common.data.functionbody }
+
+## Pointer Events
+	common.attrs.scripting &=
+		(	scripting.attr.onpointerover?
+		&	scripting.attr.onpointerenter?
+		&	scripting.attr.onpointerdown?
+		&	scripting.attr.onpointermove?
+		&	scripting.attr.onpointerrawupdate?
+		&	scripting.attr.onpointerup?
+		&	scripting.attr.onpointercancel?
+		&	scripting.attr.onpointerout?
+		&	scripting.attr.onpointerleave?
+		&	scripting.attr.ongotpointercapture?
+		&	scripting.attr.onlostpointercapture?
+		)
+
+	scripting.attr.onpointerover =
+		attribute onpointerover { common.data.functionbody }
+	scripting.attr.onpointerenter =
+		attribute onpointerenter { common.data.functionbody }
+	scripting.attr.onpointerdown =
+		attribute onpointerdown { common.data.functionbody }
+	scripting.attr.onpointermove =
+		attribute onpointermove { common.data.functionbody }
+	scripting.attr.onpointerrawupdate =
+		attribute onpointerrawupdate { common.data.functionbody }
+	scripting.attr.onpointerup =
+		attribute onpointerup { common.data.functionbody }
+	scripting.attr.onpointercancel =
+		attribute onpointercancel { common.data.functionbody }
+	scripting.attr.onpointerout =
+		attribute onpointerout { common.data.functionbody }
+	scripting.attr.onpointerleave =
+		attribute onpointerleave { common.data.functionbody }
+	scripting.attr.ongotpointercapture =
+		attribute ongotpointercapture { common.data.functionbody }
+	scripting.attr.onlostpointercapture =
+		attribute onlostpointercapture { common.data.functionbody }
 
 #	scripting.attr.common =
 #		(	scripting.attr.mouse
 #		&	scripting.attr.keyboard
 #		&	scripting.attr.focus
 #		)
-#	
+#
 #	scripting.attr.mouse =
 #		(	scripting.attr.mouse.click?
 #		&	scripting.attr.mouse.dblclick?
@@ -352,7 +417,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 #			attribute onmousemove { string }
 #		scripting.attr.mouse.out =
 #			attribute onmouseout { string }
-#	
+#
 #	scripting.attr.keyboard =
 #		(	scripting.attr.keyboard.press?
 #		&	scripting.attr.keyboard.down?
@@ -364,8 +429,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 #			attribute onkeydown { string }
 #		scripting.attr.keyboard.up =
 #			attribute onkeyup { string }
-#	
-#	
+#
+#
 #	scripting.attr.focus =
 #		(	scripting.attr.focus.gain?
 #		&	scripting.attr.focus.lose?
@@ -374,7 +439,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 #			attribute onfocus { string }
 #		scripting.attr.focus.lose =
 #			attribute onblur { string }
-#	
+#
 #	scripting.attr.loading =
 #		(	scripting.attr.loading.load?
 #		&	scripting.attr.loading.unload?

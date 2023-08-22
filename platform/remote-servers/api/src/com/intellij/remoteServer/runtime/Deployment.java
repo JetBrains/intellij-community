@@ -5,6 +5,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,12 +14,14 @@ public interface Deployment {
   String getName();
 
   @NotNull
+  @Nls
   String getPresentableName();
 
   @NotNull
   DeploymentStatus getStatus();
 
   @NotNull
+  @Nls
   String getStatusText();
 
   @Nullable

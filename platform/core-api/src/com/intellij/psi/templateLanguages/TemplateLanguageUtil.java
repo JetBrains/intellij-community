@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.templateLanguages;
 
@@ -26,12 +12,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class TemplateLanguageUtil {
+public final class TemplateLanguageUtil {
   private TemplateLanguageUtil() {
   }
 
-  @Nullable
-  public static PsiFile getTemplateFile(PsiFile file) {
+  public static @Nullable PsiFile getTemplateFile(PsiFile file) {
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       return viewProvider.getPsi(((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage());
@@ -55,8 +40,7 @@ public class TemplateLanguageUtil {
                 file == viewProvider.getPsi(((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage());
   }
 
-  @Nullable
-  public static ASTNode getSameLanguageTreePrev(@NotNull ASTNode node) {
+  public static @Nullable ASTNode getSameLanguageTreePrev(@NotNull ASTNode node) {
     ASTNode current = node.getTreePrev();
     while (current instanceof OuterLanguageElement) {
       current = current.getTreePrev();
@@ -64,8 +48,7 @@ public class TemplateLanguageUtil {
     return current;
   }
 
-  @Nullable
-  public static ASTNode getSameLanguageTreeNext(@NotNull ASTNode node) {
+  public static @Nullable ASTNode getSameLanguageTreeNext(@NotNull ASTNode node) {
     ASTNode current = node.getTreeNext();
     while (current instanceof OuterLanguageElement) {
       current = current.getTreeNext();

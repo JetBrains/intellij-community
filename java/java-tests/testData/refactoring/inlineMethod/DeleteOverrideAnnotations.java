@@ -1,10 +1,10 @@
 class A {
-  void f<caret>oo() {}
+  public void f<caret>oo() {}
 }
 
 class B extends A {
   @Override
-  void foo() {}
+  public void foo() {}
 
   void err() {
     super.foo();
@@ -13,5 +13,23 @@ class B extends A {
 
 class C extends B {
   @Override
-  void foo() {}
+  public void foo() {}
+}
+
+class B1 extends A {
+  @Override
+  public void foo() {}
+
+  void err() {
+    super.foo();
+  }
+}
+
+interface IA {
+  void foo();
+}
+
+class C1 extends B implements IA {
+  @Override
+  public void foo() { }
 }

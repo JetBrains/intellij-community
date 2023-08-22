@@ -36,7 +36,7 @@ class JavaRemoteDebugRunConfigurationImporter : RunConfigurationImporter {
   override fun canImport(typeName: String): Boolean = typeName == "remote"
 
   override fun getConfigurationFactory(): ConfigurationFactory =
-    ConfigurationTypeUtil.findConfigurationType<RemoteConfigurationType>(
+    ConfigurationTypeUtil.findConfigurationType(
       RemoteConfigurationType::class.java)
       .configurationFactories[0]
 }

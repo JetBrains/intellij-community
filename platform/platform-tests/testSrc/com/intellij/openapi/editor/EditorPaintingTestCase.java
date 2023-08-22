@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EditorTestUtil;
@@ -34,6 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -51,12 +53,12 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    new RunAll()
-      .append(() -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor))
-      .append(() -> FontLayoutService.setInstance(null))
-      .append(() -> super.tearDown())
-      .run();
+  protected void tearDown() {
+    new RunAll(
+      () -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor),
+      () -> FontLayoutService.setInstance(null),
+      () -> super.tearDown()
+    ).run();
   }
 
   protected void checkResult() throws IOException {
@@ -71,8 +73,8 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     BufferedImage originalImage = paintEditor(false, null, null);
     BufferedImage updatedImage = createImageForPainting(originalImage.getWidth(), originalImage.getHeight());
     originalImage.copyData(updatedImage.getRaster());
-    paintEditor(false, updatedImage,
-                new Rectangle(0, getEditor().visualLineToY(visualLine), updatedImage.getWidth(), getEditor().getLineHeight()));
+    int[] yRange = getEditor().visualLineToYRange(visualLine);
+    paintEditor(false, updatedImage, new Rectangle(0, yRange[0], updatedImage.getWidth(), yRange[1] - yRange[0]));
     assertImagesEqual(originalImage, updatedImage, null);
   }
 
@@ -106,10 +108,10 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   @Override
-  protected void configureSoftWraps(int charCountToWrapAt) {
+  protected void configureSoftWraps(int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
     int charWidthInPixels = BitmapFont.CHAR_WIDTH;
     // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
-    EditorTestUtil.configureSoftWraps(getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+    EditorTestUtil.configureSoftWraps(getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, 1000, charWidthInPixels, useCustomSoftWrapIndent);
     ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).setSoftWrapPainter(new SoftWrapPainter() {
       @Override
       public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
@@ -119,14 +121,14 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         int yStart = y + lineHeight / 4;
         int yEnd = y + lineHeight * 3 / 4;
         switch (drawingType) {
-          case BEFORE_SOFT_WRAP_LINE_FEED:
+          case BEFORE_SOFT_WRAP_LINE_FEED -> {
             g.drawLine(xEnd, yStart, xEnd, yEnd);
             g.drawLine(xStart, yEnd, xEnd, yEnd);
-            break;
-          case AFTER_SOFT_WRAP:
+          }
+          case AFTER_SOFT_WRAP -> {
             g.drawLine(xStart, yStart, xStart, yEnd);
             g.drawLine(xStart, yEnd, xEnd, yEnd);
-            break;
+          }
         }
         return charWidthInPixels;
       }
@@ -187,7 +189,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
   }
 
-  private BufferedImage paintEditor(boolean withGutter, @Nullable BufferedImage target, @Nullable Rectangle clip) throws IOException {
+  protected BufferedImage paintEditor(boolean withGutter, @Nullable BufferedImage target, @Nullable Rectangle clip) throws IOException {
     getEditor().getSettings().setAdditionalLinesCount(0);
     getEditor().getSettings().setAdditionalColumnsCount(1);
 
@@ -255,6 +257,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
                     @NotNull BufferedImage expectedImage,
                     @NotNull BufferedImage actualImage) throws IOException {
     File savedImage = saveTmpImage(actualImage, "actual");
+    System.out.println("##teamcity[publishArtifacts '" + savedImage.getAbsolutePath() + "']");
     if (expectedResultsFile == null) {
       expectedResultsFile = saveTmpImage(expectedImage, "expected");
     }
@@ -262,9 +265,9 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
                                     expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
   }
 
-  private File saveTmpImage(BufferedImage image, String nameSuffix) throws IOException {
+  private File saveTmpImage(RenderedImage image, String nameSuffix) throws IOException {
     File savedImage = FileUtil.createTempFile(getName() + "-" + nameSuffix, ".png", false);
-    addTmpFileToKeep(savedImage);
+    addTmpFileToKeep(savedImage.toPath());
     ImageIO.write(image, "png", savedImage);
     return savedImage;
   }
@@ -315,12 +318,12 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
 
     private void drawChar(char c, int x, int y) {
-      (((getFont().getStyle() & Font.BOLD) == 0) ? myPlainFont : myBoldFont).draw(myDelegate, c, x, y);
+      (StringUtil.containsIgnoreCase(getFont().getFontName(), "bold") ? myBoldFont : myPlainFont).draw(myDelegate, c, x, y);
     }
   }
 
   // font which, once created, should be rendered identically on all platforms
-  protected static class BitmapFont {
+  protected static final class BitmapFont {
     private static final float FONT_SIZE = 12;
     private static final int CHAR_WIDTH = 10;
     private static final int CHAR_HEIGHT = 12;
@@ -376,7 +379,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
   }
 
-  private static class UniformHighlighter implements EditorHighlighter {
+  private static final class UniformHighlighter implements EditorHighlighter {
     @NotNull
     private final TextAttributes myAttributes;
     private Document myDocument;

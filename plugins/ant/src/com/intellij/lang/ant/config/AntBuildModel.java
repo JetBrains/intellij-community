@@ -16,11 +16,12 @@
 
 package com.intellij.lang.ant.config;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntBuildModel {
   @Nullable
-  String getDefaultTargetName();
+  @NlsSafe String getDefaultTargetName();
 
   AntBuildTarget[] getTargets();
 
@@ -32,5 +33,5 @@ public interface AntBuildModel {
   AntBuildTarget findTarget(final String name);
 
   @Nullable
-  String getName();
+  @NlsSafe String getName();
 }

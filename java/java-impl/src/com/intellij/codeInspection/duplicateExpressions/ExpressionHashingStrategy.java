@@ -1,18 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.HashingStrategy;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Pavel.Dolgov
- */
-class ExpressionHashingStrategy implements TObjectHashingStrategy<PsiExpression> {
+final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> {
   private static final EquivalenceChecker EQUIVALENCE_CHECKER = new NoSideEffectExpressionEquivalenceChecker();
 
   @Override
@@ -21,42 +18,45 @@ class ExpressionHashingStrategy implements TObjectHashingStrategy<PsiExpression>
   }
 
   @Override
-  public int computeHashCode(PsiExpression e) {
+  public int hashCode(PsiExpression e) {
     if (e == null) {
       return 0;
     }
     if (e instanceof PsiParenthesizedExpression) {
-      return computeHashCode(((PsiParenthesizedExpression)e).getExpression());
+      return hashCode(((PsiParenthesizedExpression)e).getExpression());
     }
-    if (e instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unary = (PsiUnaryExpression)e;
-      return computeHashCode(unary.getOperationTokenType(), unary.getOperand());
+    if (e instanceof PsiUnaryExpression unary) {
+      return hashCode(unary.getOperationTokenType(), unary.getOperand());
     }
-    if (e instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
-      return computeHashCode(polyadic.getOperationTokenType(), polyadic.getOperands());
+    if (e instanceof PsiPolyadicExpression polyadic) {
+      return hashCode(polyadic.getOperationTokenType(), polyadic.getOperands());
     }
-    if (e instanceof PsiConditionalExpression) {
-      PsiConditionalExpression conditional = (PsiConditionalExpression)e;
-      return computeHashCode(JavaTokenType.QUEST, conditional.getCondition(),
+    if (e instanceof PsiConditionalExpression conditional) {
+      return hashCode(JavaTokenType.QUEST, conditional.getCondition(),
                              conditional.getThenExpression(), conditional.getElseExpression());
     }
-    if (e instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+    if (e instanceof PsiMethodCallExpression call) {
       PsiReferenceExpression ref = call.getMethodExpression();
-      return computeHashCode(ref.getReferenceName(), ref.getQualifierExpression(), call.getArgumentList().getExpressions());
+      String name = ref.getReferenceName();
+      PsiExpression qualifier = ref.getQualifierExpression();
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (qualifier != null) {
+        if ("get".equals(name) && (qualifier.textMatches("Paths") || qualifier.textMatches("java.nio.file.Paths")) ||
+            "of".equals(name) && qualifier.textMatches("java.nio.file.Path")) {
+          return hashCode("of", "Path", args); 
+        }
+      }
+      return hashCode(name, qualifier, args);
     }
     if (e instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
-      return computeHashCode(ref.getReferenceName(), ref.getQualifierExpression());
+      return hashCode(ref.getReferenceName(), ref.getQualifierExpression());
     }
-    if (e instanceof PsiInstanceOfExpression) {
-      PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)e;
-      return computeHashCode(getTypeName(instanceOf.getCheckType()), instanceOf.getOperand());
+    if (e instanceof PsiInstanceOfExpression instanceOf) {
+      return hashCode(getTypeName(instanceOf.getCheckType()), instanceOf.getOperand());
     }
-    if (e instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression access = (PsiArrayAccessExpression)e;
-      return computeHashCode(JavaTokenType.LBRACKET, access.getArrayExpression(), access.getIndexExpression());
+    if (e instanceof PsiArrayAccessExpression access) {
+      return hashCode(JavaTokenType.LBRACKET, access.getArrayExpression(), access.getIndexExpression());
     }
     if (e instanceof PsiClassObjectAccessExpression) {
       String name = getTypeName(((PsiClassObjectAccessExpression)e).getOperand());
@@ -64,7 +64,7 @@ class ExpressionHashingStrategy implements TObjectHashingStrategy<PsiExpression>
     }
     if (e instanceof PsiLambdaExpression) {
       PsiExpression bodyExpr = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)e).getBody());
-      return computeHashCode(JavaTokenType.ARROW, bodyExpr) * 31 + ((PsiLambdaExpression)e).getParameterList().getParametersCount();
+      return hashCode(JavaTokenType.ARROW, bodyExpr) * 31 + ((PsiLambdaExpression)e).getParameterList().getParametersCount();
     }
     if (e instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)e).getValue();
@@ -73,21 +73,30 @@ class ExpressionHashingStrategy implements TObjectHashingStrategy<PsiExpression>
     return 0;
   }
 
-  private int computeHashCode(@NotNull IElementType tokenType, PsiExpression @NotNull ... operands) {
+  private int hashCode(@NotNull IElementType tokenType, PsiExpression @NotNull ... operands) {
     int hash = tokenType.hashCode();
     for (PsiExpression operand : operands) {
-      hash = hash * 31 + computeHashCode(operand);
+      hash = hash * 31 + hashCode(operand);
     }
     return hash;
   }
 
-  private int computeHashCode(@Nullable String name, @Nullable PsiExpression expression, PsiExpression @NotNull ... operands) {
+  private int hashCode(@Nullable String name, @Nullable PsiExpression expression, PsiExpression @NotNull ... operands) {
     int hash = name != null ? name.hashCode() : 0;
-    hash = hash * 31 + computeHashCode(expression);
+    hash = hash * 31 + hashCode(expression);
     for (PsiExpression operand : operands) {
-      hash = hash * 31 + computeHashCode(operand);
+      hash = hash * 31 + hashCode(operand);
     }
     return hash;
+  }
+
+  private int hashCode(@Nullable String name, @NotNull String qualifier, PsiExpression @NotNull ... operands) {
+    int hash = name != null ? name.hashCode() : 0;
+    hash = hash * 31 + qualifier.hashCode() * 31;
+    for (PsiExpression operand : operands) {
+      hash = hash * 31 + hashCode(operand);
+    }
+    return hash; 
   }
 
   @Contract("null -> null")

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="library" name="kotlinc.assignment-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" />
+    <orderEntry type="module" module-name="intellij.gradle" />
+  </component>
+</module>

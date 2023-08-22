@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.psi.PsiClass;
@@ -7,8 +7,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ObjectIntHashMap;
-import gnu.trove.TObjectIntHashMap;
+import kotlin.Pair;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteSemilattice;
@@ -30,46 +32,37 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteS
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ven
- */
-public class ControlFlowBuilderUtil {
+public final class ControlFlowBuilderUtil {
   private ControlFlowBuilderUtil() {
   }
 
-  public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {
+  private static @Nullable ReadBeforeWriteState
+  getLastReadBeforeWriteState(Instruction[] flow, boolean onlyFirstRead) {
     DFAEngine<ReadBeforeWriteState> engine = new DFAEngine<>(
       flow,
-      new ReadBeforeWriteInstance(buildVariablesIndex(flow), onlyFirstRead),
+      new ReadBeforeWriteInstance(onlyFirstRead),
       ReadBeforeWriteSemilattice.INSTANCE
     );
     List<ReadBeforeWriteState> dfaResult = engine.performDFAWithTimeout();
-    if (dfaResult == null) {
-      return ReadWriteVariableInstruction.EMPTY_ARRAY;
-    }
-    List<ReadWriteVariableInstruction> result = new ArrayList<>();
-    BitSet reads = dfaResult.get(dfaResult.size() - 1).getReads();
-    for (int i = reads.nextSetBit(0); i >= 0; i = reads.nextSetBit(i + 1)) {
-      if (i == Integer.MAX_VALUE) break;
-      result.add((ReadWriteVariableInstruction)flow[i]);
-    }
-    return result.toArray(ReadWriteVariableInstruction.EMPTY_ARRAY);
+    return dfaResult == null ? null : dfaResult.get(dfaResult.size() - 1);
   }
 
-  private static TObjectIntHashMap<VariableDescriptor> buildVariablesIndex(Instruction[] flow) {
-    TObjectIntHashMap<VariableDescriptor> variablesIndex = new ObjectIntHashMap<>();
-    int idx = 0;
-    for (Instruction instruction : flow) {
-      if (instruction instanceof ReadWriteVariableInstruction) {
-        VariableDescriptor descriptor = ((ReadWriteVariableInstruction)instruction).getDescriptor();
-        if (!variablesIndex.contains(descriptor)) {
-          variablesIndex.put(descriptor, idx++);
-        }
-      }
+  public static List<Pair<ReadWriteVariableInstruction, VariableDescriptor>> getReadsWithoutPriorWrites(GroovyControlFlow flow, boolean onlyFirstRead) {
+    ReadBeforeWriteState lastState = getLastReadBeforeWriteState(flow.getFlow(), onlyFirstRead);
+    if (lastState == null) {
+      return Collections.emptyList();
     }
-    return variablesIndex;
+    BitSet reads = lastState.getReads();
+    ArrayList<Pair<ReadWriteVariableInstruction, VariableDescriptor>> result = new ArrayList<>();
+    for (int i = reads.nextSetBit(0); i >= 0; i = reads.nextSetBit(i + 1)) {
+      if (i == Integer.MAX_VALUE) break;
+      ReadWriteVariableInstruction instr = (ReadWriteVariableInstruction)flow.getFlow()[i];
+      result.add(new Pair<>(instr, flow.getVarIndices()[instr.getDescriptor()]));
+    }
+    return result;
   }
 
   public static boolean isInstanceOfBinary(GrBinaryExpression binary) {
@@ -106,8 +99,6 @@ public class ControlFlowBuilderUtil {
   /**
    * check whether statement is return (the statement which provides return value) statement of method or closure.
    *
-   * @param st
-   * @return
    */
   public static boolean isCertainlyReturnStatement(GrStatement st) {
     final PsiElement parent = st.getParent();
@@ -147,21 +138,21 @@ public class ControlFlowBuilderUtil {
     else if (parent instanceof GrCaseSection) {
       final GrStatement[] statements = ((GrCaseSection)parent).getStatements();
       final GrStatement last = ArrayUtil.getLastElement(statements);
-      final GrSwitchStatement switchStatement = (GrSwitchStatement)parent.getParent();
-
+      final GrSwitchElement switchElement = (GrSwitchElement)parent.getParent();
+      final GrStatement switchAsStatement = switchElement instanceof GrSwitchExpression ? (GrSwitchExpression)switchElement : (GrStatement)switchElement;
       if (last instanceof GrBreakStatement && statements.length > 1 && statements[statements.length - 2] == st) {
-        return isCertainlyReturnStatement(switchStatement);
+        return isCertainlyReturnStatement(switchAsStatement);
       }
       else if (st == last) {
-        if (st instanceof GrBreakStatement || isLastStatementInCaseSection((GrCaseSection)parent, switchStatement)) {
-          return isCertainlyReturnStatement(switchStatement);
+        if (st instanceof GrBreakStatement || isLastStatementInCaseSection((GrCaseSection)parent, switchElement)) {
+          return isCertainlyReturnStatement(switchAsStatement);
         }
       }
     }
     return false;
   }
 
-  private static boolean isLastStatementInCaseSection(GrCaseSection caseSection, GrSwitchStatement switchStatement) {
+  private static boolean isLastStatementInCaseSection(GrCaseSection caseSection, GrSwitchElement switchStatement) {
     final GrCaseSection[] sections = switchStatement.getCaseSections();
     final int i = ArrayUtilRt.find(sections, caseSection);
     if (i == sections.length - 1) {
@@ -177,5 +168,21 @@ public class ControlFlowBuilderUtil {
       }
     }
     return true;
+  }
+
+  public static boolean isCertainlyYieldStatement(GrStatement statement) {
+    final PsiElement parent = statement.getParent();
+    if (parent instanceof GrOpenBlock || parent instanceof GrCaseSection) {
+      if (statement != ArrayUtil.getLastElement(((GrStatementOwner)parent).getStatements())) return false;
+
+      PsiElement pparent = parent.getParent();
+      if (parent instanceof GrCaseSection && pparent instanceof GrSwitchElement) {
+        return true;
+      }
+      if (pparent instanceof GrStatement) {
+        return isCertainlyYieldStatement((GrStatement)pparent);
+      }
+    }
+    return false;
   }
 }

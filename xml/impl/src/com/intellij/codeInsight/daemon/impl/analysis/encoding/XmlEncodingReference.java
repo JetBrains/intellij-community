@@ -20,9 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
-*/
 public class XmlEncodingReference extends EncodingReference implements EmptyResolveMessageProvider {
   private final int myPriority;
 

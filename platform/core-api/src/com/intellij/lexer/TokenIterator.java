@@ -3,6 +3,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * An interface for getting additional information from preceding tokens in {@link RestartableLexer#start(CharSequence, int, int, int, TokenIterator)}
@@ -23,6 +24,7 @@ public interface TokenIterator {
   /**
    * current token type offset
    */
+  @NotNull
   IElementType getType(int index);
 
   /**

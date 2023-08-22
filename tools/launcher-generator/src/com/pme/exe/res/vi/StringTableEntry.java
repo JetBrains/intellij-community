@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
+ * Copyright 2013-2022 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,28 +21,40 @@ import java.io.DataInput;
 import java.io.IOException;
 
 /**
+ * <a href="https://learn.microsoft.com/en-us/windows/win32/menurc/string-str">String stucture</a>
+ *
  * @author Sergey Zhulin
  * Date: May 10, 2006
  * Time: 8:26:03 PM
  */
 public class StringTableEntry extends VersionInfoBin {
+  private final WCharStringNT myValue;
+
   public StringTableEntry() {
     super("<unnamed>");
-    addMember(new WChar("Value"));
-    addMember(new Padding(4));
+    myValue = addMember(new WCharStringNT("Value"));
+    addMember(new Padding("Padding2", 4));
+  }
+
+  public String getValue() {
+    return myValue.getValue();
+  }
+
+  public void setValue(String value) {
+    myValue.setValue(value);
+    // myValueLength has size in words, not bytes
+    myValueLength.setValue(value.length() + 1);
   }
 
   @Override
   public void read(DataInput stream) throws IOException {
     super.read(stream);
-    WChar key = (WChar) getMember("szKey");
-    setName(key.getValue());
+    setName(myKey.getValue());
+    assert myValue.sizeInBytes() == myValueLength.getValue() * 2;
   }
 
   @Override
   public String toString() {
-    WChar key = (WChar) getMember("szKey");
-    WChar value = (WChar) getMember("Value");
-    return key.getValue() + " = " + value.getValue();
+    return myKey.getValue() + " = " + myValue.getValue();
   }
 }

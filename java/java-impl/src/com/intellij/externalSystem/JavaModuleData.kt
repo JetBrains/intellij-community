@@ -33,10 +33,10 @@ constructor(
     return result
   }
 
-  override fun toString() = "java module"
+  override fun toString(): String = "java module"
 
   companion object {
     @JvmField
-    val KEY = Key.create(JavaModuleData::class.java, JavaProjectData.KEY.processingWeight + 1)
+    val KEY: Key<JavaModuleData> = Key.create(JavaModuleData::class.java, JavaProjectData.KEY.processingWeight + 1)
   }
 }

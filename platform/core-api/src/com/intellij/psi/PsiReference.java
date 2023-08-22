@@ -1,20 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.model.Symbol;
-import com.intellij.model.SymbolResolveResult;
-import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.model.psi.PsiSymbolService;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * A reference to a PSI element. For example, the variable name used in an expression.
@@ -30,7 +23,7 @@ import java.util.Collections;
  * @see PsiReferenceBase
  * @see PsiReferenceContributor
  */
-public interface PsiReference extends PsiSymbolReference {
+public interface PsiReference {
 
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
@@ -41,7 +34,6 @@ public interface PsiReference extends PsiSymbolReference {
    *
    * @return the underlying element of the reference.
    */
-  @Override
   @NotNull
   PsiElement getElement();
 
@@ -59,9 +51,17 @@ public interface PsiReference extends PsiSymbolReference {
    *
    * @return Relative range in element
    */
-  @Override
   @NotNull
   TextRange getRangeInElement();
+
+  /**
+   * @return range in the {@link PsiElement#getContainingFile containing file} of the {@link #getElement element}
+   * which is considered a reference
+   * @see #getRangeInElement
+   */
+  default @NotNull TextRange getAbsoluteRange() {
+    return getRangeInElement().shiftRight(getElement().getTextRange().getStartOffset());
+  }
 
   /**
    * Returns the element which is the target of the reference.
@@ -79,8 +79,7 @@ public interface PsiReference extends PsiSymbolReference {
    *
    * @return the canonical text of the reference.
    */
-  @NotNull
-  String getCanonicalText();
+  @NotNull @NlsSafe String getCanonicalText();
 
   /**
    * Called when the reference target element has been renamed, in order to change the reference
@@ -88,7 +87,7 @@ public interface PsiReference extends PsiSymbolReference {
    *
    * @param newElementName the new name of the target element.
    * @return the new underlying element of the reference.
-   * @throws IncorrectOperationException if the rename cannot be handled for some reason.
+   * @throws IncorrectOperationException if the renaming cannot be handled for some reason.
    */
   PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException;
 
@@ -99,7 +98,7 @@ public interface PsiReference extends PsiSymbolReference {
    *
    * @param element the element which should become the target of the reference.
    * @return the new underlying element of the reference.
-   * @throws IncorrectOperationException if the rebind cannot be handled for some reason.
+   * @throws IncorrectOperationException if the rebinding cannot be handled for some reason.
    */
   PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException;
 
@@ -114,7 +113,7 @@ public interface PsiReference extends PsiSymbolReference {
   /**
    * Returns the array of String, {@link PsiElement} and/or {@link com.intellij.codeInsight.lookup.LookupElement}
    * instances representing all identifiers that are visible at the location of the reference. The contents
-   * of the returned array is used to build the lookup list for basic code completion. (The list
+   * of the returned array are used to build the lookup list for basic code completion. (The list
    * of visible identifiers may not be filtered by the completion prefix string - the
    * filtering is performed later by the IDE.)
    * <p>
@@ -135,25 +134,4 @@ public interface PsiReference extends PsiSymbolReference {
    * @return {@code true} if the reference is soft, {@code false} otherwise.
    */
   boolean isSoft();
-
-  @Experimental
-  @NotNull
-  @Override
-  default Collection<? extends SymbolResolveResult> resolveReference() {
-    PsiElement resolved = resolve();
-    if (resolved == null) {
-      return Collections.emptyList();
-    }
-    else {
-      Symbol symbol = PsiSymbolService.getInstance().asSymbol(resolved);
-      return Collections.singletonList(SymbolResolveResult.fromSymbol(symbol));
-    }
-  }
-
-  @Experimental
-  @Override
-  default boolean resolvesTo(@NotNull Symbol target) {
-    PsiElement psi = PsiSymbolService.getInstance().extractElementFromSymbol(target);
-    return psi == null ? PsiSymbolReference.super.resolvesTo(target) : isReferenceTo(psi);
-  }
 }

@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,6 +19,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -39,7 +27,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.util.*;
@@ -60,7 +48,7 @@ public class ImplementAbstractMethodHandler {
   public void invoke() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    Ref<String> problemDetected = new Ref<>();
+    Ref<@Nls String> problemDetected = new Ref<>();
     final PsiElement[][] result = new PsiElement[1][];
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass psiClass = myMethod.getContainingClass();
@@ -107,7 +95,7 @@ public class ImplementAbstractMethodHandler {
     final MyPsiElementListCellRenderer elementListCellRenderer = new MyPsiElementListCellRenderer();
     elementListCellRenderer.sort(elements);
     final IPopupChooserBuilder<PsiElement> builder = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
+      .createPopupChooserBuilder(List.of(elements))
       .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
       .setRenderer(elementListCellRenderer)
       .setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title")).
@@ -129,10 +117,10 @@ public class ImplementAbstractMethodHandler {
       final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
       for (final Object o : selection) {
         if (o instanceof PsiEnumConstant) {
-          classes.add(ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>(){
+          classes.add(ApplicationManager.getApplication().runWriteAction(new Computable<>() {
             @Override
             public PsiClass compute() {
-              return ((PsiEnumConstant) o).getOrCreateInitializingClass();
+              return ((PsiEnumConstant)o).getOrCreateInitializingClass();
             }
           }));
         }
@@ -154,7 +142,7 @@ public class ImplementAbstractMethodHandler {
     }, JavaBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
-  private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<? super String> problemDetected) {
+  private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<@Nls String> problemDetected) {
     ArrayList<PsiClass> list = new ArrayList<>();
     Set<String> classNamesWithPotentialImplementations = new LinkedHashSet<>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass)) {
@@ -175,16 +163,17 @@ public class ImplementAbstractMethodHandler {
     }
 
     if (!classNamesWithPotentialImplementations.isEmpty()) {
-      problemDetected.set("Potential implementations with weaker access privileges are found: " + StringUtil.join(classNamesWithPotentialImplementations, ", "));
+      @NlsSafe String classNames = StringUtil.join(classNamesWithPotentialImplementations, ", ");
+      problemDetected.set(JavaBundle.message("implement.abstract.method.potential.implementations.with.weaker.access", classNames));
     }
     return list.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
-    private final PsiClassListCellRenderer myRenderer = new PsiClassListCellRenderer();
+    private final PsiElementRenderingInfo<PsiClass> myInfo = PsiClassRenderingInfo.INSTANCE;
 
     void sort(PsiElement[] result) {
-      final Comparator<PsiClass> comparator = myRenderer.getComparator();
+      final Comparator<PsiClass> comparator = PsiElementRenderingInfo.getComparator(myInfo);
       Arrays.sort(result, (o1, o2) -> {
         if (o1 instanceof PsiEnumConstant && o2 instanceof PsiEnumConstant) {
           return ((PsiEnumConstant)o1).getName().compareTo(((PsiEnumConstant)o2).getName());
@@ -197,19 +186,14 @@ public class ImplementAbstractMethodHandler {
 
     @Override
     public String getElementText(PsiElement element) {
-      return element instanceof PsiClass ? myRenderer.getElementText((PsiClass)element)
+      return element instanceof PsiClass ? myInfo.getPresentableText((PsiClass)element)
                                          : ((PsiEnumConstant)element).getName();
     }
 
     @Override
     protected String getContainerText(PsiElement element, String name) {
-      return element instanceof PsiClass ? PsiClassListCellRenderer.getContainerTextStatic(element)
+      return element instanceof PsiClass ? PsiClassRenderingInfo.getContainerTextStatic(element)
                                          : ((PsiEnumConstant)element).getContainingClass().getQualifiedName();
-    }
-
-    @Override
-    protected int getIconFlags() {
-      return 0;
     }
   }
 }

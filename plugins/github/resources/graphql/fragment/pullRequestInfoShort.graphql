@@ -5,6 +5,7 @@ fragment pullRequestInfoShort on PullRequest {
 
   title
   state
+  isDraft
 
   author {
     ...actorInfo
@@ -21,6 +22,24 @@ fragment pullRequestInfoShort on PullRequest {
       ...labelInfo
     }
   }
+  reviewRequests(first: 100) {
+    nodes {
+      ... on ReviewRequest {
+        requestedReviewer {
+          ...pullRequestReviewerInfo
+        }
+      }
+    }
+  }
+  reviewThreads(last: 100) {
+    nodes {
+      isResolved
+      isOutdated
+    }
+  }
 
+  mergeable
+
+  viewerCanUpdate
   viewerDidAuthor
 }

@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactIdInsertionHandler
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.reposearch.PoisonedRepositoryArtifactData
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Consumer
@@ -41,17 +42,21 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
   override fun fillResults(result: CompletionResultSet,
                            coordinates: MavenDomShortArtifactCoordinates,
                            cld: ConcurrentLinkedDeque<RepositoryArtifactData>,
-                           promise: Promise<Int>) {
+                           promise: Promise<Int>,
+                           completionPrefix: String) {
     val set = HashSet<String>()
+    //todo hot spot - spin loop (see also parent and other child classes)
     while (promise.state == Promise.State.PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled()
       val item = cld.poll()
       if (item is MavenRepositoryArtifactInfo && set.add(item.artifactId)) {
-        result
-          .addElement(
-            MavenDependencyCompletionUtil.lookupElement(item, item.artifactId).withInsertHandler(
-              MavenArtifactIdInsertionHandler.INSTANCE))
+        result.addElement(
+          MavenDependencyCompletionUtil.lookupElement(item, item.artifactId)
+            .withInsertHandler(MavenArtifactIdInsertionHandler.INSTANCE)
+            .also { it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix) }
+        )
       }
+      if (item === PoisonedRepositoryArtifactData.INSTANCE) break
     }
   }
 }

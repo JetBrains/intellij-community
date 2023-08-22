@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -19,19 +19,17 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SplitConditionUtil {
+public final class SplitConditionUtil {
   public static PsiPolyadicExpression findCondition(PsiElement element) {
     return findCondition(element, true, true);
   }
 
   public static PsiPolyadicExpression findCondition(PsiElement element, boolean acceptAnd, boolean acceptOr) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return null;
     }
-    PsiJavaToken token = (PsiJavaToken)element;
-    if (!(token.getParent() instanceof PsiPolyadicExpression)) return null;
+    if (!(token.getParent() instanceof PsiPolyadicExpression expression)) return null;
 
-    PsiPolyadicExpression expression = (PsiPolyadicExpression)token.getParent();
     boolean isAndExpression = acceptAnd && expression.getOperationTokenType() == JavaTokenType.ANDAND;
     boolean isOrExpression = acceptOr && expression.getOperationTokenType() == JavaTokenType.OROR;
     if (!isAndExpression && !isOrExpression) return null;
@@ -137,8 +135,7 @@ public class SplitConditionUtil {
         break;
       }
       else {
-        if (!(nextCondition instanceof PsiPolyadicExpression)) break;
-        PsiPolyadicExpression nextPolyadic = (PsiPolyadicExpression)nextCondition;
+        if (!(nextCondition instanceof PsiPolyadicExpression nextPolyadic)) break;
         if (!nextPolyadic.getOperationTokenType().equals(JavaTokenType.ANDAND)) break;
         PsiExpression[] nextOperands = nextPolyadic.getOperands();
         PsiExpression[] operands;
@@ -170,7 +167,7 @@ public class SplitConditionUtil {
       }
     }
     else {
-      thenString = "{" + createIfString(leave, thenBranch, String.join("\nelse ", elseChain), tracker) + "\n}";
+      thenString = "{" + createIfString(leave, thenBranch, String.join("\n" + PsiKeyword.ELSE + " ", elseChain), tracker) + "\n}";
     }
     String ifString = createIfString(extract, thenString, elseBranch, tracker);
     return (PsiIfStatement)factory.createStatementFromText(ifString, thenBranch);
@@ -222,8 +219,8 @@ public class SplitConditionUtil {
   private static String createIfString(@NotNull String condition,
                                        @NotNull String thenBranch,
                                        @Nullable String elseBranch) {
-    final String elsePart = elseBranch != null ? "\n else " + elseBranch : "";
-    return "if (" + condition + ")\n" + thenBranch + elsePart;
+    final String elsePart = elseBranch != null ? "\n " + PsiKeyword.ELSE + " " + elseBranch : "";
+    return PsiKeyword.IF + " (" + condition + ")\n" + thenBranch + elsePart;
   }
 
   @NotNull

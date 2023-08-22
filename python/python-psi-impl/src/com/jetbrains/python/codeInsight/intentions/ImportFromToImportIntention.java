@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.google.common.collect.Sets;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +31,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <li>{@code from ...moduleA.moduleB import names} into {@code from ...moduleA import moduleB}.</li>
  * Qualifies any names imported from that module by module name.
  * <br><small>
- * User: dcheryasov
  * </small>
  */
 public class ImportFromToImportIntention extends PyBaseIntentionAction {
@@ -44,14 +44,15 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
     String myModuleName = null;
     int myRelativeLevel = 0;
 
-    public String getText() {
+    @NotNull
+    public @IntentionName String getText() {
       String name = myModuleName != null ? myModuleName : "...";
       if (myRelativeLevel > 0) {
         String[] relative_names = getRelativeNames(false, this);
-        return PyPsiBundle.message("INTN.convert.to.from.$0.import.$1", relative_names[0], relative_names[1]);
+        return PyPsiBundle.message("INTN.convert.to.from.import", relative_names[0], relative_names[1]);
       }
       else {
-        return PyPsiBundle.message("INTN.convert.to.import.$0", name);
+        return PyPsiBundle.message("INTN.convert.to.plain.import", name);
       }
     }
 
@@ -115,7 +116,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.import.qualify");
+    return PyPsiBundle.message("INTN.NAME.convert.import.qualify");
   }
 
   @Override
@@ -150,7 +151,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
     if (info.myModuleReference != null) {
       info.myModuleName = PyPsiUtils.toPath(info.myModuleReference);
     }
-    if (info.myModuleReference != null && info.myModuleName != null && info.myFromImportStatement != null) {
+    if (info.myModuleReference != null && info.myFromImportStatement != null) {
       setText(info.getText());
       return true;
     }
@@ -160,8 +161,6 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
   /**
    * Adds myModuleName as a qualifier to target.
    * @param target_node what to qualify
-   * @param project
-   * @param qualifier
    */
   private static void qualifyTarget(ASTNode target_node, Project project, String qualifier) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
@@ -191,8 +190,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
         @Override
         public boolean execute(@NotNull PsiElement element) {
           PyPsiUtils.assertValid(element);
-          if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
-            PyReferenceExpression ref = (PyReferenceExpression)element;
+          if (element instanceof PyReferenceExpression ref && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
             if (!ref.isQualified()) {
               ResolveResult[] resolved = ref.getReference().multiResolve(false);
               for (ResolveResult rr : resolved) {

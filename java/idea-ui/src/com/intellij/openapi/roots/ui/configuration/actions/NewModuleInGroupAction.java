@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.module.ModuleManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class NewModuleInGroupAction extends NewModuleAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
@@ -38,7 +38,11 @@ public class NewModuleInGroupAction extends NewModuleAction {
     if (!ModuleGrouperKt.isQualifiedModuleNamesEnabled(module.getProject())) {
       ModuleGroup group = (ModuleGroup) dataFromContext;
       if (group != null) {
-        ModuleManagerImpl.getInstanceImpl(module.getProject()).setModuleGroupPath(module, group.getGroupPath());
+        WriteAction.run(() -> {
+          ModifiableModuleModel modifiableModel = ModuleManager.getInstance(module.getProject()).getModifiableModel();
+          modifiableModel.setModuleGroupPath(module, group.getGroupPath());
+          modifiableModel.commit();
+        });
       }
     }
   }

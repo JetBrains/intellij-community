@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
-import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -13,7 +12,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
+public final class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   private ExcludedFilesScopeForm myForm;
   private DefaultComboBoxModel<String> myScopeListModel;
 
@@ -22,6 +21,9 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   private final Action myEditAction;
   private final List<? extends NamedScope> myAvailableScopes;
 
+  /**
+   * @param availableScopes editable scopes, means that names are @NlsSafe
+   */
   protected ExcludedFilesScopeDialog(@NotNull Project project,
                                      @NotNull List<? extends NamedScope> availableScopes) {
     super(project);
@@ -42,7 +44,7 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   private void fillScopesList(@NotNull List<? extends NamedScope> availableScopes) {
     myScopeListModel = new DefaultComboBoxModel<>();
     for (NamedScope scope : availableScopes) {
-      myScopeListModel.addElement(scope.getName());
+      myScopeListModel.addElement(scope.getPresentableName());
     }
     myForm.getScopesList().setModel(myScopeListModel);
   }
@@ -55,7 +57,7 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
     String scopeName = selectedIndex >= 0 ? myScopeListModel.getElementAt(selectedIndex) : null;
     if (scopeName != null) {
       for (NamedScope scope : myAvailableScopes) {
-        if (scopeName.equals(scope.getName())) {
+        if (scopeName.equals(scope.getPresentableName())) {
           return new NamedScopeDescriptor(scope);
         }
       }

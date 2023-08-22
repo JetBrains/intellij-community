@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Generalises {@link ColorSettingsPage} in a way that allows to provide custom {@link PreviewPanel preview panel}.
- *
- * @author yole
  */
 public interface ColorAndFontPanelFactory {
 
@@ -24,10 +22,9 @@ public interface ColorAndFontPanelFactory {
   String getPanelDisplayName();
 
   /**
-   * @see {@link com.intellij.openapi.options.SearchableConfigurable#getOriginalClass()}
+   * @see com.intellij.openapi.options.SearchableConfigurable#getOriginalClass()
    */
-  @NotNull
-  default Class<?> getOriginalClass() {
+  default @NotNull Class<?> getOriginalClass() {
     return this.getClass();
   }
 }

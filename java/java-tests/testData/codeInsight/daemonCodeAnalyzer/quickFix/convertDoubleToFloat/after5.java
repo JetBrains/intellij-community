@@ -1,7 +1,7 @@
-// "Convert '3.14' to float" "true"
+// "Cast argument to 'float'" "true-preview"
 class Test {
   void bar() {
-    foo(3.14f);
+    foo(3.14F);
   }
   void foo(float f){}
 }

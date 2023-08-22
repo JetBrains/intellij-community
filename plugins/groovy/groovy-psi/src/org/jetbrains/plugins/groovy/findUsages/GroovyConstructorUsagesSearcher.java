@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.findUsages;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.util.Key;
@@ -14,7 +15,6 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -67,7 +67,8 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     SearchScope onlyGroovy = GroovyScopeUtil.restrictScopeToGroovyFiles(searchScope, GroovyScopeUtil.getEffectiveScope(constructor));
     Set<PsiClass> processed = collector.getSearchSession().getUserData(LITERALLY_CONSTRUCTED_CLASSES);
     if (processed == null) {
-      collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed = ContainerUtil.newConcurrentSet());
+      collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed =
+        ConcurrentCollectionFactory.createConcurrentSet());
     }
     if (!processed.add(clazz)) return;
 
@@ -101,7 +102,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       }
     }
     //super()
-    DirectClassInheritorsSearch.search(clazz, onlyGroovy).forEach(new ReadActionProcessor<PsiClass>() {
+    DirectClassInheritorsSearch.search(clazz, onlyGroovy).forEach(new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(PsiClass inheritor) {
         if (inheritor instanceof GrTypeDefinition) {
@@ -142,8 +143,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       return newExpressionProcessor.process((GrNewExpression)parent);
     }
 
-    if (parent instanceof GrTypeElement) {
-      final GrTypeElement typeElement = (GrTypeElement)parent;
+    if (parent instanceof GrTypeElement typeElement) {
 
       final PsiElement grandpa = typeElement.getParent();
       if (grandpa instanceof GrVariableDeclaration) {
@@ -155,8 +155,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
           }
         }
       }
-      else if (grandpa instanceof GrMethod) {
-        final GrMethod method = (GrMethod)grandpa;
+      else if (grandpa instanceof GrMethod method) {
         if (typeElement == method.getReturnTypeElementGroovy()) {
           ControlFlowUtils.visitAllExitPoints(method.getBlock(), new ControlFlowUtils.ExitPointVisitor() {
             @Override
@@ -207,8 +206,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       final GrOpenBlock block = ((GrMethod)constructor).getBlock();
       if (block != null) {
         final GrStatement[] statements = block.getStatements();
-        if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
-          final GrConstructorInvocation invocation = (GrConstructorInvocation)statements[0];
+        if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation invocation) {
           if (invocation.isThisCall() == processThisRefs &&
               invocation.getManager().areElementsEquivalent(invocation.resolveMethod(), searchedConstructor) &&
               !consumer.process(invocation.getInvokedExpression())) {

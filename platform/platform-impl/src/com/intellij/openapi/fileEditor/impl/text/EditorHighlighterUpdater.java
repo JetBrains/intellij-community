@@ -1,6 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,13 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
- */
 public class EditorHighlighterUpdater {
-  @NotNull protected final Project myProject;
-  @NotNull private final EditorEx myEditor;
-  @Nullable private final VirtualFile myFile;
+  protected final @NotNull Project myProject;
+  protected final @NotNull EditorEx myEditor;
+  private final @Nullable VirtualFile myFile;
 
   public EditorHighlighterUpdater(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull EditorEx editor, @Nullable VirtualFile file) {
     myProject = project;
@@ -58,7 +59,7 @@ public class EditorHighlighterUpdater {
     updateHighlightersOnExtensionsChange(parentDisposable, SyntaxHighlighterLanguageFactory.EP_NAME);
     updateHighlightersOnExtensionsChange(parentDisposable, FileTypeEditorHighlighterProviders.EP_NAME);
 
-    SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedFactoryEPBean>() {
+    SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         checkUpdateHighlighters(extension.key, false);
@@ -69,11 +70,26 @@ public class EditorHighlighterUpdater {
         checkUpdateHighlighters(extension.key, true);
       }
     }, parentDisposable);
+
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        IdeaPluginDescriptor loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
+        ClassLoader pluginClassLoader = loadedPluginDescriptor != null ? loadedPluginDescriptor.getPluginClassLoader() : null;
+        if (myFile != null && pluginClassLoader instanceof PluginAwareClassLoader) {
+          FileType fileType = myFile.getFileType();
+          if (fileType.getClass().getClassLoader() == pluginClassLoader ||
+              (fileType instanceof LanguageFileType && ((LanguageFileType) fileType).getClass().getClassLoader() == pluginClassLoader)) {
+            myEditor.setHighlighter(createHighlighter(true));
+          }
+        }
+      }
+    });
   }
 
   private <T> void updateHighlightersOnExtensionsChange(@NotNull Disposable parentDisposable, @NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
     epName.addExtensionPointListener(
-      new ExtensionPointListener<KeyedLazyInstance<T>>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
           checkUpdateHighlighters(extension.getKey(), false);
@@ -104,7 +120,7 @@ public class EditorHighlighterUpdater {
 
   public void updateHighlightersAsync() {
     ReadAction
-      .nonBlocking(() -> createHighlighter())
+      .nonBlocking(() -> createHighlighter(false))
       .expireWith(myProject)
       .expireWhen(() -> (myFile != null && !myFile.isValid()) || myEditor.isDisposed())
       .coalesceBy(EditorHighlighterUpdater.class, myEditor)
@@ -112,11 +128,11 @@ public class EditorHighlighterUpdater {
       .submit(NonUrgentExecutor.getInstance());
   }
 
-  @NotNull
-  protected EditorHighlighter createHighlighter() {
-    EditorHighlighter highlighter = myFile != null
+  protected @NotNull EditorHighlighter createHighlighter(boolean forceEmpty) {
+    EditorHighlighter highlighter = myFile != null && !forceEmpty
                                     ? EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile)
-                                    : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(HighlighterColors.TEXT));
+                                    : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(),
+                                                                 HighlighterColors.TEXT);
     highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
     return highlighter;
   }
@@ -133,7 +149,7 @@ public class EditorHighlighterUpdater {
 
   private void updateHighlightersSynchronously() {
     if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-      myEditor.setHighlighter(createHighlighter());
+      myEditor.setHighlighter(createHighlighter(false));
     }
   }
 
@@ -148,9 +164,9 @@ public class EditorHighlighterUpdater {
    */
   private final class MyFileTypeListener implements FileTypeListener {
     @Override
-    public void fileTypesChanged(@NotNull final FileTypeEvent event) {
+    public void fileTypesChanged(final @NotNull FileTypeEvent event) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-    // File can be invalid after file type changing. The editor should be removed
+      // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       FileType type = event.getRemovedFileType();
       if (type != null && !(type instanceof AbstractFileType)) {
@@ -162,5 +178,4 @@ public class EditorHighlighterUpdater {
       }
     }
   }
-
 }

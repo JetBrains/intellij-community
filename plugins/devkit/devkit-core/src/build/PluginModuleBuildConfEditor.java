@@ -53,7 +53,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   @NonNls private static final String MANIFEST_MF = "manifest.mf";
 
   public PluginModuleBuildConfEditor(ModuleConfigurationState state) {
-    myModule = state.getRootModel().getModule();
+    myModule = state.getCurrentRootModel().getModule();
     myBuildProperties = PluginBuildConfiguration.getInstance(myModule);
   }
 

@@ -5,10 +5,10 @@ public java.util.LinkedHashMap<java.lang.Integer, java.lang.Integer> getField() 
 public void setField(java.util.LinkedHashMap<java.lang.Integer, java.lang.Integer> field) {
 this.field = field;
 }
-public java.util.List<java.lang.Integer> getSecond() {
+public java.util.ArrayList<java.lang.Integer> getSecond() {
  return second;
 }
-public void setSecond(java.util.List<java.lang.Integer> second) {
+public void setSecond(java.util.ArrayList<java.lang.Integer> second) {
 this.second = second;
 }
 public java.lang.Integer getA() {
@@ -47,7 +47,7 @@ map.put(1, 2);
 map.put(3, 4);
 field = map;}
 private java.util.LinkedHashMap<java.lang.Integer, java.lang.Integer> field;
-private java.util.List<java.lang.Integer> second = new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2, 3));
+private java.util.ArrayList<java.lang.Integer> second = new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2, 3));
 private java.lang.Integer a = 5;
 private java.lang.Integer b = 3;
 {

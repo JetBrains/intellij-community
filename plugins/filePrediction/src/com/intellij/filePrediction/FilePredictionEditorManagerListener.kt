@@ -9,8 +9,10 @@ import com.intellij.openapi.util.registry.Registry
 internal class FilePredictionEditorManagerListener : FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val newFile = event.newFile ?: return
-    if (ApplicationManager.getApplication().isEAP && Registry.get("filePrediction.calculate.features").asBoolean()) {
-      FilePredictionHandler.getInstance()?.onFileOpened(event.manager.project, newFile, event.oldFile)
+    if (shouldRecord()) {
+      FilePredictionHandler.getInstance(event.manager.project)?.onFileSelected(newFile)
     }
   }
+
+  private fun shouldRecord() = ApplicationManager.getApplication().isEAP && Registry.get("filePrediction.calculate.features").asBoolean()
 }

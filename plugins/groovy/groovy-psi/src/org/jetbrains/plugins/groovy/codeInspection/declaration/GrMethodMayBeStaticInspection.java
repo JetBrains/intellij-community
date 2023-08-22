@@ -1,15 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.declaration;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
@@ -26,9 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
-
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GrMethodMayBeStaticInspection extends BaseInspection {
   public boolean myIgnoreTraitMethods = true;
@@ -36,12 +36,11 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
   public boolean myIgnoreEmptyMethods = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(message("method.may.be.static.option.ignore.trait.methods"), "myIgnoreTraitMethods");
-    optionsPanel.addCheckbox(message("method.may.be.static.only.private.or.final.option"), "myOnlyPrivateOrFinal");
-    optionsPanel.addCheckbox(message("method.may.be.static.ignore.empty.method.option"), "myIgnoreEmptyMethods");
-    return optionsPanel;
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("myIgnoreTraitMethods", GroovyBundle.message("method.may.be.static.option.ignore.trait.methods")),
+      checkbox("myOnlyPrivateOrFinal", GroovyBundle.message("method.may.be.static.only.private.or.final.option")),
+      checkbox("myIgnoreEmptyMethods", GroovyBundle.message("method.may.be.static.ignore.empty.method.option")));
   }
 
   @NotNull
@@ -57,7 +56,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
             assert parent instanceof GrMethod : "element: " + element + ", parent:" + parent;
             return ((GrMethod)parent).getModifierList();
           });
-          registerError(method.getNameIdentifierGroovy(), message("method.may.be.static"), new LocalQuickFix[]{modifierFix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          registerError(method.getNameIdentifierGroovy(), GroovyBundle.message("method.may.be.static"), new LocalQuickFix[]{modifierFix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     };
@@ -177,9 +176,8 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
       if (myHaveInstanceRefs) return;
 
       final PsiElement resolvedElement = refElement.resolve();
-      if (!(resolvedElement instanceof PsiClass)) return;
+      if (!(resolvedElement instanceof PsiClass aClass)) return;
 
-      final PsiClass aClass = (PsiClass)resolvedElement;
       final PsiElement scope = aClass.getScope();
 
       if (!(scope instanceof PsiClass)) return;

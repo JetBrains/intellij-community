@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -29,6 +30,7 @@ import javax.swing.*;
  */
 public interface ImageEditor extends Disposable, ImageComponentDecorator {
 
+    @NotNull
     VirtualFile getFile();
 
     Project getProject();

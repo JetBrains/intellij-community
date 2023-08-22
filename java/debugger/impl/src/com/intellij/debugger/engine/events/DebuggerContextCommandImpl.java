@@ -83,16 +83,5 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     }
   }
 
-  /**
-   * @deprecated override {@link #threadAction(SuspendContextImpl)}
-   */
-  @Deprecated
-  public void threadAction() {
-    throw new AbstractMethodError();
-  }
-
-  public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-    //noinspection deprecation
-    threadAction();
-  }
+  public abstract void threadAction(@NotNull SuspendContextImpl suspendContext);
 }

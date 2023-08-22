@@ -30,11 +30,13 @@ import org.jetbrains.annotations.NotNull;
 public class XmlTextContextType extends TemplateContextType {
 
   public XmlTextContextType() {
-    super("XML_TEXT", XmlBundle.message("xml.text"), XmlContextType.class);
+    super(XmlBundle.message("xml.text"));
   }
 
   @Override
-  public boolean isInContext(@NotNull PsiFile file, int offset) {
+  public boolean isInContext(@NotNull TemplateActionContext templateActionContext) {
+    PsiFile file = templateActionContext.getFile();
+    int offset = templateActionContext.getStartOffset();
     if (!XmlContextType.isInXml(file, offset)) return false;
     PsiElement element = file.findElementAt(offset);
     if (element == null) return false;

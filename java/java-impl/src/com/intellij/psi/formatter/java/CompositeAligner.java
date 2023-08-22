@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.alignment.AlignmentStrategy;
@@ -61,7 +61,7 @@ public class CompositeAligner extends ChildAlignmentStrategyProvider {
   /**
    * Stateful object that stores current AlignmentStrategy for AlignmentConfiguration
    */
-  private static class AlignerConfigurationWrapper {
+  private static final class AlignerConfigurationWrapper {
     private final AlignerConfiguration myConfiguration;
     private AlignmentStrategy myCurrentStrategy;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -20,8 +20,7 @@ public abstract class JobScheduler {
    * </ul>
    * If you need to execute only one task (when it's ready) at a time, you can use {@link AppExecutorUtil#createBoundedScheduledExecutorService(String, int)}.
    */
-  @NotNull
-  public static ScheduledExecutorService getScheduler() {
+  public static @NotNull ScheduledExecutorService getScheduler() {
     return AppExecutorUtil.getAppScheduledExecutorService();
   }
 }

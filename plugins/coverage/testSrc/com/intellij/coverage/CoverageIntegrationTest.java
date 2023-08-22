@@ -1,25 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.testFramework.JavaModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author yole
- */
 @ExcludeFromTestDiscovery
 public class CoverageIntegrationTest extends JavaModuleTestCase {
   private static String getTestDataPath() {
@@ -27,19 +27,15 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
   }
 
   @Override
-  protected void setUpProject() throws Exception {
-    String testDataPath = getTestDataPath();
-    myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get(testDataPath));
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
-    runStartupActivities();
+  protected void setUpProject() {
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(getTestDataPath()), getTestRootDisposable());
   }
 
   public void testSimple() {
     CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage");
     PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("foo");
-    PackageAnnotator annotator = new PackageAnnotator(psiPackage);
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
-    annotator.annotate(bundle, consumer);
+    new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitRootPackage(psiPackage);
     PackageAnnotator.ClassCoverageInfo barClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
     assertEquals(3, barClassCoverage.totalMethodCount);
     assertEquals(1, barClassCoverage.coveredMethodCount);
@@ -60,6 +56,19 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     assertEquals(LineCoverage.PARTIAL, classData.getStatus("method1()I").intValue());
   }
 
+  public void testHTMLReport() throws IOException {
+    CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage");
+    File htmlDir = Files.createTempDirectory("html").toFile();
+    try {
+      ExportToHTMLSettings.getInstance(myProject).OUTPUT_DIRECTORY = htmlDir.getAbsolutePath();
+      new IDEACoverageRunner().generateReport(bundle, myProject);
+      assertTrue(htmlDir.exists());
+      assertTrue(new File(htmlDir, "index.html").exists());
+    } finally {
+      htmlDir.delete();
+    }
+  }
+
   private CoverageSuitesBundle loadCoverageSuite(Class<? extends CoverageRunner> coverageRunnerClass, String coverageDataPath) {
     File coverageFile = new File(getTestDataPath(), coverageDataPath);
     CoverageRunner runner = CoverageRunner.getInstance(coverageRunnerClass);
@@ -72,14 +81,10 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
   }
 
   private static class PackageAnnotationConsumer implements PackageAnnotator.Annotator {
-    private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirectoryCoverage =
-      new HashMap<>();
-    private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverage =
-      new HashMap<>();
-    private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlatPackageCoverage =
-      new HashMap<>();
-    private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfo =
-      new HashMap<>();
+    private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirectoryCoverage = new HashMap<>();
+    private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverage = new HashMap<>();
+    private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlatPackageCoverage = new HashMap<>();
+    private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfo = new HashMap<>();
 
     @Override
     public void annotateSourceDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {

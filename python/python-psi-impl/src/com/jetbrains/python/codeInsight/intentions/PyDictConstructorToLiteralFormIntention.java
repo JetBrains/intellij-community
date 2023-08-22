@@ -86,7 +86,7 @@ public class PyDictConstructorToLiteralFormIntention extends PyBaseIntentionActi
 
     }
     PyDictLiteralExpression dict = (PyDictLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpressionStatement.class,
-                                                "{" + stringBuilder.toString() + "}").getExpression();
+                                                                                            "{" + stringBuilder + "}").getExpression();
     expression.replace(dict);
   }
 }

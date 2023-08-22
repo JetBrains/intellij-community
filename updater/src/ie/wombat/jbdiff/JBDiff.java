@@ -29,8 +29,12 @@ package ie.wombat.jbdiff;
 import com.intellij.updater.Utils;
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 
-import java.io.*;
-import java.util.Stack;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -39,7 +43,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author <a href="maito:jdesbonnet@gmail.com">Joe Desbonnet</a>
  */
-public class JBDiff {
+public final class JBDiff {
   private static void selectSplit(int[] I, int[] V, int start, int len, int h) {
     int j;
     for (int k = start; k < start + len; k += j) {
@@ -67,8 +71,8 @@ public class JBDiff {
   }
 
   private static void split(int[] I, int[] V, int initStart, int initLen, int h) {
-    Stack<Integer> startStack = new Stack<>();
-    Stack<Integer> lenStack = new Stack<>();
+    Deque<Integer> startStack = new ArrayDeque<>();
+    Deque<Integer> lenStack = new ArrayDeque<>();
     startStack.push(initStart);
     lenStack.push(initLen);
     while (!startStack.isEmpty()) {
@@ -223,7 +227,7 @@ public class JBDiff {
    * Count the number of bytes that match in oldBuf (starting at offset oldOffset) and newBuf (starting at offset newOffset).
    */
   private static int matchLen(byte[] oldBuf, int oldOffset, byte[] newBuf, int newOffset) {
-    int end = min(oldBuf.length - oldOffset, newBuf.length - newOffset);
+    int end = Math.min(oldBuf.length - oldOffset, newBuf.length - newOffset);
     for (int i = 0; i < end; i++) {
       if (oldBuf[oldOffset + i] != newBuf[newOffset + i]) {
         return i;
@@ -255,7 +259,7 @@ public class JBDiff {
     }
   }
 
-  public static byte[] bsdiff(InputStream oldFileIn, InputStream newFileIn, OutputStream diffFileOut) throws IOException {
+  public static byte[] bsdiff(InputStream oldFileIn, InputStream newFileIn, ByteArrayOutputStream diffFileOut, int timeout) throws IOException {
     byte[] oldBuf = Utils.readBytes(oldFileIn);
     int oldSize = oldBuf.length;
 
@@ -307,7 +311,14 @@ public class JBDiff {
     IntByRef pos = new IntByRef();
     int ctrlBlockLen = 0;
 
+    long stop = timeout > 0 ? System.nanoTime() + timeout * 1_000_000_000L : 0;
+
     while (scan < newSize) {
+      if (stop != 0 && System.nanoTime() > stop) {
+        diffFileOut.reset();
+        return newBuf;
+      }
+
       oldScore = 0;
 
       for (scSc = scan += len; scan < newSize; scan++) {
@@ -410,19 +421,19 @@ public class JBDiff {
     I = null;
 
     /* Write diff block */
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPOutputStream dbOut = new GZIPOutputStream(diffOut);
+    GZIPOutputStream dbOut = new GZIPOutputStream(diffOut);
     dbOut.write(db, 0, dbLen);
     dbOut.finish();
     int diffBlockLen = diffOut.size() - ctrlBlockLen;
 
     /* Write extra block */
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPOutputStream ebOut = new GZIPOutputStream(diffOut);
+    GZIPOutputStream ebOut = new GZIPOutputStream(diffOut);
     ebOut.write(eb, 0, ebLen);
     ebOut.finish();
 
     diffOut.close();
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream headerStream = new DataOutputStream(diffFileOut);
+    DataOutputStream headerStream = new DataOutputStream(diffFileOut);
     headerStream.writeLong(ctrlBlockLen);  // ctrlBlockLen (compressed)
     headerStream.writeLong(diffBlockLen);  // diffBlockLen (compressed)
     headerStream.writeLong(newSize);
@@ -435,10 +446,6 @@ public class JBDiff {
 
   private static class IntByRef {
     public int value;
-  }
-
-  private static int min(int x, int y) {
-    return x < y ? x : y;
   }
 
   private static void swap(int[] array, int i, int j) {

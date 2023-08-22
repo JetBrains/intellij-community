@@ -9,16 +9,14 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonDocTestRunConfiguration>
                                           implements PythonDocTestRunConfigurationParams {
-  protected String myPluralTitle = "Doctests";
-  protected String myTitle = "Doctest";
+  protected @NlsSafe String myPluralTitle = "Doctests";
+  protected @NlsSafe String myTitle = "Doctest";
   public PythonDocTestRunConfiguration(Project project,
                                        ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -32,16 +30,6 @@ public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunCo
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     return new PythonDocTestCommandLineState(this, env);
-  }
-
-  @Override
-  public void readExternal(@NotNull Element element) throws InvalidDataException {
-    super.readExternal(element);
-  }
-
-  @Override
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    super.writeExternal(element);
   }
 
   @Override

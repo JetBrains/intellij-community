@@ -18,7 +18,7 @@ package com.intellij.codeInsight.template.emmet.tokens;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -83,12 +83,12 @@ public class TemplateToken extends ZenCodingToken {
     return PsiTreeUtil.findChildOfType(myFile, XmlTag.class);
   }
   
-  public void setTemplateText(@NotNull String templateText, @NotNull CustomTemplateCallback callback) {
-    PsiFile file = PsiFileFactory.getInstance(callback.getProject())
-      .createFileFromText("dummy.html", callback.getFile().getLanguage(), templateText, true, true);
+  public void setTemplateText(@NotNull String templateText, @NotNull PsiFile context) {
+    PsiFile file = PsiFileFactory.getInstance(context.getProject())
+      .createFileFromText("dummy.html", context.getLanguage(), templateText, false, true);
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null) {
-      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+      UndoUtil.disableUndoFor(vFile);
     }
     setFile(file);
   }
@@ -100,7 +100,7 @@ public class TemplateToken extends ZenCodingToken {
 
   public void setTemplate(@NotNull TemplateImpl template, @NotNull CustomTemplateCallback callback) {
     myTemplate = template;
-    setTemplateText(createTemplateText(template, callback, getAttributes()), callback);
+    setTemplateText(createTemplateText(template, callback, getAttributes()), callback.getFile());
   }
 
   private static boolean containsAttrsVar(@NotNull TemplateImpl template) {

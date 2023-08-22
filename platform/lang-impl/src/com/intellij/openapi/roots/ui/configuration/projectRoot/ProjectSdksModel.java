@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.execution.wsl.WslPath;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,17 +19,21 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
  * @author anna
@@ -117,6 +123,7 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void disposeUIResources() {
+    StreamEx.ofValues(myProjectSdks).select(Disposable.class).forEach(Disposer::dispose);
     myProjectSdks.clear();
     myInitialized = false;
   }
@@ -294,11 +301,31 @@ public class ProjectSdksModel implements SdkModel {
     private JComponent myParentOverride;
     private Consumer<? super Sdk> myCallbackOverride;
 
+    @NotNull @ListItem private final String myListItemText;
+    /** this is the text that is shown for the item in the nested list pop-up of SdkPopup **/
+    @NotNull @ListItem private final String myListSubItemText;
+
     private NewSdkAction(@NotNull SdkType sdkType,
-                         @Nls(capitalization = Nls.Capitalization.Title) @Nullable String text,
+                         @NotNull @ActionText String actionText,
+                         @NotNull @ListItem String listItemText,
+                         @NotNull @ListItem String listSubItemText,
                          @Nullable Icon icon) {
-      super(text, null, icon);
+      super(actionText, null, icon);
+      myListItemText = listItemText;
+      myListSubItemText = listSubItemText;
       mySdkType = sdkType;
+    }
+
+    @NotNull
+    @ListItem
+    public final String getListItemText() {
+      return myListItemText;
+    }
+
+    @NotNull
+    @ListItem
+    public final String getListSubItemText() {
+      return myListSubItemText;
     }
 
     @NotNull
@@ -338,8 +365,11 @@ public class ProjectSdksModel implements SdkModel {
       SdkDownload downloadExtension = SdkDownload.EP_NAME.findFirstSafe(it -> it.supportsDownload(type));
       if (downloadExtension == null) continue;
 
-      String downloadText = ProjectBundle.message("sdk.configure.download.subAction", type.getPresentableName());
-      NewSdkAction downloadAction = new NewSdkAction(type, downloadText, downloadExtension.getIconForDownloadAction(type)) {
+      String text = ProjectBundle.message("sdk.configure.download.action", type.getPresentableName());
+      String title = ProjectBundle.message("sdk.configure.download.actionTitle", type.getPresentableName());
+      String subText = ProjectBundle.message("sdk.configure.download.subAction", type.getPresentableName());
+
+      NewSdkAction downloadAction = new NewSdkAction(type, title, text, subText, downloadExtension.getIconForDownloadAction(type)) {
         @Override
         public void actionPerformed(@Nullable Sdk selectedSdk,
                                     @NotNull JComponent parent,
@@ -353,18 +383,33 @@ public class ProjectSdksModel implements SdkModel {
     return result;
   }
 
+  protected boolean forceAddActionToSelectFromDisk(@NotNull SdkType type) {
+    return false;
+  }
+
   @NotNull
   public Map<SdkType, NewSdkAction> createAddActions(@Nullable Condition<? super SdkTypeId> filter) {
     Map<SdkType, NewSdkAction> result = new LinkedHashMap<>();
     for (final SdkType type : getAddableSdkTypes(filter)) {
-      String addOnDiskText = ProjectBundle.message("sdk.configure.add.sdkType.subAction", type.getPresentableName());
+      String sdkPresentableName = type.getPresentableName(), text, title, subText;
 
-      NewSdkAction addAction = new NewSdkAction(type, addOnDiskText, type.getIconForAddAction()) {
+      boolean isForce = forceAddActionToSelectFromDisk(type);
+      if (isForce) {
+        text = ProjectBundle.message("sdk.configure.addFromDisk.sdkType.action", sdkPresentableName);
+        title = ProjectBundle.message("sdk.configure.addFromDisk.sdkType.actionTitle", sdkPresentableName);
+        subText = ProjectBundle.message("sdk.configure.addFromDisk.sdkType.subAction", sdkPresentableName);
+      } else {
+        text = ProjectBundle.message("sdk.configure.add.sdkType.action", sdkPresentableName);
+        title = ProjectBundle.message("sdk.configure.add.sdkType.actionTitle", sdkPresentableName);
+        subText = ProjectBundle.message("sdk.configure.add.sdkType.subAction", sdkPresentableName);
+      }
+
+      NewSdkAction addAction = new NewSdkAction(type, title, text, subText, type.getIcon()) {
         @Override
         public void actionPerformed(@Nullable Sdk selectedSdk,
                                     @NotNull JComponent parent,
                                     @NotNull Consumer<? super Sdk> callback) {
-          if (type.supportsCustomCreateUI()) {
+          if (!isForce && type.supportsCustomCreateUI()) {
             type.showCustomCreateUI(ProjectSdksModel.this, parent, selectedSdk, sdk -> setupSdk(sdk, callback));
           } else {
             SdkConfigurationUtil.selectSdkHome(type, home -> addSdk(type, home, callback));
@@ -434,6 +479,9 @@ public class ProjectSdksModel implements SdkModel {
     // model with an expectation it would be updated later on
     String suggestedName = item.getSuggestedSdkName();
     String homeDir = FileUtil.toSystemIndependentName(item.getPlannedHomeDir());
+    if (WslPath.isWslUncPath(homeDir)) {
+      suggestedName += " (WSL)";
+    }
     Sdk sdk = createSdk(type, suggestedName, homeDir);
 
     SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();

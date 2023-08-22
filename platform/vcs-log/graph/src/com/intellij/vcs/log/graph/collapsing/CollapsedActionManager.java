@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class CollapsedActionManager {
+final class CollapsedActionManager {
 
   @Nullable
   public static LinearGraphAnswer performAction(@NotNull CollapsedController graphController, @NotNull LinearGraphAction action) {
@@ -75,14 +75,14 @@ class CollapsedActionManager {
     Set<GraphAction.Type> supportedActionTypes();
   }
 
-  private static class ActionContext {
+  private static final class ActionContext {
     @NotNull private final CollapsedGraph myCollapsedGraph;
     @NotNull private final LinearGraphAction myGraphAction;
     @NotNull private final FragmentGenerators myDelegatedFragmentGenerators;
     @NotNull private final FragmentGenerators myCompiledFragmentGenerators;
 
     private ActionContext(@NotNull CollapsedGraph collapsedGraph,
-                          @NotNull PermanentGraphInfo permanentGraphInfo,
+                          @NotNull PermanentGraphInfo<?> permanentGraphInfo,
                           @NotNull LinearGraphAction graphAction) {
       myCollapsedGraph = collapsedGraph;
       myGraphAction = graphAction;
@@ -131,7 +131,7 @@ class CollapsedActionManager {
     }
   }
 
-  private static class FragmentGenerators {
+  private static final class FragmentGenerators {
     @NotNull private final FragmentGenerator fragmentGenerator;
     @NotNull private final LinearFragmentGenerator linearFragmentGenerator;
 
@@ -192,14 +192,13 @@ class CollapsedActionManager {
     @NotNull
     @Override
     public Set<GraphAction.Type> supportedActionTypes() {
-      return ContainerUtil.set(GraphAction.Type.MOUSE_CLICK, GraphAction.Type.MOUSE_OVER);
+      return Set.of(GraphAction.Type.MOUSE_CLICK, GraphAction.Type.MOUSE_OVER);
     }
   };
 
   private final static ActionCase EXPAND_ALL = new ActionCase() {
-    @Nullable
     @Override
-    public LinearGraphAnswer performAction(@NotNull ActionContext context) {
+    public @NotNull LinearGraphAnswer performAction(@NotNull ActionContext context) {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
@@ -214,9 +213,8 @@ class CollapsedActionManager {
   };
 
   private final static ActionCase COLLAPSE_ALL = new ActionCase() {
-    @Nullable
     @Override
-    public LinearGraphAnswer performAction(@NotNull ActionContext context) {
+    public @NotNull LinearGraphAnswer performAction(@NotNull ActionContext context) {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
@@ -258,7 +256,7 @@ class CollapsedActionManager {
         int downNodeIndex = context.convertToDelegateNodeIndex(assertInt(dottedEdge.getDownNodeIndex()));
 
         if (context.getActionType() == GraphAction.Type.MOUSE_OVER) {
-          return LinearGraphUtils.createSelectedAnswer(context.getDelegatedGraph(), ContainerUtil.set(upNodeIndex, downNodeIndex));
+          return LinearGraphUtils.createSelectedAnswer(context.getDelegatedGraph(), Set.of(upNodeIndex, downNodeIndex));
         }
 
         Set<Integer> middleNodes = context.myDelegatedFragmentGenerators.fragmentGenerator.getMiddleNodes(upNodeIndex, downNodeIndex, true);
@@ -279,7 +277,7 @@ class CollapsedActionManager {
     @NotNull
     @Override
     public Set<GraphAction.Type> supportedActionTypes() {
-      return ContainerUtil.set(GraphAction.Type.MOUSE_CLICK, GraphAction.Type.MOUSE_OVER);
+      return Set.of(GraphAction.Type.MOUSE_CLICK, GraphAction.Type.MOUSE_OVER);
     }
   };
 
@@ -313,8 +311,7 @@ class CollapsedActionManager {
     if (graphElement == null) return null;
 
     if (graphElement instanceof GraphEdge && ((GraphEdge)graphElement).getType() == GraphEdgeType.DOTTED) return (GraphEdge)graphElement;
-    if (graphElement instanceof GraphNode) {
-      GraphNode node = (GraphNode)graphElement;
+    if (graphElement instanceof GraphNode node) {
       for (GraphEdge edge : graph.getAdjacentEdges(node.getNodeIndex(), EdgeFilter.NORMAL_ALL)) {
         if (edge.getType() == GraphEdgeType.DOTTED) return edge;
       }

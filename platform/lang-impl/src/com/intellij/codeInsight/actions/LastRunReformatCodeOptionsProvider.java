@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -20,12 +6,13 @@ import com.intellij.lang.Language;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class LastRunReformatCodeOptionsProvider {
+public final class LastRunReformatCodeOptionsProvider {
 
   private static final String OPTIMIZE_IMPORTS_KEY     = "LayoutCode.optimizeImports";
   private static final String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
   private static final String CODE_CLEANUP_KEY         = "LayoutCode.codeCleanup";
   private static final String PROCESS_CHANGED_TEXT_KEY = "LayoutCode.processChangedText";
+  private static final String DO_NOT_KEEP_LINE_BREAKS_KEY = "LayoutCode.doNotKeepLineBreaks";
 
   private final PropertiesComponent myPropertiesComponent;
 
@@ -86,6 +73,14 @@ public class LastRunReformatCodeOptionsProvider {
   public boolean isRearrangeCode(@NotNull Language language) {
     String key = getRearrangeCodeKeyFor(language);
     return myPropertiesComponent.getBoolean(key);
+  }
+
+  public boolean isDoNotKeepLineBreaks() {
+    return myPropertiesComponent.getBoolean(DO_NOT_KEEP_LINE_BREAKS_KEY);
+  }
+
+  public void setDoNotKeepLineBreaks(boolean value) {
+    myPropertiesComponent.setValue(DO_NOT_KEEP_LINE_BREAKS_KEY, value);
   }
 
   private static String getRearrangeCodeKeyFor(@NotNull Language language) {

@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.highlighting;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -26,9 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class PythonColorsPage implements RainbowColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor(PyBundle.message("python.colors.number"), PyHighlighter.PY_NUMBER),
@@ -54,6 +51,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor(PyBundle.message("python.colors.braces.and.operators.dot"), PyHighlighter.PY_DOT),
     
     new AttributesDescriptor(PyBundle.message("python.colors.functions.function.definition"), PyHighlighter.PY_FUNC_DEFINITION),
+    new AttributesDescriptor(PyBundle.message("python.colors.functions.nested.function.definition"), PyHighlighter.PY_NESTED_FUNC_DEFINITION),
     new AttributesDescriptor(PyBundle.message("python.colors.functions.function.call"), PyHighlighter.PY_FUNCTION_CALL),
     new AttributesDescriptor(PyBundle.message("python.colors.functions.method.call"), PyHighlighter.PY_METHOD_CALL),
     
@@ -69,6 +67,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor(PyBundle.message("python.colors.decorator"), PyHighlighter.PY_DECORATOR),
     new AttributesDescriptor(PyBundle.message("python.colors.class.definition"), PyHighlighter.PY_CLASS_DEFINITION),
     new AttributesDescriptor(PyBundle.message("python.colors.type.annotation"), PyHighlighter.PY_ANNOTATION),
+    new AttributesDescriptor(PyBundle.message("python.colors.local.variables"), PyHighlighter.PY_LOCAL_VARIABLE),
   };
 
   @NonNls private static final Map<String,TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()
@@ -78,6 +77,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     .put("predefined", PyHighlighter.PY_PREDEFINED_DEFINITION)
     .put("predefinedUsage", PyHighlighter.PY_PREDEFINED_USAGE)
     .put("funcDef", PyHighlighter.PY_FUNC_DEFINITION)
+    .put("nestedFuncDef", PyHighlighter.PY_NESTED_FUNC_DEFINITION)
     .put("classDef", PyHighlighter.PY_CLASS_DEFINITION)
     .put("builtin", PyHighlighter.PY_BUILTIN_NAME)
     .put("self", PyHighlighter.PY_SELF_PARAMETER)
@@ -86,7 +86,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     .put("call", PyHighlighter.PY_FUNCTION_CALL)
     .put("mcall", PyHighlighter.PY_METHOD_CALL)
     .put("annotation", PyHighlighter.PY_ANNOTATION)
-    .put("localVar", DefaultLanguageHighlighterColors.LOCAL_VARIABLE)
+    .put("localVar", PyHighlighter.PY_LOCAL_VARIABLE)
     .putAll(RainbowHighlighter.createRainbowHLM())
     .build();
 
@@ -127,22 +127,28 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     return
       "@<decorator>decorator</decorator>(<kwarg>param</kwarg>=1)\n" +
       "def f(<param>x</param>):\n" +
-      "    <docComment>\"\"\" Syntax Highlighting Demo\n" +
-      "        <docCommentTag>@param</docCommentTag> x Parameter\n" +
-      "" +
-      RainbowHighlighter.generatePaletteExample("\n        ") + "\n" +
+      "    <docComment>\"\"\"\n" +
+      "    Syntax Highlighting Demo\n" +
+      "    <docCommentTag>@param</docCommentTag> x Parameter\n" +
+      RainbowHighlighter.generatePaletteExample("\n    ") + "\n" +
       "    \"\"\"</docComment>\n" +
+      "\n" +
+      "    def <nestedFuncDef>nested_func</nestedFuncDef>(<param>y</param>):\n" +
+      "        <call>print</call>(<param>y</param> + 1)\n" +
+      "\n" +
       "    <localVar>s</localVar> = (\"Test\", 2+3, {'a': 'b'}, f'{<param>x</param>!s:{\"^10\"}}')   # Comment\n" +
-      "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower()</mcall>)\n" +
+      "    <call>f</call>(<localVar>s</localVar>[0].<mcall>lower</mcall>())\n" +
+      "    <call>nested_func</call>(42)\n" +
       "\n" +
       "class <classDef>Foo</classDef>:\n" +
       "    tags: <annotation>List[<builtin>str</builtin>]</annotation>\n" +
+      "\n" +
       "    def <predefined>__init__</predefined>(<self>self</self>: <annotation>Foo</annotation>):\n" +
       "        <localVar>byte_string</localVar>: <annotation><builtin>bytes</builtin></annotation> = b'newline:\\n also newline:\\x0a'\n" +
       "        <localVar>text_string</localVar> = u\"Cyrillic Я is \\u042f. Oops: \\u042g\"\n" +
-      "        <self>self</self>.<mcall>makeSense</mcall>(<kwarg>whatever</kwarg>=1)\n" +
+      "        <self>self</self>.<mcall>make_sense</mcall>(<kwarg>whatever</kwarg>=1)\n" +
       "    \n" +
-      "    def <funcDef>makeSense</funcDef>(<self>self</self>, <param>whatever</param>):\n" +
+      "    def <funcDef>make_sense</funcDef>(<self>self</self>, <param>whatever</param>):\n" +
       "        <self>self</self>.sense = <param>whatever</param>\n" +
       "\n" +
       "<localVar>x</localVar> = <builtin>len</builtin>('abc')\n" +

@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
-/**
- * @author peter
- */
 public class DomCompletionContributor extends CompletionContributor{
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();
 

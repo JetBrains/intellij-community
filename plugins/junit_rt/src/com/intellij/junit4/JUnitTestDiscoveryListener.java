@@ -19,10 +19,12 @@ import com.intellij.execution.TestDiscoveryListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListenerEx;
 
 public class JUnitTestDiscoveryListener extends TestDiscoveryListener implements IDEAJUnitListenerEx {
+  @Override
   public String getFrameworkId() {
     return "j";
   }
 
+  @Override
   public void testFinished(String className, String methodName) {
     testFinished(className, methodName, true);
   }

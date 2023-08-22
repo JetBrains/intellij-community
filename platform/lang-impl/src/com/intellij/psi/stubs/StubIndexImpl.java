@@ -1,100 +1,77 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.google.common.util.concurrent.Futures;
 import com.intellij.openapi.application.AppUIExecutor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.util.CachedValueImpl;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.Processors;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
-import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
-import com.intellij.util.indexing.impl.RemovedKeyProcessor;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
+import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.VoidDataExternalizer;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
+import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.function.IntPredicate;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-@State(name = "FileBasedIndex", storages = @Storage(StoragePathMacros.CACHE_FILE))
-public final class StubIndexImpl extends StubIndexEx implements PersistentStateComponent<StubIndexState> {
-  private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
+public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
-  private static final class AsyncState {
-    private final Map<StubIndexKey<?, ?>, UpdatableIndex<?, Void, FileContent>> myIndices = new THashMap<>();
-    private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<>();
+  public enum PerFileElementTypeStubChangeTrackingSource {
+    Disabled,
+    ChangedFilesCollector
+  }
+  public static final PerFileElementTypeStubChangeTrackingSource PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE;
+  static {
+    int sourceId = SystemProperties.getIntProperty("stub.index.per.file.element.type.stub.change.tracking.source", 1);
+    PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE = PerFileElementTypeStubChangeTrackingSource.values()[sourceId];
   }
 
-  private final Map<StubIndexKey<?, ?>, CachedValue<Map<CompositeKey<?>, StubIdList>>> myCachedStubIds = FactoryMap.createMap(k -> {
-    UpdatableIndex<Integer, SerializedStubTree, FileContent> index = getStubUpdatingIndex();
-    ModificationTracker tracker = index::getModificationStamp;
-    return new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(new ConcurrentHashMap<>(), tracker));
-  }, ConcurrentHashMap::new);
 
-  private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
-  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
+  private static final class AsyncState {
+    private final Map<StubIndexKey<?, ?>, UpdatableIndex<?, Void, FileContent, ?>> myIndices =
+      CollectionFactory.createSmallMemoryFootprintMap();
+  }
+
+  private final AtomicBoolean myForcedClean = new AtomicBoolean();
   private volatile CompletableFuture<AsyncState> myStateFuture;
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
-  private StubIndexState myPreviouslyRegistered;
+  private final @NotNull PerFileElementTypeStubModificationTracker myPerFileElementTypeStubModificationTracker;
 
   public StubIndexImpl() {
-    StubIndexExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<StubIndexExtension<?, ?>>() {
+    StubIndexExtension.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull StubIndexExtension<?, ?> extension, @NotNull PluginDescriptor pluginDescriptor) {
         ID.unloadId(extension.getKey());
       }
-    }, ApplicationManager.getApplication());
-  }
-
-  static @Nullable StubIndexImpl getInstanceOrInvalidate() {
-    if (ourForcedClean.compareAndSet(null, Boolean.TRUE)) {
-      return null;
-    }
-    return (StubIndexImpl)getInstance();
+    }, null);
+    myPerFileElementTypeStubModificationTracker = new PerFileElementTypeStubModificationTracker();
   }
 
   private AsyncState getAsyncState() {
@@ -103,58 +80,36 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
       if (myStateFuture == null) {
         ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitUntilIndicesAreInitialized();
       }
-      myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+      if (ProgressManager.getInstance().isInNonCancelableSection()) {
+        try {
+          state = Futures.getUnchecked(myStateFuture);
+        }
+        catch (Exception e) {
+          FileBasedIndexImpl.LOG.error(e);
+        }
+      }
+      else {
+        CompletableFuture<AsyncState> future = myStateFuture;
+        if (future == null) {
+          throw new AlreadyDisposedException("Stub Index is already disposed");
+        }
+        state = ProgressIndicatorUtils.awaitWithCheckCanceled(future);
+      }
+      myState = state;
     }
     return state;
   }
 
-  public static @NotNull <K> FileBasedIndexExtension<K, Void> wrapStubIndexExtension(StubIndexExtension<K, ?> extension) {
-    return new FileBasedIndexExtension<K, Void>() {
-      @Override
-      public @NotNull ID<K, Void> getName() {
-        //noinspection unchecked
-        return (ID<K, Void>)extension.getKey();
-      }
+  @ApiStatus.Internal
+  @TestOnly
+  public void waitUntilStubIndexedInitialized() {
+    getAsyncState();
+  }
 
-      @Override
-      public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-        return f -> {
-          throw new UnsupportedOperationException();
-        };
-      }
-
-      @Override
-      public boolean dependsOnFileContent() {
-        return true;
-      }
-
-      @Override
-      public @NotNull DataIndexer<K, Void, FileContent> getIndexer() {
-        return i -> {
-          throw new AssertionError();
-        };
-      }
-
-      @Override
-      public @NotNull KeyDescriptor<K> getKeyDescriptor() {
-        return extension.getKeyDescriptor();
-      }
-
-      @Override
-      public @NotNull DataExternalizer<Void> getValueExternalizer() {
-        return VoidDataExternalizer.INSTANCE;
-      }
-
-      @Override
-      public int getVersion() {
-        return extension.getVersion();
-      }
-
-      @Override
-      public boolean traceKeyHashToVirtualFileMapping() {
-        return extension instanceof StringStubIndexExtension && ((StringStubIndexExtension<?>)extension).traceKeyHashToVirtualFileMapping();
-      }
-    };
+  @Override
+  public void initializationFailed(@NotNull Throwable error) {
+    myStateFuture = new CompletableFuture<>();
+    myStateFuture.completeExceptionally(error);
   }
 
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
@@ -164,60 +119,34 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
     FileBasedIndexExtension<K, Void> wrappedExtension = wrapStubIndexExtension(extension);
-    synchronized (state) {
-      state.myIndexIdToVersionMap.put(indexKey, version);
-    }
 
-    final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
-
-    IndexingStamp.IndexVersionDiff versionDiff = forceClean
-                                                 ? new IndexingStamp.IndexVersionDiff.InitialBuild(version)
-                                                 : IndexingStamp.versionDiffers(indexKey, version);
+    Path indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
+    IndexVersion.IndexVersionDiff versionDiff = forceClean
+                                                 ? new IndexVersion.IndexVersionDiff.InitialBuild(version)
+                                                 : IndexVersion.versionDiffers(indexKey, version);
 
     registrationResultSink.setIndexVersionDiff(indexKey, versionDiff);
-    if (versionDiff != IndexingStamp.IndexVersionDiff.UP_TO_DATE) {
-      final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
-      final boolean versionFileExisted = versionFile.exists();
-
-      final String[] children = indexRootDir.list();
-      // rebuild only if there exists what to rebuild
-      boolean indexRootHasChildren = children != null && children.length > 0;
-      boolean needRebuild = !forceClean && (versionFileExisted || indexRootHasChildren);
-
-      if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
-      IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices
+    if (versionDiff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
+      FileUtil.deleteWithRenamingIfExists(indexRootDir);
+      IndexVersion.rewriteVersion(indexKey, version);
 
       try {
-        if (needRebuild) {
-          for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-            ex.onStubIndexVersionChanged(indexKey);
-          }
+        for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+          ex.onStubIndexVersionChanged(indexKey);
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.error(e);
       }
     }
 
-    UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = getStubUpdatingIndex();
-    ReadWriteLock lock = stubUpdatingIndex.getLock();
-
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final VfsAwareIndexStorage<K, Void> storage = FileBasedIndex.USE_IN_MEMORY_INDEX
-                                                      ? new InMemoryIndexStorage<>()
-                                                      : new VfsAwareMapIndexStorage<>(
-          IndexInfrastructure.getStorageFile(indexKey).toPath(),
-          wrappedExtension.getKeyDescriptor(),
-          wrappedExtension.getValueExternalizer(),
-          wrappedExtension.getCacheSize(),
-          wrappedExtension.keyIsUniqueForIndexedFile(),
-          wrappedExtension.traceKeyHashToVirtualFileMapping()
-        );
-        final TransientChangesIndexStorage<K, Void> memStorage = new TransientChangesIndexStorage<>(storage, indexKey);
-        UpdatableIndex<K, Void, FileContent> index = new VfsAwareMapReduceIndex<>(wrappedExtension, memStorage, null, null, null, lock);
+        UpdatableIndex<K, Void, FileContent, ?> index =
+          TransientFileContentIndex.createIndex(wrappedExtension, new StubIndexStorageLayout<>(wrappedExtension, indexKey));
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-          UpdatableIndex<K, Void, FileContent> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
+          UpdatableIndex<K, Void, FileContent, ?> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
           if (intermediateIndex != null) {
             index = intermediateIndex;
           }
@@ -229,12 +158,14 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
         break;
       }
       catch (IOException e) {
-        registrationResultSink.setIndexVersionDiff(indexKey, new IndexingStamp.IndexVersionDiff.CorruptedRebuild(version));
+        registrationResultSink.setIndexVersionDiff(indexKey, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
       catch (RuntimeException e) {
-        Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
-        if (cause == null) throw e;
+        Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+        if (cause == null) {
+          throw e;
+        }
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
     }
@@ -242,15 +173,15 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
 
   private static <K> void onExceptionInstantiatingIndex(@NotNull StubIndexKey<K, ?> indexKey,
                                                         int version,
-                                                        @NotNull File indexRootDir,
+                                                        @NotNull Path indexRootDir,
                                                         @NotNull Exception e) throws IOException {
     LOG.info(e);
-    FileUtil.deleteWithRenaming(indexRootDir);
-    IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices
+    FileUtil.deleteWithRenaming(indexRootDir.toFile());
+    IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
   }
 
   public long getIndexModificationStamp(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
-    UpdatableIndex<?, Void, FileContent> index = getAsyncState().myIndices.get(indexId);
+    UpdatableIndex<?, Void, FileContent, ?> index = getAsyncState().myIndices.get(indexId);
     if (index != null) {
       FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
       return index.getModificationStamp();
@@ -258,104 +189,28 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
     return -1;
   }
 
+  /**
+   * @implNote obtaining modification stamps might be expensive due to execution of StubIndex update on each invocation
+   */
+  @ApiStatus.Experimental
+  public @NotNull ModificationTracker getIndexModificationTracker(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
+    return () -> getIndexModificationStamp(indexId, project);
+  }
+
   public void flush() throws StorageException {
     if (!myInitialized) {
       return;
     }
-    for (UpdatableIndex<?, Void, FileContent> index : getAsyncState().myIndices.values()) {
+    for (UpdatableIndex<?, Void, FileContent, ?> index : getAsyncState().myIndices.values()) {
       index.flush();
     }
   }
 
-
+  @ApiStatus.Internal
   @Override
-  public <Key, Psi extends PsiElement> boolean processElements(final @NotNull StubIndexKey<Key, Psi> indexKey,
-                                                               final @NotNull Key key,
-                                                               final @NotNull Project project,
-                                                               final @Nullable GlobalSearchScope scope,
-                                                               @Nullable IdFilter idFilter,
-                                                               final @NotNull Class<Psi> requiredClass,
-                                                               final @NotNull Processor<? super Psi> processor) {
-    boolean dumb = DumbService.isDumb(project);
-    if (dumb) {
-      DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
-      if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
-        throw new AssertionError("raw index data access is not available for StubIndex");
-      }
-    }
-
-    IdIterator ids = getContainingIds(indexKey, key, project, idFilter, scope);
-    PersistentFS fs = PersistentFS.getInstance();
-    IntPredicate accessibleFileFilter = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getAccessibleFileIdFilter(project);
-    // already ensured up-to-date in getContainingIds() method
-    try {
-      while (ids.hasNext()) {
-        int id = ids.next();
-        ProgressManager.checkCanceled();
-        if (!accessibleFileFilter.test(id)) {
-          continue;
-        }
-        VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-        if (file == null || (scope != null && !scope.contains(file))) {
-          continue;
-        }
-
-        StubIdList list = myCachedStubIds.get(indexKey).getValue().computeIfAbsent(new CompositeKey<>(key, id), __ ->
-          myStubProcessingHelper.retrieveStubIdList(indexKey, key, file, project)
-        );
-        if (list == null) {
-          LOG.error("StubUpdatingIndex & " + indexKey + " stub index mismatch. No stub index key is present");
-          continue;
-        }
-        if (!myStubProcessingHelper.processStubsInFile(project, file, list, processor, scope, requiredClass)) {
-          return false;
-        }
-      }
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
-      if (cause != null) {
-        forceRebuild(cause);
-      }
-      else {
-        throw e;
-      }
-    } finally {
-      wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key);
-    }
-    return true;
-  }
-
   @SuppressWarnings("unchecked")
-  private <Key> UpdatableIndex<Key, Void, FileContent> getIndex(@NotNull StubIndexKey<Key, ?> indexKey) {
-    return (UpdatableIndex<Key, Void, FileContent>)getAsyncState().myIndices.get(indexKey);
-  }
-
-  // Self repair for IDEA-181227, caused by (yet) unknown file event processing problem in indices
-  // FileBasedIndex.requestReindex doesn't handle the situation properly because update requires old data that was lost
-  private <Key> void wipeProblematicFileIdsForParticularKeyAndStubIndex(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                                        @NotNull Key key) {
-    Set<VirtualFile> filesWithProblems = myStubProcessingHelper.takeAccumulatedFilesWithIndexProblems();
-
-    if (filesWithProblems != null) {
-      LOG.info("data for " + indexKey.getName() + " will be wiped for a some files because of internal stub processing error");
-      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).runCleanupAction(() -> {
-        Lock writeLock = getIndex(indexKey).getLock().writeLock();
-        boolean locked = writeLock.tryLock();
-        if (!locked) return; // nested indices invocation, can not cleanup without deadlock
-        try {
-          for (VirtualFile file : filesWithProblems) {
-            updateIndex(indexKey,
-                        FileBasedIndex.getFileId(file),
-                        Collections.singleton(key),
-                        Collections.emptySet());
-          }
-        }
-        finally {
-          writeLock.unlock();
-        }
-      });
-    }
+  protected <Key> UpdatableIndex<Key, Void, FileContent, ?> getIndex(@NotNull StubIndexKey<Key, ?> indexKey) {
+    return (UpdatableIndex<Key, Void, FileContent, ?>)getAsyncState().myIndices.get(indexKey);
   }
 
   @Override
@@ -363,167 +218,61 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
     FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
-  private static void requestRebuild() {
-    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
-  }
-
   @Override
-  public @NotNull <K> Collection<K> getAllKeys(@SuppressWarnings("BoundedWildcard") @NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project) {
-    Set<K> allKeys = new THashSet<>();
-    processAllKeys(indexKey, project, Processors.cancelableCollectProcessor(allKeys));
-    return allKeys;
-  }
-
-  @Override
-  public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey,
-                                    @NotNull Processor<? super K> processor,
-                                    @NotNull GlobalSearchScope scope,
-                                    @Nullable IdFilter idFilter) {
-    final UpdatableIndex<K, Void, FileContent> index = getIndex(indexKey); // wait for initialization to finish
-    if (index == null ||
-        !((FileBasedIndexEx)FileBasedIndex.getInstance()).ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope, null)) {
-      return true;
-    }
-
-    try {
-      return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, ()->FileBasedIndexImpl.disableUpToDateCheckIn(()->
-        index.processAllKeys(processor, scope, idFilter)));
-    }
-    catch (StorageException e) {
-      forceRebuild(e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof IOException || cause instanceof StorageException) {
-        forceRebuild(e);
-      }
-      throw e;
-    }
-    return true;
-  }
-
-  @Override
-  public @NotNull <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                    @NotNull Key dataKey,
-                                                    final @NotNull Project project,
-                                                    final @Nullable GlobalSearchScope scope) {
-    return getContainingIds(indexKey, dataKey, project, null, scope);
-  }
-
-  private @NotNull <Key> IdIterator getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
-                                                     @NotNull Key dataKey,
-                                                     final @NotNull Project project,
-                                                     @Nullable IdFilter idFilter,
-                                                     final @Nullable GlobalSearchScope scope) {
-    final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
-    final UpdatableIndex<Key, Void, FileContent> index = getIndex(indexKey);   // wait for initialization to finish
-    if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return IdIterator.EMPTY;
-
-    if (idFilter == null) {
-      idFilter = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).projectIndexableFiles(project);
-    }
-
-    UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
-
-    try {
-      final TIntArrayList result = new TIntArrayList();
-      IdFilter finalIdFilter = idFilter;
-      myAccessValidator.validate(stubUpdatingIndexId, ()-> {
-        // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        return FileBasedIndexImpl.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(stubUpdatingIndex.getLock().readLock(), () ->
-          index.getData(dataKey).forEach((id, value) -> {
-            if (finalIdFilter == null || finalIdFilter.containsFileId(id)) {
-              result.add(id);
-            }
-            return true;
-          })
-        ));
-      });
-      return new IdIterator() {
-        int cursor;
-
-        @Override
-        public boolean hasNext() {
-          return cursor < result.size();
-        }
-
-        @Override
-        public int next() {
-          return result.get(cursor++);
-        }
-
-        @Override
-        public int size() {
-          return result.size();
-        }
-      };
-    }
-    catch (StorageException e) {
-      forceRebuild(e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
-      if (cause != null) {
-        forceRebuild(cause);
-      }
-      else {
-        throw e;
-      }
-    }
-
-    return IdIterator.EMPTY;
-  }
-
   void initializeStubIndexes() {
     assert !myInitialized;
-    // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
-    FileBasedIndex.getInstance();
-    myStateFuture = new CompletableFuture<>();
-    Future<AsyncState> future = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
 
-    if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
-      try {
-        future.get();
-      }
-      catch (Throwable t) {
-        LOG.error(t);
-      }
+    // might be called on the same thread twice if initialization has been failed
+    if (myStateFuture == null) {
+      // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
+      FileBasedIndex.getInstance();
+
+      myStateFuture = new CompletableFuture<>();
+      IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
     }
   }
 
   public void dispose() {
     try {
-      for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
-        index.dispose();
-      }
+      myPerFileElementTypeStubModificationTracker.dispose();
+      Collection<UpdatableIndex<?, Void, FileContent, ?>> values = getAsyncState().myIndices.values();
+      IndexDataInitializer.runParallelTasks(ContainerUtil.map(values, index -> (ThrowableRunnable<Throwable>)() -> {
+        try {
+          index.dispose();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }), false);
     } finally {
       clearState();
     }
   }
 
-  private void clearState() {
-    StubIndexKeyDescriptorCache.INSTANCE.clear();
-    ((SerializationManagerImpl)SerializationManager.getInstance()).dropSerializerData();
-    myCachedStubIds.clear();
+  @Override
+  protected void clearState() {
+    super.clearState();
     myStateFuture = null;
     myState = null;
     myInitialized = false;
     LOG.info("StubIndexExtension-s were unloaded");
   }
 
+  @Override
   void setDataBufferingEnabled(final boolean enabled) {
-    for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
+    AsyncState state = ProgressManager.getInstance().computeInNonCancelableSection(this::getAsyncState);
+    for (UpdatableIndex<?, ?, ?, ?> index : state.myIndices.values()) {
       index.setBufferingEnabled(enabled);
     }
   }
 
+  @Override
   void cleanupMemoryStorage() {
-    UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = getStubUpdatingIndex();
+    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
     stubUpdatingIndex.getLock().writeLock().lock();
 
     try {
-      for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
+      for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.cleanupMemoryStorage();
       }
     }
@@ -533,8 +282,11 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
   }
 
   void clearAllIndices() {
-    if (!myInitialized) return;
-    for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
+    if (!myInitialized) {
+      myForcedClean.set(true);
+      return;
+    }
+    for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
       try {
         index.clear();
       }
@@ -545,171 +297,130 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
     }
   }
 
-  <K> void removeTransientDataForFile(@NotNull StubIndexKey<K, ?> key, int inputId, @NotNull Collection<? extends K> keys) {
-    UpdatableIndex<K, Void, FileContent> index = getIndex(key);
-    index.removeTransientDataForKeys(inputId, keys);
+  @SuppressWarnings("unchecked")
+  <K> void removeTransientDataForFile(@NotNull StubIndexKey<K, ?> key, int inputId, Map<K, StubIdList> keys) {
+    UpdatableIndex<Object, Void, FileContent, ?> index = (UpdatableIndex)getIndex(key);
+    index.removeTransientDataForKeys(inputId, new MapInputDataDiffBuilder(inputId, keys));
   }
 
-  private void dropUnregisteredIndices(@NotNull AsyncState state) {
-    if (ApplicationManager.getApplication().isDisposed() || !IndexInfrastructure.hasIndices()) {
-      return;
+  @Override
+  public @NotNull Logger getLogger() {
+    return LOG;
+  }
+
+  private static final class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
+    private final FileBasedIndexExtension<K, Void> myWrappedExtension;
+    private final StubIndexKey<K, ?> myIndexKey;
+
+    private StubIndexStorageLayout(FileBasedIndexExtension<K, Void> wrappedExtension, StubIndexKey<K, ?> indexKey) {
+      myWrappedExtension = wrappedExtension;
+      myIndexKey = indexKey;
     }
 
-    Set<String> indicesToDrop = new HashSet<>(myPreviouslyRegistered != null ? myPreviouslyRegistered.registeredIndices : Collections.emptyList());
-    for (ID<?, ?> key : state.myIndices.keySet()) {
-      indicesToDrop.remove(key.getName());
-    }
-
-    if (!indicesToDrop.isEmpty()) {
-      LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
-
-      for (String s : indicesToDrop) {
-        FileUtil.delete(IndexInfrastructure.getStubIndexRootDir(s));
+    @Override
+    public @NotNull IndexStorage<K, Void> openIndexStorage() throws IOException {
+      if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
+        return new InMemoryIndexStorage<>(myWrappedExtension.getKeyDescriptor());
       }
-    }
-  }
 
-  @Override
-  public StubIndexState getState() {
-    if (!myInitialized) return null;
-    return new StubIndexState(getAsyncState().myIndices.keySet());
-  }
-
-  @Override
-  public void loadState(final @NotNull StubIndexState state) {
-    myPreviouslyRegistered = state;
-  }
-
-  public <K> void updateIndex(@NotNull StubIndexKey<K, ?> stubIndexKey,
-                              int fileId,
-                              @NotNull Set<K> oldKeys,
-                              @NotNull Set<K> newKeys) {
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      Path storageFile = IndexInfrastructure.getStorageFile(myIndexKey);
       try {
-        if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-          LOG.info("stub index '" + stubIndexKey + "' update: " + fileId +
-                   " old = " + Arrays.toString(oldKeys.toArray()) +
-                   " new  = " + Arrays.toString(newKeys.toArray()) +
-                   " updated_id = " + System.identityHashCode(newKeys));
-        }
-        final UpdatableIndex<K, Void, FileContent> index = getIndex(stubIndexKey);
-        if (index == null) return;
-        index.updateWithMap(new AbstractUpdateData<K, Void>(fileId) {
-          @Override
-          protected boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super K, ? super Void> addProcessor,
-                                        @NotNull KeyValueUpdateProcessor<? super K, ? super Void> updateProcessor,
-                                        @NotNull RemovedKeyProcessor<? super K> removeProcessor) throws StorageException {
-
-            if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-              LOG.info("iterating keys updated_id = " + System.identityHashCode(newKeys));
-            }
-
-            boolean modified = false;
-
-            for (K oldKey : oldKeys) {
-              if (!newKeys.contains(oldKey)) {
-                removeProcessor.process(oldKey, fileId);
-                if (!modified) modified = true;
-              }
-            }
-
-            for (K oldKey : newKeys) {
-              if (!oldKeys.contains(oldKey)) {
-                addProcessor.process(oldKey, null, fileId);
-                if (!modified) modified = true;
-              }
-            }
-
-            if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-              LOG.info("keys iteration finished updated_id = " + System.identityHashCode(newKeys) + "; modified = " + modified);
-            }
-
-            return modified;
-          }
-        });
+        return new VfsAwareMapIndexStorage<>(
+          storageFile,
+          myWrappedExtension.getKeyDescriptor(),
+          myWrappedExtension.getValueExternalizer(),
+          myWrappedExtension.getCacheSize(),
+          myWrappedExtension.keyIsUniqueForIndexedFile(),
+          myWrappedExtension.traceKeyHashToVirtualFileMapping(),
+          myWrappedExtension.enableWal()
+        );
       }
-      catch (StorageException e) {
-        LOG.info(e);
-        requestRebuild();
+      catch (IOException e) {
+        IOUtil.deleteAllFilesStartingWith(storageFile);
+        throw e;
       }
-    });
+    }
 
+    @Override
+    public void clearIndexData() {
+      throw new UnsupportedOperationException();
+    }
   }
 
-  private class StubIndexInitialization extends IndexInfrastructure.DataInitialization<AsyncState> {
+  private final class StubIndexInitialization extends IndexDataInitializer<AsyncState> {
     private final AsyncState state = new AsyncState();
     private final IndexVersionRegistrationSink indicesRegistrationSink = new IndexVersionRegistrationSink();
 
-    @Override
-    protected void prepare() {
-      Iterator<StubIndexExtension<?, ?>> extensionsIterator =
-        IndexInfrastructure.hasIndices() ?
-          ((ExtensionPointImpl<StubIndexExtension<?, ?>>)StubIndexExtension.EP_NAME.getPoint()).iterator() :
-          Collections.emptyIterator();
-
-      boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
-      while(extensionsIterator.hasNext()) {
-        StubIndexExtension<?, ?> extension = extensionsIterator.next();
-        if (extension == null) break;
-        extension.getKey(); // initialize stub index keys
-
-        addNestedInitializationTask(() -> registerIndexer(extension, forceClean, state, indicesRegistrationSink));
-      }
+    StubIndexInitialization() {
+      super("stub index");
     }
 
     @Override
-    protected void onThrowable(@NotNull Throwable t) {
-      LOG.error(t);
-    }
-
-    @Override
-    protected AsyncState finish() {
-      dropUnregisteredIndices(state);
-
+    protected @NotNull AsyncState finish() {
       indicesRegistrationSink.logChangedAndFullyBuiltIndices(LOG, "Following stub indices will be updated:",
                                                              "Following stub indices will be built:");
 
       if (indicesRegistrationSink.hasChangedIndexes()) {
         final Throwable e = new Throwable(indicesRegistrationSink.changedIndices());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit(() -> forceRebuild(e));
+        AppUIExecutor.onWriteThread(ModalityState.nonModal()).later().submit(() -> forceRebuild(e));
       }
 
       myInitialized = true;
       myStateFuture.complete(state);
       return state;
     }
-  }
 
-  static UpdatableIndex<Integer, SerializedStubTree, FileContent> getStubUpdatingIndex() {
-    return ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
-  }
+    @Override
+    protected @NotNull Collection<ThrowableRunnable<?>> prepareTasks() {
+      Iterator<StubIndexExtension<?, ?>> extensionsIterator;
+      if (IndexInfrastructure.hasIndices()) {
+        extensionsIterator = StubIndexExtension.EP_NAME.getIterable().iterator();
+      }
+      else {
+        extensionsIterator = Collections.emptyIterator();
+      }
 
-  private static final class CompositeKey<K> {
-    private final K key;
-    private final int fileId;
+      boolean forceClean = Boolean.TRUE == myForcedClean.getAndSet(false);
+      List<ThrowableRunnable<?>> tasks = new ArrayList<>();
+      while (extensionsIterator.hasNext()) {
+        StubIndexExtension<?, ?> extension = extensionsIterator.next();
+        if (extension == null) {
+          break;
+        }
+        // initialize stub index keys
+        extension.getKey();
 
-    private CompositeKey(K key, int id) {
-      this.key = key;
-      fileId = id;
+        tasks.add(() -> registerIndexer(extension, forceClean, state, indicesRegistrationSink));
+      }
+      return tasks;
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      CompositeKey<?> key1 = (CompositeKey<?>)o;
-      return fileId == key1.fileId && Objects.equals(key, key1.key);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(key, fileId);
+    protected @NotNull String getInitializationFinishedMessage(AsyncState initializationResult) {
+      return "Initialized stub indexes: " + initializationResult.myIndices.keySet() + ".";
     }
   }
 
-  @TestOnly
-  public boolean areAllProblemsProcessedInTheCurrentThread() {
-    return myStubProcessingHelper.areAllProblemsProcessedInTheCurrentThread();
+  @Override
+  public @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType) {
+    return () -> {
+      if (PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE == PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
+        ReadAction.run(() -> {
+          ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
+        });
+      }
+      return myPerFileElementTypeStubModificationTracker.getModificationStamp(fileElementType);
+    };
+  }
+
+  @Override
+  public @NotNull ModificationTracker getStubIndexModificationTracker(@NotNull Project project) {
+    return () -> FileBasedIndex.getInstance().getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project);
+  }
+
+  @Override
+  public @NotNull FileUpdateProcessor getPerFileElementTypeModificationTrackerUpdateProcessor() {
+    return myPerFileElementTypeStubModificationTracker;
   }
 }

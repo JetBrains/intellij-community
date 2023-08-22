@@ -1,0 +1,11 @@
+{header}
+ <id>{urlbase}{url|urlescape}</id>
+ <link rel="self" href="{urlbase}{url|urlescape}atom-branches"/>
+ <link rel="alternate" href="{urlbase}{url|urlescape}branches"/>
+ <title>{repo|escape}: branches</title>
+ <summary>{repo|escape} branch history</summary>
+ <author><name>Mercurial SCM</name></author>
+ {latestentry%feedupdated}
+
+ {entries%branchentry}
+</feed>

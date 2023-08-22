@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -6,12 +6,10 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 
@@ -25,12 +23,12 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Groovy";
+    return GroovyBundle.message("script.runner.display.name");
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return "Groovy Class or Script";
+    return GroovyBundle.message("script.runner.description");
   }
 
   @Override
@@ -72,11 +70,6 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
     @Override
     public @NotNull String getId() {
       return "Groovy";
-    }
-
-    @Override
-    public boolean isApplicable(@NotNull Project project) {
-      return FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.allScope(project));
     }
 
     @NotNull

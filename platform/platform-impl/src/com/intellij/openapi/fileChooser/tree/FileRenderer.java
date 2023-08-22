@@ -24,7 +24,7 @@ public class FileRenderer {
   private static final Color HIDDEN = SimpleTextAttributes.DARK_TEXT.getFgColor();
 
   public <T> ColoredListCellRenderer<T> forList() {
-    return new ColoredListCellRenderer<T>() {
+    return new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean focused) {
         customize(this, value, selected, focused);
@@ -35,7 +35,7 @@ public class FileRenderer {
   public ColoredTableCellRenderer forTable() {
     return new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean focused, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean focused, int row, int column) {
         customize(this, value, selected, focused);
       }
     };
@@ -59,22 +59,20 @@ public class FileRenderer {
     String comment = null;
     boolean hidden = false;
     boolean valid = true;
-    if (value instanceof FileNode) {
-      FileNode node = (FileNode)value;
+    if (value instanceof FileNode node) {
       icon = node.getIcon();
       name = node.getName();
       comment = node.getComment();
       hidden = node.isHidden();
       valid = node.isValid();
     }
-    else if (value instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)value;
+    else if (value instanceof VirtualFile file) {
       name = file.getName();
       hidden = isFileHidden(file);
       valid = file.isValid();
     }
     else if (value != null) {
-      name = value.toString();
+      name = value.toString(); //NON-NLS
       color = GRAYED;
     }
     if (!valid) style |= SimpleTextAttributes.STYLE_STRIKEOUT;

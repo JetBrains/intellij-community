@@ -51,4 +51,6 @@ public interface FoldingModelEx extends FoldingModel {
   void clearDocumentRangesModificationStatus();
 
   boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region);
+
+  @NotNull List<@NotNull FoldRegion> getRegionsOverlappingWith(int startOffset, int endOffset);
 }

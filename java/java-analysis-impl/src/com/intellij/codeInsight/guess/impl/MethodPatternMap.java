@@ -22,7 +22,7 @@ class MethodPatternMap {
   private final HashMap<String, MethodPattern> myMethodNameToPatternsMap = new HashMap<>();
 
   public void addPattern(MethodPattern pattern){
-    myMethodNameToPatternsMap.put(pattern.methodName + "#" + pattern.parameterCount, pattern);
+    myMethodNameToPatternsMap.put(pattern.methodName() + "#" + pattern.parameterCount(), pattern);
   }
 
   public MethodPattern findPattern(String name, int parameterCount){

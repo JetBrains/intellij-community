@@ -1,4 +1,4 @@
-// "Make 'inner class initializer' not static" "true"
+// "Make 'inner class initializer' not static" "true-preview"
 import java.io.*;
 
 class a {

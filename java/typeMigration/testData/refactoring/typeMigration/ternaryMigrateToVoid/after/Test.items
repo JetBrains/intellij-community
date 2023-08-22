@@ -1,0 +1,8 @@
+Types:
+PsiMethod:ternary : void
+
+Conversions:
+mode ? 1 : 0 -> $
+
+New expression type changes:
+Fails:

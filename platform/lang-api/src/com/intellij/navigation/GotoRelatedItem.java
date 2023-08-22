@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Separator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.PsiNavigateUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,18 +21,18 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class GotoRelatedItem {
-  private final String myGroup;
+  private final @Separator String myGroup;
   private final int myMnemonic;
-  @Nullable private final SmartPsiElementPointer<PsiElement> myElementPointer;
+  private final @Nullable SmartPsiElementPointer<PsiElement> myElementPointer;
   public static final String DEFAULT_GROUP_NAME = "";
 
-  protected GotoRelatedItem(@Nullable PsiElement element, String group, final int mnemonic) {
+  protected GotoRelatedItem(@Nullable PsiElement element, @Separator String group, final int mnemonic) {
     myElementPointer = element == null ? null : SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
     myGroup = group;
     myMnemonic = mnemonic;
   }
   
-  public GotoRelatedItem(@NotNull PsiElement element, String group) {
+  public GotoRelatedItem(@NotNull PsiElement element, @Separator String group) {
     this(element, group, -1);
   }
 
@@ -44,23 +47,19 @@ public class GotoRelatedItem {
     }
   }
 
-  @Nullable
-  public String getCustomName() {
+  public @Nullable @NlsContexts.ListItem String getCustomName() {
     return null;
   }
 
-  @Nullable
-  public String getCustomContainerName() {
+  public @Nullable @Nls String getCustomContainerName() {
     return null;
   }
 
-  @Nullable
-  public Icon getCustomIcon() {
+  public @Nullable Icon getCustomIcon() {
     return null;
   }
 
-  @Nullable
-  public PsiElement getElement() {
+  public @Nullable PsiElement getElement() {
     return myElementPointer == null ? null : myElementPointer.getElement();
   }
 
@@ -71,7 +70,7 @@ public class GotoRelatedItem {
     return createItems(elements, DEFAULT_GROUP_NAME);
   }
 
-  public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements, String group) {
+  public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements, @Separator String group) {
     List<GotoRelatedItem> items = new ArrayList<>(elements.size());
     for (PsiElement element : elements) {
       items.add(new GotoRelatedItem(element, group));
@@ -91,7 +90,7 @@ public class GotoRelatedItem {
     return true;
   }
 
-  public String getGroup() {
+  public @Separator String getGroup() {
     return myGroup;
   }
 

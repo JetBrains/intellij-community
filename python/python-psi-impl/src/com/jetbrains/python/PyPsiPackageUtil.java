@@ -11,15 +11,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Python package utility methods with no dependencies on the Python runtime.
  *
  * @see PyPackageUtil for other package utility methods, including run-time dependent parts.
  */
-public class PyPsiPackageUtil {
+public final class PyPsiPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPsiPackageUtil.class);
 
   /**
@@ -28,7 +28,7 @@ public class PyPsiPackageUtil {
   public static final ImmutableMap<String, List<String>> PACKAGES_TOPLEVEL = loadPackageAliases();
 
   @Nullable
-  public static PyPackage findPackage(@NotNull List<? extends PyPackage> packages, @NotNull String name) {
+  public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {
     for (PyPackage pkg : packages) {
       if (name.equalsIgnoreCase(pkg.getName())) {
         return pkg;
@@ -39,15 +39,13 @@ public class PyPsiPackageUtil {
 
   @NotNull
   private static ImmutableMap<String, List<String>> loadPackageAliases() {
-    final ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
+    ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
     try {
-      Arrays.stream(StringUtil.splitByLines(ResourceUtil.loadText(PyPsiPackageUtil.class.getResource("/tools/packages"))))
-        .forEach(
-          line -> {
-            final List<String> split = StringUtil.split(line, " ");
-            builder.put(split.get(0), new SmartList<>(ContainerUtil.subList(split, 1)));
-          }
-        );
+      for (String line : StringUtil.splitByLines(ResourceUtil.loadText(Objects.requireNonNull(PyPsiPackageUtil.class.getClassLoader()
+                                                                                                .getResourceAsStream("tools/packages"))))) {
+        List<String> split = StringUtil.split(line, " ");
+        builder.put(split.get(0), new SmartList<>(ContainerUtil.subList(split, 1)));
+      }
     }
     catch (IOException e) {
       LOG.error("Cannot find \"packages\". " + e.getMessage());

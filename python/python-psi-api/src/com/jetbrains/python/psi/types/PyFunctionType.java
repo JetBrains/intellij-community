@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * Type of a particular function that is represented as a {@link PyCallable} in the PSI tree like lambda or function.
  * Use {@link #getCallable()} to get it.
  *
- * @author vlan
  */
 public interface PyFunctionType extends PyCallableType {
   /**
@@ -39,7 +39,9 @@ public interface PyFunctionType extends PyCallableType {
 
   @Override
   default int getImplicitOffset() {
-    return getCallable().asMethod() != null ? (getModifier() == PyFunction.Modifier.STATICMETHOD ? 0 : 1) : 0;
+    return getCallable().asMethod() != null
+           ? (!PyNames.NEW.equals(getName()) && getModifier() == PyFunction.Modifier.STATICMETHOD ? 0 : 1)
+           : 0;
   }
 
   @Override

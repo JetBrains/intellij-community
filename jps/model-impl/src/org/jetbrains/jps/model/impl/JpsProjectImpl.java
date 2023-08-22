@@ -1,16 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.impl;
 
-import java.util.List;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementCollection;
-import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
-import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 import org.jetbrains.jps.model.impl.runConfiguration.JpsRunConfigurationImpl;
@@ -30,15 +22,18 @@ import org.jetbrains.jps.model.runConfiguration.JpsRunConfiguration;
 import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
 import org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration;
 
-public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implements JpsProject {
+import java.util.List;
+import java.util.Objects;
+
+public final class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implements JpsProject {
   private static final JpsElementCollectionRole<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_ROLE =
     JpsElementCollectionRole.create(JpsElementChildRoleBase.create("external reference"));
   private static final JpsElementCollectionRole<JpsRunConfiguration> RUN_CONFIGURATIONS_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("run configuration"));
   private final JpsLibraryCollection myLibraryCollection;
   private String myName = "";
 
-  public JpsProjectImpl(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(model, eventDispatcher);
+  public JpsProjectImpl(@NotNull JpsModel model) {
+    super(model);
     myContainer.setChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
     myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_ROLE);
     myContainer.setChild(JpsSdkReferencesTableImpl.ROLE);
@@ -46,8 +41,8 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 
-  public JpsProjectImpl(JpsProjectImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(original, model, eventDispatcher);
+  public JpsProjectImpl(JpsProjectImpl original, JpsModel model) {
+    super(original, model);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 

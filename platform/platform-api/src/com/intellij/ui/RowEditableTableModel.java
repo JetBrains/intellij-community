@@ -18,11 +18,10 @@ package com.intellij.ui;
 import javax.swing.table.TableModel;
 
 /**
- * @author dsl
  * @author Konstantin Bulenkov
  * @deprecated use {@link com.intellij.util.ui.EditableModel}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface RowEditableTableModel extends TableModel {
   void addRow();
 

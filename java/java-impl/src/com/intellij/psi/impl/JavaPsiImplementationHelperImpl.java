@@ -1,27 +1,39 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.model.Pointer;
+import com.intellij.model.Symbol;
+import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.platform.backend.documentation.DocumentationTarget;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationTarget;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -31,9 +43,13 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
+import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +59,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-/**
- * @author yole
- */
+
 public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
   private static final Logger LOG = Logger.getInstance(JavaPsiImplementationHelperImpl.class);
 
@@ -58,7 +72,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
-    return findCompiledElement(psiClass, scope -> {
+    return findCompiledElement(myProject, psiClass, scope -> {
       String fqn = psiClass.getQualifiedName();
       return fqn != null ? Arrays.asList(JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope)) : Collections.emptyList();
     });
@@ -67,21 +81,21 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
-    return findCompiledElement(module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
+    return findCompiledElement(myProject, module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
   }
 
-  private <T extends PsiElement> T findCompiledElement(T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
+  public static <T extends PsiElement> T findCompiledElement(Project project, T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
     PsiCompiledElement cls = original.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) {
       @SuppressWarnings("unchecked") T t = (T)cls;
       return t;
     }
 
-    if (!DumbService.isDumb(myProject)) {
+    if (!DumbService.isDumb(project)) {
       VirtualFile vFile = original.getContainingFile().getVirtualFile();
-      ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
+      ProjectFileIndex idx = ProjectRootManager.getInstance(project).getFileIndex();
       if (vFile != null && idx.isInLibrarySource(vFile)) {
-        GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
+        GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(project).getLibrariesOnlyScope();
         Set<OrderEntry> originalEntries = new HashSet<>(idx.getOrderEntriesForFile(vFile));
         for (T candidate : candidateFinder.apply(librariesScope)) {
           PsiFile candidateFile = candidate.getContainingFile();
@@ -138,9 +152,9 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   private Stream<VirtualFile> findSourceRoots(VirtualFile file) {
-    Stream<VirtualFile> modelRoots = ProjectFileIndex.SERVICE.getInstance(myProject).getOrderEntriesForFile(file).stream()
+    Stream<VirtualFile> modelRoots = ProjectFileIndex.getInstance(myProject).getOrderEntriesForFile(file).stream()
       .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
-      .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
+      .flatMap(entry -> Stream.of(((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.SOURCES)));
 
     Stream<VirtualFile> synthRoots = AdditionalLibraryRootsProvider.EP_NAME.getExtensionList().stream()
       .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())
@@ -158,16 +172,19 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     // prevent expensive look-up into VFS
     if (virtualFile == null || myProject.isDefault()) return PsiUtil.getLanguageLevel(myProject);
 
-    VirtualFile parent = virtualFile.getParent();
-    if (parent != null) {
-      LanguageLevel level = parent.getUserData(LanguageLevel.KEY);
-      if (level != null) return level;
+    LanguageLevel level = JavaLanguageLevelPusher.getPushedLanguageLevel(virtualFile);
+    if (level != null) {
+      return level;
     }
 
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     Module module = index.getModuleForFile(virtualFile);
     if (module != null && index.isInSourceContent(virtualFile)) {
-      return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      return LanguageLevelUtil.getEffectiveLanguageLevel(module);
+    }
+
+    if (virtualFile instanceof LightVirtualFile) {
+      return LanguageLevel.HIGHEST;
     }
 
     LanguageLevel classesLanguageLevel = getClassesLanguageLevel(virtualFile);
@@ -243,7 +260,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @Override
   public PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
     CodeStyleSettings settings = CodeStyle.getSettings(aClass.getContainingFile());
-    MemberOrderService service = ServiceManager.getService(MemberOrderService.class);
+    MemberOrderService service = ApplicationManager.getApplication().getService(MemberOrderService.class);
     PsiElement anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
 
     PsiElement newAnchor = skipWhitespaces(aClass, anchor);
@@ -331,6 +348,76 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
     catch (Exception e) {
       throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
+    }
+  }
+
+  @Override
+  public @NotNull PsiSymbolReference getSnippetRegionSymbol(@NotNull PsiSnippetAttributeValue value) {
+    return new PsiSymbolReference() {
+      @Override
+      public @NotNull PsiElement getElement() {
+        return value;
+      }
+
+      @Override
+      public @NotNull TextRange getRangeInElement() {
+        return ((PsiSnippetAttributeValueImpl)value).getValueRange();
+      }
+
+      @Override
+      public @NotNull Collection<? extends Symbol> resolveReference() {
+        PsiSnippetDocTagValue snippet = PsiTreeUtil.getParentOfType(value, PsiSnippetDocTagValue.class);
+        if (snippet == null) return List.of();
+        SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
+        if (markup == null) return List.of();
+        String region = value.getValue();
+        SnippetMarkup.MarkupNode start = markup.getRegionStart(region);
+        if (start == null) return List.of();
+        PsiElement markupContext = markup.getContext();
+        PsiFile file = markupContext.getContainingFile();
+        if (file == null) return List.of();
+        return List.of(
+          new SnippetRegionSymbol(file,
+                                  start.range().shiftRight(markupContext.getTextRange().getStartOffset())));
+      }
+    };
+  }
+
+  public static final class SnippetRegionSymbol implements Symbol, DocumentationTarget, NavigationTarget {
+
+    private final @NotNull PsiFile myFile;
+    private final @NotNull TextRange myRangeInFile;
+
+    private SnippetRegionSymbol(@NotNull PsiFile file, @NotNull TextRange rangeInFile) {
+      myFile = file;
+      myRangeInFile = rangeInFile;
+    }
+
+    @Override
+    public @NotNull Pointer<SnippetRegionSymbol> createPointer() {
+      return Pointer.fileRangePointer(myFile, myRangeInFile, SnippetRegionSymbol::new);
+    }
+
+    private @NlsSafe @NotNull String getText() {
+      return myRangeInFile.substring(myFile.getText());
+    }
+
+    @Override
+    public @NotNull TargetPresentation computePresentation() {
+      VirtualFile virtualFile = myFile.getVirtualFile();
+      return TargetPresentation.builder(getText())
+        .locationText(virtualFile.getName(), virtualFile.getFileType().getIcon())
+        .presentation();
+    }
+
+    @Override
+    public @NotNull @NlsContexts.HintText String computeDocumentationHint() {
+      return getText();
+    }
+
+    @Override
+    public @Nullable NavigationRequest navigationRequest() {
+      return NavigationRequest.sourceNavigationRequest(myFile, myRangeInFile);
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
@@ -18,7 +18,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
@@ -36,7 +38,8 @@ import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
-import com.intellij.remoteServer.CloudBundle;
+import com.intellij.ui.BadgeIconSupplier;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,7 +54,7 @@ import java.util.*;
 /**
  * @author michael.golubev
  */
-public class ServersTreeStructure {
+public final class ServersTreeStructure {
   // 1st level: servers (RunnerAndConfigurationSettings (has CommonStrategy (extends RunConfiguration)) or RemoteServer)
   // 2nd level: deployments (DeploymentModel or Deployment)
 
@@ -112,8 +115,27 @@ public class ServersTreeStructure {
       RemoteServer<?> server = getServer();
       ServerConnection<?> connection = getConnection();
       presentation.setPresentableText(server.getName());
-      presentation
-        .setIcon(getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null));
+
+      Icon icon;
+
+      if (ExperimentalUI.isNewUI()) {
+        if (connection == null) {
+          icon = server.getType().getIcon();
+        }
+        else {
+          icon = switch (connection.getStatus()) {
+            case CONNECTED -> new BadgeIconSupplier(server.getType().getIcon()).getLiveIndicatorIcon();
+            case DISCONNECTED -> LayeredIcon.layeredIcon(new Icon[]{server.getType().getIcon(), AllIcons.RunConfigurations.InvalidConfigurationLayer});
+            default -> server.getType().getIcon();
+          };
+        }
+      }
+      else {
+        icon = getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null);
+      }
+
+      presentation.setIcon(icon);
+
       presentation.setTooltip(connection != null ? connection.getStatusText() : null);
     }
 
@@ -128,14 +150,16 @@ public class ServersTreeStructure {
     }
 
     public void deploy(@NotNull AnActionEvent e) {
-      doDeploy(e, DefaultRunExecutor.getRunExecutorInstance(), "Deploy Configuration", true);
+      doDeploy(e, DefaultRunExecutor.getRunExecutorInstance(),
+               CloudBundle.message("ServersTreeStructure.RemoteServerNode.popup.title.deploy.configuration"), true);
     }
 
     public void deployWithDebug(@NotNull AnActionEvent e) {
-      doDeploy(e, DefaultDebugExecutor.getDebugExecutorInstance(), "Deploy and Debug Configuration", false);
+      doDeploy(e, DefaultDebugExecutor.getDebugExecutorInstance(),
+               CloudBundle.message("ServersTreeStructure.RemoteServerNode.popup.title.deploy.debug.configuration"), false);
     }
 
-    public void doDeploy(@NotNull AnActionEvent e, final Executor executor, String popupTitle, boolean canCreate) {
+    public void doDeploy(@NotNull AnActionEvent e, final Executor executor, @NlsContexts.PopupTitle String popupTitle, boolean canCreate) {
       final RemoteServer<?> server = getServer();
       final ServerType<? extends ServerConfiguration> serverType = server.getType();
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(myProject);
@@ -156,7 +180,7 @@ public class ServersTreeStructure {
       }
 
       ListPopup popup =
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Object>(popupTitle, runConfigsAndTypes) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(popupTitle, runConfigsAndTypes) {
           @Override
           public Icon getIconFor(Object runConfigOrSourceType) {
             return runConfigOrSourceType != null ? serverType.getIcon() : null;
@@ -181,8 +205,7 @@ public class ServersTreeStructure {
               if (selectedRunConfigOrSourceType instanceof RunnerAndConfigurationSettings) {
                 ProgramRunnerUtil.executeConfiguration((RunnerAndConfigurationSettings)selectedRunConfigOrSourceType, executor);
               }
-              else if (selectedRunConfigOrSourceType instanceof SingletonDeploymentSourceType) {
-                SingletonDeploymentSourceType sourceType = (SingletonDeploymentSourceType)selectedRunConfigOrSourceType;
+              else if (selectedRunConfigOrSourceType instanceof SingletonDeploymentSourceType sourceType) {
                 configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue(), sourceType);
               }
               else {
@@ -206,14 +229,11 @@ public class ServersTreeStructure {
 
     @Nullable
     private static Icon getStatusIcon(final ConnectionStatus status) {
-      switch (status) {
-        case CONNECTED:
-          return RemoteServersIcons.ResumeScaled;
-        case DISCONNECTED:
-          return RemoteServersIcons.SuspendScaled;
-        default:
-          return null;
-      }
+      return switch (status) {
+        case CONNECTED -> RemoteServersIcons.ResumeScaled;
+        case DISCONNECTED -> RemoteServersIcons.SuspendScaled;
+        default -> null;
+      };
     }
   }
 
@@ -357,7 +377,7 @@ public class ServersTreeStructure {
       return result;
     }
 
-    protected void collectDeploymentChildren(List<AbstractTreeNode<?>> children) {
+    protected void collectDeploymentChildren(List<? super AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;
@@ -370,7 +390,7 @@ public class ServersTreeStructure {
       }
     }
 
-    protected void collectLogChildren(List<AbstractTreeNode<?>> children) {
+    protected void collectLogChildren(List<? super AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;

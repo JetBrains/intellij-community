@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.openapi.project.Project;
@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 class ReplacementInfoImpl implements ReplacementInfo {
+  @NotNull
   private final MatchResult matchResult;
   private final List<SmartPsiElementPointer<PsiElement>> matchesPtrList = new SmartList<>();
   private final Map<String, MatchResult> variableMap = new HashMap<>();
@@ -26,12 +28,12 @@ class ReplacementInfoImpl implements ReplacementInfo {
 
   private String replacement;
 
-  ReplacementInfoImpl(MatchResult matchResult, Project project) {
+  ReplacementInfoImpl(@NotNull MatchResult matchResult, @NotNull Project project) {
     this.matchResult = matchResult;
     init(project);
   }
 
-  private void init(Project project) {
+  private void init(@NotNull Project project) {
     fillPointerList(project);
     fillVariableMap(matchResult.getRoot());
     for(Map.Entry<String, MatchResult> entry : variableMap.entrySet()) {
@@ -44,7 +46,7 @@ class ReplacementInfoImpl implements ReplacementInfo {
     return replacement;
   }
 
-  public void setReplacement(String replacement) {
+  public void setReplacement(@NotNull String replacement) {
     this.replacement = replacement;
   }
 
@@ -60,26 +62,26 @@ class ReplacementInfoImpl implements ReplacementInfo {
   }
 
   @Override
-  public MatchResult getNamedMatchResult(String name) {
+  public MatchResult getNamedMatchResult(@NotNull String name) {
     return variableMap.get(name);
   }
 
   @Override
-  public MatchResult getMatchResult() {
+  public @NotNull MatchResult getMatchResult() {
     return matchResult;
   }
 
   @Override
-  public String getVariableName(PsiElement element) {
+  public String getVariableName(@NotNull PsiElement element) {
     return elementToVariableNameMap.get(element);
   }
 
   @Override
-  public String getSearchPatternName(String sourceName) {
+  public String getSearchPatternName(@NotNull String sourceName) {
     return sourceNameToSearchPatternNameMap.get(sourceName);
   }
 
-  private void fillPointerList(Project project) {
+  private void fillPointerList(@NotNull Project project) {
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     if (MatchResult.MULTI_LINE_MATCH.equals(matchResult.getName())) {
@@ -114,8 +116,11 @@ class ReplacementInfoImpl implements ReplacementInfo {
       for (MatchResult r : matchResult.getChildren()) {
         fillElementToVariableNameMap(name, r);
       }
-    } else if (!multiMatch && matchResult.getMatchRef() != null)  {
-      elementToVariableNameMap.put(matchResult.getMatch(), name);
+    } else if (!multiMatch) {
+      final PsiElement match = matchResult.getMatch();
+      if (match != null) {
+        elementToVariableNameMap.put(match, name);
+      }
     }
   }
 

@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -48,7 +49,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
     myProject = project;
     myAnchor = UIUtil.mergeComponentsWithAnchor(myJarPathComponent, myCommonProgramParameters, myJrePathEditor);
     ModulesComboBox modulesComboBox = myModuleComponent.getComponent();
-    modulesComboBox.allowEmptySelection("<whole project>");
+    modulesComboBox.allowEmptySelection(JavaCompilerBundle.message("whole.project"));
     modulesComboBox.fillModules(project);
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(modulesComboBox, true));
   }

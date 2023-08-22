@@ -3,6 +3,7 @@
  */
 package com.jetbrains.python.run.targetBasedConfiguration
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -13,14 +14,15 @@ import com.jetbrains.extensions.resolveToElement
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PythonRunConfigurationForm
+import org.jetbrains.annotations.Nls
 
 /**
  * Types of target (symbol, path or custom) many python runners may have
  */
-enum class PyRunTargetVariant(private val customName: String? = null) {
+enum class PyRunTargetVariant(@Nls private val customName: String? = null) {
   PYTHON(PythonRunConfigurationForm.getModuleNameText()), PATH(PythonRunConfigurationForm.getScriptPathText()), CUSTOM;
 
-  fun getCustomName(): String = customName ?: name.toLowerCase().capitalize()
+  @Nls fun getCustomName(): String = customName ?: PythonRunConfigurationForm.getCustomNameText()
 }
 
 /**
@@ -36,9 +38,10 @@ fun targetAsPsiElement(targetType: PyRunTargetVariant,
     val module = configuration.getModule() ?: return null
     val context = TypeEvalContext.userInitiated(configuration.getProject(), null)
 
-    val name = QualifiedName.fromDottedString(target)
-    return name.resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.getSdk(),
-                                                     context, workingDirectory, true))
+    return runReadAction {
+      QualifiedName.fromDottedString(target)
+        .resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.getSdk(), context, workingDirectory, true))
+    }
   }
   return null
 }

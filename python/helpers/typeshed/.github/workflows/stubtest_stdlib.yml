@@ -1,0 +1,47 @@
+name: Run stubtest
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    paths:
+      - 'stdlib/**'
+      - '.github/workflows/stubtest_stdlib.yml'
+      - 'tests/**'
+      - 'requirements-tests.txt'
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  stubtest-stdlib:
+    name: Check stdlib with stubtest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Update pip
+        run: python -m pip install -U pip
+      - name: Install dependencies
+        run: pip install $(grep mypy== requirements-tests.txt)
+      - name: Run stubtest
+        run: python tests/stubtest_stdlib.py

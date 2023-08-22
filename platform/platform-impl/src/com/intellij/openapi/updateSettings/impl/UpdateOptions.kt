@@ -1,48 +1,43 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ReportValue
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.OptionTag
-import java.util.concurrent.TimeUnit
 
 class UpdateOptions : BaseState() {
   @get:CollectionBean
-  val pluginHosts by list<String>()
+  val pluginHosts: MutableList<String> by list()
 
   @get:CollectionBean
-  val ignoredBuildNumbers by list<String>()
-
-  @get:CollectionBean
-  val enabledExternalComponentSources by list<String>()
-
-  @get:CollectionBean
-  val knownExternalComponentSources by list<String>()
-
-  @get:CollectionBean
-  val externalUpdateChannels by map<String, String>()
+  val ignoredBuildNumbers: MutableList<String> by list()
 
   @get:OptionTag("CHECK_NEEDED")
-  var isCheckNeeded by property(true)
+  var isCheckNeeded: Boolean by property(true)
+
+  @get:OptionTag("PLUGINS_CHECK_NEEDED")
+  var isPluginsCheckNeeded: Boolean by property(true)
+
+  @get:OptionTag("SHOW_WHATS_NEW_EDITOR")
+  var isShowWhatsNewEditor: Boolean by property(true)
+
+  @get:OptionTag("WHATS_NEW_SHOWN_FOR")
+  var whatsNewShownFor: Int by property(0)
 
   @get:OptionTag("LAST_TIME_CHECKED")
-  var lastTimeChecked by property(0L)
-
-  // Exists only for statistics reporting. BeanBinding enumerates only mutable properties, so we need to provide a dummy setter
-  // for this property.
-  @Suppress("unused")
-  @get:ReportValue
-  var hoursSinceLastCheck: Int
-     get() = if (lastTimeChecked <= 0) -1 else TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis() - lastTimeChecked).toInt()
-     set(_) { }
+  var lastTimeChecked: Long by property(0L)
 
   @get:OptionTag("LAST_BUILD_CHECKED")
-  var lastBuildChecked by string()
+  var lastBuildChecked: String? by string()
 
   @get:OptionTag("UPDATE_CHANNEL_TYPE")
-  var updateChannelType by string(ChannelStatus.RELEASE.code)
+  @get:ReportValue(possibleValues = ["eap", "milestone", "beta", "release"])
+  var updateChannelType: String? by string(ChannelStatus.RELEASE.code)
 
   @get:OptionTag("THIRD_PARTY_PLUGINS_ALLOWED")
-  var isThirdPartyPluginsAllowed by property(false)
+  var isThirdPartyPluginsAllowed: Boolean by property(false)
+
+  @get:OptionTag("OBSOLETE_CUSTOM_REPOSITORIES_CLEAN_NEEDED")
+  var isObsoleteCustomRepositoriesCleanNeeded: Boolean by property(true)
 }

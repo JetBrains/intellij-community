@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
 
 class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
   private final XmlAttribute myAttribute;
@@ -44,7 +45,7 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     return new LocalQuickFix[] { new DownloadResourceFix(myAttribute.getValue()) };
   }
 
@@ -68,8 +69,7 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
     final String value = myAttribute.getValue();
     final String resourceLocation = myResourceManager.getResourceLocation(value);
 
-    //noinspection StringEquality
-    if (resourceLocation != value) {
+    if (!Objects.equals(resourceLocation, value)) {
       VirtualFile file;
       try {
         file = VfsUtil.findFileByURL(new URL(resourceLocation));

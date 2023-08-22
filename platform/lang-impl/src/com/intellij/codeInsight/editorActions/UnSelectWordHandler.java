@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -34,16 +20,15 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnSelectWordHandler extends EditorActionHandler {
+public final class UnSelectWordHandler extends EditorActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginalHandler;
 
   public UnSelectWordHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
@@ -87,59 +72,87 @@ public class UnSelectWordHandler extends EditorActionHandler {
       }
     }
 
+    final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+    MaxRangeProcessor rangeProcessor = new MaxRangeProcessor(selectionRange, editor, cursorOffset);
     if (element instanceof PsiWhiteSpace) {
-      PsiElement nextSibling = element.getNextSibling();
-      if (nextSibling == null) {
-        element = element.getParent();
-        if (element == null || element instanceof PsiFile) {
-          return;
-        }
-        nextSibling = element.getNextSibling();
-        if (nextSibling == null) {
-          return;
-        }
+      if (SelectWordUtil.canWhiteSpaceBeExpanded((PsiWhiteSpace) element, cursorOffset, null, editor)) {
+        SelectWordUtil.processRanges(element, text, cursorOffset, editor, rangeProcessor);
       }
-      element = nextSibling;
-      cursorOffset = element.getTextRange().getStartOffset();
+      PsiElement sibling = findNextSibling(element);
+      if (sibling != null) {
+        int siblingOffset = sibling.getTextRange().getStartOffset();
+        rangeProcessor.setCursorOffset(siblingOffset);
+        SelectWordUtil.processRanges(sibling, text, siblingOffset, editor, rangeProcessor);
+      }
+    } else {
+      SelectWordUtil.processRanges(element, text, cursorOffset, editor, rangeProcessor);
     }
 
-    final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
-
-    final Ref<TextRange> maximumRange = new Ref<>();
-
-    final int finalCursorOffset = cursorOffset;
-    SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<TextRange>() {
-      @Override
-      public boolean process(TextRange range) {
-        range = expandToFoldingBoundaries(range);
-        if (selectionRange.contains(range) && !range.equals(selectionRange) &&
-            (range.contains(finalCursorOffset) || finalCursorOffset == range.getEndOffset())) {
-          if (maximumRange.get() == null || range.contains(maximumRange.get())) {
-            maximumRange.set(range);
-          }
-        }
-
-        return false;
-      }
-
-      private TextRange expandToFoldingBoundaries(TextRange range) {
-        int startOffset = range.getStartOffset();
-        FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
-        if (region != null) startOffset = region.getStartOffset();
-        int endOffset = range.getEndOffset();
-        region = editor.getFoldingModel().getCollapsedRegionAtOffset(endOffset);
-        if (region != null && endOffset > region.getStartOffset()) endOffset = region.getEndOffset();
-        return new TextRange(startOffset, endOffset);
-      }
-    });
-
-    TextRange range = maximumRange.get();
-
+    TextRange range = rangeProcessor.getMaximumRange();
     if (range == null) {
       editor.getSelectionModel().setSelection(cursorOffset, cursorOffset);
     }
     else {
       editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    }
+  }
+  
+  private static @Nullable PsiElement findNextSibling(PsiElement element) {
+    PsiElement nextSibling = element.getNextSibling();
+    if (nextSibling == null) {
+      element = element.getParent();
+      if (element == null || element instanceof PsiFile) {
+        return null;
+      }
+      nextSibling = element.getNextSibling();
+      if (nextSibling == null) {
+        return null;
+      }
+    }
+    return nextSibling;
+  }
+  
+  private static final class MaxRangeProcessor implements Processor<TextRange> {
+    private final Ref<TextRange> maximumRange;
+    private final TextRange selectionRange;
+    private final Editor editor;
+    private int cursorOffset;
+
+    private void setCursorOffset(int cursorOffset) {
+      this.cursorOffset = cursorOffset;
+    }
+
+    private MaxRangeProcessor(TextRange selectionRange, Editor editor, int cursorOffset) {
+      this.maximumRange = new Ref<>();
+      this.selectionRange = selectionRange;
+      this.editor = editor;
+      this.cursorOffset = cursorOffset;
+    }
+    
+    @Override
+    public boolean process(TextRange range) {
+      range = expandToFoldingBoundaries(range);
+      if (selectionRange.contains(range) && !range.equals(selectionRange) &&
+          (range.contains(cursorOffset) || cursorOffset == range.getEndOffset())) {
+        if (maximumRange.get() == null || range.contains(maximumRange.get())) {
+          maximumRange.set(range);
+        }
+      }
+      return false;
+    }
+
+    private TextRange expandToFoldingBoundaries(TextRange range) {
+      int startOffset = range.getStartOffset();
+      FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
+      if (region != null) startOffset = region.getStartOffset();
+      int endOffset = range.getEndOffset();
+      region = editor.getFoldingModel().getCollapsedRegionAtOffset(endOffset);
+      if (region != null && endOffset > region.getStartOffset()) endOffset = region.getEndOffset();
+      return new TextRange(startOffset, endOffset);
+    }
+
+    private TextRange getMaximumRange() {
+      return maximumRange.get();
     }
   }
 }

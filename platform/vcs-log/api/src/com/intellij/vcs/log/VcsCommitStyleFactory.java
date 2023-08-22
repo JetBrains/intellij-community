@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +10,7 @@ import java.util.Collection;
 /**
  * Factory for creating instances of default implementation VcsCommitStyle.
  */
-public class VcsCommitStyleFactory {
+public final class VcsCommitStyleFactory {
   /**
    * Creates VcsCommitStyle with specified text color and background color.
    *
@@ -70,7 +56,7 @@ public class VcsCommitStyleFactory {
   /**
    * Combines a list of styles into one. For example, if first style in the list specifies text color but does not provide
    * background color and second style in the list does have a background color then this method will return a style with text color from the first
-   * and background color from the second. However if the first style in the list has all the attributes then the result will be equal to the first style
+   * and background color from the second. However, if the first style in the list has all the attributes then the result will be equal to the first style
    * and the rest of the list will be ignored.
    *
    * @param styles list of styles to combine into one.

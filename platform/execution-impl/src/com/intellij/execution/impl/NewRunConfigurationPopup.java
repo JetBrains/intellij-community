@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -22,27 +23,28 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.BaseTreePopupStep;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Irina.Chernushina on 10/8/2015.
- */
-public class NewRunConfigurationPopup {
+public final class NewRunConfigurationPopup {
   static final ConfigurationType HIDDEN_ITEMS_STUB = new ConfigurationType() {
     @NotNull
     @Override
@@ -76,7 +78,7 @@ public class NewRunConfigurationPopup {
   @NotNull
   public static JBPopup createAddPopup(@NotNull Project project,
                                        @NotNull final List<? extends ConfigurationType> typesToShow,
-                                       @NotNull final String defaultText,
+                                       @NotNull @Nls final String defaultText,
                                        @NotNull final Consumer<? super ConfigurationFactory> creator,
                                        @Nullable final ConfigurationType selectedConfigurationType,
                                        @Nullable final Runnable finalStep, boolean showTitle) {
@@ -84,7 +86,7 @@ public class NewRunConfigurationPopup {
       return createAddTreePopup(project, creator, selectedConfigurationType, showTitle);
     }
 
-    BaseListPopupStep<ConfigurationType> step = new BaseListPopupStep<ConfigurationType>(
+    BaseListPopupStep<ConfigurationType> step = new BaseListPopupStep<>(
       showTitle ? ExecutionBundle.message("add.new.run.configuration.action2.name") : null, typesToShow) {
 
       @Override
@@ -129,7 +131,7 @@ public class NewRunConfigurationPopup {
       private ListPopupStep<?> getSupStep(final ConfigurationType type) {
         final ConfigurationFactory[] factories = type.getConfigurationFactories();
         Arrays.sort(factories, (factory1, factory2) -> factory1.getName().compareToIgnoreCase(factory2.getName()));
-        return new BaseListPopupStep<ConfigurationFactory>(
+        return new BaseListPopupStep<>(
           ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
 
           @Override
@@ -164,7 +166,8 @@ public class NewRunConfigurationPopup {
         values.clear();
         values.addAll(RunConfigurable.Companion.configurationTypeSorted(project,
                                                                         false,
-                                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()));
+                                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(),
+                                                                        true));
 
         getListModel().updateOriginalList();
         super.onSpeedSearchPatternChanged();
@@ -221,20 +224,20 @@ public class NewRunConfigurationPopup {
 
     final AtomicBoolean isAutoSelectionPassed = new AtomicBoolean(selectedConfigurationType == null);
 
-    BaseTreePopupStep<Object> treePopupStep = new BaseTreePopupStep<Object>(
+    BaseTreePopupStep<Object> treePopupStep = new BaseTreePopupStep<>(
       project,
       showTitle ? ExecutionBundle.message("add.new.run.configuration.action2.name") : null, structure
     ) {
-      @Override
-      public boolean isRootVisible() {
-        return false;
-      }
-
       @Override
       public boolean isSelectable(Object node, Object userData) {
         if (!(userData instanceof NodeDescriptor)) return false;
         if (getStructure().getChildElements(userData).length > 0) return false;
         userData = ((NodeDescriptor<?>)userData).getElement();
+        if (!project.isDefault() &&
+            DumbService.getInstance(project).isDumb() &&
+            !NewRunConfigurationTreePopupFactory.isEditableInDumbMode(userData)) {
+          return false;
+        }
         return isAutoSelectionPassed.get() || userData == selectedConfigurationType;
       }
 
@@ -265,7 +268,7 @@ public class NewRunConfigurationPopup {
 
       @Override
       public boolean shouldBeShowing(Object value) {
-        NodeDescriptor<?> parent = (value instanceof NodeDescriptor) ? ((NodeDescriptor)value).getParentDescriptor() : null;
+        NodeDescriptor<?> parent = (value instanceof NodeDescriptor) ? ((NodeDescriptor<?>)value).getParentDescriptor() : null;
         return super.shouldBeShowing(value) || (parent != null && super.shouldBeShowing(parent));
       }
     };
@@ -278,7 +281,15 @@ public class NewRunConfigurationPopup {
       };
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.POPUP, new DefaultActionGroup(collapseAllAction), true);
+    toolbar.setTargetComponent(treePopup.getComponent());
     toolbar.setMiniMode(true);
+    var toolbarInsets = JBUI.CurrentTheme.Popup.headerInsets();
+    if (toolbarInsets instanceof JBInsets scaledInsets) {
+      toolbarInsets = scaledInsets.getUnscaled(); // JBUI.Borders.empty() will scale, need this to avoid double scaling
+    }
+    JBEmptyBorder toolbarBorder = ExperimentalUI.isNewUI()
+      ? JBUI.Borders.empty(toolbarInsets.top, 1, toolbarInsets.bottom, 1)
+      : JBUI.Borders.empty(2, 1, 0, 1);
     treePopup.getTitle().setButtonComponent(new ActiveComponent() {
       @Override
       public void setActive(boolean active) {
@@ -289,7 +300,7 @@ public class NewRunConfigurationPopup {
       public JComponent getComponent() {
         return toolbar.getComponent();
       }
-    }, JBUI.Borders.empty(2, 1, 0, 1));
+    }, toolbarBorder);
     return treePopup;
   }
 }

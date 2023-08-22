@@ -1,0 +1,8 @@
+// WITH_STDLIB
+
+fun List<Int>.test() {
+    val x = joinToString(
+        prefix = "= ",
+        separator = " + ",
+    ) { "$it*$it" }
+}

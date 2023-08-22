@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.event;
 
 import com.intellij.openapi.editor.*;
@@ -30,13 +16,11 @@ import java.util.EventObject;
  * dispatching, and is not guaranteed to be actual by the time some event listener receives the event (if previously called listener has
  * modified the editor state).
  * <p>
- * The additional information is currently provided for the following types of events: {@link MouseEvent#MOUSE_MOVED MOUSE_MOVED},
- * {@link MouseEvent#MOUSE_PRESSED MOUSE_PRESSED}, {@link MouseEvent#MOUSE_RELEASED MOUSE_RELEASED} and
- * {@link MouseEvent#MOUSE_CLICKED MOUSE_CLICKED}. For other events, return values of corresponding event getters are unspecified.
+ * The additional information is not provided for {@link MouseEvent#MOUSE_ENTERED MOUSE_ENTERED} and
+ * {@link MouseEvent#MOUSE_EXITED MOUSE_EXITED} events. Return values of corresponding event getters are unspecified for those events.
  */
 public class EditorMouseEvent extends EventObject {
-  @NotNull
-  private final MouseEvent myMouseEvent;
+  private final @NotNull MouseEvent myMouseEvent;
   private final EditorMouseEventArea myEditorArea;
   private final int myOffset;
   private final LogicalPosition myLogicalPosition;
@@ -66,13 +50,11 @@ public class EditorMouseEvent extends EventObject {
     myGutterIconRenderer = gutterIconRenderer;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return (Editor) getSource();
   }
 
-  @NotNull
-  public MouseEvent getMouseEvent() {
+  public @NotNull MouseEvent getMouseEvent() {
     return myMouseEvent;
   }
 
@@ -88,52 +70,33 @@ public class EditorMouseEvent extends EventObject {
     return myEditorArea;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public int getOffset() {
     return myOffset;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @NotNull LogicalPosition getLogicalPosition() {
     return myLogicalPosition;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @NotNull VisualPosition getVisualPosition() {
     return myVisualPosition;
   }
 
   /**
    * Returns {@code false} if mouse is below the last line of text, to the right of the last character on the line, or over an inlay.
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
    */
   public boolean isOverText() {
     return myIsOverText;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @Nullable FoldRegion getCollapsedFoldRegion() {
     return myCollapsedFoldRegion == null || !myCollapsedFoldRegion.isValid() ? null : myCollapsedFoldRegion;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @Nullable Inlay getInlay() {
     return myInlay == null || !myInlay.isValid() ? null : myInlay;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @Nullable GutterIconRenderer getGutterIconRenderer() {
     return myGutterIconRenderer;
   }

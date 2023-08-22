@@ -29,7 +29,7 @@ fun GrTypeDefinition.getInnersOutersCache(): DeclarationHolder {
 }
 
 private fun <T> GrTypeDefinition.makeResult(value: T): Result<T> {
-  return Result.create(value, this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT)
+  return Result.create(value, this, PsiModificationTracker.MODIFICATION_COUNT)
 }
 
 private typealias ProcessFunction = (PsiScopeProcessor, ResolveState, PsiElement) -> Boolean

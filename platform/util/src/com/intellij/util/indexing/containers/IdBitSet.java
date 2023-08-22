@@ -1,11 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.indexing.impl.ValueContainerImpl;
 import org.jetbrains.annotations.NotNull;
 
-class IdBitSet implements Cloneable, RandomAccessIntContainer {
+import java.util.Arrays;
+
+final class IdBitSet implements Cloneable, RandomAccessIntContainer {
   private static final int SHIFT = 6;
   private static final int BITS_PER_WORD = 1 << SHIFT;
   private static final int MASK = BITS_PER_WORD - 1;
@@ -61,7 +65,8 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     if (!set) {
       if (myBase < 0) {
         myBase = roundToNearest(bitIndex);
-      } else if (bitIndex < myBase) {
+      }
+      else if (bitIndex < myBase) {
         int newBase = roundToNearest(bitIndex);
         int wordDiff = (myBase - newBase) >> SHIFT;
         long[] n = new long[wordDiff + myBitMask.length];
@@ -74,9 +79,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
       bitIndex -= myBase;
       int wordIndex = bitIndex >> SHIFT;
       if (wordIndex >= myBitMask.length) {
-        long[] n = new long[Math.max(calcCapacity(myBitMask.length), wordIndex + 1)];
-        System.arraycopy(myBitMask, 0, n, 0, myBitMask.length);
-        myBitMask = n;
+        myBitMask = ArrayUtil.realloc(myBitMask, Math.max(calcCapacity(myBitMask.length), wordIndex + 1));
       }
       myBitMask[wordIndex] |= 1L << (bitIndex & MASK);
       myLastUsedSlot = Math.max(myLastUsedSlot, wordIndex);
@@ -109,7 +112,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
 
   @Override
   public @NotNull IntIdsIterator intIterator() {
-    return new Iterator();
+    return size() == 0 ? ValueContainerImpl.EMPTY_ITERATOR : new Iterator();
   }
 
   @Override
@@ -138,20 +141,21 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     try {
       IdBitSet clone = (IdBitSet)super.clone();
       if (myBitMask.length != myLastUsedSlot + 1) { // trim to size
-        long[] longs = new long[myLastUsedSlot + 1];
-        System.arraycopy(myBitMask, 0, longs, 0, longs.length);
-        myBitMask = longs;
+        myBitMask = Arrays.copyOf(myBitMask, myLastUsedSlot + 1);
       }
       clone.myBitMask = myBitMask.clone();
       return clone;
-    } catch (CloneNotSupportedException ex) {
+    }
+    catch (CloneNotSupportedException ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       return null;
     }
   }
 
   private int nextSetBit(int bitIndex) {
-    assert myBase >= 0;
+    if (myBase < 0) {
+      throw new IllegalStateException();
+    }
     if (bitIndex >= myBase) bitIndex -= myBase;
     int wordIndex = bitIndex >> SHIFT;
     if (wordIndex > myLastUsedSlot) {
@@ -175,7 +179,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
     return calcCapacity(((roundToNearest(max) - roundToNearest(min)) >> SHIFT) + 1) * 8;
   }
 
-  private class Iterator implements IntIdsIterator {
+  private final class Iterator implements IntIdsIterator {
     private int nextSetBit = nextSetBit(0);
 
     @Override

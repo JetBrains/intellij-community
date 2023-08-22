@@ -18,19 +18,18 @@ package org.jetbrains.jps.model.module.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
 
-public class JpsModuleSourceDependencyImpl extends JpsDependencyElementBase<JpsModuleSourceDependencyImpl>
+public final class JpsModuleSourceDependencyImpl extends JpsDependencyElementBase<JpsModuleSourceDependencyImpl>
   implements JpsModuleSourceDependency {
-  public JpsModuleSourceDependencyImpl() {
+  JpsModuleSourceDependencyImpl() {
     super();
   }
 
-  public JpsModuleSourceDependencyImpl(JpsModuleSourceDependencyImpl original) {
+  JpsModuleSourceDependencyImpl(JpsModuleSourceDependencyImpl original) {
     super(original);
   }
 
-  @NotNull
   @Override
-  public JpsModuleSourceDependencyImpl createCopy() {
+  public @NotNull JpsModuleSourceDependencyImpl createCopy() {
     return new JpsModuleSourceDependencyImpl(this);
   }
 

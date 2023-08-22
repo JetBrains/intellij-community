@@ -6,9 +6,6 @@ package com.jetbrains.jsonSchema.schemaFile;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 
-/**
- * @author Irina.Chernushina on 4/1/2016.
- */
 public class TestJsonSchemaMappingsProjectConfiguration extends JsonSchemaMappingsProjectConfiguration {
   public TestJsonSchemaMappingsProjectConfiguration(Project project) {
     super(project);

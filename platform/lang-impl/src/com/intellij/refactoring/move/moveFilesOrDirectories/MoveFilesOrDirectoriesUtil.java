@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -17,14 +19,14 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
 
-public class MoveFilesOrDirectoriesUtil {
+public final class MoveFilesOrDirectoriesUtil {
   private MoveFilesOrDirectoriesUtil() { }
 
   /**
@@ -36,16 +38,20 @@ public class MoveFilesOrDirectoriesUtil {
    */
   public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException {
     PsiManager manager = aDirectory.getManager();
-    // do actual move
-    checkMove(aDirectory, destDirectory);
+    doJustMoveDirectory(aDirectory, destDirectory, manager);
+    DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
+  }
 
+  private static void doJustMoveDirectory(@NotNull PsiDirectory aDirectory,
+                                          @NotNull PsiDirectory destDirectory,
+                                          @Nullable Object requestor) {
+    checkMove(aDirectory, destDirectory);
     try {
-      aDirectory.getVirtualFile().move(manager, destDirectory.getVirtualFile());
+      aDirectory.getVirtualFile().move(requestor, destDirectory.getVirtualFile());
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e);
     }
-    DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
   }
 
   /**
@@ -61,10 +67,7 @@ public class MoveFilesOrDirectoriesUtil {
       // do actual move
       checkMove(file, newDirectory);
 
-      VirtualFile vFile = file.getVirtualFile();
-      if (vFile == null) {
-        throw new IncorrectOperationException("Non-physical file: " + file + " (" + file.getClass() + ")");
-      }
+      VirtualFile vFile = file.getViewProvider().getVirtualFile();
 
       try {
         vFile.move(file.getManager(), newDirectory.getVirtualFile());
@@ -92,7 +95,7 @@ public class MoveFilesOrDirectoriesUtil {
                             final PsiElement[] elements,
                             final PsiElement[] targetElement,
                             final MoveCallback moveCallback,
-                            final Function<PsiElement[], PsiElement[]> adjustElements) {
+                            final Function<? super PsiElement[], ? extends PsiElement[]> adjustElements) {
     if (adjustElements == null) {
       for (PsiElement element : elements) {
         if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {
@@ -130,7 +133,7 @@ public class MoveFilesOrDirectoriesUtil {
                              MoveCallback moveCallback,
                              Runnable doneCallback) {
     CommandProcessor.getInstance().executeCommand(project, () -> {
-      Collection<PsiElement> toCheck = ContainerUtil.newArrayList(targetDirectory);
+      Collection<PsiElement> toCheck = new SmartList<>(targetDirectory);
       for (PsiElement e : adjustedElements) {
         toCheck.add(e instanceof PsiFileSystemItem && e.getParent() != null ? e.getParent() : e);
       }
@@ -142,9 +145,9 @@ public class MoveFilesOrDirectoriesUtil {
         int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
         List<PsiElement> els = new ArrayList<>();
         for (PsiElement psiElement : adjustedElements) {
-          if (psiElement instanceof PsiFile) {
-            PsiFile file = (PsiFile)psiElement;
-            if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(), "Move")) continue;
+          if (psiElement instanceof PsiFile file) {
+            if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(),
+                                                             RefactoringBundle.message("command.name.move"))) continue;
           }
           checkMove(psiElement, targetDirectory);
           els.add(psiElement);
@@ -152,6 +155,45 @@ public class MoveFilesOrDirectoriesUtil {
 
         if (els.isEmpty()) {
           doneCallback.run();
+        }
+        else if (DumbService.isDumb(project)) {
+          if (doneCallback != null) {
+            ApplicationManager.getApplication().invokeAndWait(doneCallback);
+          }
+          Set<SmartPsiElementPointer<PsiFile>> filePointers = new HashSet<>();
+          if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) {
+            SmartPointerManager manager = SmartPointerManager.getInstance(project);
+            for (PsiElement element : elements) {
+              addFilePointers(filePointers, element, manager);
+            }
+          }
+          WriteCommandAction.runWriteCommandAction(project, RefactoringBundle.message("move.title"), null, () -> {
+            try {
+              for (PsiElement element : elements) {
+                if (element instanceof PsiDirectory) {
+                  doJustMoveDirectory((PsiDirectory)element, targetDirectory, MoveFilesOrDirectoriesUtil.class);
+                }
+                else if (element instanceof PsiFile movedFile) {
+                  PsiFile moving = targetDirectory.findFile(movedFile.getName());
+                  if (moving == null) {
+                    doMoveFile(movedFile, targetDirectory);
+                  }
+                }
+              }
+            }
+            finally {
+              if (moveCallback != null) {
+                moveCallback.refactoringCompleted();
+              }
+              if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) {
+                ApplicationManager.getApplication().invokeLater(
+                  () -> EditorHelper.openFilesInEditor(
+                    filePointers.stream().map(SmartPsiElementPointer::getContainingFile).filter(file -> file != null && file.isValid())
+                      .toArray(PsiFile[]::new)),
+                  project.getDisposed());
+              }
+            }
+          });
         }
         else {
           new MoveFilesOrDirectoriesProcessor(project, els.toArray(PsiElement.EMPTY_ARRAY), targetDirectory,
@@ -165,6 +207,19 @@ public class MoveFilesOrDirectoriesUtil {
     }, MoveHandler.getRefactoringName(), null);
   }
 
+  private static void addFilePointers(@NotNull Set<? super SmartPsiElementPointer<PsiFile>> pointers,
+                                      @NotNull PsiElement element,
+                                      @NotNull SmartPointerManager manager) {
+    if (element instanceof PsiFile) {
+      pointers.add(manager.createSmartPsiElementPointer((PsiFile)element, (PsiFile)element));
+    }
+    else if (element instanceof PsiDirectory) {
+      for (PsiElement child : element.getChildren()) {
+        addFilePointers(pointers, child, manager);
+      }
+    }
+  }
+
   @Nullable
   public static PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
     if (!(element instanceof PsiDirectoryContainer)) {
@@ -172,15 +227,11 @@ public class MoveFilesOrDirectoriesUtil {
     }
 
     PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
-    switch (directories.length) {
-      case 0:
-        return null;
-      case 1:
-        return directories[0];
-      default:
-        return DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<>());
-    }
-
+    return switch (directories.length) {
+      case 0 -> null;
+      case 1 -> directories[0];
+      default -> DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<>());
+    };
   }
 
   @Nullable

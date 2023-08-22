@@ -23,13 +23,15 @@ import java.util.List;
 public class LambdaToAnonymousTransformTest extends LightJavaCodeInsightTestCase {
   public void testPsiFileException() {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      configureFromFileText("Main.java", "import java.util.stream.Stream;\n" +
-                                         "\n" +
-                                         "public class Main {\n" +
-                                         "  public static void main(String[] args) {\n" +
-                                         "    <caret>Stream.of(1,2,3).map(x -> x * x ).filter(x -> x % 2 == 1).toArray();\n" +
-                                         "  }\n" +
-                                         "}\n", true);
+      configureFromFileText("Main.java", """
+        import java.util.stream.Stream;
+
+        public class Main {
+          public static void main(String[] args) {
+            <caret>Stream.of(1,2,3).map(x -> x * x ).filter(x -> x % 2 == 1).toArray();
+          }
+        }
+        """, true);
       final PsiFile file = getFile();
       final int offset = getEditor().getCaretModel().getCurrentCaret().getOffset();
       final PsiElement elementAtCaret = DebuggerUtilsEx.findElementAt(file, offset);

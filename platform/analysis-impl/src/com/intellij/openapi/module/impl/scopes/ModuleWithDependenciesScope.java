@@ -1,34 +1,50 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
+import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-public class ModuleWithDependenciesScope extends GlobalSearchScope {
+public final class ModuleWithDependenciesScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
   public static final int COMPILE_ONLY = 0x01;
   public static final int LIBRARIES = 0x02;
   public static final int MODULES = 0x04;
   public static final int TESTS = 0x08;
-  public static final int CONTENT = 0x20;
 
-  @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS, CONTENT})
+  @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS})
   @interface ScopeConstant {}
+
+  private static final Key<CachedValue<ConcurrentMap<Integer, VirtualFileEnumeration>>> CACHED_FILE_ID_ENUMERATIONS_KEY =
+    Key.create("CACHED_FILE_ID_ENUMERATIONS");
 
   private final Module myModule;
   @ScopeConstant
@@ -36,36 +52,33 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private final ProjectFileIndexImpl myProjectFileIndex;
 
   private volatile Set<Module> myModules;
-  private final TObjectIntHashMap<VirtualFile> myRoots = new TObjectIntHashMap<>();
+  private final Object2IntMap<VirtualFile> myRoots;
+  private final UserDataHolderBase myUserDataHolderBase = new UserDataHolderBase();
+  private final SingleFileSourcesTracker mySingleFileSourcesTracker;
 
   ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());
     myModule = module;
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
+    myRoots = calcRoots();
+    mySingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(module.getProject());
+  }
 
+  private Object2IntMap<VirtualFile> calcRoots() {
+    OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
+      if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
+      return OrderRootType.CLASSES;
+    });
     Set<VirtualFile> roots = new LinkedHashSet<>();
-    if (hasOption(CONTENT)) {
-      Set<Module> modules = calcModules();
-      myModules = new THashSet<>(modules);
-      for (Module m : modules) {
-        for (ContentEntry entry : ModuleRootManager.getInstance(m).getContentEntries()) {
-          ContainerUtil.addIfNotNull(roots, entry.getFile());
-        }
-      }
-    }
-    else {
-      OrderEnumerator en = getOrderEnumeratorForOptions();
-      Collections.addAll(roots, en.roots(entry -> {
-        if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
-        return OrderRootType.CLASSES;
-      }).getRoots());
-    }
+    Collections.addAll(roots, en.getRoots());
 
     int i = 1;
+    Object2IntMap<VirtualFile> map = new Object2IntOpenHashMap<>(roots.size());
     for (VirtualFile root : roots) {
-      myRoots.put(root, i++);
+      map.put(root, i++);
     }
+    return map;
   }
 
   private OrderEnumerator getOrderEnumeratorForOptions() {
@@ -80,9 +93,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @NotNull
   private Set<Module> calcModules() {
-    // In the case that hasOption(CONTENT), the order of the modules set matters for
-    // ordering the content roots, so use a LinkedHashSet
-    Set<Module> modules = new LinkedHashSet<>();
+    Set<Module> modules = new HashSet<>();
     OrderEnumerator en = getOrderEnumeratorForOptions();
     en.forEach(each -> {
       if (each instanceof ModuleOrderEntry) {
@@ -116,7 +127,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     Set<Module> allModules = myModules;
     if (allModules == null) {
-      myModules = allModules = new THashSet<>(calcModules());
+      myModules = allModules = new HashSet<>(calcModules());
     }
     return allModules.contains(aModule);
   }
@@ -133,44 +144,67 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
-    if (hasOption(CONTENT)) {
-      return myRoots.contains(ProjectFileIndexImpl.getContentRootForFile(info, file, true));
-    }
-    if (ProjectFileIndexImpl.isFileInContent(file, info) && myRoots.contains(ProjectFileIndexImpl.getSourceRootForFile(file, info))) {
-      return true;
-    }
-    return myRoots.contains(ProjectFileIndexImpl.getClassRootForFile(file, info));
+    // in case of single file source
+    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) return true;
+
+    VirtualFile root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
+    return root != null && myRoots.containsKey(root);
   }
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    VirtualFile r1 = getFileRoot(file1);
-    VirtualFile r2 = getFileRoot(file2);
+    VirtualFile r1 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file1);
+    VirtualFile r2 = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file2);
     if (Comparing.equal(r1, r2)) return 0;
 
     if (r1 == null) return -1;
     if (r2 == null) return 1;
 
-    int i1 = myRoots.get(r1);
-    int i2 = myRoots.get(r2);
+    Object2IntMap<VirtualFile> roots = myRoots;
+    int i1 = roots.getInt(r1);
+    int i2 = roots.getInt(r2);
     if (i1 == 0 && i2 == 0) return 0;
     if (i1 > 0 && i2 > 0) return i2 - i1;
     return i1 > 0 ? 1 : -1;
   }
 
-  @Nullable
-  private VirtualFile getFileRoot(@NotNull VirtualFile file) {
-    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
-    VirtualFile root = ProjectFileIndexImpl.getClassRootForFile(file, info);
-    return root != null ? root : ProjectFileIndexImpl.getSourceRootForFile(file, info);
-  }
-
   @TestOnly
   public Collection<VirtualFile> getRoots() {
-    @SuppressWarnings("unchecked") List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
-    result.sort(Comparator.comparingInt(myRoots::get));
+    List<VirtualFile> result = new ArrayList<>(myRoots.keySet());
+    result.sort(Comparator.comparingInt(myRoots::getInt));
     return result;
+  }
+
+  @Override
+  public @Nullable VirtualFileEnumeration extractFileEnumeration() {
+    // todo might not cheap
+    if (hasOption(MODULES) || hasOption(LIBRARIES)) return null;
+
+    CachedValueProvider<ConcurrentMap<Integer, VirtualFileEnumeration>> provider = () -> {
+      return CachedValueProvider.Result.create(new ConcurrentHashMap<Integer, VirtualFileEnumeration>(),
+                                               VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
+    };
+
+    CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(myModule.getProject());
+    ConcurrentMap<Integer, VirtualFileEnumeration> cacheHolder = cachedValuesManager.getCachedValue(myUserDataHolderBase,
+                                                                                                    CACHED_FILE_ID_ENUMERATIONS_KEY,
+                                                                                                    provider,
+                                                                                                    false);
+
+    return cacheHolder.computeIfAbsent(myOptions, key -> doExtractFilIdEnumeration());
+  }
+
+  @NotNull
+  private VirtualFileEnumeration doExtractFilIdEnumeration() {
+    IntSet result = new IntOpenHashSet();
+    for (VirtualFile file : myRoots.keySet()) {
+      if (file instanceof VirtualFileWithId) {
+        int[] children = VirtualFileManager.getInstance().listAllChildIds(((VirtualFileWithId)file).getId());
+        result.addAll(IntList.of(children));
+      }
+    }
+
+    return new MyVirtualFileEnumeration(result);
   }
 
   @Override
@@ -194,5 +228,41 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
            " include-libraries:" + hasOption(LIBRARIES) +
            " include-other-modules:" + hasOption(MODULES) +
            " include-tests:" + hasOption(TESTS);
+  }
+
+  private static class MyVirtualFileEnumeration implements VirtualFileEnumeration {
+    private final @NotNull IntSet myResult;
+
+    MyVirtualFileEnumeration(@NotNull IntSet result) {
+      myResult = result;
+    }
+
+    @Override
+    public boolean contains(int fileId) {
+      return myResult.contains(fileId);
+    }
+
+    @Override
+    public int @NotNull [] asArray() {
+      return myResult.toArray(ArrayUtil.EMPTY_INT_ARRAY);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyVirtualFileEnumeration that = (MyVirtualFileEnumeration)o;
+      return myResult.equals(that.myResult);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myResult);
+    }
+
+    @Override
+    public String toString() {
+      return Arrays.toString(myResult.toIntArray());
+    }
   }
 }

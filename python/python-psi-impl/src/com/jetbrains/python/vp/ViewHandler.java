@@ -31,7 +31,7 @@ import java.lang.reflect.Method;
  */
 class ViewHandler<C> implements InvocationHandler {
   /**
-   * Real view, created by user using {@link com.jetbrains.python.vp.Creator#createView(Presenter)}
+   * Real view, created by user using {@link Creator#createView(Presenter)}
    */
   private C realView;
 
@@ -53,7 +53,7 @@ class ViewHandler<C> implements InvocationHandler {
   /**
    * Class that invokes view methods in appropriate thread
    */
-  private static class Invoker implements Runnable {
+  private static final class Invoker implements Runnable {
     @NotNull
     private final Method method;
     private final Object @Nullable [] args;

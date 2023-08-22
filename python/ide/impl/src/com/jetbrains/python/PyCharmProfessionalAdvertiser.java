@@ -1,36 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.notification.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class PyCharmProfessionalAdvertiser implements Annotator {
+  private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("PyCharm Professional Advertiser");
 
-
-  @Language("HTML")
-  private static final String NOTIFICATIONS_TEXT =
-    "<a href=\"prof\">PyCharm Professional Edition</a> has special support for it.";
-
-  private static final NotificationGroup BALLOON_NOTIFICATIONS = new NotificationGroup("PyCharm Professional Advertiser",
-                                                                                       NotificationDisplayType.STICKY_BALLOON, false);
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
 
@@ -39,42 +30,51 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
       return;
     }
 
-    if (element instanceof PyFile) {
+    if (element instanceof PyFile pyFile) {
 
-      final PyFile pyFile = (PyFile)element;
       final VirtualFile vFile = pyFile.getVirtualFile();
       if (vFile != null && FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
         return;
       }
 
       if (PyCellUtil.hasCells(pyFile)) {
-        showInspectionAdvertisement(project, "code cells in the editor", "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "codecells");
+        showInspectionAdvertisement(project,
+                                    PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.cells.in.editor"),
+                                    "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "codecells");
       }
 
       if (PyPsiUtils.containsImport(pyFile, "django")) {
-        showInspectionAdvertisement(project, "the Django Framework", "https://www.jetbrains.com/pycharm/features/web_development.html#django","django");
+        showInspectionAdvertisement(project,
+                                    PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.django.framework"),
+                                    "https://www.jetbrains.com/pycharm/features/web_development.html#django", "django");
       }
 
       if (PyPsiUtils.containsImport(pyFile, "flask")) {
-        showInspectionAdvertisement(project, "the Flask Framework", null,"flask");
+        showInspectionAdvertisement(project,
+                                    PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.flask.framework"),
+                                    null, "flask");
       }
 
       if (PyPsiUtils.containsImport(pyFile, "pyramid")) {
-        showInspectionAdvertisement(project, "the Pyramid Framework", null,"pyramid");
+        showInspectionAdvertisement(project,
+                                    PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.pyramid.framework"),
+                                    null, "pyramid");
       }
     }
 
     if (isJupyterFile(element)) {
-      showInspectionAdvertisement(element.getProject(), "Jupyter notebook",
+      showInspectionAdvertisement(element.getProject(),
+                                  PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.jupyter.notebook"),
                                   "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "jupyter");
     }
   }
 
   private static void showInspectionAdvertisement(@NotNull Project project,
-                                                  @NotNull String message,
+                                                  @NotNull @NotificationTitle String message,
                                                   @Nullable String url,
                                                   @NotNull String source) {
-    showSingletonNotification(project, "You are using " + message, NOTIFICATIONS_TEXT, NotificationType.INFORMATION,
+    showSingletonNotification(project, message,
+                              PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.pycharm.pro.has.support.for.it"),
                               (notification, event) -> {
                                 if ("prof".equals(event.getDescription())) {
                                   BrowserUtil.browse(
@@ -95,23 +95,25 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
   }
 
   private static void showSingletonNotification(@NotNull Project project,
-                                                @NotNull String title,
-                                                @NotNull String htmlContent,
-                                                @NotNull NotificationType type,
+                                                @NotNull @NotificationTitle String title,
+                                                @NotNull @NotificationContent String htmlContent,
                                                 @NotNull NotificationListener listener) {
     getSettings(project).shown = true;
-    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, type, (notification, event) -> {
-      try {
-        listener.hyperlinkUpdate(notification, event);
-      }
-      finally {
-        notification.expire();
-      }
-    }).notify(project);
+    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, NotificationType.INFORMATION)
+      .setListener((notification, event) -> {
+        try {
+          listener.hyperlinkUpdate(notification, event);
+        }
+        finally {
+          notification.expire();
+        }
+      })
+      .setSuggestionType(true)
+      .notify(project);
   }
 
   @NotNull
   private static PyCharmProfessionalAdvertiserSettings getSettings(@NotNull Project project) {
-    return ServiceManager.getService(project, PyCharmProfessionalAdvertiserSettings.class);
+    return project.getService(PyCharmProfessionalAdvertiserSettings.class);
   }
 }

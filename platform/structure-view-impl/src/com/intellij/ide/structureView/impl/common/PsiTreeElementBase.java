@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.common;
 
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.customRegions.CustomRegionStructureUtil;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.navigation.ItemPresentation;
@@ -60,11 +59,6 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return getElement();
   }
 
-  @Override
-  public String getLocationString() {
-    return null;
-  }
-
   public boolean isSearchInLocationString() {
     return false;
   }
@@ -76,12 +70,12 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
 
   @Override
   public final StructureViewTreeElement @NotNull [] getChildren() {
-    List<StructureViewTreeElement> list = AbstractTreeUi.calculateYieldingToWriteAction(() -> doGetChildren(true));
+    List<StructureViewTreeElement> list = doGetChildren(true);
     return list.isEmpty() ? EMPTY_ARRAY : list.toArray(EMPTY_ARRAY);
   }
 
   public final @NotNull List<StructureViewTreeElement> getChildrenWithoutCustomRegions() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doGetChildren(false));
+    return doGetChildren(false);
   }
 
   private @NotNull List<StructureViewTreeElement> doGetChildren(boolean withCustomRegions) {

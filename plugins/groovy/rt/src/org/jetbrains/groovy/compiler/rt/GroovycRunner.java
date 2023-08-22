@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
 
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,12 +8,12 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-public class GroovycRunner {
+public final class GroovycRunner {
 
   public static void main(String[] args) {
     System.exit(intMain(args));
@@ -93,10 +92,10 @@ public class GroovycRunner {
 
   @Nullable
   private static ClassLoader buildMainLoader(String argsPath, PrintStream err) {
-    final List<URL> urls = new ArrayList<URL>();
+    final List<URL> urls = new ArrayList<>();
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(argsPath), Charset.forName("UTF-8")));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(argsPath), StandardCharsets.UTF_8));
       String classpath = reader.readLine();
       for (String s : classpath.split(File.pathSeparator)) {
         urls.add(new File(s).toURI().toURL());
@@ -108,12 +107,13 @@ public class GroovycRunner {
       return null;
     }
 
-    final ClassLoader[] ref = new ClassLoader[1];
-    new Runnable() {
-      public void run() {
-        ref[0] = UrlClassLoader.build().urls(urls).useCache().allowLock().get();
-      }
-    }.run();
-    return ref[0];
+    try {
+      Class<?> classLoaderClass = Class.forName("com.intellij.util.lang.java6.UrlClassLoader");
+      return (ClassLoader)classLoaderClass.getMethod("create", List.class).invoke(null, urls);
+    }
+    catch (Throwable t) {
+      t.printStackTrace(err);
+      return null;
+    }
   }
 }

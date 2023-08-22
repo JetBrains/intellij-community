@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.*;
 
 import static com.intellij.xml.CommonXmlStrings.*;
 
-public class XmlStringUtil {
-
+public final class XmlStringUtil {
   private XmlStringUtil() {
   }
 
@@ -18,24 +17,24 @@ public class XmlStringUtil {
     int cur = 0;
     int len = str.length();
     while (cur < len) {
-      int next = StringUtil.indexOf(str, CDATA_END, cur);
+      int next = Strings.indexOf(str, CDATA_END, cur);
       sb.append(CDATA_START).append(str.subSequence(cur, next = next < 0 ? len : next + 1)).append(CDATA_END);
       cur = next;
     }
     return sb.toString();
   }
 
-  @Contract("null->null; !null->!null")
+  @Contract(value = "null->null; !null->!null", pure = true)
   public static String escapeString(@Nullable String str) {
     return escapeString(str, false);
   }
 
-  @Contract("null,_->null; !null,_->!null")
+  @Contract(value = "null,_->null; !null,_->!null", pure = true)
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace) {
     return escapeString(str, escapeWhiteSpace, true);
   }
 
-  @Contract("null,_,_->null; !null,_,_->!null")
+  @Contract(value = "null,_,_->null; !null,_,_->!null", pure = true)
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace, final boolean convertNoBreakSpace) {
     if (str == null) {
       return null;
@@ -104,7 +103,8 @@ public class XmlStringUtil {
     return buffer;
   }
 
-  public static @NotNull String wrapInHtml(@Nls @NotNull CharSequence result) {
+  @Contract(pure = true)
+  public static @NotNull String wrapInHtml(@NotNull CharSequence result) {
     return HTML_START + result + HTML_END;
   }
 
@@ -132,16 +132,21 @@ public class XmlStringUtil {
     return String.format("<%s %s>%s</%s>", tagWord, attributes, text, tagWord);
   }
 
-  public static boolean isWrappedInHtml(@NotNull String tooltip) {
-    return StringUtil.startsWithIgnoreCase(tooltip, HTML_START) &&
-           StringUtil.endsWithIgnoreCase(tooltip, HTML_END);
+  public static @NotNull String formatLink(@NonNls @NotNull String targetUrl, @Nls @NotNull String text) {
+    return wrapInHtmlTagWithAttributes(text, "a", "href=\"" + targetUrl + "\"");
   }
 
+  public static boolean isWrappedInHtml(@NotNull String tooltip) {
+    return StringUtilRt.startsWithIgnoreCase(tooltip, HTML_START) &&
+           Strings.endsWithIgnoreCase(tooltip, HTML_END);
+  }
+
+  @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String toolTip) {
-    toolTip = StringUtil.trimStart(toolTip, HTML_START);
-    toolTip = StringUtil.trimStart(toolTip, BODY_START);
-    toolTip = StringUtil.trimEnd(toolTip, HTML_END);
-    toolTip = StringUtil.trimEnd(toolTip, BODY_END);
+    toolTip = Strings.trimStart(toolTip, HTML_START);
+    toolTip = Strings.trimStart(toolTip, BODY_START);
+    toolTip = Strings.trimEnd(toolTip, HTML_END);
+    toolTip = Strings.trimEnd(toolTip, BODY_END);
     return toolTip;
   }
 
@@ -149,6 +154,7 @@ public class XmlStringUtil {
    * Converts {@code text} to a string which can be used inside an HTML document: if it's already an HTML text the root html/body tags will
    * be stripped, if it's a plain text special characters will be escaped
    */
+  @Contract(pure = true)
   public static @NotNull String convertToHtmlContent(@NotNull String text) {
     return isWrappedInHtml(text) ? stripHtml(text) : escapeString(text);
   }

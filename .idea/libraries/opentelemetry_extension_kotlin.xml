@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="opentelemetry-extension-kotlin" type="repository">
+    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="io.opentelemetry:opentelemetry-extension-kotlin:1.29.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.29.0/opentelemetry-extension-kotlin-1.29.0.jar">
+          <sha256sum>1552fb08aee63a94947cc5e94729bb2416ac500cd8f05c32fba4125e5d206b68</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.29.0/opentelemetry-extension-kotlin-1.29.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.29.0/opentelemetry-extension-kotlin-1.29.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

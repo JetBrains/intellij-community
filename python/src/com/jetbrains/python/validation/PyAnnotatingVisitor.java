@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -12,10 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class PyAnnotatingVisitor implements Annotator {
+
+public class PyAnnotatingVisitor implements Annotator, DumbAware {
   private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
   private static final Class[] ANNOTATOR_CLASSES = new Class[] {
     AssignTargetAnnotator.class,
@@ -28,7 +27,8 @@ public class PyAnnotatingVisitor implements Annotator {
     GlobalAnnotator.class,
     ImportAnnotator.class,
     PyBuiltinAnnotator.class,
-    UnsupportedFeatures.class
+    UnsupportedFeatures.class,
+    PyAsyncAwaitAnnotator.class
   };
 
   private final PyAnnotator[] myAnnotators;
@@ -40,11 +40,7 @@ public class PyAnnotatingVisitor implements Annotator {
       try {
         annotator = (PyAnnotator)cls.newInstance();
       }
-      catch (InstantiationException e) {
-        LOGGER.error(e);
-        continue;
-      }
-      catch (IllegalAccessException e) {
+      catch (InstantiationException | IllegalAccessException e) {
         LOGGER.error(e);
         continue;
       }

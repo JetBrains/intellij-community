@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -22,7 +25,7 @@ import java.util.List;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
   public void testMultipleImplsFromAbstractCall() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                   "    abstract void foo();\n" +
                   "\n" +
@@ -46,7 +49,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testFromIncompleteCode() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                       "    abstract void foo();\n" +
                       "\n" +
@@ -70,7 +73,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testToStringOnUnqualifiedPerformance() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public class Fix {\n" +
                   "    {\n" +
                   "        <caret>toString();\n" +
@@ -98,7 +101,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testToStringOnQualifiedPerformance() {
-    @Language("JAVA")
+    @SuppressWarnings("ALL") @Language("JAVA")
     String fileText = "public class Fix {\n" +
                   "    {\n" +
                   "        Fix ff = getFix();\n" +
@@ -130,7 +133,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
   public void testShowSelfNonAbstract() {
     //fails if groovy plugin is enabled: org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public class Hello {\n" +
                       "    void foo(){}\n" +
                       "\n" +
@@ -154,7 +157,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testMultipleImplsFromStaticCall() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "public abstract class Hello {\n" +
                       "    static void bar (){}\n" +
                       "    class Hello1 extends Hello {\n" +
@@ -174,7 +177,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testFilterOutImpossibleVariants() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface A {\n" +
                       "    void save();\n" +
                       "}\n" +
@@ -207,7 +210,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testImplicitInheritance() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface PackContainer {\n" +
                       "    void foo();\n" +
                       "}\n" +
@@ -237,7 +240,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testMethodReferences() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface I {void f();}\n" +
                   "class A implements I { public void f(){}}\n" +
                   "class B implements I { public void f(){}}\n" +
@@ -263,7 +266,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testMethodImplementationsOnTypeVariable() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "interface I {}\n" +
                       "interface Im {\n" +
                       "    void m();\n" +
@@ -286,7 +289,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testStaticMethodReference() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String fileText = "class C {\n" +
                   "  static void a(){}\n" +
                   "  {a<caret>();}" +
@@ -301,10 +304,10 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
   public void testPrivateClassInheritors() {
     @Language("JAVA")
-    String fileText = "class C {\n" +
-                  "  private static class Pr<caret>ivate {}\n" +
-                  "  public static class Public extends Private {}" +
-                  "}";
+    String fileText = """
+      class C {
+        private static class Pr<caret>ivate {}
+        public static class Public extends Private {}}""";
     PsiFile file = myFixture.addFileToProject("Foo.java",
                                               fileText);
     myFixture.addClass("class Inheritor extends C.Public {}");
@@ -314,7 +317,9 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testPrivateClassInheritorsInJdkDecompiled() {
-    ModuleRootModificationUtil.setModuleSdk(getModule(), IdeaTestUtil.getMockJdk18());
+    Sdk sdk = IdeaTestUtil.getMockJdk18();
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
+    ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
 
     PsiClass aClass = myFixture.getJavaFacade().findClass("java.util.ResourceBundle.CacheKeyReference");
     PsiFile file = aClass.getContainingFile();
@@ -325,7 +330,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testScopeForPrivateMethod() {
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String text = "class Foo {" +
                   " {f<caret>oo();}" +
                   " private void foo() {}" +
@@ -342,12 +347,14 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
       "jar://" + JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/MyInterfaceLibrary.jar!/"
     );
     @Language("JAVA")
-    String fileText = "import com.company.MyInterface;\n" +
-                      "\n" +
-                      "public class MyInterfaceImplementation implements My<caret>Interface {\n" +
-                      "    @Override\n" +
-                      "    public void doIt() {}\n" +
-                      "}\n";
+    String fileText = """
+      import com.company.MyInterface;
+
+      public class MyInterfaceImplementation implements My<caret>Interface {
+          @Override
+          public void doIt() {}
+      }
+      """;
     PsiFile psiFile = myFixture.addFileToProject("MyInterfaceImplementation.java",
                                                  fileText);
 

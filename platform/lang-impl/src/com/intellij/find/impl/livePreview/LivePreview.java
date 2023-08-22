@@ -1,12 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
-
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -16,7 +14,10 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -25,11 +26,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
@@ -37,12 +38,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.PrintStream;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-public class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener, EditorColorsListener {
+public final class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener, EditorColorsListener {
   private static final Key<RangeHighlighter> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
-  private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
   private final Disposable myDisposable = Disposer.newDisposable("livePreview");
   private boolean mySuppressedUpdate = false;
@@ -71,8 +71,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   public interface Delegate {
-    @Nullable
-    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult)
+    @NlsSafe @Nullable String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult)
       throws FindManager.MalformedReplacementStringException;
   }
 
@@ -151,7 +150,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
 
     for (RangeHighlighter highlighter : highlighters) {
-      dumpStream.println(highlighter + " : " + highlighter.getTextAttributes());
+      dumpStream.println(highlighter + " : " + highlighter.getTextAttributes(editor.getColorsScheme()));
     }
     dumpStream.println("------------");
   }
@@ -296,7 +295,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     markupModel.processRangeHighlightersOverlappingWith(startOffset, startOffset, highlighter -> {
       if (highlighter.getUserData(SEARCH_MARKER) != null &&
           highlighter.getStartOffset() == startOffset && highlighter.getEndOffset() == endOffset &&
-          Objects.equals(highlighter.getTextAttributes(), attributes)) {
+          Objects.equals(highlighter.getTextAttributes(mySearchResults.getEditor().getColorsScheme()), attributes)) {
         existing[0] = highlighter;
         return false;
       }
@@ -333,7 +332,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       } else if (needsAdditionalHighlighting) {
         RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
                                                                 new TextAttributes(null, null,
-                                                                                   Color.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN));
+                                                                                   JBColor.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN));
         highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
       }
     }
@@ -356,32 +355,20 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       if (replacementPreviewText == null) {
         return;//malformed replacement string
       }
-      if (Registry.is("ide.find.show.replacement.hint.for.simple.regexp")) {
-        showBalloon(editor, replacementPreviewText.isEmpty() ? EMPTY_STRING_DISPLAY_TEXT : replacementPreviewText);
-      }
-      else if (!replacementPreviewText.equals(findModel.getStringToReplace())) {
+      if (!replacementPreviewText.equals(findModel.getStringToReplace()) ||
+          Registry.is("ide.find.show.replacement.hint.for.simple.regexp")) {
         showBalloon(editor, replacementPreviewText);
       }
     }
   }
 
-  private void showBalloon(Editor editor, String replacementPreviewText) {
+  private void showBalloon(Editor editor, @NotNull @NlsSafe String replacementPreviewText) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myReplacementPreviewText = replacementPreviewText;
       return;
     }
 
-    ReplacementView replacementView = new ReplacementView(replacementPreviewText);
-
-    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
-    balloonBuilder.setFadeoutTime(0);
-    balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
-    balloonBuilder.setAnimationCycle(0);
-    balloonBuilder.setHideOnClickOutside(false);
-    balloonBuilder.setHideOnKeyOutside(false);
-    balloonBuilder.setHideOnAction(false);
-    balloonBuilder.setCloseButtonEnabled(true);
-    myReplacementBalloon = balloonBuilder.createBalloon();
+    myReplacementBalloon = UsagePreviewPanel.buildReplacementPreviewBalloon(replacementPreviewText);
     EditorUtil.disposeWithEditor(editor, myReplacementBalloon);
     myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.below);
   }
@@ -409,7 +396,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   private RangeHighlighter addHighlighter(int startOffset, int endOffset, @NotNull TextAttributes attributes) {
     Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return null;
+    if (project.isDisposed()) return null;
     List<RangeHighlighter> sink = new ArrayList<>();
     HighlightManager.getInstance(project).addRangeHighlight(mySearchResults.getEditor(), startOffset, endOffset, attributes, false, sink);
     RangeHighlighter result = ContainerUtil.getFirstItem(sink);
@@ -419,11 +406,11 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   private void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     Project project = mySearchResults.getProject();
-    if (project == null || project.isDisposed()) return;
+    if (project.isDisposed()) return;
     HighlightManager.getInstance(project).removeSegmentHighlighter(mySearchResults.getEditor(), highlighter);
   }
 
-  private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
+  private final class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;
 
     ReplacementBalloonPositionTracker(Editor editor) {
@@ -433,7 +420,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
 
     @Override
-    public RelativePoint recalculateLocation(final Balloon object) {
+    public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
       FindResult cursor = mySearchResults.getCursor();
       if (cursor == null) return null;
       final TextRange cur = cursor;
@@ -441,35 +428,30 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
       int endOffset = cur.getEndOffset();
 
       if (endOffset > myEditor.getDocument().getTextLength()) {
-        if (!object.isDisposed()) {
-          requestBalloonHiding(object);
+        if (!balloon.isDisposed()) {
+          requestBalloonHiding(balloon);
         }
         return null;
       }
       if (!SearchResults.insideVisibleArea(myEditor, cur)) {
-        requestBalloonHiding(object);
+        requestBalloonHiding(balloon);
 
         removeVisibleAreaListener();
-        myVisibleAreaListener = new VisibleAreaListener() {
-          @Override
-          public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
-            if (SearchResults.insideVisibleArea(myEditor, cur)) {
-              showReplacementPreview();
-            }
-          }
+        myVisibleAreaListener = e -> {
+          if (SearchResults.insideVisibleArea(myEditor, cur)) showReplacementPreview();
         };
         myEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
       }
 
       Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
       Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
-      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y + myEditor.getLineHeight());
+      Point point = new Point((startPoint.x + endPoint.x)/2, endPoint.y + myEditor.getLineHeight());
 
       return new RelativePoint(myEditor.getContentComponent(), point);
     }
   }
 
-  private static void requestBalloonHiding(final Balloon object) {
-    ApplicationManager.getApplication().invokeLater(() -> object.hide());
+  private static void requestBalloonHiding(Balloon balloon) {
+    ApplicationManager.getApplication().invokeLater(() -> balloon.hide());
   }
 }

@@ -27,4 +27,14 @@ class EditorConfigFormattingTest : BasePlatformTestCase() {
   fun testAlignOnValues() = doTestWithSettings { ALIGN_GROUP_FIELD_DECLARATIONS = true }
 
   fun testNoAlignment() = doTestWithSettings { }
+
+  fun testSpaceAroundComma() = doTestWithSettings {
+    SPACE_AFTER_COMMA = true
+    SPACE_BEFORE_COMMA = true
+  }
+
+  fun testKeepSpacesAroundComma() = doTestWithSettings {
+    SPACE_AFTER_COMMA = false
+    SPACE_BEFORE_COMMA = false
+  }
 }

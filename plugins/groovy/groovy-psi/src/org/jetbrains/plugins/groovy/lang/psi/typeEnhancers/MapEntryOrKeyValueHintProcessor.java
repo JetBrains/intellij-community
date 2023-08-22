@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -13,6 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
+  @NlsSafe private static final String INDEX = "index";
+  @NlsSafe private static final String ARG_NUM = "argNum";
+
+
   @Override
   public String getHintName() {
     return "groovy.transform.stc.MapEntryOrKeyValue";
@@ -44,10 +49,10 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
 
     PsiClassType mapEntryType = JavaPsiFacade.getElementFactory(method.getProject()).createType(mapEntry, key, value);
 
-    PsiType[] keyValueSignature = index ? new PsiType[]{key, value, PsiType.INT} : new PsiType[]{key, value};
-    PsiType[] mapEntrySignature = index ? new PsiType[]{mapEntryType, PsiType.INT} : new PsiType[]{mapEntryType};
+    PsiType[] keyValueSignature = index ? new PsiType[]{key, value, PsiTypes.intType()} : new PsiType[]{key, value};
+    PsiType[] mapEntrySignature = index ? new PsiType[]{mapEntryType, PsiTypes.intType()} : new PsiType[]{mapEntryType};
 
-    return ContainerUtil.newArrayList(keyValueSignature, mapEntrySignature);
+    return List.of(keyValueSignature, mapEntrySignature);
   }
 
   private static int extractArgNum(String[] options) {
@@ -84,7 +89,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     Couple<String> pair = parseValue(value);
     if (pair == null) return null;
 
-    if ("index".equals(pair.getFirst())) {
+    if (INDEX.equals(pair.getFirst())) {
       return Boolean.valueOf(pair.getSecond());
     }
 
@@ -95,7 +100,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     Couple<String> pair = parseValue(value);
     if (pair == null) return null;
 
-    if ("argNum".equals(pair.getFirst())) {
+    if (ARG_NUM.equals(pair.getFirst())) {
       return StringUtil.parseInt(pair.getSecond(), 0);
     }
 

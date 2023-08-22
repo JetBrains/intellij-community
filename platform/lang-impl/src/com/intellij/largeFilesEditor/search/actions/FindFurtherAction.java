@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorBundle;
@@ -10,14 +11,9 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
-public class FindFurtherAction extends AnAction implements DumbAware {
-
-  private static class Holder {
-    private static final Icon ICON_FIND_ADD_NEXT = AllIcons.Actions.FindAndShowNextMatches;
-    private static final Icon ICON_FIND_ADD_PREV = AllIcons.Actions.FindAndShowPrevMatches;
-  }
-
+public final class FindFurtherAction extends AnAction implements DumbAware {
   private final boolean directionForward;
   private final RangeSearch myRangeSearch;
 
@@ -25,19 +21,19 @@ public class FindFurtherAction extends AnAction implements DumbAware {
     this.directionForward = directionForward;
     this.myRangeSearch = rangeSearch;
 
-    String text;
-    String description;
+    Supplier<String> text;
+    Supplier<String> description;
     Icon icon;
 
     if (directionForward) {
-      text = EditorBundle.message("large.file.editor.find.further.forward.action.text");
-      description = EditorBundle.message("large.file.editor.find.further.forward.action.description");
-      icon = Holder.ICON_FIND_ADD_NEXT;
+      text = EditorBundle.messagePointer("large.file.editor.find.further.forward.action.text");
+      description = EditorBundle.messagePointer("large.file.editor.find.further.forward.action.description");
+      icon = AllIcons.Actions.FindAndShowNextMatches;
     }
     else {
-      text = EditorBundle.message("large.file.editor.find.further.backward.action.text");
-      description = EditorBundle.message("large.file.editor.find.further.backward.action.description");
-      icon = Holder.ICON_FIND_ADD_PREV;
+      text = EditorBundle.messagePointer("large.file.editor.find.further.backward.action.text");
+      description = EditorBundle.messagePointer("large.file.editor.find.further.backward.action.description");
+      icon = AllIcons.Actions.FindAndShowPrevMatches;
     }
 
     getTemplatePresentation().setText(text);
@@ -49,6 +45,11 @@ public class FindFurtherAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     boolean enabled = myRangeSearch.isButtonFindFurtherEnabled(directionForward);
     e.getPresentation().setEnabled(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

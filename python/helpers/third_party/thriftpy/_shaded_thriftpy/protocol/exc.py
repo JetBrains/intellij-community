@@ -15,5 +15,22 @@ class TProtocolException(TException):
     BAD_VERSION = 4
 
     def __init__(self, type=UNKNOWN, message=None):
-        TException.__init__(self, message)
         self.type = type
+        self.message = message
+
+    def __str__(self):
+        if self.message:
+            return self.message
+
+        if self.type == self.UNKNOWN:
+            return 'Unknown protocol exception'
+        elif self.type == self.INVALID_DATA:
+            return 'Invalid data'
+        elif self.type == self.NEGATIVE_SIZE:
+            return 'Negative size'
+        elif self.type == self.SIZE_LIMIT:
+            return 'Size limit'
+        elif self.type == self.BAD_VERSION:
+            return 'Bad version'
+        else:
+            return 'Default (unknown) TProtocolException'

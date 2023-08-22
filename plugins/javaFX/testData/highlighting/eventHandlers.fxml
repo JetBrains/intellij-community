@@ -5,5 +5,5 @@
 <?import javafx.scene.control.*?>
 
 <GridPane xmlns:fx="http://javafx.com/fxml">
-    <Button fx:id="btn" onMouseClicked=<error descr="No controller specified for top level element">"#foo"</error>/>
+    <Button fx:id="btn" onMouseClicked=<error descr="No controller is specified for the top-level element">"#foo"</error>/>
 </GridPane>

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
@@ -9,12 +10,15 @@ import org.jetbrains.concurrency.onError
 import org.jetbrains.concurrency.onSuccess
 import org.jetbrains.concurrency.thenAsyncAccept
 
-class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?) : XValueGroup(scope.createScopeNodeName()) {
+class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?, private val firstScope: Boolean? = null) : XValueGroup(scope.createScopeNodeName()) {
   private val context = createVariableContext(scope, parentContext, callFrame)
 
   private val callFrame = if (scope.type == ScopeType.LOCAL) callFrame else null
 
-  override fun isAutoExpand(): Boolean = scope.type == ScopeType.BLOCK || scope.type == ScopeType.LOCAL || scope.type == ScopeType.CATCH
+  override fun isAutoExpand(): Boolean = scope.type == ScopeType.BLOCK
+                                         || scope.type == ScopeType.LOCAL
+                                         || scope.type == ScopeType.CATCH
+                                         || firstScope == true
 
   override fun getComment(): String? {
     val className = scope.description
@@ -22,39 +26,41 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
   }
 
   override fun computeChildren(node: XCompositeNode) {
-    val promise = processScopeVariables(scope, node, context, callFrame == null)
-    if (callFrame == null) {
-      return
-    }
-
-    promise
-      .onSuccess(node) {
-        context.memberFilter
-          .thenAsyncAccept(node) {
-            if (it.hasNameMappings()) {
-              it.sourceNameToRaw(RECEIVER_NAME)?.let {
-                return@thenAsyncAccept callFrame.evaluateContext.evaluate(it)
-                  .onSuccess(node) {
-                    VariableImpl(RECEIVER_NAME, it.value, null)
-                    node.addChildren(XValueChildrenList.singleton(VariableView(
-                      VariableImpl(RECEIVER_NAME, it.value, null), context)), true)
-                  }
-              }
-            }
-
-            context.viewSupport.computeReceiverVariable(context, callFrame, node)
-          }
-          .onError(node) {
-            context.viewSupport.computeReceiverVariable(context, callFrame, node)
-          }
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val promise = processScopeVariables(scope, node, context, callFrame == null)
+      if (callFrame == null) {
+        return@executeOnPooledThread
       }
+
+      promise
+        .onSuccess(node) {
+          context.memberFilter
+            .thenAsyncAccept(node) {
+              if (it.hasNameMappings()) {
+                it.sourceNameToRaw(RECEIVER_NAME)?.let {
+                  return@thenAsyncAccept callFrame.evaluateContext.evaluate(it)
+                    .onSuccess(node) {
+                      VariableImpl(RECEIVER_NAME, it.value, null)
+                      node.addChildren(XValueChildrenList.singleton(VariableView(
+                        VariableImpl(RECEIVER_NAME, it.value, null), context)), true)
+                    }
+                }
+              }
+
+              context.viewSupport.computeReceiverVariable(context, callFrame, node)
+            }
+            .onError(node) {
+              context.viewSupport.computeReceiverVariable(context, callFrame, node)
+            }
+        }
+    }
   }
 }
 
 fun createAndAddScopeList(node: XCompositeNode, scopes: List<Scope>, context: VariableContext, callFrame: CallFrame?) {
   val list = XValueChildrenList(scopes.size)
   for (scope in scopes) {
-    list.addBottomGroup(ScopeVariablesGroup(scope, context, callFrame))
+    list.addBottomGroup(ScopeVariablesGroup(scope, context, callFrame, scope == scopes[0]))
   }
   node.addChildren(list, true)
 }

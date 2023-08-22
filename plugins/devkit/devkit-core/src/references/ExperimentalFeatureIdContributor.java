@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ExperimentalFeatureImpl;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -16,7 +15,9 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,35 +32,32 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar
       .registerUastReferenceProvider(registrar,
-                                     injectionHostUExpression().methodCallParameter(0, psiMethod()
-                                       .withName(string().oneOf("isFeatureEnabled", "setFeatureEnabled"))
-                                       .definedInClass(Experiments.class.getName())),
+                                     injectionHostUExpression()
+                                       .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+                                       .methodCallParameter(0, psiMethod()
+                                         .withName(string().oneOf("isFeatureEnabled", "setFeatureEnabled"))
+                                         .definedInClass(Experiments.class.getName())),
                                      UastReferenceRegistrar.uastInjectionHostReferenceProvider(
                                        (expression, host) -> new PsiReference[]{new ExperimentalFeatureIdReference(host)}),
                                      PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
 
-  private static class ExperimentalFeatureIdReference extends ExtensionPointReferenceBase {
+  private static final class ExperimentalFeatureIdReference extends ExtensionReferenceBase {
 
     private ExperimentalFeatureIdReference(PsiElement element) {
       super(element);
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return ExperimentalFeatureImpl.class.getName();
-    }
-
-    @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return extension.getId();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.experimentalFeature";
     }
 
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve feature '" + getValue() + "'";
+      return DevKitBundle.message("code.convert.experimental.feature.id.cannot.resolve", getValue());
     }
 
     @Override
@@ -74,7 +72,8 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
 
         final boolean requireRestart = "true".equals(getAttributeValue(extension, "requireRestart"));
         final boolean isInternalFeature = "true".equals(getAttributeValue(extension, "internalFeature"));
-        final String description = " " + StringUtil.notNullize(getDescription(extension), "No Description");
+        final String description = " " + StringUtil.notNullize(getDescription(extension),
+                                                               DevKitBundle.message("code.convert.experimental.feature.no.description"));
         final String percentage = getAttributeValue(extension, "percentOfUsers");
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), value)
@@ -92,7 +91,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       final DomFixedChildDescription description = extension.getGenericInfo().getFixedChildDescription("description");
       if (description == null) return null;
       final DomElement element = ContainerUtil.getFirstItem(description.getValues(extension));
-      return element instanceof GenericDomValue ? ((GenericDomValue)element).getStringValue() : null;
+      return element instanceof GenericDomValue ? ((GenericDomValue<?>)element).getStringValue() : null;
     }
   }
 }

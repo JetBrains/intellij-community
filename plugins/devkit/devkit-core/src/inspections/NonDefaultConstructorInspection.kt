@@ -1,28 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.lang.jvm.JvmClassKind
+import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
-import gnu.trove.THashSet
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
+import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.convertOpt
+import java.util.*
 
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
@@ -30,8 +33,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
-    if (javaPsi.language.id == "Groovy" || javaPsi.classKind != JvmClassKind.CLASS ||
-        PsiUtil.isInnerClass(javaPsi) || PsiUtil.isLocalOrAnonymousClass(javaPsi) || PsiUtil.isAbstractClass(javaPsi) ||
+    if (javaPsi.language.id == "Groovy" || !ExtensionUtil.isExtensionPointImplementationCandidate(javaPsi) ||
         javaPsi.hasModifierProperty(PsiModifier.PRIVATE) /* ignore private classes */) {
       return null
     }
@@ -44,10 +46,11 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
 
     val area: Area?
     val isService: Boolean
+    var serviceClientKind: ClientKind? = null
     // hack, allow Project-level @Service
     var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
-    if (javaPsi.hasAnnotation("com.intellij.openapi.components.Service")) {
+    if (isLightService(aClass)) {
       area = null
       isService = true
       isServiceAnnotation = true
@@ -65,13 +68,35 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
 
       area = getArea(extensionPoint)
       isService = extensionPoint?.beanClass?.stringValue == serviceBeanFqn
+      if (isService) {
+        for (candidate in locateExtensionsByPsiClass(javaPsi)) {
+          val extensionTag = candidate.pointer.element ?: continue
+          val clientName = extensionTag.getAttribute("client")?.value ?: continue
+
+          val kind = when (clientName.lowercase(Locale.US)) {
+            "local" -> ClientKind.LOCAL
+            "controller" -> ClientKind.CONTROLLER
+            "guest" -> ClientKind.GUEST
+            "owner" -> ClientKind.OWNER
+            "remote" -> ClientKind.REMOTE
+            "all" -> ClientKind.ALL
+            else -> null
+          }
+          if (serviceClientKind == null) {
+            serviceClientKind = kind
+          }
+          else if (serviceClientKind != kind) {
+            serviceClientKind = ClientKind.ALL
+          }
+        }
+      }
     }
 
     val isAppLevelExtensionPoint = area == null || area == Area.IDEA_APPLICATION
 
     var errors: MutableList<ProblemDescriptor>? = null
     loop@ for (method in constructors) {
-      if (isAllowedParameters(method.parameterList, extensionPoint, isAppLevelExtensionPoint, isServiceAnnotation)) {
+      if (isAllowedParameters(method.parameterList, extensionPoint, isAppLevelExtensionPoint, serviceClientKind, isServiceAnnotation)) {
         // allow to have empty constructor and extra (e.g. DartQuickAssistIntention)
         return null
       }
@@ -87,15 +112,19 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
       }
 
 
-      val kind = if (isService) "Service" else "Extension"
-      val suffix = if (area == null) {
-        " (except Project or Module if requested on corresponding level)"
-      }
-      else {
-        if (isAppLevelExtensionPoint) "" else " (except ${if (area == Area.IDEA_PROJECT) "Project" else "Module"})"
-      }
+      @NlsSafe val kind = if (isService) DevKitBundle.message("inspections.non.default.warning.type.service") else DevKitBundle.message("inspections.non.default.warning.type.extension")
+      @Nls val suffix =
+        if (area == null) DevKitBundle.message("inspections.non.default.warning.suffix.project.or.module")
+        else {
+          when {
+            isAppLevelExtensionPoint -> ""
+            area == Area.IDEA_PROJECT -> DevKitBundle.message("inspections.non.default.warning.suffix.project")
+            else -> DevKitBundle.message("inspections.non.default.warning.suffix.module")
+          }
+        }
       errors.add(manager.createProblemDescriptor(anchorElement,
-                                                 "$kind should not have constructor with parameters${suffix}.\nDo not instantiate services in constructor because they should be requested only when needed.", true,
+                                                 DevKitBundle.message("inspections.non.default.warning.and.suffix.message", kind, suffix),
+                                                 true,
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly))
     }
     return errors?.toTypedArray()
@@ -135,6 +164,10 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
   val strictMatch = searchString === qualifiedName
   processExtensionDeclarations(searchString, project, strictMatch = strictMatch) { extension, tag ->
     val point = extension.extensionPoint ?: return@processExtensionDeclarations true
+    if (point.name.value == "psi.symbolReferenceProvider") {
+      return@processExtensionDeclarations true
+    }
+
     when (point.beanClass.stringValue) {
       null -> {
         if (tag.attributes.any { it.name == Extension.IMPLEMENTATION_ATTRIBUTE && it.value == qualifiedName }) {
@@ -150,7 +183,9 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
       }
       else -> {
         // bean EP
-        if (tag.name == "className" || tag.subTags.any { it.name == "className" && (strictMatch || it.textMatches(qualifiedName)) } || checkAttributes(tag, qualifiedName)) {
+        if (tag.name == "className" || tag.subTags.any {
+            it.name == "className" && (strictMatch || it.textMatches(qualifiedName))
+          } || checkAttributes(tag, qualifiedName)) {
           result = point
           return@processExtensionDeclarations false
         }
@@ -162,7 +197,11 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
 }
 
 // todo can we use attribute `with`?
-private val ignoredTagNames = THashSet(listOf("semContributor", "modelFacade", "scriptGenerator", "editorActionHandler", "editorTypedHandler", "dataImporter", "java.error.fix", "explainPlanProvider"))
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@NonNls
+private val ignoredTagNames = java.util.Set.of("semContributor", "modelFacade", "scriptGenerator",
+                                               "editorActionHandler", "editorTypedHandler",
+                                               "dataImporter", "java.error.fix", "explainPlanProvider", "typeIcon")
 
 // problem - tag
 //<lang.elementManipulator forClass="com.intellij.psi.css.impl.CssTokenImpl"
@@ -180,19 +219,44 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 }
 
+@NonNls
+private val allowedClientSessionsQualifiedNames = setOf(
+  "com.intellij.openapi.client.ClientSession",
+  "com.jetbrains.rdserver.core.GuestSession",
+  "com.jetbrains.rdserver.core.RemoteSession",
+)
+
+@NonNls
+private val allowedClientAppSessionsQualifiedNames = setOf(
+  "com.intellij.openapi.client.ClientAppSession",
+  "com.jetbrains.rdserver.core.GuestAppSession",
+  "com.jetbrains.rdserver.core.RemoteAppSession",
+) + allowedClientSessionsQualifiedNames
+
+@NonNls
+private val allowedClientProjectSessionsQualifiedNames = setOf(
+  "com.intellij.openapi.client.ClientProjectSession",
+  "com.jetbrains.rdserver.core.GuestProjectSession",
+  "com.jetbrains.rdserver.core.RemoteProjectSession",
+) + allowedClientSessionsQualifiedNames
+
+@NonNls
 private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.project.Project",
   "com.intellij.openapi.module.Module",
   "com.intellij.util.messages.MessageBus",
   "com.intellij.openapi.options.SchemeManagerFactory",
   "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
-  "com.intellij.database.Dbms"
-)
-private val allowedServiceNames = allowedServiceQualifiedNames.map { StringUtil.getShortName(it) }
+  "com.intellij.database.Dbms",
+  "kotlinx.coroutines.CoroutineScope"
+) + allowedClientAppSessionsQualifiedNames + allowedClientProjectSessionsQualifiedNames
+
+private val allowedServiceNames = allowedServiceQualifiedNames.mapTo(HashSet(allowedServiceQualifiedNames.size)) { it.substringAfterLast('.') }
 
 private fun isAllowedParameters(list: PsiParameterList,
                                 extensionPoint: ExtensionPoint?,
                                 isAppLevelExtensionPoint: Boolean,
+                                clientKind: ClientKind?,
                                 isServiceAnnotation: Boolean): Boolean {
   if (list.isEmpty) {
     return true
@@ -224,17 +288,52 @@ private fun isAllowedParameters(list: PsiParameterList,
     if (isAppLevelExtensionPoint && !isServiceAnnotation && name == "Project") {
       return false
     }
+
+    if (!checkPerClientServices(clientKind, isAppLevelExtensionPoint, qualifiedName)) {
+      return false
+    }
   }
 
   return true
 }
 
-private val interfacesToCheck = THashSet(listOf(
+private fun checkPerClientServices(kind: ClientKind?, isAppLevel: Boolean, qualifiedName: String?): Boolean {
+  val isPerClient = kind != null
+  val hasProjectSessionDeps = allowedClientProjectSessionsQualifiedNames.contains(qualifiedName)
+  val hasAppSessionDeps = allowedClientAppSessionsQualifiedNames.contains(qualifiedName)
+
+  // non per-client injecting per-client stuff
+  if (!isPerClient) {
+    return !hasProjectSessionDeps && !hasAppSessionDeps
+  }
+
+  // app-level per-client injecting project-level stuff
+  if (isAppLevel && hasProjectSessionDeps && !hasAppSessionDeps) {
+    return false
+  }
+
+  // project-level per-client injecting app-level stuff. Technically okay, but probably not something user wants
+  if (!isAppLevel && !hasProjectSessionDeps && hasAppSessionDeps) {
+    return false
+  }
+
+  // not remote-only per-client injecting remote-only stuff
+  if (kind != ClientKind.REMOTE &&
+      kind != ClientKind.GUEST &&
+      kind != ClientKind.CONTROLLER &&
+      qualifiedName?.startsWith("com.jetbrains.rdserver.core") == true) {
+    return false
+  }
+
+  return true
+}
+
+private val interfacesToCheck = HashSet(listOf(
   "com.intellij.codeInsight.daemon.LineMarkerProvider",
   "com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"
 ))
 
-private val classesToCheck = THashSet(listOf(
+private val classesToCheck = HashSet(listOf(
   "com.intellij.codeInsight.completion.CompletionContributor",
   "com.intellij.codeInsight.completion.CompletionConfidence",
   "com.intellij.psi.PsiReferenceContributor"

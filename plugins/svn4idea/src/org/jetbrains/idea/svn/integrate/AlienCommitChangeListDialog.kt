@@ -10,7 +10,7 @@ class AlienCommitChangeListDialog(workflow: AlienCommitWorkflow) : CommitChangeL
   private val browser = AlienChangeListBrowser(project, workflow.changeList)
 
   init {
-    browser.viewer.setIncludedChanges(workflow.initiallyIncluded)
+    browser.viewer.setIncludedChanges(workflow.changes)
     browser.viewer.rebuildTree()
   }
 

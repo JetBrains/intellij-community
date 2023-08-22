@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
+import java.util.Objects;
+
 /**
  * @deprecated use org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
  */
@@ -21,8 +23,8 @@ class MyModuleIdentifier {
 
     MyModuleIdentifier that = (MyModuleIdentifier)o;
 
-    if (name != null ? !name.equals(that.name) : that.name != null) return false;
-    if (group != null ? !group.equals(that.group) : that.group != null) return false;
+    if (!Objects.equals(name, that.name)) return false;
+    if (!Objects.equals(group, that.group)) return false;
 
     return true;
   }

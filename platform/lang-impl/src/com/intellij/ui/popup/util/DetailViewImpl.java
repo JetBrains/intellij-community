@@ -3,6 +3,8 @@
  */
 package com.intellij.ui.popup.util;
 
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -15,11 +17,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +43,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private JPanel myDetailPanelWrapper;
   private RangeHighlighter myHighlighter;
   private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
-  private String myEmptyLabel = UIBundle.message("message.nothingToShow");
+  private @NlsContexts.Label String myEmptyLabel = IdeCoreBundle.message("message.nothingToShow");
 
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
@@ -131,14 +133,14 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       }
     }
     else {
-      myLabel.setText("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
+      myLabel.setText(LangBundle.message(file.isDirectory() ? "detail.view.navigate.to.directory" :"detail.view.navigate.to.file"));
       add(myLabel, BorderLayout.CENTER);
       validate();
     }
   }
 
   @NotNull
-  protected Editor createEditor(@Nullable Project project, Document document, VirtualFile file) {
+  protected Editor createEditor(@Nullable Project project, Document document, @NotNull VirtualFile file) {
     EditorEx editor = (EditorEx)EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW);
 
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -196,7 +198,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     repaint();
   }
 
-  public void setEmptyLabel(String text) {
+  public void setEmptyLabel(@NlsContexts.Label String text) {
     myEmptyLabel = text;
   }
 

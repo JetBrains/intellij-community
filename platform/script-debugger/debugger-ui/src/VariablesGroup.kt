@@ -19,8 +19,7 @@ import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueGroup
 
 internal class VariablesGroup(private val start: Int, private val end: Int, private val variables: List<Variable>, private val context: VariableContext, name: String) : XValueGroup(name) {
-  constructor(name: String, variables: List<Variable>, context: VariableContext) : this(0, variables.size, variables, context, name) {
-  }
+  constructor(name: String, variables: List<Variable>, context: VariableContext) : this(0, variables.size, variables, context, name)
 
   override fun computeChildren(node: XCompositeNode) {
     node.setAlreadySorted(true)

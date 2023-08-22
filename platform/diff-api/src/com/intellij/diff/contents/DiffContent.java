@@ -21,7 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see com.intellij.diff.requests.ContentDiffRequest
  * @see com.intellij.diff.DiffContentFactory
+ * @see DocumentContent
+ * @see FileContent
+ * @see DirectoryContent
  */
 public interface DiffContent extends UserDataHolder {
   @Nullable
@@ -43,11 +46,14 @@ public interface DiffContent extends UserDataHolder {
   /**
    * @see DiffRequest#onAssigned(boolean)
    */
-  @CalledInAwt
+  @RequiresEdt
   default void onAssigned(boolean isAssigned) { }
 
+  /**
+   * @deprecated isn't called by the platform anymore
+   */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default OpenFileDescriptor getOpenFileDescriptor() {
     return ObjectUtils.tryCast(getNavigatable(), OpenFileDescriptor.class);
   }

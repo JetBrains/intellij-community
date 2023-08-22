@@ -1,8 +1,13 @@
 <html>
 <body>
-Reports operator calls that can be replaced with methods.
-<p>
-<small>New in 2017.1</small>
-</p>
+Reports operator invocations that can be replaced with method calls.
+<p><b>Example:</b></p>
+<pre><code>
+  a + b
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  a.plus(b)
+</code></pre>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.facet;
 
 import com.intellij.facet.Facet;
@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfiguration> {
 
   @NonNls
@@ -63,29 +61,5 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfigura
   @Override
   public Icon getIcon() {
     return PythonIcons.Python.Python;
-  }
-
-  public static class PythonFrameworkDetector extends FacetBasedFrameworkDetector<PythonFacet, PythonFacetConfiguration> {
-    public PythonFrameworkDetector() {
-      super("python");
-    }
-
-    @NotNull
-    @Override
-    public FacetType<PythonFacet, PythonFacetConfiguration> getFacetType() {
-      return PythonFacetType.getInstance();
-    }
-
-    @NotNull
-    @Override
-    public FileType getFileType() {
-      return PythonFileType.INSTANCE;
-    }
-
-    @NotNull
-    @Override
-    public ElementPattern<FileContent> createSuitableFilePattern() {
-      return FileContentPattern.fileContent();
-    }
   }
 }

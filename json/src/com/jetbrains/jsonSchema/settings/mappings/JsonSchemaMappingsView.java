@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,7 +51,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -58,9 +58,6 @@ import java.util.function.BiConsumer;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
-/**
- * @author Irina.Chernushina on 2/2/2016.
- */
 public class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
   private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
@@ -73,7 +70,7 @@ public class JsonSchemaMappingsView implements Disposable {
   private TextFieldWithBrowseButton mySchemaField;
   private ComboBox<JsonSchemaVersion> mySchemaVersionComboBox;
   private JEditorPane myError;
-  private String myErrorText;
+  private @PopupContent String myErrorText;
   private JBLabel myErrorIcon;
   private boolean myInitialized;
 
@@ -90,6 +87,7 @@ public class JsonSchemaMappingsView implements Disposable {
     MyAddActionButtonRunnable addActionButtonRunnable = new MyAddActionButtonRunnable();
 
     myTableView = new JsonMappingsTableView(addActionButtonRunnable);
+    myTableView.setShowGrid(false);
     myTableView.getTableHeader().setVisible(false);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
     final MyEditActionButtonRunnableImpl editAction = new MyEditActionButtonRunnableImpl();
@@ -121,7 +119,7 @@ public class JsonSchemaMappingsView implements Disposable {
       }).showInCenterOf(urlButton);
     });
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
-                                                     FileChooserDescriptorFactory.createSingleFileDescriptor());
+                                                     FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     mySchemaField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -174,7 +172,7 @@ public class JsonSchemaMappingsView implements Disposable {
   public void dispose() {
   }
 
-  public void setError(final String text, boolean showWarning) {
+  public void setError(@PopupContent String text, boolean showWarning) {
     myErrorText = text;
     myError.setVisible(showWarning && text != null);
     myErrorIcon.setVisible(showWarning && text != null);
@@ -197,9 +195,8 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   public List<UserDefinedJsonSchemaConfiguration.Item> getData() {
-    return Collections.unmodifiableList(
-      ContainerUtil
-        .filter(myTableView.getListTableModel().getItems(), i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path)));
+    return ContainerUtil
+      .filter(myTableView.getListTableModel().getItems(), i -> i.mappingKind == JsonMappingKind.Directory || !StringUtil.isEmpty(i.path));
   }
 
   public void setItems(String schemaFilePath,
@@ -294,15 +291,12 @@ public class JsonSchemaMappingsView implements Disposable {
     @Override
     public void run(AnActionButton button) {
       RelativePoint point = button.getPreferredPopupPoint();
-      if (point == null) {
-        point = new RelativePoint(button.getContextComponent(), new Point(0, 0));
-      }
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JsonMappingKind>(null,
-                                                                                          JsonMappingKind.values()) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(null,
+                                                                           JsonMappingKind.values()) {
         @NotNull
         @Override
         public String getTextFor(JsonMappingKind value) {
-          return "Add " + StringUtil.capitalizeWords(value.getDescription(), true);
+          return JsonBundle.message("schema.add.mapping.kind.text", StringUtil.capitalizeWords(value.getDescription(), true));
         }
 
         @Override

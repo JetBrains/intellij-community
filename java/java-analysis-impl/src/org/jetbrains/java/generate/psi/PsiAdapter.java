@@ -24,6 +24,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ import static com.intellij.psi.CommonClassNames.*;
 /**
  * Basic PSI Adapter with common function that works in all supported versions of IDEA.
  */
-public class PsiAdapter {
+public final class PsiAdapter {
 
     private PsiAdapter() {}
 
@@ -162,7 +163,7 @@ public class PsiAdapter {
     }
 
     /**
-     * Is the given field a {@link java.lang.String} type?
+     * Is the given field a {@link String} type?
      *
      * @param factory element factory.
      * @param type    type.
@@ -173,7 +174,7 @@ public class PsiAdapter {
     }
 
     /**
-     * Is the given field assignable from {@link java.lang.Object}?
+     * Is the given field assignable from {@link Object}?
      *
      * @param factory element factory.
      * @param type    type.
@@ -206,7 +207,7 @@ public class PsiAdapter {
     }
 
     /**
-     * Is the given field a {@link java.lang.Boolean} type or a primitive boolean type?
+     * Is the given field a {@link Boolean} type or a primitive boolean type?
      *
      * @param factory element factory.
      * @param type    type.
@@ -267,7 +268,7 @@ public class PsiAdapter {
      *
      * @param javaFile                javafile.
      * @param importStatementOnDemand name of import statement, must be with a wildcard (etc. java.util.*).
-     * @throws com.intellij.util.IncorrectOperationException
+     * @throws IncorrectOperationException
      *          is thrown if there is an error creating the import statement.
      */
     public static void addImportStatement(PsiJavaFile javaFile, String importStatementOnDemand) {
@@ -315,7 +316,7 @@ public class PsiAdapter {
      *
      * @param type the type.
      * @return the fully qualified classname, null if the field is a primitive.
-     * @see #getTypeClassName(com.intellij.psi.PsiType) for the non qualified version.
+     * @see #getTypeClassName(PsiType) for the non qualified version.
      */
     @Nullable
     public static String getTypeQualifiedClassName(PsiType type) {
@@ -337,7 +338,7 @@ public class PsiAdapter {
      *
      * @param type the type.
      * @return the classname, null if the field is a primitive.
-     * @see #getTypeQualifiedClassName(com.intellij.psi.PsiType) for the qualified version.
+     * @see #getTypeQualifiedClassName(PsiType) for the qualified version.
      */
     @Nullable
     public static String getTypeClassName(PsiType type) {
@@ -375,7 +376,7 @@ public class PsiAdapter {
 
             // must have void as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.VOID.equals(returnType)) {
+            if (!PsiTypes.voidType().equals(returnType)) {
                 continue;
             }
 
@@ -481,7 +482,7 @@ public class PsiAdapter {
      *
      * @param method  the method
      * @return the fieldname if this is a getter method.
-     * @see #isGetterMethod(com.intellij.psi.PsiMethod) for the getter check
+     * @see #isGetterMethod(PsiMethod) for the getter check
      */
     @Nullable
     public static String getGetterFieldName(PsiMethod method) {
@@ -499,13 +500,8 @@ public class PsiAdapter {
      * @return true if enum.
      */
     public static boolean isEnumField(PsiField field) {
-        PsiType type = field.getType();
-        if (!(type instanceof PsiClassType)) {
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass aClass = classType.resolve();
-        return (aClass != null) && aClass.isEnum();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+      return (aClass != null) && aClass.isEnum();
     }
 
     /**
@@ -542,7 +538,7 @@ public class PsiAdapter {
 
             // must have boolean as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.BOOLEAN.equals(returnType)) {
+            if (!PsiTypes.booleanType().equals(returnType)) {
                 continue;
             }
 
@@ -589,7 +585,7 @@ public class PsiAdapter {
 
             // must have int as return type
             PsiType returnType = method.getReturnType();
-            if (!PsiType.INT.equals(returnType)) {
+            if (!PsiTypes.intType().equals(returnType)) {
                 continue;
             }
 
@@ -615,7 +611,7 @@ public class PsiAdapter {
      * @param typeFQClassName the FQ classname to test against.
      * @return true if the given type is assignable of FQ classname.
      */
-    protected static boolean isTypeOf(PsiElementFactory factory, PsiType type, String typeFQClassName) {
+    private static boolean isTypeOf(PsiElementFactory factory, PsiType type, String typeFQClassName) {
         // fix for IDEA where fields can have 'void' type and generate NPE.
         if (isTypeOfVoid(type)) {
             return false;
@@ -642,7 +638,7 @@ public class PsiAdapter {
     public static String @NotNull [] getImplementsClassnames(PsiClass clazz) {
         PsiClass[] interfaces = clazz.getInterfaces();
 
-        if (interfaces == null || interfaces.length == 0) {
+        if (interfaces.length == 0) {
           return ArrayUtilRt.EMPTY_STRING_ARRAY;
         }
 

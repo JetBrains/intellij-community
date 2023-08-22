@@ -1,25 +1,20 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User : catherine
  */
 public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
-  public void testDictCompExpression() {
-    doTest(LanguageLevel.PYTHON27);
-  }
-
-  public void testSetLiteralExpression() {
-    doTest(LanguageLevel.PYTHON27);
-  }
-
-  public void testSetCompExpression() {
-    doTest(LanguageLevel.PYTHON27);
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
   }
 
   public void testExceptBlock() {
@@ -66,8 +61,9 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testWithStatement() {
-    doTest(LanguageLevel.PYTHON27);
+  // PY-42200
+  public void testParenthesizedWithItems() {
+    doTest(LanguageLevel.getLatest());
   }
 
   public void testPrintStatement() {
@@ -199,15 +195,16 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   // PY-29763
   public void testTryExceptEmptyRaiseUnderFinallyPy2() {
-    doTestByText("try:\n" +
-                 "   something_that_raises_error1()\n" +
-                 "except BaseException as e:\n" +
-                 "    raise\n" +
-                 "finally:\n" +
-                 "    try:\n" +
-                 "        something_that_raises_error2()\n" +
-                 "    except BaseException as e:\n" +
-                 "        raise   ");
+    doTestByText("""
+                   try:
+                      something_that_raises_error1()
+                   except BaseException as e:
+                       raise
+                   finally:
+                       try:
+                           something_that_raises_error2()
+                       except BaseException as e:
+                           raise  \s""");
   }
 
   // PY-15360
@@ -229,7 +226,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON38,
       () -> doTestByText(
-        "def f(pos1, <warning descr=\"Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support positional-only parameters\">/</warning>, pos_or_kwd, *, kwd1):\n" +
+        "def f(pos1, <warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7 do not support positional-only parameters\">/</warning>, pos_or_kwd, *, kwd1):\n" +
         "    pass"
       )
     );
@@ -244,17 +241,33 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   public void testContinueInFinallyBlock() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON38,
-      () -> doTestByText("while True:\n" +
-                         "  try:\n" +
-                         "    print(\"a\")\n" +
-                         "  finally:\n" +
-                         "    <warning descr=\"Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause\">continue</warning>")
+      () -> doTestByText("""
+                           while True:
+                             try:
+                               print("a")
+                             finally:
+                               <warning descr="Python versions 2.7, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause">continue</warning>""")
     );
   }
 
   // PY-35961
   public void testUnpackingInNonParenthesizedTuplesInReturnAndYield() {
     doTest(LanguageLevel.PYTHON38);
+  }
+
+  // PY-41305
+  public void testExpressionInDecorators() {
+    doTest(LanguageLevel.PYTHON39);
+  }
+
+  // PY-53776
+  public void testStarExpressionInIndexes() {
+    doTest(LanguageLevel.PYTHON311);
+  }
+
+  // PY-53776
+  public void testStarExpressionInTypeAnnotation() {
+    doTest(LanguageLevel.PYTHON311);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

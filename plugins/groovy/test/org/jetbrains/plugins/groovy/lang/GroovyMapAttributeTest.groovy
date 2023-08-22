@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAss
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-/**
- * @author Sergey Evdokimov
- */
 @CompileStatic
 class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -436,7 +433,7 @@ class Test {
   }
 
   private doTestCompletionWithinMap(String text, String text2 = null) {
-    GroovyNamedArgumentProvider.EP_NAME.getPoint(null).registerExtension(new GroovyNamedArgumentProvider() {
+    GroovyNamedArgumentProvider.EP_NAME.getPoint().registerExtension(new GroovyNamedArgumentProvider() {
       @NotNull
       @Override
       Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {

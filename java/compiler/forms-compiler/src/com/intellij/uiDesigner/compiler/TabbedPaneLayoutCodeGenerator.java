@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -23,10 +9,7 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
-public class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
+public final class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Type myTabbedPaneType = Type.getType(JTabbedPane.class);
   private final Method myAddTabMethod = Method.getMethod("void addTab(java.lang.String,javax.swing.Icon,java.awt.Component,java.lang.String)");
   private final Method mySetDisabledIconAtMethod = Method.getMethod("void setDisabledIconAt(int,javax.swing.Icon)");
@@ -36,12 +19,14 @@ public class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,
-                                      final int parentLocal) {
+                                      final int parentLocal,
+                                      final String formClassName) {
     generator.loadLocal(parentLocal);
     final LwTabbedPane.Constraints tabConstraints = (LwTabbedPane.Constraints)lwComponent.getCustomLayoutConstraints();
     if (tabConstraints == null){
       throw new IllegalArgumentException("tab constraints cannot be null: " + lwComponent.getId());
     }
+    tabConstraints.myTitle.setFormClass(formClassName);
     AsmCodeGenerator.pushPropValue(generator, String.class.getName(), tabConstraints.myTitle);
     if (tabConstraints.myIcon == null) {
       generator.push((String) null);
@@ -54,6 +39,7 @@ public class TabbedPaneLayoutCodeGenerator extends LayoutCodeGenerator {
       generator.push((String) null);
     }
     else {
+      tabConstraints.myToolTip.setFormClass(formClassName);
       AsmCodeGenerator.pushPropValue(generator, String.class.getName(), tabConstraints.myToolTip);
     }
     generator.invokeVirtual(myTabbedPaneType, myAddTabMethod);

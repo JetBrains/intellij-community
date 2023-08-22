@@ -2,8 +2,9 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.CompositeParameterTargetedValue;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntBundle;
@@ -15,6 +16,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
@@ -31,9 +33,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class AntCommandLineBuilder {
-  private final List<String> myTargets = new ArrayList<>();
-  private final JavaParameters myCommandLine = new JavaParameters();
-  private String myBuildFilePath;
+  private final List<@NlsSafe String> myTargets = new ArrayList<>();
+  private final SimpleJavaParameters myCommandLine = new SimpleJavaParameters();
+  private @NlsSafe String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;
   @NonNls private final List<String> myExpandedProperties = new ArrayList<>();
@@ -60,7 +62,7 @@ public class AntCommandLineBuilder {
     myExpandedProperties.add("-D" + property.getPropertyName() + "=" + value);
   }
 
-  public void addTarget(String targetName) {
+  public void addTarget(@NlsSafe String targetName) {
     myTargets.add(targetName);
   }
 
@@ -93,9 +95,9 @@ public class AntCommandLineBuilder {
     }
 
     final String antHome = AntInstallation.HOME_DIR.get(antInstallation.getProperties());
-    vmParametersList.add("-Dant.home=" + antHome);
+    vmParametersList.add(new CompositeParameterTargetedValue("-Dant.home=").addPathPart(antHome));
     final String libraryDir = antHome + (antHome.endsWith("/") || antHome.endsWith(File.separator) ? "" : File.separator) + "lib";
-    vmParametersList.add("-Dant.library.dir=" + libraryDir);
+    vmParametersList.add(new CompositeParameterTargetedValue("-Dant.library.dir=").addPathPart(libraryDir));
 
     String[] urls = jdk.getRootProvider().getUrls(OrderRootType.CLASSES);
     final String jdkHome = homeDirectory.getPath().replace('/', File.separatorChar);
@@ -151,7 +153,7 @@ public class AntCommandLineBuilder {
     myCommandLine.setWorkingDirectory(buildFile.getParent());
   }
 
-  public JavaParameters getCommandLine() {
+  public SimpleJavaParameters getCommandLine() {
     if (myDone) return myCommandLine;
     ParametersList programParameters = myCommandLine.getProgramParametersList();
     for (final String property : myExpandedProperties) {
@@ -159,7 +161,8 @@ public class AntCommandLineBuilder {
         programParameters.add(property);
       }
     }
-    programParameters.add("-buildfile", myBuildFilePath);
+    programParameters.add("-buildfile");
+    programParameters.add(new CompositeParameterTargetedValue().addPathPart(myBuildFilePath));
     for (final String target : myTargets) {
       if (target != null) {
         programParameters.add(target);
@@ -169,15 +172,15 @@ public class AntCommandLineBuilder {
     return myCommandLine;
   }
 
-  public void addTargets(String[] targets) {
+  public void addTargets(@NlsSafe String[] targets) {
     ContainerUtil.addAll(myTargets, targets);
   }
 
-  public void addTargets(Collection<String> targets) {
+  public void addTargets(Collection<@NlsSafe String> targets) {
     myTargets.addAll(targets);
   }
 
-  public String[] getTargets() {
+  public @NlsSafe String[] getTargets() {
     return ArrayUtilRt.toStringArray(myTargets);
   }
 }

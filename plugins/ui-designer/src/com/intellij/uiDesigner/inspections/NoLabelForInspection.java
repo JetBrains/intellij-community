@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -38,9 +24,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class NoLabelForInspection extends BaseFormInspection {
   public NoLabelForInspection() {
     super("NoLabelFor");
@@ -64,9 +48,8 @@ public class NoLabelForInspection extends BaseFormInspection {
             found.set(Boolean.TRUE);
             return false;
           }
-          else if (component instanceof RadComponent &&
+          else if (component instanceof RadComponent radComponent &&
                    (prop == null || StringUtil.isEmpty((String)prop.getPropertyValue(c2)))) {
-            RadComponent radComponent = (RadComponent) component;
             final RadComponent radComponent2 = (RadComponent)c2;
             allLabels.add(radComponent2);
             if (radComponent.getParent() == radComponent2.getParent() && radComponent.getParent().getLayoutManager().isGrid()) {
@@ -117,8 +100,7 @@ public class NoLabelForInspection extends BaseFormInspection {
         IntrospectedProperty[] props = palette.getIntrospectedProperties(myLabel);
         boolean modified = false;
         for(IntrospectedProperty prop: props) {
-          if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty) {
-            IntroComponentProperty icp = (IntroComponentProperty) prop;
+          if (prop.getName().equals(SwingProperties.LABEL_FOR) && prop instanceof IntroComponentProperty icp) {
             icp.setValueEx(myLabel, myComponent.getId());
             modified = true;
             break;

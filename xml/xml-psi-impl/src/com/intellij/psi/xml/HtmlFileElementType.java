@@ -12,20 +12,20 @@ public class HtmlFileElementType extends IStubFileElementType<PsiFileStub<?>> {
 
   private static volatile int stubVersion = -1;
   
-  public HtmlFileElementType() {super(HTMLLanguage.INSTANCE);}
+  public HtmlFileElementType() {super("html", HTMLLanguage.INSTANCE);}
 
   @Override
   public int getStubVersion() {
     return getHtmlStubVersion() + 3;
   }
-  
+
   public static int getHtmlStubVersion() {
     int version = stubVersion;
     if (version != -1) return version;
     IElementType[] dataElementTypes = IElementType.enumerate(
       (elementType) -> elementType instanceof IStubFileElementType && isAcceptable(elementType));
 
-    int res = Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType)e).getStubVersion()).sum();
+    int res = Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType<?>)e).getStubVersion()).sum();
     stubVersion = res;
     
     return res;

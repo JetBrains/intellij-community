@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -42,8 +28,6 @@ import java.util.List;
  * <li>comment and comment: remove indentation and hash sign;</li>
  * <li>second line is 'class' or 'def': fail.</li>
  * </ul>
- *
- * @author dcheryasov
  */
 public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private final static Joiner[] JOINERS = {
@@ -69,7 +53,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     final CharSequence text = document.getCharsSequence();
     if (start >= 0 && text.charAt(start) == '\n') start -= 1;
     if (start >= 0 && text.charAt(start) == '\\') start -= 1;
-    while (start >= 0 && text.charAt(start) == ' ' || text.charAt(start) == '\t') {
+    while (start >= 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) {
       start -= 1;
     }
     if (start < 0) {
@@ -131,7 +115,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   }
 
   // a dumb immutable request items holder
-  private static class Request {
+  private static final class Request {
     final Document document;
     final PsiElement leftElem;
     final PsiElement rightElem;
@@ -228,7 +212,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
         final PsiElement parent = rightStringElem.getParent();
         if ((leftStringElem.getParent() == parent && parent instanceof PyStringLiteralExpression) ||
             (req.leftExpr instanceof PyStringLiteralExpression && req.rightExpr instanceof PyStringLiteralExpression)) {
-          
+
           if (leftStringElem.isTerminated() && rightStringElem.isTerminated() && haveSamePrefixes(leftStringElem, rightStringElem)) {
             final String leftElemQuotes = leftStringElem.getQuote();
             final String rightElemQuotes = rightStringElem.getQuote();

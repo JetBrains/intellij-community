@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push
 
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.update.FileGroup
@@ -16,20 +17,21 @@ import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushRepoResult.Type.*
+import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
+import org.junit.After
 import org.junit.Assume.assumeTrue
+import org.junit.Before
 import java.io.File
+import java.nio.file.Path
 import java.util.Collections.singletonMap
-import javax.swing.Action
 
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
-
   private lateinit var repository: GitRepository
-  private lateinit var parentRepo: File
-  private lateinit var broRepo: File
+  private lateinit var parentRepo: Path
+  private lateinit var broRepo: Path
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -43,6 +45,16 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(projectPath)
     refresh()
     updateRepositories()
+  }
+
+  @Before
+  fun beforeEach() {
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT)
+  }
+
+  @After
+  fun afterEach() {
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT)
   }
 
   fun `test successful push`() {
@@ -88,11 +100,10 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     pushCommitFromBro()
 
     var dialogShown = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
+    TestDialogManager.setTestDialog {
       dialogShown = true
-      DialogWrapper.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
-
     val result = push("master", "origin/master")
 
     assertTrue("Rejected push dialog wasn't shown", dialogShown)
@@ -105,9 +116,9 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     git("checkout -b feature")
 
     var dialogShown = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
+    TestDialogManager.setTestDialog {
       dialogShown = true
-      DialogWrapper.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
 
     val result = push("feature", "origin/master")
@@ -121,7 +132,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     val hash = makeCommit("afile.txt")
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE)
+    TestDialogManager.setTestDialog { PushRejectedExitCode.MERGE.exitCode }
 
     updateRepositories()
     val pushSpec = makePushSpec(repository, "master", "origin/master")
@@ -137,7 +148,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     }.execute()
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", GitUpdateResult.SUCCESS, listOf("bro.txt"), result)
 
-    cd(parentRepo.path)
+    cd(parentRepo)
     val history = git("log --all --pretty=%H ")
     assertFalse("The commit shouldn't be pushed", history.contains(hash))
   }
@@ -147,7 +158,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     makeCommit("afile.txt")
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
+    TestDialogManager.setTestDialog { PushRejectedExitCode.REBASE.exitCode }
 
     updateRepositories()
     val pushSpec = makePushSpec(repository, "master", "origin/master")
@@ -175,7 +186,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   fun `test force push without lease`() {
-    Registry.get("git.use.push.force.with.lease").setValue(false, testRootDisposable)
+    (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("git.use.push.force.with.lease", false, testRootDisposable)
 
     val broHash = pushCommitFromBro()
 
@@ -185,7 +196,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val result = push("master", "origin/master", true)
     assertResult(FORCED, -1, "master", "origin/master", result)
 
-    cd(parentRepo.path)
+    cd(parentRepo)
     val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
     assertFalse(parentHistory.contains(broHash))
     assertEquals(myHash, parentHistory[0])
@@ -204,7 +215,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val result = push("master", "origin/master", true)
     assertResult(FORCED, -1, "master", "origin/master", result)
 
-    cd(parentRepo.path)
+    cd(parentRepo)
     val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
     assertFalse(parentHistory.contains(broHash))
     assertEquals(myHash, parentHistory[0])
@@ -221,7 +232,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val result = push("master", "origin/master", true)
     assertResult(REJECTED_STALE_INFO, -1, "master", "origin/master", result)
 
-    cd(parentRepo.path)
+    cd(parentRepo)
     val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
     assertFalse(parentHistory.contains(myHash))
     assertEquals(broHash, parentHistory[0])
@@ -238,7 +249,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val result = push("master", "origin/feature", true)
     assertResult(NEW_BRANCH, -1, "master", "origin/feature", result)
 
-    cd(parentRepo.path)
+    cd(parentRepo)
     val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
     assertEquals(broHash, parentHistory[0])
 
@@ -251,7 +262,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     val broHash = pushCommitFromBro()
 
-    cd(broRepo.path)
+    cd(broRepo)
     git("push origin master:feature")
 
     cd(repository)
@@ -260,7 +271,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val result = push("master", "origin/feature", true)
     assertResult(REJECTED_STALE_INFO, -1, "master", "origin/feature", result)
 
-    cd(parentRepo.path)
+    cd(parentRepo)
     val parentHistory = StringUtil.splitByLines(git("log master --pretty=%H"))
     assertEquals(broHash, parentHistory[0])
 
@@ -270,15 +281,15 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   fun `test dont propose to update if force push is rejected`() {
     var dialogShown = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
+    TestDialogManager.setTestDialog {
       dialogShown = true
-      DialogWrapper.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
 
     val remoteTipAndPushResult = forcePushWithReject(true)
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", remoteTipAndPushResult.second)
     assertFalse("Rejected push dialog should not be shown", dialogShown)
-    cd(parentRepo.path)
+    cd(parentRepo)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
   }
 
@@ -289,7 +300,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val remoteTipAndPushResult = forcePushWithReject(true)
 
     assertResult(REJECTED_NO_FF, -1, "master", "origin/master", remoteTipAndPushResult.second)
-    cd(parentRepo.path)
+    cd(parentRepo)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
   }
 
@@ -302,7 +313,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val remoteTipAndPushResult = forcePushWithReject(false)
 
     assertResult(REJECTED_STALE_INFO, -1, "master", "origin/master", remoteTipAndPushResult.second)
-    cd(parentRepo.path)
+    cd(parentRepo)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
   }
 
@@ -325,7 +336,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     val hash = makeCommit("file.txt")
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE)
+    TestDialogManager.setTestDialog { PushRejectedExitCode.MERGE.exitCode }
 
     val result = push("master", "origin/master")
 
@@ -355,9 +366,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
       """.trimIndent()
     installHook(parentRepo, "pre-receive", rejectHook)
 
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      throw AssertionError("Update shouldn't be proposed")
-    }
+    TestDialogManager.setTestDialog { throw AssertionError("Update shouldn't be proposed") }
 
     val result = push("master", "origin/master")
 
@@ -370,7 +379,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   fun `test update with conflicts cancels push`() {
-    cd(broRepo.path)
+    cd(broRepo)
     append("bro.txt", "bro content")
     makeCommit("msg")
     git("push origin master:master")
@@ -379,7 +388,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     append("bro.txt", "main content")
     makeCommit("msg")
 
-    agreeToUpdate(GitRejectedPushUpdateDialog.REBASE_EXIT_CODE)
+    TestDialogManager.setTestDialog { PushRejectedExitCode.REBASE.exitCode }
     vcsHelper.onMerge {}
 
     val result = push("master", "origin/master")
@@ -409,76 +418,12 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val rejectHook = """
       exit 1
       """.trimIndent()
-    installHook(File(repository.root.path, ".git"), "pre-push", rejectHook)
+    installHook(repository.root.toNioPath().resolve(".git"), "pre-push", rejectHook)
 
     val result = push("master", "origin/master", false, true)
 
     assertResult(SUCCESS, 1, "master", "origin/master", result)
     assertPushed(hash, "master")
-  }
-
-  fun `test warn if rebasing over merge`() {
-    generateUnpushedMergedCommitProblem()
-
-    var rebaseOverMergeProblemDetected = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      rebaseOverMergeProblemDetected = it.warnsAboutRebaseOverMerge()
-      DialogWrapper.CANCEL_EXIT_CODE
-    }
-    push("master", "origin/master")
-    assertTrue(rebaseOverMergeProblemDetected)
-  }
-
-  fun `test warn if silently rebasing over merge`() {
-    generateUnpushedMergedCommitProblem()
-
-    settings.setAutoUpdateIfPushRejected(true)
-    settings.updateMethod = UpdateMethod.REBASE
-
-    var rebaseOverMergeProblemDetected = false
-    dialogManager.onMessage {
-      rebaseOverMergeProblemDetected = it.contains(GitRebaseOverMergeProblem.DESCRIPTION)
-      Messages.CANCEL
-    }
-    push("master", "origin/master")
-    assertTrue(rebaseOverMergeProblemDetected)
-  }
-
-  fun `test dont overwrite rebase setting when chose to merge due to unpushed merge commits`() {
-    generateUnpushedMergedCommitProblem()
-
-    settings.updateMethod = UpdateMethod.REBASE
-
-    var rebaseOverMergeProblemDetected = false
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      rebaseOverMergeProblemDetected = it.warnsAboutRebaseOverMerge()
-      GitRejectedPushUpdateDialog.MERGE_EXIT_CODE
-    }
-    push("master", "origin/master")
-    assertTrue(rebaseOverMergeProblemDetected)
-    assertEquals("Update method was overwritten by temporary update-via-merge decision",
-                 UpdateMethod.REBASE, settings.updateMethod)
-  }
-
-  fun `test respect branch default setting for rejected push dialog`() {
-    generateUpdateNeeded()
-    settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
-    git("config branch.master.rebase true")
-
-    var defaultActionName = ""
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      defaultActionName = it.defaultAction.getValue(Action.NAME) as String
-      DialogWrapper.CANCEL_EXIT_CODE
-    }
-
-    push("master", "origin/master")
-    assertTrue("Default action in rejected-push dialog is incorrect: $defaultActionName",
-               defaultActionName.toLowerCase().contains("rebase"))
-
-    git("config branch.master.rebase false")
-    push("master", "origin/master")
-    assertTrue("Default action in rejected-push dialog is incorrect: $defaultActionName",
-               defaultActionName.toLowerCase().contains("merge"))
   }
 
   fun `test respect branch default setting for silent update when rejected push`() {
@@ -498,9 +443,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
 
-    dialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
-      GitRejectedPushUpdateDialog.REBASE_EXIT_CODE
-    }
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
 
     push("master", "origin/master")
     assertEquals(UpdateMethod.BRANCH_DEFAULT, settings.updateMethod)
@@ -510,16 +453,6 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     pushCommitFromBro()
     cd(repository)
     makeCommit("file.txt")
-  }
-
-  private fun generateUnpushedMergedCommitProblem() {
-    pushCommitFromBro()
-    cd(repository)
-    repository.prepareConflict("master", "feature", "branch1.txt")
-    git("checkout master")
-    git("merge feature", true)
-    git("add -u .")
-    git("commit -m 'merged with conflicts'")
   }
 
   private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false): GitPushResult {
@@ -532,7 +465,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   private fun pushCommitFromBro(): String {
-    cd(broRepo.path)
+    cd(broRepo)
     val hash = makeCommit("bro.txt")
     git("push")
     return hash
@@ -569,13 +502,13 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   }
 
   private fun assertPushed(expectedHash: String, branch: String) {
-    cd(parentRepo.path)
+    cd(parentRepo)
     val actualHash = git("log -1 --pretty=%H $branch")
     assertEquals(expectedHash, actualHash)
   }
 
   private fun assertBranchExists(branch: String) {
-    cd(parentRepo.path)
+    cd(parentRepo)
     val out = git("branch")
     assertTrue(out.contains(branch))
   }

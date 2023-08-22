@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -20,13 +20,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, ImplicitToStringSearch.SearchParameters> {
+public final class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, ImplicitToStringSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance(ImplicitToStringSearcher.class);
 
   @Override
@@ -36,13 +36,13 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
     PsiClass aClass = ReadAction.compute(() -> targetMethod.getContainingClass());
     if (aClass == null) return;
     DumbService dumbService = DumbService.getInstance(project);
-    Map<VirtualFile, int[]> fileOffsets = new THashMap<>();
+    Map<VirtualFile, int[]> fileOffsets = new HashMap<>();
     dumbService.runReadActionInSmartMode(() -> {
-      CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
-      GlobalSearchScope scopeWithoutToString = compilerReferenceService == null ? null : compilerReferenceService.getScopeWithoutImplicitToStringCodeReferences(aClass);
-      GlobalSearchScope filter = GlobalSearchScopeUtil.toGlobalSearchScope(scopeWithoutToString == null
+      CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(project);
+      GlobalSearchScope scopeWithToString = compilerReferenceService == null ? null : compilerReferenceService.getScopeWithImplicitToStringCodeReferences(aClass);
+      GlobalSearchScope filter = GlobalSearchScopeUtil.toGlobalSearchScope(scopeWithToString == null
                                                                            ? parameters.getSearchScope()
-                                                                           : GlobalSearchScope.notScope(scopeWithoutToString).intersectWith(parameters.getSearchScope()), project);
+                                                                           : scopeWithToString.intersectWith(parameters.getSearchScope()), project);
       FileBasedIndex.getInstance().processValues(JavaBinaryPlusExpressionIndex.INDEX_ID, Boolean.TRUE, null,
                                                  (file, value) -> {
                                                    ProgressManager.checkCanceled();
@@ -53,20 +53,17 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
     });
 
     PsiManager psiManager = PsiManager.getInstance(project);
-    psiManager.startBatchFilesProcessingMode();
-    try {
+    psiManager.runInBatchFilesMode(() -> {
       for (Map.Entry<VirtualFile, int[]> entry : fileOffsets.entrySet()) {
         VirtualFile file = entry.getKey();
         int[] offsets = entry.getValue();
         ProgressManager.checkCanceled();
         if (!processFile(file, offsets, psiManager, targetMethod, consumer, dumbService)) {
-          return;
+          return null;
         }
       }
-    }
-    finally {
-      psiManager.finishBatchFilesProcessingMode();
-    }
+      return null;
+    });
   }
 
   private static boolean processFile(VirtualFile file,
@@ -90,8 +87,7 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
         }
         PsiElement parent = plusToken.getParent();
 
-        if (parent instanceof PsiPolyadicExpression) {
-          PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+        if (parent instanceof PsiPolyadicExpression polyadicExpression) {
           PsiType exprType = polyadicExpression.getType();
           if (exprType == null || !exprType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             continue;
@@ -102,8 +98,6 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
               return false;
             }
           }
-        } else {
-          LOG.error(parent + " expected to be polyadic expression");
         }
       }
       return true;

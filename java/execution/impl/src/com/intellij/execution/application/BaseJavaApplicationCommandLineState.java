@@ -1,38 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
-import com.intellij.debugger.impl.RemoteConnectionBuilder;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Optional;
 
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
-  extends JavaCommandLineState implements RemoteConnectionCreator {
+  extends JavaCommandLineState {
 
   @NotNull protected final T myConfiguration;
-
-  @Nullable private volatile RemoteConnection myRemoteConnection;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
     super(environment);
@@ -40,89 +33,24 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   protected void setupJavaParameters(@NotNull JavaParameters params) throws ExecutionException {
-    JavaParametersUtil.configureConfiguration(params, myConfiguration);
-
-    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-      ext.updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor());
-    }
+    ReadAction.run(() -> JavaRunConfigurationExtensionManager.getInstance()
+      .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor()));
   }
 
   @Override
-  public synchronized void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
-                                                           @Nullable TargetEnvironmentConfiguration configuration,
-                                                           @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
-    prepareRemoteConnection(request, configuration);
-    super.prepareTargetEnvironmentRequest(request, configuration, progressIndicator);
-  }
-
-  private void prepareRemoteConnection(@NotNull TargetEnvironmentRequest request,
-                                       @Nullable TargetEnvironmentConfiguration configuration) {
-    //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    if (!DefaultDebugExecutor.EXECUTOR_ID.equalsIgnoreCase(getEnvironment().getExecutor().getId())) {
-      myRemoteConnection = null;
-      return;
+  public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
+                                              @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
+    if (myConfiguration.getProjectPathOnTarget() != null) {
+      request.setProjectPathOnTarget(myConfiguration.getProjectPathOnTarget());
     }
-
-    try {
-      if (!(request instanceof LocalTargetEnvironmentRequest)) {
-        final int remotePort = 12345;
-        final String remoteAddressForVmParams;
-
-        final boolean java9plus = Optional.ofNullable(configuration)
-          .map(TargetEnvironmentConfiguration::getRuntimes)
-          .map(list -> list.findByType(JavaLanguageRuntimeConfiguration.class))
-          .map(JavaLanguageRuntimeConfiguration::getJavaVersionString)
-          .filter(StringUtil::isNotEmpty)
-          .map(JavaSdkVersion::fromVersionString)
-          .map(v -> v.isAtLeast(JavaSdkVersion.JDK_1_9))
-          .orElse(false);
-
-        if (java9plus) {
-          // IDEA-225182 - hack: pass "host:port" to construct correct VM params, then adjust the connection
-          remoteAddressForVmParams = "*:" + remotePort;
-        }
-        else {
-          remoteAddressForVmParams = String.valueOf(remotePort);
-        }
-
-        RemoteConnection remoteConnection = new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remoteAddressForVmParams)
-          .suspend(true)
-          .create(getJavaParameters());
-
-        remoteConnection.setApplicationAddress(String.valueOf(remotePort));
-        if (java9plus) {
-          remoteConnection.setApplicationHostName("*");
-        }
-
-        request.bindTargetPort(remotePort).getLocalValue().onSuccess(it -> {
-          remoteConnection.setDebuggerHostName("0.0.0.0");
-          remoteConnection.setDebuggerAddress(String.valueOf(it));
-        });
-        myRemoteConnection = remoteConnection;
-      }
-    }
-    catch (ExecutionException e) {
-      myRemoteConnection = null;
-    }
-  }
-
-  @Nullable
-  @Override
-  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-    return myRemoteConnection;
-  }
-
-  @Override
-  public boolean isPollConnection() {
-    return true;
+    super.prepareTargetEnvironmentRequest(request, targetProgressIndicator);
   }
 
   @NotNull
   @Override
-  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                                 @Nullable TargetEnvironmentConfiguration configuration)
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
-    TargetedCommandLineBuilder line = super.createTargetedCommandLine(request, configuration);
+    TargetedCommandLineBuilder line = super.createTargetedCommandLine(request);
     File inputFile = InputRedirectAware.getInputFile(myConfiguration);
     if (inputFile != null) {
       line.setInputFile(request.getDefaultVolume().createUpload(inputFile.getAbsolutePath()));
@@ -130,11 +58,21 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     return line;
   }
 
+  @Override
+  protected @Nullable ConsoleView createConsole(@NotNull Executor executor) throws ExecutionException {
+    ConsoleView console = super.createConsole(executor);
+    if (console == null) {
+      return null;
+    }
+    return JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(getConfiguration(), getRunnerSettings(), console, executor);
+  }
+
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, new EmptyProgressIndicator());
+
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * The 'if/elif/else' statement.
  */
-public interface PyIfStatement extends PyStatementWithElse {
+public interface PyIfStatement extends PyCompoundStatement, PyStatementWithElse {
   @NotNull PyIfPart getIfPart();
   PyIfPart @NotNull [] getElifParts();
 }

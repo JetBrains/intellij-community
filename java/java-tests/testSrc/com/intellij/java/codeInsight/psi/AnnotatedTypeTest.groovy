@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.psi
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -60,13 +60,19 @@ class AnnotatedTypeTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void testPartiallyQualifiedClassReferenceType() {
-    doTest("@TA(1) O.@TA(2) I i", "pkg.O.I", "pkg.@pkg.TA(1) O.@pkg.TA(2) I", "I", "@TA I")
+    doTest("@TA(1) O.@TA(2) I i", "pkg.O.I", "pkg.@pkg.TA(1) O.@pkg.TA(2) I", "I", "@TA O.@TA I")
   }
 
   void testCStyleArrayType() {
     doTest("@A @TA(1) String @TA(2) [] f @TA(3) []",
-           "java.lang.String[][]", "java.lang.@pkg.TA(1) String @pkg.TA(2) [] @pkg.TA(3) []",
+           "java.lang.String[][]", "java.lang.@pkg.TA(1) String @pkg.TA(3) [] @pkg.TA(2) []",
            "String[][]", "@TA String @TA [] @TA []")
+  }
+
+  void testCStyleMultiArrayType() {
+    doTest("@A @TA(1) String @TA(2) [] @TA(3) [] f @TA(4) [] @TA(5) []",
+           "java.lang.String[][][][]", "java.lang.@pkg.TA(1) String @pkg.TA(4) [] @pkg.TA(5) [] @pkg.TA(2) [] @pkg.TA(3) []",
+           "String[][][][]", "@TA String @TA [] @TA [] @TA [] @TA []")
   }
 
   void testWildcardType() {

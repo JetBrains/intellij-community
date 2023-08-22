@@ -29,7 +29,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   private static final ElementPattern<PsiElement> PLACE = psiElement().withParent(GrTypeDefinitionBody.class).with(
-    new PatternCondition<PsiElement>("Not in extends/implements clause of inner class") {
+    new PatternCondition<>("Not in extends/implements clause of inner class") {
       @Override
       public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
         final GrTypeDefinition innerDefinition = PsiTreeUtil.getPrevSiblingOfType(element, GrTypeDefinition.class);
@@ -65,7 +65,7 @@ class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionPa
       PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
       String parameters = PsiFormatUtil.formatMethod(method, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_NAME);
       String visibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-      String modifiers = (visibility == PsiModifier.PACKAGE_LOCAL ? "" : visibility + " ");
+      String modifiers = visibility.equals(PsiModifier.PACKAGE_LOCAL) ? "" : visibility + " ";
       PsiType type = substitutor.substitute(method.getReturnType());
       String parentClassName = psiClass == null ? "" : psiClass.getName();
       String signature = modifiers + (type == null ? "" : type.getPresentableText() + " ") + method.getName();

@@ -1,29 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
 import com.intellij.largeFilesEditor.search.searchTask.RangeSearchTask;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public class StopRangeSearchAction extends AnAction implements DumbAware {
-
-  private static class Holder {
-    private static final Icon ICON = AllIcons.Actions.Suspend;
-  }
+public final class StopRangeSearchAction extends AnAction implements DumbAware {
 
   private final RangeSearch myRangeSearch;
 
   public StopRangeSearchAction(@NotNull RangeSearch rangeSearch) {
     this.myRangeSearch = rangeSearch;
-    getTemplatePresentation().setText(EditorBundle.message("large.file.editor.stop.searching.action.text"));
-    getTemplatePresentation().setIcon(Holder.ICON);
+    getTemplatePresentation().setText(EditorBundle.messagePointer("large.file.editor.stop.searching.action.text"));
+    getTemplatePresentation().setIcon(AllIcons.Actions.Suspend);
   }
 
   @Override
@@ -32,6 +27,11 @@ public class StopRangeSearchAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(
       task != null && !task.isFinished() && !task.isShouldStop()
     );
+  }
+  
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

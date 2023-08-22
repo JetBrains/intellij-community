@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
@@ -7,6 +7,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelper
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
@@ -14,8 +15,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -498,6 +499,45 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     }
   }
 
+  fun `test text block tab in fragment editor`() {
+    with(myFixture) {
+      configureByText("classA.java", """
+        import org.intellij.lang.annotations.Language;
+        
+        class A {
+          @Language("HTML")
+          String s = ""${'"'}
+                  <html>
+                  <caret><p></p>
+                  </html>
+                  ""${'"'};
+        }
+      """.trimIndent())
+
+      val fe = injectionTestFixture.openInFragmentEditor()
+      fe.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+      fe.performEditorAction(IdeActions.ACTION_EDITOR_INDENT_SELECTION)
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      TestCase.assertEquals("""
+           |<html>
+           |    <p></p>
+           |</html>
+           |""".trimMargin(), fe.file.text)
+      myFixture.checkResult("""
+        |import org.intellij.lang.annotations.Language;
+        |
+        |class A {
+        |  @Language("HTML")
+        |  String s = ""${'"'}
+        |          <html>
+        |              <p></p>
+        |          </html>
+        |          ""${'"'};
+        |}
+      """.trimMargin())
+    }
+  }
+
   fun `test delete-commit-delete`() {
     with(myFixture) {
 
@@ -900,14 +940,14 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   private fun runWithUndoManager(editor: Editor, action: (UndoManager, TextEditor) -> Unit) {
     UIUtil.invokeAndWaitIfNeeded(Runnable {
-      val oldTestDialog = Messages.setTestDialog(TestDialog.OK)
+      val oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK)
       try {
         val undoManager = UndoManager.getInstance(project)
         val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
         action(undoManager, textEditor)
       }
       finally {
-        Messages.setTestDialog(oldTestDialog)
+        TestDialogManager.setTestDialog(oldTestDialog)
       }
     })
   }

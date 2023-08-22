@@ -17,13 +17,14 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Collections;
@@ -31,7 +32,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public class MavenJUnitPatcherTest extends MavenImportingTestCase {
+public class MavenJUnitPatcherTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void setUp() throws Exception {
@@ -41,24 +42,26 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     MavenProjectSettings.getInstance(myProject).getTestRunningSettings().setPassSystemProperties(true);
   }
 
-  public void testExcludeClassPathElement() throws CantRunException {
+  @Test
+  public void ExcludeClassPathElement() throws CantRunException {
     String[] excludeSpecifications = {
-      "<classpathDependencyExcludes>" +
-      "<classpathDependencyExclude>org.jetbrains:annotations" +
-      "</classpathDependencyExclude>" +
-      "</classpathDependencyExcludes>",
-      "<classpathDependencyExcludes>" +
-      "<classpathDependencyExcludes>org.jetbrains:annotations" +
-      "</classpathDependencyExcludes>" +
-      "</classpathDependencyExcludes>",
-      "<classpathDependencyExcludes>" +
-      "<dependencyExclude>org.jetbrains:annotations" +
-      "</dependencyExclude>" +
-      "</classpathDependencyExcludes>",
-      "<classpathDependencyExcludes>\n" +
-      "org.jetbrains:annotations,\n" +
-      "org.jetbrains:annotations\n" +
-      "</classpathDependencyExcludes>",
+      """
+<classpathDependencyExcludes>
+<classpathDependencyExclude>org.jetbrains:annotations</classpathDependencyExclude>
+</classpathDependencyExcludes>""",
+      """
+<classpathDependencyExcludes>
+<classpathDependencyExcludes>org.jetbrains:annotations</classpathDependencyExcludes>
+</classpathDependencyExcludes>""",
+      """
+<classpathDependencyExcludes>
+<dependencyExclude>org.jetbrains:annotations</dependencyExclude>
+</classpathDependencyExcludes>""",
+      """
+<classpathDependencyExcludes>
+org.jetbrains:annotations,
+org.jetbrains:annotations
+</classpathDependencyExcludes>""",
     };
     for (String excludeSpecification : excludeSpecifications) {
       @Language(value = "XML", prefix = "<project>", suffix = "</project>")
@@ -103,40 +106,43 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                    ContainerUtil.map(javaParameters.getClassPath().getPathList(), path -> new File(path).getName()));
       mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
       List<String> classPath = javaParameters.getClassPath().getPathList();
-      assertEquals(excludeSpecification,Collections.singletonList("annotations-java5-17.0.0.jar"),
+      assertEquals(excludeSpecification, Collections.singletonList("annotations-java5-17.0.0.jar"),
                    ContainerUtil.map(classPath, path -> new File(path).getName()));
     }
   }
 
-  public void testExcludeScope() throws CantRunException {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
-                                           "<artifactId>m1</artifactId>\n" +
-                                           "<version>1</version>\n" +
-                                           "<dependencies>\n" +
-                                           "  <dependency>\n" +
-                                           "    <groupId>org.jetbrains</groupId>\n" +
-                                           "    <artifactId>annotations</artifactId>\n" +
-                                           "    <version>17.0.0</version>\n" +
-                                           "    <scope>runtime</scope>\n" +
-                                           "  </dependency>\n" +
-                                           "  <dependency>\n" +
-                                           "    <groupId>org.jetbrains</groupId>\n" +
-                                           "    <artifactId>annotations-java5</artifactId>\n" +
-                                           "    <version>17.0.0</version>\n" +
-                                           "  </dependency>\n" +
-                                           "</dependencies>\n" +
-                                           "<build>\n" +
-                                           "  <plugins>\n" +
-                                           "    <plugin>\n" +
-                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
-                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
-                                           "      <version>2.16</version>\n" +
-                                           "      <configuration>\n" +
-                                           "        <classpathDependencyScopeExclude>compile</classpathDependencyScopeExclude>\n" +
-                                           "      </configuration>\n" +
-                                           "    </plugin>\n" +
-                                           "  </plugins>\n" +
-                                           "</build>\n");
+  @Test
+  public void ExcludeScope() throws CantRunException {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>org.jetbrains</groupId>
+          <artifactId>annotations</artifactId>
+          <version>17.0.0</version>
+          <scope>runtime</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.jetbrains</groupId>
+          <artifactId>annotations-java5</artifactId>
+          <version>17.0.0</version>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.16</version>
+            <configuration>
+              <classpathDependencyScopeExclude>compile</classpathDependencyScopeExclude>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -152,26 +158,29 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  ContainerUtil.map(classPath, path -> new File(path).getName()));
   }
 
-  public void testAddClassPath() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
-                                           "<artifactId>m1</artifactId>\n" +
-                                           "<version>1</version>\n" +
-                                           "<build>\n" +
-                                           "  <plugins>\n" +
-                                           "    <plugin>\n" +
-                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
-                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
-                                           "      <version>2.16</version>\n" +
-                                           "      <configuration>\n" +
-                                           "        <additionalClasspathElements>\n" +
-                                           "          <additionalClasspathElement>path/to/additional/resources</additionalClasspathElement>\n" +
-                                           "          <additionalClasspathElement>path/to/additional/jar</additionalClasspathElement>\n" +
-                                           "          <additionalClasspathElement>path/to/csv/jar1, path/to/csv/jar2</additionalClasspathElement>\n" +
-                                           "        </additionalClasspathElements>\n" +
-                                           "      </configuration>\n" +
-                                           "    </plugin>\n" +
-                                           "  </plugins>\n" +
-                                           "</build>\n");
+  @Test
+  public void AddClassPath() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.16</version>
+            <configuration>
+              <additionalClasspathElements>
+                <additionalClasspathElement>path/to/additional/resources</additionalClasspathElement>
+                <additionalClasspathElement>path/to/additional/jar</additionalClasspathElement>
+                <additionalClasspathElement>path/to/csv/jar1, path/to/csv/jar2</additionalClasspathElement>
+              </additionalClasspathElements>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -183,27 +192,30 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     assertEquals(asList("path/to/additional/resources", "path/to/additional/jar", "path/to/csv/jar1", "path/to/csv/jar2"), classPath);
   }
 
-  public void testArgList() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "      <argLine>-Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\"</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+  @Test
+  public void ArgList() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.16</version>
+          <configuration>
+            <argLine>-Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces"</argLine>
+          </configuration>
+        </plugin>
+      </plugins></build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -215,29 +227,29 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testIgnoreJaCoCoOption() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<build>\n" +
-                                           "  <plugins>\n" +
-                                           "    <plugin>\n" +
-                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
-                                           "      <version>2.22.0</version>\n" +
-                                           "      <configuration>\n" +
-                                           "        <argLine>-Dmyprop=abc @{jacoco} @{unresolved}</argLine>\n" +
-                                           "      </configuration>\n" +
-                                           "    </plugin>\n" +
-                                           "    <plugin>\n" +
-                                           "      <groupId>org.jacoco</groupId>\n" +
-                                           "      <artifactId>jacoco-maven-plugin</artifactId>\n" +
-                                           "      <version>0.8.3</version>\n" +
-                                           "      <configuration>\n" +
-                                           "        <propertyName>jacoco</propertyName>\n" +
-                                           "      </configuration>\n" +
-                                           "    </plugin>\n" +
-                                           "  </plugins>\n" +
-                                           "</build>\n");
+  @Test
+  public void IgnoreJaCoCoOption() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.22.0</version>
+            <configuration>
+              <argLine>-Dmyprop=abc @{jacoco} @{unresolved}</argLine>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.3</version>
+            <configuration>
+              <propertyName>jacoco</propertyName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -250,23 +262,23 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testImplicitArgLine() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<properties>\n" +
-                                           "  <argLine>-Dfoo=${version}</argLine>\n" +
-                                           "</properties>\n" +
-                                           "\n" +
-                                           "<build>\n" +
-                                           "  <plugins>\n" +
-                                           "    <plugin>\n" +
-                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
-                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
-                                           "      <version>2.22.1</version>\n" +
-                                           "    </plugin>\n" +
-                                           "  </plugins>\n" +
-                                           "</build>\n");
+  @Test
+  public void ImplicitArgLine() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
+        <argLine>-Dfoo=${version}</argLine>
+      </properties>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.22.1</version>
+          </plugin>
+        </plugins>
+      </build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -278,27 +290,30 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testVmPropertiesResolve() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "      <argLine>-Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\" ${argLineApx}</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+  @Test
+  public void VmPropertiesResolve() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.16</version>
+          <configuration>
+            <argLine>-Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces" ${argLineApx}</argLine>
+          </configuration>
+        </plugin>
+      </plugins></build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -307,24 +322,28 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.getVMParametersList().addProperty("argLineApx", "-DsomeKey=someValue");
     mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
-    assertEquals(asList("-DargLineApx=-DsomeKey=someValue", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces", "-DsomeKey=someValue"),
-                 javaParameters.getVMParametersList().getList());
+    assertEquals(
+      asList("-DargLineApx=-DsomeKey=someValue", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces", "-DsomeKey=someValue"),
+      javaParameters.getVMParametersList().getList());
   }
 
-  public void testArgLineLateReplacement() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\"</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+  @Test
+  public void ArgLineLateReplacement() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.16</version>
+          <configuration>
+            <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces"</argLine>
+          </configuration>
+        </plugin>
+      </plugins></build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -337,24 +356,83 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testArgLineRefersAnotherProperty() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<properties>" +
-                                           "  <app.testing.jvm.args>-Xms256m -Xmx1524m -Duser.language=en</app.testing.jvm.args>" +
-                                           "  <argLine>${app.testing.jvm.args}</argLine>" +
-                                           "</properties>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "        <argLine>@{argLine}</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+  @Test
+  public void ArgLineLateReplacementParentProperty() {
+    createProjectPom(
+      """
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+        <packaging>pom</packaging>
+        <properties>
+          <parentProp>parent.value</parentProp>
+        </properties>
+        <modules>
+          <module>m1</module>
+        </modules>
+        """);
+
+    createModulePom(
+        "m1",
+        """
+          <groupId>test</groupId>
+          <artifactId>m1</artifactId>
+          <version>1</version>
+          <properties>
+            <moduleProp>module.value</moduleProp>
+          </properties>
+          <parent>
+            <groupId>test</groupId>
+            <artifactId>project</artifactId>
+            <version>1</version>
+          </parent>
+          <build>
+            <plugins>
+              <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.16</version>
+                <configuration>
+                  <argLine>@{moduleProp} @{parentProp}</argLine>
+                </configuration>
+              </plugin>
+            </plugins>
+          </build>
+          """);
+
+    importProject();
+    Module module = getModule(mn("project", "m1"));
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.getVMParametersList().add("-ea");
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(
+        asList("-ea", "module.value", "parent.value"),
+        javaParameters.getVMParametersList().getList());
+  }
+
+  @Test
+  public void ArgLineRefersAnotherProperty() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <properties>
+        <app.testing.jvm.args>-Xms256m -Xmx1524m -Duser.language=en</app.testing.jvm.args>
+        <argLine>${app.testing.jvm.args}</argLine>
+      </properties>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.16</version>
+          <configuration>
+              <argLine>@{argLine}</argLine>
+          </configuration>
+        </plugin>
+      </plugins></build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -367,23 +445,12 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testArgLineProperty() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<properties>\n" +
-                                           "<argLine>-DsomeProp=Hello</argLine>\n" +
-                                           "</properties>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\"</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+  @Test
+  public void ArgLineProperty() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
+      <argLine>-DsomeProp=Hello</argLine>
+      </properties><build><plugins>  <plugin>    <groupId>org.apache.maven.plugins</groupId>    <artifactId>maven-surefire-plugin</artifactId>    <version>2.16</version>    <configuration>      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces"</argLine>    </configuration>  </plugin></plugins></build>""");
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -396,25 +463,28 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
-  public void testResolvePropertiesUsingAt() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
-                                           "<artifactId>m1</artifactId>\n" +
-                                           "<version>1</version>\n" +
-                                           "<properties>\n" +
-                                           "    <test.argLine>-Dfoo=bar</test.argLine>\n" +
-                                           "</properties>\n" +
-                                           "<build>\n" +
-                                           "  <plugins>\n" +
-                                           "    <plugin>\n" +
-                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
-                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
-                                           "      <version>2.16</version>\n" +
-                                           "      <configuration>\n" +
-                                           "        <argLine>@{test.argLine}</argLine>\n" +
-                                           "      </configuration>\n" +
-                                           "    </plugin>\n" +
-                                           "  </plugins>\n" +
-                                           "</build>\n");
+  @Test
+  public void ResolvePropertiesUsingAt() {
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <properties>
+          <test.argLine>-Dfoo=bar</test.argLine>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.16</version>
+            <configuration>
+              <argLine>@{test.argLine}</argLine>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");

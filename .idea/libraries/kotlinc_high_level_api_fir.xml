@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.high-level-api-fir" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-fir-for-ide:1.9.30-dev-460">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-for-ide/1.9.30-dev-460/high-level-api-fir-for-ide-1.9.30-dev-460.jar">
+          <sha256sum>5448b96252f0217115b31f5e870744b2cb6c659d5dae037154b4f9e5c4ce76a4</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-for-ide/1.9.30-dev-460/high-level-api-fir-for-ide-1.9.30-dev-460.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-for-ide/1.9.30-dev-460/high-level-api-fir-for-ide-1.9.30-dev-460-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

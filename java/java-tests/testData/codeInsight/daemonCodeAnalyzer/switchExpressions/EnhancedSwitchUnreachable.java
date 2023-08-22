@@ -1,10 +1,18 @@
 class C {
-  void alwaysThrow(String s) {
+  void alwaysThrow1(String s) {
     switch (s) {
       case "a" -> throw new IllegalArgumentException();
       default -> throw new IllegalStateException();
     }
     <error descr="Unreachable statement">System.out.println();</error>
+  }
+
+  void alwaysThrow2(Integer i) {
+    switch (i) {
+      case Integer integer when true:
+        throw new IllegalArgumentException();
+    }
+    <error descr="Unreachable statement">System.out.println(42);</error>
   }
 
   void breakFromEndlessLoop() {
@@ -47,7 +55,7 @@ class C {
 
   void endlessLoopInBranchWithValueBreak(String arg) {
     int result = switch (arg) {
-      case "one" -> { while(true); <error descr="Unreachable statement">yield 1;</error>}
+      case "one" -> { while(true); <error descr="Unreachable statement">yield</error> 1;}
       default -> 0;
     };
     System.out.println(result);

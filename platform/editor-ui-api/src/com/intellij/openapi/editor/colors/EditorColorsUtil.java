@@ -1,21 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Function;
 
 /**
  * @author gregsh
  */
-public class EditorColorsUtil {
+public final class EditorColorsUtil {
   private EditorColorsUtil() {
   }
 
@@ -23,13 +27,11 @@ public class EditorColorsUtil {
    * @return the appropriate color scheme for UI other than text editor (QuickDoc, UsagesView, etc.)
    * depending on the current LAF and current editor color scheme.
    */
-  @NotNull
-  public static EditorColorsScheme getGlobalOrDefaultColorScheme() {
+  public static @NotNull EditorColorsScheme getGlobalOrDefaultColorScheme() {
     return getColorSchemeForBackground(null);
   }
 
-  @Nullable
-  public static Color getGlobalOrDefaultColor(@NotNull ColorKey colorKey) {
+  public static @Nullable Color getGlobalOrDefaultColor(@NotNull ColorKey colorKey) {
     Color color = getColorSchemeForBackground(null).getColor(colorKey);
     return color != null? color : colorKey.getDefaultColor();
   }
@@ -38,8 +40,7 @@ public class EditorColorsUtil {
    * @return the appropriate color scheme for UI other than text editor (QuickDoc, UsagesView, etc.)
    * depending on the current LAF, current editor color scheme and the component background.
    */
-  @NotNull
-  public static EditorColorsScheme getColorSchemeForComponent(@Nullable JComponent component) {
+  public static @NotNull EditorColorsScheme getColorSchemeForComponent(@Nullable JComponent component) {
     return getColorSchemeForBackground(component != null ? component.getBackground() : null);
   }
 
@@ -52,7 +53,7 @@ public class EditorColorsUtil {
     boolean dark1 = background == null ? StartupUiUtil.isUnderDarcula() : ColorUtil.isDark(background);
     boolean dark2 = ColorUtil.isDark(globalScheme.getDefaultBackground());
     if (dark1 != dark2) {
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(dark1 ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME);
       if (scheme != null) {
         return scheme;
       }
@@ -60,8 +61,7 @@ public class EditorColorsUtil {
     return globalScheme;
   }
 
-  @NotNull
-  public static EditorColorsScheme getColorSchemeForPrinting() {
+  public static @NotNull EditorColorsScheme getColorSchemeForPrinting() {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     return colorsManager.isDarkEditor() ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
                                         : colorsManager.getGlobalScheme();
@@ -83,5 +83,15 @@ public class EditorColorsUtil {
       if (o instanceof EditorColorsListener)
         ((EditorColorsListener)o).globalSchemeChange(EditorColorsManager.getInstance().getGlobalScheme());
     }
+  }
+
+  public static @NotNull ColorKey createColorKey(@NonNls @NotNull String name, @NotNull Color defaultColor) {
+    return ColorKey.createColorKey(name, JBColor.namedColor(name, defaultColor));
+  }
+
+  public static @Nullable Color getColor(@Nullable Component component, @NotNull ColorKey key) {
+    Function<ColorKey, Color> function = ClientProperty.get(component, ColorKey.FUNCTION_KEY);
+    Color color = function == null ? null : function.apply(key);
+    return color != null ? color : key.getDefaultColor();
   }
 }

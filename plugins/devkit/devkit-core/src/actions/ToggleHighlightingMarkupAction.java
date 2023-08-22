@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,11 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     e.getPresentation().setEnabled(editor != null && file != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -179,7 +186,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     return offset;
   }
 
-  private static void appendTag(StringBuilder sb, HighlightInfo cur, boolean opening) {
+  private static void appendTag(@NonNls StringBuilder sb, HighlightInfo cur, boolean opening) {
     sb.append("<");
     if (!opening) sb.append("/");
     if (cur.isAfterEndOfLine()) {

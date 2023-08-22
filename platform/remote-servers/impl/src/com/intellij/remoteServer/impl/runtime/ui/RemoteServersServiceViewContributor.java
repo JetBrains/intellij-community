@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.ui;
 
-import com.intellij.execution.services.ServiceViewContributor;
-import com.intellij.execution.services.ServiceViewDescriptor;
-import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.execution.services.ServiceViewProvidingContributor;
+import com.intellij.execution.services.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
@@ -12,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -20,8 +18,8 @@ import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurab
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
+import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
-import com.intellij.remoteServer.CloudBundle;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -86,6 +84,11 @@ public abstract class RemoteServersServiceViewContributor
     }
 
     return name1.compareTo(name2);
+  }
+
+  @Nullable
+  protected ServiceEventListener.ServiceEvent createDeploymentsChangedEvent(@NotNull ServerConnection<?> connection) {
+    return ServiceEventListener.ServiceEvent.createResetEvent(this.getClass());
   }
 
   @NotNull

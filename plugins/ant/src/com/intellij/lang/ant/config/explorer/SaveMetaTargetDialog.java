@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.lang.ant.AntBundle;
@@ -21,9 +7,11 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.ExecuteCompositeTargetEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,7 +76,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     final JLabel nameLabel = new JLabel(AntBundle.message("save.meta.data.name.label"));
     panel.add(nameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                                GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     myTfName = new JTextField(myInitialEvent.getPresentableName());
     nameLabel.setLabelFor(myTfName);
     myTfName.selectAll();
@@ -98,7 +86,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     final DefaultListModel dataModel = new DefaultListModel();
     myTargetList = new JBList(dataModel);
     final List<String> targetNames = myInitialEvent.getTargetNames();
-    for (String name : targetNames) {
+    for (@NlsSafe String name : targetNames) {
       dataModel.addElement(name);
     }
     panel.add(new JLabel(AntBundle.message("save.meta.data.targets.label")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1,
@@ -154,7 +142,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
   private ExecuteCompositeTargetEvent createEventObject() {
     final ListModel model = myTargetList.getModel();
     final int size = model.getSize();
-    final List<String> names  = new ArrayList<>();
+    final List<@NlsSafe String> names  = new ArrayList<>();
     for (int idx = 0; idx < size; idx++) {
       names.add((String)model.getElementAt(idx));
     }

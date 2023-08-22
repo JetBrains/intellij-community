@@ -1,16 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.UnmodifiableIterator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TextRanges implements Iterable<TextRange> {
-  private static final Comparator<TextRange> START_COMP = (o1, o2) -> Comparing.compare(o1.getStartOffset(), o2.getStartOffset());
-  private static final Comparator<TextRange> END_COMP = (o1, o2) -> Comparing.compare(o1.getEndOffset(), o2.getEndOffset());
+public final class TextRanges implements Iterable<TextRange> {
+  private static final Comparator<TextRange> START_COMP = Comparator.comparingInt(TextRange::getStartOffset);
+  private static final Comparator<TextRange> END_COMP = Comparator.comparingInt(TextRange::getEndOffset);
   private final List<TextRange> myRanges = new ArrayList<>();
 
   public TextRanges union(@Nullable TextRange range) {

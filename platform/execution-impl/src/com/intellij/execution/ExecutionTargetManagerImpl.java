@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,9 +95,8 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
   public Element getState() {
     Element state = new Element("state");
     synchronized (myActiveTargetLock) {
-      String id = myActiveTarget == null ? mySavedActiveTargetId : myActiveTarget.getId();
-      if (id != null && !id.equals(DefaultExecutionTarget.INSTANCE.getId())) {
-        state.setAttribute("SELECTED_TARGET", id);
+      if (mySavedActiveTargetId != null && !mySavedActiveTargetId.equals(DefaultExecutionTarget.INSTANCE.getId())) {
+        state.setAttribute("SELECTED_TARGET", mySavedActiveTargetId);
       }
     }
     return state;
@@ -145,7 +143,9 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
                                                       : getTargetsFor(settings.getConfiguration());
     ExecutionTarget toNotify;
     synchronized (myActiveTargetLock) {
-      if (toSelect == null) toSelect = myActiveTarget;
+      if (toSelect == null && !DefaultExecutionTarget.INSTANCE.equals(myActiveTarget)) {
+        toSelect = myActiveTarget;
+      }
 
       int index = -1;
       if (toSelect != null) {
@@ -183,7 +183,9 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
 
   @Nullable
   private ExecutionTarget doSetActiveTarget(@NotNull ExecutionTarget newTarget) {
-    mySavedActiveTargetId = null;
+    if (!DefaultExecutionTarget.INSTANCE.equals(newTarget)) {
+      mySavedActiveTargetId = newTarget.getId();
+    }
 
     ExecutionTarget prev = myActiveTarget;
     myActiveTarget = newTarget;
@@ -208,7 +210,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     boolean checkFallbackToDefault = isCompound && !target.equals(defaultTarget);
 
     return doWithEachNonCompoundWithSpecifiedTarget(configuration, (subConfiguration, executionTarget) -> {
-      if (!(subConfiguration instanceof TargetAwareRunProfile)) {
+      if (!(subConfiguration instanceof TargetAwareRunProfile targetAwareProfile)) {
         return true;
       }
 
@@ -217,7 +219,6 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
         return false;
       }
 
-      TargetAwareRunProfile targetAwareProfile = (TargetAwareRunProfile)subConfiguration;
       return target.canRun(subConfiguration) && targetAwareProfile.canRunOn(target)
              || (checkFallbackToDefault && defaultTarget.canRun(subConfiguration) && targetAwareProfile.canRunOn(defaultTarget));
     });
@@ -233,7 +234,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     List<ExecutionTargetProvider> providers = ExecutionTargetProvider.EXTENSION_NAME.getExtensionList();
     LinkedHashSet<ExecutionTarget> result = new LinkedHashSet<>();
 
-    Set<ExecutionTarget> specifiedTargets = new THashSet<>();
+    Set<ExecutionTarget> specifiedTargets = new HashSet<>();
     doWithEachNonCompoundWithSpecifiedTarget(configuration, (subConfiguration, executionTarget) -> {
       for (ExecutionTargetProvider eachTargetProvider : providers) {
         List<ExecutionTarget> supportedTargets = eachTargetProvider.getTargets(myProject, subConfiguration);
@@ -255,11 +256,11 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
         result.add(MULTIPLE_TARGETS);
       }
     }
-    return Collections.unmodifiableList(ContainerUtil.filter(result, it -> doCanRun(configuration, it)));
+    return ContainerUtil.filter(result, it -> doCanRun(configuration, it));
   }
 
   private boolean doWithEachNonCompoundWithSpecifiedTarget(@NotNull RunConfiguration configuration, @NotNull BiPredicate<? super RunConfiguration, ? super ExecutionTarget> action) {
-    Set<RunConfiguration> recursionGuard = new THashSet<>();
+    Set<RunConfiguration> recursionGuard = new HashSet<>();
     LinkedList<Pair<RunConfiguration, ExecutionTarget>> toProcess = new LinkedList<>();
     toProcess.add(Pair.create(configuration, null));
 

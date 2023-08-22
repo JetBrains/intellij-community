@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.impl;
 
+import com.intellij.tracing.Tracer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -14,20 +14,20 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
-public class BuildTargetIndexImpl implements BuildTargetIndex {
+public final class BuildTargetIndexImpl implements BuildTargetIndex {
   private final BuildTargetRegistry myRegistry;
   private final BuildRootIndexImpl myBuildRootIndex;
   private final Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
   private List<BuildTargetChunk> myTargetChunks;
 
-  public BuildTargetIndexImpl(BuildTargetRegistry targetRegistry, BuildRootIndexImpl buildRootIndex) {
+  public BuildTargetIndexImpl(@NotNull BuildTargetRegistry targetRegistry, @NotNull BuildRootIndexImpl buildRootIndex) {
     myRegistry = targetRegistry;
     myBuildRootIndex = buildRootIndex;
-    myDependencies = new THashMap<>();
+    myDependencies = new HashMap<>();
   }
 
   @Override
-  public List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context) {
+  public @NotNull List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context) {
     initializeChunks(context);
     return myTargetChunks;
   }
@@ -38,6 +38,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       return;
     }
 
+    Tracer.Span chunksInitSpan = Tracer.start("BuildTargetIndexImpl.initializeChunks");
     List<BuildTarget<?>> allTargets = getAllTargets();
     TargetOutputIndex outputIndex = new TargetOutputIndexImpl(allTargets, context);
     Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies = new HashMap<>();
@@ -84,6 +85,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     for (Collection<BuildTarget<?>> component : components) {
       myTargetChunks.add(new BuildTargetChunk(new LinkedHashSet<>(component)));
     }
+    chunksInitSpan.complete();
   }
 
   private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<? extends BuildTarget<?>> dependencies,

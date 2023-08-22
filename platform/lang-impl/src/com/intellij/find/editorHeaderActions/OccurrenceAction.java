@@ -17,6 +17,7 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchSession;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -45,6 +46,11 @@ public abstract class OccurrenceAction extends DumbAwareAction implements Shortc
     boolean hasMatches = search.hasMatches();
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && hasMatches && (availableForSelection() || search.getFindModel().isGlobal()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean availableForReplace() {

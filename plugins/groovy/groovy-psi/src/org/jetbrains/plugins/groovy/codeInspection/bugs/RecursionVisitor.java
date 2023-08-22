@@ -54,10 +54,9 @@ class RecursionVisitor extends GroovyRecursiveElementVisitor {
     super.visitMethodCallExpression(call);
     final GrExpression methodExpression =
         call.getInvokedExpression();
-    if (!(methodExpression instanceof GrReferenceExpression)) {
+    if (!(methodExpression instanceof GrReferenceExpression referenceExpression)) {
       return;
     }
-    final GrReferenceExpression referenceExpression = (GrReferenceExpression) methodExpression;
     final String calledMethodName = referenceExpression.getReferenceName();
     if (calledMethodName == null) {
       return;

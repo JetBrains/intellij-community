@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiNameHelper;
 import org.junit.Assert;
 import org.junit.Test;
@@ -12,7 +13,7 @@ public class PsiNameHelperTest {
     doTest("I<Long>", "I");
     doTest("java.lang.Object", "Object");
     doTest("java.lang.String", "String");
-    doTest("java.lang.Throwable", "Throwable");
+    doTest(CommonClassNames.JAVA_LANG_THROWABLE, "Throwable");
     doTest("java.io.PrintStream", "PrintStream");
     doTest("java.io.PrintWriter", "PrintWriter");
     doTest("java.lang.StackTraceElement", "StackTraceElement");

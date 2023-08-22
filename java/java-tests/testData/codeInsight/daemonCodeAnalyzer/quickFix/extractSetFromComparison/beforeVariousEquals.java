@@ -1,4 +1,4 @@
-// "Extract Set from comparison chain" "true"
+// "Extract Set from comparison chain" "true-preview"
 import java.util.Objects;
 
 public class Test {

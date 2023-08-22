@@ -1,21 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GithubIssueState
-import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
+import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityStateBuilder
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
-import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
 
 class GHPRStateServiceImpl internal constructor(private val progressManager: ProgressManager,
+                                                private val project: Project,
                                                 private val securityService: GHPRSecurityService,
                                                 private val requestExecutor: GithubApiRequestExecutor,
                                                 private val serverPath: GithubServerPath,
@@ -31,13 +35,14 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
 
     return progressManager.submitIOTask(progressIndicator) {
       try {
-        requestExecutor.execute(GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
+        requestExecutor.execute(it, GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
       }
-      catch (e: GithubStatusCodeException) {
-        if (e.statusCode == 404) null
-        else throw e
+      catch (e: Exception) {
+        // assume there are no restrictions
+        if (e !is ProcessCanceledException) LOG.info("Error occurred while loading branch protection rules for $baseBranch", e)
+        null
       }
-    }.logError(LOG, "Error occurred while loading branch protection rules for $baseBranch")
+    }
   }
 
   override fun loadMergeabilityState(progressIndicator: ProgressIndicator,
@@ -46,7 +51,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
                                      prHtmlUrl: String,
                                      baseBranchProtectionRules: GHBranchProtectionRules?) =
     progressManager.submitIOTask(progressIndicator) {
-      val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, pullRequestId.number))
+      val mergeabilityData = requestExecutor.execute(it, GHGQLRequests.PullRequest.mergeabilityData(repository, pullRequestId.number))
                              ?: error("Could not find pull request $pullRequestId.number")
       val builder = GHPRMergeabilityStateBuilder(headRefOid, prHtmlUrl,
                                                  mergeabilityData)
@@ -75,12 +80,20 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
       return@submitIOTask
     }.logError(LOG, "Error occurred while reopening PR ${pullRequestId.number}")
 
+  override fun markReadyForReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier) =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(it,
+                              GHGQLRequests.PullRequest.markReadyForReview(repository, pullRequestId.id))
+      return@submitIOTask
+    }.logError(LOG, "Error occurred while marking PR ${pullRequestId.number} ready fro review")
+
   override fun merge(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier,
                      commitMessage: Pair<String, String>, currentHeadRef: String) =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.merge(serverPath, repoPath, pullRequestId.number,
                                                                              commitMessage.first, commitMessage.second,
                                                                              currentHeadRef))
+      GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.merge)
       return@submitIOTask
     }.logError(LOG, "Error occurred while merging PR ${pullRequestId.number}")
 
@@ -91,6 +104,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
       requestExecutor.execute(it,
                               GithubApiRequests.Repos.PullRequests.rebaseMerge(serverPath, repoPath, pullRequestId.number,
                                                                                currentHeadRef))
+      GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.rebase)
       return@submitIOTask
     }.logError(LOG, "Error occurred while rebasing PR ${pullRequestId.number}")
 
@@ -101,6 +115,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
                               GithubApiRequests.Repos.PullRequests.squashMerge(serverPath, repoPath, pullRequestId.number,
                                                                                commitMessage.first, commitMessage.second,
                                                                                currentHeadRef))
+      GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.squash)
       return@submitIOTask
     }.logError(LOG, "Error occurred while squash-merging PR ${pullRequestId.number}")
 

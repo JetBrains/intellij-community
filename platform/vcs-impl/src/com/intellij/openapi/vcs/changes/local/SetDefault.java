@@ -24,19 +24,20 @@ public class SetDefault implements ChangeListCommand {
     LocalChangeList list = worker.getChangeListByName(myNewDefaultName);
     if (list == null || list.isDefault()) {
       myOldDefaultListCopy = null;
-      myResult = false;
       myNewDefaultListCopy = null;
+      myResult = false;
       return;
     }
 
-    myOldDefaultListCopy = worker.getDefaultList();
-    myResult = worker.setDefaultList(myNewDefaultName);
-    myNewDefaultListCopy = worker.getDefaultList();
+    String oldDefaultName = worker.setDefaultList(myNewDefaultName);
+    myOldDefaultListCopy = worker.getChangeListByName(oldDefaultName);
+    myNewDefaultListCopy = worker.getChangeListByName(myNewDefaultName);
+    myResult = oldDefaultName != null;
   }
 
   @Override
   public void doNotify(final ChangeListListener listener) {
-    if (myResult) {
+    if (myOldDefaultListCopy != null && myNewDefaultListCopy != null && myResult) {
       listener.defaultListChanged(myOldDefaultListCopy, myNewDefaultListCopy, myAutomatic);
     }
   }

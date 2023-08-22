@@ -1,24 +1,25 @@
 <html>
 <body>
-Detects when some transformations are performed on Stream API result which could be incorporated into the Stream API call chain directly. E.g.:
-<pre>
+Detects transformations outside a Stream API chain that could be incorporated into it.
+<p>Example:</p>
+<pre><code>
   List&lt;String&gt; list = stream.collect(Collectors.toList());
   list.sort(null);
   return list.toArray(new String[list.size()]);
-</pre>
-Could be converted to
-<pre>
+</code></pre>
+<p>After the conversion:</p>
+<pre><code>
   return stream.sorted().toArray(String[]::new);
-</pre>
+</code></pre>
 <p>
-  Note that sometimes converted stream chain may replace explicit <b>ArrayList</b> with <b>Collectors.toList()</b> or explicit
-  <b>HashSet</b> with <b>Collectors.toSet()</b>. While current library implementation uses these collections internally,
-  this is not specified, thus can be changed in future possibly changing the semantics of your code. If you are concerned about this,
-  use the checkbox below to suppress usages of <b>toList</b> and <b>toSet</b> collectors. In this case <b>Collectors.toCollection()</b>
-  will be suggested instead.
-</p>
+  Note that sometimes the converted stream chain may replace explicit <code>ArrayList</code> with <code>Collectors.toList()</code> or explicit
+  <code>HashSet</code> with <code>Collectors.toSet()</code>. The current library implementation uses these collections internally. However,
+  this approach is not very reliable and might change in the future altering the semantics of your code.</p>
+
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
-<p><small>New in 2017.3</small></p>
+<p>If you are concerned about it, use the <b>Do not suggest 'toList()' or 'toSet()' collectors</b> option to suggest
+  <code>Collectors.toCollection()</code> instead of <code>toList</code> and <code>toSet</code> collectors.
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
+<!--<p><small>New in 2017.3</small></p>-->
 </body>
 </html>

@@ -2,14 +2,16 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
@@ -17,34 +19,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 import java.util.Objects;
 
-/**
- * @author ilyas
- */
 public class NewGantScriptAction extends NewGroovyActionBase {
 
-  public NewGantScriptAction() {
-    super("Gant Script", "Create new Gant Script", JetgroovyIcons.Groovy.Gant_16x16);
+  @Override
+  protected @NotNull String getActionName(@NotNull PsiDirectory directory, @NotNull String newName) {
+    return GroovyBundle.message("new.gant.script.dialog.title");
   }
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName) {
-    return null;
+  protected @DialogMessage String getDialogPrompt() {
+    return GroovyBundle.message("new.gant.script.dialog.message");
   }
 
   @Override
-  protected String getDialogPrompt() {
-    return "Enter name for new Gant Script";
-  }
-
-  @Override
-  protected String getDialogTitle() {
-    return "New Gant Script";
+  protected @DialogTitle String getDialogTitle() {
+    return GroovyBundle.message("new.gant.script.dialog.title");
   }
 
   @Override
   protected boolean isAvailable(DataContext dataContext) {
     return super.isAvailable(dataContext) &&
-           GantUtils.isSDKConfiguredToRun(Objects.requireNonNull(LangDataKeys.MODULE.getData(dataContext)));
+           GantUtils.isSDKConfiguredToRun(Objects.requireNonNull(PlatformCoreDataKeys.MODULE.getData(dataContext)));
   }
 
   @Override

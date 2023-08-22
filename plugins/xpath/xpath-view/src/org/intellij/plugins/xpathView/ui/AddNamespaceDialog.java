@@ -39,8 +39,8 @@ public class AddNamespaceDialog extends DialogWrapper {
     private JPanel myRoot;
     private JLabel myIcon;
 
-    private ComboBox myPrefix;
-    private ComboBox myURI;
+    private ComboBox<String> myPrefix;
+    private ComboBox<String> myURI;
 
     public AddNamespaceDialog(Project project, Set<String> unresolvedPrefixes, Collection<String> uriList, Mode mode) {
         super(project, false);
@@ -48,15 +48,16 @@ public class AddNamespaceDialog extends DialogWrapper {
         myIcon.setText(null);
         myIcon.setIcon(Messages.getQuestionIcon());
 
-      myURI.setModel(new DefaultComboBoxModel(ArrayUtilRt.toStringArray(uriList)));
+      myURI.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.toStringArray(uriList)));
         myURI.setSelectedItem("");
         myURI.setEditable(mode == Mode.EDITABLE || mode == Mode.URI_EDITABLE);
         addUpdateListener(myURI);
 
-      myPrefix.setModel(new DefaultComboBoxModel(ArrayUtilRt.toStringArray(unresolvedPrefixes)));
+      myPrefix.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.toStringArray(unresolvedPrefixes)));
         myPrefix.setEditable(mode == Mode.EDITABLE || mode == Mode.PREFIX_EDITABLE);
         if (unresolvedPrefixes.size() == 1) {
-            myPrefix.setSelectedItem(unresolvedPrefixes.iterator().next());
+            final String next = unresolvedPrefixes.iterator().next();  //NON-NLS
+            myPrefix.setSelectedItem(next);
         }
         addUpdateListener(myPrefix);
 
@@ -64,7 +65,7 @@ public class AddNamespaceDialog extends DialogWrapper {
         init();
     }
 
-    private void addUpdateListener(ComboBox comboBox) {
+    private void addUpdateListener(ComboBox<String> comboBox) {
         final ComboBoxEditor boxEditor = comboBox.getEditor();
         if (boxEditor != null) {
             final Component component = boxEditor.getEditorComponent();

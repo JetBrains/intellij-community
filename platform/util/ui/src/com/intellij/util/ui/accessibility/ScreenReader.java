@@ -30,7 +30,7 @@ import java.util.Properties;
 /**
  * Expose system-wide screen reader status for accessibility features.
  */
-public class ScreenReader {
+public final class ScreenReader {
   public static final String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
   public static final String ACCESS_BRIDGE = "com.sun.java.accessibility.AccessBridge";
 
@@ -104,9 +104,9 @@ public class ScreenReader {
    * Adds property change listener. Supported properties:
    * {@link #SCREEN_READER_ACTIVE_PROPERTY}
    */
-  public static void addPropertyChangeListener(@NotNull final String propertyName,
+  public static void addPropertyChangeListener(final @NotNull String propertyName,
                                                @NotNull Disposable parent,
-                                               @NotNull final PropertyChangeListener listener) {
+                                               final @NotNull PropertyChangeListener listener) {
     PCS.addPropertyChangeListener(propertyName, listener);
     Disposer.register(parent, new Disposable() {
       @Override

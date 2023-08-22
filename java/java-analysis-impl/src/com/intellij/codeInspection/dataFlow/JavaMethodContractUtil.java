@@ -1,17 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Methods to operate on Java contracts
  */
-public class JavaMethodContractUtil {
+public final class JavaMethodContractUtil {
   private JavaMethodContractUtil() {}
 
   /**
@@ -141,7 +141,7 @@ public class JavaMethodContractUtil {
   }
 
   static @NotNull ContractInfo getContractInfo(@NotNull PsiMethod method) {
-    if (PsiUtil.isAnnotationMethod(method)) {
+    if (PsiUtil.isAnnotationMethod(method) || method instanceof LightRecordMethod) {
       return ContractInfo.PURE;
     }
     return CachedValuesManager.getCachedValue(method, () -> {
@@ -173,7 +173,7 @@ public class JavaMethodContractUtil {
   /**
    * Parse contracts for given method. Calling this method is rarely necessary in client code; it exists mainly to
    * aid the inference procedure. Use {@link #getMethodContracts(PsiMethod)} instead.
-   * 
+   *
    * @param method method to parse contracts for
    * @param contractAnno a contract annotation
    * @return a list of parsed contracts
@@ -185,7 +185,7 @@ public class JavaMethodContractUtil {
       try {
         final int paramCount = method.getParameterList().getParametersCount();
         List<StandardMethodContract> parsed = StandardMethodContract.parseContract(text);
-        if (parsed.stream().allMatch(c -> c.getParameterCount() == paramCount)) {
+        if (ContainerUtil.and(parsed, c -> c.getParameterCount() == paramCount)) {
           return parsed;
         }
       }
@@ -225,7 +225,7 @@ public class JavaMethodContractUtil {
     List<ContractValue> failConditions = new ArrayList<>();
     for (MethodContract contract : contracts) {
       List<ContractValue> conditions = contract.getConditions();
-      if (conditions.isEmpty() || conditions.stream().allMatch(c -> failConditions.stream().anyMatch(c::isExclusive))) {
+      if (conditions.isEmpty() || ContainerUtil.and(conditions, c -> failConditions.stream().anyMatch(c::isExclusive))) {
         return contract.getReturnValue();
       }
       if (contract.getReturnValue().isFail()) {
@@ -255,16 +255,6 @@ public class JavaMethodContractUtil {
     List<? extends MethodContract> contracts = getMethodCallContracts(call);
     ContractReturnValue returnValue = getNonFailingReturnValue(contracts);
     if (returnValue == null) return null;
-    if (returnValue.equals(ContractReturnValue.returnThis())) {
-      return ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
-    }
-    if (returnValue instanceof ContractReturnValue.ParameterReturnValue) {
-      int number = ((ContractReturnValue.ParameterReturnValue)returnValue).getParameterNumber();
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length <= number) return null;
-      if (args.length == number + 1 && MethodCallUtils.isVarArgCall(call)) return null;
-      return args[number];
-    }
-    return null;
+    return returnValue.findPlace(call);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang;
 
@@ -25,8 +11,8 @@ import java.util.List;
 /**
  * Defines the support for "Comment with Line Comment" and "Comment with Block Comment"
  * actions in a custom language.
- * @author max
- * @see LanguageCommenters
+ *
+ * @see com.intellij.codeInsight.generation.SelfManagingCommenter
  */
 public interface Commenter {
   /**
@@ -34,7 +20,7 @@ public interface Commenter {
    * does not support line comments. If the language supports several prefixes for line comments,
    * only one of them (the most recommended to use) is returned. Use {@link #getLineCommentPrefixes()}
    * to get all supported line comment prefixes.
-   * 
+   *
    * @return the line comment text, or null.
    */
   @Nullable
@@ -43,16 +29,17 @@ public interface Commenter {
   /**
    * Returns the list of strings that prefix line comments in the language, or empty list
    * if the language does not support line comments.
+   *
    * @return the list of line comment prefixes
    */
-  @NotNull
-  default List<String> getLineCommentPrefixes() {
+  default @NotNull List<String> getLineCommentPrefixes() {
     return ContainerUtil.createMaybeSingletonList(getLineCommentPrefix());
   }
 
   /**
    * Returns the string which marks the beginning of a block comment in the language,
    * or null if the language does not support block comments.
+   *
    * @return the block comment start text, or null.
    */
   @Nullable
@@ -61,6 +48,7 @@ public interface Commenter {
   /**
    * Returns the string which marks the end of a block comment in the language,
    * or null if the language does not support block comments.
+   *
    * @return the block comment end text, or null.
    */
   @Nullable
@@ -69,6 +57,7 @@ public interface Commenter {
   /**
    * Returns the string which marks the commented beginning of a block comment in the language,
    * or null if the language does not support block comments.
+   *
    * @return the commented block comment start text, or null.
    */
   @Nullable
@@ -77,8 +66,20 @@ public interface Commenter {
   /**
    * Returns the string which marks the commented end of a block comment in the language,
    * or null if the language does not support block comments.
+   *
    * @return the commented block comment end text, or null.
    */
   @Nullable
   String getCommentedBlockCommentSuffix();
+
+  /**
+   * Some indentation-based languages require the block comment prefix and suffix to be placed at the
+   * start of the line. This method allows to specify that the selection must be extended to match
+   * only full lines. This way prefix and suffix will be inserted at the beginning and at the end of the line
+   *
+   * @return whether the selection should be extended to match only full lines
+   */
+  default boolean blockCommentRequiresFullLineSelection() {
+    return false;
+  }
 }

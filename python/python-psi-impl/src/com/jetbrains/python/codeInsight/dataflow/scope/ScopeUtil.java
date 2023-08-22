@@ -37,7 +37,7 @@ import java.util.List;
 import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
 import static com.intellij.psi.util.PsiTreeUtil.isAncestor;
 
-public class ScopeUtil {
+public final class ScopeUtil {
   private ScopeUtil() {
   }
 
@@ -79,8 +79,12 @@ public class ScopeUtil {
     if (element == null) {
       return null;
     }
+    if (element instanceof PyExpressionCodeFragment) {
+      final PsiElement context = element.getContext();
+      return context instanceof ScopeOwner ? (ScopeOwner)context : getScopeOwner(context);
+    }
     if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement)element).getStub();
+      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
         StubElement parentStub = stub.getParentStub();
         while (parentStub != null) {
@@ -125,8 +129,7 @@ public class ScopeUtil {
       return nextOwner;
     }
     // Function return annotations and type comments are resolved outside of the function
-    if (firstOwner instanceof PyFunction) {
-      final PyFunction function = (PyFunction)firstOwner;
+    if (firstOwner instanceof PyFunction function) {
       if (isAncestor(function.getAnnotation(), element, false) || isAncestor(function.getTypeComment(), element, false)) {
         return nextOwner;
       }

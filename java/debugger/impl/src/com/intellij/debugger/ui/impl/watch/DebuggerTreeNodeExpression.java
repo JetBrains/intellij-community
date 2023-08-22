@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -12,15 +12,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.SmartHashSet;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
-public class DebuggerTreeNodeExpression {
+public final class DebuggerTreeNodeExpression {
   @Nullable
   public static PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
@@ -33,10 +33,10 @@ public class DebuggerTreeNodeExpression {
 
     if (thisClass != null) {
       PsiType type = howToEvaluateThis.getType();
-      if(type != null) {
-        if(type instanceof PsiClassType) {
-          PsiClass psiClass = ((PsiClassType) type).resolve();
-          if(psiClass != null && (psiClass == thisClass || psiClass.isInheritor(thisClass, true))) {
+      if (type != null) {
+        if (type instanceof PsiClassType) {
+          PsiClass psiClass = ((PsiClassType)type).resolve();
+          if (psiClass != null && (psiClass == thisClass || psiClass.isInheritor(thisClass, true))) {
             castNeeded = false;
           }
         }
@@ -53,7 +53,7 @@ public class DebuggerTreeNodeExpression {
     ChangeContextUtil.encodeContextInfo(result, false);
     PsiExpression psiExpression;
     try {
-      psiExpression = (PsiExpression) ChangeContextUtil.decodeContextInfo(result, thisClass, howToEvaluateThis);
+      psiExpression = (PsiExpression)ChangeContextUtil.decodeContextInfo(result, thisClass, howToEvaluateThis);
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(
@@ -77,12 +77,12 @@ public class DebuggerTreeNodeExpression {
     if (!(value instanceof ObjectReference)) {
       return expression;
     }
-    
+
     ReferenceType valueType = ((ObjectReference)value).referenceType();
     if (valueType == null) {
       return expression;
     }
-    
+
     Project project = expression.getProject();
 
     PsiType type = RuntimeTypeEvaluator.getCastableRuntimeType(project, value);
@@ -99,7 +99,7 @@ public class DebuggerTreeNodeExpression {
       ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
       Set<String> imports = expression.getUserData(ADDITIONAL_IMPORTS_KEY);
       if (imports == null) {
-        imports = new SmartHashSet<>();
+        imports = new HashSet<>();
       }
       imports.add(typeName);
       parenthExpression.putUserData(ADDITIONAL_IMPORTS_KEY, imports);

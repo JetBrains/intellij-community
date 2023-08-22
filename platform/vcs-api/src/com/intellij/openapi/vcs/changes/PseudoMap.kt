@@ -12,5 +12,5 @@ class PseudoMap<Key, Value> : PairConsumer<Key, Value>, NullableFunction<Key, Va
   @Suppress("UNCHECKED_CAST")
   override fun `fun`(key: Key): Value? = commitContext.additionalData.`fun`(key) as? Value
 
-  override fun consume(key: Key, value: Value) = commitContext.additionalDataConsumer.consume(key, value)
+  override fun consume(key: Key, value: Value): Unit = commitContext.additionalDataConsumer.consume(key, value)
 }

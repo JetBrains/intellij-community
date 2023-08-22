@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.google.common.base.Stopwatch;
@@ -28,9 +28,7 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.committed.IncomingChangeState.State.*;
 
-/**
- * @author yole
- */
+
 public class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance(ChangesCacheFile.class);
   private static final int VERSION = 7;
@@ -158,7 +156,7 @@ public class ChangesCacheFile {
         //noinspection unchecked
         myChangesProvider.writeChangeList(myStream, list);
         updateCachedRange(list);
-        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, present == null ? false : iterator.next());
+        writeIndexEntry(list.getNumber(), list.getCommitDate().getTime(), position, present != null && iterator.next());
         myIncomingCount++;
       }
       writeHeader();
@@ -364,7 +362,7 @@ public class ChangesCacheFile {
     writeChanges(lists, present);
   }
 
-  private class BackIterator implements Iterator<ChangesBunch> {
+  private final class BackIterator implements Iterator<ChangesBunch> {
     private final int bunchSize;
     private long myOffset;
 
@@ -766,7 +764,6 @@ public class ChangesCacheFile {
     private final Set<FilePath> myReplacedFiles = new HashSet<>();
     private final Map<Long, IndexEntry> myIndexEntryCache = new HashMap<>();
     private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<>();
-    private final ChangeListManagerImpl myClManager;
     private final ChangesCacheFile myChangesCacheFile;
     private final Project myProject;
     private final DiffProvider myDiffProvider;
@@ -777,7 +774,6 @@ public class ChangesCacheFile {
       myChangesCacheFile = changesCacheFile;
       myProject = project;
       myDiffProvider = diffProvider;
-      myClManager = ChangeListManagerImpl.getInstanceImpl(project);
     }
 
     public boolean invoke() throws VcsException, IOException {
@@ -886,7 +882,7 @@ public class ChangesCacheFile {
       return myAnyChanges || !list.isEmpty();
     }
 
-    private static class ProcessingResult {
+    private static final class ProcessingResult {
       final boolean changeFound;
       final IncomingChangeState.State state;
       final VirtualFile file;
@@ -989,7 +985,8 @@ public class ChangesCacheFile {
         }
         if (beforeRevision.getFile().getVirtualFile() == null || myCreatedFiles.contains(beforeRevision.getFile())) {
           // if not deleted from vcs, mark as incoming, otherwise file already deleted
-          final boolean locallyDeleted = myClManager.isContainedInLocallyDeleted(beforeRevision.getFile());
+          final boolean locallyDeleted = ChangeListManagerImpl.getInstanceImpl(myProject)
+            .isContainedInLocallyDeleted(beforeRevision.getFile());
           debug(locallyDeleted ? "File deleted locally, change marked as incoming" : "File already deleted");
           return new ProcessingResult(!locallyDeleted, locallyDeleted ? BEFORE_NOT_EXISTS_DELETED_LOCALLY : BEFORE_NOT_EXISTS_ALREADY_DELETED);
         }
@@ -1013,12 +1010,11 @@ public class ChangesCacheFile {
     }
 
     private boolean fileMarkedForDeletion(final FilePath localPath) {
-      final List<LocalChangeList> changeLists =  myClManager.getChangeListsCopy();
+      final List<LocalChangeList> changeLists =  ChangeListManager.getInstance(myProject).getChangeLists();
       for (LocalChangeList list : changeLists) {
         final Collection<Change> changes = list.getChanges();
         for (Change change : changes) {
-          if (change.getBeforeRevision() != null && change.getBeforeRevision().getFile() != null &&
-              change.getBeforeRevision().getFile().getPath().equals(localPath.getPath())) {
+          if (change.getBeforeRevision() != null && change.getBeforeRevision().getFile().getPath().equals(localPath.getPath())) {
             if (FileStatus.DELETED.equals(change.getFileStatus()) || change.isMoved() || change.isRenamed()) {
               return true;
             }
@@ -1066,12 +1062,10 @@ public class ChangesCacheFile {
       // could take a lot of time
       boolean underBefore = (isParentReplaced || isMovedRenamed) && file.isUnder(beforeFile, false);
 
-      if (underBefore && isParentReplaced) {
-        debug("For " + file + "some of parents is replaced: " + beforeFile);
-        return true;
-      }
-      else if (underBefore && isMovedRenamed) {
-        debug("For " + file + "some of parents was renamed/moved: " + beforeFile);
+      if (underBefore) {
+        debug(isParentReplaced
+              ? "For " + file + "some of parents is replaced: " + beforeFile
+              : "For " + file + "some of parents was renamed/moved: " + beforeFile);
         return true;
       }
       return false;

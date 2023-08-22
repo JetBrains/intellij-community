@@ -16,14 +16,12 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.psi.XPathFunction;
 import org.intellij.lang.xpath.psi.XPathFunctionCall;
@@ -31,17 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunctionCall, XPathFunction> {
-    @Override
-    public boolean couldShowInLookup() {
-        return false;
-    }
 
-    @Override
-    public Object[] getParametersForLookup(LookupElement lookupElement, ParameterInfoContext parameterInfoContext) {
-      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    }
-
-    @Override
+  @Override
     public XPathFunctionCall findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         final XPathFunctionCall call = findFunctionCall(context.getFile(), context.getOffset());
         if (call != null) {

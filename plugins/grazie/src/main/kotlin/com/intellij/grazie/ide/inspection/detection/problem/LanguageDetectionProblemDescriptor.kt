@@ -1,12 +1,12 @@
 package com.intellij.grazie.ide.inspection.detection.problem
 
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.utils.englishName
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.detection.toLang
-import com.intellij.grazie.detector.model.Language
-import com.intellij.grazie.detector.model.utils.englishName
 import com.intellij.grazie.ide.inspection.detection.quickfix.DownloadLanguageQuickFix
 import com.intellij.grazie.ide.inspection.detection.quickfix.GrazieGoToSettingsQuickFix
 import com.intellij.grazie.ide.inspection.detection.quickfix.NeverSuggestLanguageQuickFix

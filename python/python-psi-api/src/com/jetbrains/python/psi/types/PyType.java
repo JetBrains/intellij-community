@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Key;
@@ -31,8 +17,6 @@ import java.util.Set;
 
 /**
  * Represents a type of an expression.
- *
- * @author yole
  */
 public interface PyType {
 
@@ -53,8 +37,6 @@ public interface PyType {
    *
    * @param name      attribute name
    * @param location  the expression of type qualifierType on which the member is being resolved (optional)
-   * @param direction
-   * @param resolveContext
    * @return null if name definitely cannot be found (e.g. in a qualified reference),
    *         or an empty list if name is not found but other contexts are worth looking at,
    *         or a list of elements that define the name, a la multiResolve().

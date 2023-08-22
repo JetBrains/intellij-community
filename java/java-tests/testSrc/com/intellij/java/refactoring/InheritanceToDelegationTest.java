@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -6,20 +6,24 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class InheritanceToDelegationTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inheritanceToDelegation/";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   public void testSimpleInsertion() {
@@ -112,6 +116,10 @@ public class InheritanceToDelegationTest extends LightMultiFileTestCase {
 
   public void testTypeParametersSubstitution() {
      doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+  }
+
+  public void testSealedParent() {
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   private ThrowableRunnable<Exception> createPerformAction(

@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-/**
- * @author ven
- */
 public interface GrCall extends GroovyPsiElement {
   @Nullable
   GrArgumentList getArgumentList();
@@ -35,6 +32,10 @@ public interface GrCall extends GroovyPsiElement {
   GrNamedArgument addNamedArgument(GrNamedArgument namedArgument) throws IncorrectOperationException;
 
   GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument);
+
+  default GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument, boolean incompleteCode){
+    return getCallVariants(upToArgument);
+  }
 
   @Nullable
   default PsiMethod resolveMethod() {

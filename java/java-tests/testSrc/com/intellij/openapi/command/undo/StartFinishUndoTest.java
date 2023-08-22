@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -7,8 +7,8 @@ import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 
 public class StartFinishUndoTest extends EditorUndoTestCase {
   public void testCompoundUndo() {
@@ -59,7 +59,7 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
   }
 
   public void testGlobalCommandDuringCompoundUndo() {
-    Messages.setTestDialog(TestDialog.DEFAULT);
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT);
     final StartMarkAction[] compound = new StartMarkAction[1];
     start(compound);
 
@@ -139,7 +139,7 @@ public class StartFinishUndoTest extends EditorUndoTestCase {
   }
 
   public void testUserConfirmation() {
-    Messages.setTestDialog(TestDialog.DEFAULT);
+    TestDialogManager.setTestDialog(TestDialog.DEFAULT);
     final StartMarkAction[] compound = new StartMarkAction[1];
     start(compound);
 

@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.openapi.diagnostic.LoggerRt;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -10,20 +11,23 @@ import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import java.util.*;
 
 class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
-  private static final Logger LOG = Logger.getInstance(SyntaxNodeDescriptor.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(SyntaxNodeDescriptor.class);
 
-  private TIntObjectHashMap<SyntaxNodeDescriptor> myRepository = new TIntObjectHashMap<>();
+  private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();
   private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
-  private Map<Constants.CaptureKey, TIntObjectHashMap<CharSequence>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
+  private Map<Constants.CaptureKey, Int2ObjectMap<CharSequence>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
   private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
 
   private final SyntaxNodeDescriptor myParentNode;
-  private CharSequence myScopeName = null;
 
-  SyntaxNodeDescriptorImpl(@Nullable SyntaxNodeDescriptor parentNode) {
+  @Nullable
+  private final CharSequence myScopeName;
+
+  SyntaxNodeDescriptorImpl(@Nullable CharSequence scopeName, @Nullable SyntaxNodeDescriptor parentNode) {
     myParentNode = parentNode;
+    myScopeName = scopeName;
   }
 
   @Override
@@ -38,14 +42,24 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<CharSequence> captures) {
+  public void setCaptures(@NotNull Constants.CaptureKey key, @Nullable Int2ObjectMap<CharSequence> captures) {
     myCaptures.put(key, captures);
+  }
+
+  @Override
+  public boolean hasBackReference(Constants.@NotNull StringKey key) {
+    return true;
   }
 
   @Nullable
   @Override
-  public TIntObjectHashMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
+  public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
     return myCaptures.get(key);
+  }
+
+  @Override
+  public boolean hasBackReference(Constants.@NotNull CaptureKey key, int group) {
+    return true;
   }
 
   @Override
@@ -65,11 +79,6 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setScopeName(@NotNull CharSequence scopeName) {
-    myScopeName = scopeName;
-  }
-
-  @Override
   public void compact() {
     myStringAttributes = PreferencesReadUtil.compactMap(myStringAttributes);
     myCaptures = PreferencesReadUtil.compactMap(myCaptures);
@@ -78,11 +87,13 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     myRepository = compactMap(myRepository);
   }
 
-  private static TIntObjectHashMap<SyntaxNodeDescriptor> compactMap(TIntObjectHashMap<SyntaxNodeDescriptor> map) {
+  private static Int2ObjectMap<SyntaxNodeDescriptor> compactMap(Int2ObjectMap<SyntaxNodeDescriptor> map) {
     if (map.isEmpty()) {
       return null;
     }
-    map.trimToSize();
+    if (map instanceof Int2ObjectOpenHashMap) {
+      ((Int2ObjectOpenHashMap<SyntaxNodeDescriptor>)map).trim();
+    }
     return map;
   }
 

@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.services.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.reference.SoftReference
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.containers.FixedHashMap
@@ -33,24 +32,27 @@ import org.editorconfig.language.services.EditorConfigServiceLoaded
 import org.editorconfig.language.services.EditorConfigServiceLoading
 import org.editorconfig.language.services.EditorConfigServiceResult
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
-import org.editorconfig.language.util.matches
 import java.lang.ref.Reference
+import java.lang.ref.SoftReference
 
-class EditorConfigFileHierarchyServiceImpl(private val project: Project) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener {
+class EditorConfigFileHierarchyServiceImpl(private val project: Project) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener, Disposable {
   private val taskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("EditorConfig.notification.vfs.update.executor")
 
-  private val updateQueue = MergingUpdateQueue("EditorConfigFileHierarchy UpdateQueue", 500, true, null, project)
+  private val updateQueue = MergingUpdateQueue("EditorConfigFileHierarchy UpdateQueue", 500, true, null, this)
 
   @Volatile
   private var cacheDropsCount = 0
   private val cacheLocker = Any()
-  private val affectingFilesCache = FixedHashMap<VirtualFile, Reference<List<EditorConfigPsiFile>>>(CacheSize)
+  private val parentFilesCache = FixedHashMap<VirtualFile, Reference<List<EditorConfigPsiFile>>>(CacheSize)
 
   init {
     DumbService.getInstance(project).runWhenSmart {
-      ApplicationManager.getApplication().messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, this)
+      ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, this)
     }
-    Registry.get(EditorConfigRegistry.EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY).addListener(this, project)
+    Registry.get(EditorConfigRegistry.EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY).addListener(this, this)
+  }
+
+  override fun dispose() {
   }
 
   private fun updateHandlers(project: Project) {
@@ -63,30 +65,28 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
   override fun after(events: List<VFileEvent>) {
     val editorConfigs = events
       .asSequence()
-      .filter { PathUtil.getFileName(it.path) == EditorConfigFileConstants.FILE_NAME }
+      .filter { PathUtil.getFileName(it.path) == EditorConfigFileConstants.FILE_NAME && it.isFromSave }
       .toList()
     if (editorConfigs.isNotEmpty()) {
       synchronized(cacheLocker) {
         cacheDropsCount += 1
-        affectingFilesCache.clear()
+        parentFilesCache.clear()
       }
       updateHandlers(project)
     }
   }
 
-  override fun beforeValueChanged(value: RegistryValue) {}
-
   override fun afterValueChanged(value: RegistryValue) {
     synchronized(cacheLocker) {
       cacheDropsCount += 1
-      affectingFilesCache.clear()
+      parentFilesCache.clear()
     }
   }
 
   override fun getParentEditorConfigFiles(virtualFile: VirtualFile): EditorConfigServiceResult {
-    val cachedResult = SoftReference.dereference(synchronized(cacheLocker) {
-      affectingFilesCache[virtualFile]
-    })
+    val cachedResult = synchronized(cacheLocker) {
+      parentFilesCache[virtualFile]
+    }?.get()
 
     if (cachedResult != null) return EditorConfigServiceLoaded(cachedResult)
     startBackgroundTask(virtualFile)
@@ -97,12 +97,12 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
     val expectedCacheDropsCount = cacheDropsCount
     ReadAction
       .nonBlocking<List<EditorConfigPsiFile>?> { findApplicableFiles(virtualFile) }
-      .expireWith(project)
+      .expireWith(this)
       .finishOnUiThread(ModalityState.any()) ui@{ affectingFiles ->
       if (affectingFiles == null) return@ui
       synchronized(cacheLocker) {
         if (expectedCacheDropsCount != cacheDropsCount) return@ui
-        affectingFilesCache[virtualFile] = SoftReference(affectingFiles)
+        parentFilesCache[virtualFile] = SoftReference(affectingFiles)
       }
     }.submit(taskExecutor)
   }
@@ -112,21 +112,11 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
    */
   private fun findApplicableFiles(virtualFile: VirtualFile): List<EditorConfigPsiFile>? {
     val app = ApplicationManager.getApplication()
-    Log.assertTrue(!app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     app.assertReadAccessAllowed()
-    val expectedCacheDropsCount = cacheDropsCount
-    val parentFiles = when {
+    return when {
       !EditorConfigRegistry.shouldStopAtProjectRoot() -> findParentPsiFiles(virtualFile)
       else -> EditorConfigPsiTreeUtil.findAllParentsFiles(PsiManager.getInstance(project).findFile(virtualFile) ?: return null)
-    }
-    return parentFiles?.filter { parent ->
-      parent.sections.any { section ->
-        if (expectedCacheDropsCount != cacheDropsCount) return null
-        ProgressIndicatorProvider.checkCanceled()
-        val header = section.header
-        if (header.isValidGlob) header matches virtualFile
-        else false
-      }
     }
   }
 
@@ -138,7 +128,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
    */
   private fun findParentPsiFiles(file: VirtualFile): List<EditorConfigPsiFile>? {
     val app = ApplicationManager.getApplication()
-    Log.assertTrue(!app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     app.assertReadAccessAllowed()
     val expectedCacheDropsCount = cacheDropsCount
 
@@ -165,7 +155,7 @@ class EditorConfigFileHierarchyServiceImpl(private val project: Project) : Edito
    */
   private fun findParentFiles(file: VirtualFile): List<VirtualFile>? {
     val app = ApplicationManager.getApplication()
-    Log.assertTrue(!app.isDispatchThread)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     app.assertReadAccessAllowed()
     val fileName = EditorConfigFileConstants.FILE_NAME
     val expectedCacheDropsCount = cacheDropsCount

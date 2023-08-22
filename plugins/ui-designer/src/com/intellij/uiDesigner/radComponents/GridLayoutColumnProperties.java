@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -16,9 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class GridLayoutColumnProperties implements CustomPropertiesPanel {
   private JPanel myRootPanel;
   private JCheckBox myWantGrowCheckBox;
@@ -65,12 +64,12 @@ public class GridLayoutColumnProperties implements CustomPropertiesPanel {
     myContainer = container;
     myRow = isRow;
     if (selectedIndices.length != 1) {
-      myTitleLabel.setText(selectedIndices.length + (isRow ? " rows selected" : " columns selected"));
+      myTitleLabel.setText(UIDesignerBundle.message("grid.layout.column.selected.property", selectedIndices.length, isRow ? 0 : 1));
       myWantGrowCheckBox.setEnabled(false);
     }
     else {
       mySelectedIndex = selectedIndices [0];
-      myTitleLabel.setText((isRow ? "Row " : "Column ") + selectedIndices [0]);
+      myTitleLabel.setText(UIDesignerBundle.message("grid.layout.column.property", isRow ? 0 : 1, selectedIndices [0]));
       myWantGrowCheckBox.setEnabled(true);
 
       GridLayoutManager layout = (GridLayoutManager) container.getLayout();

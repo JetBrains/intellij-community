@@ -33,7 +33,7 @@ Groovy script
             Parameter list
               <empty list>
             PsiElement(})('}')
+        PsiElement(new line)('\n')
         PsiErrorElement:')' expected, got '}'
           <empty list>
-      PsiWhiteSpace('\n')
       PsiElement(})('}')

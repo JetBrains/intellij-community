@@ -37,23 +37,17 @@ public class DomNamespaceKeyIndex extends StringStubIndexExtension<PsiFile> {
     return ourInstance;
   }
 
-  public boolean hasStubElementsWithNamespaceKey(final DomFileElement domFileElement, final String namespaceKey) {
+  public boolean hasStubElementsWithNamespaceKey(@NotNull DomFileElement<?> domFileElement,
+                                                 @NotNull String namespaceKey) {
     final VirtualFile file = domFileElement.getFile().getVirtualFile();
     if (!(file instanceof VirtualFileWithId)) return false;
 
-    final int virtualFileId = ((VirtualFileWithId)file).getId();
     CommonProcessors.FindFirstProcessor<PsiFile> processor = new CommonProcessors.FindFirstProcessor<>();
     StubIndex.getInstance().processElements(
       KEY,
       namespaceKey,
       domFileElement.getFile().getProject(),
       GlobalSearchScope.fileScope(domFileElement.getFile()),
-      new IdFilter() {
-        @Override
-        public boolean containsFileId(int id) {
-          return id == virtualFileId;
-        }
-      },
       PsiFile.class, 
       processor
     );

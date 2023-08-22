@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration
 
 import com.intellij.icons.AllIcons
+import com.intellij.java.JavaBundle
+import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiElement
 import com.intellij.ui.popup.WizardPopup
@@ -42,8 +31,8 @@ class RecentTestsListPopup(project: Project,
     shiftReleased()
     registerActions(this)
 
-    val shift = if (SystemInfo.isMac) MacKeymapUtil.SHIFT else "Shift"
-    setAdText("Debug with $shift, navigate with F4")
+    val shift = if (SystemInfo.isMac) MacKeymapUtil.SHIFT else JavaCompilerBundle.message("shift.key")
+    setAdText(JavaCompilerBundle.message("popup.advertisement.debug.with.shift.navigate.with.f4", shift))
   }
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
@@ -63,23 +52,23 @@ class RecentTestsListPopup(project: Project,
   }
   
   private fun shiftPressed() {
-    setCaption("Debug Recent Tests")
+    setCaption(JavaCompilerBundle.message("popup.title.debug.recent.tests"))
     testRunner.setMode(RecentTestRunner.Mode.DEBUG)
   }
 
   private fun shiftReleased() {
-    setCaption("Run Recent Tests")
+    setCaption(JavaCompilerBundle.message("popup.title.run.recent.tests"))
     testRunner.setMode(RecentTestRunner.Mode.RUN)
   }
 }
 
 
-class SelectTestStep(title: String?,
-                     tests: List<RecentTestsPopupEntry>, 
+class SelectTestStep(@PopupTitle title: String?,
+                     tests: List<RecentTestsPopupEntry>,
                      private val runner: RecentTestRunner) : BaseListPopupStep<RecentTestsPopupEntry>(title, tests) 
 {
 
-  override fun getIconFor(value: RecentTestsPopupEntry): Icon? {
+  override fun getIconFor(value: RecentTestsPopupEntry): Icon {
     if (value is SingleTestEntry) {
       return AllIcons.RunConfigurations.TestFailed  
     }
@@ -120,17 +109,17 @@ class SelectConfigurationStep(items: List<RecentTestsPopupEntry>,
     var presentation = value.presentation
     value.accept(object : TestEntryVisitor() {
       override fun visitSuite(suite: SuiteEntry) {
-        presentation = "[suite] " + presentation
+        presentation = JavaBundle.message("list.item.suite", presentation)
       }
 
       override fun visitRunConfiguration(configuration: RunConfigurationEntry) {
-        presentation = "[configuration] " + presentation
+        presentation = JavaBundle.message("list.item.configuration", presentation)
       }
     })
     return presentation
   } 
 
-  override fun getIconFor(value: RecentTestsPopupEntry?): Icon? = AllIcons.RunConfigurations.Junit
+  override fun getIconFor(value: RecentTestsPopupEntry?): Icon = AllIcons.RunConfigurations.Junit
 
   override fun onChosen(selectedValue: RecentTestsPopupEntry, finalChoice: Boolean): PopupStep<RecentTestsPopupEntry>? {
     if (finalChoice) {
@@ -173,9 +162,9 @@ private fun ListPopupImpl.navigateOnF4(locator: TestLocator, parentPopup: Recent
       val values = selectedValues
       if (values.size == 1) {
         val entry = values[0] as RecentTestsPopupEntry
-        locator.getNavigatableElement(entry)?.let { 
+        locator.getNavigatableElement(entry)?.let {
           parentPopup.cancel()
-          PsiNavigateUtil.navigate(it) 
+          PsiNavigateUtil.navigate(it)
         }
       }
     }

@@ -42,8 +42,8 @@ class A extends B {
         if (a8 != a.a8) return false;
         if (a9 != a.a9) return false;
         if (a10 != a.a10) return false;
-        if (Float.compare(a.a11, a11) != 0) return false;
-        if (Double.compare(a.a12, a12) != 0) return false;
+        if (Float.compare(a11, a.a11) != 0) return false;
+        if (Double.compare(a12, a.a12) != 0) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(a1, a.a1)) return false;
         if (!Arrays.deepEquals(a2, a.a2)) return false;
@@ -72,7 +72,7 @@ class A extends B {
         result = 31 * result + (int) a8;
         result = 31 * result + a9;
         result = 31 * result + (int) (a10 ^ (a10 >>> 32));
-        result = 31 * result + (a11 != +0.0f ? Float.floatToIntBits(a11) : 0);
+        result = 31 * result + (a11 != 0.0f ? Float.floatToIntBits(a11) : 0);
         temp = Double.doubleToLongBits(a12);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + a13.hashCode();

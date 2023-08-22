@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -8,6 +8,8 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
@@ -29,12 +31,10 @@ import java.util.stream.Collectors;
 public class PluginConflictDialog extends DialogWrapper {
   public static final int WIDTH = 450;
 
-  @NotNull
-  private final List<PluginId> myConflictingPlugins;
+  private final @NotNull List<PluginId> myConflictingPlugins;
 
   private final boolean myIsConflictWithPlatform;
-  @Nullable
-  private final List<JBRadioButton> myRadioButtons;
+  private final @Nullable List<JBRadioButton> myRadioButtons;
 
   private JPanel myContentPane;
 
@@ -68,7 +68,7 @@ public class PluginConflictDialog extends DialogWrapper {
     myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
 
-  private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
+  protected @NlsContexts.Label String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     final int pluginsNumber = conflictingPlugins.size();
     if (isConflictWithPlatform) {
       return DiagnosticBundle.message("error.dialog.conflict.plugin.header.platform", pluginsNumber);
@@ -87,9 +87,8 @@ public class PluginConflictDialog extends DialogWrapper {
   private void $$$setupUI$$$() {
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myContentPane;
   }
 
@@ -109,8 +108,7 @@ public class PluginConflictDialog extends DialogWrapper {
     setUpDefaultSelection();
   }
 
-  @NotNull
-  private JPanel getChooserPanelForPlugin(@NotNull ButtonGroup buttonGroup, @Nullable PluginId plugin) {
+  private @NotNull JPanel getChooserPanelForPlugin(@NotNull ButtonGroup buttonGroup, @Nullable PluginId plugin) {
     final JPanel panel = new JPanel(new BorderLayout());
     if (!myIsConflictWithPlatform) {
       assert myRadioButtons != null;
@@ -159,31 +157,28 @@ public class PluginConflictDialog extends DialogWrapper {
     myRadioButtons.get(myRadioButtons.size() - 1).setSelected(true);
   }
 
-  @NotNull
-  private static JPanel getPluginDescriptionPanel(@NotNull PluginId plugin, boolean addUseWord) {
+  private static @NotNull JPanel getPluginDescriptionPanel(@NotNull PluginId plugin, boolean addUseWord) {
     final JPanel panel = new JPanel(new BorderLayout());
 
     final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(plugin);
     if (pluginDescriptor == null) {
+      //noinspection HardCodedStringLiteral
       panel.add(new JBLabel(plugin.getIdString()), BorderLayout.CENTER);
       return panel;
     }
 
-    final StringBuilder sb = new StringBuilder("<html>");
-    if (addUseWord) {
-      sb.append("Use ");
-    }
-    sb.append(pluginDescriptor.getName());
-    if (pluginDescriptor.getVendor() != null) {
-      sb.append(" by ").append(pluginDescriptor.getVendor());
-    }
-    sb.append("</html>");
-    panel.add(new JBLabel(sb.toString()));
+    HtmlBuilder message = new HtmlBuilder();
+    String vendor = pluginDescriptor.getVendor();
+    message.append(DiagnosticBundle.message("plugin.conflict.use.by.vendor.label",
+                                            addUseWord ? 0 : 1,
+                                            pluginDescriptor.getName(),
+                                            vendor != null ? 0 : 1,
+                                            vendor));
+    panel.add(new JBLabel(message.wrapWithHtmlBody().toString()));
     return panel;
   }
 
-  @NotNull
-  private static String getPluginNameOrId(@NotNull PluginId pluginId) {
+  private static @NotNull String getPluginNameOrId(@NotNull PluginId pluginId) {
     final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
     if (pluginDescriptor == null) {
       return pluginId.getIdString();
@@ -193,8 +188,7 @@ public class PluginConflictDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  private static JPanel getDisableAllPanel() {
+  private static @NotNull JPanel getDisableAllPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JBLabel(DiagnosticBundle.message("error.dialog.conflict.plugin.disable.all")));
     return panel;
@@ -211,15 +205,14 @@ public class PluginConflictDialog extends DialogWrapper {
     myOKAction = new DisableAction();
   }
 
-  @NotNull
   @Override
-  protected DisableAction getOKAction() {
+  protected @NotNull DisableAction getOKAction() {
     return ((DisableAction)myOKAction);
   }
 
   private class DisableAction extends DialogWrapperAction {
     protected DisableAction() {
-      super(IdeBundle.message("button.disable"));
+      super(IdeBundle.message("plugins.configurable.disable"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -228,8 +221,7 @@ public class PluginConflictDialog extends DialogWrapper {
       repaint();
     }
 
-    @NotNull
-    private String getButtonText() {
+    private @NotNull @NlsContexts.Button String getButtonText() {
       if (myIsConflictWithPlatform) {
         return DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
       }

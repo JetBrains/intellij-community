@@ -21,9 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost, PsiNameIdentifierOwner {
   private static final Logger LOG = Logger.getInstance(PropertyImpl.class);
+
+  private static final Pattern PROPERTIES_SEPARATOR = Pattern.compile("^\\s*\\n\\s*\\n\\s*$");
 
   public PropertyImpl(@NotNull ASTNode node) {
     super(node);
@@ -124,7 +127,8 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
 
   @Override
   public @Nullable PsiElement getNameIdentifier() {
-    return getKeyNode().getPsi();
+    final ASTNode node = getKeyNode();
+    return node == null ? null : node.getPsi();
   }
 
 
@@ -158,44 +162,18 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
           for (int i = 0; i < 4 && off < s.length(); i++) {
             aChar = s.charAt(off++);
             switch (aChar) {
-              case '0':
-              case '1':
-              case '2':
-              case '3':
-              case '4':
-              case '5':
-              case '6':
-              case '7':
-              case '8':
-              case '9':
-                value = (value << 4) + aChar - '0';
-                break;
-              case 'a':
-              case 'b':
-              case 'c':
-              case 'd':
-              case 'e':
-              case 'f':
-                value = (value << 4) + 10 + aChar - 'a';
-                break;
-              case 'A':
-              case 'B':
-              case 'C':
-              case 'D':
-              case 'E':
-              case 'F':
-                value = (value << 4) + 10 + aChar - 'A';
-                break;
-              default:
+              case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> value = (value << 4) + aChar - '0';
+              case 'a', 'b', 'c', 'd', 'e', 'f' -> value = (value << 4) + 10 + aChar - 'a';
+              case 'A', 'B', 'C', 'D', 'E', 'F' -> value = (value << 4) + 10 + aChar - 'A';
+              default -> {
                 outChars.append("\\u");
                 int start = off - i - 1;
-                int end = start + 4 < s.length() ? start + 4 : s.length();
+                int end = Math.min(start + 4, s.length());
                 outChars.append(s, start, end);
-                i=4;
+                i = 4;
                 error = true;
                 off = end;
-                break;
-                //throw new IllegalArgumentException("Malformed \\uxxxx encoding.");
+              }
             }
           }
           if (!error) {
@@ -258,42 +236,17 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
           for (int i = 0; i < 4; i++) {
             aChar = off < s.length() ? s.charAt(off++) : 0;
             switch (aChar) {
-              case '0':
-              case '1':
-              case '2':
-              case '3':
-              case '4':
-              case '5':
-              case '6':
-              case '7':
-              case '8':
-              case '9':
-                value = (value << 4) + aChar - '0';
-                break;
-              case 'a':
-              case 'b':
-              case 'c':
-              case 'd':
-              case 'e':
-              case 'f':
-                value = (value << 4) + 10 + aChar - 'a';
-                break;
-              case 'A':
-              case 'B':
-              case 'C':
-              case 'D':
-              case 'E':
-              case 'F':
-                value = (value << 4) + 10 + aChar - 'A';
-                break;
-              default:
+              case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> value = (value << 4) + aChar - '0';
+              case 'a', 'b', 'c', 'd', 'e', 'f' -> value = (value << 4) + 10 + aChar - 'a';
+              case 'A', 'B', 'C', 'D', 'E', 'F' -> value = (value << 4) + 10 + aChar - 'A';
+              default -> {
                 int start = off - i - 1;
-                int end = start + 4 < s.length() ? start + 4 : s.length();
-                i=4;
+                int end = Math.min(start + 4, s.length());
+                i = 4;
                 error = true;
                 off = end;
                 startSpaces = -1;
-                break;
+              }
             }
           }
           if (!error) {
@@ -375,23 +328,40 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
 
   @Override
   public PropertiesFile getPropertiesFile() {
-    return (PropertiesFile)super.getContainingFile();
+    PsiFile containingFile = super.getContainingFile();
+    if (!(containingFile instanceof PropertiesFile)) {
+      LOG.error("Unexpected file type of: " + containingFile.getName());
+    }
+    return (PropertiesFile)containingFile;
+  }
+
+  /**
+   * The method gets the upper edge of a {@link Property} instance which might either be
+   * the property itself or the first {@link PsiComment} node that is related to the property
+   *
+   * @param property the property to get the upper edge for
+   * @return the property itself or the first {@link PsiComment} node that is related to the property
+   */
+  static PsiElement getEdgeOfProperty(@NotNull final Property property) {
+    PsiElement prev = property;
+    for (PsiElement node = property.getPrevSibling(); node != null; node = node.getPrevSibling()) {
+      if (node instanceof Property) break;
+      if (node instanceof PsiWhiteSpace) {
+        if (PROPERTIES_SEPARATOR.matcher(node.getText()).find()) break;
+      }
+      prev = node;
+    }
+    return prev;
   }
 
   @Override
   public String getDocCommentText() {
+    final PsiElement edge = getEdgeOfProperty(this);
     StringBuilder text = new StringBuilder();
-    for (PsiElement doc = getPrevSibling(); doc != null; doc = doc.getPrevSibling()) {
-      if (doc instanceof PsiWhiteSpace) {
-        doc = doc.getPrevSibling();
-      }
+    for(PsiElement doc = edge; doc != this; doc = doc.getNextSibling()) {
       if (doc instanceof PsiComment) {
-        if (text.length() != 0) text.insert(0, "\n");
-        String comment = doc.getText();
-        text.insert(0, comment);
-      }
-      else {
-        break;
+        text.append(doc.getText());
+        text.append("\n");
       }
     }
     if (text.length() == 0) return null;

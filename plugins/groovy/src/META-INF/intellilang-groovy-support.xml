@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="org.intellij.plugins.intelliLang.inject.groovy">
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.groovy.GroovyLanguageInjectionSupport"/>
     <injectionConfig config="resources/groovyInjections.xml"/>

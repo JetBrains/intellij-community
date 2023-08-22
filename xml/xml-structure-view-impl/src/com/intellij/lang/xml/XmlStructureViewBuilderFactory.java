@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.lang.xml;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
@@ -29,7 +25,7 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
   {
     XmlStructureViewBuilderProvider.EP_NAME.addChangeListener(
       () -> ApplicationManager.getApplication().getMessageBus().syncPublisher(StructureViewWrapperImpl.STRUCTURE_CHANGED).run(),
-      ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint(null)));
+      ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint()));
   }
 
   @Override

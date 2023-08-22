@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.compiler;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -14,11 +17,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "ArtifactsWorkspaceSettings",
-  storages = {
-    @Storage(StoragePathMacros.WORKSPACE_FILE)
-  })
-public class ArtifactsWorkspaceSettings implements PersistentStateComponent<ArtifactsWorkspaceSettings.ArtifactsWorkspaceSettingsState> {
+@State(name = "ArtifactsWorkspaceSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public final class ArtifactsWorkspaceSettings implements PersistentStateComponent<ArtifactsWorkspaceSettings.ArtifactsWorkspaceSettingsState> {
   private ArtifactsWorkspaceSettingsState myState = new ArtifactsWorkspaceSettingsState();
   private final Project myProject;
 
@@ -27,7 +27,7 @@ public class ArtifactsWorkspaceSettings implements PersistentStateComponent<Arti
   }
 
   public static ArtifactsWorkspaceSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ArtifactsWorkspaceSettings.class);
+    return project.getService(ArtifactsWorkspaceSettings.class);
   }
 
   public List<Artifact> getArtifactsToBuild() {

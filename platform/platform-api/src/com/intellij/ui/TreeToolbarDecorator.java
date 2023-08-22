@@ -1,8 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ui.EditableModel;
@@ -27,10 +25,16 @@ import java.util.Arrays;
  * @author Konstantin Bulenkov
  */
 class TreeToolbarDecorator extends ToolbarDecorator {
+  private final JComponent myComponent;
   private final JTree myTree;
   @Nullable private final ElementProducer<?> myProducer;
 
   TreeToolbarDecorator(JTree tree, @Nullable final ElementProducer<?> producer) {
+    this(tree, tree, producer);
+  }
+
+  TreeToolbarDecorator(@NotNull JComponent component, @NotNull JTree tree, @Nullable final ElementProducer<?> producer) {
+    myComponent = component;
     myTree = tree;
     myProducer = producer;
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTree.getModel() instanceof EditableTreeModel;
@@ -106,13 +110,8 @@ class TreeToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  public @NotNull ToolbarDecorator initPosition() {
-    return setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.TOP);
-  }
-
-  @Override
   protected @NotNull JComponent getComponent() {
-    return myTree;
+    return myComponent;
   }
 
   @Override

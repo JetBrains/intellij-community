@@ -27,9 +27,6 @@ import com.intellij.util.ArrayUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class RangeBlinker {
   private final Editor myEditor;
   private int myTimeToLive;

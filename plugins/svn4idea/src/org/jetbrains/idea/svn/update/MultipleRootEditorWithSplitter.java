@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.project.Project;
@@ -9,19 +9,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Map;
 
-/**
- * @author irengrig
- */
+import static com.intellij.openapi.util.io.FileUtil.join;
+
 public class MultipleRootEditorWithSplitter extends JPanel {
   private final JList<FilePath> myList;
   private final JPanel myConfigureRootPanel;
@@ -64,11 +62,12 @@ public class MultipleRootEditorWithSplitter extends JPanel {
 
     myList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myList.setCellRenderer(SimpleListCellRenderer.create("", o -> {
+    myList.setCellRenderer(BuilderKt.textListCellRenderer(o -> {
       VcsPathPresenter presenter = VcsPathPresenter.getInstance(project);
       VirtualFile file = o.getVirtualFile();
-      return file != null ? presenter.getPresentableRelativePathFor(file) :
-             presenter.getPresentableRelativePathFor(o.getVirtualFileParent()) + File.separator + o.getName();
+      return file != null
+             ? presenter.getPresentableRelativePathFor(file)
+             : join(presenter.getPresentableRelativePathFor(o.getVirtualFileParent()), o.getName());
     }));
     myList.addListSelectionListener(e -> {
       FilePath root = myList.getSelectedValue();

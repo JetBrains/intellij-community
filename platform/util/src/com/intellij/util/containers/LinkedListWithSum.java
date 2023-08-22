@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.AbstractSequentialList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.ToIntFunction;
 
 /**
@@ -12,7 +14,7 @@ import java.util.function.ToIntFunction;
  * <p>
  * This class is not thread-safe.
  */
-public class LinkedListWithSum<E> extends AbstractSequentialList<E> implements List<E> {
+public final class LinkedListWithSum<E> extends AbstractSequentialList<E> implements List<E> {
   private final LinkedList<ItemWithValue<E>> myList = new LinkedList<>();
   private final ToIntFunction<? super E> myEvaluator;
   private long mySum;
@@ -32,13 +34,12 @@ public class LinkedListWithSum<E> extends AbstractSequentialList<E> implements L
     return myList.size();
   }
 
-  @NotNull
   @Override
-  public ListIterator listIterator(int index) {
+  public @NotNull ListIterator listIterator(int index) {
     return new ListIterator(myList.listIterator(index));
   }
 
-  private static class ItemWithValue<E> {
+  private static final class ItemWithValue<E> {
     private final E item;
     private final int value;
 
@@ -48,7 +49,7 @@ public class LinkedListWithSum<E> extends AbstractSequentialList<E> implements L
     }
   }
 
-  public class ListIterator implements java.util.ListIterator<E> {
+  public final class ListIterator implements java.util.ListIterator<E> {
     private final java.util.ListIterator<ItemWithValue<E>> it;
     private ItemWithValue<E> lastItem;
 

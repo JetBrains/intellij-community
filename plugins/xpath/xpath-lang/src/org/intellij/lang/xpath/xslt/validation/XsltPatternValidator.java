@@ -24,10 +24,12 @@ import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.xslt.context.Xslt2ContextProvider;
+import org.intellij.plugins.xpathView.XPathBundle;
 
 // TODO: more detailed error descriptions
 
 @SuppressWarnings({"SimplifiableIfStatement"})
+final
 class XsltPatternValidator {
   private XsltPatternValidator() {
   }
@@ -36,16 +38,15 @@ class XsltPatternValidator {
     final XPathExpression expression = ((XPathFile)file).getExpression();
     if (expression != null) {
       if (!checkPattern(expression)) {
-        annotationHolder.newAnnotation(HighlightSeverity.ERROR, "Bad pattern").range(expression).create();
+        annotationHolder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.bad.pattern")).range(expression).create();
       }
     } else {
-      annotationHolder.newAnnotation(HighlightSeverity.ERROR, "Missing pattern").range(TextRange.from(0, 1)).create();
+      annotationHolder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.missing.pattern")).range(TextRange.from(0, 1)).create();
     }
   }
 
   private static boolean checkPattern(XPathExpression element) {
-    if (element instanceof XPathBinaryExpression) {
-      final XPathBinaryExpression expression = (XPathBinaryExpression)element;
+    if (element instanceof XPathBinaryExpression expression) {
       if (expression.getOperator() == XPathTokenTypes.UNION) {
         if (checkPattern(expression.getLOperand()) && checkPattern(expression.getROperand())) {
           return true;
@@ -99,8 +100,7 @@ class XsltPatternValidator {
   }
 
   private static boolean checkIdKeyPattern(PsiElement child) {
-    if (child instanceof XPathFunctionCall) {
-      final XPathFunctionCall call = (XPathFunctionCall)child;
+    if (child instanceof XPathFunctionCall call) {
       final XPathExpression[] arguments = call.getArgumentList();
       if ("id".equals(call.getFunctionName())) {
         if (arguments.length != 1) return false;

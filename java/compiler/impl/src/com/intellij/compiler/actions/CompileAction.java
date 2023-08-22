@@ -1,16 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,9 +23,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompileAction extends CompileActionBase {
+
+  private final boolean myIsForFiles;
+  private final String myBundleKey;
+
+  public CompileAction() {
+    this(false, IdeActions.ACTION_COMPILE);
+  }
+
+  protected CompileAction(boolean forFiles, String key) {
+    myIsForFiles = forFiles;
+    myBundleKey = key;
+  }
+
   @Override
-  protected void doAction(DataContext dataContext, Project project) {
-    final Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
+  protected void doAction(@NotNull DataContext dataContext, Project project) {
+    Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
       ProjectTaskManager.getInstance(project).rebuild(module);
     }
@@ -33,8 +47,13 @@ public class CompileAction extends CompileActionBase {
       if (files.length > 0) {
         ProjectTaskManager.getInstance(project).compile(files);
       }
+      else {
+        module = dataContext.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
+        if (module != null) {
+          ProjectTaskManager.getInstance(project).rebuild(module);
+        }
+      }
     }
-
   }
 
   @Override
@@ -45,7 +64,7 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    presentation.setText(ActionsBundle.actionText(RECOMPILE_FILES_ID_MOD));
+    presentation.setText(ActionsBundle.actionText(myBundleKey));
     presentation.setVisible(true);
 
     Project project = e.getProject();
@@ -54,11 +73,18 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     boolean forFiles = false;
-
-    final VirtualFile[] files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+    Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
+    final VirtualFile[] files;
+    if (module != null) {
+      files = VirtualFile.EMPTY_ARRAY;
+    }
+    else {
+      files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace()) && !ActionPlaces.isPopupPlace(e.getPlace())) {
+        module = e.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
+      }
+    }
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
@@ -87,7 +113,6 @@ public class CompileAction extends CompileActionBase {
       if (aPackage != null) {
         String name = aPackage.getQualifiedName();
         if (name.length() == 0) {
-          //noinspection HardCodedStringLiteral
           name = "<default>";
         }
         elementDescription = "'" + name + "'";
@@ -96,8 +121,7 @@ public class CompileAction extends CompileActionBase {
         forFiles = true;
         final VirtualFile file = files[0];
         FileType fileType = file.getFileType();
-        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) ||
-            compilerConfiguration.isCompilableResourceFile(project, file)) {
+        if (CompilerManager.getInstance(project).isCompilableFileType(fileType) || CompilerConfiguration.getInstance(project).isCompilableResourceFile(project, file)) {
           elementDescription = "'" + file.getName() + "'";
         }
         else {
@@ -119,17 +143,15 @@ public class CompileAction extends CompileActionBase {
       return;
     }
 
-    presentation.setText(createPresentationText(elementDescription, forFiles), true);
-    presentation.setEnabled(true);
+    presentation.setText(createPresentationText(elementDescription), true);
+    presentation.setEnabledAndVisible(forFiles == myIsForFiles);
   }
 
-  private final static String RECOMPILE_FILES_ID_MOD = IdeActions.ACTION_COMPILE + "File";
-
-  private static String createPresentationText(String elementDescription, boolean forFiles) {
+  private @NlsSafe String createPresentationText(String elementDescription) {
     StringBuilder buffer = new StringBuilder(40);
-    buffer.append(ActionsBundle.actionText(forFiles? RECOMPILE_FILES_ID_MOD : IdeActions.ACTION_COMPILE)).append(" ");
+    buffer.append(ActionsBundle.actionText(myBundleKey)).append(" ");
     int length = elementDescription.length();
-    if (length > 23) {
+    if (length > 50) {
       if (StringUtil.startsWithChar(elementDescription, '\'')) {
         buffer.append("'");
       }

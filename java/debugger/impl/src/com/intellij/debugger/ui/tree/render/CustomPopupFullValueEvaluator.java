@@ -10,13 +10,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public abstract class CustomPopupFullValueEvaluator<T> extends JavaValue.JavaFullValueEvaluator {
-  public CustomPopupFullValueEvaluator(@NotNull String linkText, @NotNull EvaluationContextImpl evaluationContext) {
+  public CustomPopupFullValueEvaluator(@NotNull @Nls String linkText, @NotNull EvaluationContextImpl evaluationContext) {
     super(linkText, evaluationContext);
     setShowValuePopup(false);
   }

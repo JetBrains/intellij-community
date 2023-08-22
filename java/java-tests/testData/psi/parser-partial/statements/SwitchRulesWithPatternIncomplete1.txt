@@ -1,0 +1,28 @@
+PsiJavaFile:SwitchRulesWithPatternIncomplete1.java
+  PsiSwitchLabeledRule
+    PsiKeyword:case('case')
+    PsiWhiteSpace(' ')
+    PsiCaseLabelElementList
+      PsiParenthesizedPattern
+        PsiJavaToken:LPARENTH('(')
+        PsiTypeTestPattern
+          PsiPatternVariable:i
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:Integer
+              PsiJavaCodeReferenceElement:Integer
+                PsiIdentifier:Integer('Integer')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiIdentifier:i('i')
+        PsiErrorElement:')' expected
+          <empty list>
+    PsiWhiteSpace('  ')
+    PsiJavaToken:ARROW('->')
+    PsiWhiteSpace(' ')
+    PsiBlockStatement
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:RBRACE('}')

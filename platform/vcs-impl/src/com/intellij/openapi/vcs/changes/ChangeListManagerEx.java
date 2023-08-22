@@ -15,16 +15,24 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.Collection;
+import java.util.List;
 
 public abstract class ChangeListManagerEx extends ChangeListManager {
-  private static final Logger LOG = Logger.getInstance(ChangeListManagerEx.class);
+  @NotNull
+  public static ChangeListManagerEx getInstanceEx(@NotNull Project project) {
+    return (ChangeListManagerEx)getInstance(project);
+  }
 
   public abstract boolean isInUpdate();
 
@@ -32,9 +40,11 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes);
 
   @NotNull
-  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data);
+  public abstract LocalChangeList addChangeList(@NotNull @NonNls String name,
+                                                @Nullable @NonNls String comment,
+                                                @Nullable ChangeListData data);
 
-  public abstract boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData);
+  public abstract boolean editChangeListData(@NotNull @NonNls String name, @Nullable ChangeListData newData);
 
   /**
    * @param automatic true is changelist switch operation was not triggered by user (and, for example, will be reverted soon)
@@ -43,26 +53,45 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic);
 
   /**
+   * Add unversioned files into VCS under modal progress dialog
+   *
+   * @see com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+   */
+  public abstract void addUnversionedFiles(@Nullable LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
+
+  /**
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
    * They will be shown when notifications are unblocked.
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void blockModalNotifications();
-  @CalledInAwt
+
+  @RequiresEdt
   public abstract void unblockModalNotifications();
 
   /**
-   * Temporarily disable CLM update
+   * Temporarily disable CLM update.
    * For example, to preserve FilePath->ChangeList mapping during "stash-do_smth-unstash" routine.
    */
-  public abstract void freeze(@NotNull String reason);
+  public abstract void freeze(@NotNull @Nls String reason);
+
   public abstract void unfreeze();
 
   /**
-   * Simulate synchronous task execution.
-   * Do not execute such methods from EDT - cause CLM update can trigger synchronous VFS refresh,
-   * that is waiting for EDT.
+   * Wait until all current pending tasks are finished.
+   * <p>
+   * Do not execute this method while holding the read lock - it might be a long operation,
+   * and CLM update can trigger synchronous VFS refresh that needs an EDT callback (causing a deadlock).
+   *
+   * @see #invokeAfterUpdate(boolean, Runnable)
    */
-  @CalledInBackground
-  public abstract void waitForUpdate(@Nullable String operationName);
+  @RequiresBackgroundThread
+  public abstract void waitForUpdate();
+
+  /**
+   * Wait until all current pending tasks are finished.
+   *
+   * @see #waitForUpdate()
+   */
+  public abstract @NotNull Promise<?> promiseWaitForUpdate();
 }

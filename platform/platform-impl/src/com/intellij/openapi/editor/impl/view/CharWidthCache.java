@@ -1,21 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import gnu.trove.TIntFloatHashMap;
+import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 import org.intellij.lang.annotations.JdkConstants;
 
 /**
  * Cache of char widths for different font styles
  */
-class CharWidthCache {
+final class CharWidthCache {
   private static final int CACHE_SIZE_LIMIT = 1024;
   private static final float SHIFT = 1f;
 
   private final EditorView myView;
-  private final TIntFloatHashMap myCache = new TIntFloatHashMap();
+  private final Int2FloatOpenHashMap myCache = new Int2FloatOpenHashMap();
 
-  CharWidthCache(EditorView view) {myView = view;}
+  CharWidthCache(EditorView view) {
+    myView = view;
+  }
 
   void clear() {
     myCache.clear();
@@ -25,12 +28,25 @@ class CharWidthCache {
     int key = createKey(codePoint, fontStyle);
     float width = getCachedValue(key);
     if (width < 0) {
-      width = ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle,
-                                                              myView.getEditor().getColorsScheme().getFontPreferences(),
-                                                              myView.getFontRenderContext()).charWidth2D(codePoint);
+      width = calcValue(codePoint, fontStyle);
       saveInCache(key, width);
     }
     return width;
+  }
+
+  private float calcValue(int codePoint, int fontStyle) {
+    Editor editor = myView.getEditor();
+    if (editor.getSettings().isShowingSpecialChars()) {
+      // This is a simplification - we don't account for special characters not rendered in certain circumstances(based on surrounding
+      // characters), so a premature wrapping can occur sometimes (as the representation using Unicode name is most certainly wider than the
+      // original character).
+      SpecialCharacterFragment specialCharacterFragment = SpecialCharacterFragment.create(myView, codePoint, null, 0);
+      if (specialCharacterFragment != null) {
+        return specialCharacterFragment.visualColumnToX(0, 1);
+      }
+    }
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, editor.getColorsScheme().getFontPreferences(),
+                                                           myView.getFontRenderContext()).charWidth2D(codePoint);
   }
 
   /**
@@ -44,7 +60,9 @@ class CharWidthCache {
    * @param value assumed to be non-negative
    */
   private void saveInCache(int key, float value) {
-    if (myCache.size() >= CACHE_SIZE_LIMIT) myCache.clear();
+    if (myCache.size() >= CACHE_SIZE_LIMIT) {
+      myCache.clear();
+    }
     myCache.put(key, value + SHIFT);
   }
 

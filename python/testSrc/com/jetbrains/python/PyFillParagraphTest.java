@@ -16,6 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -36,7 +37,7 @@ public class PyFillParagraphTest extends PyTestCase {
   }
 
   public void testString() {
-    doTest();
+    doTestWithParenthesizeOnEnter(false, 120);
   }
 
   public void testComment() {
@@ -65,7 +66,7 @@ public class PyFillParagraphTest extends PyTestCase {
 
   // PY-26422
   public void testFString() {
-    doTestWithMargin(20);
+    doTestWithParenthesizeOnEnter(false, 20);
   }
 
   private void doTest() {
@@ -78,5 +79,15 @@ public class PyFillParagraphTest extends PyTestCase {
     myFixture.configureByFile(baseName + ".py");
     myFixture.testAction(new FillParagraphAction());
     myFixture.checkResultByFile(baseName + "_after.py", true);
+  }
+
+  private void doTestWithParenthesizeOnEnter(boolean enabled, int margin) {
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+    try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = enabled;
+      doTestWithMargin(margin);
+    } finally {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
+    }
   }
 }

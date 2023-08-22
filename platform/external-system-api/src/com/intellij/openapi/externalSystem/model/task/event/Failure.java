@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -23,11 +25,10 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public interface Failure {
-  @Nullable
-  String getMessage();
 
-  @Nullable
-  String getDescription();
+  @Nullable @Nls String getMessage();
 
-  List<? extends Failure> getCauses();
+  @Nullable @Nls String getDescription();
+
+  @NotNull List<? extends Failure> getCauses();
 }

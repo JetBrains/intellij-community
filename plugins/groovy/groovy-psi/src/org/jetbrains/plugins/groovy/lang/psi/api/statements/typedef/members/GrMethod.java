@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayFactory;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -23,8 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
 import java.util.Map;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMethod, GrMember,
                                   GrParameterListOwner, GrTopStatement, GrTypeParameterListOwner, GrDocCommentOwner {
@@ -59,9 +58,7 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   GrTypeElement setReturnType(@Nullable PsiType newReturnType);
 
   @Override
-  @NotNull
-  @NonNls
-  String getName();
+  @NlsSafe @NotNull String getName();
 
   @Override
   @NotNull

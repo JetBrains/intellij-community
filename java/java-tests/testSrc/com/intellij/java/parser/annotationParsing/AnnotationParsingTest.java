@@ -17,9 +17,6 @@ package com.intellij.java.parser.annotationParsing;
 
 import com.intellij.java.parser.JavaParsingTestCase;
 
-/**
- * @author ven
- */
 public class AnnotationParsingTest extends JavaParsingTestCase {
   public AnnotationParsingTest() {
     super("parser-full/annotationParsing/annotation");

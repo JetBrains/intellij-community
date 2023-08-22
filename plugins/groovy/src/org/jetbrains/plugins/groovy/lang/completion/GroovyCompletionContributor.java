@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -23,17 +10,17 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.completion.api.GroovyCompletionCustomizer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
+import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public class GroovyCompletionContributor extends CompletionContributor {
+
+  static final ExtensionPointName<GroovyCompletionCustomizer> EP_NAME = ExtensionPointName.create("org.intellij.groovy.completionCustomizer");
 
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL = PlatformPatterns.psiElement().afterLeafSkipping(
     StandardPatterns.alwaysFalse(),
@@ -50,16 +37,16 @@ public class GroovyCompletionContributor extends CompletionContributor {
     GroovyConfigSlurperCompletionProvider.register(this);
     MapKeysCompletionProvider.register(this);
     GroovyDocCompletionProvider.register(this);
-    GrStatementStartCompletionProvider.register(this);
+    GrInlineTransformationCompletionProvider.register(this);
     GrMainCompletionProvider.register(this);
     GrAnnotationAttributeCompletionProvider.register(this);
 
-    extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(GrLiteral.class), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement().withParent(GrLiteral.class), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
-        final Set<String> usedWords = new THashSet<>();
+        final Set<String> usedWords = new HashSet<>();
         for (CompletionResult element : result.runRemainingContributors(parameters, true)) {
           usedWords.add(element.getLookupElement().getLookupString());
         }
@@ -76,7 +63,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (!AFTER_NUMBER_LITERAL.accepts(parameters.getPosition())) {
-      super.fillCompletionVariants(parameters, result);
+      super.fillCompletionVariants(parameters, enrichResultSet(parameters, result));
     }
   }
 
@@ -93,5 +80,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (position!= null && position.getNode().getElementType() == GroovyTokenTypes.mDOLLAR) {
       context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getStartOffset());
     }
+  }
+
+  private static @NotNull CompletionResultSet enrichResultSet(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet resultSet) {
+    for (GroovyCompletionCustomizer customizer : EP_NAME.getExtensionList()) {
+      resultSet = customizer.customizeCompletionConsumer(parameters, resultSet);
+    }
+    return resultSet;
   }
 }

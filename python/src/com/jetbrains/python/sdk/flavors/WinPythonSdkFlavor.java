@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,34 +13,47 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import kotlin.text.Regex;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
+
+import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxFiles;
+import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxProduct;
 
 /**
  * This class knows how to find python in Windows Registry according to
  * <a href="https://www.python.org/dev/peps/pep-0514/">PEP 514</a>
- *
- * @author yole
  */
-public class WinPythonSdkFlavor extends CPythonSdkFlavor {
+public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   @NotNull
-  private static final Key<String> APPX_PYTHON_CACHE = new Key<>("PythonFromStoreCache");
-  private static final String NOTHING = "";
   private static final String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
+  /**
+   * There may be a lot of python files in APPX folder. We do not need "w" files, but may need "python[version]?.exe"
+   */
+  private static final Regex PYTHON_EXE = new Regex("^python[0-9.]*?.exe$");
+  /**
+   * All Pythons from WinStore have "Python[something]" as their product name
+   */
+  private static final String APPX_PRODUCT = "Python";
   private static final Map<String, String> REGISTRY_MAP =
     ImmutableMap.of("Python", "python.exe",
                     "IronPython", "ipy.exe");
 
   @NotNull
-  private final ClearableLazyValue<Set<String>> myRegistryCache =
-    ClearableLazyValue.createAtomic(() -> findInRegistry(getWinRegistryService()));
+  private final SynchronizedClearableLazy<Set<String>> myRegistryCache =
+    new SynchronizedClearableLazy<>(() -> findInRegistry(getWinRegistryService()));
+  @NotNull
+  private final SynchronizedClearableLazy<Set<String>> myAppxCache = new SynchronizedClearableLazy<>(
+    WinPythonSdkFlavor::getPythonsFromStore);
 
   public static WinPythonSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(WinPythonSdkFlavor.class);
@@ -51,48 +64,17 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     return SystemInfo.isWindows;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getHelpersRoot().getParent());
-
-    if (SystemInfo.isWin10OrNewer) {
-      // For pythons installed from WindowsStore
-      final VirtualFile installLocation = getInstallationLocationForStoreWithCache(context);
-      if (installLocation != null) {
-        final VirtualFile pythonFromStore = installLocation.findChild("python.exe");
-        if (pythonFromStore != null) {
-          candidates.add(pythonFromStore.getPath());
-        }
-      }
-    }
-
-    return candidates;
-  }
-
-  @Nullable
-  private static VirtualFile getInstallationLocationForStoreWithCache(@Nullable final UserDataHolder context) {
-    final VirtualFileSystem fs = LocalFileSystem.getInstance();
-
-    if (context != null) {
-      synchronized (APPX_PYTHON_CACHE) {
-        final String result = context.getUserData(APPX_PYTHON_CACHE);
-        if (result != null) {
-          return result.equals(NOTHING) ? null : fs.refreshAndFindFileByPath(result);
-        }
-        final VirtualFile python = getInstallationLocationForStore(fs);
-        context.putUserData(APPX_PYTHON_CACHE, python != null ? python.getPath() : NOTHING);
-        return python;
-      }
-    }
-    return getInstallationLocationForStore(fs);
-  }
-
-  @Nullable
-  private static VirtualFile getInstallationLocationForStore(@NotNull final VirtualFileSystem fs) {
-    return WindowsStoreServiceKt.findInstallLocationForPackage("Python", fs);
+    return ContainerUtil.map(candidates, Path::of);
   }
 
   private void findInCandidatePaths(Set<String> candidates, String... exe_names) {
@@ -102,6 +84,22 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     }
 
     findInRegistry(candidates);
+    candidates.addAll(myAppxCache.getValue());
+  }
+
+  @Override
+  public boolean sdkSeemsValid(@NotNull Sdk sdk,
+                               PyFlavorData.@NotNull Empty flavorData,
+                               @Nullable TargetEnvironmentConfiguration targetConfig) {
+    if (super.sdkSeemsValid(sdk, flavorData, targetConfig)) {
+      return true;
+    }
+    if (targetConfig != null) {
+      // non-local, cant check for appx
+      return true;
+    }
+    var path = sdk.getHomePath();
+    return path != null && isLocalPathValidPython(Path.of(path));
   }
 
   @Override
@@ -110,46 +108,21 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
       return true;
     }
 
-    final File file = new File(path);
-    return mayBeAppXReparsePoint(file) && isValidSdkPath(file);
+    return isLocalPathValidPython(Path.of(path));
+  }
+
+  private boolean isLocalPathValidPython(@NotNull Path path) {
+    if (myAppxCache.getValue().contains(path.toString())) {
+      return true;
+    }
+
+    return StringUtils.contains(getAppxProduct(path), APPX_PRODUCT) && isValidSdkPath(path.toFile());
   }
 
   @Override
   public void dropCaches() {
     myRegistryCache.drop();
-  }
-
-  /**
-   * AppX packages installed to AppX volume (see <code>Get-AppxDefaultVolume</code>).
-   * At the same time, <strong>reparse point</strong> is created somewhere in <code>%LOCALAPPDATA%</code>.
-   * This point has tag <code>IO_REPARSE_TAG_APPEXECLINK</code> and it also added to <code>PATH</code>
-   * <br/>
-   * Such points can't be read. Their attributes are also inaccessible. {@link File#exists()} returns false.
-   * But when executed, they are processed by NTFS filter and redirected to their real location in AppX volume.
-   * They are also returned with parent's {@link File#listFiles()}
-   * <br/>
-   * There is no Java API to fetch reparse data, and its structure is undocumented (although pretty simple), so we workaround it
-   */
-  private static boolean mayBeAppXReparsePoint(@NotNull final File file) {
-    if (!SystemInfo.isWin10OrNewer) {
-      return false;
-    }
-
-    final String localAppData = System.getenv("LOCALAPPDATA");
-    if (localAppData == null) {
-      return false;
-    }
-    final File localAppDataFile = new File(localAppData);
-
-    if (!FileUtil.isAncestor(localAppDataFile, file, true)) {
-      return false;
-    }
-    final File parent = file.getParentFile();
-    if (parent == null) {
-      return false;
-    }
-    final File[] files = parent.listFiles();
-    return (files != null && ArrayUtil.contains(file, files));
+    myAppxCache.drop();
   }
 
 
@@ -181,6 +154,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
         candidates.add(FileUtil.toSystemDependentName(f.getPath()));
       }
     }
+  }
+
+  @NotNull
+  private static Set<String> getPythonsFromStore() {
+    return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.toAbsolutePath().toString());
   }
 
   @NotNull
@@ -219,6 +197,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
 
     return result;
   }
+
 
   private static void findSubdirInstallations(Collection<String> candidates, String rootDir, String dir_prefix, String exe_name) {
     VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(rootDir);

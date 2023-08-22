@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -25,6 +26,7 @@ import static com.intellij.openapi.progress.ProgressManager.progress2;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class MergeCalculatorTask extends BaseMergeTask {
+  private static final Logger LOG = Logger.getInstance(MergeCalculatorTask.class);
 
   public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
   private final static int BUNCH_SIZE = 100;
@@ -64,7 +66,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
   @Override
   public void run() throws VcsException {
-    progress("Collecting merge information");
+    progress(message("progress.text.collecting.merge.information"));
     myMergeChecker.prepare();
 
     if (myCopyPoint != null) {
@@ -82,7 +84,9 @@ public class MergeCalculatorTask extends BaseMergeTask {
       myCallback.consume(this);
     }
     else {
-      myMergeProcess.end("Everything is up-to-date", false);
+      LOG.info("Info: Everything is up-to-date");
+
+      myMergeProcess.end(message("notification.content.everything.is.up.to.date"), false);
     }
   }
 
@@ -99,7 +103,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
   private List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
     List<SvnChangeList> result = new ArrayList<>();
 
-    progress("Collecting not merged revisions");
+    progress(message("progress.text.collecting.not.merged.revisions"));
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
       SvnChangeList changeList = pair.getFirst();
 

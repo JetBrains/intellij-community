@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -122,12 +123,10 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (AbstractTreeNode child : children) {
       Pair<VirtualFile, PsiDirectoryNode> parentNodePair = null;
-      if (child instanceof ProjectViewModuleGroupNode) {
-        final ProjectViewModuleGroupNode groupNode = (ProjectViewModuleGroupNode)child;
+      if (child instanceof ProjectViewModuleGroupNode groupNode) {
         final Collection<AbstractTreeNode<?>> groupNodeChildren = groupNode.getChildren();
         for (final AbstractTreeNode node : groupNodeChildren) {
-          if (node instanceof PsiDirectoryNode) {
-            final PsiDirectoryNode psiDirectoryNode = (PsiDirectoryNode)node;
+          if (node instanceof PsiDirectoryNode psiDirectoryNode) {
             final PsiDirectory psiDirectory = psiDirectoryNode.getValue();
             if (psiDirectory == null) {
               parentNodePair = null;
@@ -224,7 +223,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
   }
 
   private static class GradleModuleDirectoryNode extends PsiDirectoryNode {
-    private final String myModuleShortName;
+    private final @NlsSafe String myModuleShortName;
     private final Module myModule;
     private final boolean appendModuleName;
     private final boolean isSourceSetModule;
@@ -246,14 +245,16 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
 
     @Override
     protected boolean shouldShowModuleName() {
-      return !(appendModuleName || isSourceSetModule);
+      return !(appendModuleName || isSourceSetModule) || canRealModuleNameBeHidden();
     }
 
     @Override
     protected void updateImpl(@NotNull PresentationData data) {
       super.updateImpl(data);
       if (appendModuleName) {
-        data.addText("[" + myModuleShortName + "]", REGULAR_BOLD_ATTRIBUTES);
+        if (!canRealModuleNameBeHidden()) {
+          data.addText("[" + myModuleShortName + "]", REGULAR_BOLD_ATTRIBUTES);
+        }
       }
       else if (isSourceSetModule) {
         List<ColoredFragment> fragments = data.getColoredText();
@@ -268,6 +269,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
 
   private static class GradleProjectViewModuleNode extends ProjectViewModuleNode {
     @NotNull
+    @NlsSafe
     private final String myModuleShortName;
 
     GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {

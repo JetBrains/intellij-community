@@ -4,6 +4,7 @@ import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,15 +13,15 @@ import java.util.Date;
 
 public class GenericTask extends Task {
   private final String myId;
-  private final String mySummary;
-  private String myDescription;
+  private final @Nls String mySummary;
+  private @Nls String myDescription;
   private Date myUpdated;
   private Date myCreated;
   private String myIssueUrl;
   private final TaskRepository myRepository;
   private boolean myClosed;
 
-  public GenericTask(final String id, final String summary, final TaskRepository repository) {
+  public GenericTask(final String id, final @Nls String summary, final TaskRepository repository) {
     myId = id;
     mySummary = summary;
     myRepository = repository;
@@ -107,7 +108,7 @@ public class GenericTask extends Task {
     myUpdated = updated;
   }
 
-  public void setDescription(@Nullable String description) {
+  public void setDescription(@Nullable @Nls String description) {
     myDescription = description;
   }
 

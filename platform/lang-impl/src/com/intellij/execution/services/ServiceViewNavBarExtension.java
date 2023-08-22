@@ -1,17 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
-import com.intellij.execution.services.ServiceModel.ServiceViewItem;
-import com.intellij.execution.services.ServiceViewNavBarPanel.ServiceViewNavBarRoot;
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.navbar.impl.DefaultNavBarItem;
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class ServiceViewNavBarExtension extends AbstractNavBarModelExtension {
+public final class ServiceViewNavBarExtension extends AbstractNavBarModelExtension {
   @Nullable
   @Override
   public String getPopupMenuGroup(@NotNull DataProvider provider) {
@@ -19,27 +17,33 @@ public class ServiceViewNavBarExtension extends AbstractNavBarModelExtension {
     return serviceView == null ? null : ServiceViewActionProvider.SERVICE_VIEW_ITEM_POPUP;
   }
 
-  @Nullable
   @Override
-  public String getPresentableText(Object object) {
-    if (object instanceof ServiceViewItem) {
-      return ServiceViewDragHelper.getDisplayName(((ServiceViewItem)object).getViewDescriptor().getPresentation());
+  public @Nullable Object getData(@NotNull String dataId, @NotNull DataProvider provider) {
+    if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+      return unwrapNavBarItem(PlatformCoreDataKeys.SELECTED_ITEM.getData(provider));
     }
-    if (object instanceof ServiceViewNavBarRoot) {
-      return "";
+    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+      Object[] items = PlatformCoreDataKeys.SELECTED_ITEMS.getData(provider);
+      if (items != null) {
+        return ContainerUtil.map2Array(items, ServiceViewNavBarExtension::unwrapNavBarItem);
+      }
+      return null;
     }
     return null;
   }
 
-  @Nullable
+  private static Object unwrapNavBarItem(Object item) {
+    if (item instanceof DefaultNavBarItem<?> defaultNavBarItem) {
+      Object data = defaultNavBarItem.getData();
+      if (data instanceof ServiceModel.ServiceViewItem serviceViewItem) {
+        return serviceViewItem.getValue();
+      }
+    }
+    return item;
+  }
+
   @Override
-  public Icon getIcon(Object object) {
-    if (object instanceof ServiceViewItem) {
-      return ((ServiceViewItem)object).getViewDescriptor().getPresentation().getIcon(false);
-    }
-    if (object instanceof ServiceViewNavBarRoot) {
-      return AllIcons.Nodes.Services;
-    }
+  public @Nullable String getPresentableText(Object object) {
     return null;
   }
 }

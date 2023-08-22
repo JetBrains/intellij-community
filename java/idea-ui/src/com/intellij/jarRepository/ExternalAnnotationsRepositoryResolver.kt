@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository
 
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -13,6 +12,17 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -39,7 +49,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
                              null)
       as MutableList<OrderRoot>?
 
-    if (roots == null || roots.isEmpty()) {
+    if (roots.isNullOrEmpty()) {
       mavenLibDescriptor = extractDescriptor(mavenId, library, true) ?: return false
       roots = JarRepositoryManager
         .loadDependenciesSync(project,
@@ -50,11 +60,11 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
         as MutableList<OrderRoot>?
     }
 
-    invokeAndWaitIfNeeded {
+    ApplicationManager.getApplication().invokeAndWait {
       updateLibrary(roots, mavenLibDescriptor, library)
     }
 
-    return roots != null && roots.isNotEmpty()
+    return !roots.isNullOrEmpty()
   }
 
   override fun resolve(project: Project, library: Library, location: AnnotationsLocation): Boolean {
@@ -72,12 +82,63 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     val roots = JarRepositoryManager
                   .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
 
-    if (roots == null || roots.isEmpty()) {
-      return false;
+    if (roots.isNullOrEmpty()) {
+      return false
     }
 
-    invokeAndWaitIfNeeded { updateLibrary(roots, descriptor, library) }
-    return true;
+    ApplicationManager.getApplication().invokeAndWait { updateLibrary(roots, descriptor, library) }
+    return true
+  }
+
+  override fun resolve(project: Project, library: Library, location: AnnotationsLocation, diff: MutableEntityStorage): Boolean {
+    val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
+    val repos = if (location.repositoryUrls.isNotEmpty()) {
+      location.repositoryUrls.mapIndexed { index, url ->
+        val someUniqueId = "id_${url.hashCode()}_$index"
+        RemoteRepositoryDescription(someUniqueId, "name", url)
+      }
+    }
+    else {
+      null
+    }
+
+    if (library !is LibraryBridge || library.isDisposed) {
+      return true;
+    }
+
+    val newRoots = JarRepositoryManager
+      .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
+
+    if (newRoots.isNullOrEmpty()) {
+      return false
+    }
+
+    LOG.debug("Found ${newRoots.size} external annotations for ${library.name}")
+
+    val libraryEntity: LibraryEntity = diff.findLibraryEntity(library) ?: return true
+    val vfUrlManager = VirtualFileUrlManager.getInstance(project)
+    val newUrls = newRoots.map { it.file.toVirtualFileUrl(vfUrlManager) }.toHashSet()
+    val toRemove = mutableListOf<LibraryRoot>()
+    val annotationsRootType = LibraryRootTypeId(AnnotationOrderRootType.ANNOTATIONS_ID)
+
+    libraryEntity.roots
+      .filter { it.type == annotationsRootType }
+      .forEach {
+        if (it.url !in newUrls) {
+          toRemove.add(it)
+        }
+        else {
+          newUrls.remove(it.url)
+        }
+      }
+
+    if (!toRemove.isEmpty() || !newUrls.isEmpty()) {
+      diff.modifyEntity(libraryEntity) {
+        roots.removeAll(toRemove)
+        roots.addAll(newUrls.map { LibraryRoot(it, annotationsRootType) })
+      }
+    }
+    return true
   }
 
   override fun resolveAsync(project: Project, library: Library, mavenId: String?): Promise<Library> {
@@ -114,17 +175,29 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
   private fun updateLibrary(roots: MutableList<OrderRoot>?,
                     mavenLibDescriptor: JpsMavenRepositoryLibraryDescriptor,
                     library: Library) {
-    if (roots == null || roots.isEmpty()) {
+    if (library !is LibraryEx || library.isDisposed) return
+    if (roots.isNullOrEmpty()) {
       LOG.info("No annotations found for [$mavenLibDescriptor]")
     } else {
-      runWriteAction {
         LOG.debug("Found ${roots.size} external annotations for ${library.name}")
         val editor = ExistingLibraryEditor(library, null)
         val type = AnnotationOrderRootType.getInstance()
-        editor.getUrls(type).forEach { editor.removeRoot(it, type) }
-        editor.addRoots(roots)
-        editor.commit()
-      }
+        val newUrls = roots.map { it.file.url }.toHashSet()
+        editor.getUrls(type).forEach {
+          if (!newUrls.contains(it)) {
+            editor.removeRoot(it, type)
+          } else {
+            newUrls.remove(it)
+          }
+        }
+        if (!newUrls.isEmpty()) {
+          editor.addRoots(roots.filter { newUrls.contains(it.file.url) })
+          runWriteAction {
+            editor.commit()
+          }
+        } else {
+          Disposer.dispose(editor)
+        }
     }
   }
 

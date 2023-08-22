@@ -44,6 +44,7 @@ public interface PsiReferenceList extends PsiElement {
     THROWS_LIST,
     EXTENDS_LIST,
     IMPLEMENTS_LIST,
+    PERMITS_LIST,
     EXTENDS_BOUNDS_LIST,
     PROVIDES_WITH_LIST
   }

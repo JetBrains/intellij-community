@@ -16,8 +16,11 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.psi.PyDecorator;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.PyDecorator;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PyDecoratorStub extends StubElement<PyDecorator> {
 
@@ -26,5 +29,16 @@ public interface PyDecoratorStub extends StubElement<PyDecorator> {
    */
   QualifiedName getQualifiedName();
 
-  //PyFunction getTarget();
+  /**
+   * @return true if invocation has a form of {@code @foo(...)}.
+   */
+  boolean hasArgumentList();
+
+  @ApiStatus.Experimental
+  @Nullable
+  String getPositionalArgumentLiteralText(int position);
+
+  @ApiStatus.Experimental
+  @Nullable
+  String getNamedArgumentLiteralText(@NotNull String name);
 }

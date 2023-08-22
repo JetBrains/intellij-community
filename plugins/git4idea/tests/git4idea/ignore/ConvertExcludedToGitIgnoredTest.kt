@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
-import com.intellij.configurationStore.saveComponentManager
-import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.configurationStore.saveSettings
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsApplicationSettings
@@ -20,11 +19,10 @@ import git4idea.test.GitSingleRepoTest
 import java.io.File
 
 class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
-
   private lateinit var moduleContentRoot: VirtualFile
   private lateinit var gitIgnore: File
 
-  override fun getProjectDirOrFile() = getProjectDirOrFile(true)
+  override fun isCreateDirectoryBasedProject() = true
 
   override fun setUp() {
     super.setUp()
@@ -36,13 +34,16 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
 
   override fun setUpProject() {
     super.setUpProject()
-    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
+    // will create .idea directory
+    runBlockingMaybeCancellable {
+      saveSettings(project)
+    }
   }
 
   override fun setUpModule() {
-    runWriteAction {
+    ApplicationManager.getApplication().runWriteAction {
       myModule = createMainModule()
-      moduleContentRoot = myModule.moduleFile!!.parent
+      moduleContentRoot = getOrCreateProjectBaseDir()
       myModule.addContentRoot(moduleContentRoot)
     }
   }
@@ -138,7 +139,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
   private fun generateIgnoreFileAndWaitHoldersUpdate() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
     flushIgnoreHoldersQueue()
-    val waiter = (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).createWaiter()
+    val waiter = repo.ignoredFilesHolder.createWaiter()
     VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
     waiter.waitFor()
   }

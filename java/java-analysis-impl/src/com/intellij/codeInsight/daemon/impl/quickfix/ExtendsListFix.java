@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -37,9 +23,9 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   @SafeFieldForPreview // we don't modify this class
   protected final SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
   private final boolean myToAdd;
-  @SafeFieldForPreview // we don't mo
+  @SafeFieldForPreview // we don't modify PSI referenced from this type
   private final PsiClassType myTypeToExtendFrom;
-  private final String myName;
+  private final @IntentionName String myName;
 
   public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd) {
     this(aClass, typeToExtendFrom.resolve(), typeToExtendFrom, toAdd);
@@ -87,6 +73,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
+    if (!myTypeToExtendFrom.isValid()) return false;
     final PsiClass myClass = (PsiClass)startElement;
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
     return
@@ -109,7 +96,6 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                      @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
     invokeImpl(myClass);
-    UndoUtil.markPsiFileForUndo(file);
   }
 
   protected void invokeImpl(PsiClass myClass) {
@@ -122,10 +108,10 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                                  myClass.getExtendsList() : myClass.getImplementsList();
     try {
       if (extendsList != null) {
-        modifyList(extendsList, myToAdd, -1);
+        modifyList(extendsList, myToAdd, -1, myTypeToExtendFrom);
       }
       if (otherList != null) {
-        modifyList(otherList, false, -1);
+        modifyList(otherList, false, -1, myTypeToExtendFrom);
       }
     }
     catch (IncorrectOperationException e) {
@@ -136,10 +122,12 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   /**
    * @param position to add new class to or -1 if add to the end
    */
-  void modifyList(@NotNull PsiReferenceList extendsList, boolean add, int position) throws IncorrectOperationException {
+  static void modifyList(@NotNull PsiReferenceList extendsList, boolean add, int position, @NotNull PsiClassType myTypeToExtendFrom) {
+    PsiClass classToExtendFrom = myTypeToExtendFrom.resolve();
+    if (classToExtendFrom == null) return;
+
     PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
     boolean alreadyExtends = false;
-    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
 
     for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
       if (referenceElement.getManager().areElementsEquivalent(classToExtendFrom, referenceElement.resolve())) {

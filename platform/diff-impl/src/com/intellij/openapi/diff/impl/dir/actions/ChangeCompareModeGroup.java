@@ -30,9 +30,6 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
         actions.add(new ChangeCompareModeAction(model, mode));
       }
     }
-    else {
-      getTemplatePresentation().setEnabledAndVisible(false);
-    }
     myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[0]));
   }
 
@@ -46,6 +43,12 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
     super.update(e);
     getTemplatePresentation().setText(mySettings.compareMode.getPresentableName());
     e.getPresentation().setText(mySettings.compareMode.getPresentableName());
+    e.getPresentation().setEnabledAndVisible(mySettings.showCompareModes);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @NotNull
@@ -61,7 +64,7 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
 
   @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     return myGroup;
   }
 

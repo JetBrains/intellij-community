@@ -1,28 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.lastModified
 import com.intellij.util.io.readChars
-import com.intellij.util.io.size
 import com.intellij.util.text.CharArrayUtil
-import gnu.trove.THashMap
 import io.netty.buffer.ByteBufUtf8Writer
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.fileSize
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.inputStream
 
 internal val LOG = Logger.getInstance(SsiProcessor::class.java)
 
 internal const val COMMAND_START = "<!--#"
 internal const val COMMAND_END = "-->"
 
-class SsiStopProcessingException : RuntimeException()
+internal class SsiStopProcessingException : RuntimeException()
 
-class SsiProcessor(allowExec: Boolean) {
-  private val commands: MutableMap<String, SsiCommand> = THashMap()
+internal open class SsiProcessor {
+  private val commands: MutableMap<String, SsiCommand> = HashMap()
 
   init {
     commands.put("config", SsiCommand { state, _, paramNames, paramValues, writer ->
@@ -71,11 +70,7 @@ class SsiProcessor(allowExec: Boolean) {
       writer.write(variableValue ?: "(none)")
       System.currentTimeMillis()
     })
-    //noinspection StatementWithEmptyBody
-    if (allowExec) {
-      // commands.put("exec", new SsiExec());
-    }
-    commands.put("include", SsiCommand { state, commandName, paramNames, paramValues, writer ->
+    commands.put("include", SsiCommand { state, _, paramNames, paramValues, writer ->
       var lastModified: Long = 0
       val configErrorMessage = state.configErrorMessage
       for (i in paramNames.indices) {
@@ -85,14 +80,14 @@ class SsiProcessor(allowExec: Boolean) {
           try {
             val virtual = paramName.equals("virtual", ignoreCase = true)
             lastModified = state.ssiExternalResolver.getFileLastModified(substitutedValue, virtual)
-            val file = state.ssiExternalResolver.findFile(substitutedValue, virtual)
+            val file = state.ssiExternalResolver.findFileInProject(substitutedValue, virtual)
             if (file == null) {
               LOG.warn("#include-- Couldn't find file: $substitutedValue")
               return@SsiCommand 0
             }
 
             file.inputStream().use {
-              writer.write(it, file.size().toInt())
+              writer.write(it, file.fileSize().toInt())
             }
           }
           catch (e: IOException) {
@@ -197,12 +192,12 @@ class SsiProcessor(allowExec: Boolean) {
    */
   fun process(ssiExternalResolver: SsiExternalResolver, file: Path, writer: ByteBufUtf8Writer): Long {
     val fileContents = file.readChars()
-    var lastModifiedDate = file.lastModified().toMillis()
+    var lastModifiedDate = file.getLastModifiedTime().toMillis()
     val ssiProcessingState = SsiProcessingState(ssiExternalResolver, lastModifiedDate)
     var index = 0
     var inside = false
     val command = StringBuilder()
-    writer.ensureWritable(file.size().toInt())
+    writer.ensureWritable(file.fileSize().toInt())
     try {
       while (index < fileContents.length) {
         val c = fileContents[index]
@@ -268,7 +263,7 @@ class SsiProcessor(allowExec: Boolean) {
     return lastModifiedDate
   }
 
-  protected fun parseParamNames(command: StringBuilder, start: Int): List<String> {
+  private fun parseParamNames(command: StringBuilder, start: Int): List<String> {
     var bIdx = start
     val values = SmartList<String>()
     var inside = false
@@ -314,7 +309,7 @@ class SsiProcessor(allowExec: Boolean) {
   }
 
   @SuppressWarnings("AssignmentToForLoopParameter")
-  protected fun parseParamValues(command: StringBuilder, start: Int, count: Int): Array<String>? {
+  private fun parseParamValues(command: StringBuilder, start: Int, count: Int): Array<String>? {
     var valueIndex = 0
     var inside = false
     val values = arrayOfNulls<String>(count)
@@ -367,14 +362,14 @@ class SsiProcessor(allowExec: Boolean) {
       }
       bIdx++
     }
-    @Suppress("CAST_NEVER_SUCCEEDS", "UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
     return values as Array<String>
   }
 
   private fun parseCommand(instruction: StringBuilder): String {
     var firstLetter = -1
     var lastLetter = -1
-    for (i in 0..instruction.length - 1) {
+    for (i in instruction.indices) {
       val c = instruction[i]
       if (Character.isLetter(c)) {
         if (firstLetter == -1) {
@@ -394,9 +389,9 @@ class SsiProcessor(allowExec: Boolean) {
     return if (firstLetter == -1) "" else instruction.substring(firstLetter, lastLetter + 1)
   }
 
-  protected fun charCmp(buf: CharSequence, index: Int, command: String): Boolean = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
+  private fun charCmp(buf: CharSequence, index: Int, command: String): Boolean = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
 
-  protected fun isSpace(c: Char): Boolean = c == ' ' || c == '\n' || c == '\t' || c == '\r'
+  private fun isSpace(c: Char): Boolean = c == ' ' || c == '\n' || c == '\t' || c == '\r'
 
-  protected fun isQuote(c: Char): Boolean = c == '\'' || c == '\"' || c == '`'
+  private fun isQuote(c: Char): Boolean = c == '\'' || c == '\"' || c == '`'
 }

@@ -22,13 +22,15 @@ import java.util.Arrays;
  */
 public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiteralExpression> {
   @Override
-  public void tokenize(@NotNull PsiLiteralExpression expression, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiLiteralExpression expression, @NotNull TokenConsumer consumer) {
     String text;
     if (!ExpressionUtils.hasStringType(expression)) {
       text = null;
     }
     else if (expression.isTextBlock()) {
       text = expression.getText();
+      if (text.length() < 7) return;
+      text = text.substring(3, text.length() - 3);
     }
     else {
       text = PsiLiteralUtil.getStringLiteralContent(expression);
@@ -40,9 +42,10 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
 
     if (InjectedLanguageManager.getInstance(expression.getProject()).getInjectedPsiFiles(expression) != null) return;
 
-    final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(expression, PsiModifierListOwner.class);
+    final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(skipParenthesizedExprUp(expression), 
+                                                                       PsiModifierListOwner.class);
     if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, AnnotationUtil.NON_NLS, AnnotationUtil.CHECK_EXTERNAL)) {
-      PsiElement targetElement = getCompleteStringValueExpression(expression);
+      PsiElement targetElement = skipParenthesizedExprUp(getCompleteStringValueExpression(expression));
       if (listOwner instanceof PsiMethod) {
         if (Arrays.stream(PsiUtil.findReturnStatements(((PsiMethod)listOwner))).map(s -> s.getReturnValue()).anyMatch(e -> e == targetElement)) {
           return;
@@ -61,12 +64,20 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
     }
   }
 
+  private static PsiElement skipParenthesizedExprUp(PsiElement expression) {
+    while (expression.getParent() instanceof PsiParenthesizedExpression) {
+      expression = expression.getParent();
+    }
+    return expression;
+  }
+
   public static void processTextWithEscapeSequences(PsiLiteralExpression element, String text, TokenConsumer consumer) {
-    StringBuilder unescapedText = new StringBuilder();
+    StringBuilder unescapedText = new StringBuilder(text.length());
     int[] offsets = new int[text.length() + 1];
     CodeInsightUtilCore.parseStringCharacters(text, unescapedText, offsets);
 
-    processTextWithOffsets(element, consumer, unescapedText, offsets, 1);
+    int startOffset = (element != null && element.isTextBlock()) ? 3 : 1;
+    processTextWithOffsets(element, consumer, unescapedText, offsets, startOffset);
   }
 
   public static PsiElement getCompleteStringValueExpression(PsiExpression expression) {

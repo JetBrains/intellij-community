@@ -32,6 +32,7 @@ import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
 import org.intellij.lang.xpath.xslt.quickfix.CreateTemplateFix;
 import org.intellij.lang.xpath.xslt.util.NamedTemplateMatcher;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,13 +75,13 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
-    return new LocalQuickFix[] { new CreateTemplateFix(myAttribute.getParent(), myName) };
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
+    return new LocalQuickFix[] { new CreateTemplateFix(myName) };
   }
 
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return "Cannot resolve template ''{0}''";
+    return XPathBundle.partialMessage("inspection.message.cannot.resolve.template", 1);
   }
 }

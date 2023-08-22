@@ -2,18 +2,13 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.TObjectObjectProcedure;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 
-/**
- * @author: db
- */
 abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final K key);
 
@@ -35,7 +30,7 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
 
   abstract void removeAll(final K key, final Collection<V> value);
 
-  abstract void forEachEntry(TObjectObjectProcedure<K, Collection<V>> procedure);
+  abstract void forEachEntry(@NotNull PairProcessor<? super K, ? super Collection<V>> procedure);
 
   abstract void flush(boolean memoryCachesOnly);
 
@@ -43,15 +38,12 @@ abstract class ObjectObjectMultiMaplet<K, V> implements Streamable, CloseableMap
   public void toStream(final DependencyContext context, final PrintStream stream) {
 
     final List<Pair<K, String>> keys = new ArrayList<>();
-    forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(final K a, final Collection<V> b) {
-        keys.add(Pair.create(a, debugString(a)));
-        return true;
-      }
+    forEachEntry((a, b) -> {
+      keys.add(Pair.create(a, debugString(a)));
+      return true;
     });
 
-    keys.sort(Comparator.comparing(o -> o.second));
+    keys.sort(Pair.comparingBySecond());
 
     for (final Pair<K, String> a: keys) {
       final Collection<V> b = get(a.first);

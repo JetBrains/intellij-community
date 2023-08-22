@@ -1,0 +1,18 @@
+{
+  "modules" : [
+    { "name": "A", "dependsOn": ["A"] },
+    { "name": "B", "dependsOn": ["A"] }
+  ],
+  "targets": [
+    {
+      "module": "A",
+      "directDependents": ["B"],
+      "transitiveDependents": ["B"]
+    },
+    {
+      "module": "B",
+      "directDependents": [],
+      "transitiveDependents": []
+    }
+  ]
+}

@@ -7,8 +7,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-public class ImageSerializer {
+public final class ImageSerializer {
   public static String imageToBytes(Image image) throws IOException {
     //noinspection UndesirableClassUsage
     BufferedImage bi = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
@@ -17,7 +18,7 @@ public class ImageSerializer {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ImageIO.write(bi, "png", baos);
     g.dispose();
-    return new String(baos.toByteArray(), "ISO-8859-1");
+    return new String(baos.toByteArray(), StandardCharsets.ISO_8859_1);
   }
 
   public static String iconToBytesPreview(Icon icon, int maxSize) throws IOException {

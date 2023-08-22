@@ -15,6 +15,4 @@ public interface PomTransaction {
   @NotNull
   PsiElement getChangeScope();
 
-  @NotNull
-  PomModelAspect getTransactionAspect();
 }

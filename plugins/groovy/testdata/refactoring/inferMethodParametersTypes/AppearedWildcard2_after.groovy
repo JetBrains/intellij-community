@@ -1,4 +1,4 @@
-void foo(List<Object> a) {}
+void foo(ArrayList<Object> a) {}
 
 def m() {
   foo([])

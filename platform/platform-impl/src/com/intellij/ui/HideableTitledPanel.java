@@ -1,5 +1,7 @@
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -7,25 +9,31 @@ import java.awt.*;
 
 /**
  * @author evgeny zakrevsky
+ *
+ * @deprecated Use Kotlin UI DSL 2, see Panel#collapsibleGroup
  */
+@Deprecated
 public class HideableTitledPanel extends JPanel {
 
   private final HideableDecorator myDecorator;
 
-  public HideableTitledPanel(String title) {
+  public HideableTitledPanel(@NlsContexts.Separator String title) {
     this(title, true);
   }
 
-  public HideableTitledPanel(String title, boolean adjustWindow) {
+  public HideableTitledPanel(@NlsContexts.Separator String title, boolean adjustWindow) {
     super(new BorderLayout());
     myDecorator = new HideableDecorator(this, title, adjustWindow);
+    UIUtil.applyDeprecatedBackground(this);
+    //noinspection DataFlowIssue
+    UIUtil.applyDeprecatedBackground(UIUtil.findComponentOfType(this, TitledSeparator.class));
   }
 
-  public HideableTitledPanel(String title, JComponent content, boolean on) {
+  public HideableTitledPanel(@NlsContexts.Separator String title, JComponent content, boolean on) {
     this(title, true, content, on);
   }
 
-  public HideableTitledPanel(String title, boolean adjustWindow, JComponent content, boolean on) {
+  public HideableTitledPanel(@NlsContexts.Separator String title, boolean adjustWindow, JComponent content, boolean on) {
     this(title, adjustWindow);
     setContentComponent(content);
     setOn(on);
@@ -43,7 +51,7 @@ public class HideableTitledPanel extends JPanel {
     return myDecorator.isExpanded();
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.Separator String title) {
     myDecorator.setTitle(title);
   }
 

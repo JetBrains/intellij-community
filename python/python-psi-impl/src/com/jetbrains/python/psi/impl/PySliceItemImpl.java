@@ -7,9 +7,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceItem;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PySliceItemImpl extends PyElementImpl implements PySliceItem {
   public PySliceItemImpl(ASTNode astNode) {
     super(astNode);

@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,19 +27,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAware {
-  LoadAllVfsStoredContentsAction() {
-    super(InternalActionsBundle.messagePointer("action.AnAction.text.load.all.virtual.files.content"),
-          InternalActionsBundle.messagePointer("action.AnAction.description.load.all.virtual.files.content"), null);
-  }
+final class LoadAllVfsStoredContentsAction extends AnAction implements DumbAware {
+
   private static final Logger LOG = Logger.getInstance(LoadAllVfsStoredContentsAction.class);
 
   private final AtomicInteger count = new AtomicInteger();
   private final AtomicLong totalSize = new AtomicLong();
 
+  LoadAllVfsStoredContentsAction() {
+    super(InternalActionsBundle.messagePointer("action.AnAction.text.load.all.virtual.files.content"),
+          InternalActionsBundle.messagePointer("action.AnAction.description.load.all.virtual.files.content"),
+          null);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     String m = "Started loading content";
     LOG.info(m);
     System.out.println(m);
@@ -92,7 +95,12 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 }

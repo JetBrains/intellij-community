@@ -1,32 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
+import com.intellij.psi.*;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -47,11 +34,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 
 public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntroducer<GroovyIntroduceVariableSettings> {
   private JCheckBox myCanBeFinalCb;
 
-  public GrInplaceVariableIntroducer(String title,
+  public GrInplaceVariableIntroducer(@NlsContexts.Command String title,
                                      OccurrencesChooser.ReplaceChoice replaceChoice,
                                      GrIntroduceContext context) {
     super(title, replaceChoice, context);
@@ -59,10 +47,10 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
   }
 
   @Nullable
-  private static String getAdvertisementText() {
+  private static @PopupAdvertisement String getAdvertisementText() {
     final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("PreviousTemplateVariable");
     if  (shortcut != null) {
-      return "Press " + KeymapUtil.getShortcutText(shortcut) + " to change type";
+      return GroovyBundle.message("introduce.variable.change.type.advertisement", KeymapUtil.getShortcutText(shortcut));
     }
     return null;
   }
@@ -79,9 +67,9 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
 
   @Override
   protected JComponent getComponent() {
-    myCanBeFinalCb = new NonFocusableCheckBox(GroovyRefactoringBundle.message("declare.final"));
+    myCanBeFinalCb = new NonFocusableCheckBox(GroovyRefactoringBundle.message("declare.final.checkbox"));
     myCanBeFinalCb.setSelected(false);
-    myCanBeFinalCb.setMnemonic('f');
+    myCanBeFinalCb.setMnemonic(KeyEvent.VK_F);
     final GrFinalListener finalListener = new GrFinalListener(myEditor);
     myCanBeFinalCb.addActionListener(new ActionListener() {
       @Override
@@ -125,7 +113,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
                        var != null ? var.getType() :
                        stringPart != null ? stringPart.getLiteral().getType() :
                        null;
-        myType = type != null && !PsiType.NULL.equals(type)? CanonicalTypes.createTypeWrapper(type) : null;
+        myType = type != null && !PsiTypes.nullType().equals(type) ? CanonicalTypes.createTypeWrapper(type) : null;
       }
 
 
@@ -158,8 +146,8 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
     GrVariable variable = getVariable();
     assert variable != null && variable.getInitializerGroovy() != null;
     final PsiType initializerType = variable.getInitializerGroovy().getType();
-    TypeConstraint[] constraints = initializerType != null && !initializerType.equals(PsiType.NULL) ? new SupertypeConstraint[]{SupertypeConstraint.create(initializerType)}
-                                                                                                    : TypeConstraint.EMPTY_ARRAY;
+    TypeConstraint[] constraints = initializerType != null && !initializerType.equals(PsiTypes.nullType()) ? new SupertypeConstraint[]{SupertypeConstraint.create(initializerType)}
+                                                                                                           : TypeConstraint.EMPTY_ARRAY;
     ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), variable.getResolveScope(), true, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
     PsiElement element = getTypeELementOrDef(variable);
     if (element == null) return;

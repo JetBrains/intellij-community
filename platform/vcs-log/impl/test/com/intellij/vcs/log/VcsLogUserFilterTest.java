@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -20,14 +20,14 @@ import java.util.*;
 import static java.util.Collections.*;
 
 public abstract class VcsLogUserFilterTest {
-  @NotNull protected final Project myProject;
-  @NotNull protected final VcsLogProvider myLogProvider;
-  @NotNull protected final VcsLogObjectsFactory myObjectsFactory;
+  protected final @NotNull Project myProject;
+  protected final @NotNull VcsLogProvider myLogProvider;
+  protected final @NotNull VcsLogObjectsFactory myObjectsFactory;
 
   public VcsLogUserFilterTest(@NotNull VcsLogProvider logProvider, @NotNull Project project) {
     myProject = project;
     myLogProvider = logProvider;
-    myObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
+    myObjectsFactory = myProject.getService(VcsLogObjectsFactory.class);
   }
 
   /*
@@ -193,8 +193,9 @@ public abstract class VcsLogUserFilterTest {
 
     MultiMap<VcsUser, String> commits = generateHistory(users);
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
-    VcsLogUserFilter filter =
-      VcsLogFilterObject.fromUserNames(singleton(VcsLogFilterObject.ME), singletonMap(myProject.getBaseDir(), petrov), new HashSet<>(users));
+    VcsLogUserFilter filter = VcsLogFilterObject.fromUserNames(singleton(VcsLogFilterObject.ME),
+                                                               singletonMap(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), petrov),
+                                                               new HashSet<>(users));
 
     StringBuilder builder = new StringBuilder();
     checkFilter(filter, "me", commits.get(petrov), metadata, builder);
@@ -233,26 +234,23 @@ public abstract class VcsLogUserFilterTest {
     return new HashSet<>(expected).equals(new HashSet<>(collection));
   }
 
-  @NotNull
-  private List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
+  private @NotNull List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
     VcsLogFilterCollection filters = VcsLogFilterObject.collection(filter);
-    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProject.getBaseDir(), filters, -1);
+    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), filters, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
-  @NotNull
-  private static List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<? extends VcsCommitMetadata> metadata) {
+  private static @NotNull List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<? extends VcsCommitMetadata> metadata) {
     return ContainerUtil.map(ContainerUtil.filter(metadata, filter::matches), metadata1 -> metadata1.getId().asString());
   }
 
-  @NotNull
-  private List<VcsCommitMetadata> generateMetadata(@NotNull MultiMap<VcsUser, String> commits) {
+  private @NotNull List<VcsCommitMetadata> generateMetadata(@NotNull MultiMap<VcsUser, String> commits) {
     List<VcsCommitMetadata> result = new ArrayList<>();
 
     for (VcsUser user : commits.keySet()) {
       for (String commit : commits.get(user)) {
         result.add(myObjectsFactory.createCommitMetadata(HashImpl.build(commit), emptyList(), System.currentTimeMillis(),
-                                                         myProject.getBaseDir(), "subject " + Math.random(), user.getName(),
+                                                         PlatformTestUtil.getOrCreateProjectBaseDir(myProject), "subject " + Math.random(), user.getName(),
                                                          user.getEmail(), "message " + Math.random(), user.getName(), user.getEmail(),
                                                          System.currentTimeMillis()));
       }
@@ -261,8 +259,7 @@ public abstract class VcsLogUserFilterTest {
     return result;
   }
 
-  @NotNull
-  private MultiMap<VcsUser, String> generateHistory(String... names) throws IOException {
+  private @NotNull MultiMap<VcsUser, String> generateHistory(String... names) throws IOException {
     TestCase.assertTrue("Incorrect user names (should be pairs of users and emails) " + Arrays.toString(names), names.length % 2 == 0);
 
     List<VcsUser> users = new ArrayList<>();
@@ -273,20 +270,19 @@ public abstract class VcsLogUserFilterTest {
     return generateHistory(users);
   }
 
-  @NotNull
-  private MultiMap<VcsUser, String> generateHistory(@NotNull List<? extends VcsUser> users) throws IOException {
+  private @NotNull MultiMap<VcsUser, String> generateHistory(@NotNull List<? extends VcsUser> users) throws IOException {
     MultiMap<VcsUser, String> commits = MultiMap.createLinked();
 
     for (VcsUser user : users) {
       recordCommit(commits, user);
     }
 
-    VfsUtil.markDirtyAndRefresh(false, true, false, myProject.getBaseDir());
+    VfsUtil.markDirtyAndRefresh(false, true, false, PlatformTestUtil.getOrCreateProjectBaseDir(myProject));
     return commits;
   }
 
   private static void assertFilteredCorrectly(@NotNull StringBuilder builder) {
-    TestCase.assertTrue("Incorrectly filtered log for\n" + builder.toString(), builder.toString().isEmpty());
+    TestCase.assertTrue("Incorrectly filtered log for\n" + builder, builder.toString().isEmpty());
   }
 
   private void recordCommit(@NotNull MultiMap<VcsUser, String> commits, @NotNull VcsUser user) throws IOException {
@@ -294,6 +290,5 @@ public abstract class VcsLogUserFilterTest {
     commits.putValue(user, commit);
   }
 
-  @NotNull
-  protected abstract String commit(VcsUser user) throws IOException;
+  protected abstract @NotNull String commit(VcsUser user) throws IOException;
 }

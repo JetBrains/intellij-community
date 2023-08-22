@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
@@ -42,7 +28,7 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    * @return the instance.
    */
   public static ProjectRootManager getInstance(@NotNull Project project) {
-    return project.getComponent(ProjectRootManager.class);
+    return project.getService(ProjectRootManager.class);
   }
 
   /**
@@ -86,14 +72,14 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
     /**
     * Returns the list of content roots for all modules in the project.
     *
-    * @return the list of content roots.
+    * @return the array of content roots.
     */
   public abstract VirtualFile @NotNull [] getContentRoots();
 
   /**
    * Returns the list of source roots under the content roots for all modules in the project.
    *
-   * @return the list of content source roots.
+   * @return the array of content source roots.
    */
   public abstract VirtualFile @NotNull [] getContentSourceRoots();
 
@@ -131,12 +117,6 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    * @param sdk the SDK instance.
    */
   public abstract void setProjectSdk(@Nullable Sdk sdk);
-
-  /**
-   * @deprecated use {@link #setProjectSdk(Sdk)} or {@link #setProjectSdkName(String, String)}
-   */
-  @Deprecated
-  public abstract void setProjectSdkName(@NotNull String name);
 
   /**
    * Sets the name of the JDK to be used for the project

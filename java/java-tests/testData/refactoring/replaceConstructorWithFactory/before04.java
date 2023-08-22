@@ -1,7 +1,7 @@
 class OuterClass {
     class InnerClass {
         int i;
-        InnerClass(int _i) {<caret>
+        InnerClass<caret>(int _i) {
             i = _i;
         }
     }

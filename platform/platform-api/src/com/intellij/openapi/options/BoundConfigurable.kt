@@ -1,25 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 /**
- * @author yole
+ * @see DialogPanelConfigurableBase
  */
 abstract class BoundConfigurable(
-  @Nls private val displayName: String,
+  @NlsContexts.ConfigurableName private val displayName: String,
   @NonNls private val helpTopic: String? = null
 ) : DslConfigurableBase(), Configurable {
   override fun getDisplayName(): String = displayName
   override fun getHelpTopic(): String? = helpTopic
 }
 
+/**
+ * @see DialogPanelUnnamedConfigurableBase
+ */
 abstract class DslConfigurableBase : UnnamedConfigurable {
   protected var disposable: Disposable? = null
     private set
@@ -37,9 +40,9 @@ abstract class DslConfigurableBase : UnnamedConfigurable {
 
   abstract fun createPanel(): DialogPanel
 
-  final override fun createComponent(): JComponent? = panel.value
+  final override fun createComponent(): JComponent = panel.value
 
-  override fun isModified() = panel.value.isModified()
+  override fun isModified(): Boolean = panel.value.isModified()
 
   override fun reset() {
     panel.value.reset()
@@ -47,6 +50,10 @@ abstract class DslConfigurableBase : UnnamedConfigurable {
 
   override fun apply() {
     panel.value.apply()
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return panel.value.preferredFocusedComponent
   }
 
   override fun disposeUIResources() {
@@ -59,7 +66,7 @@ abstract class DslConfigurableBase : UnnamedConfigurable {
   }
 }
 
-abstract class BoundSearchableConfigurable(displayName: String, helpTopic: String, private val _id: String = helpTopic)
+abstract class BoundSearchableConfigurable(@NlsContexts.ConfigurableName displayName: String, helpTopic: String, private val _id: String = helpTopic)
   : BoundConfigurable(displayName, helpTopic), SearchableConfigurable {
   override fun getId(): String = _id
 }

@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JCiPUtil {
+public final class JCiPUtil {
 
   private JCiPUtil() {}
 
@@ -42,7 +42,7 @@ public class JCiPUtil {
 
   private static boolean containsImmutableWord(PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
-      CachedValueProvider.Result.create(IdIndex.hasIdentifierInFile(file, "Immutable"), file));
+      CachedValueProvider.Result.create(PsiSearchHelper.getInstance(file.getProject()).hasIdentifierInFile(file, "Immutable"), file));
   }
 
   @Nullable
@@ -52,8 +52,7 @@ public class JCiPUtil {
     if (annotation != null) {
       return getGuardValue(annotation);
     }
-    if (member instanceof PsiDocCommentOwner) {
-      PsiDocCommentOwner commentOwner = (PsiDocCommentOwner)member;
+    if (member instanceof PsiDocCommentOwner commentOwner) {
       PsiDocComment comment = commentOwner.getDocComment();
       if (comment != null) {
         PsiDocTag[] tags = comment.getTags();

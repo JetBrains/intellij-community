@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
@@ -26,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import java.util.Set;
 
 public abstract class GroovyElseUnwrapperBase extends GroovyUnwrapper {
-  public GroovyElseUnwrapperBase(@NotNull String description) {
+  public GroovyElseUnwrapperBase(@NotNull @Nls String description) {
     super(description);
   }
 

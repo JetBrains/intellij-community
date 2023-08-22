@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -11,10 +12,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents id of the task enqueued to external API for execution.
- *
- * @author Denis Zhdanov
  */
-public class ExternalSystemTaskId implements Serializable {
+public final class ExternalSystemTaskId implements Serializable {
 
   @NotNull private static final AtomicLong COUNTER          = new AtomicLong();
   private static final          long       serialVersionUID = 1L;
@@ -76,6 +75,10 @@ public class ExternalSystemTaskId implements Serializable {
   @NotNull
   public ExternalSystemTaskType getType() {
     return myType;
+  }
+
+  public long getId() {
+    return myId;
   }
 
   @Override

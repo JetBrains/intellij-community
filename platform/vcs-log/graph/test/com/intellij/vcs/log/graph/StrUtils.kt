@@ -36,14 +36,14 @@ fun LinearGraph.asString(sorted: Boolean = false): String {
     if (sorted) {
       adjEdges = adjEdges.sortedWith(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
     }
-    adjEdges.map { it.asString() }.joinTo(s, separator = " ")
+    adjEdges.joinTo(s, separator = " ") { it.asString() }
   }
   return s.toString()
 }
 
 fun GraphNode.asString(): String = "${nodeIndex}_${toChar(type)}"
 
-fun Int?.asString() = if (this == null) "n" else toString()
+fun Int?.asString() = this?.toString() ?: "n"
 
 fun GraphEdge.asString(): String = "${upNodeIndex.asString()}:${downNodeIndex.asString()}:${targetId.asString()}_${toChar(type)}"
 

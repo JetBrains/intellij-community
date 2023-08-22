@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +16,25 @@ import java.util.Map;
 public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
   private static final BooleanMarkStateDescriptor MARK_STATE_DESCRIPTOR = new BooleanMarkStateDescriptor();
 
+  private final Collection<StatisticsCollector<T>> myStatisticsCollectors = new ArrayList<>();
+
+  public void addStatisticsCollector(StatisticsCollector<T> collector) {
+    myStatisticsCollectors.add(collector);
+    addElementsMarkListener(collector);
+  }
+  public void removeStatisticsCollector(StatisticsCollector<T> collector) {
+    myStatisticsCollectors.remove(collector);
+    removeElementsMarkListener(collector);
+  }
+
   public interface ElementsMarkListener<T> {
     void elementMarkChanged(T element, boolean isMarked);
+  }
+
+  public interface StatisticsCollector<T> extends ElementsMarkListener<T> {
+    void selectionInverted();
+    void allSelected();
+    void noneSelected();
   }
 
   public ElementsChooser(final boolean elementsCanBeMarked) {
@@ -72,13 +89,11 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     markElements(elements, Boolean.TRUE);
   }
 
-  @NotNull
-  public List<T> getMarkedElements() {
+  public @NotNull List<T> getMarkedElements() {
     return getElements(true);
   }
 
-  @NotNull
-  public List<T> getElements(boolean isMarked) {
+  public @NotNull List<T> getElements(boolean isMarked) {
     Map<T, Boolean> elementMarkStates = getElementMarkStates();
     List<T> elements = new ArrayList<>();
     for (Map.Entry<T, Boolean> entry : elementMarkStates.entrySet()) {
@@ -105,10 +120,13 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
       T type = getElementAt(i);
       setElementMarked(type, !isElementMarked(type));
     }
+    myStatisticsCollectors.forEach(StatisticsCollector::selectionInverted);
   }
 
   public void setAllElementsMarked(boolean marked) {
     setAllElementsMarked(getMarkState(marked));
+    if (marked) myStatisticsCollectors.forEach(StatisticsCollector::allSelected);
+    else myStatisticsCollectors.forEach(StatisticsCollector::noneSelected);
   }
 
   private static Boolean getMarkState(boolean marked) {
@@ -121,21 +139,18 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
   }
 
   private static class BooleanMarkStateDescriptor<T> implements MarkStateDescriptor<T, Boolean> {
-    @NotNull
     @Override
-    public Boolean getDefaultState(@NotNull T element) {
+    public @NotNull Boolean getDefaultState(@NotNull T element) {
       return Boolean.FALSE;
     }
 
-    @NotNull
     @Override
-    public Boolean getNextState(@NotNull T element, @NotNull Boolean state) {
+    public @NotNull Boolean getNextState(@NotNull T element, @NotNull Boolean state) {
       return !state;
     }
 
-    @Nullable
     @Override
-    public Boolean getNextState(@NotNull Map<T, Boolean> elementsWithStates) {
+    public @Nullable Boolean getNextState(@NotNull Map<T, Boolean> elementsWithStates) {
       boolean currentlyMarked = true;
       for (Boolean state : elementsWithStates.values()) {
         currentlyMarked = state;
@@ -151,15 +166,13 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
       return state;
     }
 
-    @Nullable
     @Override
-    public Boolean getMarkState(@Nullable Object value) {
+    public @Nullable Boolean getMarkState(@Nullable Object value) {
       return value instanceof Boolean ? ((Boolean)value) : null;
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getMarkRenderer() {
+    public @Nullable TableCellRenderer getMarkRenderer() {
       return null;
     }
   }

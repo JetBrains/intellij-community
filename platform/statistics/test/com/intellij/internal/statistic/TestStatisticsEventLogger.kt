@@ -1,25 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.eventLog.*
-import java.util.*
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.Executor
 
-class TestStatisticsEventLogger(private val session: String = "testSession",
+open class TestStatisticsEventLogger(private val session: String = "testSession",
                                 private val build: String = "999.999",
                                 private val bucket: String = "1",
                                 private val recorderVersion: String = "1") : StatisticsEventLogger {
-  val logged = ArrayList<LogEvent>()
+  val logged = CopyOnWriteArrayList<LogEvent>()
 
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
 
-    val event = newLogEvent(session, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, eventId, isState)
-    for (datum in data) {
-      event.event.addData(datum.key, datum.value)
-    }
+    val event = newLogEvent(session, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, eventId, isState, data)
+      .escape()
     logged.add(event)
     return CompletableFuture.completedFuture(null)
+  }
+
+  override fun logAsync(group: EventLogGroup,
+                        eventId: String,
+                        dataProvider: () -> Map<String, Any>?,
+                        isState: Boolean): CompletableFuture<Void> {
+    val data = dataProvider() ?: return CompletableFuture.completedFuture(null)
+    return logAsync(group, eventId, data, isState)
+  }
+
+  override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {
   }
 
   override fun getActiveLogFile(): EventLogFile? = null

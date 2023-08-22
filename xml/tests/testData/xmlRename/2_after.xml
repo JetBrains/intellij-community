@@ -1,0 +1,6 @@
+<!DOCTYPE anothertag [
+<!ELEMENT anothertag (#PCDATA)>
+<!ATTLIST anothertag id ID #IMPLIED>
+<!ELEMENT tag2 (anothertag)>
+]>
+<anothert<caret>ag></anothertag>

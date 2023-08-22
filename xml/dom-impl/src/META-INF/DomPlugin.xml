@@ -35,17 +35,18 @@
                     interface="com.intellij.util.Consumer"/>
 
     <extensionPoint name="moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider" dynamic="true"/>
+    <extensionPoint name="dom.gotoSuper" interface="com.intellij.util.xml.DomElementNavigationProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.gotoSuper language="XML" implementationClass="com.intellij.codeInsight.navigation.DomGotoSuperHandler"/>
+
     <fileBasedIndex implementation="com.intellij.util.xml.DomFileIndex"/>
 
     <filetype.stubBuilder filetype="XML" implementationClass="com.intellij.util.xml.stubs.builder.DomStubBuilder"/>
     <stubElementTypeHolder class="com.intellij.util.xml.stubs.DomElementTypeHolder" externalIdPrefix="xml."/>
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex"/>
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomElementClassIndex"/>
-
-    <applicationService serviceImplementation="com.intellij.util.xml.impl.DomApplicationComponent"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.DomService"
                         serviceImplementation="com.intellij.util.xml.impl.DomServiceImpl"/>

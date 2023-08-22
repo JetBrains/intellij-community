@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +32,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <br>
  * <i>NOTE: currently we only check usage of module name in the same file. For re-exported module names this is not sufficient.</i>
  * <br>
- * <small>User: dcheryasov
  */
 public class ImportToImportFromIntention extends PyBaseIntentionAction {
 
@@ -54,8 +54,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           myRelativeLevel = 0;
           available = true;
         }
-        else if (parent instanceof PyFromImportStatement) {
-          final PyFromImportStatement fromImport = (PyFromImportStatement)parent;
+        else if (parent instanceof PyFromImportStatement fromImport) {
           final int relativeLevel = fromImport.getRelativeLevel();
           PyPsiUtils.assertValid(fromImport);
           if (fromImport.isValid() && relativeLevel > 0 && fromImport.getImportSource() == null) {
@@ -89,8 +88,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           PsiTreeUtil.processElements(file, new PsiElementProcessor() {
             @Override
             public boolean execute(@NotNull PsiElement element) {
-              if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
-                final PyReferenceExpression ref = (PyReferenceExpression)element;
+              if (element instanceof PyReferenceExpression ref && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
                 if (myQualifierName.equals(PyPsiUtils.toPath(ref))) {  // filter out other names that might resolve to our target
                   final PsiElement parentElt = ref.getParent();
                   if (parentElt instanceof PyQualifiedExpression) { // really qualified by us, not just referencing?
@@ -131,7 +129,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           if (!FileModificationService.getInstance().preparePsiElementForWrite(elt)) {
             return;
           }
-          assert parentElt instanceof PyReferenceExpression;
+          assert parentElt instanceof PyReferenceExpression: parentElt.getClass();
           final PyElement newReference = generator.createExpressionFromText(languageLevel, nameUsed);
           parentElt.replace(newReference);
         }
@@ -185,7 +183,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
 
 
     @NotNull
-    public String getText() {
+    public @IntentionName String getText() {
       String moduleName = "?";
       if (myImportElement != null) {
         final PyReferenceExpression reference = myImportElement.getImportReferenceExpression();
@@ -193,7 +191,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           moduleName = PyPsiUtils.toPath(reference);
         }
       }
-      return PyPsiBundle.message("INTN.convert.to.from.$0.import.$1", getDots() + moduleName, "...");
+      return PyPsiBundle.message("INTN.convert.to.from.import", getDots() + moduleName, "...");
     }
 
     @NotNull
@@ -209,7 +207,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.import.unqualify");
+    return PyPsiBundle.message("INTN.NAME.convert.import.unqualify");
   }
 
   @Nullable

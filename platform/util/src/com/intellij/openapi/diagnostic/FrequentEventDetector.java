@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.FixedHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -26,10 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
-public class FrequentEventDetector {
+public final class FrequentEventDetector {
   private static final Logger LOG = Logger.getInstance(FrequentEventDetector.class);
 
   public enum Level {INFO, WARN, ERROR}
@@ -56,30 +40,30 @@ public class FrequentEventDetector {
   /**
    * @return an error message to be logged, if the current event is a part of a "frequent"-series, null otherwise
    */
-  @Nullable
-  public String getMessageOnEvent(@NotNull Object event) {
-    if (disableRequests.get() == 0 && myEventsPosted.incrementAndGet() > myEventCountThreshold && manyEventsHappenedInSmallTimeSpan()) {
-      return generateMessage(event);
+  private @Nullable String getMessageOnEvent(@NotNull Object event) {
+    if (disableRequests.get() == 0) {
+      return manyEventsHappenedInSmallTimeSpan(event);
     }
     return null;
   }
 
-  private boolean manyEventsHappenedInSmallTimeSpan() {
+  private String manyEventsHappenedInSmallTimeSpan(@NotNull Object event) {
+    int eventsPosted = myEventsPosted.incrementAndGet();
     boolean shouldLog = false;
-
-    synchronized (myEventsPosted) {
-      if (myEventsPosted.get() > myEventCountThreshold) {
-        long timeNow = System.currentTimeMillis();
-        shouldLog = timeNow - myStartedCounting < myTimeSpanMs;
-        myEventsPosted.set(0);
-        myStartedCounting = timeNow;
+    if (eventsPosted > myEventCountThreshold) {
+      synchronized (myEventsPosted) {
+        if (myEventsPosted.get() > myEventCountThreshold) {
+          long timeNow = System.currentTimeMillis();
+          shouldLog = timeNow - myStartedCounting < myTimeSpanMs;
+          myEventsPosted.set(0);
+          myStartedCounting = timeNow;
+        }
       }
     }
-    return shouldLog;
+    return shouldLog ? generateMessage(event, eventsPosted) : null;
   }
 
-  @NotNull
-  private String generateMessage(@NotNull Object event) {
+  private @NotNull @NonNls String generateMessage(@NotNull Object event, int eventsPosted) {
     String trace = ExceptionUtil.getThrowableText(new Throwable());
     boolean logTrace;
     int traceId;
@@ -94,7 +78,9 @@ public class FrequentEventDetector {
       }
     }
 
-    return "Too many events posted, #" + traceId + ". Event: " + event + (logTrace ? "\n" + trace : "");
+    return "Too many events posted (" + eventsPosted+")"
+           + " #" + traceId + ". Event: '" + event + "'"
+           + (logTrace ? "\n" + trace : "");
   }
 
   public void logMessage(@NotNull String message) {

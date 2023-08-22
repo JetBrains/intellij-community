@@ -16,23 +16,32 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ExceptionFilter implements Filter, DumbAware {
   final ExceptionInfoCache myCache;
+  private final ExceptionLineParserFactory myFactory = ExceptionLineParserFactory.getInstance();
   private ExceptionLineRefiner myNextLineRefiner;
 
-  public ExceptionFilter(@NotNull final GlobalSearchScope scope) {
-    myCache = new ExceptionInfoCache(scope);
+  public ExceptionFilter(@NotNull GlobalSearchScope scope) {
+    myCache = new ExceptionInfoCache(Objects.requireNonNull(scope.getProject()), scope);
+  }
+
+  public ExceptionFilter(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+    myCache = new ExceptionInfoCache(project, scope);
   }
 
   @Override
-  public Result applyFilter(@NotNull final String line, final int textEndOffset) {
-    ExceptionWorker worker = new ExceptionWorker(myCache);
+  public Result applyFilter(@NotNull String line, int textEndOffset) {
+    ExceptionLineParser worker = myFactory.create(myCache);
     Result result = worker.execute(line, textEndOffset, myNextLineRefiner);
     if (result == null) {
       if (myNextLineRefiner != null) {
@@ -44,7 +53,16 @@ public class ExceptionFilter implements Filter, DumbAware {
       return null;
     }
     ExceptionInfo prevLineException = myNextLineRefiner == null ? null : myNextLineRefiner.getExceptionInfo();
-    myNextLineRefiner = worker.getLocationRefiner();
+    ExceptionLineRefiner nextRefiner = null;
+    if (myNextLineRefiner != null) {
+      nextRefiner = myNextLineRefiner.consumeNextLine(line);
+    }
+    if (nextRefiner == null) {
+      myNextLineRefiner = worker.getLocationRefiner();
+    }
+    else {
+      myNextLineRefiner = nextRefiner;
+    }
     if (prevLineException != null) {
       List<ResultItem> exceptionResults = getExceptionClassNameItems(prevLineException);
       if (!exceptionResults.isEmpty()) {
@@ -53,6 +71,12 @@ public class ExceptionFilter implements Filter, DumbAware {
       }
     }
     return result;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public ExceptionLineRefiner getLocationRefiner() {
+    return myNextLineRefiner;
   }
 
   @NotNull

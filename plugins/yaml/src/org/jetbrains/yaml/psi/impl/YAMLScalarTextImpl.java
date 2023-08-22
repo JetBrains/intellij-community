@@ -8,16 +8,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
+import org.jetbrains.yaml.psi.YAMLBlockScalar;
 import org.jetbrains.yaml.psi.YAMLScalarText;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScalarText {
+
+public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScalarText, YAMLBlockScalar {
   public YAMLScalarTextImpl(@NotNull final ASTNode node) {
     super(node);
   }
@@ -28,44 +31,64 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
     return YAMLTokenTypes.SCALAR_TEXT;
   }
 
-  @NotNull
   @Override
-  protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
-    final TextRange leftRange = contentRanges.get(indexBefore);
-    final TextRange rightRange = contentRanges.get(indexBefore + 1);
-    if (leftRange.isEmpty()) {
-      return "\n";
-    }
-    if (startsWithWhitespace(text, leftRange) || startsWithWhitespace(text, rightRange)) {
-      return "\n";
-    }
-    if (rightRange.isEmpty()) {
-      int i = indexBefore + 2;
-      // Unfortunately we need to scan to the nearest non-empty line to understand
-      // whether we should add a line here
-      while (i < contentRanges.size() && contentRanges.get(i).isEmpty()) {
-        i++;
-      }
-      if (i >= contentRanges.size()) {
-        // empty lines until the end
-        if (getChompingIndicator() == ChompingIndicator.KEEP) {
+  public @NotNull YamlScalarTextEvaluator<YAMLScalarTextImpl> getTextEvaluator() {
+    return new YAMLBlockScalarTextEvaluator<>(this) {
+
+      @NotNull
+      @Override
+      protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+        final TextRange leftRange = contentRanges.get(indexBefore);
+        final TextRange rightRange = contentRanges.get(indexBefore + 1);
+        if (leftRange.isEmpty()) {
+          if (rightRange.getLength() == 1 &&
+              text.charAt(rightRange.getStartOffset()) == '\n' &&
+              getChompingIndicator() != ChompingIndicator.KEEP)
+            return "";
           return "\n";
         }
+        if (startsWithWhitespace(text, leftRange) || startsWithWhitespace(text, rightRange)) {
+          return "\n";
+        }
+        if (rightRange.isEmpty()) {
+          int i = indexBefore + 2;
+          // Unfortunately we need to scan to the nearest non-empty line to understand
+          // whether we should add a line here
+          while (i < contentRanges.size() && contentRanges.get(i).isEmpty()) {
+            i++;
+          }
+          if (i >= contentRanges.size()) {
+            // empty lines until the end
+            if (getChompingIndicator() == ChompingIndicator.KEEP) {
+              return "\n";
+            }
+          }
+          else if (startsWithWhitespace(text, contentRanges.get(i))) {
+            return "\n";
+          }
+          return "";
+        }
+        return " ";
       }
-      else if (startsWithWhitespace(text, contentRanges.get(i))) {
-        return "\n";
-      }
-      return "";
-    }
-    return " ";
-  }
 
-  private static boolean startsWithWhitespace(@NotNull CharSequence text, @NotNull TextRange range) {
-    if (range.isEmpty()) {
-      return false;
-    }
-    final char c = text.charAt(range.getStartOffset());
-    return c == ' ' || c == '\t';
+      @NotNull
+      @Override
+      public String getTextValue(@Nullable TextRange rangeInHost) {
+        String value = super.getTextValue(rangeInHost);
+        if (!StringUtil.isEmptyOrSpaces(value) && getChompingIndicator() != ChompingIndicator.STRIP && isEnding(rangeInHost)) {
+          value += "\n";
+        }
+        return value;
+      }
+
+      private boolean startsWithWhitespace(@NotNull CharSequence text, @NotNull TextRange range) {
+        if (range.isEmpty()) {
+          return false;
+        }
+        final char c = text.charAt(range.getStartOffset());
+        return c == ' ' || c == '\t';
+      }
+    };
   }
 
   @Override
@@ -76,7 +99,7 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
 
     int indent = locateIndent();
     if (indent == 0) {
-      indent = YAMLUtil.getIndentToThisElement(this) + DEFAULT_CONTENT_INDENT;
+      indent = YAMLUtil.getIndentToThisElement(this) + YAMLBlockScalarImplKt.DEFAULT_CONTENT_INDENT;
     }
     final String indentString = StringUtil.repeatSymbol(' ', indent);
 
@@ -94,7 +117,7 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
           replacement = "\n" + indentString;
         }
         else {
-          replacement = "\n\n" + indentString;
+          replacement = "\n" + indentString;
         }
 
         result.add(Pair.create(TextRange.from(i, 1), replacement));

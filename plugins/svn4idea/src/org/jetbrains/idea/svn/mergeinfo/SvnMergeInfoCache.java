@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,7 +25,9 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SvnMergeInfoCache {
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
+public final class SvnMergeInfoCache {
 
   private final static Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);
 
@@ -43,7 +44,7 @@ public class SvnMergeInfoCache {
   }
 
   public static SvnMergeInfoCache getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, SvnMergeInfoCache.class);
+    return project.getService(SvnMergeInfoCache.class);
   }
 
   public void clear(@NotNull WCInfoWithBranches info, String branchPath) {
@@ -103,7 +104,7 @@ public class SvnMergeInfoCache {
       myPath = path;
       myRevision = -1;
 
-      Task.Backgroundable task = new Task.Backgroundable(vcs.getProject(), "Calculating Copy Revision", false) {
+      Task.Backgroundable task = new Task.Backgroundable(vcs.getProject(), message("progress.title.calculating.copy.revision"), false) {
         private CopyData myData;
 
         @Override
@@ -148,7 +149,7 @@ public class SvnMergeInfoCache {
     }
   }
 
-  private static class MyCurrentUrlData {
+  private static final class MyCurrentUrlData {
 
     // key - working copy local path
     @NotNull private final Map<String, BranchInfo> myBranchInfo = ContainerUtil.createSoftMap();

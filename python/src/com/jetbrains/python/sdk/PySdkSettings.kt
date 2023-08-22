@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk
 
 import com.intellij.application.options.ReplacePathToMacroMap
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
@@ -11,18 +13,12 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-/**
- * @author vlan
- */
-@State(name = "PySdkSettings", storages = [
-  Storage(value = "pySdk.xml", roamingType = RoamingType.DISABLED),
-  Storage(value = "py_sdk_settings.xml", roamingType = RoamingType.DISABLED, deprecated = true)
-])
+@State(name = "PySdkSettings", storages = [Storage(value = "pySdk.xml", roamingType = RoamingType.DISABLED)])
 class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   companion object {
     @JvmStatic
     val instance: PySdkSettings
-      get() = ServiceManager.getService(PySdkSettings::class.java)
+      get() = ApplicationManager.getApplication().getService(PySdkSettings::class.java)
 
     private const val VIRTUALENV_ROOT_DIR_MACRO_NAME = "VIRTUALENV_ROOT_DIR"
   }
@@ -47,12 +43,19 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
       state.PREFERRED_VIRTUALENV_BASE_SDK = value
     }
 
-  fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String?) {
+  fun onVirtualEnvCreated(baseSdk: Sdk, location: @SystemIndependent String, projectPath: @SystemIndependent String?) {
+    setPreferredVirtualEnvBasePath(location, projectPath)
+    preferredVirtualEnvBaseSdk = baseSdk.homePath
+  }
+
+  private fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String?) {
     val pathMap = ReplacePathToMacroMap().apply {
       projectPath?.let {
         addMacroReplacement(it, PathMacroUtil.PROJECT_DIR_MACRO_NAME)
       }
-      addMacroReplacement(defaultVirtualEnvRoot, VIRTUALENV_ROOT_DIR_MACRO_NAME)
+      defaultVirtualEnvRoot?.let {
+        addMacroReplacement(it, VIRTUALENV_ROOT_DIR_MACRO_NAME)
+      }
     }
     val pathToSave = when {
       projectPath != null && FileUtil.isAncestor(projectPath, value, true) -> value.trimEnd { !it.isLetter() }
@@ -62,13 +65,10 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   }
 
   fun getPreferredVirtualEnvBasePath(projectPath: @SystemIndependent String?): @SystemIndependent String {
+    val defaultPath = defaultVirtualEnvRoot ?: projectPath?.let { "$it/venv" } ?: userHome
     val pathMap = ExpandMacroToPathMap().apply {
       addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectPath ?: userHome)
-      addMacroExpand(VIRTUALENV_ROOT_DIR_MACRO_NAME, defaultVirtualEnvRoot)
-    }
-    val defaultPath = when {
-      defaultVirtualEnvRoot != userHome -> defaultVirtualEnvRoot
-      else -> "$${PathMacroUtil.PROJECT_DIR_MACRO_NAME}$/venv"
+      addMacroExpand(VIRTUALENV_ROOT_DIR_MACRO_NAME, defaultPath)
     }
     val rawSavedPath = state.PREFERRED_VIRTUALENV_BASE_PATH ?: defaultPath
     val savedPath = pathMap.substitute(rawSavedPath, true)
@@ -81,7 +81,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
 
   override fun getState(): State = state
 
-  override fun loadState(state: PySdkSettings.State) {
+  override fun loadState(state: State) {
     XmlSerializerUtil.copyBean(state, this.state)
   }
 
@@ -97,8 +97,8 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
     var PREFERRED_VIRTUALENV_BASE_SDK: String? = null
   }
 
-  private val defaultVirtualEnvRoot: @SystemIndependent String
-    get() = VirtualEnvSdkFlavor.getDefaultLocation()?.path ?: userHome
+  private val defaultVirtualEnvRoot: @SystemIndependent String?
+    get() = VirtualEnvSdkFlavor.getDefaultLocation()?.path
 
   private val userHome: @SystemIndependent String
     get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())

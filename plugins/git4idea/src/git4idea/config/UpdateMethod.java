@@ -16,6 +16,7 @@
 package git4idea.config;
 
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -49,12 +50,12 @@ public enum UpdateMethod {
   }
 
   @NotNull
-  public String getName() {
+  public @Nls String getMethodName() {
     return GitBundle.message(myName);
   }
 
   @NotNull
-  public String getPresentation() {
+  public @Nls String getPresentation() {
     return GitBundle.message(myPresentation);
   }
 }

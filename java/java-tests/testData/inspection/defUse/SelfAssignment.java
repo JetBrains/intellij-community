@@ -8,7 +8,7 @@ class X {
     System.out.println(z);
     z = (z = x);
     System.out.println(z);
-    z = <warning descr="The value x assigned to 'y' is never used">y</warning> = x;
+    z = <warning descr="The value 'x' assigned to 'y' is never used">y</warning> = x;
     System.out.println(z);
   }
 }

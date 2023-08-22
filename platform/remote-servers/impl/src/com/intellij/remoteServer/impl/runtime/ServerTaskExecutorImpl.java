@@ -16,12 +16,14 @@
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.runtime.RemoteOperationCallback;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 public class ServerTaskExecutorImpl implements ServerTaskExecutor {
@@ -50,8 +52,8 @@ public class ServerTaskExecutorImpl implements ServerTaskExecutor {
       }
       catch (Throwable e) {
         LOG.info(e);
-        String message = e.getMessage();
-        callback.errorOccurred(message != null ? message : e.getClass().getName());
+        @NlsSafe String message = Optional.ofNullable(e.getMessage()).orElseGet(() -> e.getClass().getName());
+        callback.errorOccurred(message);
       }
     });
   }

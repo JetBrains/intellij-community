@@ -17,40 +17,36 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
-public class VcsAbstractSetting {
-  protected final String myDisplayName;
-  private final Collection<String> myApplicable = new HashSet<>();
+public abstract class VcsAbstractSetting implements PersistentVcsSetting {
+  private final Set<String> myApplicable = new HashSet<>();
 
-  protected VcsAbstractSetting(final String displayName) {
-    myDisplayName = displayName;
-  }
-
-  public String getDisplayName(){
-    return myDisplayName;
-  }
-
+  @Override
   public void addApplicableVcs(AbstractVcs vcs) {
     if (vcs != null) {
       myApplicable.add(vcs.getName());
     }
   }
 
-  public boolean isApplicableTo(Collection<? extends AbstractVcs> vcs) {
+  @Override
+  public boolean isApplicableTo(@NotNull Collection<? extends AbstractVcs> vcs) {
     for (AbstractVcs abstractVcs : vcs) {
       if (myApplicable.contains(abstractVcs.getName())) return true;
     }
     return false;
   }
 
-  public List<AbstractVcs> getApplicableVcses(@NotNull Project project) {
+  @Override
+  public @NotNull List<AbstractVcs> getApplicableVcses(@NotNull Project project) {
     return ContainerUtil.mapNotNull(myApplicable, name -> AllVcses.getInstance(project).getByName(name));
   }
 }

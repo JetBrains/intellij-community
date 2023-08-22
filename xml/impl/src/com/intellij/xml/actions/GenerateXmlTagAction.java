@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -31,11 +17,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -59,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.xml.XMLConstants;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -66,8 +52,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class GenerateXmlTagAction extends SimpleCodeInsightAction {
-
+public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
   public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
   private final static Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
 
@@ -110,7 +95,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       }
       else {
         JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(ContainerUtil.newArrayList(descriptors))
+          .createPopupChooserBuilder(List.of(descriptors))
           .setRenderer(new MyListCellRenderer())
           .setTitle(XmlBundle.message("choose.tag.name"))
           .setItemChosenCallback(consumer)
@@ -164,18 +149,18 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     XmlElementDescriptor selected = newTag.getDescriptor();
     if (selected == null) return;
     switch (selected.getContentType()) {
-      case XmlElementDescriptor.CONTENT_TYPE_EMPTY:
+      case XmlElementDescriptor.CONTENT_TYPE_EMPTY -> {
         newTag.collapseIfEmpty();
         ASTNode node = newTag.getNode();
         assert node != null;
         ASTNode elementEnd = node.findChildByType(XmlTokenType.XML_EMPTY_ELEMENT_END);
         if (elementEnd == null) {
-          LeafElement emptyTagEnd = Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
+          LeafElement emptyTagEnd =
+            Factory.createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, null, newTag.getManager());
           node.addChild(emptyTagEnd);
         }
-        break;
-      case XmlElementDescriptor.CONTENT_TYPE_MIXED:
-        newTag.getValue().setText("");
+      }
+      case XmlElementDescriptor.CONTENT_TYPE_MIXED -> newTag.getValue().setText("");
     }
     for (XmlAttributeDescriptor descriptor : selected.getAttributesDescriptors(newTag)) {
       if (descriptor.isRequired()) {
@@ -231,7 +216,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return tag;
   }
 
-  private static String getNamespace(XmlElementDescriptor descriptor) {
+  private static @NlsSafe String getNamespace(XmlElementDescriptor descriptor) {
     return descriptor instanceof XmlElementDescriptorImpl ? ((XmlElementDescriptorImpl)descriptor).getNamespace() : "";
   }
 
@@ -252,10 +237,24 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
 
     if (group.getMinOccurs() < 1) return Collections.emptyList();
     switch (group.getGroupType()) {
-      case LEAF:
+      case LEAF -> {
         XmlElementDescriptor descriptor = group.getLeafDescriptor();
-        return descriptor == null ? Collections.emptyList() : Collections.singletonList(descriptor);
-      case CHOICE:
+        
+        if (descriptor == null) return Collections.emptyList();
+        
+        PsiElement declaration = descriptor.getDeclaration();
+        // don't add abstract elements to required sub tags list
+        if (declaration instanceof XmlTag) {
+          XmlTag tag = (XmlTag)descriptor.getDeclaration();
+          String abstractValue = tag.getAttributeValue("abstract", XMLConstants.W3C_XML_SCHEMA_NS_URI);
+          if ("true".equals(abstractValue)) {
+            return Collections.emptyList();
+          }
+        }
+        
+        return Collections.singletonList(descriptor);
+      }
+      case CHOICE -> {
         LinkedHashSet<XmlElementDescriptor> set = null;
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
           List<XmlElementDescriptor> descriptors = computeRequiredSubTags(subGroup);
@@ -270,13 +269,14 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           return Collections.singletonList(null); // placeholder for smart completion
         }
         return new ArrayList<>(set);
-
-      default:
+      }
+      default -> {
         ArrayList<XmlElementDescriptor> list = new ArrayList<>();
         for (XmlElementsGroup subGroup : group.getSubGroups()) {
           list.addAll(computeRequiredSubTags(subGroup));
         }
         return list;
+      }
     }
   }
 
@@ -312,8 +312,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       myNSLabel = new JLabel();
       myPanel.add(myNSLabel, BorderLayout.EAST);
 
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      Font font = scheme.getFont(EditorFontType.PLAIN);
+      Font font = EditorFontType.getGlobalPlainFont();
       myNameLabel.setFont(font);
       myNSLabel.setFont(font);
     }

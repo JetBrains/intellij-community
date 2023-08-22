@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.extensions.PluginDescriptor
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.function.Predicate
 
 abstract class SchemeManager<T> {
-  companion object {
-    @JvmStatic
-    fun getBaseName(scheme: Scheme) = scheme.name.removePrefix(Scheme.EDITABLE_COPY_PREFIX)
-  }
-
   abstract val allSchemes: List<T>
 
   open val isEmpty: Boolean
@@ -31,12 +29,15 @@ abstract class SchemeManager<T> {
   abstract fun reload()
 
   @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
+  @ApiStatus.ScheduledForRemoval
   fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
     @Suppress("UNCHECKED_CAST")
     addScheme(scheme as T, replaceExisting)
   }
 
-  fun addScheme(scheme: T): Unit = addScheme(scheme, true)
+  fun addScheme(scheme: T) {
+    addScheme(scheme, true)
+  }
 
   abstract fun addScheme(scheme: T, replaceExisting: Boolean)
 
@@ -57,7 +58,7 @@ abstract class SchemeManager<T> {
    *
    * Scheme manager processor must be LazySchemeProcessor
    */
-  open fun loadBundledScheme(resourceName: String, requestor: Any) {}
+  abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T?
 
   @JvmOverloads
   open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Predicate<T>? = null) {
@@ -66,7 +67,12 @@ abstract class SchemeManager<T> {
   /**
    * Bundled / read-only (or overriding) scheme cannot be renamed or deleted.
    */
-  open fun isMetadataEditable(scheme: T): Boolean = true
+  abstract fun isMetadataEditable(scheme: T): Boolean
 
-  open fun save(errors: MutableList<Throwable>) {}
+  abstract fun save()
+
+  /**
+   * Returns the category which settings of this scheme belong to.
+   */
+  abstract fun getSettingsCategory(): SettingsCategory
 }

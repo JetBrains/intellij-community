@@ -76,3 +76,6 @@ internal fun dropModuleSourceEntry(model: ModuleRootModel, additionalEntries: In
   model.orderEntries.filterIsInstance<ModuleSourceOrderEntry>().single()
   return model.orderEntries.filter { it !is ModuleSourceOrderEntry }
 }
+
+internal fun getSingleLibraryOrderEntry(model: ModuleRootModel): LibraryOrderEntry =
+  dropModuleSourceEntry(model, 1).single() as LibraryOrderEntry

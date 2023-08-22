@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
+public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub<?>, PsiClass> {
   JavaClassElementType(@NotNull String id) {
     super(id);
   }
@@ -51,7 +51,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @NotNull
   @Override
-  public PsiClassStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
+  public PsiClassStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     boolean isDeprecatedByComment = false;
     boolean isInterface = false;
     boolean isEnum = false;
@@ -75,7 +75,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     else if (node.getTokenType() == JavaElementType.ENUM_CONSTANT_INITIALIZER) {
       isAnonymous = isEnumConst = true;
       classKindFound = true;
-      baseRef = ((PsiClassStub)parentStub.getParentStub()).getName();
+      baseRef = ((PsiClassStub<?>)parentStub.getParentStub()).getName();
     }
 
     for (final LighterASTNode child : tree.getChildren(node)) {
@@ -119,7 +119,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
         if (!pkg.isEmpty()) qualifiedName = pkg + '.' + name; else qualifiedName = name;
       }
       else if (parentStub instanceof PsiClassStub) {
-        final String parentFqn = ((PsiClassStub)parentStub).getQualifiedName();
+        final String parentFqn = ((PsiClassStub<?>)parentStub).getQualifiedName();
         qualifiedName = parentFqn != null ? parentFqn + '.' + name : null;
       }
     }
@@ -134,7 +134,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
                                                   isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment, isRecord);
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
-    return new PsiClassStubImpl(type, parentStub, qualifiedName, name, baseRef, flags);
+    return new PsiClassStubImpl<>(type, parentStub, qualifiedName, name, baseRef, flags);
   }
 
   @NotNull
@@ -146,7 +146,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @Override
   public void serialize(@NotNull PsiClassStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    dataStream.writeShort(((PsiClassStubImpl)stub).getFlags());
+    dataStream.writeShort(((PsiClassStubImpl<?>)stub).getFlags());
     if (!stub.isAnonymous()) {
       dataStream.writeName(stub.getName());
       dataStream.writeName(stub.getQualifiedName());
@@ -190,13 +190,13 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
     else {
       final String shortName = stub.getName();
-      if (shortName != null && (!(stub instanceof PsiClassStubImpl) || !((PsiClassStubImpl)stub).isAnonymousInner())) {
+      if (shortName != null && (!(stub instanceof PsiClassStubImpl) || !((PsiClassStubImpl<?>)stub).isAnonymousInner())) {
         sink.occurrence(JavaStubIndexKeys.CLASS_SHORT_NAMES, shortName);
       }
 
       final String fqn = stub.getQualifiedName();
       if (fqn != null) {
-        sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn.hashCode());
+        sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn);
       }
     }
   }

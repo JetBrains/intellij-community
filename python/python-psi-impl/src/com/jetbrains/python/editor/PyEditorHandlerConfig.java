@@ -4,7 +4,7 @@ package com.jetbrains.python.editor;
 import com.intellij.psi.PsiComment;
 import com.jetbrains.python.psi.*;
 
-public class PyEditorHandlerConfig {
+public final class PyEditorHandlerConfig {
   private PyEditorHandlerConfig() {
   }
 
@@ -15,9 +15,13 @@ public class PyEditorHandlerConfig {
     PyDictLiteralExpression.class,
     PyParenthesizedExpression.class,
     PyArgumentList.class,
-    PyParameterList.class
+    PyParameterList.class,
+    PyGroupPattern.class,
+    PySequencePattern.class,
+    PyMappingPattern.class,
+    PyPatternArgumentList.class,
   };
-  static final Class[] WRAPPABLE_CLASSES = new Class[]{
+  public static final Class[] WRAPPABLE_CLASSES = new Class[]{
     PsiComment.class,
     PyParenthesizedExpression.class,
     PyListCompExpression.class,
@@ -31,6 +35,19 @@ public class PyEditorHandlerConfig {
     PyDecoratorList.class,
     PySliceExpression.class,
     PySubscriptionExpression.class,
-    PyGeneratorExpression.class
+    PyGeneratorExpression.class,
+    PyGroupPattern.class,
+    PyMappingPattern.class,
+    PyPatternArgumentList.class,
+  };
+
+  static final Class[] CLASSES_TO_PARENTHESISE_ON_ENTER = new Class[]{
+    PyBinaryExpression.class,
+    PyCallExpression.class,
+    PyFromImportStatement.class,
+    PyTupleExpression.class,
+    PyWithStatement.class,
+    PySequencePattern.class,
+    PyReferenceExpression.class,
   };
 }

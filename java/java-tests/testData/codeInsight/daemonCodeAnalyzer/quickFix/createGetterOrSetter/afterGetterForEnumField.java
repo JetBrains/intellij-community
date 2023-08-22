@@ -1,4 +1,4 @@
-// "Create getter for '_i'" "true"
+// "Create getter for '_i'" "true-preview"
 public enum TestEnum {
     ;
     private final int _i;

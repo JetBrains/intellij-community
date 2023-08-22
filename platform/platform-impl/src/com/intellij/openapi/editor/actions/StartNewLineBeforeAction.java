@@ -26,27 +26,20 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public class StartNewLineBeforeAction extends EditorAction {
 
   public StartNewLineBeforeAction() {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return getHandler(IdeActions.ACTION_EDITOR_ENTER).isEnabled(editor, caret, dataContext);
     }
 
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       editor.getSelectionModel().removeSelection();
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       final int line = caretPosition.line;

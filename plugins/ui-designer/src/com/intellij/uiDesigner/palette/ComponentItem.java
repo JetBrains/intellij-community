@@ -1,16 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.palette.PaletteItem;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
@@ -36,10 +34,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ComponentItem implements Cloneable, PaletteItem {
   private static final Logger LOG = Logger.getInstance(ComponentItem.class);
 
@@ -57,7 +51,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private Icon mySmallIcon;
   /**
    * @see #getIconPath()
-   * @see #setIconPath(java.lang.String)
+   * @see #setIconPath(String)
    */
   private String myIconPath;
   /**
@@ -149,11 +143,14 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * {@code iconPath} is not specified and some "unknown" icon should be used
    * to represent the {@link ComponentItem} in UI.
    */
-  void setIconPath(@Nullable final String iconPath){
+  void setIconPath(@Nullable final String iconPath) {
     myIcon = null; // reset cached icon
     mySmallIcon = null; // reset cached icon
 
     myIconPath = iconPath;
+    if (iconPath != null && iconPath.startsWith("/com/intellij/uiDesigner/icons/") && iconPath.endsWith(".png")) {
+      myIconPath = iconPath.substring(0, iconPath.length() - 4) + ".svg";
+    }
   }
 
   /**
@@ -161,14 +158,15 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * Note, that the method never returns {@code null}. It returns some
    * default "unknown" icon for the items that has no specified icon in the XML.
    */
-  @NotNull public Icon getIcon() {
+  @NotNull
+  public Icon getIcon() {
     // Check cached value first
-    if(myIcon != null){
+    if (myIcon != null) {
       return myIcon;
     }
 
     // Create new icon
-    if(myIconPath != null && myIconPath.length() > 0) {
+    if (myIconPath != null && myIconPath.length() > 0) {
       final VirtualFile iconFile = ResourceFileUtil.findResourceFileInScope(myIconPath, myProject, GlobalSearchScope.allScope(myProject));
       if (iconFile != null) {
         try {
@@ -179,13 +177,12 @@ public final class ComponentItem implements Cloneable, PaletteItem {
         }
       }
       else {
-        myIcon = IconLoader.findIcon(myIconPath);
+        myIcon = IconLoader.findIcon(myIconPath, ComponentItem.class.getClassLoader());
       }
     }
-    if(myIcon == null){
+    if (myIcon == null) {
       myIcon = UIDesignerIcons.Unknown;
-     }
-    LOG.assertTrue(myIcon != null);
+    }
     return myIcon;
   }
 
@@ -203,8 +200,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     // [vova] It's safe to cast to ImageIcon here because all icons loaded by IconLoader
     // are ImageIcon(s).
     final Icon icon = getIcon();
-    if (icon instanceof ImageIcon) {
-      final ImageIcon imageIcon = (ImageIcon)icon;
+    if (icon instanceof ImageIcon imageIcon) {
       mySmallIcon = new MySmallIcon(imageIcon.getImage());
     }
     else {
@@ -221,7 +217,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     return myClassName;
   }
 
-  public String getClassShortName() {
+  public @NlsSafe String getClassShortName() {
     final int lastDotIndex = myClassName.lastIndexOf('.');
     if (lastDotIndex != -1 && lastDotIndex != myClassName.length() - 1/*not the last char in class name*/) {
       return myClassName.substring(lastDotIndex + 1).replace('$', '.');
@@ -242,7 +238,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     myClassName = className;
   }
 
-  public String getToolTipText() {
+  public @NlsSafe String getToolTipText() {
     return myToolTipText != null ? myToolTipText : calcToolTipText(myClassName);
   }
 
@@ -300,9 +296,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof ComponentItem)) return false;
-
-    final ComponentItem componentItem = (ComponentItem)o;
+    if (!(o instanceof ComponentItem componentItem)) return false;
 
     if (myClassName != null ? !myClassName.equals(componentItem.myClassName) : componentItem.myClassName != null) return false;
     if (myDefaultConstraints != null
@@ -356,15 +350,22 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Override
-  @Nullable public Object getData(Project project, @NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
-    }
-    if (getClass().getName().equals(dataId)) {
+  public @Nullable Object getData(@NotNull Project project, @NotNull String dataId) {
+    if (DATA_KEY.is(dataId)) {
       return this;
     }
     if (GroupItem.DATA_KEY.is(dataId)) {
       return Palette.getInstance(project).findGroup(this);
+    }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId, project);
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
     }
     return null;
   }

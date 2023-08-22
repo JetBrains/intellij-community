@@ -1,13 +1,13 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 class X {
   int m(int i) {
     if (i > 0) {
-        int i1 = ++i;
-        if (i1 == 1) {
+        int j = ++i;
+        if (j == 1) {
             System.out.println(1);
 
             System.out.println(2);
-        } else if (i1 == 2) {
+        } else if (j == 2) {
             System.out.println(2);
         }
     }

@@ -16,11 +16,12 @@
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailView;
 
 public interface Filter {
-  String getDisplayName();
+  @NlsActions.ActionText String getDisplayName();
 
   boolean accepts(VirtualFile file);
 

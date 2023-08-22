@@ -28,8 +28,7 @@ public class PySubTypesHierarchyTreeStructure extends HierarchyTreeStructure {
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     final List<PyHierarchyNodeDescriptor> res = new ArrayList<>();
     final PsiElement element = descriptor.getPsiElement();
-    if (element instanceof PyClass) {
-      final PyClass cls = (PyClass)element;
+    if (element instanceof PyClass cls) {
       Query<PyClass> subClasses = PyClassInheritorsSearch.search(cls, false);
       for (PyClass subClass : subClasses) {
         res.add(new PyHierarchyNodeDescriptor(descriptor, subClass, false));

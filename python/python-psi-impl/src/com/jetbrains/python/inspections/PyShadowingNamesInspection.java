@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -32,6 +33,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +42,6 @@ import java.util.Arrays;
 /**
  * Warns about shadowing names defined in outer scopes.
  *
- * @author vlan
  */
 public class PyShadowingNamesInspection extends PyInspection {
 
@@ -49,14 +50,13 @@ public class PyShadowingNamesInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyClass(@NotNull PyClass node) {
       processElement(node);
@@ -114,7 +114,8 @@ public class PyShadowingNamesInspection extends PyInspection {
                   return;
                 }
                 registerProblem(problemElement, PyPsiBundle.message("INSP.shadows.name.from.outer.scope", name),
-                                ProblemHighlightType.WEAK_WARNING, null, PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement));
+                                ProblemHighlightType.WEAK_WARNING, null,
+                                LocalQuickFix.notNullElements(PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement)));
                 return;
               }
             }

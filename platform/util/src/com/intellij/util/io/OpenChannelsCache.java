@@ -1,49 +1,183 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
+import com.intellij.util.io.stats.CachedChannelsStatistics;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.Closeable;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.util.*;
 
-public class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
-  private final int myCacheSizeLimit;
-  private final String myAccessMode;
-  private final Map<File, ChannelDescriptor> myCache;
+import static java.nio.file.StandardOpenOption.*;
 
-  public OpenChannelsCache(final int cacheSizeLimit, @NonNls String accessMode) {
-    myCacheSizeLimit = cacheSizeLimit;
-    myAccessMode = accessMode;
-    myCache = new LinkedHashMap<>(cacheSizeLimit, 0.5f, true);
+/**
+ * Cache of {@link FileChannel}s.
+ * Cache eviction policy is kind of FIFO -- the first channel cached is the first candidate to drop
+ * from the cache, given it is not used right now.
+ * <p>
+ * Cache provides 2 ways to access FileChannel: {@link #executeOp(Path, FileChannelOperation, boolean)} and {@link #executeIdempotentOp(Path, FileChannelIdempotentOperation, boolean)}.
+ * In a first method lambda supplied with {@link ResilientFileChannel} channel wrapper -- see its description for details
+ * about that 'reliable' means there. In the second method lambda must be idempotent, but supplied with direct {@link FileChannel}
+ * without wrapping.
+ */
+@ApiStatus.Internal
+final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+  private final int myCapacity;
+  private int myHitCount;
+  private int myMissCount;
+  private int myLoadCount;
+
+  //@GuardedBy("myCacheLock")
+  private final @NotNull Map<Path, ChannelDescriptor> myCache;
+
+  private final transient Object myCacheLock = new Object();
+
+  OpenChannelsCache(final int capacity) {
+    myCapacity = capacity;
+    myCache = new LinkedHashMap<>(capacity, 0.5f, true);
   }
 
-  public synchronized RandomAccessFile getChannel(File ioFile) throws FileNotFoundException {
-    ChannelDescriptor descriptor = myCache.get(ioFile);
-    if (descriptor == null) {
-      dropOvercache();
-      descriptor = new ChannelDescriptor(ioFile, myAccessMode);
-      myCache.put(ioFile, descriptor);
+  @NotNull CachedChannelsStatistics getStatistics() {
+    synchronized (myCacheLock) {
+      return new CachedChannelsStatistics(myHitCount, myMissCount, myLoadCount, myCapacity);
     }
-    descriptor.lock();
-    return descriptor.getChannel();
   }
 
-  private void dropOvercache() {
-    int dropCount = myCache.size() - myCacheSizeLimit;
+  @FunctionalInterface
+  public interface FileChannelOperation<T> {
+    T execute(@NotNull ResilientFileChannel channel) throws IOException;
+  }
+
+  /**
+   * Note: implementation supplies {@link ResilientFileChannel} to processor. {@link ResilientFileChannel}
+   * is a FileChannel implementation that tries to ensure each FileChannel operation is completed,
+   * or not started at all, but not interrupted in the middle. If something interrupts 'elementary'
+   * FileChannel ops, like read/write -- those ops are retried, invisibly for processor -- see class
+   * description for details. But it comes with small performance cost, and als the {@link ResilientFileChannel}
+   * does not implement some FileChannel operations, so be aware.
+   */
+  <T> T executeOp(final @NotNull Path path,
+                  final @NotNull FileChannelOperation<T> operation,
+                  final boolean read) throws IOException {
+    ChannelDescriptor descriptor;
+    synchronized (myCacheLock) {
+      descriptor = myCache.get(path);
+      if (descriptor == null) {
+        boolean somethingDropped = releaseOverCachedChannels();
+        descriptor = new ChannelDescriptor(path, read);
+        myCache.put(path, descriptor);
+        if (somethingDropped) {
+          myMissCount++;
+        }
+        else {
+          myLoadCount++;
+        }
+      }
+      else if (!read && descriptor.isReadOnly()) {
+        if (descriptor.isLocked()) {
+          descriptor = new ChannelDescriptor(path, false);
+        }
+        else {
+          // re-open as write
+          closeChannel(path);
+          descriptor = new ChannelDescriptor(path, false);
+          myCache.put(path, descriptor);
+        }
+        myMissCount++;
+      }
+      else {
+        myHitCount++;
+      }
+      descriptor.lock();
+    }
+
+    //channel access is NOT guarded by the myCacheLock
+    try {
+      return operation.execute(descriptor.channel());
+    }
+    finally {
+      synchronized (myCacheLock) {
+        descriptor.unlock();
+      }
+    }
+  }
+
+  /**
+   * Parameter {@param operation} should be idempotent because sometimes calculation might be restarted
+   * when file channel was closed by thread interruption
+   */
+  <T> T executeIdempotentOp(final @NotNull Path path,
+                            final @NotNull FileChannelIdempotentOperation<T> operation,
+                            final boolean read) throws IOException {
+    ChannelDescriptor descriptor;
+    synchronized (myCacheLock) {
+      descriptor = myCache.get(path);
+      if (descriptor == null) {
+        boolean somethingDropped = releaseOverCachedChannels();
+        descriptor = new ChannelDescriptor(path, read);
+        myCache.put(path, descriptor);
+        if (somethingDropped) {
+          myMissCount++;
+        }
+        else {
+          myLoadCount++;
+        }
+      }
+      else if (!read && descriptor.isReadOnly()) {
+        if (descriptor.isLocked()) {
+          descriptor = new ChannelDescriptor(path, false);
+        }
+        else {
+          // re-open as write
+          closeChannel(path);
+          descriptor = new ChannelDescriptor(path, false);
+          myCache.put(path, descriptor);
+        }
+        myMissCount++;
+      }
+      else {
+        myHitCount++;
+      }
+      descriptor.lock();
+    }
+
+    //channel access is NOT guarded by the myCacheLock
+    try {
+      return descriptor.channel().executeOperation(operation);
+    }
+    finally {
+      synchronized (myCacheLock) {
+        descriptor.unlock();
+      }
+    }
+  }
+
+
+  void closeChannel(Path path) throws IOException {
+    synchronized (myCacheLock) {
+      final ChannelDescriptor descriptor = myCache.remove(path);
+
+      if (descriptor != null) {
+        assert !descriptor.isLocked() : "Channel is in use: " + descriptor;
+        descriptor.close();
+      }
+    }
+  }
+
+  private boolean releaseOverCachedChannels() throws IOException {
+    int dropCount = myCache.size() - myCapacity;
 
     if (dropCount >= 0) {
-      List<File> keysToDrop = new ArrayList<>();
-      for (Map.Entry<File, ChannelDescriptor> entry : myCache.entrySet()) {
+      List<Path> keysToDrop = new ArrayList<>();
+      for (Map.Entry<Path, ChannelDescriptor> entry : myCache.entrySet()) {
         if (dropCount < 0) break;
         if (!entry.getValue().isLocked()) {
           dropCount--;
@@ -51,57 +185,75 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
         }
       }
 
-      for (File file : keysToDrop) {
+      for (Path file : keysToDrop) {
         closeChannel(file);
       }
+
+      return true;
     }
+    return false;
   }
 
-  public synchronized void releaseChannel(File ioFile) {
-    ChannelDescriptor descriptor = myCache.get(ioFile);
-    assert descriptor != null;
+  static final class ChannelDescriptor implements Closeable {
+    private static final OpenOption[] MODIFIABLE_OPTS = {READ, WRITE, CREATE};
+    private static final OpenOption[] READ_ONLY_OPTS = {READ};
 
-    descriptor.unlock();
-  }
-
-  public synchronized void closeChannel(File ioFile) {
-    final ChannelDescriptor descriptor = myCache.remove(ioFile);
-
-    if (descriptor != null) {
-      assert !descriptor.isLocked();
-      try {
-        descriptor.getChannel().close();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  private static class ChannelDescriptor {
     private int lockCount = 0;
-    private final RandomAccessFile myChannel;
-    private final File myFile;
+    private final @NotNull ResilientFileChannel channel;
+    private final boolean readOnly;
 
-    ChannelDescriptor(File file, String accessMode) throws FileNotFoundException {
-      myFile = file;
-      myChannel = new RandomAccessFile(file, accessMode);
+
+    ChannelDescriptor(@NotNull Path file, boolean readOnly) throws IOException {
+      this.readOnly = readOnly;
+      channel = Objects.requireNonNull(FileUtilRt.doIOOperation(lastAttempt -> {
+        try {
+          return new ResilientFileChannel(file, readOnly ? READ_ONLY_OPTS : MODIFIABLE_OPTS);
+        }
+        catch (NoSuchFileException ex) {
+          Path parent = file.getParent();
+          if (!readOnly) {
+            if (!Files.exists(parent)) {
+              Files.createDirectories(parent);
+            }
+            if (!lastAttempt) return null;
+          }
+          throw ex;
+        }
+      }));
     }
 
-    public void lock() {
+    boolean isReadOnly() {
+      return readOnly;
+    }
+
+    void lock() {
       lockCount++;
     }
 
-    public void unlock() {
+    void unlock() {
       lockCount--;
     }
 
-    public boolean isLocked() {
+    boolean isLocked() {
       return lockCount != 0;
     }
 
-    public RandomAccessFile getChannel() {
-      return myChannel;
+    @NotNull ResilientFileChannel channel() {
+      return channel;
+    }
+
+    @Override
+    public void close() throws IOException {
+      channel.close();
+    }
+
+    @Override
+    public String toString() {
+      return "ChannelDescriptor{" +
+             "locks=" + lockCount +
+             ", channel=" + channel +
+             ", readOnly=" + readOnly +
+             '}';
     }
   }
 }

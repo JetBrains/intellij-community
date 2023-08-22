@@ -39,13 +39,13 @@ class GitMoveTest : GitSingleRepoTest() {
     echo(file, "some\ncontent\nere")
     addCommit("created $file")
 
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectPath + "/$file")!!
+    val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath("$projectPath/$file")!!
 
     renameFile(vf, "ver-ren.txt")
     assertTrue("File should versioned! All changes: " + getLogString(projectPath, changeListManager.allChanges),
                !changeListManager.isUnversioned(vf))
     val change = changeListManager.getChange(vf)!!
-    assertTrue("Change should be rename: " + change, change.isRenamed)
+    assertTrue("Change should be rename: $change", change.isRenamed)
   }
 
   // IDEA-153272

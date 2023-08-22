@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import io.netty.bootstrap.Bootstrap;
@@ -10,10 +10,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Log4JLoggerFactory;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
+import io.netty.util.internal.logging.JdkLoggerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
@@ -25,44 +22,37 @@ import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.Formatter;
+import java.util.logging.*;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ExternalJavacProcess {
+public final class ExternalJavacProcess {
   public static final String JPS_JAVA_COMPILING_TOOL_PROPERTY = "jps.java.compiling.tool";
-  private final ChannelInitializer myChannelInitializer;
+  public static final int MINIMUM_REQUIRED_JAVA_VERSION = 7;
   private final EventLoopGroup myEventLoopGroup;
   private final boolean myKeepRunning;
   private volatile ChannelFuture myConnectFuture;
-  private final ConcurrentMap<UUID, Boolean> myCanceled = new ConcurrentHashMap<UUID, Boolean>();
+  private final ConcurrentMap<UUID, Boolean> myCanceled = new ConcurrentHashMap<>();
   private final Executor myThreadPool = Executors.newCachedThreadPool();
 
   static {
-    org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
-    if (!root.getAllAppenders().hasMoreElements()) {
+    Logger root = Logger.getLogger("");
+    if (root.getHandlers().length == 0) {
       root.setLevel(Level.INFO);
-      root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+      ConsoleHandler handler = new ConsoleHandler();
+      handler.setFormatter(new Formatter() {
+        @Override
+        public String format(LogRecord record) {
+          return record.getMessage() + "\n";
+        }
+      });
+      root.addHandler(handler);
     }
-    InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
+    InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE);
   }
 
   public ExternalJavacProcess(boolean keepRunning) {
     myKeepRunning = keepRunning;
-    final JavacRemoteProto.Message msgDefaultInstance = JavacRemoteProto.Message.getDefaultInstance();
-
     myEventLoopGroup = new NioEventLoopGroup(1, myThreadPool);
-    myChannelInitializer = new ChannelInitializer() {
-      @Override
-      protected void initChannel(Channel channel) throws Exception {
-        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
-                                   new ProtobufDecoder(msgDefaultInstance),
-                                   new ProtobufVarint32LengthFieldPrepender(),
-                                   new ProtobufEncoder(),
-                                   new CompilationRequestsHandler()
-                                   );
-      }
-    };
   }
 
   //static volatile long myGlobalStart;
@@ -96,7 +86,7 @@ public class ExternalJavacProcess {
       }
 
       if (args.length > 3) {
-        keepRunning = Boolean.valueOf(args[3]);
+        keepRunning = Boolean.parseBoolean(args[3]);
       }
     }
     else {
@@ -104,8 +94,8 @@ public class ExternalJavacProcess {
       System.exit(-1);
     }
 
-    final ExternalJavacProcess process = new ExternalJavacProcess(keepRunning);
     try {
+      final ExternalJavacProcess process = new ExternalJavacProcess(keepRunning);
       //final long connectStart = System.nanoTime();
       if (process.connect(host, port)) {
         //final long connectEnd = System.nanoTime();
@@ -125,9 +115,18 @@ public class ExternalJavacProcess {
     }
   }
 
-  private  boolean connect(final String host, final int port) throws Throwable {
-    final Bootstrap bootstrap = new Bootstrap().group(myEventLoopGroup).channel(NioSocketChannel.class).handler(myChannelInitializer);
-    bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
+  private  boolean connect(final String host, final int port) {
+    final Bootstrap bootstrap = new Bootstrap().group(myEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
+      @Override
+      protected void initChannel(Channel channel) {
+        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
+                                   new ProtobufDecoder(JavacRemoteProto.Message.getDefaultInstance()),
+                                   new ProtobufVarint32LengthFieldPrepender(),
+                                   new ProtobufEncoder(),
+                                   new CompilationRequestsHandler()
+        );
+      }
+    }).option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
     final ChannelFuture future = bootstrap.connect(host, port).syncUninterruptibly();
     if (future.isSuccess()) {
       myConnectFuture = future;
@@ -147,7 +146,7 @@ public class ExternalJavacProcess {
                                                   Collection<? extends File> sourcePath,
                                                   Map<File, Set<File>> outs,
                                                   final CanceledStatus canceledStatus) {
-    final long compileStart = System.nanoTime();
+    //final long compileStart = System.nanoTime();
     //System.err.println("Compile start; since global start: " + TimeUnit.NANOSECONDS.toMillis(compileStart - myGlobalStart));
     final DiagnosticOutputConsumer diagnostic = new DiagnosticOutputConsumer() {
       @Override
@@ -192,16 +191,16 @@ public class ExternalJavacProcess {
       );
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }
-    catch (Throwable e) {
+    catch (Exception e) {
       //noinspection UseOfSystemOutOrSystemErr
       e.printStackTrace(System.err);
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(e.getMessage(), e));
     }
-    finally {
-      final long compileEnd = System.nanoTime();
-      System.err.println("Compiled in " + TimeUnit.NANOSECONDS.toMillis(compileEnd - compileStart) + " ms");
+    //finally {
+      //final long compileEnd = System.nanoTime();
+      //System.err.println("Compiled in " + TimeUnit.NANOSECONDS.toMillis(compileEnd - compileStart) + " ms");
       //System.err.println("Compiled in " + TimeUnit.NANOSECONDS.toMillis(compileEnd - compileStart) + " ms; since global start: " + TimeUnit.NANOSECONDS.toMillis(compileEnd - myGlobalStart));
-    }
+    //}
   }
 
   private static JavaCompilingTool getCompilingTool() {
@@ -244,12 +243,12 @@ public class ExternalJavacProcess {
                 modulePathBuilder.add(namesMap.get(path), new File(path));
               }
               final ModulePath modulePath = modulePathBuilder.create();
-              
+
               final List<File> upgradeModulePath = toFiles(request.getUpgradeModulePathList());
 
-              final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();
+              final Map<File, Set<File>> outs = new HashMap<>();
               for (JavacRemoteProto.Message.Request.OutputGroup outputGroup : request.getOutputList()) {
-                final Set<File> srcRoots = new HashSet<File>();
+                final Set<File> srcRoots = new HashSet<>();
                 for (String root : outputGroup.getSourceRootList()) {
                   srcRoots.add(new File(root));
                 }
@@ -258,6 +257,7 @@ public class ExternalJavacProcess {
               myThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
+                  boolean keepRunning = myKeepRunning;
                   try {
                     final JavacRemoteProto.Message result = compile(context, sessionId, options, files, cp, platformCp, modulePath, upgradeModulePath, srcPath, outs, new CanceledStatus() {
                       @Override
@@ -267,9 +267,25 @@ public class ExternalJavacProcess {
                     });
                     context.channel().writeAndFlush(result).awaitUninterruptibly();
                   }
+                  catch (Throwable throwable) {
+                    // in case of unexpected exception exit, to ensure the process is not stuck in a problematic state
+                    keepRunning = false;
+                    throwable.printStackTrace(System.err);
+                    try {
+                      // attempt to report via proto
+                      context.channel().writeAndFlush(JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure(throwable.getMessage(), throwable)));
+                    }
+                    catch (Throwable ignored) {
+                    }
+                  }
                   finally {
                     myCanceled.remove(sessionId); // state cleanup
-                    if (!myKeepRunning) {
+                    if (keepRunning) {
+                      JavacMain.clearCompilerZipFileCache();
+                      //noinspection CallToSystemGC
+                      System.gc();
+                    }
+                    else {
                       // in this mode this is only one-time compilation process that should stop after build is complete
                       ExternalJavacProcess.this.stop();
                     }
@@ -332,7 +348,7 @@ public class ExternalJavacProcess {
   }
 
   private static List<File> toFiles(List<String> paths) {
-    final List<File> files = new ArrayList<File>(paths.size());
+    final List<File> files = new ArrayList<>(paths.size());
     for (String path : paths) {
       files.add(new File(path));
     }

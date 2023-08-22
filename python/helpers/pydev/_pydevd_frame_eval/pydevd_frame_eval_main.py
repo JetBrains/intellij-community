@@ -2,7 +2,7 @@ import os
 import sys
 
 from _pydev_bundle.pydev_monkey import log_error_once
-from _pydevd_bundle.pydevd_constants import IS_PYCHARM
+from _pydevd_bundle.pydevd_constants import IS_PYCHARM, IS_PY311_OR_GREATER
 
 IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
 
@@ -18,6 +18,9 @@ use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
 
 
 if not IS_PY36_OR_GREATER or sys.version_info[:3] == (3, 6, 1):  # PY-37312
+    pass
+
+elif IS_PY311_OR_GREATER:  # PY-51730
     pass
 
 elif use_cython == 'NO':

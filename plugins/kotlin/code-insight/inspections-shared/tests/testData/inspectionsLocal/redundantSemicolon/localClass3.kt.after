@@ -1,0 +1,5 @@
+fun test(foo: Any) {
+    class Bar()
+
+    (foo as? String)
+}

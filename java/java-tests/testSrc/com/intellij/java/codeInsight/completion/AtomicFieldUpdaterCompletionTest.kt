@@ -2,7 +2,9 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.testFramework.NeedsIndex
 
+@NeedsIndex.Full
 class AtomicFieldUpdaterCompletionTest : LightFixtureCompletionTestCase() {
   override fun setUp() {
     super.setUp()
@@ -51,13 +53,13 @@ class Data extends Base {
   fun testUpdateableAll() {
     doTest("updateable", 3,
            "updateableArray", "updateableIntFirst", "updateableIntSecond", "updateableLong", "updateableObject",
-           "updateableString", "nonUpdateableStringFirst", "nonUpdateableType", "nonUpdateableStringSecond")
+           "updateableString", "nonUpdateableStringFirst", "nonUpdateableStringSecond", "nonUpdateableType")
   }
 
   fun testAll() {
     doTest("", 5, "other",
            "updateableArray", "updateableIntFirst", "updateableIntSecond", "updateableLong", "updateableObject",
-           "updateableString", "nonUpdateableStringFirst", "nonUpdateableType", "nonUpdateableStringSecond")
+           "updateableString", "nonUpdateableStringFirst", "nonUpdateableStringSecond", "nonUpdateableType")
   }
 
   fun testUpdateableBase() {

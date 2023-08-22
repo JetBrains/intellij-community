@@ -42,26 +42,24 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
   public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
     final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
 
-    return with(new PatternCondition<T>("methodCallParameter") {
+    return with(new PatternCondition<>("methodCallParameter") {
       @Override
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
-        if (parent instanceof GrArgumentList) {
+        if (parent instanceof GrArgumentList psiExpressionList) {
           if (!(literal instanceof GrExpression)) return false;
 
-          final GrArgumentList psiExpressionList = (GrArgumentList)parent;
           if (psiExpressionList.getExpressionArgumentIndex((GrExpression)literal) != index) return false;
 
           final PsiElement element = psiExpressionList.getParent();
           if (element instanceof GrCall) {
             final GroovyPsiElement expression =
               element instanceof GrMethodCall ? ((GrMethodCall)element).getInvokedExpression() :
-              element instanceof GrNewExpression? ((GrNewExpression)element).getReferenceElement() :
+              element instanceof GrNewExpression ? ((GrNewExpression)element).getReferenceElement() :
               null;
 
 
-            if (expression instanceof GrReferenceElement) {
-              final GrReferenceElement ref = (GrReferenceElement)expression;
+            if (expression instanceof GrReferenceElement ref) {
 
               if (nameCondition != null && "withName".equals(nameCondition.getDebugMethodName())) {
                 final String methodName = ref.getReferenceName();
@@ -86,13 +84,17 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
 
   @NotNull
   public Self regExpOperatorArgument() {
-    return with(new PatternCondition<T>("regExpOperatorArg") {
+    return with(new PatternCondition<>("regExpOperatorArg") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
         PsiElement parent = t.getParent();
         return parent instanceof GrUnaryExpression && ((GrUnaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mBNOT ||
-               parent instanceof GrBinaryExpression && t == ((GrBinaryExpression)parent).getRightOperand() && ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_FIND ||
-               parent instanceof GrBinaryExpression && t == ((GrBinaryExpression)parent).getRightOperand() && ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_MATCH;
+               parent instanceof GrBinaryExpression &&
+               t == ((GrBinaryExpression)parent).getRightOperand() &&
+               ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_FIND ||
+               parent instanceof GrBinaryExpression &&
+               t == ((GrBinaryExpression)parent).getRightOperand() &&
+               ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_MATCH;
       }
     });
   }

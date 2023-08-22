@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -32,32 +18,26 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler {
   public static PsiClass createClassOrInterface(Project project,
                                                 PsiDirectory directory,
                                                 String content,
                                                 boolean reformat,
                                                 String extension) throws IncorrectOperationException {
-    if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
+    if (extension == null) extension = JavaFileType.INSTANCE.getDefaultExtension();
     final String name = "myClass" + "." + extension;
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, JavaLanguage.INSTANCE, content, false, false);
-    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW);
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_16);
 
-    if (!(psiFile instanceof PsiJavaFile)){
+    if (!(psiFile instanceof PsiJavaFile psiJavaFile)){
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
-    PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
     final PsiClass[] classes = psiJavaFile.getClasses();
     if (classes.length == 0) {
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
     PsiClass createdClass = classes[0];
-    if(reformat){
-      CodeStyleManager.getInstance(project).reformat(psiJavaFile);
-    }
     String className = createdClass.getName();
     JavaDirectoryServiceImpl.checkCreateClassOrInterface(directory, className);
 
@@ -76,19 +56,20 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     PsiElement addedElement = directory.add(psiJavaFile);
     if (addedElement instanceof PsiJavaFile) {
       psiJavaFile = (PsiJavaFile)addedElement;
+      if(reformat){
+        CodeStyleManager.getInstance(project).scheduleReformatWhenSettingsComputed(psiJavaFile);
+      }
 
       return psiJavaFile.getClasses()[0];
     }
     else {
       PsiFile containingFile = addedElement.getContainingFile();
-      throw new IncorrectOperationException("Selected class file name '" +
-                                            containingFile.getName() +  "' mapped to not java file type '"+
-                                            containingFile.getFileType().getDescription() + "'");
+      throw new IncorrectOperationException("The file '" + containingFile +  "' was expected to be of JAVA file type, but got: '"+ containingFile.getFileType() + "'");
     }
   }
 
   static void hackAwayEmptyPackage(PsiJavaFile file, FileTemplate template, Map<String, Object> props) throws IncorrectOperationException {
-    if (!template.isTemplateOfType(StdFileTypes.JAVA)) return;
+    if (!template.isTemplateOfType(JavaFileType.INSTANCE)) return;
 
     String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
     if(packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
@@ -102,7 +83,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   @Override
   public boolean handlesTemplate(@NotNull FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
-    return fileType.equals(StdFileTypes.JAVA) && !ArrayUtil.contains(template.getName(), JavaTemplateUtil.INTERNAL_FILE_TEMPLATES);
+    return fileType.equals(JavaFileType.INSTANCE) && !ArrayUtil.contains(template.getName(), JavaTemplateUtil.INTERNAL_FILE_TEMPLATES);
   }
 
   @NotNull

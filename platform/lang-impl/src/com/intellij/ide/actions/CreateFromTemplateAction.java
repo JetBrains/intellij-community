@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,19 +29,28 @@ import javax.swing.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
+
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
+  protected CreateFromTemplateAction() {
+  }
+
   public CreateFromTemplateAction(@NlsActions.ActionText String text,
-                                  @NlsActions.ActionDescription String description, Icon icon) {
+                                  @NlsActions.ActionDescription String description,
+                                  @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public CreateFromTemplateAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+  public CreateFromTemplateAction(@NotNull Supplier<String> dynamicText,
+                                  @NotNull Supplier<String> dynamicDescription,
+                                  @Nullable Icon icon) {
     super(dynamicText, dynamicDescription, icon);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -53,7 +63,6 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     }
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null || project == null) return;
 
@@ -67,7 +76,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                    @Override
                    public T createFile(@NotNull String name, @NotNull String templateName) {
                      selectedTemplateName.set(templateName);
-                     return CreateFromTemplateAction.this.createFile(name, templateName, dir);
+                     return CreateFromTemplateAction.this.createFile(name, templateName, adjustDirectory(dir));
                    }
 
                    @Override
@@ -89,9 +98,20 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                      if (offset != -1 && editor != null && !editor.isDisposed()) {
                        editor.getCaretModel().moveToOffset(offset);
                      }
-                     postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
+                     try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+                       postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
+                     }
                    }
                  });
+  }
+
+  protected PsiDirectory adjustDirectory(@NotNull PsiDirectory original) {
+    return original;
+  }
+
+  @Nullable
+  protected PsiDirectory getDirectory(IdeView view) {
+    return view.getOrChooseDirectory();
   }
 
   @SuppressWarnings("TestOnlyProblems")
@@ -105,13 +125,14 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return CreateFileFromTemplateDialog.createDialog(project);
   }
 
-  protected void postProcess(T createdElement, String templateName, Map<String,String> customProperties) {
+  protected void postProcess(@NotNull T createdElement, String templateName, Map<String, String> customProperties) {
   }
 
   @Nullable
   protected abstract T createFile(String name, String templateName, PsiDirectory dir);
 
-  protected abstract void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder);
+  protected abstract void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                                      @NotNull CreateFileFromTemplateDialog.Builder builder);
 
   @NonNls
   @Nullable
@@ -137,6 +158,10 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   protected boolean isAvailable(DataContext dataContext) {
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor != null && editor.getSelectionModel().hasSelection()) {
+      return false;
+    }
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     return project != null && view != null && view.getDirectories().length != 0;

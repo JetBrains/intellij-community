@@ -17,6 +17,7 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,5 @@ public interface QuickActionProvider {
   @Nullable
   JComponent getComponent();
 
-  @Nullable
-  String getName();
+  @NlsActions.ActionText @Nullable String getName();
 }

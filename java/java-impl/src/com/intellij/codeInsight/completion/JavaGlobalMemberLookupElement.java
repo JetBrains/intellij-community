@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaGlobalMemberLookupElement extends LookupElement implements StaticallyImportable {
   private final MemberLookupHelper myHelper;
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;
@@ -64,7 +61,7 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
     myHelper.renderElement(presentation, !myHelper.willBeImported(), true, PsiSubstitutor.EMPTY);
   }

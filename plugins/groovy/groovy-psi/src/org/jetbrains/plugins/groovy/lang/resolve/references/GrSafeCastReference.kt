@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
@@ -15,5 +15,5 @@ class GrSafeCastReference(element: GrSafeCastExpression) : GroovyMethodCallRefer
 
   override val methodName: String get() = AS_TYPE
 
-  override val arguments: Arguments? get() = listOf(LazyTypeArgument { createJavaLangClassType(element.castTypeElement?.type, element) })
+  override val arguments: Arguments get() = listOf(LazyTypeArgument { createJavaLangClassType(element.castTypeElement?.type, element) })
 }

@@ -1,4 +1,4 @@
-// "Unwrap 'if' statement" "true"
+// "Unwrap 'if' statement" "true-preview"
 class X {
   void test(@org.jetbrains.annotations.NotNull String x) {
     if(x != <caret>null) {

@@ -62,7 +62,7 @@ class Meta(type):
   def foo(<weak_warning descr="Usually first parameter of such methods is named 'self'">first</weak_warning>): # rename to "self"
     pass
 
-  def __new__(<weak_warning descr="Usually first parameter of such methods is named 'mcs'">self</weak_warning>, *rest): # rename to "mcs"
+  def __new__(<weak_warning descr="Usually first parameter of such methods is named 'cls'">self</weak_warning>, *rest): # rename to "mcs"
     pass
 
   def __call__(<weak_warning descr="Usually first parameter of such methods is named 'cls'">self</weak_warning>): # rename to "cls"
@@ -72,8 +72,24 @@ class Meta(type):
     return "foobar"
 
   @classmethod
-  def baz(<weak_warning descr="Usually first parameter of such methods is named 'mcs'">moo</weak_warning>): # <- rename to "mcs"
+  def baz(<weak_warning descr="Usually first parameter of such methods is named 'cls'">moo</weak_warning>): # <- rename to "mcs"
     return "foobar"
+
+  @classmethod
+  def cls_is_preferred(cls):
+    pass
+
+  @classmethod
+  def mcls_is_valid(mcls):
+    pass
+
+  @classmethod
+  def mcs_is_valid(mcs):
+    pass
+
+  @classmethod
+  def metacls_is_valid(metacls):
+    pass
 
   @staticmethod
   def bazz(param1):

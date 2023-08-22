@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
   @Nullable
@@ -115,11 +112,6 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void removeListener(@NotNull Listener listener) {
-    throw new UnsupportedOperationException("Method removeListener is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
     throw new UnsupportedOperationException("Method isDocumentBlockedByPsi is not yet implemented in " + getClass().getName());
   }
@@ -146,7 +138,8 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void performLaterWhenAllCommitted(@NotNull Runnable runnable, ModalityState modalityState) {
+  public void performLaterWhenAllCommitted(@NotNull ModalityState modalityState,
+                                           @NotNull Runnable runnable) {
     throw new UnsupportedOperationException();
   }
 }

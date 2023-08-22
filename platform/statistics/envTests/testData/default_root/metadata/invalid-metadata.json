@@ -1,0 +1,7 @@
+{
+  "groups" : [ {
+    "id" : "test.group",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "3"
+    } ],

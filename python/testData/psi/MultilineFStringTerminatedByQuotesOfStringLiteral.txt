@@ -12,9 +12,9 @@ PyFile:MultilineFStringTerminatedByQuotesOfStringLiteral.py
         PsiElement(Py:FSTRING_START)('f'''')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-          PsiErrorElement:expression expected
+          PsiErrorElement:Expression expected
             PsiWhiteSpace('\n    ')
-          PsiErrorElement:} expected
+          PsiErrorElement:'}' expected
             <empty list>
         PsiElement(Py:FSTRING_END)(''''')
       PsiElement(Py:TRIPLE_QUOTED_STRING)(''''\n}'''')

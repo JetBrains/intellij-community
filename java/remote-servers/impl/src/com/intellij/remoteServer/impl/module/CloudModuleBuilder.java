@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.module;
 
 import com.intellij.icons.AllIcons;
@@ -16,9 +16,10 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
-import com.intellij.remoteServer.CloudBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,8 +59,8 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
   }
 
   @Override
-  public String getBuilderId() {
-    return getClass().getName();
+  public @NonNls String getBuilderId() {
+    return "Cloud";
   }
 
   @Override
@@ -157,7 +158,7 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
   }
 
   @Override
-  protected boolean isAvailable() {
+  public boolean isAvailable() {
     return CloudModuleBuilderContributionFactory.EP_NAME.getExtensions().length > 0;
   }
 }

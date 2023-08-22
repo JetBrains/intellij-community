@@ -24,12 +24,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 
@@ -38,17 +38,41 @@ public abstract class IdFilter {
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
   private static final Key<CachedValue<IdFilter>> OUTSIDE_PROJECT = Key.create("OUTSIDE_PROJECT");
 
+  public enum FilterScopeType {
+    OTHER {
+      @Override
+      public @NonNls @NotNull String getId() {
+        throw new UnsupportedOperationException();
+      }
+    },
+    PROJECT {
+      @Override
+      public @NonNls @NotNull String getId() {
+        return "false";
+      }
+    },
+    PROJECT_AND_LIBRARIES {
+      @Override
+      public @NonNls @NotNull String getId() {
+        return "true";
+      }
+    };
+
+    @NonNls
+    @NotNull
+    public abstract String getId();
+  }
+
   @NotNull
   public static IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
     Key<CachedValue<IdFilter>> key = includeNonProjectItems ? OUTSIDE_PROJECT : INSIDE_PROJECT;
     CachedValueProvider<IdFilter> provider = () -> CachedValueProvider.Result.create(buildProjectIdFilter(project, includeNonProjectItems),
               ProjectRootManager.getInstance(project), VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
-    return CachedValuesManager.getManager(project).getCachedValue(project, key,
-                                                                  provider, false);
+    return CachedValuesManager.getManager(project).getCachedValue(project, key, provider, false);
   }
 
   @NotNull
-  private static IdFilter buildProjectIdFilter(Project project, boolean includeNonProjectItems) {
+  private static IdFilter buildProjectIdFilter(@NotNull Project project, boolean includeNonProjectItems) {
     long started = System.currentTimeMillis();
     final BitSet idSet = new BitSet();
 
@@ -58,11 +82,11 @@ public abstract class IdFilter {
       return true;
     };
 
-    if (!includeNonProjectItems) {
-      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
+    if (includeNonProjectItems) {
+      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, ProgressIndicatorProvider.getGlobalProgressIndicator());
     }
     else {
-      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, ProgressIndicatorProvider.getGlobalProgressIndicator());
+      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
     }
 
     if (LOG.isDebugEnabled()) {
@@ -78,16 +102,17 @@ public abstract class IdFilter {
 
       @NotNull
       @Override
-      public GlobalSearchScope getEffectiveFilteringScope() {
-        return includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+      public FilterScopeType getFilteringScopeType() {
+        return includeNonProjectItems ? FilterScopeType.PROJECT_AND_LIBRARIES : FilterScopeType.PROJECT;
       }
     };
   }
 
   public abstract boolean containsFileId(int id);
 
-  @Nullable
-  public GlobalSearchScope getEffectiveFilteringScope() {
-    return null;
+  @ApiStatus.Internal
+  @NotNull
+  public FilterScopeType getFilteringScopeType() {
+    return FilterScopeType.OTHER;
   }
 }

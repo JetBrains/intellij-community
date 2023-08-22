@@ -20,7 +20,7 @@ package com.intellij.openapi.compiler;
  * integrate into 'external build system' instead (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/frameworks_and_external_apis/external_builder_api.html).
  * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface CompilerFilter {
   CompilerFilter ALL = new CompilerFilter() {
     @Override
@@ -29,7 +29,6 @@ public interface CompilerFilter {
     }
   };
   /**
-   * @param compiler
    * @return true if this compiler can be executed
    */
   boolean acceptCompiler(Compiler compiler);

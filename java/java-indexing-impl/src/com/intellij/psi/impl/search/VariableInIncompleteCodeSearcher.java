@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
@@ -53,13 +53,10 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
         if (!child.textMatches(name)) {
           break;
         }
-        if (child instanceof PsiJavaCodeReferenceElement) {
-          final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)child;
-          if (!ref.isQualified() &&
-              !(ref.getParent() instanceof PsiMethodCallExpression) &&
-              ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
-            consumer.process(ref);
-          }
+        if (child instanceof PsiJavaCodeReferenceElement ref && !ref.isQualified() &&
+            !(ref.getParent() instanceof PsiMethodCallExpression) &&
+            ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
+          consumer.process(ref);
         }
       }
       return true;

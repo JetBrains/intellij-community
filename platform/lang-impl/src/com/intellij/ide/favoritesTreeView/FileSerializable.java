@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 
+@Deprecated(forRemoval = true)
 public class FileSerializable implements WorkingSetSerializable<File, File> {
   @Override
   public String getId() {

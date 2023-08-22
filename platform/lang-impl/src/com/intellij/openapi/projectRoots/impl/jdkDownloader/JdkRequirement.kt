@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkVersionUtil
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
 import com.intellij.util.lang.JavaVersion
 import java.util.function.Predicate
@@ -131,7 +132,7 @@ object JdkRequirements {
   fun parseRequirement(request: String): JdkRequirement? {
     try {
       val versionMatcher = if (request.trim().startsWith("=")) ::strictVersionMatcher else ::sameMajorVersionMatcher
-      val text = request.trimStart('=').trim()
+      val text = request.trimStart('=').substringBefore("(").trim()
 
       //case 1. <vendor>-<version>
       run {
@@ -144,12 +145,16 @@ object JdkRequirements {
         val matcher = versionMatcher(javaVersion)
 
         return object : VersionRequirement(matcher) {
-          fun findJdkItem(home: String) = JdkInstaller.getInstance().findJdkItemForInstalledJdk(home)
-          fun findJdkItem(sdk: Sdk) = sdk.homePath?.let { findJdkItem(it) }
-          fun findJdkItem(sdk: UnknownSdkLocalSdkFix) = findJdkItem(sdk.existingSdkHome)
+          fun matchesVendor(home: String): Boolean {
+            return JdkInstaller.getInstance().findJdkItemForInstalledJdk(home)?.matchesVendor(vendor) == true ||
+                   SdkVersionUtil.getJdkVersionInfo(home)?.variant?.prefix == vendor
+          }
 
-          override fun matches(sdk: Sdk) = super.matches(sdk) && findJdkItem(sdk)?.matchesVendor(vendor) == true
-          override fun matches(sdk: UnknownSdkLocalSdkFix) = super.matches(sdk) && findJdkItem(sdk)?.matchesVendor(vendor) == true
+          fun matchesVendor(sdk: Sdk) = sdk.homePath?.let { matchesVendor(it) } == true
+          fun matchesVendor(sdk: UnknownSdkLocalSdkFix) = matchesVendor(sdk.existingSdkHome)
+
+          override fun matches(sdk: Sdk) = super.matches(sdk) && matchesVendor(sdk)
+          override fun matches(sdk: UnknownSdkLocalSdkFix) = super.matches(sdk) && matchesVendor(sdk)
           override fun matches(sdk: JdkItem) = super.matches(sdk) && sdk.matchesVendor(vendor)
 
           override fun toString() = "JdkRequirement { $vendor && $matcher }"

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,17 +49,15 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
 
   public static boolean isIterable(PsiExpression expression) {
     final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiLocalVariable) {
-      return isIterable(((PsiLocalVariable)parent).getType());
+    if (parent instanceof PsiLocalVariable var) {
+      return isIterable(var.getType());
     }
     else if (parent instanceof PsiReturnStatement) {
       return isIterable(PsiTypesUtil.getMethodReturnType(parent));
     }
-    else if (parent instanceof PsiExpressionList) {
-      final PsiExpressionList expressionList = (PsiExpressionList)parent;
-      final PsiElement maybeMethodCallExpr = expressionList.getParent();
-      if (maybeMethodCallExpr instanceof PsiMethodCallExpression) {
-        final PsiMethod method = ((PsiMethodCallExpression)maybeMethodCallExpr).resolveMethod();
+    else if (parent instanceof PsiExpressionList expressionList) {
+      if (expressionList.getParent() instanceof PsiMethodCallExpression call) {
+        final PsiMethod method = call.resolveMethod();
         if (method != null) {
           final PsiParameter[] parameters = method.getParameterList().getParameters();
           final PsiExpression[] arguments = expressionList.getExpressions();
@@ -86,8 +70,8 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
         }
       }
     }
-    else if (parent instanceof PsiMethodCallExpression) {
-      return isIterable((PsiExpression)parent);
+    else if (parent instanceof PsiMethodCallExpression call) {
+      return isIterable(call);
     }
     return false;
   }

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -141,15 +142,12 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
 
     @Override
     @Nullable
-    public String getLocationString() {
-        return null;
-    }
-
-    @Override
-    @Nullable
-    public String getPresentableText() {
-        final QName qName = getQName();
-        return qName != null ? qName.toString() : hasPrefix() ? getPrefix() + ":" + getName() : getName();
+    public @NlsSafe String getPresentableText() {
+      final QName qName = getQName();
+      if (qName != null) {
+        return qName.toString();
+      }
+      return hasPrefix() ? getPrefix() + ":" + getName() : getName();
     }
 
     @NotNull
@@ -161,20 +159,20 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
             final Class[] allInterfaces = CompletionLists.getAllInterfaces(tag.getClass());
             myNavigationElement = (PsiElement)Proxy.newProxyInstance(getClass().getClassLoader(), allInterfaces, new InvocationHandler() {
                 @Override
-                @SuppressWarnings({"StringEquality", "AutoBoxing", "AutoUnboxing"})
+                @SuppressWarnings({"AutoBoxing", "AutoUnboxing"})
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     try {
                         final ImplicitModeElement nameElement = ImplicitModeElement.this;
 
-                        if (method.getName() == "navigate") {
-                            nameElement.navigate((Boolean)args[0]);
-                          return null;
-                        } else if (method.getName() == "canNavigate") {
-                            return nameElement.canNavigate();
-                        } else if (method.getName() == "getTextOffset") {
-                            return nameElement.getTextOffset();
-                        }
-                        return method.invoke(tag, args);
+                        return switch (method.getName()) {
+                            case "navigate" -> {
+                              nameElement.navigate((Boolean)args[0]);
+                              yield null;
+                            }
+                            case "canNavigate" -> nameElement.canNavigate();
+                            case "getTextOffset" -> nameElement.getTextOffset();
+                            default -> method.invoke(tag, args);
+                        };
                     } catch (InvocationTargetException e1) {
                         throw e1.getTargetException();
                     }

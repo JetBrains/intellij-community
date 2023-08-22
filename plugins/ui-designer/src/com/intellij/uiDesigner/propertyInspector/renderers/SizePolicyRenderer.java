@@ -1,14 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.core.GridConstraints;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
   private final StringBuffer myBuffer;
 
@@ -41,6 +38,7 @@ public final class SizePolicyRenderer extends LabelPropertyRenderer<Integer> {
       myBuffer.append(UIDesignerBundle.message("property.fixed"));
     }
 
-    setText(myBuffer.substring(0, myBuffer.length())); // [jeka] important! do not use toString() on the StringBuffer that is reused
+    @NlsSafe String text = myBuffer.substring(0, myBuffer.length()); // [jeka] important! do not use toString() on the StringBuffer that is reused
+    setText(text);
   }
 }

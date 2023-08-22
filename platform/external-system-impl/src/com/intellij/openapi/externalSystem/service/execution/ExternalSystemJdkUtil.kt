@@ -44,6 +44,8 @@ private fun SdkLookupProvider.nonblockingResolveSdkInfoBySdkName(sdkName: String
 
 fun SdkLookupProvider.nonblockingResolveSdkBySdkName(sdkName: String?): Sdk? {
   if (sdkName == null) return getSdk()
+  // This lookup may run away to async behaviour if a given SDK is downloading,
+  // sdkName is sent back faster thou
   executeSdkLookup(sdkName)
   return getSdk()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.FilePosition
@@ -10,8 +10,10 @@ import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
-import com.intellij.util.text.nullize
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
+import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencyBuildIssue
 import java.io.File
 import java.util.function.Consumer
@@ -46,7 +48,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     if (location != null) {
       description.appendln(location).appendln()
     }
-    var reason = reader.readLine() ?: return false
+    @NlsSafe var reason = reader.readLine() ?: return false
     val parentId: Any
     if (reason.startsWith("Execution failed for task '")) {
       parentId = reason.substringAfter("Execution failed for task '").substringBefore("'.")
@@ -54,6 +56,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     else {
       parentId = reader.parentEventId
     }
+
     description.appendln(reason)
     loop@ while (true) {
       val nextLine = reader.readLine() ?: return false
@@ -61,25 +64,37 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       description.appendln(nextLine)
       val trimStart = nextLine.trimStart()
       if (trimStart.startsWith("> ")) {
-        reason = trimStart.substringAfter("> ").trimEnd('.')
+        reason = trimStart.substringAfter("> ").trimEnd('.') //NON-NLS
       }
       when {
         nextLine.isEmpty() -> break@loop
-        nextLine == "* Try:" -> break@loop
+        nextLine == "* Try:" -> {
+          reader.pushBack()
+          break@loop
+        }
       }
     }
 
+    var trySuggestions: StringBuilder? = null
     var exception: StringBuilder? = null
     while (true) {
       val nextLine = reader.readLine() ?: break
-      if (nextLine == "* Exception is:")  {
-        exception = StringBuilder(nextLine).appendln()
-      } else {
-        exception?.appendln(nextLine)
+      if (nextLine == "BUILD FAILED" || nextLine == "* Get more help at https://help.gradle.org" || nextLine.startsWith("CONFIGURE FAILED")) break
+      if (nextLine == "* Exception is:") {
+        exception = StringBuilder()
       }
-      if (nextLine == "BUILD FAILED") break
+      else if (nextLine == "* Try:") {
+        trySuggestions = StringBuilder()
+      }
+      else {
+        if (exception != null) {
+          exception.appendln(nextLine)
+        }
+        else if (trySuggestions != null && nextLine.isNotBlank()) {
+          trySuggestions.appendln(nextLine)
+        }
+      }
     }
-    exception?.also { description.appendln().append(it) }
 
     // compilation errors should be added by the respective compiler output parser
     if (reason.startsWith("Compilation failed") ||
@@ -87,56 +102,50 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
         reason == "Script compilation error:" ||
         reason.contains("compiler failed")) return false
 
-    // JDK compatibility issues should be handled by org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker
-    if (reason.startsWith("Could not create service of type ") && reason.contains(" using BuildScopeServices.")) return false
+    val filePosition: FilePosition?
+    if (filter != null) {
+      filePosition = FilePosition(File(filter.filteredFileName), filter.filteredLineNumber - 1, 0)
+    }
+    else {
+      filePosition = null
+    }
 
-    // Build cancellation errors should be handled by org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker
-    if (reason.contains("Build cancelled.")) return false
+    val errorText = description.toString()
+    for (issueChecker in GradleIssueChecker.getKnownIssuesCheckList()) {
+      if (issueChecker.consumeBuildOutputFailureMessage(errorText, reason, exception.toString(), filePosition, parentId, messageConsumer)) {
+        return true
+      }
+    }
 
-    if (location != null && filter != null) {
-      val errorText = description.toString()
-      val reasonAndFilePosition = getReasonAndFilePosition(reason, errorText, filter)
-      reason = reasonAndFilePosition.first
-      val filePosition = reasonAndFilePosition.second
+    val detailedMessage = StringBuilder(errorText)
+
+    if (!trySuggestions.isNullOrBlank()) {
+      detailedMessage.append("\n* Try:\n$trySuggestions")
+    }
+    if (!exception.isNullOrBlank()) {
+      detailedMessage.append("\n* Exception is:\n$exception")
+    }
+    if (filePosition != null) {
+      //TODO: Used english suggestions and exceptions:
       messageConsumer.accept(object : FileMessageEventImpl(
-        parentId, MessageEvent.Kind.ERROR, null, reason, errorText, filePosition), DuplicateMessageAware {}
+        parentId, MessageEvent.Kind.ERROR, null, reason, detailedMessage.toString(), filePosition), DuplicateMessageAware {} //NON-NLS
       )
     }
     else {
-      val unresolvedMessageEvent = checkUnresolvedDependencyError(reason, description, parentId)
+      val unresolvedMessageEvent = checkUnresolvedDependencyError(reason, errorText, parentId)
       if (unresolvedMessageEvent != null) {
         messageConsumer.accept(unresolvedMessageEvent)
       }
       else {
+        //TODO: Used english suggestions and exceptions:
         messageConsumer.accept(object : MessageEventImpl(parentId, MessageEvent.Kind.ERROR, null, reason,
-                                                         description.toString()), DuplicateMessageAware {})
+                                                         detailedMessage.toString()), DuplicateMessageAware {}) //NON-NLS
       }
     }
     return true
   }
 
-  private fun getReasonAndFilePosition(reason: String, errorText: String, filter: GradleConsoleFilter): Pair<String, FilePosition> {
-    if (reason == "startup failed:") {
-      val startupError = getStartupErrorReasonAndFilePosition(errorText, filter)
-      if (startupError != null) return startupError
-    }
-
-    return Pair(reason, FilePosition(File(filter.filteredFileName), filter.filteredLineNumber - 1, 0))
-  }
-
-  private fun getStartupErrorReasonAndFilePosition(errorText: String, filter: GradleConsoleFilter): Pair<String, FilePosition>? {
-    val locationLine = errorText.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return null
-    val failedStartupReason = locationLine.substringAfter("'${filter.filteredFileName}': ${filter.filteredLineNumber}: ", "")
-                                .nullize()?.substringBeforeLast(" @ ") ?: return null
-    val locationPart = locationLine.substringAfterLast(" @ ")
-    val matchResult = GradleConsoleFilter.LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)
-    val values = matchResult?.groupValues?.drop(1)?.map { it.toInt() } ?: listOf(filter.filteredLineNumber, 0)
-    val line = values[0] - 1
-    val column = values[1]
-    return Pair(failedStartupReason, FilePosition(File(filter.filteredFileName), line, column))
-  }
-
-  private fun checkUnresolvedDependencyError(reason: String, description: StringBuilder, parentId: Any): BuildEvent? {
+  private fun checkUnresolvedDependencyError(reason: String, description: String, parentId: Any): BuildEvent? {
     val noCachedVersionPrefix = "No cached version of "
     val couldNotFindPrefix = "Could not find "
     val cannotResolvePrefix = "Cannot resolve external dependency "
@@ -150,7 +159,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
                  } ?: return null
     val indexOfSuffix = reason.indexOf(" available for offline mode")
     val dependencyName = if (indexOfSuffix > 0) reason.substring(prefix.length, indexOfSuffix) else reason.substring(prefix.length)
-    val unresolvedDependencyIssue = UnresolvedDependencyBuildIssue(dependencyName, description.toString(), indexOfSuffix > 0)
+    val unresolvedDependencyIssue = UnresolvedDependencyBuildIssue(dependencyName, description, indexOfSuffix > 0)
     return BuildIssueEventImpl(parentId, unresolvedDependencyIssue, MessageEvent.Kind.ERROR)
   }
 }

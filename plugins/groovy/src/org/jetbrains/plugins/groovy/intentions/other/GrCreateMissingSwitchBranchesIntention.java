@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.other;
 
 import com.intellij.openapi.editor.Editor;
@@ -14,11 +14,11 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -80,12 +80,11 @@ public class GrCreateMissingSwitchBranchesIntention extends Intention {
     if (resolved == null || !resolved.isEnum()) return Collections.emptyList();
 
     final PsiField[] fields = resolved.getFields();
-    final List<PsiEnumConstant> constants = ContainerUtil.findAll(fields, PsiEnumConstant.class);
+    final List<PsiEnumConstant> constants = new ArrayList<>(ContainerUtil.findAll(fields, PsiEnumConstant.class));
 
     final GrCaseSection[] sections = switchStatement.getCaseSections();
     for (GrCaseSection section : sections) {
-      for (GrCaseLabel label : section.getCaseLabels()) {
-        final GrExpression value = label.getValue();
+      for (GrExpression value : section.getExpressions()) {
         if (value instanceof GrReferenceExpression) {
           final PsiElement r = ((GrReferenceExpression)value).resolve();
           constants.remove(r);

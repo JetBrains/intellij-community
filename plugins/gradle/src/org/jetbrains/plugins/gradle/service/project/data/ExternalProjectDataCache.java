@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.data;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -15,7 +18,6 @@ import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,34 +26,20 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalProjectDataCache {
-  @ApiStatus.Internal
-  @NotNull public static final Key<ExternalProject> KEY = Key.create(ExternalProject.class, ProjectKeys.TASK.getProcessingWeight() + 1);
+@Service(Service.Level.PROJECT)
+public final class ExternalProjectDataCache {
+  @ApiStatus.Internal public static final @NotNull Key<ExternalProject> KEY = Key.create(ExternalProject.class, ProjectKeys.TASK.getProcessingWeight() + 1);
   private final Project myProject;
 
   public static ExternalProjectDataCache getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExternalProjectDataCache.class);
+    return project.getService(ExternalProjectDataCache.class);
   }
 
   public ExternalProjectDataCache(@NotNull Project project) {
     myProject = project;
   }
 
-  /**
-   * Kept for compatibility with Kotlin
-   * @deprecated since 2019.1
-   */
-  @Deprecated
-  @Nullable
-  public ExternalProject getRootExternalProject(@NotNull ProjectSystemId systemId, @NotNull File projectRootDir) {
-    if (GradleConstants.SYSTEM_ID != systemId) {
-      throw new IllegalStateException("Attempt to use Gradle-specific cache with illegal system id [" + systemId.getReadableName() + "]");
-    }
-    return getRootExternalProject(ExternalSystemApiUtil.toCanonicalPath(projectRootDir.getAbsolutePath()));
-  }
-
-  @Nullable
-  public ExternalProject getRootExternalProject(@NotNull String externalProjectPath) {
+  public @Nullable ExternalProject getRootExternalProject(@NotNull String externalProjectPath) {
     ExternalProjectInfo projectData =
       ProjectDataManager.getInstance().getExternalProjectData(myProject, GradleConstants.SYSTEM_ID, externalProjectPath);
     if (projectData == null) return null;
@@ -62,18 +50,16 @@ public class ExternalProjectDataCache {
     return projectDataNode.getData();
   }
 
-  @NotNull
-  public Map<String, ExternalSourceSet> findExternalProject(@NotNull ExternalProject parentProject, @NotNull Module module) {
+  public @NotNull Map<String, ExternalSourceSet> findExternalProject(@NotNull ExternalProject parentProject, @NotNull Module module) {
     String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
     boolean isSourceSet = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module));
     return externalProjectId != null ? findExternalProject(parentProject, externalProjectId, isSourceSet)
                                      : Collections.emptyMap();
   }
 
-  @NotNull
-  private static Map<String, ExternalSourceSet> findExternalProject(@NotNull ExternalProject parentProject,
-                                                                    @NotNull String externalProjectId,
-                                                                    boolean isSourceSet) {
+  private static @NotNull Map<String, ExternalSourceSet> findExternalProject(@NotNull ExternalProject parentProject,
+                                                                             @NotNull String externalProjectId,
+                                                                             boolean isSourceSet) {
     ArrayDeque<ExternalProject> queue = new ArrayDeque<>();
     queue.add(parentProject);
 

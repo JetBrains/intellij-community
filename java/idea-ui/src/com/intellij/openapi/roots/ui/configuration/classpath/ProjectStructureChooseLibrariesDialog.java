@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -12,9 +12,9 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,10 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private final ClasspathPanel myClasspathPanel;
@@ -37,7 +35,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,
                                                StructureConfigurableContext context,
                                                Predicate<? super Library> acceptedLibraries) {
-    super(classpathPanel.getComponent(), "Choose Libraries", classpathPanel.getProject(), true);
+    super(classpathPanel.getComponent(), JavaUiBundle.message("project.structure.dialog.title.choose.libraries"), classpathPanel.getProject(), true);
     myClasspathPanel = classpathPanel;
     myContext = context;
     myAcceptedLibraries = acceptedLibraries;
@@ -90,11 +88,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
   @Override
   protected boolean acceptsElement(Object element) {
-    if (element instanceof Library) {
-      final Library library = (Library)element;
-      return myAcceptedLibraries.apply(library);
-    }
-    return true;
+    return !(element instanceof Library library) || myAcceptedLibraries.test(library);
   }
 
   @NotNull
@@ -105,7 +99,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
         return model.getLibraryEditor(library).getName();
       }
     }
-    return library.getName();
+    return Objects.toString(library.getName());
   }
 
   @Override
@@ -134,7 +128,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
   private static class LibraryEditorDescriptor extends LibrariesTreeNodeBase<Library> {
     protected LibraryEditorDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Library element,
-                                      String libraryName, StructureConfigurableContext context) {
+                                      @NlsSafe String libraryName, StructureConfigurableContext context) {
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
       Icon icon = LibraryPresentationManager.getInstance().getNamedLibraryIcon(element, context);
@@ -143,7 +137,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     }
   }
 
-  private class CreateNewLibraryAction extends DialogWrapperAction {
+  private final class CreateNewLibraryAction extends DialogWrapperAction {
     private CreateNewLibraryAction() {
       super(JavaUiBundle.message("dialog.title.new.library"));
       putValue(MNEMONIC_KEY, KeyEvent.VK_N);

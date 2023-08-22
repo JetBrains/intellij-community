@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.highlighter;
 
@@ -28,9 +28,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERATORS;
 
-/**
- * @author ilyas
- */
 public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey LINE_COMMENT = createTextAttributesKey("Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
@@ -172,7 +169,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
     return new GroovyHighlightingLexer();
   }
 
-  private static class GroovyHighlightingLexer extends LayeredLexer {
+  private static final class GroovyHighlightingLexer extends LayeredLexer {
     private GroovyHighlightingLexer() {
       super(new GroovyLexer());
       registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, STRING_SQ, true, "$"),

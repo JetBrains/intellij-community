@@ -3,6 +3,7 @@ package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +31,11 @@ public class TreeTest implements Disposable {
   private final AsyncPromise<Throwable> promise = new AsyncPromise<>();
   private JTree tree;
 
-  public TreeTest(int minutes, Consumer<TreeTest> consumer, Function<Disposable, TreeModel> function) {
+  public TreeTest(int minutes, Consumer<? super TreeTest> consumer, Function<? super Disposable, ? extends TreeModel> function) {
     assert !EventQueue.isDispatchThread() : "main thread is expected";
     invokeLater(() -> {
       tree = new JTree(function.apply(this));
+      TreeTestUtil.assertTreeUI(tree);
       invokeAfterProcessing(() -> {
         tree.collapseRow(0); // because root node is expanded by default
         consumer.accept(this);
@@ -47,7 +49,7 @@ public class TreeTest implements Disposable {
       throw new RuntimeException(e);
     }
     finally {
-      Disposer.dispose(this);
+      EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(this));
     }
   }
 
@@ -57,8 +59,7 @@ public class TreeTest implements Disposable {
 
   public void invokeAfterProcessing(@NotNull Runnable runnable) {
     TreeModel model = tree.getModel();
-    if (model instanceof AsyncTreeModel) {
-      AsyncTreeModel async = (AsyncTreeModel)model;
+    if (model instanceof AsyncTreeModel async) {
       if (async.isProcessing()) {
         invokeLater(() -> invokeAfterProcessing(runnable));
         return; // do nothing if delayed
@@ -109,12 +110,12 @@ public class TreeTest implements Disposable {
     return tree;
   }
 
-  public static void test(Supplier<TreeNode> supplier, Consumer<TreeTest> consumer) {
+  public static void test(Supplier<? extends TreeNode> supplier, Consumer<? super TreeTest> consumer) {
     test(FAST, 1, supplier, consumer);
     test(SLOW, 2, supplier, consumer);
   }
 
-  public static void test(long delay, int minutes, Supplier<TreeNode> supplier, Consumer<TreeTest> consumer) {
+  public static void test(long delay, int minutes, Supplier<? extends TreeNode> supplier, Consumer<? super TreeTest> consumer) {
     new TreeTest(minutes, consumer, parent -> model(supplier, delay, false, null));
     new TreeTest(minutes, consumer, parent -> model(supplier, delay, true, Invoker.forEventDispatchThread(parent)));
     new TreeTest(minutes, consumer, parent -> model(supplier, delay, false, Invoker.forEventDispatchThread(parent)));
@@ -122,7 +123,7 @@ public class TreeTest implements Disposable {
     new TreeTest(minutes, consumer, parent -> model(supplier, delay, false, Invoker.forBackgroundThreadWithReadAction(parent)));
   }
 
-  private static TreeModel model(Supplier<TreeNode> supplier, long delay, boolean showLoadingNode, Invoker invoker) {
+  private static TreeModel model(Supplier<? extends TreeNode> supplier, long delay, boolean showLoadingNode, Invoker invoker) {
     TreeModel model = new DefaultTreeModel(supplier.get());
     if (delay > 0) {
       model = new Wrapper.WithDelay(model, delay);

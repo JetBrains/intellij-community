@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class HorizontalLabeledIcon implements Icon {
   private final Icon myIcon;
   private final String[] myStrings;
@@ -47,7 +46,7 @@ public class HorizontalLabeledIcon implements Icon {
 
   private int getTextHeight() {
     if (myStrings != null) {
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       return fontMetrics.getHeight() * myStrings.length;
     }
@@ -59,7 +58,7 @@ public class HorizontalLabeledIcon implements Icon {
   private int getTextWidth() {
     if (myStrings != null) {
       int width = 0;
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       for (int i = 0; i < myStrings.length; i++) {
         String string = myStrings[i];
@@ -90,7 +89,7 @@ public class HorizontalLabeledIcon implements Icon {
 
     // Draw text
     if (myStrings != null) {
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       g.setFont(fontMetrics.getFont());
       g.setColor(UIUtil.getLabelForeground());
@@ -102,7 +101,7 @@ public class HorizontalLabeledIcon implements Icon {
         y += fontMetrics.getHeight();
       }
       if (myMnemonic != null) {
-        g.setColor(UIUtil.getInactiveTextColor());
+        g.setColor(NamedColorUtil.getInactiveTextColor());
         int offset = fontMetrics.stringWidth(myStrings[myStrings.length-1]+" ");
         y -= fontMetrics.getHeight();
         g.drawString(myMnemonic, x + offset, y);

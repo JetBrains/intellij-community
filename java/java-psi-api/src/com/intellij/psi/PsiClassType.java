@@ -6,10 +6,12 @@ import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.lang.jvm.types.JvmSubstitutor;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.lang.jvm.types.JvmTypeResolveResult;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -246,6 +248,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
    * If class-type is created from the explicit reference in the code returns that reference.
    * @return reference which the type is created from. Returns null if not applicable.
    */
+  @ApiStatus.Experimental
   public @Nullable PsiElement getPsiContext() {
     return null;
   }
@@ -285,6 +288,14 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
   public interface ClassResolveResult extends JavaResolveResult {
     @Override
     PsiClass getElement();
+
+    /**
+     * @return human-readable inference error if resolve of the class type involves type inference.
+     * Currently, the only possibility for this is inference in deconstruction pattern. 
+     */
+    default @Nullable @NlsContexts.DetailedDescription String getInferenceError() {
+      return null;
+    }
 
     ClassResolveResult EMPTY = new ClassResolveResult() {
       @Override

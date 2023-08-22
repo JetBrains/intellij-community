@@ -15,21 +15,67 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
 
-  @Nullable
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
-  }
-
   // PY-18965
   public void testExec() {
+    doTest();
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionOnReturnType() {
+    doTestByText("""
+                   def foo() -> <warning descr="Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | str</warning>:
+                       return 42
+                   """);
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionOnReturnTypeFromFeatureAnnotations() {
+    doTestByText("""
+                   from __future__ import annotations
+                   def foo() -> int | str:
+                       return 42
+                   """);
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionOnIsInstance() {
+    doTestByText("""
+                   class A:
+                       pass
+
+                   assert isinstance(A(), <warning descr="Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | str</warning>)
+                   """);
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionInPrint() {
+    doTestByText("print(<warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y\">int | str | dict</warning>)");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionInOverloadedOperator() {
+    doTestByText("""
+                   class A:
+                     def __or__(self, other) -> int: return 5
+                    \s
+                   expr = A() | A()""");
+  }
+
+  // PY-44974
+  public void testBitwiseOrUnionInParenthesizedUnionOfUnions() {
+    doTestByText("""
+                   def foo() -> <warning descr="Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | ((list | dict) | (float | str))</warning>:
+                       pass
+                   """);
+  }
+
+  // PY-48012
+  public void testMatchStatement() {
     doTest();
   }
 

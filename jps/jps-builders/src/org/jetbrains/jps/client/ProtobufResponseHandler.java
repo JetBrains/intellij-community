@@ -23,9 +23,7 @@ import com.google.protobuf.MessageLite;
 public interface ProtobufResponseHandler {
 
   /**
-   * @param message
    * @return true if session should be terminated, false otherwise
-   * @throws Exception
    */
   boolean handleMessage(MessageLite message) throws Exception;
 

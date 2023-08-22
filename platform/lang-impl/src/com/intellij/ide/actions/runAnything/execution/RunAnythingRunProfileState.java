@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -20,14 +20,13 @@ import com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class RunAnythingRunProfileState extends CommandLineState {
+public final class RunAnythingRunProfileState extends CommandLineState {
   public RunAnythingRunProfileState(@NotNull ExecutionEnvironment environment, @NotNull String originalCommand) {
     super(environment);
 
@@ -82,7 +81,7 @@ public class RunAnythingRunProfileState extends CommandLineState {
       }
 
       @Override
-      public final boolean shouldKillProcessSoftly() {
+      public boolean shouldKillProcessSoftly() {
         RunAnythingCommandHandler handler = RunAnythingCommandHandler.getMatchedHandler(getEnvironment().getProject(), originalCommand);
         return handler != null ? handler.shouldKillProcessSoftly() : super.shouldKillProcessSoftly();
       }
@@ -117,7 +116,6 @@ public class RunAnythingRunProfileState extends CommandLineState {
         }
       }
     });
-    processHandler.setHasPty(true);
     return processHandler;
   }
 }

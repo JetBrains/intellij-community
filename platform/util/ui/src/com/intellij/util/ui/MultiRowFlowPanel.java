@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import org.intellij.lang.annotations.JdkConstants;
@@ -13,10 +13,8 @@ import java.awt.*;
  * It fixes the width to use as a minimum between a width offered by default flow layout and customizable value
  * and calculates the height. If the user has an ability to manually change panel size (e.g. indirectly via changing
  * size of the dialog that serves as a container for the panel), that width is used as a maximum width.
- *
- * @author Denis Zhdanov
  */
-public class MultiRowFlowPanel extends JPanel {
+public final class MultiRowFlowPanel extends JPanel {
 
   private final int maximumWidth = GraphicsEnvironment.isHeadless()
                                    ? 400

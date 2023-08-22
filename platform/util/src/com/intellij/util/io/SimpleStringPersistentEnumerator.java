@@ -1,115 +1,148 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Simple version of string enumerator:
  * <p><ul>
- * <li>strings are stored directly in UTF-8 encoding
+ * <li>strings are stored directly in UTF-8 encoding FIXME RC: this is not true, actual implementation uses defaultCharset()!
  * <li>always has synchronized state between disk and memory state
- * <li>has limited size by {@link Short#MAX_VALUE}
- * <li>{@link SimpleStringPersistentEnumerator#valueOf(short)} has O(n) complexity where n is enumerator size
  * </ul>
  */
 @ApiStatus.Internal
-public class SimpleStringPersistentEnumerator {
-  public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
+public final class SimpleStringPersistentEnumerator implements DataEnumerator<String> {
+  private final @NotNull Path myFile;
+  private final Charset charset;
 
-  @NotNull
-  private final Path myFile;
-  @NotNull
-  private final TObjectIntHashMap<String> myState;
+  private final @NotNull Object2IntMap<String> myInvertedState;
+  private final @NotNull Int2ObjectMap<String> myForwardState;
 
-  public SimpleStringPersistentEnumerator(@NotNull Path file) {
-    myFile = file;
-    myState = new TObjectIntHashMap<>();
-
-    readStorageFromDisk();
+  public SimpleStringPersistentEnumerator(final @NotNull Path file) {
+    //FIXME RC: javadoc states that charset should be UTF-8, but implementation actually used defaultCharset()
+    //          Need to make doc & impl consistent
+    this(file, Charset.defaultCharset());
   }
 
-  public synchronized short enumerate(@Nullable String value) {
-    if (myState.containsKey(value)) {
-      return (short) myState.get(value);
+  public SimpleStringPersistentEnumerator(final @NotNull Path file,
+                                          final @NotNull Charset charset) {
+    this.myFile = file;
+    this.charset = charset;
+
+    final Pair<Object2IntMap<String>, Int2ObjectMap<String>> pair = readStorageFromDisk(file, charset);
+    myInvertedState = pair.getFirst();
+    myForwardState = pair.getSecond();
+  }
+
+  public @NotNull Path getFile() {
+    return myFile;
+  }
+
+  @Override
+  public synchronized int enumerate(@Nullable String value) {
+    int id = myInvertedState.getInt(value);
+    if (id != myInvertedState.defaultReturnValue()) {
+      return id;
     }
 
-    int n = myState.size() + 1;
-    assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded: "+n;
+    if (value != null && StringUtil.containsLineBreak(value)) {
+      throw new IllegalArgumentException("SimpleStringPersistentEnumerator doesn't support multi-line strings: [" + value + "]");
+    }
 
-    myState.put(value, n);
-    writeStorageToDisk();
-    return (short)n;
+    // do not use myInvertedState.size because enumeration file may have duplicates on different lines
+    id = myForwardState.size() + 1;
+    myInvertedState.put(value, id);
+    myForwardState.put(id, value);
+    writeStorageToDisk(myForwardState, myFile, charset);
+    return id;
   }
 
-  @Nullable
-  public synchronized String valueOf(short idx) {
-    String[] result = {null};
-    myState.forEachEntry(new TObjectIntProcedure<String>() {
-      @Override
-      public boolean execute(String data, int dataId) {
-        if (dataId == idx) {
-          result[0] = data;
-          return false;
-        }
-        return true;
-      }
-    });
-    return result[0];
+  public synchronized @NotNull Collection<String> entries() {
+    return new ArrayList<>(myInvertedState.keySet());
+  }
+
+  public synchronized @NotNull Map<String, Integer> getInvertedState() {
+    return Collections.unmodifiableMap(myInvertedState);
+  }
+
+  @Override
+  public synchronized @Nullable String valueOf(int idx) {
+    return myForwardState.get(idx);
   }
 
   public synchronized void forceDiskSync() {
-    writeStorageToDisk();
+    writeStorageToDisk(myForwardState, myFile, charset);
   }
-  
-  private synchronized void readStorageFromDisk() {
+
+  public synchronized boolean isEmpty() {
+    return myInvertedState.isEmpty();
+  }
+
+  public synchronized int getSize() {
+    return myInvertedState.size();
+  }
+
+  public @NotNull String dumpToString() {
+    return myInvertedState
+      .object2IntEntrySet()
+      .stream()
+      .sorted(Comparator.comparing(e -> e.getIntValue()))
+      .map(e -> e.getKey() + "->" + e.getIntValue()).collect(Collectors.joining("\n"));
+  }
+
+  private static @NotNull Pair<Object2IntMap<String>, Int2ObjectMap<String>> readStorageFromDisk(final @NotNull Path file,
+                                                                                                 final Charset charset) {
     try {
-      TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<>();
-      List<String> lines = Files.readAllLines(myFile, Charset.defaultCharset());
+      final Object2IntMap<String> nameToIdRegistry = new Object2IntOpenHashMap<>();
+      final Int2ObjectMap<String> idToNameRegistry = new Int2ObjectOpenHashMap<>();
+      final List<String> lines = Files.readAllLines(file, charset);
       for (int i = 0; i < lines.size(); i++) {
-        String name = lines.get(i);
-        nameToIdRegistry.put(name, i + 1);
+        final String name = lines.get(i);
+        final int id = i + 1;
+        nameToIdRegistry.put(name, id);
+        idToNameRegistry.put(id, name);
       }
-
-      synchronized (myState) {
-        myState.ensureCapacity(nameToIdRegistry.size());
-        nameToIdRegistry.forEachEntry((name, index) -> {
-          myState.put(name, index);
-          return true;
-        });
-      }
+      return Pair.create(nameToIdRegistry, idToNameRegistry);
     }
     catch (IOException e) {
-      synchronized (myState) {
-        myState.clear();
-        writeStorageToDisk();
-      }
+      writeStorageToDisk(Int2ObjectMaps.emptyMap(), file, charset);
+      return Pair.create(new Object2IntOpenHashMap<>(), new Int2ObjectOpenHashMap<>());
     }
   }
-  
-  private void writeStorageToDisk() {
-    try {
-      final String[] names = new String[myState.size()];
-      myState.forEachEntry((key, value) -> {
-        names[value - 1] = key;
-        return true;
-      });
 
-      Files.createDirectories(myFile.getParent());
-      Files.write(myFile, Arrays.asList(names), Charset.defaultCharset());
+  private static void writeStorageToDisk(final @NotNull Int2ObjectMap<String> forwardIndex,
+                                         final @NotNull Path file,
+                                         final Charset charset) {
+    try {
+      final String[] names = new String[forwardIndex.size()];
+      for (ObjectIterator<Int2ObjectMap.Entry<String>> iterator = Int2ObjectMaps.fastIterator(forwardIndex); iterator.hasNext(); ) {
+        final Int2ObjectMap.Entry<String> entry = iterator.next();
+        names[entry.getIntKey() - 1] = entry.getValue();
+      }
+
+      Files.createDirectories(file.getParent());
+      Files.write(file, Arrays.asList(names), charset);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new UncheckedIOException("Can't store enumerator to "+file, e);
     }
   }
 }

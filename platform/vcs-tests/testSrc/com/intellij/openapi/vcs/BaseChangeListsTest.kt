@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.AccessToken
@@ -11,19 +11,21 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
+import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.common.runAll
+import com.intellij.util.io.createDirectories
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
 import org.mockito.Mockito
+import java.nio.file.Paths
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -47,25 +49,24 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
   protected lateinit var testRoot: VirtualFile
 
-  protected lateinit var vcsManager: ProjectLevelVcsManagerImpl
+  private lateinit var vcsManager: ProjectLevelVcsManagerImpl
 
   protected var arePartialChangelistsSupported: Boolean = true
 
   override fun setUp() {
     super.setUp()
-    testRoot = runWriteAction {
-      VfsUtil.markDirtyAndRefresh(false, false, true, this.project.baseDir)
-      VfsUtil.createDirectoryIfMissing(this.project.baseDir, getTestName(true))
-    }
+    val project = project
+    val testRootPath = Paths.get(project.basePath!!).resolve(getTestName(true)).createDirectories()
+    testRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(testRootPath)!!
 
-    vcs = MyMockVcs(this.project)
+    vcs = MyMockVcs(project)
     changeProvider = MyMockChangeProvider()
     vcs.changeProvider = changeProvider
 
-    clm = ChangeListManagerImpl.getInstanceImpl(this.project)
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(this.project) as VcsDirtyScopeManagerImpl
+    clm = ChangeListManagerImpl.getInstanceImpl(project)
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project) as VcsDirtyScopeManagerImpl
 
-    vcsManager = ProjectLevelVcsManager.getInstance(this.project) as ProjectLevelVcsManagerImpl
+    vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
     vcsManager.registerVcs(vcs)
     vcsManager.directoryMappings = listOf(VcsDirectoryMapping(testRoot.path, vcs.name))
     vcsManager.waitForInitialized()
@@ -81,15 +82,15 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { resetSettings() })
-      .append(ThrowableRunnable { resetChanges() })
-      .append(ThrowableRunnable { resetChangelists() })
-      .append(ThrowableRunnable { vcsManager.directoryMappings = emptyList() })
-      .append(ThrowableRunnable { AllVcses.getInstance(getProject()).unregisterManually(vcs) })
-      .append(ThrowableRunnable { runWriteAction { testRoot.delete(this) } })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    runAll(
+      { resetSettings() },
+      { resetChanges() },
+      { resetChangelists() },
+      { vcsManager.directoryMappings = emptyList() },
+      { project.getServiceIfCreated(AllVcsesI::class.java)?.unregisterManually(vcs) },
+      { runWriteAction { testRoot.delete(this) } },
+      { super.tearDown() }
+    )
   }
 
   protected open fun resetSettings() {
@@ -125,15 +126,18 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   protected fun addLocalFile(name: String, content: String): VirtualFile {
-    val file = runWriteAction {
+    val file = createLocalFile(name, content)
+    assertFalse(changeProvider.files.contains(file))
+    changeProvider.files.add(file)
+    return file
+  }
+
+  protected fun createLocalFile(name: String, content: String): VirtualFile {
+    return runWriteAction {
       val file = testRoot.createChildData(this, name)
       VfsUtil.saveText(file, parseInput(content))
       file
     }
-
-    assertFalse(changeProvider.files.contains(file))
-    changeProvider.files.add(file)
-    return file
   }
 
   protected fun removeLocalFile(name: String) {
@@ -173,7 +177,7 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
   protected val String.toFilePath: FilePath get() = VcsUtil.getFilePath(testRoot, this)
   protected fun Array<out String>.toFilePaths() = this.asList().toFilePaths()
-  protected fun List<String>.toFilePaths() = this.map { it.toFilePath }
+  private fun List<String>.toFilePaths() = this.map { it.toFilePath }
   protected val VirtualFile.change: Change? get() = clm.getChange(this)
   protected val VirtualFile.document: Document get() = FileDocumentManager.getInstance().getDocument(this)!!
 
@@ -249,11 +253,10 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
       try {
         for ((filePath, beforeRevision) in changes) {
-          val file = files.find { VcsUtil.getFilePath(it) == filePath }
-          val afterContent: ContentRevision? = when (file) {
-            null -> null
-            else -> CurrentContentRevision(filePath)
-          }
+          val afterContent: ContentRevision? =
+            if (files.find { VcsUtil.getFilePath(it) == filePath } == null)
+              null
+            else CurrentContentRevision(filePath)
 
           val change = Change(beforeRevision, afterContent)
 
@@ -277,7 +280,6 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
 
       dirtyScopeManager.markEverythingDirty()
-      clm.scheduleUpdate()
 
       markerSemaphore.acquireOrThrow()
       markerSemaphore.release()

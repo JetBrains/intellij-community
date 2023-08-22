@@ -30,8 +30,6 @@ import java.awt.*;
  * </pre>
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
- *
- * @author Denis Zhdanov
  */
 public interface SoftWrapPainter {
 

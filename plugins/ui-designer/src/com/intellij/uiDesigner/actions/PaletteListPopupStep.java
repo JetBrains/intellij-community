@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.actions;
 
@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.GroupItem;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,18 +19,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchFilter<ComponentItem> {
   private final ArrayList<ComponentItem> myItems = new ArrayList<>();
   private final ComponentItem myInitialSelection;
   private final Processor<? super ComponentItem> myRunnable;
-  private final String myTitle;
+  private final @Nls String myTitle;
   private final Project myProject;
   private Runnable myFinalRunnable;
 
-  PaletteListPopupStep(GuiEditor editor, ComponentItem initialSelection, final Processor<? super ComponentItem> runnable, final String title) {
+  PaletteListPopupStep(GuiEditor editor,
+                       ComponentItem initialSelection,
+                       final Processor<? super ComponentItem> runnable,
+                       final @Nls String title) {
     myInitialSelection = initialSelection;
     myRunnable = runnable;
     myProject = editor.getProject();

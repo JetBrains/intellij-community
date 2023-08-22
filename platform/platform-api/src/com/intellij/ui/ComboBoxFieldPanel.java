@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,11 +19,11 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     super(new ComboBox());
     myComboBox = (JComboBox) getComponent();
   }
-  public ComboBoxFieldPanel(String[] items, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener) {
+  public ComboBoxFieldPanel(String[] items, @NlsContexts.Label String labelText, final @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener) {
     this(items, labelText, viewerDialogTitle, browseButtonActionListener, null);
   }
 
-  public ComboBoxFieldPanel(String[] items, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
+  public ComboBoxFieldPanel(String[] items, @NlsContexts.Label String labelText, final @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
     super(new ComboBox(items), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
 
     myComboBox = (JComboBox) getComponent();
@@ -78,7 +79,7 @@ public class ComboBoxFieldPanel extends AbstractFieldPanel {
     }
   }
 
-  public void addItemSetText(String text) {
+  public void addItemSetText(@NlsContexts.ListItem String text) {
     JComboBox comboBox = getComboBox();
     int n = comboBox.getItemCount();
     boolean found = false;

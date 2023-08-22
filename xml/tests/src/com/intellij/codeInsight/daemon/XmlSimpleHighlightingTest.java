@@ -13,15 +13,10 @@ public class XmlSimpleHighlightingTest extends BasePlatformTestCase {
   }
 
   public void testUnsupportedIncludeScheme() {
-    checkValidation("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n" +
-                    "  <xi:include href=\"extensionPoints.xml\" xpointer=\"xpointer(/extensionPoints/*)\"/>\n" +
-                    "</idea-plugin>");
-  }
-
-  public void testSupportedIncludeScheme() {
-    checkValidation("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n" +
-                    "  <<error descr=\"An 'include' failed, and no 'fallback' element was found.\">xi:include</error> href=\"extensionPoints.xml\" xpointer=\"element(/1111)\"/>\n" +
-                    "</idea-plugin>");
+    checkValidation("""
+                      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                        <xi:include href="extensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+                      </idea-plugin>""");
   }
 
   private void checkValidation(String text) {

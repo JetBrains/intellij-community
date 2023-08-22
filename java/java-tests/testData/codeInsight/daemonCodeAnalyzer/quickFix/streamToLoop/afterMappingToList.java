@@ -1,4 +1,4 @@
-// "Replace Stream API chain with loop" "true"
+// "Replace Stream API chain with loop" "true-preview"
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -8,8 +8,8 @@ public class Main {
       List<Integer> list = new ArrayList<>();
       for (String string : strings) {
           Integer len = string.length();
-          Integer integer = len * 2;
-          list.add(integer);
+          Integer i = len * 2;
+          list.add(i);
       }
       System.out.println(list);
   }

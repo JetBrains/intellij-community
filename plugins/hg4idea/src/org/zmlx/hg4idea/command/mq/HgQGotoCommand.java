@@ -26,6 +26,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collections;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QGOTO_ERROR;
+
 public class HgQGotoCommand {
   @NotNull private final HgRepository myRepository;
 
@@ -39,7 +41,9 @@ public class HgQGotoCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qgoto", Collections.singletonList(name));
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QGotoFromPatches.error"),
+        .notifyError(QGOTO_ERROR,
+                     result,
+                     HgBundle.message("action.hg4idea.QGotoFromPatches.error"),
                      HgBundle.message("action.hg4idea.QGotoFromPatches.error.msg", name));
     }
     myRepository.update();

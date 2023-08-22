@@ -3,7 +3,7 @@
 }
 
 class Foo {
-  @TestFor(testForClass = { Object.class, Aaaaaaaaaaaaaaaaaaaaa<caret> } )
+  @TestFor(testForClass = { Object.class, Aaaaaaaaaaaaaaaaaaaaa.class<caret> } )
   public void foo22() {}
 }
 

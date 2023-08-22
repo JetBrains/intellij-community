@@ -13,9 +13,8 @@
                         serviceImplementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomizationProviderImpl"
                         overrides="true"/>
     <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
-    <projectService serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
-    <projectService serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
-    <applicationService serviceImplementation="com.intellij.spellchecker.SpellcheckerCorrectionsFilter"/>
+    <postStartupActivity implementation="com.intellij.spellchecker.settings.SettingsTransferActivity"/>
+    <postStartupActivity implementation="com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine$SpellerLoadActivity"/>
     <projectConfigurable parentId="proofread" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="messages.SpellCheckerBundle" />
 
     <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
@@ -24,15 +23,22 @@
 
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider" order="first"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
-    
+
     <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
-    <spellchecker.support language="HTML" implementationClass="com.intellij.spellchecker.tokenizer.HtmlSpellcheckingStrategy"/>
-    <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>
     <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
+    <spellchecker.dictionary.customDictionaryProvider implementation="com.intellij.spellchecker.hunspell.HunspellDictionaryProvider"/>
+
+    <registryKey key="spellchecker.corrections.limit" defaultValue="3" description="Spellchecker corrections limit" restartRequired="false"/>
+    <registryKey key="spellchecker.inspection.enabled" defaultValue="true" description="Enable spellchecking inspection" restartRequired="false"/>
 
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
-    <applicationService serviceImplementation="com.intellij.spellchecker.state.CachedDictionaryState"/>
     <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
-    <notificationWhitelist groupIds="Spell Checker Dictionary;Spellchecker"/>
+    <lookup.usageDetails implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor"/>
+    <statistics.collectorExtension implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor$SpellcheckerCompletionCollectorExtension"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.spellchecker.statistics.SpellcheckerActionStatistics"/>
+
+    <notificationGroup id="Spellchecker" displayType="BALLOON" bundle="messages.SpellCheckerBundle" key="notification.group.spellchecker"/>
+
+    <iconMapper mappingFile="SpellcheckerIconMappings.json"/>
   </extensions>
 </idea-plugin>

@@ -1,6 +1,6 @@
-import codeanalysis.experimental.annotations.DefaultNotNull;
+import org.jspecify.annotations.NullMarked;
 
-@DefaultNotNull
+@NullMarked
 class X {
   X get() {
     return /*ca-nullable-to-not-null*/null;

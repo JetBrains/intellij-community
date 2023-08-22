@@ -1,0 +1,86 @@
+Mercurial accepts several notations for identifying one or more files
+at a time.
+
+By default, Mercurial treats filenames as shell-style extended glob
+patterns.
+
+Alternate pattern notations must be specified explicitly.
+
+.. note::
+
+  Patterns specified in ``.hgignore`` are not rooted.
+  Please see :hg:`help hgignore` for details.
+
+To use a plain path name without any pattern matching, start it with
+``path:``. These path names must completely match starting at the
+current repository root, and when the path points to a directory, it is matched
+recursively. To match all files in a directory non-recursively (not including
+any files in subdirectories), ``rootfilesin:`` can be used, specifying an
+absolute path (relative to the repository root).
+
+To use an extended glob, start a name with ``glob:``. Globs are rooted
+at the current directory; a glob such as ``*.c`` will only match files
+in the current directory ending with ``.c``. ``rootglob:`` can be used
+instead of ``glob:`` for a glob that is rooted at the root of the
+repository.
+
+The supported glob syntax extensions are ``**`` to match any string
+across path separators and ``{a,b}`` to mean "a or b".
+
+To use a Perl/Python regular expression, start a name with ``re:``.
+Regexp pattern matching is anchored at the root of the repository.
+
+To read name patterns from a file, use ``listfile:`` or ``listfile0:``.
+The latter expects null delimited patterns while the former expects line
+feeds. Each string read from the file is itself treated as a file
+pattern.
+
+To read a set of patterns from a file, use ``include:`` or ``subinclude:``.
+``include:`` will use all the patterns from the given file and treat them as if
+they had been passed in manually.  ``subinclude:`` will only apply the patterns
+against files that are under the subinclude file's directory. See :hg:`help
+hgignore` for details on the format of these files.
+
+All patterns, except for ``glob:`` specified in command line (not for
+``-I`` or ``-X`` options), can match also against directories: files
+under matched directories are treated as matched.
+For ``-I`` and ``-X`` options, ``glob:`` will match directories recursively.
+
+Plain examples::
+
+  path:foo/bar        a name bar in a directory named foo in the root
+                      of the repository
+  path:path:name      a file or directory named "path:name"
+  rootfilesin:foo/bar the files in a directory called foo/bar, but not any files
+                      in its subdirectories and not a file bar in directory foo
+
+Glob examples::
+
+  glob:*.c       any name ending in ".c" in the current directory
+  *.c            any name ending in ".c" in the current directory
+  **.c           any name ending in ".c" in any subdirectory of the
+                 current directory including itself.
+  foo/*          any file in directory foo
+  foo/**         any file in directory foo plus all its subdirectories,
+                 recursively
+  foo/*.c        any name ending in ".c" in the directory foo
+  foo/**.c       any name ending in ".c" in any subdirectory of foo
+                 including itself.
+  rootglob:*.c   any name ending in ".c" in the root of the repository
+
+Regexp examples::
+
+  re:.*\.c$      any name ending in ".c", anywhere in the repository
+
+File examples::
+
+  listfile:list.txt  read list from list.txt with one file pattern per line
+  listfile0:list.txt read list from list.txt with null byte delimiters
+
+See also :hg:`help filesets`.
+
+Include examples::
+
+  include:path/to/mypatternfile    reads patterns to be applied to all paths
+  subinclude:path/to/subignorefile reads patterns specifically for paths in the
+                                   subdirectory

@@ -18,25 +18,27 @@ package org.jetbrains.plugins.groovy.codeInspection.exception;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class GroovyEmptyCatchBlockInspection extends BaseInspection {
   public boolean myIgnore = true;
   public boolean myCountCommentsAsContent = true;
+  @NlsSafe private static final String NEW_NAME = "ignored";
 
   @Override
   @NotNull
@@ -44,13 +46,11 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
     return new Visitor();
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(GroovyInspectionBundle.message("comments.count.as.content"), "myCountCommentsAsContent");
-    panel.addCheckbox(GroovyInspectionBundle.message("ignore.when.catch.parameter.is.named.ignore.or.ignored"), "myIgnore");
-    return panel;
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("myCountCommentsAsContent", GroovyBundle.message("comments.count.as.content")),
+      checkbox("myIgnore", GroovyBundle.message("ignore.when.catch.parameter.is.named.ignore.or.ignored")));
   }
 
   private class Visitor extends BaseInspectionVisitor {
@@ -67,11 +67,12 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
       if (parameter == null) return;
       if (myIgnore && GrExceptionUtil.ignore(parameter)) return;
 
-      LocalQuickFix fix = QuickFixFactory.getInstance().createRenameElementFix(parameter, "ignored");
+      LocalQuickFix fix = QuickFixFactory.getInstance().createRenameElementFix(parameter, NEW_NAME);
       final LocalQuickFix[] fixes = myIgnore
                                     ? new LocalQuickFix[]{fix}
                                     : LocalQuickFix.EMPTY_ARRAY;
-      registerError(catchClause.getFirstChild(), "Empty '#ref' block #loc", fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      registerError(catchClause.getFirstChild(), GroovyBundle.message("inspection.message.empty.ref.block"), fixes,
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
     private boolean isEmpty(@NotNull GrOpenBlock body) {

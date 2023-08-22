@@ -14,9 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
-/**
- * @author peter
- */
 public abstract class ComparingClassifier<T> extends Classifier<T> {
   private final boolean myNegated;
 
@@ -50,10 +47,10 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     final List<List<T>> values = new ArrayList<>(myNegated ? map.descendingMap().values() : map.values());
     ContainerUtil.addIfNotNull(values, nulls);
 
-    return new Iterable<T>() {
+    return new Iterable<>() {
       @Override
       public Iterator<T> iterator() {
-        return new FlatteningIterator<List<T>, T>(values.iterator()) {
+        return new FlatteningIterator<>(values.iterator()) {
           @Override
           protected Iterator<T> createValueIterator(List<T> group) {
             return myNext.classify(group, context).iterator();

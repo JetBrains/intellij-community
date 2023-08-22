@@ -1,18 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseDragHelper;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.MultiResolutionImageProvider;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,15 +28,13 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.lang.ref.WeakReference;
 
-import static com.intellij.util.ui.TimerUtil.createNamedTimer;
-
 public final class DnDManagerImpl extends DnDManager {
   private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
 
-  @NonNls private static final String SOURCE_KEY = "DnD Source";
-  @NonNls private static final String TARGET_KEY = "DnD Target";
+  private static final @NonNls String SOURCE_KEY = "DnD Source";
+  private static final @NonNls String TARGET_KEY = "DnD Target";
 
-  public static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<>("draggedImage");
+  private static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<>("draggedImage");
 
   private DnDEventImpl myCurrentEvent;
   private DnDEvent myLastHighlightedEvent;
@@ -53,7 +55,7 @@ public final class DnDManagerImpl extends DnDManager {
   private static final Image EMPTY_IMAGE = ImageUtil.createImage(1, 1, Transparency.TRANSLUCENT);
 
   private final Timer myTooltipTimer =
-    createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), e -> onTimer());
+    TimerUtil.createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), e -> onTimer());
   private Runnable myHighlighterShowRequest;
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
@@ -73,6 +75,17 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   @Override
+  public void registerSource(@NotNull DnDSource source, @NotNull JComponent component, @NotNull Disposable parentDisposable) {
+    registerSource(source, component);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        unregisterSource(source, component);
+      }
+    });
+  }
+
+  @Override
   public void unregisterSource(@NotNull AdvancedDnDSource source) {
     unregisterSource(source, source.getComponent());
   }
@@ -80,12 +93,12 @@ public final class DnDManagerImpl extends DnDManager {
   @Override
   public void unregisterSource(@NotNull DnDSource source, @NotNull JComponent component) {
     component.putClientProperty(SOURCE_KEY, null);
-    cleanup(source, null, null);
+    cleanup(null, null);
   }
 
-  private void cleanup(@Nullable final DnDSource source, @Nullable final DnDTarget target, @Nullable final JComponent targetComponent) {
+  private void cleanup(final @Nullable DnDTarget target, final @Nullable JComponent targetComponent) {
     Runnable cleanup = () -> {
-      if (shouldCancelCurrentDnDOperation(source, target, targetComponent)) {
+      if (shouldCancelCurrentDnDOperation(target, targetComponent)) {
         myLastProcessedOverComponent = null;
         myCurrentDragContext = null;
         resetEvents("cleanup");
@@ -100,9 +113,9 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  private boolean shouldCancelCurrentDnDOperation(DnDSource source, DnDTarget target, JComponent targetComponent) {
+  private boolean shouldCancelCurrentDnDOperation(DnDTarget target, JComponent targetComponent) {
     DnDEvent currentDnDEvent = myLastProcessedEvent;
-    if (currentDnDEvent == null || (source != null && currentDnDEvent.equals(source))) {
+    if (currentDnDEvent == null) {
       return true;
     }
 
@@ -123,23 +136,48 @@ public final class DnDManagerImpl extends DnDManager {
   @Override
   public void registerTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, target);
+    //noinspection ResultOfObjectAllocationIgnored
     new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
+  }
+
+  public DropTargetListener getDropTargetListener() {
+    return myDropTargetListener;
+  }
+
+  @Override
+  public void registerTarget(@NotNull DnDTarget target, @NotNull JComponent component, @NotNull Disposable parentDisposable) {
+    registerTarget(target, component);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        unregisterTarget(target, component);
+      }
+    });
   }
 
   @Override
   public void unregisterTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, null);
 
-    cleanup(null, target, component);
+    cleanup(target, component);
   }
 
+  public void updateCurrentEvent() {
+    if (myCurrentEvent == null) return;
+    updateCurrentEvent(
+      myCurrentEvent.getCurrentOverComponent(),
+      myCurrentEvent.getPoint(),
+      myCurrentEvent.getAction().getActionId(),
+      myCurrentEvent.getTransferDataFlavors(),
+      myCurrentEvent
+    );
+  }
   private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, DataFlavor @Nullable [] flavors, @Nullable Transferable transferable) {
-    LOG.debug("updateCurrentEvent: " + aComponentOverDragging);
+    LOG.debug("updateCurrentEvent: ", aComponentOverDragging);
 
     DnDEventImpl currentEvent = myCurrentEvent;
 
-    if (myCurrentEvent == null && aComponentOverDragging instanceof JComponent) {
-      JComponent jComp = (JComponent)aComponentOverDragging;
+    if (myCurrentEvent == null && aComponentOverDragging instanceof JComponent jComp) {
       DnDTarget target = getTarget(jComp);
       if (target instanceof DnDNativeTarget) {
         DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
@@ -153,7 +191,7 @@ public final class DnDManagerImpl extends DnDManager {
       }
     }
 
-    if (currentEvent == null) return currentEvent;
+    if (currentEvent == null) return null;
 
     final DnDAction dndAction = getDnDActionForPlatformAction(nativeAction);
     if (dndAction == null) return null;
@@ -167,10 +205,10 @@ public final class DnDManagerImpl extends DnDManager {
     boolean sameComponent = currentEvent.getCurrentOverComponent().equals(component);
     boolean sameAction = nativeAction == myLastProcessedAction;
 
-    LOG.debug("updateCurrentEvent: point:" + aPoint);
-    LOG.debug("updateCurrentEvent: action:" + nativeAction);
+    LOG.debug("updateCurrentEvent: point:", aPoint);
+    LOG.debug("updateCurrentEvent: action:", nativeAction);
 
-    if (samePoint && sameComponent && sameAction) {
+    if (samePoint && sameComponent && sameAction && transferable != myCurrentEvent) {
       return currentEvent;
     }
 
@@ -281,7 +319,7 @@ public final class DnDManagerImpl extends DnDManager {
     myCurrentDragContext.setCursor(cursor);
   }
 
-  private boolean update(DnDTarget target, DnDEvent currentEvent) {
+  private boolean update(DnDTargetChecker target, DnDEvent currentEvent) {
     LOG.debug("update target:" + target);
 
     currentEvent.clearDelegatedTarget();
@@ -307,8 +345,7 @@ public final class DnDManagerImpl extends DnDManager {
     return canGoToParent;
   }
 
-  @Nullable
-  private static Component findAllowedParentComponent(@NotNull Component aComponentOverDragging) {
+  private static @Nullable Component findAllowedParentComponent(@NotNull Component aComponentOverDragging) {
     Component eachParent = aComponentOverDragging;
     while (true) {
       eachParent = eachParent.getParent();
@@ -323,8 +360,7 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  @Nullable
-  private static DnDSource getSource(Component component) {
+  private static @Nullable DnDSource getSource(Component component) {
     if (component instanceof JComponent) {
       return (DnDSource)((JComponent)component).getClientProperty(SOURCE_KEY);
     }
@@ -347,12 +383,33 @@ public final class DnDManagerImpl extends DnDManager {
 
   void showHighlighter(RelativeRectangle rectangle, int aType, DnDEvent aEvent) {
     JLayeredPane layeredPane = getLayeredPane(rectangle.getPoint().getComponent());
-    Rectangle bounds = rectangle.getRectangleOn(layeredPane);
-    showHighlighter(layeredPane, aEvent, bounds, aType);
+    showHighlighter(layeredPane, rectangle, aType, aEvent);
   }
 
   void showHighlighter(JLayeredPane layeredPane, final RelativeRectangle rectangle, final int aType, final DnDEvent event) {
     final Rectangle bounds = rectangle.getRectangleOn(layeredPane);
+    // update selected row bounds according to the visible rectangle
+    RelativePoint point = rectangle.getPoint();
+    Component component = point == null ? null : point.getOriginalComponent();
+    if (component instanceof JTree tree) {
+      Rectangle visible = tree.getVisibleRect();
+      int dx = point.getOriginalPoint().x - visible.x;
+      if (aType == DnDEvent.DropTargetHighlightingType.RECTANGLE || dx < 0) {
+        bounds.x -= dx;
+        bounds.width = visible.width;
+      }
+      else {
+        bounds.width = visible.width - dx;
+      }
+    }
+    else if (component instanceof JList<?> list) {
+      if (JList.VERTICAL == list.getLayoutOrientation()) {
+        Rectangle visible = list.getVisibleRect();
+        int dx = point.getOriginalPoint().x - visible.x;
+        bounds.x -= dx;
+        bounds.width = visible.width;
+      }
+    }
     showHighlighter(layeredPane, event, bounds, aType);
   }
 
@@ -423,8 +480,7 @@ public final class DnDManagerImpl extends DnDManager {
     clearRequest();
   }
 
-  @Nullable
-  private static JLayeredPane getLayeredPane(@Nullable Component aComponent) {
+  private static @Nullable JLayeredPane getLayeredPane(@Nullable Component aComponent) {
     if (aComponent == null) {
       return null;
     }
@@ -480,8 +536,7 @@ public final class DnDManagerImpl extends DnDManager {
     LOG.debug("Reset events: " + s);
   }
 
-  @Nullable
-  private static DnDEventImpl resetEvent(DnDEvent event) {
+  private static @Nullable DnDEventImpl resetEvent(DnDEvent event) {
     if (event == null) return null;
     event.cleanUp();
     return null;
@@ -518,7 +573,7 @@ public final class DnDManagerImpl extends DnDManager {
           pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
         }
 
-        if (SystemInfo.isMac && MultiResolutionImageProvider.isMultiResolutionImageAvailable()) {
+        if (SystemInfo.isMac && true) {
           Image mrImage = MultiResolutionImageProvider.convertFromJBImage(pair.first);
           if (mrImage != null) pair = new Pair<>(mrImage, pair.second);
         }
@@ -538,23 +593,14 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   private static DnDAction getDnDActionForPlatformAction(int platformAction) {
-    DnDAction action = null;
     boolean altOnly = UISettings.getInstance().getDndWithPressedAltOnly();
-    switch (platformAction) {
-      case DnDConstants.ACTION_COPY:
-        action = altOnly ? DnDAction.MOVE : DnDAction.COPY;
-        break;
-      case DnDConstants.ACTION_MOVE:
-        action = altOnly? DnDAction.COPY : DnDAction.MOVE;
-        break;
-      case DnDConstants.ACTION_LINK:
-        action = DnDAction.LINK;
-        break;
-      default:
-        break;
-    }
 
-    return action;
+    return switch (platformAction) {
+      case DnDConstants.ACTION_COPY -> altOnly ? DnDAction.MOVE : DnDAction.COPY;
+      case DnDConstants.ACTION_MOVE -> altOnly ? DnDAction.COPY : DnDAction.MOVE;
+      case DnDConstants.ACTION_LINK -> DnDAction.LINK;
+      default -> null;
+    };
   }
 
   private class MyDragSourceListener implements DragSourceListener {
@@ -719,8 +765,7 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   @Override
-  @Nullable
-  public Component getLastDropHandler() {
+  public @Nullable Component getLastDropHandler() {
     return SoftReference.dereference(myLastDropHandler);
   }
 }

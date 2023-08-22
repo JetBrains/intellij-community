@@ -27,9 +27,6 @@ import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodProces
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testSimple() { doTest(true, 0); }
@@ -89,6 +86,10 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   }
    
   public void testSameNamesRecursion() {
+    doTest(true, 0);
+  }
+
+  public void testDefaultInClass() {
     doTest(true, 0);
   }
 

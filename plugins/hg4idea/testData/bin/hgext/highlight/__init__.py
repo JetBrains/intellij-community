@@ -13,21 +13,54 @@
 It depends on the Pygments syntax highlighting library:
 http://pygments.org/
 
-There is a single configuration option::
+There are the following configuration options::
 
   [web]
-  pygments_style = <style>
+  pygments_style = <style> (default: colorful)
+  highlightfiles = <fileset> (default: size('<5M'))
+  highlightonlymatchfilename = <bool> (default False)
 
-The default is 'colorful'.
+``highlightonlymatchfilename`` will only highlight files if their type could
+be identified by their filename. When this is not enabled (the default),
+Pygments will try very hard to identify the file type from content and any
+match (even matches with a low confidence score) will be used.
 """
 
-import highlight
-from mercurial.hgweb import webcommands, webutil, common
-from mercurial import extensions, encoding
-testedwith = 'internal'
+from __future__ import absolute_import
 
-def filerevision_highlight(orig, web, tmpl, fctx):
-    mt = ''.join(tmpl('mimetype', encoding=encoding.encoding))
+from . import highlight
+from mercurial.hgweb import (
+    webcommands,
+    webutil,
+)
+
+from mercurial import (
+    extensions,
+    pycompat,
+)
+
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
+
+
+def pygmentize(web, field, fctx, tmpl):
+    style = web.config(b'web', b'pygments_style', b'colorful')
+    expr = web.config(b'web', b'highlightfiles', b"size('<5M')")
+    filenameonly = web.configbool(b'web', b'highlightonlymatchfilename', False)
+
+    ctx = fctx.changectx()
+    m = ctx.matchfileset(fctx.repo().root, expr)
+    if m(fctx.path()):
+        highlight.pygmentize(
+            field, fctx, style, tmpl, guessfilenameonly=filenameonly
+        )
+
+
+def filerevision_highlight(orig, web, fctx):
+    mt = web.res.headers[b'Content-Type']
     # only pygmentize for mimetype containing 'html' so we both match
     # 'text/html' and possibly 'application/xhtml+xml' in the future
     # so that we don't have to touch the extension when the mimetype
@@ -35,30 +68,42 @@ def filerevision_highlight(orig, web, tmpl, fctx):
     # raw file is sent using rawfile() and doesn't call us, so we
     # can't clash with the file's content-type here in case we
     # pygmentize a html file
-    if 'html' in mt:
-        style = web.config('web', 'pygments_style', 'colorful')
-        highlight.pygmentize('fileline', fctx, style, tmpl)
-    return orig(web, tmpl, fctx)
+    if b'html' in mt:
+        pygmentize(web, b'fileline', fctx, web.tmpl)
 
-def annotate_highlight(orig, web, req, tmpl):
-    mt = ''.join(tmpl('mimetype', encoding=encoding.encoding))
-    if 'html' in mt:
-        fctx = webutil.filectx(web.repo, req)
-        style = web.config('web', 'pygments_style', 'colorful')
-        highlight.pygmentize('annotateline', fctx, style, tmpl)
-    return orig(web, req, tmpl)
+    return orig(web, fctx)
 
-def generate_css(web, req, tmpl):
-    pg_style = web.config('web', 'pygments_style', 'colorful')
-    fmter = highlight.HtmlFormatter(style = pg_style)
-    req.respond(common.HTTP_OK, 'text/css')
-    return ['/* pygments_style = %s */\n\n' % pg_style,
-            fmter.get_style_defs('')]
 
-def extsetup():
+def annotate_highlight(orig, web):
+    mt = web.res.headers[b'Content-Type']
+    if b'html' in mt:
+        fctx = webutil.filectx(web.repo, web.req)
+        pygmentize(web, b'annotateline', fctx, web.tmpl)
+
+    return orig(web)
+
+
+def generate_css(web):
+    pg_style = web.config(b'web', b'pygments_style', b'colorful')
+    fmter = highlight.HtmlFormatter(style=pycompat.sysstr(pg_style))
+    web.res.headers[b'Content-Type'] = b'text/css'
+    style_defs = fmter.get_style_defs(pycompat.sysstr(b''))
+    web.res.setbodybytes(
+        b''.join(
+            [
+                b'/* pygments_style = %s */\n\n' % pg_style,
+                pycompat.bytestr(style_defs),
+            ]
+        )
+    )
+    return web.res.sendresponse()
+
+
+def extsetup(ui):
     # monkeypatch in the new version
-    extensions.wrapfunction(webcommands, '_filerevision',
-                            filerevision_highlight)
-    extensions.wrapfunction(webcommands, 'annotate', annotate_highlight)
+    extensions.wrapfunction(
+        webcommands, b'_filerevision', filerevision_highlight
+    )
+    extensions.wrapfunction(webcommands, b'annotate', annotate_highlight)
     webcommands.highlightcss = generate_css
-    webcommands.__all__.append('highlightcss')
+    webcommands.__all__.append(b'highlightcss')

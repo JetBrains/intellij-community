@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
@@ -37,10 +38,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author vlan
- */
-public class PyiUtil {
+public final class PyiUtil {
   private PyiUtil() {}
 
   public static boolean isInsideStubAnnotation(@NotNull PsiElement element) {
@@ -66,13 +64,58 @@ public class PyiUtil {
   @Nullable
   public static PsiElement getOriginalElement(@NotNull PyElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file instanceof PyiFile) {
-      final PyFile originalFile = getOriginalFile((PyiFile)file);
-      if (originalFile != null) {
-        return findSimilarElement(element, originalFile);
+    if (!(file instanceof PyiFile)) return null;
+
+    final PyFile originalFile = getOriginalFile((PyiFile)file);
+    if (originalFile == null) return null;
+
+    PsiElement result = findSimilarElement(element, originalFile);
+    
+    // If a name is defined in a .pyi stub and the corresponding .py module in a different manner, e.g.
+    // it's exported through an assignment to a top-level attribute in a .pyi stub, but though a regular
+    // "from" import in .py file, we might end up in another stub file again. It happens because resolving 
+    // an imported name in a .py file in findSimilarElement() still prioritizes .pyi stubs over implementations
+    // as PyResolveContext doesn't retain the PyQualifiedNameResolveContext.getWithoutStubs flag.
+    // TODO propagate "without stubs" property through PyResolveContext
+    if (result instanceof PyElement && isInsideStub(result) && result.getContainingFile() != file) {
+      result = getOriginalElement((PyElement)result);
+    }
+
+    if (result != null) return result;
+
+    if (element instanceof PyFunction) {
+      PyClass containingClass = PyUtil.turnConstructorIntoClass((PyFunction)element);
+      if (containingClass != null) {
+        result = findSimilarElement(containingClass, originalFile);
       }
     }
-    return null;
+
+    return result;
+  }
+
+  /**
+   * Returns the language level of {@link #getOriginalElement(PyElement)} result if {@code element} belongs to a .pyi file and
+   * the language level of the {@code element} itself, otherwise.
+   * <p>
+   * If {@link #getOriginalElement(PyElement)} still returns {@code null}, we try to restore the original SDK language level
+   * from the corresponding .pyi file using the underlying machinery of {@link PythonLanguageLevelPusher}. The reason for that
+   * is that by design {@link PyiFile#getLanguageLevel()} unconditionally returns the latest supported Python version (as these
+   * are not executable), and original .py implementations may be absent in some environments such as unit tests with a mock SDK.
+   */
+  @NotNull
+  public static LanguageLevel getOriginalLanguageLevel(@NotNull PyElement element) {
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PyiFile) {
+      PsiElement impl = getOriginalElement(element);
+      if (impl != null) {
+        return LanguageLevel.forElement(impl);
+      }
+      else {
+        // XXX: Relying on the fact .pyi files still have the language level key set by the pusher
+        return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(element.getProject(), containingFile.getVirtualFile());
+      }
+    }
+    return LanguageLevel.forElement(element);
   }
 
   /**
@@ -117,7 +160,7 @@ public class PyiUtil {
   }
 
   public static boolean isPyiFileOfPackage(@NotNull PsiElement element) {
-    return element instanceof PyiFile || PyUtil.turnDirIntoInit(element) instanceof PyiFile;
+    return element instanceof PyiFile || PyUtil.turnDirIntoInitPyi(element) instanceof PyiFile;
   }
 
   private static boolean pyButNotPyiFile(@Nullable PsiFile file) {
@@ -134,7 +177,7 @@ public class PyiUtil {
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
       .stream()
       .findFirst()
-      .map(PyUtil::turnDirIntoInit)
+      .map(PyUtil::turnDirIntoInitPyi)
       .orElse(null), PyiFile.class);
   }
 
@@ -148,7 +191,7 @@ public class PyiUtil {
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
                        .stream()
                        .findFirst()
-                       .map(PyUtil::turnDirIntoInit)
+                       .map(PyUtil::turnDirIntoInitPy)
                        .orElse(null), PyFile.class);
   }
 
@@ -162,24 +205,29 @@ public class PyiUtil {
     if (owner != null && name != null) {
       assert owner != element;
       final PsiElement originalOwner = findSimilarElement(owner, file);
-      if (originalOwner instanceof PyClass) {
-        final PyClass classOwner = (PyClass)originalOwner;
-        final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
-        if (type instanceof PyClassLikeType) {
-          final PyClassLikeType classType = (PyClassLikeType)type;
-          final PyClassLikeType instanceType = classType.toInstance();
-          final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
-                                                                                               PyResolveContext.defaultContext(), false);
-          final PsiElement result = takeTopPriorityElement(resolveResults);
-          return result == element ? null : result;
-        }
-      }
-      else if (originalOwner instanceof PyFile) {
-        final PsiElement result = takeTopPriorityElement(((PyFile)originalOwner).multiResolveName(name));
+      if (originalOwner instanceof PyTypedElement) {
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(file.getProject());
+        final PyType type = context.getType((PyTypedElement)originalOwner);
+        final PsiElement result = resolveSimilarMember(type, name, context);
         return result == element ? null : result;
       }
     }
     return null;
+  }
+
+  private static @Nullable PsiElement resolveSimilarMember(@Nullable PyType similarOwnerType,
+                                                           @NotNull String name,
+                                                           @NotNull TypeEvalContext context) {
+    if (similarOwnerType == null) return null;
+
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
+
+    final List<? extends RatedResolveResult> results =
+      similarOwnerType instanceof PyClassLikeType
+      ? ((PyClassLikeType)similarOwnerType).resolveMember(name, null, AccessDirection.READ, resolveContext, false)
+      : similarOwnerType.resolveMember(name, null, AccessDirection.READ, resolveContext);
+
+    return takeTopPriorityElement(results);
   }
 
   @NotNull
@@ -198,14 +246,12 @@ public class PyiUtil {
       return true;
     };
 
-    if (owner instanceof PyClass) {
-      final PyClass cls = (PyClass)owner;
+    if (owner instanceof PyClass cls) {
       if (name != null) {
         cls.visitMethods(overloadsProcessor, false, context);
       }
     }
-    else if (owner instanceof PyFile) {
-      final PyFile file = (PyFile)owner;
+    else if (owner instanceof PyFile file) {
       for (PyFunction f : file.getTopLevelFunctions()) {
         if (!overloadsProcessor.process(f)) {
           break;

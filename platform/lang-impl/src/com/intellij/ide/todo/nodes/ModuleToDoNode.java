@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.nodes;
 
@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,22 +23,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class ModuleToDoNode extends BaseToDoNode<Module> {
+public final class ModuleToDoNode extends BaseToDoNode<Module> {
 
   public ModuleToDoNode(Project project, @NotNull Module value, TodoTreeBuilder builder) {
     super(project, value, builder);
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
     if (myToDoSettings.getIsPackagesShown()) {
       TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, getValue(), myBuilder);
     }
     else {
-      for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
-        final PsiFile psiFile = (PsiFile)i.next();
+      for (Iterator<? extends PsiFile> i = myBuilder.getAllFiles(); i.hasNext(); ) {
+        final PsiFile psiFile = i.next();
         if (psiFile == null) { // skip invalid PSI files
           continue;
         }
@@ -53,7 +51,6 @@ public class ModuleToDoNode extends BaseToDoNode<Module> {
       }
     }
     return children;
-
   }
 
   @Override

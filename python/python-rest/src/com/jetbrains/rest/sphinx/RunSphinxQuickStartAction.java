@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rest.sphinx;
 
 import com.intellij.openapi.actionSystem.*;
@@ -15,6 +15,12 @@ import org.jetbrains.annotations.NotNull;
  * user : catherine
  */
 public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull final AnActionEvent event) {
     RestPythonUtil.updateSphinxQuickStartRequiredAction(event);
@@ -23,13 +29,13 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Presentation presentation = RestPythonUtil.updateSphinxQuickStartRequiredAction(e);
-    assert presentation.isEnabled() &&  presentation.isVisible() : "Sphinx requirements for action are not satisfied";
+    assert presentation.isEnabled() && presentation.isVisible() : "Sphinx requirements for action are not satisfied";
 
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
     if (project == null) return;
 
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       Module[] modules = ModuleManager.getInstance(project).getModules();
       module = modules.length == 0 ? null : modules [0];
@@ -38,6 +44,6 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
     if (module == null) return;
     final SphinxBaseCommand action = new SphinxBaseCommand();
     final Module finalModule = module;
-    ApplicationManager.getApplication().invokeLater(() -> action.execute(finalModule), ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> action.execute(finalModule), ModalityState.nonModal());
   }
 }

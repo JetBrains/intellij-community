@@ -17,8 +17,10 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -51,11 +53,10 @@ public class HgRebaseCommand {
   }
 
   @Nullable
-  private HgCommandResult performRebase(String @NotNull ... args) {
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Rebase")) {
-      final List<String> list = ContainerUtil.newArrayList(args);
-      list.add("--config");
-      list.add("extensions.rebase=");
+  private HgCommandResult performRebase(@NonNls String @NotNull ... args) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, HgBundle.message("activity.name.rebase"))) {
+      final List<String> list = ContainerUtil.concat(List.of(args),
+      List.of("--config", "extensions.rebase="));
       HgCommandResult result =
         new HgCommandExecutor(project)
           .executeInCurrentThread(repo.getRoot(), "rebase", list);

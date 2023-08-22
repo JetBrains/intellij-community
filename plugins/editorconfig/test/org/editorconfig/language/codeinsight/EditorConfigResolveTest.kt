@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -9,7 +9,6 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import java.util.*
 
 class EditorConfigResolveTest : BasePlatformTestCase() {
   override fun getTestDataPath() =
@@ -64,7 +63,7 @@ class EditorConfigResolveTest : BasePlatformTestCase() {
     val referencesList = mutableListOf<PsiReference>()
     file.accept(object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        referencesList.addAll(Arrays.asList(*element.references))
+        referencesList.addAll(listOf(*element.references))
         element.acceptChildren(this)
       }
     })

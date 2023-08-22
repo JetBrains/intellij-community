@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -39,9 +26,7 @@ import org.jsoup.nodes.Element;
 import java.util.Map;
 import java.util.function.Function;
 
-/**
- * @author yole
- */
+
 public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
   // use tools/stdlib-modindex.py to regenerate the map when new Python versions are released
   private static final Map<String, String> py2LibraryModulesToWebpageName = new MyBuilder()
@@ -990,7 +975,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
   @Nullable
   @Override
-  public Function<Document, String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
+  public Function<Document, @NlsSafe String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return document -> {
       final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
 
@@ -1022,7 +1007,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
                              ((PyFunction)element).getContainingClass().getName() : "";
     final String name = element instanceof PsiNamedElement && !(element instanceof PyFile) ? ((PsiNamedElement)element).getName() : null;
     final String name2 = "__init__".equals(name) ? "" : name;
-    final String qName = name == null ? null : className + (!"".equals(className) && !"".equals(name2) ? "." : "") + name2;
+    final String qName = name == null ? null : className + (!"".equals(className) && !name2.isEmpty() ? "." : "") + name2;
     final String webpageName2 = isBuiltin ? stdlibObjectsToWebpage.get(qName) : webpageName;
 
     if (webpageName2 != null) {

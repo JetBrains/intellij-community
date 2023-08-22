@@ -1,0 +1,42 @@
+# fake module, only exists once the app is frozen
+pyi_splash
+# Undocumented and clearly not meant to be exposed
+PyInstaller.__main__.generate_parser
+PyInstaller.__main__.run_build
+PyInstaller.__main__.run_makespec
+PyInstaller.utils.hooks.conda.lib_dir
+# A mix of modules meant to be private, and shallow incomplete type references for other modules
+PyInstaller.building.*
+PyInstaller.depend.analysis.*
+PyInstaller.isolated._parent.*
+# Most modules are not meant to be used, yet are not marked as private
+PyInstaller.archive.*
+PyInstaller.config
+PyInstaller.configure
+PyInstaller.depend.bindepend
+PyInstaller.depend.bytecode
+PyInstaller.depend.dylib
+PyInstaller.depend.imphook
+PyInstaller.depend.utils
+PyInstaller.exceptions
+PyInstaller.hooks.*
+PyInstaller.lib.*
+PyInstaller.loader.*
+PyInstaller.log
+PyInstaller.utils.cliutils.*
+PyInstaller.utils.conftest
+PyInstaller.utils.git
+PyInstaller.utils.hooks.django
+PyInstaller.utils.hooks.gi
+PyInstaller.utils.hooks.qt
+PyInstaller.utils.hooks.subproc.*
+PyInstaller.utils.hooks.tcl_tk
+PyInstaller.utils.misc
+PyInstaller.utils.osx
+PyInstaller.utils.run_tests
+PyInstaller.utils.tests
+PyInstaller.utils.win32.*
+# Explicitly private implementation details
+PyInstaller\._.*
+PyInstaller.isolated._child
+PyInstaller.utils._gitrevision

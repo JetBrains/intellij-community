@@ -22,9 +22,7 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
     setTitle(SvnBundle.message("checkout.dialog.title"));
     setOKButtonText(SvnBundle.message("checkout.dialog.button"));
     getRepositoryBrowser().addChangeListener(e -> {
-      if (getOKAction() != null) {
-        getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
-      }
+      getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }

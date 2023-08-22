@@ -4,9 +4,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 
-/**
- * @author peter
-*/
 public class HtmlQuoteHandler implements QuoteHandler {
   private final QuoteHandler myBaseQuoteHandler = new XmlQuoteHandler();
 

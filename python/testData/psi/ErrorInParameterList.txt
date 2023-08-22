@@ -16,7 +16,7 @@ PyFile:ErrorInParameterList.py
           PsiElement(Py:IDENTIFIER)('None')
       PsiElement(Py:COMMA)(',')
       PsiWhiteSpace(' ')
-      PsiErrorElement:formal parameter name expected
+      PsiErrorElement:Formal parameter name expected
         PsiElement(Py:FROM_KEYWORD)('from')
         PsiElement(Py:EQ)('=')
         PsiElement(Py:SINGLE_QUOTED_STRING)('''')

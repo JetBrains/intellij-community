@@ -4,7 +4,7 @@ class Base {
 class Derived extends Base {
   int i;
 
-    public Derived(int i, String... ignored) {
+    Derived(int i, String... ignored) {
         super(ignored);
         this.i = i;
     }

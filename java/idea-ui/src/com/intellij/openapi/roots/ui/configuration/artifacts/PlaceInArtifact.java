@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.PlaceInProjectStructure;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.ActionCallback;
@@ -57,7 +56,7 @@ public class PlaceInArtifact extends PlaceInProjectStructure {
   @Override
   public ActionCallback navigate() {
     final Artifact artifact = myContext.getArtifactModel().getArtifactByOriginal(myArtifact);
-    return ProjectStructureConfigurable.getInstance(myContext.getProject()).select(myArtifact, true).doWhenDone(() -> {
+    return myContext.getProjectStructureConfigurable().select(myArtifact, true).doWhenDone(() -> {
       final ArtifactEditorEx artifactEditor = (ArtifactEditorEx)myContext.getOrCreateEditor(artifact);
       if (myParentPath != null && myPackagingElement != null) {
         artifactEditor.getLayoutTreeComponent().selectNode(myParentPath, myPackagingElement);

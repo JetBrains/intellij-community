@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
@@ -6,10 +6,14 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.ui.AppIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import javax.swing.JCheckBox
@@ -27,11 +31,11 @@ import javax.swing.text.Segment
  */
 @JvmOverloads
 fun askPassword(project: Project?,
-                dialogTitle: String,
-                passwordFieldLabel: String,
+                @NlsContexts.DialogTitle dialogTitle: String,
+                @NlsContexts.Label passwordFieldLabel: String,
                 attributes: CredentialAttributes,
                 resetPassword: Boolean = false,
-                error: String? = null): String? {
+                @NlsContexts.DialogMessage error: String? = null): String? {
   return askCredentials(project, dialogTitle, passwordFieldLabel, attributes,
                         isResetPassword = resetPassword,
                         error = error,
@@ -40,13 +44,13 @@ fun askPassword(project: Project?,
 
 @JvmOverloads
 fun askCredentials(project: Project?,
-                   dialogTitle: String,
-                   passwordFieldLabel: String,
+                   @NlsContexts.DialogTitle dialogTitle: String,
+                   @NlsContexts.Label passwordFieldLabel: String,
                    attributes: CredentialAttributes,
                    isSaveOnOk: Boolean = true,
                    isCheckExistingBeforeDialog: Boolean = false,
                    isResetPassword: Boolean = false,
-                   error: String? = null): CredentialRequestResult? {
+                   @NlsContexts.DialogMessage error: String? = null): CredentialRequestResult? {
   val store = PasswordSafe.instance
   if (isResetPassword) {
     store.set(attributes, null)
@@ -62,9 +66,13 @@ fun askCredentials(project: Project?,
     val rememberCheckBox = RememberCheckBoxState.createCheckBox(toolTip = "The password will be stored between application sessions.")
 
     val panel = panel {
-      row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
-      row { passwordField() }
-      row { rememberCheckBox() }
+      row {
+        label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:")
+      }
+      row {
+        cell(passwordField).resizableColumn().align(AlignX.FILL)
+      }
+      row { cell(rememberCheckBox) }
     }
 
     AppIcon.getInstance().requestAttention(project, true)
@@ -85,8 +93,6 @@ fun askCredentials(project: Project?,
   }
 }
 
-data class CredentialRequestResult(val credentials: Credentials, val isRemember: Boolean)
-
 object RememberCheckBoxState {
   val isSelected: Boolean
     get() = PasswordSafe.instance.isRememberPasswordByDefault
@@ -96,7 +102,7 @@ object RememberCheckBoxState {
     PasswordSafe.instance.isRememberPasswordByDefault = component.isSelected
   }
 
-  fun createCheckBox(toolTip: String?): JCheckBox {
+  fun createCheckBox(@Tooltip toolTip: String?): JCheckBox {
     return CheckBox(
       UIBundle.message("auth.remember.cb"),
       selected = isSelected,

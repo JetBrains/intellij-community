@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.pratt;
 
 import com.intellij.lang.ITokenTypeRemapper;
@@ -20,7 +6,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,16 +14,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class PrattBuilderImpl extends PrattBuilder {
   private final PsiBuilder myBuilder;
   private final PrattBuilder myParentBuilder;
   private final PrattRegistry myRegistry;
   private final LinkedList<IElementType> myLeftSiblings = new LinkedList<>();
   private boolean myParsingStarted;
-  private String myExpectedMessage;
+  private @NlsContexts.ParsingError String myExpectedMessage;
   private int myPriority = Integer.MIN_VALUE;
   private MutableMarker myStartMarker;
 
@@ -52,7 +35,7 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  public PrattBuilder expecting(final String expectedMessage) {
+  public PrattBuilder expecting(final @NlsContexts.ParsingError String expectedMessage) {
     myExpectedMessage = expectedMessage;
     return this;
   }
@@ -126,9 +109,9 @@ public class PrattBuilderImpl extends PrattBuilder {
   @Nullable
   private TokenParser findParser() {
     final IElementType tokenType = getTokenType();
-    for (final Trinity<Integer, PathPattern, TokenParser> trinity : myRegistry.getParsers(tokenType)) {
-      if (trinity.first > myPriority && trinity.second.accepts(this)) {
-        return trinity.third;
+    for (final PrattRegistry.ParserData parserData : myRegistry.getParsers(tokenType)) {
+      if (parserData.priority() > myPriority && parserData.pattern().accepts(this)) {
+        return parserData.parser();
       }
     }
     return null;
@@ -141,7 +124,7 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  public void error(@NotNull final String errorText) {
+  public void error(@NotNull @NlsContexts.ParsingError final String errorText) {
     final PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.error(errorText);
     marker.drop();

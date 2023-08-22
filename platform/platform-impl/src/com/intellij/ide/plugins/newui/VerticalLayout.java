@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -12,9 +13,11 @@ import java.util.Set;
 
 /**
  * @author Alexander Lobas
+ * @deprecated use {@link com.intellij.ui.components.panels.ListLayout}
  */
+@Deprecated
 public class VerticalLayout extends AbstractLayoutManager {
-  public static final String FILL_HORIZONTAL = "fill_h";
+  public static final @NonNls String FILL_HORIZONTAL = "fill_h";
 
   private final int myOffset;
   private final int myWidth;

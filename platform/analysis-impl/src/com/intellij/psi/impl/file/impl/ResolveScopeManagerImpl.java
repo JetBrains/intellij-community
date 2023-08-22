@@ -1,20 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.ide.scratch.ScratchFileHelper;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
@@ -23,7 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public final class ResolveScopeManagerImpl extends ResolveScopeManager {
+import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
+
+public final class ResolveScopeManagerImpl extends ResolveScopeManager implements Disposable {
   private final Project myProject;
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
@@ -37,36 +45,53 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(
-      key -> {
-        GlobalSearchScope scope = null;
-        for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
-          scope = resolveScopeProvider.getResolveScope(key, myProject);
-          if (scope != null) break;
-        }
-        if (scope == null) scope = getInherentResolveScope(key);
-        for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-          SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
-          if (extra != null) {
-            scope = scope.union(extra);
-          }
-        }
-        return scope;
-      },
-      ContainerUtil::createConcurrentWeakKeySoftValueMap);
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.compute(() -> createScopeByFile(key)), ContainerUtil::createConcurrentWeakKeySoftValueMap);
 
-    ((PsiManagerImpl)myManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
+    myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        if (isPhysical) myDefaultResolveScopesCache.clear();
+      }
+    });
+
     // Make it explicit that registering and removing ResolveScopeProviders needs to clear the resolve scope cache
     // (even though normally registerRunnableToRunOnChange would be enough to clear the cache)
-    ResolveScopeProvider.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), project);
-    ResolveScopeEnlarger.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), project);
+    ResolveScopeProvider.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), this);
+    ResolveScopeEnlarger.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), this);
   }
 
-  private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
+  @NotNull
+  private GlobalSearchScope createScopeByFile(@NotNull VirtualFile key) {
+    VirtualFile file = key;
+    VirtualFile original = key instanceof LightVirtualFile ? ((LightVirtualFile)key).getOriginalFile() : null;
+    if (original != null) {
+      file = original;
+    }
+    GlobalSearchScope scope = null;
+    for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
+      scope = resolveScopeProvider.getResolveScope(file, myProject);
+      if (scope != null) break;
+    }
+    if (scope == null) scope = getInherentResolveScope(file);
+    for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+      SearchScope extra = enlarger.getAdditionalResolveScope(file, myProject);
+      if (extra != null) {
+        scope = scope.union(extra);
+      }
+    }
+    if (original != null && !scope.contains(key)) {
+      scope = scope.union(GlobalSearchScope.fileScope(myProject, key));
+    }
+    return scope;
+  }
+
+  @NotNull
+  private GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile) {
     return myDefaultResolveScopesCache.get(vFile);
   }
 
-  private GlobalSearchScope getInherentResolveScope(VirtualFile vFile) {
+  @NotNull
+  private GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
@@ -112,14 +137,18 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
     if (containingFile == null) {
       return GlobalSearchScope.allScope(myProject);
     }
-    if (containingFile instanceof FileResolveScopeProvider) {
-      return ((FileResolveScopeProvider)containingFile).getFileResolveScope();
+    return getPsiFileResolveScope(containingFile);
+  }
+
+  @NotNull
+  private GlobalSearchScope getPsiFileResolveScope(@NotNull PsiFile psiFile) {
+    if (psiFile instanceof FileResolveScopeProvider) {
+      return ((FileResolveScopeProvider)psiFile).getFileResolveScope();
     }
-    VirtualFile vFile = containingFile.getOriginalFile().getVirtualFile();
-    if (vFile == null) {
-      return withFile(containingFile, GlobalSearchScope.allScope(myProject));
+    if (!psiFile.getOriginalFile().isPhysical() && !psiFile.getViewProvider().isPhysical()) {
+      return withFile(psiFile, GlobalSearchScope.allScope(myProject));
     }
-    return getResolveScopeFromProviders(vFile);
+    return getResolveScopeFromProviders(psiFile.getViewProvider().getVirtualFile());
   }
 
   private GlobalSearchScope withFile(PsiFile containingFile, GlobalSearchScope scope) {
@@ -131,9 +160,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
 
   @NotNull
   @Override
-  public GlobalSearchScope getDefaultResolveScope(@NotNull final VirtualFile vFile) {
-    final PsiFile psiFile = myManager.findFile(vFile);
-    assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject;
+  public GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
+    PsiFile psiFile = myManager.findFile(vFile);
+    assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject+"; vFile="+vFile+"; type="+vFile.getFileType();
     return getResolveScopeFromProviders(vFile);
   }
 
@@ -142,9 +171,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
   @NotNull
   public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     VirtualFile vDirectory;
-    final VirtualFile virtualFile;
-    final PsiFile containingFile;
-    final GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
+    VirtualFile virtualFile;
+    PsiFile containingFile;
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
     if (element instanceof PsiDirectory) {
       vDirectory = ((PsiDirectory)element).getVirtualFile();
       virtualFile = null;
@@ -158,19 +187,19 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
       if (virtualFile instanceof VirtualFileWindow) {
         return GlobalSearchScope.fileScope(myProject, ((VirtualFileWindow)virtualFile).getDelegate());
       }
-      if (ScratchFileHelper.isScratchFile(virtualFile)) {
+      if (ScratchUtil.isScratch(virtualFile)) {
         return GlobalSearchScope.fileScope(myProject, virtualFile);
       }
       vDirectory = virtualFile.getParent();
     }
 
     if (vDirectory == null) return allScope;
-    final ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
-    final Module module = projectFileIndex.getModuleForFile(vDirectory);
+    ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
+    VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
+    Module module = projectFileIndex.getModuleForFile(notNullVFile);
     if (module == null) {
-      VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
-      final List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
-      if (entries.isEmpty() && (myAdditionalIndexableFileSet.isInSet(notNullVFile) || isFromAdditionalLibraries(notNullVFile))) {
+      List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
+      if (entries.isEmpty() && (projectFileIndex.isInLibrary(notNullVFile) || myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
         return allScope;
       }
 
@@ -184,14 +213,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
            : GlobalSearchScope.moduleWithDependentsScope(module);
   }
 
-  private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
-    for (final AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-      for (final SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
-        if (library.contains(file)) {
-          return true;
-        }
-      }
-    }
-    return false;
+  @Override
+  public void dispose() {
+
   }
 }

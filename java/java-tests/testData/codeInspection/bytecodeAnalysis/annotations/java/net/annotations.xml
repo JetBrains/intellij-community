@@ -1116,6 +1116,16 @@
     <item name='java.net.URLConnection int readBytes(int[], int, java.io.InputStream) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.net.URLConnection java.io.InputStream getInputStream()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;fail&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.net.URLConnection java.io.OutputStream getOutputStream()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;fail&quot;"/>
+        </annotation>
+    </item>
     <item name='java.net.URLConnection java.lang.String getContentEncoding()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -1182,6 +1192,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URLConnection java.lang.String typeToPackageName(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URLConnection java.lang.String typeToPackageName(java.lang.String) 0'>

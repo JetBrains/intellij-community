@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.editor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -25,22 +27,21 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.editorconfig.language.filetype.EditorConfigFileType;
+import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
-  private final static String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
+final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
+  private static final String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
 
-  final static int MAX_PREVIEW_LENGTH = 10000;
+  static final int MAX_PREVIEW_LENGTH = 10000;
 
-  private final static PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
+  private static final PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
 
-  @NotNull
   @Override
-  public Builder createEditorAsync(@NotNull Project project,
-                                   @NotNull VirtualFile file) {
+  public @NotNull Builder createEditorAsync(@NotNull Project project, @NotNull VirtualFile file) {
     return new MyEditorBuilder(project, file);
   }
 
@@ -49,25 +50,22 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
     return FileTypeRegistry.getInstance().isFileOfType(file, EditorConfigFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new MyEditorBuilder(project, file).build();
   }
 
-  @NotNull
   @Override
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return EDITOR_TYPE_ID;
   }
 
-  @NotNull
   @Override
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 
-  private static class MyEditorBuilder extends Builder {
+  private static final class MyEditorBuilder extends Builder {
     private final Project myProject;
     private final VirtualFile myFile;
 
@@ -77,20 +75,25 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
     }
 
     @Override
-    public FileEditor build() {
+    public @NotNull FileEditor build() {
       VirtualFile contextFile = EditorConfigPreviewManager.getInstance(myProject).getAssociatedPreviewFile(myFile);
-      if (contextFile != null) {
+      EditorConfigStatusListener statusListener = new EditorConfigStatusListener(myProject, myFile);
+      if (contextFile != null && CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class).ENABLED) {
         Document document =EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
-        final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document);
+        Disposable previewDisposable = Disposer.newDisposable();
+        final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document, previewDisposable);
         FileEditor previewEditor = createPreviewEditor(document, previewFile);
         TextEditor ecTextEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myFile);
         final EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(
           myFile, myProject, ecTextEditor, previewEditor);
-        Disposer.register(splitEditor, previewFile);
+        Disposer.register(splitEditor, previewDisposable);
+        Disposer.register(splitEditor, statusListener);
         return splitEditor;
       }
       else {
-        return myMainEditorProvider.createEditor(myProject, myFile);
+        FileEditor fileEditor = myMainEditorProvider.createEditor(myProject, myFile);
+        Disposer.register(fileEditor, statusListener);
+        return fileEditor;
       }
     }
 
@@ -103,8 +106,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
       return new EditorConfigPreviewFileEditor(previewEditor, previewFile);
     }
 
-    @NotNull
-    private static String getPreviewText(@NotNull VirtualFile file) {
+    private static @NotNull String getPreviewText(@NotNull VirtualFile file) {
       if (file.getLength() <= MAX_PREVIEW_LENGTH) {
         try {
           return StringUtil.convertLineSeparators(VfsUtilCore.loadText(file));
@@ -125,8 +127,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
     }
   }
 
-  @Nullable
-  static Language getLanguage(@NotNull VirtualFile virtualFile) {
+  static @Nullable Language getLanguage(@NotNull VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }

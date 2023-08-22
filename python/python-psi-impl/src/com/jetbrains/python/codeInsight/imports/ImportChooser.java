@@ -10,7 +10,5 @@ public interface ImportChooser {
     return ApplicationManager.getApplication().getService(ImportChooser.class);
   }
 
-  Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> mySources,
-                                              String myName,
-                                              boolean myUseQualifiedImport);
+  Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> mySources, boolean myUseQualifiedImport);
 }

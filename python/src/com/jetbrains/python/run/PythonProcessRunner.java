@@ -8,7 +8,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
-public class PythonProcessRunner {
+public final class PythonProcessRunner {
   private PythonProcessRunner() {
   }
 
@@ -18,14 +18,14 @@ public class PythonProcessRunner {
     }
     else {
       if (isUnderDebugger(commandLine)) {
-        return new PyDebugProcessHandler(commandLine, softKillOnWin);
+        return new PyDebugProcessHandler(commandLine);
       }
-      return new PythonProcessHandler(commandLine, softKillOnWin);
+      return new PythonProcessHandler(commandLine);
     }
   }
 
   public static ProcessHandler createProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    return createProcess(commandLine, PythonProcessHandler.SOFT_KILL_ON_WIN);
+    return createProcess(commandLine, PythonProcessHandler.softKillOnWin());
   }
 
   public static ProcessHandler createProcessHandlingCtrlC(GeneralCommandLine commandLine) throws ExecutionException {

@@ -15,11 +15,12 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Conditions;
@@ -29,15 +30,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
 
-/**
- * @author peter
- */
 public class PsiClassTableCellEditor extends AbstractTableCellEditor {
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
@@ -68,16 +67,16 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
   @Override
   public final Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     final Document document = JavaReferenceEditorUtil.createDocument(value == null ? "" : (String)value, myProject, true);
-    myEditor = new EditorTextField(document, myProject, StdFileTypes.JAVA){
+    myEditor = new EditorTextField(document, myProject, JavaFileType.INSTANCE){
       @Override
       protected boolean shouldHaveBorder() {
         return false;
       }
 
       @Override
-      public void addNotify() {
-        super.addNotify();
-        final JComponent editorComponent = getEditor().getContentComponent();
+      protected void onEditorAdded(@NotNull Editor editor) {
+        super.onEditorAdded(editor);
+        final JComponent editorComponent = editor.getContentComponent();
         editorComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
         editorComponent.getActionMap().put("ENTER", new AbstractAction() {
           @Override

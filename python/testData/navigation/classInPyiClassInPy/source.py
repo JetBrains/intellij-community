@@ -1,0 +1,3 @@
+class Clazz:
+    def __init__(self) -> None:
+        pass

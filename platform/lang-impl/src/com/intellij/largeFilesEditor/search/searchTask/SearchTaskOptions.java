@@ -1,16 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchTask;
 
 import com.intellij.find.FindModel;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Field;
 
-public class SearchTaskOptions implements Cloneable {
+public final class SearchTaskOptions implements Cloneable {
 
   public static final int DEFAULT_CRITICAL_AMOUNT_OF_SEARCH_RESULTS = 1000;
   public static final int NO_LIMIT = -1;
 
-  public String stringToFind;
+  public @NlsSafe String stringToFind;
 
   public boolean loopedPhase = false;
 
@@ -43,7 +45,7 @@ public class SearchTaskOptions implements Cloneable {
     return this;
   }
 
-  public SearchTaskOptions setCaseSensetive(boolean caseSensitive) {
+  public SearchTaskOptions setCaseSensitive(boolean caseSensitive) {
     this.caseSensitive = caseSensitive;
     return this;
   }
@@ -79,7 +81,7 @@ public class SearchTaskOptions implements Cloneable {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     StringBuilder stringBuilder = new StringBuilder();
     Field[] fields = this.getClass().getDeclaredFields();
 
@@ -93,7 +95,7 @@ public class SearchTaskOptions implements Cloneable {
         stringBuilder.append(field.get(this));
       }
       catch (IllegalAccessException e) {
-        stringBuilder.append("<Illegal access>");
+        stringBuilder.append("<Illegal access>"); //NON-NLS
       }
       stringBuilder.append(", ");
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.Task;
 import org.gradle.tooling.model.cpp.CppExecutable;
@@ -37,7 +36,7 @@ import java.util.Set;
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class GradleNativeProjectResolver extends AbstractProjectResolverExtension {
+public final class GradleNativeProjectResolver extends AbstractProjectResolverExtension {
   @NotNull public static final Key<CppProject> CPP_PROJECT = Key.create(CppProject.class, ProjectKeys.MODULE.getProcessingWeight() + 1);
 
   @Override
@@ -67,13 +66,13 @@ public class GradleNativeProjectResolver extends AbstractProjectResolverExtensio
   @NotNull
   @Override
   public Set<Class<?>> getExtraProjectModelClasses() {
-    return ContainerUtil.set(org.gradle.tooling.model.cpp.CppProject.class, CppProject.class);
+    return Set.of(org.gradle.tooling.model.cpp.CppProject.class, CppProject.class);
   }
 
   @NotNull
   @Override
   public Set<Class<?>> getToolingExtensionsClasses() {
-    return ContainerUtil.set(
+    return Set.of(
       // native-gradle-tooling jar
       CppModelBuilder.class
     );
@@ -81,7 +80,7 @@ public class GradleNativeProjectResolver extends AbstractProjectResolverExtensio
 
   @Override
   public Set<Class<?>> getTargetTypes() {
-    return ContainerUtil.set(
+    return Set.of(
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppExecutable.class,
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppSharedLibrary.class,
       org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppStaticLibrary.class

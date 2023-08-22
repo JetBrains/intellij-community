@@ -19,12 +19,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.picker.ColorListener
 import java.awt.Color
 
-val DEFAULT_PICKER_COLOR = Color(0xFF, 0xFF, 0xFF, 0xFF)
+val DEFAULT_PICKER_COLOR: Color = Color(0xFF, 0xFF, 0xFF, 0xFF)
 
 class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
 
   private val listeners = mutableSetOf<ColorListener>()
+  private val pipetteListeners = mutableSetOf<ColorPipette.Callback>()
   private val instantListeners = mutableSetOf<ColorListener>()
+  private var changedByUser = false
 
   var color: Color = originalColor
     private set
@@ -32,13 +34,18 @@ class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
   fun setColor(newColor: Color, source: Any? = null) {
     color = newColor
     Color.RGBtoHSB(color.red, color.green, color.blue, hsb)
+    if (source != null) {
+      changedByUser = true
+    }
 
     instantListeners.forEach { it.colorChanged(color, source) }
   }
 
   fun onClose() {
-    ApplicationManager.getApplication().invokeLater {
-      listeners.forEach { it.colorChanged(color, this) }
+    if (changedByUser) {
+      ApplicationManager.getApplication().invokeLater {
+        listeners.forEach { it.colorChanged(color, this) }
+      }
     }
   }
 
@@ -52,23 +59,23 @@ class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
 
   private val hsb: FloatArray = Color.RGBtoHSB(color.red, color.green, color.blue, null)
 
-  val red get() = color.red
+  val red: Int get() = color.red
 
-  val green get() = color.green
+  val green: Int get() = color.green
 
-  val blue get() = color.blue
+  val blue: Int get() = color.blue
 
-  val alpha get() = color.alpha
+  val alpha: Int get() = color.alpha
 
   val hex: String get() = Integer.toHexString(color.rgb)
 
-  val hue get() = hsb[0]
+  val hue: Float get() = hsb[0]
 
-  val saturation get() = hsb[1]
+  val saturation: Float get() = hsb[1]
 
-  val brightness get() = hsb[2]
+  val brightness: Float get() = hsb[2]
 
-  fun addListener(listener: ColorListener) = addListener(listener, true)
+  fun addListener(listener: ColorListener): Unit = addListener(listener, true)
 
   fun addListener(listener: ColorListener, invokeOnEveryColorChange: Boolean) {
     listeners.add(listener)
@@ -81,4 +88,14 @@ class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
     listeners.remove(listener)
     instantListeners.remove(listener)
   }
+
+  fun addPipetteListener(listener: ColorPipette.Callback): Boolean = pipetteListeners.add(listener)
+
+  fun removePipetteListener(listener: ColorPipette.Callback): Boolean = pipetteListeners.remove(listener)
+
+  fun firePipettePicked(pickedColor: Color): Unit = pipetteListeners.forEach { it.picked(pickedColor) }
+
+  fun firePipetteUpdated(updatedColor: Color): Unit = pipetteListeners.forEach { it.update(updatedColor) }
+
+  fun firePipetteCancelled(): Unit = pipetteListeners.forEach { it.cancel() }
 }

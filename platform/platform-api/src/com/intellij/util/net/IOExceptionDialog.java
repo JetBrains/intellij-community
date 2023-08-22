@@ -1,27 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.lang.reflect.InvocationTargetException;
 
-public class IOExceptionDialog extends DialogWrapper {
+public final class IOExceptionDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(IOExceptionDialog.class);
   private final JTextArea myErrorLabel;
 
-  public IOExceptionDialog(String title, String errorText)  {
+  public IOExceptionDialog(@NlsContexts.DialogTitle String title, String errorText)  {
     super((Project)null, true);
     setTitle(title);
     setOKButtonText(UIBundle.message("io.error.dialog.retry"));
@@ -64,15 +62,15 @@ public class IOExceptionDialog extends DialogWrapper {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(title + ": " + text);
     }
-    final Ref<Boolean> ok = Ref.create(false);
+    Ref<Boolean> ok = new Ref<>(false);
     try {
-      GuiUtils.runOrInvokeAndWait(() -> {
-        IOExceptionDialog dialog = new IOExceptionDialog(title, text);
-        dialog.show();
-        ok.set(dialog.isOK());
-      });
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+          IOExceptionDialog dialog = new IOExceptionDialog(title, text);
+          dialog.show();
+          ok.set(dialog.isOK());
+        });
     }
-    catch (InterruptedException | InvocationTargetException e) {
+    catch (RuntimeException e) {
       LOG.info(e);
     }
 

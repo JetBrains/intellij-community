@@ -41,8 +41,7 @@ public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
     DumbService service = DumbService.getInstance(myFixture.getProject());
     assert service instanceof DumbServiceImpl;
     DumbServiceImpl impl = (DumbServiceImpl)service;
-    impl.setDumb(true);
-    try {
+    impl.runInDumbModeSynchronously(() -> {
       String searchResults = collectSearchResults(requests, contributor);
 
       StringBuilder builder = new StringBuilder();
@@ -50,10 +49,7 @@ public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
         addRequestToResult(builder, request);
       }
       assertSameLines(builder.toString(), searchResults);
-    } finally {
-      // dumb state lives between tests
-      impl.setDumb(false);
-    }
+    });
   }
 
   @NotNull
@@ -62,6 +58,8 @@ public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
     for (String request : requests) {
       addRequestToResult(builder, request);
       ContributorSearchResult<YAMLKeyNavigationItem> result = contributor.search(request, new MockProgressIndicator(), 15);
+      ContributorSearchResult<YAMLKeyNavigationItem> result2 = contributor.search(request, new MockProgressIndicator(), 15);
+      assertEquals(result2.getItems(), result.getItems());
       for (YAMLKeyNavigationItem item : result.getItems()) {
         item.navigate(true);
         PsiElement element = myFixture.getElementAtCaret();

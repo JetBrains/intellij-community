@@ -151,7 +151,7 @@ public class DFAEngine<E> {
     return allPred * 2;
   }
 
-  private E join(final Instruction instruction, final List<E> info) {
+  private E join(final Instruction instruction, final List<? extends E> info) {
     final Iterable<? extends Instruction> prev = instruction.allPred();
     final ArrayList<E> prevInfos = new ArrayList<>();
     for (Instruction i : prev) {

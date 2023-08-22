@@ -4,16 +4,18 @@
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import icons.SpellcheckerIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class DictionaryFileType implements FileType {
   public static final DictionaryFileType INSTANCE = new DictionaryFileType();
+
+  private DictionaryFileType() {
+  }
 
   @NotNull
   @Override
@@ -24,7 +26,13 @@ public class DictionaryFileType implements FileType {
   @NotNull
   @Override
   public String getDescription() {
-    return SpellCheckerBundle.message("dictionary.filetype.description");
+    return SpellCheckerBundle.message("filetype.dictionary.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return SpellCheckerBundle.message("filetype.dictionary.display.name");
   }
 
   @NotNull
@@ -33,7 +41,6 @@ public class DictionaryFileType implements FileType {
     return "dic";
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     return SpellcheckerIcons.Dictionary;
@@ -42,16 +49,5 @@ public class DictionaryFileType implements FileType {
   @Override
   public boolean isBinary() {
     return false;
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return null;
   }
 }

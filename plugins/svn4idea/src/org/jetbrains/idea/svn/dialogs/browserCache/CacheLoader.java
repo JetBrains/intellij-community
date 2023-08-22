@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
@@ -14,7 +15,7 @@ public class CacheLoader extends Loader {
   @NotNull private final Loader myRepositoryLoader;
 
   public static Loader getInstance() {
-    return ServiceManager.getService(Loader.class);
+    return ApplicationManager.getApplication().getService(Loader.class);
   }
 
   public CacheLoader() {
@@ -29,7 +30,7 @@ public class CacheLoader extends Loader {
       if (cached != null) {
         refreshNode(node, cached, expander);
       }
-      final String error = myCache.getError(node.getURL());
+      final VcsException error = myCache.getError(node.getURL());
       if (error != null) {
         refreshNodeError(node, error);
       }

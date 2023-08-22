@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package org.jetbrains.java.generate.view;
 
 import com.intellij.java.JavaBundle;
@@ -17,13 +13,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.java.generate.element.ClassElement;
 import org.jetbrains.java.generate.element.FieldElement;
 import org.jetbrains.java.generate.element.GenerationHelper;
@@ -39,7 +33,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
     private final TemplateResource template;
     private final Editor myEditor;
     private final List<String> availableImplicits = new ArrayList<>();
-  private String myHint;
+  private @Nls String myHint;
 
   public GenerateTemplateConfigurable(TemplateResource template, Map<String, PsiType> contextMap, Project project) {
     this(template, contextMap, project, true);
@@ -55,7 +49,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
             .createFileFromText(template.getFileName(), ftl, template.getTemplate(), LocalTimeCounter.currentTime(), true);
         if (!template.isDefault()) {
           final HashMap<String, PsiType> map = new LinkedHashMap<>();
-          map.put("java_version", PsiType.INT);
+          map.put("java_version", PsiTypes.intType());
           map.put("class", TemplatesManager.createElementType(project, ClassElement.class));
           if (multipleFields) {
             map.put("fields", TemplatesManager.createFieldListElementType(project));
@@ -77,7 +71,7 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       myEditor = factory.createEditor(doc, project, ftl != null ? ftl : FileTypes.PLAIN_TEXT, template.isDefault());
     }
 
-    public void setHint(String hint) {
+    public void setHint(@Nls String hint) {
       myHint = hint;
     }
 

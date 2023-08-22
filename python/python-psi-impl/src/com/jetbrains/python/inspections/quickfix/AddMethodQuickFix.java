@@ -7,15 +7,14 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -31,7 +30,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Adds a method foo to class X if X.foo() is unresolved.
- * User: dcheryasov
  */
 public class AddMethodQuickFix implements LocalQuickFix {
 
@@ -49,13 +47,13 @@ public class AddMethodQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.NAME.add.method.$0.to.class.$1", myIdentifier, myClassName);
+    return PyPsiBundle.message("QFIX.add.method.to.class", myIdentifier, myClassName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.add.method.to.class");
+    return PyPsiBundle.message("QFIX.NAME.add.method.to.class");
   }
 
   @Override
@@ -108,8 +106,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
         if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(self, bar_1)
           builder.parameter(((PyKeywordArgument)arg).getKeyword());
         }
-        else if (arg instanceof PyReferenceExpression) {
-          PyReferenceExpression refex = (PyReferenceExpression)arg;
+        else if (arg instanceof PyReferenceExpression refex) {
           builder.parameter(refex.getReferencedName());
         }
         else { // use a boring name
@@ -163,11 +160,6 @@ public class AddMethodQuickFix implements LocalQuickFix {
 
     final PyStatementList statementList = method.getStatementList();
     builder.replaceElement(statementList, PyNames.PASS);
-
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return;
-    final Editor editor = PythonUiService.getInstance().openTextEditor(file.getProject(), virtualFile);
-    if (editor == null) return;
-    builder.run(editor, false);
+    PythonTemplateRunner.runTemplate(file, builder);
   }
 }

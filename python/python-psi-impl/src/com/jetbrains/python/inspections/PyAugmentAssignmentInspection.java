@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
@@ -30,6 +31,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,17 +63,18 @@ public class PyAugmentAssignmentInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
-    public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(final @NotNull PyAssignmentStatement node) {
       final PyExpression target = node.getLeftHandSideExpression();
       final PyBinaryExpression value = PyUtil.as(node.getAssignedValue(), PyBinaryExpression.class);
 
@@ -104,7 +107,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
 
         final PyElementType operator = value.getOperator();
         if (operator != null && assignmentCanBeReplaced(mainOperandExpression, otherOperandExpression, operator, changedParts)) {
-          registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
+          registerProblem(node, PyPsiBundle.message("INSP.assignment.can.be.replaced.with.augmented.assignment"), new AugmentedAssignmentQuickFix());
         }
       }
     }
@@ -147,7 +150,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         return SEQUENCE_METHODS.stream().anyMatch(attributeNames::contains);
       }
 
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
       return !SEQUENCE_METHODS
         .stream()
@@ -158,10 +161,5 @@ public class PyAugmentAssignmentInspection extends PyInspection {
     private boolean isNumeric(@NotNull PyType type, @NotNull PyBuiltinCache cache) {
       return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext);
     }
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
   }
 }

@@ -27,6 +27,4 @@ public abstract class JpsLibraryPropertiesSerializer<P extends JpsElement> exten
   }
 
   public abstract P loadProperties(@Nullable Element propertiesElement);
-
-  public abstract void saveProperties(P properties, Element element);
 }

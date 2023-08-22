@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -8,7 +8,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.java.AnnotationElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
@@ -16,14 +19,16 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class JavaSharedImplUtil {
+public final class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
 
   private static final TokenSet BRACKETS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
@@ -36,20 +41,24 @@ public class JavaSharedImplUtil {
 
   public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
     PsiType type = typeElement.getType();
+    boolean ellipsisType = type instanceof PsiEllipsisType;
 
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor, stopAt);
     if (allAnnotations == null) return null;
-    for (PsiAnnotation[] annotations : allAnnotations) {
-      type = type.createArrayType().annotate(TypeAnnotationProvider.Static.create(annotations));
+    for (int i = 0, size = allAnnotations.size(); i < size; i++) {
+      type = ((ellipsisType && i == size - 1) ? new PsiEllipsisType(type) : type.createArrayType())
+        .annotate(TypeAnnotationProvider.Static.create(allAnnotations.get(i)));
     }
 
     return type;
   }
 
-  // collects annotations bound to C-style arrays
+  /**
+   * Collects annotations bound to C-style arrays.
+   */
   @Nullable
   private static List<PsiAnnotation[]> collectAnnotations(@NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
-    List<PsiAnnotation[]> annotations = new SmartList<>();
+    List<PsiAnnotation[]> annotations = Collections.emptyList();
 
     List<PsiAnnotation> current = null;
     boolean found = stopAt == null;
@@ -65,7 +74,8 @@ public class JavaSharedImplUtil {
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
-        annotations.add(current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
+        if (annotations == Collections.EMPTY_LIST) annotations = new SmartList<>();
+        annotations.add(0, current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
         current = null;
         if (stop) return annotations;
       }
@@ -76,6 +86,15 @@ public class JavaSharedImplUtil {
 
     // annotation is misplaced (either located before the anchor or has no following brackets)
     return !found || stop ? null : annotations;
+  }
+
+  @NotNull
+  public static PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
+    String typeText = TypeInfo.createTypeText(typeInfo);
+    assert typeText != null : owner;
+    PsiType type = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeFromText(typeText, owner);
+    type = applyAnnotations(type, owner.getModifierList());
+    return typeInfo.getTypeAnnotations().applyTo(type, owner);
   }
 
   @NotNull
@@ -119,6 +138,17 @@ public class JavaSharedImplUtil {
     return type.annotate(provider);
   }
 
+  /**
+   * Normalizes brackets, i.e. any brackets after the identifier of the variable are moved to the correct
+   * position in the type element of the variable.
+   * For example <br>
+   * {@code String @One [] array @Two [] = null;}<br>
+   * becomes<br>
+   * {@code String @Two [] @One [] array = null;}.<br>
+   * See <a href ="https://docs.oracle.com/javase/specs/jls/se20/html/jls-10.html#jls-10.2">JLS 10.2</a>
+   *
+   * @param variable  an array variable.
+   */
   public static void normalizeBrackets(@NotNull PsiVariable variable) {
     CompositeElement variableElement = (CompositeElement)variable.getNode();
 
@@ -133,8 +163,13 @@ public class JavaSharedImplUtil {
     ASTNode lastBracket = null;
     int arrayCount = 0;
     ASTNode element = name;
+    MultiMap<Integer, AnnotationElement> annotationElementsToMove = new MultiMap<>();
     while (element != null) {
       element = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
+      if (element instanceof AnnotationElement) {
+        annotationElementsToMove.putValue(arrayCount, (AnnotationElement)element);
+        continue;
+      }
       if (element == null || element.getElementType() != JavaTokenType.LBRACKET) break;
       if (firstBracket == null) firstBracket = element;
       lastBracket = element;
@@ -146,26 +181,93 @@ public class JavaSharedImplUtil {
     }
 
     if (firstBracket != null) {
-      element = firstBracket;
-      while (true) {
-        ASTNode next = element.getTreeNext();
+      element = PsiImplUtil.skipWhitespaceAndComments(name.getTreeNext());
+      while (element != null) {
+        ASTNode next = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
         CodeEditUtil.removeChild(variableElement, element);
         if (element == lastBracket) break;
         element = next;
       }
 
       CompositeElement newType = (CompositeElement)type.clone();
-      for (int i = 0; i < arrayCount; i++) {
+      if (!(typeElement.getType() instanceof PsiArrayType)) {
         CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
         newType1.rawAddChildren(newType);
-
-        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
-        newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
         newType = newType1;
-        newType.acceptTree(new GeneratedMarkerVisitor());
       }
+      for (int i = arrayCount - 1; i >= 0; i--) {
+        // add in reverse so the anchor can remain the same
+        TreeElement anchor = newType.getFirstChildNode();
+        anchor.rawInsertAfterMe(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
+        anchor.rawInsertAfterMe(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
+        List<AnnotationElement> annotations = (List<AnnotationElement>)annotationElementsToMove.get(i);
+        for (int j = annotations.size() - 1; j >= 0; j--) {
+          anchor.rawInsertAfterMe(annotations.get(j));
+        }
+      }
+      newType.acceptTree(new GeneratedMarkerVisitor());
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
       CodeEditUtil.replaceChild(variableElement, type, newType);
+    }
+  }
+
+  @NotNull
+  public static PsiElement getPatternVariableDeclarationScope(@NotNull PsiPatternVariable variable) {
+    PsiElement parent = variable.getPattern().getParent();
+    if (!(parent instanceof PsiInstanceOfExpression) && !(parent instanceof PsiCaseLabelElementList) && !(parent instanceof PsiPattern)
+        && !(parent instanceof PsiDeconstructionList)) {
+      return parent;
+    }
+    return getInstanceOfPartDeclarationScope(parent);
+  }
+
+  @Nullable
+  public static PsiElement getPatternVariableDeclarationScope(@NotNull PsiInstanceOfExpression instanceOfExpression) {
+    return getInstanceOfPartDeclarationScope(instanceOfExpression);
+  }
+
+  private static PsiElement getInstanceOfPartDeclarationScope(@NotNull PsiElement parent) {
+    boolean negated = false;
+    for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
+      if (nextParent instanceof PsiParenthesizedExpression) continue;
+      if (nextParent instanceof PsiForeachStatementBase ||
+        nextParent instanceof PsiConditionalExpression && parent == ((PsiConditionalExpression)nextParent).getCondition()) {
+        return nextParent;
+      }
+      if (nextParent instanceof PsiPrefixExpression &&
+          ((PsiPrefixExpression)nextParent).getOperationTokenType().equals(JavaTokenType.EXCL)) {
+        negated = !negated;
+        continue;
+      }
+      if (nextParent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)nextParent).getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.ANDAND) && !negated || tokenType.equals(JavaTokenType.OROR) && negated) continue;
+      }
+      if (nextParent instanceof PsiIfStatement) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiConditionalLoopStatement) {
+        if (!negated) return nextParent;
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiSwitchLabelStatementBase) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression) ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiDeconstructionList)) {
+        continue;
+      }
+      return parent;
     }
   }
 
@@ -192,7 +294,7 @@ public class JavaSharedImplUtil {
     variable.addAfter(initializer, eq.getPsi());
   }
 
-  private static class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
+  private static final class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
     private final PsiAnnotation[] myCandidates;
     private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;
@@ -207,7 +309,9 @@ public class JavaSharedImplUtil {
       PsiAnnotation[] result = myCache;
       if (result == null) {
         List<PsiAnnotation> filtered = JBIterable.of(myCandidates)
-          .filter(annotation -> AnnotationTargetUtil.isTypeAnnotation(annotation))
+          .filter(annotation ->
+                    !annotation.isValid() || // avoid exceptions in the next line, enable isValid checks at more specific call sites
+                    AnnotationTargetUtil.isTypeAnnotation(annotation))
           .append(myOriginalProvider.getAnnotations())
           .toList();
         myCache = result = filtered.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : filtered.toArray(PsiAnnotation.EMPTY_ARRAY);

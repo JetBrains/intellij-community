@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.meta.impl.YamlMetaUtil;
 import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLValue;
@@ -34,14 +35,11 @@ public class YamlMetaClass extends YamlMetaType {
     }
 
     Optional<Field> byExactName = getFeatures().stream()
-      .filter(f -> !f.isAnyNameAllowed() && name.equals(f.getName()))
+      .filter(f -> !f.isByPattern() && name.equals(f.getName()))
       .findAny();
 
     return byExactName.orElse(
-      getFeatures().stream()
-        .filter(Field::isAnyNameAllowed)
-        .findAny()
-        .orElse(null)
+      ContainerUtil.find(getFeatures(), f -> f.isByPattern() && f.acceptsFieldName(name))
     );
   }
 
@@ -101,26 +99,17 @@ public class YamlMetaClass extends YamlMetaType {
                                          @NotNull Field.Relation relation,
                                          @NotNull ForcedCompletionPath.Iteration iteration) {
     switch (relation) {
-      case SCALAR_VALUE:
-        throw new IllegalArgumentException("Default relation " + relation + " requested for complex type: " + this);
-
-      case OBJECT_CONTENTS:
-        doBuildInsertionSuffixMarkup(markup, false, iteration);
-        break;
-
-      case SEQUENCE_ITEM:
-        doBuildInsertionSuffixMarkup(markup, true, iteration);
-        break;
-
-      default:
-        throw new IllegalArgumentException("Unknown relation: " + relation);
+      case SCALAR_VALUE -> throw new IllegalArgumentException("Default relation " + relation + " requested for complex type: " + this);
+      case OBJECT_CONTENTS -> doBuildInsertionSuffixMarkup(markup, false, iteration);
+      case SEQUENCE_ITEM -> doBuildInsertionSuffixMarkup(markup, true, iteration);
+      default -> throw new IllegalArgumentException("Unknown relation: " + relation);
     }
   }
 
   @Override
   public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
     super.validateValue(value, problemsHolder);
-    if (value instanceof YAMLScalar) {
+    if (value instanceof YAMLScalar && !YamlMetaUtil.isNull(value)) {
       problemsHolder.registerProblem(value,
                                      YAMLBundle.message("YamlMetaClass.error.scalar.value", ArrayUtil.EMPTY_OBJECT_ARRAY));
     }

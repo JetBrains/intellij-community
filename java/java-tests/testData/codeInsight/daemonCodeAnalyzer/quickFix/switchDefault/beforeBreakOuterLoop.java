@@ -1,4 +1,4 @@
-// "Unwrap 'switch'" "true"
+// "Unwrap 'switch'" "true-preview"
 class X {
   String test(char c) {
     for(int i=0; i<10; i++)

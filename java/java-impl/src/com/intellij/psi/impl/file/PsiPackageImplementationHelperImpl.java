@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -22,17 +22,17 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
   @NotNull
   @Override
@@ -93,7 +93,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
       for (final ContentEntry contentEntry : rootModel.getContentEntries()) {
         for (final SourceFolder sourceFolder : contentEntry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
-          if (packagePrefix.startsWith(oldQualifiedName)) {
+          if (PsiNameHelper.isSubpackageOf(packagePrefix, oldQualifiedName)) {
             sourceFolder.setPackagePrefix(newQualifiedName + packagePrefix.substring(oldQualifiedName.length()));
             anyChange = true;
           }
@@ -130,7 +130,8 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
     projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
   }
 
-  private static PsiDirectory @NotNull [] suggestMostAppropriateDirectories(@NotNull PsiPackage psiPackage) {
+  @VisibleForTesting
+  public static PsiDirectory @NotNull [] suggestMostAppropriateDirectories(@NotNull PsiPackage psiPackage) {
     final Project project = psiPackage.getProject();
     PsiDirectory[] directories = null;
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
@@ -141,14 +142,21 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
         final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
         if (module != null) {
           final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiFile);
-          final boolean isInTests =
-            virtualFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile);
-          if (isInTests) {
-            directories = psiPackage.getDirectories(GlobalSearchScope.moduleTestsWithDependentsScope(module));
+          if (virtualFile != null) {
+            if (ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile)) {
+              directories = psiPackage.getDirectories(GlobalSearchScope.moduleTestsWithDependentsScope(module));
+            }
+
+            if (directories == null || directories.length == 0) {
+              VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
+              if (contentRootForFile != null) {
+                directories = psiPackage.getDirectories(GlobalSearchScopes.directoriesScope(project, true, contentRootForFile));
+              }
+            }
           }
 
           if (directories == null || directories.length == 0) {
-            directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+            directories = psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
           }
         }
         else {
@@ -170,6 +178,6 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
 
   @Override
   public Object @NotNull [] getDirectoryCachedValueDependencies(@NotNull PsiPackage psiPackage) {
-    return new Object[] { PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, ProjectRootManager.getInstance(psiPackage.getProject()) };
+    return new Object[] {PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(psiPackage.getProject()) };
   }
 }

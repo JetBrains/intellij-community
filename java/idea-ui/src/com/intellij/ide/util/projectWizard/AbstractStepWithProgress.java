@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SwingWorker;
@@ -18,7 +19,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -36,9 +39,9 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
   private ProgressIndicator myProgressIndicator;
-  private final String myPromptStopSearch;
+  private final @NlsContexts.DialogMessage String myPromptStopSearch;
 
-  public AbstractStepWithProgress(final String promptStopSearching) {
+  public AbstractStepWithProgress(final @NlsContexts.DialogMessage String promptStopSearching) {
     myPromptStopSearch = promptStopSearching;
   }
 
@@ -56,13 +59,13 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected abstract JComponent createResultsPanel();
 
-  protected abstract String getProgressText();
+  protected abstract @NlsContexts.ProgressText String getProgressText();
 
   protected abstract boolean shouldRunProgress();
 
   protected abstract Result calculate();
 
-  protected abstract void onFinished(Result result, boolean canceled);
+  protected abstract void onFinished(@Nullable Result result, boolean canceled);
 
   private JPanel createProgressPanel() {
     final JPanel progressPanel = new JPanel(new GridBagLayout());
@@ -75,7 +78,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
     myProgressLabel2 = new JLabel() {
           @Override
-          public void setText(String text) {
+          public void setText(@Nls String text) {
             super.setText(StringUtil.trimMiddle(text, 80));
           }
         };
@@ -128,7 +131,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
 
-      Result result = ProgressManager.getInstance().runProcess(() -> calculate(), progress);
+      Result result = ProgressManager.getInstance().runProcess(this::calculate, progress);
       onFinished(result, false);
       return;
     }
@@ -200,7 +203,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
       super.setText2(text);
     }
 
-    private void updateLabel(final JLabel label, final String text) {
+    private void updateLabel(final JLabel label, @NlsContexts.Label final String text) {
       UIUtil.invokeLaterIfNeeded(() -> label.setText(text));
     }
   }

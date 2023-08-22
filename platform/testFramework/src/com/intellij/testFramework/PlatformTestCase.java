@@ -4,6 +4,6 @@ package com.intellij.testFramework;
 /**
  * @deprecated Use {@link HeavyPlatformTestCase} (or better yet, {@link LightPlatformTestCase}) instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class PlatformTestCase extends HeavyPlatformTestCase {
 }

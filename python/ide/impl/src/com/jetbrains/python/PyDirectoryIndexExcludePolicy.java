@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolicy {
-  private final static String[] SITE_PACKAGES = new String[]{"site-packages", "dist-packages"};
+  private final static String[] SITE_PACKAGES = new String[]{PyNames.SITE_PACKAGES, PyNames.DIST_PACKAGES};
 
   private final Project myProject;
 
@@ -47,7 +47,7 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
       List<VirtualFile> result = new LinkedList<>();
 
       if (sdk != null) {
-        Set<VirtualFile> roots = ContainerUtil.set(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+        Set<VirtualFile> roots = ContainerUtil.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
 
         for (VirtualFile dir : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
           for (String name : SITE_PACKAGES) {

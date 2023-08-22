@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.CopyPasteManagerEx;
@@ -33,10 +33,10 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Component focusedComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component focusedComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     if (!(focusedComponent instanceof JComponent)) return;
@@ -83,6 +83,11 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     final boolean enabled = isEnabled(e);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -94,7 +99,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {
-    Object component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Object component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JComponent)) return false;
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) return !editor.isViewer();
@@ -112,6 +117,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
       setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
       setOKButtonMnemonic('P');
+      setKeepPopupsOpen(true);
     }
 
     @Override
@@ -119,9 +125,8 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       return new Action[]{getHelpAction(), getOKAction(), new PasteSimpleAction(), getCancelAction()};
     }
 
-    @Nullable
     @Override
-    protected String getHelpId() {
+    protected @Nullable String getHelpId() {
       return "ixPasteSelected";
     }
 
@@ -136,9 +141,8 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       }
     }
 
-    @NotNull
     @Override
-    protected List<Transferable> getContents() {
+    protected @NotNull List<Transferable> getContents() {
       return Arrays.asList(CopyPasteManager.getInstance().getAllContents());
     }
 
@@ -147,7 +151,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       CopyPasteManagerEx.getInstanceEx().removeContent(content);
     }
 
-    class PasteSimpleAction extends DialogWrapperAction {
+    final class PasteSimpleAction extends DialogWrapperAction {
       private PasteSimpleAction() {
         super(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE_SIMPLE));
       }

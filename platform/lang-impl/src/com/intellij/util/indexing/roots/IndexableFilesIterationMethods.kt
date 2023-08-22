@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -7,8 +7,8 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
-import com.intellij.util.containers.ConcurrentBitSet
-import com.intellij.util.indexing.IndexableFilesFilter
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -17,37 +17,84 @@ object IndexableFilesIterationMethods {
   private val followSymlinks
     get() = Registry.`is`("indexer.follows.symlinks")
 
-  fun iterateNonExcludedRoots(
+  /**
+   *  @param excludeNonProjectRoots - if only files considered project content by [ProjectFileIndex] should be iterated
+   */
+  fun iterateRoots(
     project: Project,
     roots: Iterable<VirtualFile>,
     contentIterator: ContentIterator,
-    visitedFileSet: ConcurrentBitSet
+    fileFilter: VirtualFileFilter,
+    excludeNonProjectRoots: Boolean = true
   ): Boolean {
     val projectFileIndex = ProjectFileIndex.getInstance(project)
-    val acceptFilter = VirtualFileFilter { file ->
-      runReadAction { !projectFileIndex.isExcluded(file) }
+    val rootsSet = roots.toSet()
+    val finalFileFilter = fileFilter.and { shouldIndexFile(it, projectFileIndex, rootsSet, excludeNonProjectRoots) }
+    return roots.all { root ->
+      VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
     }
-    return iterateAllRoots(roots, acceptFilter, contentIterator, visitedFileSet)
   }
 
-  fun iterateNonProjectRoots(
-    roots: Iterable<VirtualFile>,
-    contentIterator: ContentIterator,
-    visitedFileSet: ConcurrentBitSet
-  ): Boolean = iterateAllRoots(roots, VirtualFileFilter.ALL, contentIterator, visitedFileSet)
-
-  private fun iterateAllRoots(
-    roots: Iterable<VirtualFile>,
-    fileFilter: VirtualFileFilter,
-    contentIterator: ContentIterator,
-    visitedFileSet: ConcurrentBitSet
-  ): Boolean {
-    val finalFilter = fileFilter
-      .and { it is VirtualFileWithId && it.id > 0 && !visitedFileSet.set(it.id) }
-      .and { IndexableFilesFilter.EP_NAME.extensionList.let { fs -> fs.isEmpty() || fs.any { e -> e.shouldIndex(it) } } }
-    return roots.all { root ->
-      val options = if (followSymlinks) emptyArray<VirtualFileVisitor.Option>() else arrayOf(VirtualFileVisitor.NO_FOLLOW_SYMLINKS)
-      VfsUtilCore.iterateChildrenRecursively(root, finalFilter, contentIterator, *options)
+  private fun iterateRootsNonRecursively(project: Project,
+                                         roots: Iterable<VirtualFile>,
+                                         contentIterator: ContentIterator,
+                                         fileFilter: VirtualFileFilter,
+                                         excludeNonProjectRoots: Boolean): Boolean {
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    val rootsSet = roots.toSet()
+    for (root in roots) {
+      if (fileFilter.accept(root) && shouldIndexFile(root, projectFileIndex, rootsSet, excludeNonProjectRoots)) {
+        if (!contentIterator.processFile(root)) return false
+      }
     }
+    return true
+  }
+
+  fun iterateRoots(project: Project,
+                   roots: IndexingRootHolder,
+                   contentIterator: ContentIterator,
+                   fileFilter: VirtualFileFilter,
+                   excludeNonProjectRoots: Boolean = true
+  ): Boolean {
+    val recursiveResult = iterateRoots(project, roots.roots, contentIterator, fileFilter, excludeNonProjectRoots)
+    if (!recursiveResult) return false
+    return iterateRootsNonRecursively(project, roots.nonRecursiveRoots, contentIterator, fileFilter, excludeNonProjectRoots)
+  }
+
+  fun iterateRoots(project: Project,
+                   rootsHolder: IndexingSourceRootHolder,
+                   contentIterator: ContentIterator,
+                   fileFilter: VirtualFileFilter,
+                   excludeNonProjectRoots: Boolean = true
+  ): Boolean {
+    val roots = rootsHolder.roots + rootsHolder.sourceRoots
+    return iterateRoots(project, roots, contentIterator, fileFilter, excludeNonProjectRoots)
+  }
+
+  @JvmOverloads
+  fun shouldIndexFile(
+    file: VirtualFile,
+    projectFileIndex: ProjectFileIndex,
+    rootsSet: Set<VirtualFile>,
+    excludeNonProjectRoots: Boolean = true
+  ): Boolean {
+    if (file.`is`(VFileProperty.SYMLINK)) {
+      if (!followSymlinks) {
+        return false
+      }
+      val targetFile = file.canonicalFile
+      if (targetFile == null || targetFile.`is`(VFileProperty.SYMLINK)) {
+        // Broken or recursive symlink. The second check should not happen but let's guarantee no StackOverflowError.
+        return false
+      }
+      if (file in rootsSet) {
+        return true
+      }
+      return shouldIndexFile(targetFile, projectFileIndex, rootsSet, excludeNonProjectRoots)
+    }
+    if (file !is VirtualFileWithId || file.id <= 0) {
+      return false
+    }
+    return !excludeNonProjectRoots || runReadAction { !projectFileIndex.isExcluded(file) }
   }
 }

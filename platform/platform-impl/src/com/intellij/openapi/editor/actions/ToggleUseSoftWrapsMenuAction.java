@@ -17,14 +17,13 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Action that toggles {@code 'show soft wraps at editor'} option and is expected to be used at various menus.
- *
- * @author Denis Zhdanov
  */
 public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsAction {
 
@@ -33,7 +32,12 @@ public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsActi
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e){
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (!e.isFromActionToolbar()) {
       e.getPresentation().setIcon(null);

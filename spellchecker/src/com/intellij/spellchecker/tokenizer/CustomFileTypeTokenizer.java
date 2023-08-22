@@ -24,9 +24,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
   private final SyntaxTable mySyntaxTable;
 
@@ -35,7 +32,7 @@ class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
   }
 
   @Override
-  public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiElement element, @NotNull TokenConsumer consumer) {
     CustomFileTypeLexer lexer = new CustomFileTypeLexer(mySyntaxTable);
     String text = element.getText();
     lexer.start(text);
@@ -46,7 +43,8 @@ class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
       }
 
       if (!isKeyword(tokenType)) {
-        consumer.consumeToken(element, text, false, 0, new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()), PlainTextSplitter.getInstance());
+        consumer.consumeToken(element, text, false, 0, new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()),
+                              PlainTextSplitter.getInstance());
       }
       lexer.advance();
     }
@@ -54,8 +52,8 @@ class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
 
   private static boolean isKeyword(IElementType tokenType) {
     return tokenType == CustomHighlighterTokenType.KEYWORD_1 ||
-          tokenType == CustomHighlighterTokenType.KEYWORD_2 ||
-          tokenType == CustomHighlighterTokenType.KEYWORD_3 ||
-          tokenType == CustomHighlighterTokenType.KEYWORD_4;
+           tokenType == CustomHighlighterTokenType.KEYWORD_2 ||
+           tokenType == CustomHighlighterTokenType.KEYWORD_3 ||
+           tokenType == CustomHighlighterTokenType.KEYWORD_4;
   }
 }

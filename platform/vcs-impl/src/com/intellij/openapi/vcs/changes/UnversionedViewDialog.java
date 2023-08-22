@@ -13,15 +13,14 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.ex.ActionUtil.recursiveRegisterShortcutSet;
+import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 
 public class UnversionedViewDialog extends SpecificFilesViewDialog {
   private static final String TOOLBAR_GROUP = "Unversioned.Files.Dialog";
   private static final String POPUP_GROUP = "Unversioned.Files.Dialog.Popup";
 
   public UnversionedViewDialog(@NotNull Project project) {
-    super(project, VcsBundle.message("dialog.title.unversioned.files"), ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY,
-          ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFilesPaths());
+    super(project, VcsBundle.message("dialog.title.unversioned.files"), ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
   }
 
   @Override
@@ -50,6 +49,6 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
   @NotNull
   @Override
   protected List<FilePath> getFiles() {
-    return ((ChangeListManagerImpl)myChangeListManager).getUnversionedFilesPaths();
+    return ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
   }
 }

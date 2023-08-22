@@ -1,4 +1,4 @@
-// "Qualify this expression with 'Test.Foo'" "true"
+// "Qualify this expression with 'Test.Foo'" "true-preview"
 class Test {
   void foo(Foo m) {
   }

@@ -15,6 +15,7 @@
  */
 package git4idea.attributes;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,10 +28,11 @@ public enum GitAttribute {
 
   @NotNull private final String myName;
 
-  GitAttribute(@NotNull String name) {
+  GitAttribute(@NotNull @NonNls String name) {
     myName = name;
   }
 
+  @NonNls
   @NotNull
   public String getName() {
     return myName;

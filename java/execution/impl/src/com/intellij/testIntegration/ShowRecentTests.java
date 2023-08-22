@@ -16,6 +16,8 @@
 package com.intellij.testIntegration;
 
 import com.intellij.execution.TestStateStorage;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +41,11 @@ public class ShowRecentTests extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
   }
-  
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
@@ -56,7 +62,7 @@ public class ShowRecentTests extends AnAction {
     
     List<RecentTestsPopupEntry> entries = listProvider.getTestsToShow();
     
-    SelectTestStep selectStepTest = new SelectTestStep("Debug Recent Tests", entries, testRunner);
+    SelectTestStep selectStepTest = new SelectTestStep(JavaBundle.message("popup.title.debug.recent.tests"), entries, testRunner);
 
     RecentTestsListPopup popup = new RecentTestsListPopup(project, selectStepTest, testRunner, testLocator);
     popup.showCenteredInCurrentWindow(project);

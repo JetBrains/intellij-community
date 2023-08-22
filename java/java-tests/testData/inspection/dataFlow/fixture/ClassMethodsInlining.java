@@ -8,6 +8,12 @@ class ClassMethodsInlining {
     }
   }
 
+  void instanceBoxingTest() {
+    if (<warning descr="Condition 'Integer.class.isInstance(1)' is always 'true'">Integer.class.isInstance(1)</warning>) {
+
+    }
+  }
+
   void instanceTest(Class<?> c, Object o) {
     if(c.isInstance(o)) {
       System.out.println(o.hashCode());

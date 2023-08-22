@@ -20,37 +20,21 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public class DummyCompileContext implements CompileContext {
   private final Project myProject;
 
-  /**
-   * @deprecated use {@link #create(Project)} instead
-   */
-  @Deprecated
-  public DummyCompileContext() {
-    this(ProjectManager.getInstance().getDefaultProject());
-  }
-
   protected DummyCompileContext(Project project) {
     myProject = project;
-  }
-
-  /**
-   * @deprecated use {@link #create(Project)} instead
-   * @return
-   */
-  @Deprecated
-  @NotNull
-  public static DummyCompileContext getInstance() {
-    return new DummyCompileContext(ProjectManager.getInstance().getDefaultProject());
   }
 
   @NotNull
@@ -65,17 +49,10 @@ public class DummyCompileContext implements CompileContext {
   }
 
   @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-  }
-
-
-  @Override
   public void addMessage(@NotNull CompilerMessageCategory category,
-                         String message,
-                         @Nullable String url,
-                         int lineNum,
-                         int columnNum,
-                         Navigatable navigatable) {
+                         @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                         @Nullable String url, int lineNum, int columnNum, @Nullable Navigatable navigatable,
+                         Collection<String> moduleNames) {
   }
 
   @Override

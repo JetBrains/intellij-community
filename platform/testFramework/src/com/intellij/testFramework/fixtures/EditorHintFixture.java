@@ -31,7 +31,9 @@ public class EditorHintFixture implements EditorHintListener {
   }
 
   @Override
-  public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+  public void hintShown(Project project,
+                        @NotNull LightweightHint hint,
+                        int flags) {
     hint.putUserData(LightweightHint.SHOWN_AT_DEBUG, Boolean.TRUE);
     myCurrentHint = hint;
     hint.addHintListener(event -> {

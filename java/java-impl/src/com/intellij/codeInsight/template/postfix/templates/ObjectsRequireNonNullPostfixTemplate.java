@@ -14,7 +14,7 @@ public class ObjectsRequireNonNullPostfixTemplate extends JavaEditablePostfixTem
           "java.util.Objects.requireNonNull($EXPR$)",
           "Objects.requireNonNull(expr)",
           Collections.singleton(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNotPrimitiveTypeExpressionCondition()),
-          LanguageLevel.JDK_1_7, true, provider);
+          LanguageLevel.JDK_1_7, false, provider);
   }
 
   @Override

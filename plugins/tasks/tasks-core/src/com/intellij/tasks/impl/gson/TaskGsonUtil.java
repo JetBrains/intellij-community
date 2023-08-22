@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl.gson;
 
 import com.google.gson.*;
@@ -12,12 +13,12 @@ import java.util.Date;
 /**
  * @author Mikhail Golubev
  */
-public class TaskGsonUtil {
+public final class TaskGsonUtil {
 
   private TaskGsonUtil() {
   }
 
-  public static final JsonDeserializer<Date> DATE_DESERIALIZER = new JsonDeserializer<Date>() {
+  public static final JsonDeserializer<Date> DATE_DESERIALIZER = new JsonDeserializer<>() {
     @Override
     public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
       return TaskUtil.parseDate(json.getAsString());

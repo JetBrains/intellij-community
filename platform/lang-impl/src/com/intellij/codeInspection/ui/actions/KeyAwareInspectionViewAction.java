@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
@@ -12,6 +11,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -20,11 +20,10 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -44,38 +43,35 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
   @Override
   protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
+    InspectionToolWrapper<?, ?> wrapper = getToolWrapper(e);
     return wrapper != null && HighlightDisplayKey.find(wrapper.getShortName()) != null;
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final InspectionResultsView view = getView(e);
-    final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
-    actionPerformed(view, key);
-  }
-
-  protected abstract void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key);
-
-  public static class DisableInspection extends KeyAwareInspectionViewAction {
+  public static final class DisableInspection extends KeyAwareInspectionViewAction {
     public DisableInspection() {
       super(DisableInspectionToolAction.getNameText());
     }
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-      final boolean enabled = super.isEnabled(view, e);
-      if (!enabled) return false;
-      final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(view.getProject())
-        .getCurrentProfile();
-      return profile.isToolEnabled(key);
+      final InspectionToolWrapper<?, ?> wrapper = getToolWrapper(e);
+      if (wrapper == null) {
+        return false;
+      }
+      final HighlightDisplayKey key = HighlightDisplayKey.find(wrapper.getShortName());
+      if (key == null) {
+        return false;
+      }
+      return InspectionProjectProfileManager.getInstance(view.getProject()).getCurrentProfile().isToolEnabled(key);
     }
 
     @Override
-    protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
-      if (view.isSingleInspectionRun()) {
-        view.getCurrentProfile().modifyProfile(it -> it.setToolEnabled(key.toString(), false));
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      InspectionResultsView view = getView(e);
+      InspectionToolWrapper<?, ?> wrapper = getToolWrapper(e);
+      String shortName = Objects.requireNonNull(wrapper).getShortName();
+      if (Objects.requireNonNull(view).isSingleInspectionRun()) {
+        view.getCurrentProfile().modifyProfile(it -> it.setToolEnabled(shortName, false));
       }
       else {
         final RefEntity[] selectedElements = view.getTree().getSelectedElements();
@@ -87,12 +83,12 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
         }
 
         if (files.isEmpty()) {
-          view.getCurrentProfile().modifyProfile(it -> it.setToolEnabled(key.toString(), false));
+          view.getCurrentProfile().modifyProfile(it -> it.setToolEnabled(shortName, false));
         }
         else {
           InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(view.getProject(), it -> {
             for (PsiElement element : files) {
-              it.disableTool(key.toString(), element);
+              it.disableTool(shortName, element);
             }
           });
         }
@@ -100,20 +96,21 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     }
   }
 
-  public static class RunInspectionOn extends KeyAwareInspectionViewAction {
+  public static final class RunInspectionOn extends KeyAwareInspectionViewAction {
     public RunInspectionOn() {
       super(InspectionsBundle.messagePointer("run.inspection.on.file.intention.text"));
     }
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-      return super.isEnabled(view, e) && getPsiElement(view) != null;
+      return super.isEnabled(view, e) && InspectionTree.getSelectedElement(e) != null;
     }
 
     @Override
-    protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
-      Set<PsiFile> files = new THashSet<>();
-      for (RefEntity entity : view.getTree().getSelectedElements()) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      InspectionResultsView view = getView(e);
+      Set<PsiFile> files = new HashSet<>();
+      for (RefEntity entity : Objects.requireNonNull(view).getTree().getSelectedElements()) {
         if (entity instanceof RefElement && entity.isValid()) {
           final PsiElement element = ((RefElement)entity).getPsiElement();
           final PsiFile file = element.getContainingFile();
@@ -143,36 +140,23 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
       final PsiElement context;
       final AnalysisScope scope;
       switch (files.size()) {
-        case 0:
+        case 0 -> {
           context = null;
           scope = view.getScope();
-          break;
-        case 1:
+        }
+        case 1 -> {
           final PsiFile theFile = ContainerUtil.getFirstItem(files);
           LOG.assertTrue(theFile != null);
           context = theFile;
           scope = new AnalysisScope(theFile);
-          break;
-        default:
+        }
+        default -> {
           context = null;
           scope = new AnalysisScope(view.getProject(), ContainerUtil.map(files, PsiFile::getVirtualFile));
+        }
       }
 
-      RunInspectionIntention.selectScopeAndRunInspection(key.toString(), scope, useModule ? module : null, context, view.getProject());
-    }
-
-    @Nullable
-    private static PsiElement getPsiElement(InspectionResultsView view) {
-      final RefEntity[] selectedElements = view.getTree().getSelectedElements();
-
-      final PsiElement psiElement;
-      if (selectedElements.length > 0 && selectedElements[0] instanceof RefElement) {
-        psiElement = ((RefElement)selectedElements[0]).getPsiElement();
-      }
-      else {
-        psiElement = null;
-      }
-      return psiElement;
+      RunInspectionIntention.selectScopeAndRunInspection(Objects.requireNonNull(getToolWrapper(e)).getShortName(), scope, useModule ? module : null, context, view.getProject());
     }
   }
 }

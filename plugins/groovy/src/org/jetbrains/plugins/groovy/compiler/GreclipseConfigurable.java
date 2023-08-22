@@ -12,13 +12,11 @@ import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GreclipseSettings;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class GreclipseConfigurable implements Configurable {
   private final GreclipseSettings mySettings;
   private TextFieldWithBrowseButton myJarPath;
@@ -30,7 +28,7 @@ public class GreclipseConfigurable implements Configurable {
     mySettings = settings;
 
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false);
-    myJarPath.addBrowseFolderListener(null, "Select path to groovy-eclipse-batch-*.jar with version matching your Groovy distribution", null, descriptor);
+    myJarPath.addBrowseFolderListener(null, GroovyBundle.message("configurable.greclipse.path.chooser.description"), null, descriptor);
   }
 
   @Override

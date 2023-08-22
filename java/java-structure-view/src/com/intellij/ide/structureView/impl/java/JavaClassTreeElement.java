@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -16,15 +16,6 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
 
   public JavaClassTreeElement(PsiClass cls, boolean inherited) {
     super(inherited, cls);
-  }
-
-  /**
-   * @deprecated use {@link #JavaClassTreeElement(PsiClass, boolean)}
-   * @noinspection unused
-   */
-  @Deprecated
-  public JavaClassTreeElement(PsiClass cls, boolean inherited, Set<PsiClass> parents) {
-    this(cls, inherited);
   }
 
   @Override
@@ -54,10 +45,16 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
         children.add(new ClassInitializerTreeElement((PsiClassInitializer)child));
       }
     }
+    PsiRecordHeader header = aClass.getRecordHeader();
+    if (header != null) {
+      for (PsiRecordComponent recordComponent : header.getRecordComponents()) {
+        children.add(new JavaRecordComponentTreeElement(recordComponent, false));
+      }
+    }
     return children;
   }
 
-  static LinkedHashSet<PsiElement> getOwnChildren(@NotNull PsiClass aClass) {
+  static @NotNull LinkedHashSet<PsiElement> getOwnChildren(@NotNull PsiClass aClass) {
     LinkedHashSet<PsiElement> members = new LinkedHashSet<>();
     addPhysicalElements(aClass.getFields(), members, aClass);
     addPhysicalElements(aClass.getMethods(), members, aClass);

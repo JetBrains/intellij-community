@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -15,10 +15,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.Consumer;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,15 +28,12 @@ import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
-* @author peter
-*/
-class SameSignatureCallParametersProvider extends CompletionProvider<CompletionParameters> {
+final class SameSignatureCallParametersProvider {
   static final PsiElementPattern.Capture<PsiElement> IN_CALL_ARGUMENT =
     psiElement().afterLeaf("(").withParent(
       psiElement(PsiReferenceExpression.class).withParent(
         psiElement(PsiExpressionList.class).withParent(PsiCall.class))).with(
-      new PatternCondition<PsiElement>("Method call completed with parameter hints") {
+      new PatternCondition<>("Method call completed with parameter hints") {
         @Override
         public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
           PsiElement e = element.getParent();
@@ -46,15 +44,8 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
         }
       });
 
-  @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters,
-                                @NotNull ProcessingContext context,
-                                @NotNull CompletionResultSet result) {
-    addSignatureItems(parameters, result);
-  }
-
-  void addSignatureItems(@NotNull CompletionParameters parameters, @NotNull Consumer<? super LookupElement> result) {
-    final PsiCall methodCall = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiCall.class);
+  void addSignatureItems(@NotNull PsiElement position, @NotNull Consumer<? super LookupElement> result) {
+    final PsiCall methodCall = PsiTreeUtil.getParentOfType(position, PsiCall.class);
     assert methodCall != null;
     Set<Pair<PsiMethod, PsiSubstitutor>> candidates = getCallCandidates(methodCall);
 
@@ -75,17 +66,18 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
   }
 
   private static LookupElement createParametersLookupElement(final PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
-    final PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
-    final String lookupString = StringUtil.join(parameters, PsiNamedElement::getName, ", ");
+    PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
+    String lookupString = StringUtil.join(parameters, PsiNamedElement::getName, ", ");
 
-    final int w = PlatformIcons.PARAMETER_ICON.getIconWidth();
+    IconManager iconManager = IconManager.getInstance();
+    int w = iconManager.getPlatformIcon(PlatformIcons.Parameter).getIconWidth();
     LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(PlatformIcons.PARAMETER_ICON, 0, 2*w/5, 0);
-    icon.setIcon(PlatformIcons.PARAMETER_ICON, 1);
+    icon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Parameter), 0, 2 * w / 5, 0);
+    icon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Parameter), 1);
 
     LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon);
     boolean makeFinalIfNeeded = PsiTreeUtil.isAncestor(takeParametersFrom, call, true);
-    element = element.withInsertHandler(new InsertHandler<LookupElement>() {
+    element = element.withInsertHandler(new InsertHandler<>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
         context.commitDocument();
@@ -128,7 +120,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
         final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
         if (psiClass != null) {
           for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
-            if (overload.first != toExclude && (chosenMethod == null || chosenMethod.equals(overload.first))) {
+            if (overload.first != toExclude && (chosenMethod == null || chosenMethod.isEquivalentTo(overload.first))) {
               candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
             }
           }

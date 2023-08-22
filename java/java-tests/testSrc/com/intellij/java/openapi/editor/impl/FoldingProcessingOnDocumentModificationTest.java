@@ -16,6 +16,7 @@
 package com.intellij.java.openapi.editor.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -26,32 +27,32 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.TestFileType;
+import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Denis Zhdanov
- */
 public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorTest {
   
   public void testUnexpectedClassLevelJavadocExpandingOnClassSignatureChange() {
     // Inspired by IDEA-61275
 
     String text =
-      "/**\n" +
-      " * This is a test comment\n" +
-      " */\n" +
-      "public <caret>class Test {\n" +
-      "}";
-    init(text, TestFileType.JAVA);
+      """
+        /**
+         * This is a test comment
+         */
+        public <caret>class Test {
+        }""";
+    init(text, JavaFileType.INSTANCE);
 
     CaretModel caretModel = getEditor().getCaretModel();
     int caretOffset = caretModel.getOffset();
@@ -70,12 +71,13 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testCollapseAllHappensBeforeFirstCodeFoldingPass() {
-    init("class Foo {\n" +
-         "    void m() {\n" +
-         "        System.out.println();\n" +
-         "        System.out.println();\n" +
-         "    }\n" +
-         "}", TestFileType.JAVA);
+    init("""
+           class Foo {
+               void m() {
+                   System.out.println();
+                   System.out.println();
+               }
+           }""", JavaFileType.INSTANCE);
     
     buildInitialFoldRegions();
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
@@ -84,11 +86,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testSurvivingBrokenPsi() {
-    openJavaEditor("class Foo {\n" +
-                   "    void m() {\n" +
-                   "\n" +
-                   "    }\n" +
-                   "}");
+    openJavaEditor("""
+                     class Foo {
+                         void m() {
+
+                         }
+                     }""");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
@@ -103,11 +106,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testInvalidRegionIsRemovedOnExpanding() {
-    openJavaEditor("class Foo {\n" +
-                   "    void m() {\n" +
-                   "\n" +
-                   "    }\n" +
-                   "}");
+    openJavaEditor("""
+                     class Foo {
+                         void m() {
+
+                         }
+                     }""");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
@@ -120,11 +124,12 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   public void testEditingNearRegionExpandsIt() {
-    openJavaEditor("class Foo {\n" +
-                   "    void m() <caret>{\n" +
-                   "\n" +
-                   "    }\n" +
-                   "}");
+    openJavaEditor("""
+                     class Foo {
+                         void m() <caret>{
+
+                         }
+                     }""");
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     executeAction(IdeActions.ACTION_EDITOR_DELETE);
     checkFoldingState("[]");
@@ -144,7 +149,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
         return true;
       }
     }, () -> {
-      openEditor("<caret>\nvalue", TestFileType.TEXT);
+      openEditor("<caret>\nvalue", PlainTextFileType.INSTANCE);
       checkFoldingState("[FoldRegion +(1:6), placeholder='0']");
       valuePlaceholder[0] = 1;
       runFoldingPass();
@@ -166,7 +171,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
         return setting.get();
       }
     }, () -> {
-      openEditor("<caret>\nvalue", TestFileType.TEXT);
+      openEditor("<caret>\nvalue", PlainTextFileType.INSTANCE);
       checkFoldingState("[FoldRegion +(1:6), placeholder='foo']");
       setting.set(false);
       runFoldingPass();
@@ -185,10 +190,10 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
 
   private void openJavaEditor(String text) {
-    openEditor(text, TestFileType.JAVA);
+    openEditor(text, JavaFileType.INSTANCE);
   }
 
-  private void openEditor(String text, TestFileType fileType) {
+  private void openEditor(String text, FileType fileType) {
     init(text, fileType);
     buildInitialFoldRegions();
     runFoldingPass(true);
@@ -202,7 +207,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
   }
   
   private void buildInitialFoldRegions() {
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
   }
   
   private void updateFoldRegions() {
@@ -227,7 +232,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
         return new FoldingDescriptor[] {new FoldingDescriptor(node, new TextRange(pos, pos + 5), null,
                                                               Collections.singleton(ModificationTracker.EVER_CHANGED))};
       }
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
   }
 }

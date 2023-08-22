@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -10,12 +10,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class MoveModuleToGroupTopLevel extends ActionGroup {
+public final class MoveModuleToGroupTopLevel extends ActionGroup {
   @Override
   public void update(@NotNull AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
@@ -23,6 +24,11 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     boolean active = project != null && modules != null && modules.length != 0 && !ModuleGrouperKt.isQualifiedModuleNamesEnabled(project);
     e.getPresentation().setVisible(active);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -34,8 +40,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
 
     ModifiableModuleModel moduleModel = e.getData(LangDataKeys.MODIFIABLE_MODULE_MODEL);
     ModuleGrouper grouper = ModuleGrouper.instanceFor(project, moduleModel);
-    List<String> topLevelGroupNames = new ArrayList<>(getTopLevelGroupNames(grouper));
-    Collections.sort(topLevelGroupNames);
+    List<String> topLevelGroupNames = ContainerUtil.sorted(getTopLevelGroupNames(grouper));
 
     List<AnAction> result = new ArrayList<>();
     result.add(new MoveModulesOutsideGroupAction());

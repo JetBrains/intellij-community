@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.application.ApplicationManager
@@ -16,13 +16,13 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
  */
 class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
-  private lateinit var dirtyScopeManager: VcsDirtyScopeManager
+  private lateinit var dirtyScopeManager: VcsDirtyScopeManagerImpl
   private lateinit var vcs: MockAbstractVcs
   private lateinit var basePath: FilePath
 
   override fun setUp() {
     super.setUp()
-    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
+    dirtyScopeManager = VcsDirtyScopeManagerImpl.getInstanceImpl(project)
     vcs = MockAbstractVcs(project)
     basePath = getFilePath(projectRoot)
 
@@ -61,7 +61,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test dirty files from different roots`() {
-    val otherRoot = createSubRoot(testRootFile, "otherRoot")
+    val otherRoot = createSubRoot(testRoot, "otherRoot")
     val file = createFile(projectRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
@@ -87,7 +87,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   // this is already implicitly checked in several other tests, but better to have it explicit
   fun `test all roots from a single vcs belong to a single scope`() {
-    val otherRoot = createSubRoot(testRootFile, "otherRoot")
+    val otherRoot = createSubRoot(testRoot, "otherRoot")
     val file = createFile(projectRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
@@ -101,7 +101,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test marking file outside of any VCS root dirty has no effect`() {
-    val file = createFile(testRootFile, "outside.txt")
+    val file = createFile(testRoot, "outside.txt")
 
     dirtyScopeManager.fileDirty(file)
 
@@ -128,7 +128,11 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     assertTrue(otherVcsScope.recursivelyDirtyDirectories.contains(subRoot))
   }
 
-  private fun retrieveDirtyScopes() = dirtyScopeManager.retrieveScopes()!!
+  private fun retrieveDirtyScopes(): VcsInvalidated {
+    val scopes = dirtyScopeManager.retrieveScopes()!!
+    dirtyScopeManager.changesProcessed()
+    return scopes
+  }
 
   private fun disableVcsDirtyScopeVfsListener() {
     project.service<VcsDirtyScopeVfsListener>().setForbid(true)
@@ -151,6 +155,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   private fun registerRootMapping(root: VirtualFile, vcs: AbstractVcs) {
     vcsManager.setDirectoryMapping(root.path, vcs.name)
     dirtyScopeManager.retrieveScopes() // ignore the dirty event after adding the mapping
+    dirtyScopeManager.changesProcessed()
   }
 
   private fun createFile(parentDir: FilePath, name: String): FilePath {

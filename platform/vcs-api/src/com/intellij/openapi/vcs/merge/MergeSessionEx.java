@@ -10,23 +10,23 @@ import java.util.List;
 /**
  * Represents the state of a multiple file merge operation.
  *
- * @author yole
  * @see MergeProvider2#createMergeSession
  */
 public interface MergeSessionEx extends MergeSession {
   /**
    * Called when user executes "Accept Theirs" or "Accept Ours" action to update file content on disk to the selected version.
    *
-   * @param files
+   * @param files      the conflicting files.
    * @param resolution AcceptedYours or AcceptedTheirs
    */
   void acceptFilesRevisions(@NotNull List<? extends VirtualFile> files, @NotNull Resolution resolution) throws VcsException;
 
   /**
    * Called after conflict resolution for conflicting files.
-   * @see  #conflictResolvedForFile
-   *@param files       the conflicting file.
+   *
+   * @param files      the conflicting files.
    * @param resolution the used resolution.
+   * @see #conflictResolvedForFile
    */
   void conflictResolvedForFiles(@NotNull List<? extends VirtualFile> files, @NotNull Resolution resolution);
 }

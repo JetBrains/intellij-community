@@ -1,4 +1,4 @@
-// "Replace field reference with Main2.YYY" "true"
+// "Replace field reference with 'Main2.YYY'" "true-preview"
 public class Main extends Main2 {
   public void main(String[] args) {
     boolean yyy = new Main().X<caret>XX;

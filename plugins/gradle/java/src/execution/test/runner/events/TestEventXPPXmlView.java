@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.openapi.util.text.Strings;
 import com.thoughtworks.xstream.io.HierarchicalStreamDriver;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppDriver;
@@ -27,11 +28,13 @@ public class TestEventXPPXmlView implements TestEventXmlView {
   private String myEventTestResultExpected;
   private String myEventTestResultActual;
   private String myEventTestResultFailureType;
+  private String myEventTestResultExceptionName;
   private String myEventTestResultStackTrace;
   private String myEventTestResultErrorMsg;
   private String myEventTestResultEndTime;
   private String myEventTestResultStartTime;
   private String myTestName;
+  private String myTestDisplayName;
 
   public TestEventXPPXmlView(@NotNull final String xml) {
     final HierarchicalStreamReader parser = DRIVER.createReader(new StringReader(xml));
@@ -62,6 +65,7 @@ public class TestEventXPPXmlView implements TestEventXmlView {
 
               if ("descriptor".equals(parser.getNodeName())) {
                 myTestName = parser.getAttribute("name");            //queryXml("/ijLog/event/test/descriptor/@name");
+                myTestDisplayName = parser.getAttribute("displayName");            //queryXml("/ijLog/event/test/descriptor/@name");
                 myTestClassName = parser.getAttribute("className");  //queryXml("/ijLog/event/test/descriptor/@className");
               } else if ("event".equals(parser.getNodeName())) {
                 myTestEventTestDescription = parser.getAttribute("destination"); //queryXml("/ijLog/event/test/event/@destination");
@@ -84,6 +88,8 @@ public class TestEventXPPXmlView implements TestEventXmlView {
                     myEventTestResultActual = parser.getValue();                     //queryXml("/ijLog/event/test/result/actual");
                   } else if ("failureType".equals(parser.getNodeName())){
                     myEventTestResultFailureType = parser.getValue();                //queryXml("/ijLog/event/test/result/failureType");
+                  } else if ("exceptionName".equals(parser.getNodeName())){
+                    myEventTestResultExceptionName = parser.getValue();              //queryXml("/ijLog/event/test/result/exceptionName");
                   } else if ("stackTrace".equals(parser.getNodeName())){
                     myEventTestResultStackTrace = parser.getValue();                 //queryXml("/ijLog/event/test/result/stackTrace");
                   } else if ("errorMsg".equals(parser.getNodeName())){
@@ -115,6 +121,12 @@ public class TestEventXPPXmlView implements TestEventXmlView {
   @Override
   public String getTestName() {
     return myTestName == null ? "" : myTestName;
+  }
+
+  @NotNull
+  @Override
+  public String getTestDisplayName() {
+    return Strings.isEmpty(myTestDisplayName) ? getTestName() : myTestDisplayName;
   }
 
   @NotNull
@@ -204,6 +216,12 @@ public class TestEventXPPXmlView implements TestEventXmlView {
   @Override
   public String getEventTestResultFailureType() {
     return myEventTestResultFailureType == null ? "" : myEventTestResultFailureType;
+  }
+
+  @NotNull
+  @Override
+  public String getEventTestResultExceptionName() {
+    return myEventTestResultExceptionName == null ? "" : myEventTestResultExceptionName;
   }
 
   @NotNull

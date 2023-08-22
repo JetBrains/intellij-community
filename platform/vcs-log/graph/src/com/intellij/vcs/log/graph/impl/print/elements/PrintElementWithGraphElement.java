@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.impl.print.elements;
 
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PrintElementWithGraphElement implements PrintElement {
@@ -27,16 +27,16 @@ public abstract class PrintElementWithGraphElement implements PrintElement {
   protected final int myPositionInCurrentRow;
 
   @NotNull protected final GraphElement myGraphElement;
-  @NotNull protected final PrintElementManager myPrintElementManager;
+  @NotNull protected final PrintElementPresentationManager myPresentationManager;
 
   protected PrintElementWithGraphElement(int rowIndex,
                                          int positionInCurrentRow,
                                          @NotNull GraphElement graphElement,
-                                         @NotNull PrintElementManager printElementManager) {
+                                         @NotNull PrintElementPresentationManager presentationManager) {
     myRowIndex = rowIndex;
     myPositionInCurrentRow = positionInCurrentRow;
     myGraphElement = graphElement;
-    myPrintElementManager = printElementManager;
+    myPresentationManager = presentationManager;
   }
 
   @NotNull
@@ -56,19 +56,19 @@ public abstract class PrintElementWithGraphElement implements PrintElement {
 
   @Override
   public int getColorId() {
-    return myPrintElementManager.getColorId(myGraphElement);
+    return myPresentationManager.getColorId(myGraphElement);
   }
 
   @Override
   public boolean isSelected() {
-    return myPrintElementManager.isSelected(this);
+    return myPresentationManager.isSelected(this);
   }
 
   @NotNull
   public static PrintElementWithGraphElement converted(@NotNull PrintElementWithGraphElement element,
                                                        @NotNull GraphElement convertedGraphElement) {
     return new PrintElementWithGraphElement(element.getRowIndex(), element.getPositionInCurrentRow(), convertedGraphElement,
-                                            element.myPrintElementManager) {
+                                            element.myPresentationManager) {
     };
   }
 }

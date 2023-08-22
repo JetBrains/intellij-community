@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 interface SESearcher {
@@ -13,16 +12,6 @@ interface SESearcher {
                            @NotNull String pattern);
 
   ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
-                                  @NotNull String pattern,
-                                  @NotNull SearchEverywhereContributor<?> contributor,
-                                  int newLimit);
-
-  /**
-   * Search process listener interface
-   */
-  interface Listener {
-    void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list);
-    void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list);
-    void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
-  }
+                                  @NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+                                  @NotNull String pattern);
 }

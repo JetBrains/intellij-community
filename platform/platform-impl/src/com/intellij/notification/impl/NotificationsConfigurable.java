@@ -1,90 +1,34 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.impl.ui.NotificationsConfigurablePanel;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.Nls;
+import com.intellij.notification.impl.ui.NotificationsConfigurableUi;
+import com.intellij.openapi.options.ConfigurableBase;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 /**
- * @author spleaner
+ * @author Konstantin Bulenkov
  */
-public class NotificationsConfigurable implements Configurable, SearchableConfigurable, Configurable.NoScroll {
-  public static final String DISPLAY_NAME = "Notifications";
-  @NonNls static final String ID = "reference.settings.ide.settings.notifications";
-  private NotificationsConfigurablePanel myComponent;
+public class NotificationsConfigurable extends ConfigurableBase<NotificationsConfigurableUi, NotificationsConfigurationImpl> {
+  static final @NonNls String ID = "reference.settings.ide.settings.notifications";
 
-  @Override
-  @Nls
-  public String getDisplayName() {
+  public NotificationsConfigurable() {
+    super(ID, displayName(), ID);
+  }
+
+  public static @NotNull @NlsContexts.ConfigurableName String displayName() {
     return IdeBundle.message("notification.configurable.display.name.notifications");
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
-    return ID;
+  protected @NotNull NotificationsConfigurationImpl getSettings() {
+    return NotificationsConfigurationImpl.getInstanceImpl();
   }
 
   @Override
-  public JComponent createComponent() {
-    if (myComponent == null) {
-      myComponent = new NotificationsConfigurablePanel();
-    }
-
-    return myComponent;
-  }
-
-  @Override
-  public boolean isModified() {
-    return myComponent != null && myComponent.isModified();
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    myComponent.apply();
-  }
-
-  @Override
-  public void reset() {
-    myComponent.reset();
-  }
-
-  @Override
-  public void disposeUIResources() {
-    Disposer.dispose(myComponent);
-    myComponent = null;
-  }
-
-  @Override
-  @NotNull
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  @Override
-  public Runnable enableSearch(final String option) {
-    return () -> myComponent.selectGroup(option);
+  protected NotificationsConfigurableUi createUi() {
+    return new NotificationsConfigurableUi(getSettings());
   }
 }

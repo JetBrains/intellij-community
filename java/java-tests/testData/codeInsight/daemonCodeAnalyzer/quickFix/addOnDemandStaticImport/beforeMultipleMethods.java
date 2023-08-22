@@ -1,4 +1,4 @@
-// "Add on-demand static import for 'test.Bar'" "true"
+// "Add on-demand static import for 'test.Bar'" "true-preview"
 package test;
 
 class Bar {

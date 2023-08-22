@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -19,21 +20,20 @@ import java.util.List;
 
 public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember, MemberInfo> {
 
-  public MemberSelectionTable(final List<MemberInfo> memberInfos, String abstractColumnHeader) {
+  public MemberSelectionTable(final List<MemberInfo> memberInfos, @NlsContexts.ColumnName String abstractColumnHeader) {
     this(memberInfos, null, abstractColumnHeader);
   }
 
-  public MemberSelectionTable(final List<MemberInfo> memberInfos, MemberInfoModel<PsiMember, MemberInfo> memberInfoModel, String abstractColumnHeader) {
+  public MemberSelectionTable(final List<MemberInfo> memberInfos, MemberInfoModel<PsiMember, MemberInfo> memberInfoModel, @NlsContexts.ColumnName String abstractColumnHeader) {
     super(memberInfos, memberInfoModel, abstractColumnHeader);
   }
 
   @Nullable
   @Override
   protected Object getAbstractColumnValue(MemberInfo memberInfo) {
-    if (!(memberInfo.getMember() instanceof PsiMethod)) return null;
+    if (!(memberInfo.getMember() instanceof PsiMethod method)) return null;
     if (memberInfo.isStatic()) return null;
 
-    PsiMethod method = (PsiMethod)memberInfo.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final Boolean fixedAbstract = myMemberInfoModel.isFixedAbstract(memberInfo);
       if (fixedAbstract != null) return fixedAbstract;
@@ -50,10 +50,9 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
   @Override
   protected boolean isAbstractColumnEditable(int rowIndex) {
     MemberInfo info = myMemberInfos.get(rowIndex);
-    if (!(info.getMember() instanceof PsiMethod)) return false;
+    if (!(info.getMember() instanceof PsiMethod method)) return false;
     if (info.isStatic()) return false;
 
-    PsiMethod method = (PsiMethod)info.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       if (myMemberInfoModel.isFixedAbstract(info) != null) {
         return false;

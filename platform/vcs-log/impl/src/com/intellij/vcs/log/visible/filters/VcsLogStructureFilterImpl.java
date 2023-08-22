@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.openapi.util.Comparing;
@@ -14,24 +14,24 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 @ApiStatus.Internal
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
-  @NotNull private final Collection<FilePath> myFiles;
+  private final @NotNull Collection<FilePath> myFiles;
 
   /**
-   * Use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromPaths(Collection)}
+   * Use {@link VcsLogFilterObject#fromPaths(Collection)}
    */
   protected VcsLogStructureFilterImpl(@NotNull Collection<FilePath> files) {
     myFiles = files;
   }
 
-  @NotNull
   @Override
-  public Collection<FilePath> getFiles() {
+  public @NotNull Collection<FilePath> getFiles() {
     return myFiles;
   }
 
@@ -52,13 +52,13 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
     return false;
   }
 
-  private boolean matches(@NotNull final String path) {
+  private boolean matches(final @NotNull String path) {
     return ContainerUtil.find(myFiles, (Condition<VirtualFile>)file -> FileUtil.isAncestor(file.getPath(), path, false)) != null;
   }
 
   @Override
-  public String toString() {
-    return "files:" + myFiles; // NON-NLS
+  public @NonNls String toString() {
+    return "files:" + myFiles;
   }
 
   @Override

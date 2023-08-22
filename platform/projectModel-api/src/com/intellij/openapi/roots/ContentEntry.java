@@ -28,9 +28,10 @@ import java.util.Set;
 /**
  * Represents a module's content root.
  * You can get existing entries with {@link ModuleRootModel#getContentEntries()} or
- * create a new one with {@link ModifiableRootModel#addContentEntry(VirtualFile)}.
+ * create a new one with {@link ModifiableRootModel#addContentEntry(VirtualFile)}. Note that methods which change the state can be called
+ * only on instances of {@link ContentEntry} obtained from {@link ModifiableRootModel}. Calling these methods on instances obtained from
+ * {@code ModuleRootManager.getInstance(module).getContentEntries()} may lead to failed assertion at runtime.
  *
- * @author dsl
  * @see ModuleRootModel#getContentEntries()
  * @see ModifiableRootModel#addContentEntry(VirtualFile)
  */
@@ -57,7 +58,7 @@ public interface ContentEntry extends Synthetic {
   /**
    * Returns the list of source roots under this content root.
    *
-   * @return list of this {@code ContentEntry} {@link SourceFolder}s
+   * @return array of this {@code ContentEntry} {@link SourceFolder}s
    */
   SourceFolder @NotNull [] getSourceFolders();
 
@@ -79,14 +80,14 @@ public interface ContentEntry extends Synthetic {
   /**
    * Returns the list of files and directories for valid source roots under this content root.
    *
-   * @return list of all valid source roots.
+   * @return array of all valid source roots.
    */
   VirtualFile @NotNull [] getSourceFolderFiles();
 
   /**
    * Returns the list of excluded roots configured under this content root. The result doesn't include synthetic excludes like the module output.
    *
-   * @return list of this {@code ContentEntry} {@link ExcludeFolder}s
+   * @return array of this {@code ContentEntry} {@link ExcludeFolder}s
    */
   ExcludeFolder @NotNull [] getExcludeFolders();
 
@@ -99,12 +100,19 @@ public interface ContentEntry extends Synthetic {
   /**
    * Returns the list of files and directories for valid excluded roots under this content root.
    *
-   * @return list of all valid exclude roots including synthetic excludes like the module output
+   * @return array of all valid exclude roots including synthetic excludes like the module output
    */
   VirtualFile @NotNull [] getExcludeFolderFiles();
 
   /**
-   * Adds a source or test source root under the content root.
+   * Adds a source or test source root under the content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   * <p>
+   * This method will mark source folder as "user-defined". That means if the content root is imported from some external system,
+   * the new SourceRootEntity will use the internal entity source. Such source folder will be stored in .idea folder and won't
+   * be affected by external system reimport.
+   * If you want you source folder to behave exactly as content root, you can add source folder
+   * using {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, boolean)} or
+   * {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, JpsElement, ProjectModelExternalSource)} methods.
    *
    * @param file         the file or directory to add as a source root.
    * @param isTestSource true if the file or directory is added as a test source root.
@@ -114,7 +122,15 @@ public interface ContentEntry extends Synthetic {
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource);
 
   /**
-   * Adds a source or test source root with the specified package prefix under the content root.
+   * Adds a source or test source root with the specified package prefix under the content root. This method may be called only on an
+   * instance obtained from {@link ModifiableRootModel}.
+   * <p>
+   * This method will mark source folder as "user-defined". That means if the content root is imported from some external system,
+   * the new SourceRootEntity will use the internal entity source. Such source folder will be stored in .idea folder and won't
+   * be affected by external system reimport.
+   * If you want you source folder to behave exactly as content root, you can add source folder
+   * using {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, boolean)} or
+   * {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, JpsElement, ProjectModelExternalSource)} methods.
    *
    * @param file          the file or directory to add as a source root.
    * @param isTestSource  true if the file or directory is added as a test source root.
@@ -125,43 +141,139 @@ public interface ContentEntry extends Synthetic {
   @NotNull
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix);
 
-  @NotNull
-  <P extends JpsElement>
-  SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
+  /**
+   * Adds a source root of the given type with the given properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   * <p>
+   * This method will mark source folder as "user-defined". That means if the content root is imported from some external system,
+   * the new SourceRootEntity will use the internal entity source. Such source folder will be stored in .idea folder and won't
+   * be affected by external system reimport.
+   * If you want you source folder to behave exactly as content root, you can add source folder
+   * using {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, boolean)} or
+   * {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, JpsElement, ProjectModelExternalSource)} methods.
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull P properties);
 
-  @NotNull
-  <P extends JpsElement>
+  /**
+   * Adds a source root of the given type with the default properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   * <p>
+   * This method will mark source folder as "user-defined". That means if the content root is imported from some external system,
+   * the new SourceRootEntity will use the internal entity source. Such source folder will be stored in .idea folder and won't
+   * be affected by external system reimport.
+   * If you want you source folder to behave exactly as content root, you can add source folder
+   * using {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, boolean)} or
+   * {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, JpsElement, ProjectModelExternalSource)} methods.
+   */
+  @NotNull <P extends JpsElement>
   SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type);
 
   /**
-   * Adds a source or test source root under the content root.
+   * Adds a source or test source root under the content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   * <p>
+   * This method will mark source folder as "user-defined". That means if the content root is imported from some external system,
+   * the new SourceRootEntity will use the internal entity source. Such source folder will be stored in .idea folder and won't
+   * be affected by external system reimport.
+   * If you want you source folder to behave exactly as content root, you can add source folder
+   * using {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, boolean)} or
+   * {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, JpsElement, ProjectModelExternalSource)} methods.
    *
-   * @param  url the file or directory url to add as a source root.
+   * @param url          the file or directory url to add as a source root.
    * @param isTestSource true if the file or directory is added as a test source root.
    * @return the object representing the added root.
    */
   @NotNull
   SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource);
 
-  @NotNull
-  <P extends JpsElement>
-  SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type);
-
-  @NotNull
-  <P extends JpsElement>
-  SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull  P properties);
+  /**
+   * Adds a source root of the given type with the default properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   * <p>
+   * This method will mark source folder as "user-defined". That means if the content root is imported from some external system,
+   * the new SourceRootEntity will use the internal entity source. Such source folder will be stored in .idea folder and won't
+   * be affected by external system reimport.
+   * If you want you source folder to behave exactly as content root, you can add source folder
+   * using {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, boolean)} or
+   * {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, JpsElement, ProjectModelExternalSource)} methods.
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type);
+  /**
+   * Adds a source root of the given type with the default properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   * <p>
+   * This method accepts externalSource, what means that if the content root is "externally imported" (e.g. using maven or gradle),
+   * the source root will get the {@link com.intellij.platform.workspace.storage.EntitySource} of the content entity and will
+   * also be marked as "externally imported".
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull ProjectModelExternalSource externalSource);
 
   /**
-   * Removes a source or test source root from this content root.
+   * @param isAutomaticallyImported true if the source root is "detected" or "imported" by IDE, false if it explicitly defined by user.
+   *                                This means that if the content root is "externally imported" (e.g. using maven or gradle),
+   *                                the source root will get the {@link com.intellij.platform.workspace.storage.EntitySource} of the content
+   *                                entity and will also be marked as "externally imported".
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               boolean isAutomaticallyImported);
+
+  /**
+   * Adds a source root of the given type with given properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   * <p>
+   * This method will mark source folder as "user-defined". That means if the content root is imported from some external system,
+   * the new SourceRootEntity will use the internal entity source. Such source folder will be stored in .idea folder and won't
+   * be affected by external system reimport.
+   * If you want you source folder to behave exactly as content root, you can add source folder
+   * using {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, boolean)} or
+   * {@link ContentEntry#addSourceFolder(String, JpsModuleSourceRootType, JpsElement, ProjectModelExternalSource)} methods.
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull P properties);
+
+  /**
+   * @param isAutomaticallyImported true if the source root is "detected" or "imported" by IDE, false if it explicitly defined by user.
+   *                                This means that if the content root is "externally imported" (e.g. using maven or gradle),
+   *                                the source root will get the {@link com.intellij.platform.workspace.storage.EntitySource} of the content
+   *                                entity and will also be marked as "externally imported".
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull P properties,
+                                                               boolean isAutomaticallyImported);
+
+  /**
+   * Adds a source root of the given type with given properties. This method may be called only on an instance obtained from
+   * {@link ModifiableRootModel}.
+   * <p>
+   * This method accepts externalSource, what means that if the content root is "externally imported" (e.g. using maven or gradle),
+   * the source root will get the {@link com.intellij.platform.workspace.storage.EntitySource} of the content entity and will
+   * also be marked as "externally imported".
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull P properties,
+                                                               @Nullable ProjectModelExternalSource externalSource);
+
+  /**
+   * Removes a source or test source root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param sourceFolder the source root to remove (must belong to this content root).
    */
   void removeSourceFolder(@NotNull SourceFolder sourceFolder);
 
+  /**
+   * Removes all source roots. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void clearSourceFolders();
 
   /**
-   * Adds an exclude root under the content root.
+   * Adds an exclude root under the content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param file the file or directory to add as an exclude root.
    * @return the object representing the added root.
@@ -170,7 +282,7 @@ public interface ContentEntry extends Synthetic {
   ExcludeFolder addExcludeFolder(@NotNull VirtualFile file);
 
   /**
-   * Adds an exclude root under the content root.
+   * Adds an exclude root under the content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param url the file or directory url to add as an exclude root.
    * @return the object representing the added root.
@@ -179,19 +291,32 @@ public interface ContentEntry extends Synthetic {
   ExcludeFolder addExcludeFolder(@NotNull String url);
 
   /**
-   * Removes an exclude root from this content root.
+   * @param isAutomaticallyImported true if the exclude root is "detected" or "imported" by IDE, false if it is explicitly defined by user.
+   *                                This means that if the content root is "externally imported" (e.g. using maven or gradle),
+   *                                the source root will get the {@link com.intellij.platform.workspace.storage.EntitySource} of the content
+   *                                entity and will also be marked as "externally imported".
+   */
+  @NotNull
+  ExcludeFolder addExcludeFolder(@NotNull String url, boolean isAutomaticallyImported);
+
+  /**
+   * Removes an exclude root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
    *
    * @param excludeFolder the exclude root to remove (must belong to this content root).
    */
   void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder);
 
   /**
-   * Removes an exclude root from this content root.
+   * Removes an exclude root from this content root. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   *
    * @param url url of the exclude root
    * @return {@code true} if the exclude root was removed
    */
   boolean removeExcludeFolder(@NotNull String url);
 
+  /**
+   * Removes all excluded folders. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void clearExcludeFolders();
 
   /**
@@ -202,8 +327,19 @@ public interface ContentEntry extends Synthetic {
   @NotNull
   List<String> getExcludePatterns();
 
+  /**
+   * Adds a pattern for names of files which should be excluded. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void addExcludePattern(@NotNull String pattern);
+
+  /**
+   * Removes a pattern for names of files which should be excluded. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void removeExcludePattern(@NotNull String pattern);
+
+  /**
+   * Sets patterns for names of files which should be excluded. This method may be called only on an instance obtained from {@link ModifiableRootModel}.
+   */
   void setExcludePatterns(@NotNull List<String> patterns);
 
   @NotNull

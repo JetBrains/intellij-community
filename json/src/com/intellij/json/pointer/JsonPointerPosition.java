@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.pointer;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -134,7 +134,7 @@ public class JsonPointerPosition {
     return steps.size() >= pos;
   }
 
-  static class Step {
+  static final class Step {
     @Nullable private final String myName;
     private final int myIdx;
 

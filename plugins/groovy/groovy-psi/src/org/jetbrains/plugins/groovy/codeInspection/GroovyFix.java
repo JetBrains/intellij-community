@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
@@ -67,13 +68,13 @@ public abstract class GroovyFix implements LocalQuickFix {
       throws IncorrectOperationException;
 
 
-  protected static void replaceExpression(GrExpression expression, String newExpression) {
+  protected static void replaceExpression(GrExpression expression, @NonNls String newExpression) {
     GrInspectionUtil.replaceExpression(expression, newExpression);
   }
 
-  protected static void replaceStatement(GrStatement statement, String newStatement) {
+  protected static void replaceStatement(GrStatement statement, @NonNls String newStatement) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
-    final GrStatement newCall = (GrStatement) factory.createTopElementFromText(newStatement);
+    final GrStatement newCall = (GrStatement)factory.createTopElementFromText(newStatement);
     statement.replaceWithStatement(newCall);
   }
 
@@ -81,8 +82,7 @@ public abstract class GroovyFix implements LocalQuickFix {
    * unwraps surrounding blocks from newStatement.
    */
   protected static void replaceStatement(GrStatement oldStatement, GrStatement newStatement) throws IncorrectOperationException {
-    if (newStatement instanceof GrBlockStatement) {
-      GrBlockStatement blockStatement = (GrBlockStatement)newStatement;
+    if (newStatement instanceof GrBlockStatement blockStatement) {
       final GrOpenBlock openBlock = blockStatement.getBlock();
       final GrStatement[] statements = openBlock.getStatements();
       if (statements.length == 0) {
@@ -90,8 +90,7 @@ public abstract class GroovyFix implements LocalQuickFix {
       }
       else {
         final PsiElement parent = oldStatement.getParent();
-        if (parent instanceof GrStatementOwner) {
-          GrStatementOwner statementOwner = (GrStatementOwner)parent;
+        if (parent instanceof GrStatementOwner statementOwner) {
           for (GrStatement statement : statements) {
             statementOwner.addStatementBefore(statement, oldStatement);
           }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class DebuggerContextUtil {
+public final class DebuggerContextUtil {
   public static void setStackFrame(final DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebuggerContextImpl context = manager.getContext();
@@ -41,6 +41,7 @@ public class DebuggerContextUtil {
             SuspendManagerUtil.findContextByThread(session.getProcess().getSuspendManager(), stackFrame.threadProxy());
           final DebuggerContextImpl newContext =
             DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
+          newContext.initCaches();
           DebuggerInvocationUtil.swingInvokeLater(session.getProject(), () -> {
             manager.setState(newContext, session.getState(), DebuggerSession.Event.REFRESH, null);
             SourceCodeChecker.checkSource(newContext);
@@ -57,14 +58,17 @@ public class DebuggerContextUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final DebuggerSession session = contextManager.getContext().getDebuggerSession();
-    final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, item.getSuspendContext(), item.getThreadReference(), null);
+    final DebuggerContextImpl newContext =
+      DebuggerContextImpl.createDebuggerContext(session, item.getSuspendContext(), item.getThreadReference(), null);
 
-    contextManager.setState(newContext, session != null? session.getState() : DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
+    contextManager.setState(newContext, session != null ? session.getState() : DebuggerSession.State.DISPOSED,
+                            DebuggerSession.Event.CONTEXT, null);
   }
 
   @NotNull
-  public static DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext){
-    return DebuggerContextImpl.createDebuggerContext(session, suspendContext, suspendContext != null ? suspendContext.getThread() : null, null);
+  public static DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext) {
+    return DebuggerContextImpl.createDebuggerContext(
+      session, suspendContext, suspendContext != null ? suspendContext.getThread() : null, null);
   }
 
   public static SourcePosition findNearest(@NotNull DebuggerContextImpl context, @NotNull PsiElement psi, @NotNull PsiFile file) {
@@ -89,12 +93,18 @@ public class DebuggerContextUtil {
               final int breakPointLine = position.getLine();
               int bestLine = -1;
               int bestOffset = -1;
+              int textOffset = method != null ? method.getTextOffset() : -1;
               for (TextRange range : ranges) {
+                // skip comments
+                if (range.getEndOffset() < textOffset) {
+                  continue;
+                }
                 final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
                 if (line > bestLine && line < breakPointLine) {
                   bestLine = line;
                   bestOffset = range.getStartOffset();
-                } else if (line == breakPointLine) {
+                }
+                else if (line == breakPointLine) {
                   bestOffset = range.getStartOffset();
                   break;
                 }

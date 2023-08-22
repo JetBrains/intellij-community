@@ -1,0 +1,1 @@
+public final [ResolvedTo(BODY_RESOLVE)] var listOfStrings: R|ft<kotlin/collections/MutableList<kotlin/String!>, kotlin/collections/List<kotlin/String!>?>|

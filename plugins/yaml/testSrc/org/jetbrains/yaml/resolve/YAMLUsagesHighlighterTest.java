@@ -42,7 +42,7 @@ public class YAMLUsagesHighlighterTest extends BasePlatformTestCase {
 
     for (RangeHighlighter highlighter : highlighters) {
       String usageType;
-      TextAttributes attributes = highlighter.getTextAttributes();
+      TextAttributes attributes = highlighter.getTextAttributes(null);
 
       if (attributes == null) {
         continue;

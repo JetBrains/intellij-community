@@ -8,9 +8,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-/**
- * @author peter
- */
 public class NextPrevWordTest extends BasePlatformTestCase {
 
   public void testNextWordFromPreLastPosition() {

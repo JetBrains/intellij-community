@@ -13,13 +13,13 @@ public interface OptimizingSearchHelper {
   boolean doOptimizing();
   void clear();
 
-  void addWordToSearchInCode(String word);
+  void addWordToSearchInCode(@NotNull String word);
 
-  void addWordToSearchInText(String word);
+  void addWordToSearchInText(@NotNull String word);
 
-  void addWordToSearchInComments(String word);
+  void addWordToSearchInComments(@NotNull String word);
 
-  void addWordToSearchInLiterals(String word);
+  void addWordToSearchInLiterals(@NotNull String word);
 
   void endTransaction();
 

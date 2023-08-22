@@ -17,6 +17,7 @@ package com.intellij.history.integration
 
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.ChangeVisitor
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -26,9 +27,14 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ExceptionUtil
 
+@Suppress("HardCodedStringLiteral")
 class ValidateHistoryAction : AnAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -53,8 +59,10 @@ class ValidateHistoryAction : AnAction() {
             }
           })
         }
-        catch(ex: ProcessCanceledException) { throw ex }
-        catch(ex: Exception) {
+        catch (ex: ProcessCanceledException) {
+          throw ex
+        }
+        catch (ex: Exception) {
           Messages.showErrorDialog(e.project, ExceptionUtil.getThrowableText(ex), "Local History Validation Error")
         }
       }

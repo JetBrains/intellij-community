@@ -4,19 +4,16 @@ package com.intellij.jarRepository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -30,12 +27,11 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   private lateinit var myTestLocalMvnCache: File
   private lateinit var myTestRepo: RemoteRepositoryDescription
 
-  @Before
   override fun setUp() {
     super.setUp()
-    myFixture = EdtTestUtil.runInEdtAndGet(ThrowableComputable {
-      IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().fixture.apply { setUp() }
-    })
+    myFixture = runInEdtAndGet {
+      IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(getTestName(false)).fixture.apply { setUp() }
+    }
     myProject = myFixture.project
     myMavenRepo = FileUtil.createTempDirectory("maven", "repo")
     myTestLocalMvnCache = FileUtil.createTempDirectory("maven", "cache")
@@ -43,13 +39,16 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     JarRepositoryManager.setLocalRepositoryPath(myTestLocalMvnCache)
   }
 
-  @After
   override fun tearDown() {
     try {
-      EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+      runInEdtAndWait {
         myFixture.tearDown()
-      })
-    } finally {
+      }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
       super.tearDown()
     }
   }
@@ -156,8 +155,65 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     assertTrue("File name [${root.file.name} should contain '$expectedName'", root.file.name.contains(expectedName))
   }
 
+  @Test fun `test selection for snapshot`() {
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1-SNAPSHOT-an1")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
 
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1-SNAPSHOT")
+    val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
+                                                                                              listOf(myTestRepo), null)
+    val result: List<OrderRoot>? = getResultingRoots(promise)
 
+    assertEquals(1, result?.size)
+    val root = result?.get(0)!!
+    assertEquals(AnnotationOrderRootType.getInstance(), root.type)
+  }
+
+  @Test fun `test remote repositories selection uses project repos by default`() {
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(
+      RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1"),
+      RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2"),
+    )
+
+    val descriptor = createDescriptorWithJarRepoId(null)
+    val expected = RemoteRepositoriesConfiguration.getInstance(myProject).repositories
+    val actualWhenNullPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
+    assertEquals(expected, actualWhenNullPassed)
+
+    val actualWhenEmptyListPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
+    assertEquals(expected, actualWhenEmptyListPassed)
+  }
+  
+  @Test fun `test remote repositories selection repo from desc has second priority`() {
+    val repo1 = RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1")
+    val repo2 = RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2")
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(repo1, repo2)
+    val descriptor = createDescriptorWithJarRepoId(repo1.id)
+    
+    val expected = listOf(repo1)
+    val actualWhenNullPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, null)
+    val actualWhenEmptyListPassed = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, emptyList())
+    assertEquals(expected, actualWhenNullPassed)
+    assertEquals(expected, actualWhenEmptyListPassed)
+  }  
+  
+  @Test fun `test remote repositories selection explicitly set repos have max priority`() {
+    val repo1 = RemoteRepositoryDescription("repo1", "repo1", "https://example.com/repo1")
+    val repo2 = RemoteRepositoryDescription("repo2", "repo2", "https://example.com/repo2")
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(repo1, repo2)
+    val descriptor = createDescriptorWithJarRepoId(repo1.id)
+    val expected = listOf(repo2)
+    val actual = JarRepositoryManager.selectRemoteRepositories(myProject, descriptor, expected)
+    assertEquals(expected, actual)
+  }
+  
+  private fun createDescriptorWithJarRepoId(jarRepoId: String?) = JpsMavenRepositoryLibraryDescriptor("id", false, emptyList(),
+                                                                                                      emptyList(),
+                                                                                                      jarRepoId)
   private fun getResultingRoots(promise: Promise<MutableList<OrderRoot>>): List<OrderRoot>? {
     var result: List<OrderRoot>? = null
     (1..5).forEach {

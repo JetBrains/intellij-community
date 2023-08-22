@@ -42,7 +42,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
   }
 
   private PyDebugValue getNone() {
-    return new PyDebugValue("", "NoneType", null, "None", false, null, false, false, false, null, myDebugProcess);
+    return new PyDebugValue("", "NoneType", null, "None", false, null, false, false, false, null, null, myDebugProcess);
   }
 
   private void doEvaluate(final String expr, final XEvaluationCallback callback, final boolean doTrunc) {
@@ -58,7 +58,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
         // todo: think on getting results from EXEC
         final PyDebugValue value = myDebugProcess.evaluate(expression, !isExpression, doTrunc);
         if (value.isErrorOnEval()) {
-          callback.errorOccurred("{" + value.getType() + "}" + value.getValue());
+          callback.errorOccurred("{" + value.getType() + "}" + value.getValue()); //NON-NLS
         }
         else {
           callback.evaluated(value);

@@ -17,6 +17,8 @@
 package com.intellij.history.core.revisions;
 
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class Revision {
+  @NlsContexts.Label
   @Nullable
   public String getLabel() {
     return null;
@@ -40,6 +43,7 @@ public abstract class Revision {
     return null;
   }
 
+  @NlsContexts.Label
   @Nullable
   public String getChangeSetName() {
     return null;
@@ -58,4 +62,6 @@ public abstract class Revision {
   public List<Difference> getDifferencesWith(Revision right) {
     return Entry.getDifferencesBetween(findEntry(), right.findEntry(), right instanceof CurrentRevision);
   }
+
+  public abstract RootEntry getRoot();
 }

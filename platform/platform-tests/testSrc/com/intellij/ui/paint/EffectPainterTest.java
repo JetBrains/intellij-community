@@ -13,7 +13,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
-import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
+import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
 
 public final class EffectPainterTest {
   @ClassRule

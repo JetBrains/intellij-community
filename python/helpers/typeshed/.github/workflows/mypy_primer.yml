@@ -1,0 +1,70 @@
+name: Run mypy_primer
+
+on:
+  # Only run on PR, since we diff against master
+  pull_request:
+    paths:
+    - 'stdlib/**'
+    - 'stubs/**'
+    - '.github/workflows/mypy_primer.yml'
+    - '.github/workflows/mypy_primer_comment.yml'
+
+jobs:
+  mypy_primer:
+    name: Run
+    if: github.actor != 'pre-commit-ci[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        shard-index: [0, 1, 2, 3]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: typeshed_to_test
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: pip install git+https://github.com/hauntsaninja/mypy_primer.git
+      - name: Run mypy_primer
+        shell: bash
+        run: |
+          cd typeshed_to_test
+          MYPY_VERSION=$(grep mypy== requirements-tests.txt | cut -d = -f 3)
+          echo "new commit"
+          git rev-list --format=%s --max-count=1 $GITHUB_SHA
+          git checkout -b upstream_master origin/master
+          echo "base commit"
+          git rev-list --format=%s --max-count=1 upstream_master
+          echo ''
+          cd ..
+          # fail action if exit code isn't zero or one
+          (
+            mypy_primer \
+            --new v${MYPY_VERSION} --old v${MYPY_VERSION} \
+            --custom-typeshed-repo typeshed_to_test \
+            --new-typeshed $GITHUB_SHA --old-typeshed upstream_master \
+            --num-shards 4 --shard-index ${{ matrix.shard-index }} \
+            --debug \
+            --output concise \
+            | tee diff_${{ matrix.shard-index }}.txt
+          ) || [ $? -eq 1 ]
+      - name: Upload mypy_primer diff
+        uses: actions/upload-artifact@v3
+        with:
+          name: mypy_primer_diffs
+          path: diff_${{ matrix.shard-index }}.txt
+      - if: ${{ matrix.shard-index }} == 0
+        name: Save PR number
+        run: |
+          echo ${{ github.event.pull_request.number }} | tee pr_number.txt
+      - if: ${{ matrix.shard-index }} == 0
+        name: Upload PR number
+        uses: actions/upload-artifact@v3
+        with:
+          name: mypy_primer_diffs
+          path: pr_number.txt

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -23,9 +23,9 @@ import com.intellij.testIntegration.createTest.TestGenerator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -82,7 +82,7 @@ public class GroovyTestGenerator implements TestGenerator {
 
   @Override
   public String toString() {
-    return GroovyIntentionsBundle.message("intention.crete.test.groovy");
+    return GroovyBundle.message("language.groovy");
   }
 
   private static void addSuperClass(@NotNull GrTypeDefinition targetClass, @NotNull Project project, @Nullable String superClassName)
@@ -143,7 +143,7 @@ public class GroovyTestGenerator implements TestGenerator {
                                      Editor editor,
                                      @Nullable String name, Set<? super String> existingNames) {
     GroovyPsiElementFactory f = GroovyPsiElementFactory.getInstance(targetClass.getProject());
-    PsiMethod method = (PsiMethod)targetClass.add(f.createMethod("dummy", PsiType.VOID));
+    PsiMethod method = (PsiMethod)targetClass.add(f.createMethod("dummy", PsiTypes.voidType()));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true, existingNames);
   }

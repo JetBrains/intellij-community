@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -44,8 +44,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
     final PsiElement element = e.getParent();
-    if (element instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)element;
+    if (element instanceof XmlAttribute attribute) {
 
       CachedValue<PsiReference[]> cachedValue = attribute.getUserData(CACHED_XSLT_REFS);
       if (cachedValue == null) {
@@ -105,7 +104,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         }
       } else if (XsltSupport.isParam(attribute) && isInsideUnnamedTemplate(tag)) {
         final XsltParameter myParam = myXsltElementFactory.wrapElement(tag, XsltParameter.class);
-        psiReferences = new PsiReference[]{ new MySelfReference(attribute, myParam) };
+        psiReferences = new PsiReference[]{new MySelfReference(attribute, myParam)};
       } else if (XsltSupport.isVariableOrParamName(attribute) || XsltSupport.isTemplateName(attribute)) {
         final XsltElement myElement = myXsltElementFactory.wrapElement(tag, XsltElement.class);
         psiReferences = createReferencesWithPrefix(attribute, SelfReference.create(attribute, myElement));
@@ -115,8 +114,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       } else if (XsltSupport.isIncludeOrImportHref(attribute)) {
         final String href = attribute.getValue();
         final String resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(href, attribute.getProject());
-        //noinspection StringEquality
-        if (href == resourceLocation) {
+        if (href.equals(resourceLocation)) {
           // not a configured external resource
           if (!URLUtil.containsScheme(href)) {
             // a local file reference
@@ -160,7 +158,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       }
     }
 
-    private class MySelfReference extends SelfReference {
+    private static class MySelfReference extends SelfReference {
       private final XsltParameter myParam;
       private final XmlTag myTag;
 
@@ -188,9 +186,8 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         assert !super.isReferenceTo(element);
 
         if (element == myParam) return false;
-        if (!(element instanceof XsltParameter)) return false;
+        if (!(element instanceof XsltParameter param)) return false;
 
-        final XsltParameter param = ((XsltParameter)element);
         final String name = param.getName();
         if (name == null || !name.equals(myParam.getName())) return false;
 

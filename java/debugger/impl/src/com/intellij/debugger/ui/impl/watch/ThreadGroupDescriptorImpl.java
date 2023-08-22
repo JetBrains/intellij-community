@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -25,7 +11,7 @@ import com.intellij.debugger.ui.tree.ThreadGroupDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.sun.jdi.ObjectCollectedException;
 
-public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements ThreadGroupDescriptor{
+public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements ThreadGroupDescriptor {
   private final ThreadGroupReferenceProxyImpl myThreadGroup;
   private boolean myIsCurrent;
   private String myName = null;
@@ -69,21 +55,21 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
 
   @Override
   public void setContext(EvaluationContextImpl context) {
-    ThreadReferenceProxyImpl threadProxy = context != null? context.getSuspendContext().getThread() : null;
+    ThreadReferenceProxyImpl threadProxy = context != null ? context.getSuspendContext().getThread() : null;
     myIsCurrent = threadProxy != null && isDescendantGroup(threadProxy.threadGroupProxy());
     myIsExpandable = calcExpandable();
   }
 
   private boolean isDescendantGroup(ThreadGroupReferenceProxyImpl group) {
-    if(group == null) return false;
+    if (group == null) return false;
 
-    if(getThreadGroupReference() == group) return true;
+    if (getThreadGroupReference() == group) return true;
 
     return isDescendantGroup(group.parent());
   }
 
   private boolean calcExpandable() {
     ThreadGroupReferenceProxyImpl group = getThreadGroupReference();
-    return group.threads().size() > 0 || group.threadGroups().size() > 0;
+    return !group.threads().isEmpty() || !group.threadGroups().isEmpty();
   }
 }

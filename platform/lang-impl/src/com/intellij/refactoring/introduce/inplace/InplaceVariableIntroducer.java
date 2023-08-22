@@ -1,12 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -15,15 +13,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.MyLookupExpression;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -45,7 +41,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   public InplaceVariableIntroducer(PsiNamedElement elementToRename,
                                    Editor editor,
                                    final Project project,
-                                   String title, E[] occurrences,
+                                   @NlsContexts.Command String title, E[] occurrences,
                                    @Nullable E expr) {
     super(editor, elementToRename, project);
     myTitle = title;
@@ -129,10 +125,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     return false;
   }
 
-  @Override
-  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
-  }
-
+  @NlsContexts.Command 
   @Override
   protected String getCommandName() {
     return myTitle;
@@ -151,28 +144,31 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     }
   }
 
-
+  @Override
+  protected @Nullable PsiElement checkLocalScope() {
+    return PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+  }
 
   @Override
   protected MyLookupExpression createLookupExpression(PsiElement selectedElement) {
     return new MyIntroduceLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, shouldSelectAll(), myAdvertisementText);
   }
 
-  private static class MyIntroduceLookupExpression extends MyLookupExpression {
+  private static final class MyIntroduceLookupExpression extends MyLookupExpression {
     private final SmartPsiElementPointer<PsiNamedElement> myPointer;
 
     MyIntroduceLookupExpression(final String initialName,
                                        final LinkedHashSet<String> names,
                                        final PsiNamedElement elementToRename,
                                        final boolean shouldSelectAll,
-                                       final String advertisementText) {
+                                       final @NlsContexts.PopupAdvertisement String advertisementText) {
       super(initialName, names, elementToRename, elementToRename, shouldSelectAll, advertisementText);
       myPointer = SmartPointerManager.getInstance(elementToRename.getProject()).createSmartPsiElementPointer(elementToRename);
     }
 
     @Override
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      return createLookupItems(myName, context.getEditor(), getElement());
+      return createLookupItems(myName, context, getElement());
     }
 
     @Nullable
@@ -180,11 +176,9 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       return myPointer.getElement();
     }
 
-    private LookupElement @Nullable [] createLookupItems(String name, Editor editor, PsiNamedElement psiVariable) {
-      TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    private LookupElement @Nullable [] createLookupItems(String name, ExpressionContext context, PsiNamedElement psiVariable) {
       if (psiVariable != null) {
-        final TextResult insertedValue =
-          templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
+        final TextResult insertedValue = context.getVariableValue(PRIMARY_VARIABLE_NAME);
         if (insertedValue != null) {
           final String text = insertedValue.getText();
           if (!text.isEmpty() && !Comparing.strEqual(text, name)) {

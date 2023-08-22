@@ -3,7 +3,8 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
-import com.intellij.history.core.StreamUtil;
+import com.intellij.history.core.DataStreamUtil;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -14,10 +15,10 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class PutLabelChange extends Change {
-  @NotNull private final String myName;
+  @NotNull private final @NlsContexts.Label String myName;
   @NotNull private final String myProjectId;
 
-  public PutLabelChange(long id, @NotNull String name, @NotNull String projectId) {
+  public PutLabelChange(long id, @NotNull @NlsContexts.Label String name, @NotNull String projectId) {
     super(id);
     myName = name;
     myProjectId = projectId;
@@ -25,17 +26,18 @@ public class PutLabelChange extends Change {
 
   public PutLabelChange(DataInput in) throws IOException {
     super(in);
-    myName = StreamUtil.readString(in);
-    myProjectId = StreamUtil.readString(in);
+    myName = DataStreamUtil.readString(in); //NON-NLS
+    myProjectId = DataStreamUtil.readString(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    StreamUtil.writeString(out, myName);
-    StreamUtil.writeString(out, myProjectId);
+    DataStreamUtil.writeString(out, myName);
+    DataStreamUtil.writeString(out, myProjectId);
   }
 
+  @NlsContexts.Label
   @NotNull
   public String getName() {
     return myName;

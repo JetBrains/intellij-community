@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.closure;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +41,7 @@ import java.util.Set;
 public class EachToForIntention extends Intention {
 
   @NonNls public static final String OUTER = "Outer";
-  @NonNls public static final String HINT = "Replace with For-In";
+  @NonNls public static final String HINT = "Replace with for-in";
 
   @NotNull
   @Override
@@ -212,17 +212,15 @@ public class EachToForIntention extends Intention {
   private static class EachToForPredicate implements PsiElementPredicate {
     @Override
     public boolean satisfiedBy(@NotNull PsiElement element) {
-      if (element instanceof GrMethodCallExpression) {
-        final GrMethodCallExpression expression = (GrMethodCallExpression)element;
-//        final PsiElement parent = expression.getParent();
+      if (element instanceof GrMethodCallExpression expression) {
+        //        final PsiElement parent = expression.getParent();
 //        if (parent instanceof GrAssignmentExpression) return false;
 //        if (parent instanceof GrArgumentList) return false;
 //        if (parent instanceof GrReturnStatement) return false;
 //        if (!(parent instanceof GrCodeBlock || parent instanceof GrIfStatement|| parent instanceof GrCaseSection)) return false;
 
         final GrExpression invokedExpression = expression.getInvokedExpression();
-        if (invokedExpression instanceof GrReferenceExpression) {
-          GrReferenceExpression referenceExpression = (GrReferenceExpression)invokedExpression;
+        if (invokedExpression instanceof GrReferenceExpression referenceExpression) {
           if ("each".equals(referenceExpression.getReferenceName())) {
             final GrArgumentList argumentList = expression.getArgumentList();
             if (PsiImplUtil.hasExpressionArguments(argumentList)) return false;

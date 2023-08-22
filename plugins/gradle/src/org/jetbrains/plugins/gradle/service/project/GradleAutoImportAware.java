@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -12,13 +13,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -29,11 +30,9 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   private static final Logger LOG = Logger.getInstance(GradleAutoImportAware.class);
 
@@ -65,13 +64,13 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     for (ExternalProjectSettings setting : projectsSettings) {
       if(setting != null) {
         for (String path : setting.getModules()) {
-          rootPaths.put(new File(path).getAbsolutePath(), setting.getExternalProjectPath());
+          rootPaths.put(new File(path).getPath(), setting.getExternalProjectPath());
         }
       }
     }
 
     for (File f = file.getParentFile(); f != null; f = f.getParentFile()) {
-      String dirPath = f.getAbsolutePath();
+      String dirPath = f.getPath();
       if (rootPaths.containsKey(dirPath)) {
         return rootPaths.get(dirPath);
       }
@@ -102,52 +101,106 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   }
 
   @Override
-  public List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
-    final List<File> files = new SmartList<>();
-
-    // add global gradle.properties
-    String serviceDirectoryPath = GradleSettings.getInstance(project).getServiceDirectoryPath();
-    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
-    files.add(new File(serviceDirectoryPath != null ? serviceDirectoryPath : gradleUserHomeDir.getPath(), "gradle.properties"));
-    // add init script
-    files.add(new File(serviceDirectoryPath != null ? serviceDirectoryPath : gradleUserHomeDir.getPath(), "init.gradle"));
-    // TODO add init scripts from USER_HOME/.gradle/init.d/ directory
-
-    // add project-specific gradle.properties
-    GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath);
-    files.add(new File(projectSettings == null ? projectPath : projectSettings.getExternalProjectPath(), "gradle.properties"));
-
-    // add wrapper config file
-    if (projectSettings != null && projectSettings.getDistributionType() == DistributionType.DEFAULT_WRAPPED) {
-      files.add(new File(projectSettings.getExternalProjectPath(), "gradle/wrapper/gradle-wrapper.properties"));
+  public List<File> getAffectedExternalProjectFiles(@NotNull String externalProjectPath, @NotNull Project project) {
+    GradleSettings settings = GradleSettings.getInstance(project);
+    GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
+    if (projectSettings == null) {
+      return null;
     }
+    return GradleAutoReloadSettingsCollector.EP_NAME.getExtensionList().stream()
+      .flatMap(it -> it.collectSettingsFiles(project, projectSettings).stream())
+      .collect(Collectors.toList());
+  }
 
-    // add gradle scripts
-    Set<String> subProjectPaths = projectSettings != null && /*!projectSettings.getModules().isEmpty() &&*/
-                                  FileUtil.pathsEqual(projectSettings.getExternalProjectPath(), projectPath)
-                                  ? projectSettings.getModules() : ContainerUtil.set(projectPath);
-    for (String path : subProjectPaths) {
-      ProgressManager.checkCanceled();
+  public static class GradlePropertiesCollector implements GradleAutoReloadSettingsCollector {
 
-      try {
-        Files.walkFileTree(Paths.get(path), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<Path>() {
-          @Override
-          public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
-            String fileName = path.getFileName().toString();
-            if (fileName.endsWith('.' + GradleConstants.EXTENSION) ||
-                fileName.endsWith('.' + GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) {
-              File file = path.toFile();
-              if (file.isFile()) files.add(file);
-            }
-            return FileVisitResult.CONTINUE;
+    @NotNull
+    @Override
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+      String gradleUserHome = ObjectUtils.chooseNotNull(
+        GradleSettings.getInstance(project).getServiceDirectoryPath(),
+        new BuildLayoutParameters().getGradleUserHomeDir().getPath()
+      );
+      String externalProjectPath = projectSettings.getExternalProjectPath();
+
+      List<File> files = new SmartList<>();
+      files.add(new File(gradleUserHome, "gradle.properties"));
+      files.add(new File(gradleUserHome, "init.gradle"));
+      files.add(new File(externalProjectPath, "gradle.properties"));
+      return files;
+    }
+  }
+
+  public static class VersionCatalogCollector implements GradleAutoReloadSettingsCollector {
+
+    @NotNull
+    @Override
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+      String externalProjectPath = projectSettings.getExternalProjectPath();
+
+      List<File> files = new SmartList<>();
+      var node = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, externalProjectPath);
+      if (node != null) {
+        var versionCatalog = ExternalSystemApiUtil.find(node, BuildScriptClasspathData.VERSION_CATALOGS);
+        if (versionCatalog != null) {
+          for (String catalogFile : versionCatalog.getData().getCatalogsLocations().values()) {
+            files.add(new File(catalogFile));
           }
-        });
+        }
       }
-      catch (IOException | InvalidPathException e) {
-        LOG.debug(e);
-      }
+      return files;
     }
+  }
 
-    return files;
+  public static class WrapperConfigCollector implements GradleAutoReloadSettingsCollector {
+    @NotNull
+    @Override
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+      String externalProjectPath = projectSettings.getExternalProjectPath();
+
+      List<File> files = new SmartList<>();
+      if (projectSettings.getDistributionType() == DistributionType.DEFAULT_WRAPPED) {
+        files.add(new File(externalProjectPath, "gradle/wrapper/gradle-wrapper.properties"));
+      }
+      return files;
+    }
+  }
+
+  public static class GradleScriptCollector implements GradleAutoReloadSettingsCollector {
+
+    @NotNull
+    @Override
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+      List<File> files = new SmartList<>();
+
+      for (String modulePath : projectSettings.getModules()) {
+        ProgressManager.checkCanceled();
+
+        try {
+          Files.walkFileTree(Paths.get(modulePath), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
+              String fileName = path.getFileName().toString();
+              if (fileName.endsWith('.' + GradleConstants.EXTENSION) ||
+                  fileName.endsWith('.' + GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) {
+                File file = path.toFile();
+                if (file.isFile()) files.add(file);
+              }
+              return FileVisitResult.CONTINUE;
+            }
+          });
+        }
+        catch (IOException | InvalidPathException e) {
+          LOG.debug(e);
+        }
+      }
+
+      return files;
+    }
+  }
+
+  @Override
+  public boolean isApplicable(@Nullable ProjectResolverPolicy resolverPolicy) {
+    return resolverPolicy == null || !resolverPolicy.isPartialDataResolveAllowed();
   }
 }

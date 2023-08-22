@@ -25,11 +25,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInfe
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall;
 
-public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
-
+public final class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
   @Nullable
   @Override
   protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {
@@ -77,7 +75,8 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
       if (candidate != null) {
         ArgumentMapping<PsiCallParameter> mapping = candidate.getArgumentMapping();
         if (mapping != null) {
-          param = doIfNotNull(mapping.targetParameter(new ExpressionArgument(expression)), PsiCallParameter::getPsi);
+          PsiCallParameter obj = mapping.targetParameter(new ExpressionArgument(expression));
+          param = obj == null ? null : obj.getPsi();
         }
       }
     } else {
@@ -125,8 +124,8 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   @NotNull
-  protected static PsiSubstitutor computeAnnotationBasedSubstitutor(@NotNull GrCall call,
-                                                                    @NotNull GroovyInferenceSessionBuilder builder) {
+  private static PsiSubstitutor computeAnnotationBasedSubstitutor(@NotNull GrCall call,
+                                                                  @NotNull GroovyInferenceSessionBuilder builder) {
     return builder.skipClosureIn(call).resolveMode(false).build().inferSubst();
   }
 

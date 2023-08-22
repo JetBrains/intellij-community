@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UI;
@@ -39,10 +39,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Pavel.Dolgov
- */
-public class CreateClassInPackageInModuleFix implements IntentionAction {
+public final class CreateClassInPackageInModuleFix implements IntentionAction {
   public static final Key<Boolean> IS_INTERFACE = Key.create("CREATE_CLASS_IN_PACKAGE_IS_INTERFACE");
   public static final Key<PsiDirectory> ROOT_DIR = Key.create("CREATE_CLASS_IN_PACKAGE_ROOT_DIR");
   public static final Key<String> NAME = Key.create("CREATE_CLASS_IN_PACKAGE_NAME");
@@ -72,6 +69,11 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return ModuleManager.getInstance(project).findModuleByName(myModuleName) != null;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(JavaBundle.message("intention.text.create.a.class.in.package.preview", myPackageName));
   }
 
   @Override
@@ -137,9 +139,9 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     private final JBTextField myNameTextField = new JBTextField();
     private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
-    @Nullable private final Project myProject;
+    @NotNull private final Project myProject;
 
-    CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
+    CreateClassInPackageDialog(@NotNull Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
       setTitle(JavaBundle.message("dialog.title.create.class.in.package"));
@@ -148,7 +150,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(rootDirs));
 
       for (CreateClassKind kind : CreateClassKind.values()) {
-        myKindCombo.addItem(CommonRefactoringUtil.capitalize(kind.getDescription()), kind.getKindIcon(), kind.name());
+        myKindCombo.addItem(StringUtil.capitalize(kind.getDescription()), kind.getKindIcon(), kind.name());
       }
 
       init();

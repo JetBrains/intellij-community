@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -11,10 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class Property<T extends RadComponent, V> implements IProperty {
   public static final Property[] EMPTY_ARRAY=new Property[]{};
 
@@ -39,7 +36,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
    */
   @Override
   @NotNull
-  public final String getName() {
+  public final @NlsSafe String getName() {
     return myName;
   }
 
@@ -117,7 +114,6 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
 
   /**
    * @return child properties.
-   * @param component
    */
   public Property @NotNull [] getChildren(final RadComponent component) {
     return EMPTY_ARRAY;

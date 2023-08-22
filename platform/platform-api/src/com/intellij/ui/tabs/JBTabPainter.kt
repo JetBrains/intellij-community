@@ -16,7 +16,7 @@ interface JBTabPainter {
     @JvmStatic
     val DEFAULT: JBTabPainter = JBDefaultTabPainter()
     @JvmStatic
-    val EDITOR = JBEditorTabPainter()
+    val EDITOR: JBEditorTabPainter = JBEditorTabPainter()
     @JvmStatic
     val TOOL_WINDOW: JBTabPainter = ToolWindowTabPainter()
     @JvmStatic
@@ -27,13 +27,18 @@ interface JBTabPainter {
 
   fun getBackgroundColor(): Color
 
+  /** Color that should be painted on top of [TabTheme.background] */
+  fun getCustomBackground(tabColor: Color?, selected: Boolean, active: Boolean, hovered: Boolean): Color? {
+    return tabColor
+  }
+
   fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point)
 
   fun fillBackground(g: Graphics2D, rect: Rectangle)
 
   fun paintTab(position: JBTabsPosition,
                g: Graphics2D,
-               bounds: Rectangle,
+               rect: Rectangle,
                borderThickness: Int,
                tabColor: Color?,
                active: Boolean,

@@ -5,10 +5,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class FormalArgTypePredicate extends ExprTypePredicate {
 
-  public FormalArgTypePredicate(String type,
+  public FormalArgTypePredicate(@NotNull String type,
                                 String baseName,
                                 boolean withinHierarchy,
                                 boolean caseSensitiveMatch,
@@ -18,7 +19,7 @@ public class FormalArgTypePredicate extends ExprTypePredicate {
   }
 
   @Override
-  protected PsiType evalType(PsiExpression match, MatchContext context) {
+  protected PsiType evalType(@NotNull PsiExpression match, @NotNull MatchContext context) {
     return ExpectedTypeUtils.findExpectedType(match, true, true);
   }
 }

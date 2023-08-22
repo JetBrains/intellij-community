@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -9,6 +9,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiDirectory;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+@Deprecated(forRemoval = true)
 public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<AbstractTreeNode<?>> {
   private final AbstractTreeNode<?> myElement;
   public static final FavoriteTreeNodeDescriptor[] EMPTY_ARRAY = new FavoriteTreeNodeDescriptor[0];
@@ -37,11 +39,13 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
   }
 
   @Nullable
+  @NlsSafe
   public String getLocation() {
     return getLocation(myElement, myProject);
   }
 
   @Nullable
+  @NlsSafe
   public static String getLocation(@NotNull AbstractTreeNode<?> element, @NotNull Project project) {
     Object nodeElement = element.getValue();
     if (nodeElement instanceof SmartPsiElementPointer) {
@@ -51,8 +55,7 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
       if (nodeElement instanceof PsiDirectory) {
         return VfsUtilCore.getRelativeLocation(((PsiDirectory)nodeElement).getVirtualFile(), project.getBaseDir());
       }
-      if (nodeElement instanceof PsiFile) {
-        final PsiFile containingFile = (PsiFile)nodeElement;
+      if (nodeElement instanceof PsiFile containingFile) {
         return VfsUtilCore.getRelativeLocation(containingFile.getVirtualFile(), project.getBaseDir());
       }
     }
@@ -60,8 +63,7 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
     if (nodeElement instanceof LibraryGroupElement) {
       return ((LibraryGroupElement)nodeElement).getModule().getName();
     }
-    if (nodeElement instanceof NamedLibraryElement) {
-      final NamedLibraryElement namedLibraryElement = ((NamedLibraryElement)nodeElement);
+    if (nodeElement instanceof NamedLibraryElement namedLibraryElement) {
       final Module module = namedLibraryElement.getModule();
       return (module != null ? module.getName() : "") + ":" + namedLibraryElement.getOrderEntry().getPresentableName();
     }
@@ -89,19 +91,6 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
 
   public int hashCode() {
     return myElement.hashCode();
-  }
-
-  @Nullable
-  public FavoriteTreeNodeDescriptor getFavoritesRoot() {
-    FavoriteTreeNodeDescriptor descriptor = this;
-    while (descriptor != null && descriptor.getParentDescriptor() instanceof FavoriteTreeNodeDescriptor) {
-      FavoriteTreeNodeDescriptor parent = (FavoriteTreeNodeDescriptor)descriptor.getParentDescriptor();
-      if (parent != null && parent.getParentDescriptor() == null) {
-        return descriptor;
-      }
-      descriptor = parent;
-    }
-    return descriptor;
   }
 
   @Override

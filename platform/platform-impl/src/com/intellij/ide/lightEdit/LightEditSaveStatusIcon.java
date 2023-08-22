@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ColorIcon;
@@ -11,8 +13,10 @@ import javax.swing.*;
 import java.awt.*;
 
 @SuppressWarnings("SameParameterValue")
-public class LightEditSaveStatusIcon extends ColorIcon {
-  private final static int BASE_ICON_SIZE = 7;
+public final class LightEditSaveStatusIcon extends ColorIcon {
+  private static final int BASE_ICON_SIZE = 7;
+
+  @SuppressWarnings("UseJBColor") private static final Color DEFAULT_COLOR = new Color(0x4083c9);
 
   private LightEditSaveStatusIcon(@NotNull Color color) {
     super(BASE_ICON_SIZE, color);
@@ -30,8 +34,12 @@ public class LightEditSaveStatusIcon extends ColorIcon {
     config.restore();
   }
 
-  static Icon create(@NotNull Color color) {
-    return JBUIScale.scaleIcon(new LightEditSaveStatusIcon(color));
+  @Override
+  public Color getIconColor() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.MODIFIED_TAB_ICON_COLOR);
   }
 
+  static Icon create() {
+    return JBUIScale.scaleIcon(new LightEditSaveStatusIcon(DEFAULT_COLOR));
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.dvcs.MultiRootMessage;
@@ -7,24 +7,22 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.fetch.GitFetchSupport;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +34,7 @@ import java.util.regex.Pattern;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
+import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 
 /**
@@ -68,10 +67,10 @@ public class GitFetcher {
 
   /**
    * Invokes 'git fetch'.
-   * @return true if fetch was successful, false in the case of error.
+   *
    * @deprecated Use {@link GitFetchSupport}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public GitFetchResult fetch(@NotNull GitRepository repository) {
     // TODO need to have a fair compound result here
     GitFetchResult fetchResult = myFetchAll ? fetchAll(repository) : fetchCurrentRemote(repository);
@@ -83,7 +82,7 @@ public class GitFetcher {
   /**
    * @deprecated Use {@link GitFetchSupport}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public GitFetchResult fetch(@NotNull VirtualFile root, @NotNull String remoteName, @Nullable String branch) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
@@ -178,7 +177,7 @@ public class GitFetcher {
   private static GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @Nullable String branch) {
     Git git = Git.getInstance();
     String[] additionalParams = branch != null ?
-                                new String[]{ getFetchSpecForBranch(branch, remote.getName()) } :
+                                new String[]{getFetchSpecForBranch(branch, remote.getName())} :
                                 ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     GitFetchPruneDetector pruneDetector = new GitFetchPruneDetector();
@@ -220,25 +219,32 @@ public class GitFetcher {
 
   public static void displayFetchResult(@NotNull Project project,
                                         @NotNull GitFetchResult result,
-                                        @Nullable String errorNotificationTitle, @NotNull Collection<? extends Exception> errors) {
+                                        @Nullable @NlsContexts.NotificationTitle String errorNotificationTitle,
+                                        @NotNull Collection<? extends Exception> errors) {
+    VcsNotifier notifier = VcsNotifier.getInstance(project);
     if (result.isSuccess()) {
-      VcsNotifier.getInstance(project).notifySuccess("Fetched successfully" + result.getAdditionalInfo());
-    } else if (result.isCancelled()) {
-      VcsNotifier.getInstance(project).notifyMinorWarning("", "Fetch cancelled by user" + result.getAdditionalInfo());
-    } else if (result.isNotAuthorized()) {
-      String title;
-      String description;
+      notifier.notifySuccess(FETCH_SUCCESS, "",
+                             GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
+    }
+    else if (result.isCancelled()) {
+      notifier.notifyMinorWarning(GitNotificationIdsHolder.FETCH_CANCELLED,
+                                  GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
+    }
+    else if (result.isNotAuthorized()) {
       if (errorNotificationTitle != null) {
-        title = errorNotificationTitle;
-        description = "Fetch failed: couldn't authorize";
-      } else {
-        title = "Fetch failed";
-        description = "Couldn't authorize";
+        notifier.notifyError(FETCH_ERROR,
+                             errorNotificationTitle,
+                             GitBundle.message("notification.content.fetch.failed.couldn.t.authorize") + result.getAdditionalInfo());
       }
-      description += result.getAdditionalInfo();
-      GitUIUtil.notifyMessage(project, title, description, true, null);
-    } else {
-      GitUIUtil.notifyMessage(project, "Fetch failed", result.getAdditionalInfo(), true, errors);
+      else {
+        notifier.notifyError(FETCH_ERROR,
+                             GitBundle.message("notification.title.fetch.failed"),
+                             GitBundle.message("notification.content.couldn.t.authorize") + result.getAdditionalInfo());
+      }
+    }
+    else {
+      VcsNotifier.getInstance(project)
+        .notifyError(FETCH_ERROR, GitBundle.message("notification.title.fetch.failed"), result.getAdditionalInfo(), errors);
     }
   }
 
@@ -246,16 +252,18 @@ public class GitFetcher {
    * Fetches all specified roots.
    * Once a root has failed, stops and displays the notification.
    * If needed, displays the successful notification at the end.
-   * @param roots                   roots to fetch.
-   * @param errorNotificationTitle  if specified, this notification title will be used instead of the standard "Fetch failed".
-   *                                Use this when fetch is a part of a compound process.
-   * @param notifySuccess           if set to {@code true} successful notification will be displayed.
+   *
+   * @param roots                  roots to fetch.
+   * @param errorNotificationTitle if specified, this notification title will be used instead of the standard "Fetch failed".
+   *                               Use this when fetch is a part of a compound process.
+   * @param notifySuccess          if set to {@code true} successful notification will be displayed.
    * @return true if all fetches were successful, false if at least one fetch failed.
    * @deprecated Use {@link GitFetchSupport}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean fetchRootsAndNotify(@NotNull Collection<? extends GitRepository> roots,
-                                     @Nullable String errorNotificationTitle, boolean notifySuccess) {
+                                     @Nullable @NlsContexts.NotificationTitle String errorNotificationTitle,
+                                     boolean notifySuccess) {
     MultiRootMessage additionalInfo = new MultiRootMessage(myProject, GitUtil.getRootsFromRepositories(roots), false, true);
     for (GitRepository repository : roots) {
       LOG.info("fetching " + repository);
@@ -272,11 +280,12 @@ public class GitFetcher {
       }
     }
     if (notifySuccess) {
-      VcsNotifier.getInstance(myProject).notifySuccess("Fetched successfully");
+      VcsNotifier.getInstance(myProject).notifySuccess(FETCH_SUCCESS, "", GitBundle.message("notification.content.fetched.successfully"));
     }
 
     if (!additionalInfo.asString().isEmpty()) {
-      VcsNotifier.getInstance(myProject).notifyMinorInfo("Fetch details", additionalInfo.asString());
+      VcsNotifier.getInstance(myProject)
+        .notifyMinorInfo(FETCH_DETAILS, GitBundle.message("notification.title.fetch.details"), additionalInfo.asString());
     }
 
     return true;

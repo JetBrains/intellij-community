@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -7,14 +7,12 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -67,7 +65,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     });
   }
 
-  private void doSelect(final boolean toUseNormalSelection, @NotNull final Editor editor,
+  private void doSelect(final boolean toUseNormalSelection, final @NotNull Editor editor,
                         final boolean toSelectLine,
                         final TextRange textRange) {
     int startOffset = textRange.getStartOffset();
@@ -86,25 +84,25 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
       return;
     }
 
-    TextAttributes selectionAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
     releaseAll();
 
     if (toSelectLine){
       DocumentEx doc = (DocumentEx) editor.getDocument();
       int lineNumber = doc.getLineNumber(startOffset);
       if (lineNumber >= 0 && lineNumber < doc.getLineCount()){
-        mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(doc.getLineStartOffset(lineNumber),
+        mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                           doc.getLineStartOffset(lineNumber),
                                                                            doc.getLineEndOffset(lineNumber) + doc.getLineSeparatorLength(lineNumber),
                                                                            HighlighterLayer.LAST + 1,
-                                                                           selectionAttributes, HighlighterTargetArea.EXACT_RANGE);
+                                                                           HighlighterTargetArea.EXACT_RANGE);
       }
     }
     else{
-      mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(startOffset,
+      mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                         startOffset,
                                                                          endOffset,
                                                                          HighlighterLayer.LAST + 1,
-                                                                         selectionAttributes, HighlighterTargetArea.EXACT_RANGE);
+                                                                         HighlighterTargetArea.EXACT_RANGE);
     }
     myEditor = editor;
     myEditor.getContentComponent().addFocusListener(this);
@@ -135,8 +133,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     }
   }
 
-  @Nullable
-  private Editor openEditor(VirtualFile file, int textOffset){
+  private @Nullable Editor openEditor(VirtualFile file, int textOffset){
     if (file == null || !file.isValid()){
       return null;
     }

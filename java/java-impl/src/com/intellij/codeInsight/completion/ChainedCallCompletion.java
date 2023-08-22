@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -17,11 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
-/**
- * @author peter
- */
-class ChainedCallCompletion {
-  private static final PsiMethodPattern OBJECT_METHOD_PATTERN = psiMethod().withName(
+final class ChainedCallCompletion {
+  static final PsiMethodPattern OBJECT_METHOD_PATTERN = psiMethod().withName(
     StandardPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
     definedInClass(CommonClassNames.JAVA_LANG_OBJECT);
 
@@ -49,7 +46,7 @@ class ChainedCallCompletion {
     }
 
     final ElementFilter filter = ReferenceExpressionCompletionContributor.getReferenceFilter(place, true);
-    for (final LookupElement item : ReferenceExpressionCompletionContributor.completeFinalReference(place, mockRef, filter, parameters)) {
+    for (LookupElement item : ReferenceExpressionCompletionContributor.completeFinalReference(place, mockRef, filter, expectedType, parameters.getParameters())) {
       if (shouldChain(place, qualifierType, expectedType, item)) {
         result.consume(new JavaChainLookupElement(qualifierItem, item) {
           @Override
@@ -68,8 +65,7 @@ class ChainedCallCompletion {
       return false;
     }
 
-    if (object instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)object;
+    if (object instanceof PsiMethod method) {
       if (psiMethod().withName("toArray").withParameterCount(1)
         .definedInClass(CommonClassNames.JAVA_UTIL_COLLECTION).accepts(method)) {
         return false;
@@ -80,11 +76,9 @@ class ChainedCallCompletion {
       }
 
       final PsiType type = method.getReturnType();
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      if (type instanceof PsiClassType classType) {
         final PsiClass psiClass = classType.resolve();
-        if (psiClass instanceof PsiTypeParameter && method.getTypeParameterList() == psiClass.getParent()) {
-          final PsiTypeParameter typeParameter = (PsiTypeParameter)psiClass;
+        if (psiClass instanceof PsiTypeParameter typeParameter && method.getTypeParameterList() == psiClass.getParent()) {
           if (typeParameter.getExtendsListTypes().length == 0) return false;
           if (!expectedType.isAssignableFrom(TypeConversionUtil.typeParameterErasure(typeParameter))) return false;
         }

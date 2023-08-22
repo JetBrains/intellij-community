@@ -15,16 +15,23 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 class ConfigureAssociationsAction extends AnAction {
     ConfigureAssociationsAction() {
-        super("Configure...");
+        super(XPathBundle.message("action.configure.associations.text"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

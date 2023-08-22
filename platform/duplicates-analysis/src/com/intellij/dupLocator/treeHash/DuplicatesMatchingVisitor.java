@@ -15,15 +15,13 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Eugene.Kudelevsky
- */
-public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
+public final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   private final NodeSpecificHasherBase myNodeSpecificHasher;
   private final NodeFilter myNodeFilter;
   private final int myDiscardCost;
@@ -147,8 +145,8 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return element2.getFirstChild() == null && element2.getTextLength() == 0;
     }
 
-    return matchSequentially(new FilteringNodeIterator(new SiblingNodeIterator(element1.getFirstChild()), getNodeFilter()),
-                             new FilteringNodeIterator(new SiblingNodeIterator(element2.getFirstChild()), getNodeFilter()));
+    return matchSequentially(new FilteringNodeIterator(SiblingNodeIterator.create(element1.getFirstChild()), getNodeFilter()),
+                             new FilteringNodeIterator(SiblingNodeIterator.create(element2.getFirstChild()), getNodeFilter()));
   }
 
   @Override
@@ -176,27 +174,19 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return false;
     }
 
-    final TIntObjectHashMap<List<PsiElement>> hash2element = new TIntObjectHashMap<>(elements1.size());
-
+    Int2ObjectMap<List<PsiElement>> hashToElement = new Int2ObjectOpenHashMap<>(elements1.size());
     for (PsiElement element : elements1) {
-      final TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
+      TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
       if (result != null) {
-        final int hash = result.getHash();
-
-        List<PsiElement> list = hash2element.get(hash);
-        if (list == null) {
-          list = new ArrayList<>();
-          hash2element.put(hash, list);
-        }
-        list.add(element);
+        hashToElement.computeIfAbsent(result.getHash(), __ -> new ArrayList<>()).add(element);
       }
     }
 
     for (PsiElement element : elements2) {
-      final TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
+      TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
       if (result != null) {
-        final int hash = result.getHash();
-        final List<PsiElement> list = hash2element.get(hash);
+        int hash = result.getHash();
+        List<PsiElement> list = hashToElement.get(hash);
         if (list == null) {
           return false;
         }
@@ -214,12 +204,12 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
         }
 
         if (list.size() == 0) {
-          hash2element.remove(hash);
+          hashToElement.remove(hash);
         }
       }
     }
 
-    return hash2element.size() == 0;
+    return hashToElement.size() == 0;
   }
 
   @NotNull

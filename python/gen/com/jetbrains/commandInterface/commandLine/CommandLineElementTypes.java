@@ -28,7 +28,7 @@ public interface CommandLineElementTypes {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-       if (type == ARGUMENT) {
+      if (type == ARGUMENT) {
         return new CommandLineArgumentImpl(node);
       }
       else if (type == COMMAND) {

@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.dvcs.ui.RepositoryComboboxListCellRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
@@ -40,7 +27,7 @@ import java.util.Map;
  * This dialog is shown when user tries to delete a local branch, which is not fully merged to the current branch.
  * It shows the list of commits not merged to the current branch and the list of branches, which the given branch is merged to.
  */
-public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
+public final class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
 
   @NotNull private final Map<GitRepository, List<GitCommit>> myCommits;
   @NotNull private final GitCommitListWithDiffPanel myCommitListWithDiffPanel;
@@ -97,6 +84,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   }
 
   @NotNull
+  @NlsContexts.Label
   private String makeDescription(@NotNull GitRepository repository) {
     String baseBranch = myBaseBranches.get(repository);
     String description;
@@ -126,7 +114,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     });
 
     JPanel repoSelectorPanel = new JPanel(new BorderLayout());
-    JBLabel label = new JBLabel(GitBundle.message("branch.not.fully.merged.dialog.repository.label"));
+    JBLabel label = new JBLabel(GitBundle.message("branch.not.fully.merged.dialog.repository.label") + " ");
     label.setLabelFor(repoSelectorPanel);
     repoSelectorPanel.add(label, BorderLayout.WEST);
     repoSelectorPanel.add(repositorySelector);

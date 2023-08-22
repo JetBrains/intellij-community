@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.compact.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
 
-public class PatternParsing extends DeclarationParsing {
-
-  protected static final Map<IElementType, IElementType> TOKEN_MAP =
-    ContainerUtil.newIdentityTroveMap();
+public final class PatternParsing extends DeclarationParsing {
+  private static final Map<IElementType, IElementType> TOKEN_MAP = new IdentityHashMap<>();
 
   static {
     TOKEN_MAP.put(COMMA, RncElementTypes.SEQUENCE);
@@ -64,7 +62,7 @@ public class PatternParsing extends DeclarationParsing {
         do {
           advance();
           if (!parseQuantifiedPattern()) {
-            error("Pattern expected");
+            error(RelaxngBundle.message("relaxng.parse.error.pattern-expected"));
           }
         } while (currentToken() == t);
         marker.done(TOKEN_MAP.get(t));
@@ -95,7 +93,7 @@ public class PatternParsing extends DeclarationParsing {
     final PsiBuilder.Marker marker = myBuilder.mark();
     if (matches(ATTR_OR_ELEMENT)) {
       if (!myNameClassParsing.parseNameClass()) {
-        error("Name class expected");
+        error(RelaxngBundle.message("relaxng.parse.error.name-class-expected"));
         marker.drop();
         return false;
       }
@@ -118,16 +116,16 @@ public class PatternParsing extends DeclarationParsing {
     } else if (matches(KEYWORD_EMPTY)) {
       marker.done(RncElementTypes.EMPTY_PATTERN);
     } else if (matches(KEYWORD_PARENT)) {
-      match(IDENTIFIERS, "Identifier expected");
+      match(IDENTIFIERS, RelaxngBundle.message("relaxng.parse.error.identifier-expected"));
       marker.done(RncElementTypes.PARENT_REF);
     } else if (matches(KEYWORD_GRAMMAR)) {
       parseBracedGrammarContents();
       marker.done(RncElementTypes.GRAMMAR_PATTERN);
     } else if (matches(LPAREN)) {
       if (!parsePattern()) {
-        error("Pattern expected");
+        error(RelaxngBundle.message("relaxng.parse.error.pattern-expected"));
       }
-      match(RPAREN, "')' expected");
+      match(RPAREN, RelaxngBundle.message("relaxng.parse.error.rparen-expected"));
       marker.done(RncElementTypes.GROUP_PATTERN);
     } else if (matches(IDENTIFIERS)) {
       marker.done(RncElementTypes.REF_PATTERN);
@@ -154,19 +152,19 @@ public class PatternParsing extends DeclarationParsing {
       parseParams();
       if (matches(MINUS)) {
         if (!parsePattern()) {
-          error("Pattern expected");
+          error(RelaxngBundle.message("relaxng.parse.error.pattern-expected"));
         }
       }
-      match(RBRACE, "'}' expected");
+      match(RBRACE, RelaxngBundle.message("relaxng.parse.error.rbrace-expected"));
     }
   }
 
   private void parseBracedPattern() {
-    match(LBRACE, "'{' expected");
+    match(LBRACE, RelaxngBundle.message("relaxng.parse.error.lbrace-expected"));
     if (!parsePattern()) {
-      error("Pattern expected");
+      error(RelaxngBundle.message("relaxng.parse.error.pattern-expected"));
     }
-    match(RBRACE, "'}' expected");
+    match(RBRACE, RelaxngBundle.message("relaxng.parse.error.rbrace-expected"));
   }
 
   private void parseParams() {
@@ -174,9 +172,9 @@ public class PatternParsing extends DeclarationParsing {
     if (t != RBRACE) {
       do {
         final PsiBuilder.Marker marker = myBuilder.mark();
-        match(IDENTIFIER_OR_KEYWORD, "Identifier expected");
-        match(EQ, "'=' expected");
-        match(LITERAL, "Literal expected");
+        match(IDENTIFIER_OR_KEYWORD, RelaxngBundle.message("relaxng.parse.error.identifier-expected"));
+        match(EQ, RelaxngBundle.message("relaxng.parse.error.equals-expected"));
+        match(LITERAL, RelaxngBundle.message("relaxng.parse.error.literal-expected"));
         marker.done(RncElementTypes.PARAM);
       } while (IDENTIFIER_OR_KEYWORD.contains(currentToken()));
     }

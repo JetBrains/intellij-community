@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.jetbrains.python.documentation.docstrings.EpydocString;
@@ -25,9 +11,7 @@ import java.util.List;
 import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 
-/**
- * @author yole
- */
+
 public class EpydocStringTest extends TestCase {
   public void testTagValue() {
     EpydocString docString = createEpydocDocString("@rtype: C{str}");
@@ -65,24 +49,26 @@ public class EpydocStringTest extends TestCase {
   }
 
   public void testMultipleTags() {
-    EpydocString docString = createEpydocDocString("    Run the given function wrapped with seteuid/setegid calls.\n" +
-                                                   "\n" +
-                                                   "    This will try to minimize the number of seteuid/setegid calls, comparing\n" +
-                                                   "    current and wanted permissions\n" +
-                                                   "\n" +
-                                                   "    @param euid: effective UID used to call the function.\n" +
-                                                   "    @type  euid: C{int}\n" +
-                                                   "\n" +
-                                                   "    @param egid: effective GID used to call the function.\n" +
-                                                   "    @type  egid: C{int}\n" +
-                                                   "\n" +
-                                                   "    @param function: the function run with the specific permission.\n" +
-                                                   "    @type  function: any callable\n" +
-                                                   "\n" +
-                                                   "    @param *args: arguments passed to function\n" +
-                                                   "    @param **kwargs: keyword arguments passed to C{function}\n" +
-                                                   "    \n" +
-                                                   "    @return: the return value of the function");
+    EpydocString docString = createEpydocDocString("""
+                                                         Run the given function wrapped with seteuid/setegid calls.
+
+                                                         This will try to minimize the number of seteuid/setegid calls, comparing
+                                                         current and wanted permissions
+
+                                                         @param euid: effective UID used to call the function.
+                                                         @type  euid: C{int}
+
+                                                         @param egid: effective GID used to call the function.
+                                                         @type  egid: C{int}
+
+                                                         @param function: the function run with the specific permission.
+                                                         @type  function: any callable
+
+                                                         @param *args: arguments passed to function
+                                                         @param **kwargs: keyword arguments passed to C{function}
+                                                        \s
+                                                         @return: the return value of the function\
+                                                     """);
 
     final List<String> params = docString.getParameters();
     assertOrderedEquals(params, "euid", "egid", "function", "*args", "**kwargs");
@@ -133,19 +119,20 @@ public class EpydocStringTest extends TestCase {
   }
 
   public void testFieldAliases() {
-    final EpydocString docstring = createEpydocDocString("@param p1: p1 description\n" +
-                                                         "@parameter p2: p2 description\n" +
-                                                         "@arg p3: p3 description\n" +
-                                                         "@argument p4: p4 description\n" +
-                                                         "\n" +
-                                                         "@kwarg key1: key1 description\n" +
-                                                         "@keyword key2: key2 description\n" +
-                                                         "@kwparam key3: key3 description\n" +
-                                                         "\n" +
-                                                         "@raises Exc1: Exc1 description  \n" +
-                                                         "@raise Exc2: Exc2 description \n" +
-                                                         "@except Exc3: Exc3 description \n" +
-                                                         "@exception Exc4: Exc4 description ");
+    final EpydocString docstring = createEpydocDocString("""
+                                                           @param p1: p1 description
+                                                           @parameter p2: p2 description
+                                                           @arg p3: p3 description
+                                                           @argument p4: p4 description
+
+                                                           @kwarg key1: key1 description
+                                                           @keyword key2: key2 description
+                                                           @kwparam key3: key3 description
+
+                                                           @raises Exc1: Exc1 description \s
+                                                           @raise Exc2: Exc2 description\s
+                                                           @except Exc3: Exc3 description\s
+                                                           @exception Exc4: Exc4 description\s""");
 
     assertSameElements(docstring.getParameters(), "p1", "p2", "p3", "p4");
     assertEquals("p1 description", docstring.getParamDescription("p1"));

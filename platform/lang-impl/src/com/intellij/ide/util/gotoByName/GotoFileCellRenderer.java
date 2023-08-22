@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Iconable;
@@ -77,10 +77,14 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
 
   @Nullable
   public static VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     VirtualFile root = index.getContentRootForFile(virtualFile);
     if (root == null) root = index.getClassRootForFile(virtualFile);
     if (root == null) root = index.getSourceRootForFile(virtualFile);
+    if (root == null || !root.isDirectory()) {
+      root = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile);
+    }
+
     return root;
   }
 
@@ -103,9 +107,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
                                                              JList list,
                                                              Object value,
                                                              TextAttributes attributes) {
-    if (!(value instanceof NavigationItem)) return false;
-
-    NavigationItem item = (NavigationItem)value;
+    if (!(value instanceof NavigationItem item)) return false;
 
     SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
@@ -121,16 +123,6 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
       renderer.append(locationString, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
     }
     return true;
-  }
-
-  @Override
-  protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-    final DefaultListCellRenderer rightRenderer = super.getRightCellRenderer(value);
-    if (rightRenderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
-      // that renderer will display file path, but we're showing it ourselves - no need to show twice
-      return null;
-    }
-    return rightRenderer;
   }
 
   @Override

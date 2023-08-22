@@ -9,11 +9,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.UNCOMMITTED_CHANGES_SAVING_ERROR;
 
 /**
  * VCS-independent implementation for {@link VcsPreservingExecutor}
@@ -24,15 +26,15 @@ class DefaultPreservingExecutorImpl {
 
   private final Project myProject;
   private final Collection<? extends VirtualFile> myRootsToSave;
-  private final String myOperationTitle;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myOperationTitle;
   private final Runnable myOperation;
   private final VcsShelveChangesSaver mySaver;
 
   DefaultPreservingExecutorImpl(@NotNull Project project,
-                                       @NotNull Collection<? extends VirtualFile> rootsToSave,
-                                       @NotNull String operationTitle,
-                                       @NotNull ProgressIndicator indicator,
-                                       @NotNull Runnable operation) {
+                                @NotNull Collection<? extends VirtualFile> rootsToSave,
+                                @Nls(capitalization = Nls.Capitalization.Title) @NotNull String operationTitle,
+                                @NotNull ProgressIndicator indicator,
+                                @NotNull Runnable operation) {
     mySaver = new VcsShelveChangesSaver(project, indicator, operationTitle);
     myProject = project;
     myRootsToSave = rootsToSave;
@@ -70,10 +72,13 @@ class DefaultPreservingExecutorImpl {
       }
       catch (VcsException e) {
         LOG.info("Couldn't save local changes", e);
+        String format = VcsBundle.message("changes.tried.to.save.uncommitted.changes.in.shelve.before.s.but.failed.with.an.error",
+                                          myOperationTitle,
+                                          join(e.getMessages()));
         VcsNotifier.getInstance(myProject).notifyError(
+          UNCOMMITTED_CHANGES_SAVING_ERROR,
           VcsBundle.message("notification.title.couldn.t.save.uncommitted.changes"),
-          String.format("Tried to save uncommitted changes in shelve before %s, but failed with an error.<br/>%s",
-                        myOperationTitle, join(e.getMessages())));
+          format);
         return false;
       }
     });

@@ -6,6 +6,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 
 import javax.swing.*;
@@ -16,7 +17,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
 
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     setIcon(null);
     if (value instanceof RepositoryTreeNode) {
       RepositoryTreeNode node = (RepositoryTreeNode) value;

@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -12,22 +15,23 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * The base class for all programming language support implementations.
- * Specific language implementations should inherit from this class
- * and its registered instance wrapped with {@link LanguageFileType} via {@code com.intellij.fileType} extension point.
+ * A language represents a programming language such as Java,
+ * a document format such as HTML or Markdown,
+ * or other structured data formats such as HTTP cookies or regular expressions.
+ * <p>
+ * An implementation for a specific language should inherit from this class
+ * and wrap its registered instance with {@link LanguageFileType}
+ * via the {@code com.intellij.fileType} extension point.
+ * <p>
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
- * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.<p/>
  * <p>
  * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
@@ -57,11 +61,11 @@ public abstract class Language extends UserDataHolderBase {
     this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
+  protected Language(@NonNls @NotNull String ID, @NonNls @NotNull String @NotNull ... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 
-  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls String @NotNull ... mimeTypes) {
+  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls @NotNull String @NotNull ... mimeTypes) {
     if (baseLanguage instanceof MetaLanguage) {
       throw new ImplementationConflictException(
         "MetaLanguage cannot be a base language.\n" +
@@ -75,12 +79,12 @@ public abstract class Language extends UserDataHolderBase {
     myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
-    Language prev = ourRegisteredLanguages.put(langClass, this);
+    Language prev = ourRegisteredLanguages.putIfAbsent(langClass, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this);
     }
 
-    prev = ourRegisteredIDs.put(ID, this);
+    prev = ourRegisteredIDs.putIfAbsent(ID, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(), null, prev, this);
     }
@@ -105,36 +109,42 @@ public abstract class Language extends UserDataHolderBase {
    * @return collection of all languages registered so far.
    */
   public static @NotNull Collection<Language> getRegisteredLanguages() {
-    final Collection<Language> languages = ourRegisteredLanguages.values();
+    Collection<Language> languages = ourRegisteredLanguages.values();
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
-  public static void unregisterLanguages(ClassLoader classLoader) {
-    List<Class<? extends Language>> classes = new ArrayList<>(ourRegisteredLanguages.keySet());
-    for (Class<? extends Language> clazz : classes) {
+  @ApiStatus.Internal
+  public static void unregisterAllLanguagesIn(@NotNull ClassLoader classLoader, @NotNull PluginDescriptor pluginDescriptor) {
+    for (Map.Entry<Class<? extends Language>, Language> e : new ArrayList<>(ourRegisteredLanguages.entrySet())) {
+      Class<? extends Language> clazz = e.getKey();
+      Language language = e.getValue();
       if (clazz.getClassLoader() == classLoader) {
-        unregisterLanguage(ourRegisteredLanguages.get(clazz));
+        language.unregisterLanguage(pluginDescriptor);
       }
     }
-    IElementType.unregisterElementTypes(classLoader);
+    IElementType.unregisterElementTypes(classLoader, pluginDescriptor);
   }
 
-  public static void unregisterLanguage(@NotNull Language language) {
-    IElementType.unregisterElementTypes(language);
-    ReferenceProvidersRegistry.getInstance().unloadProvidersFor(language);
-    ourRegisteredLanguages.remove(language.getClass());
-    ourRegisteredIDs.remove(language.getID());
-    for (String mimeType : language.getMimeTypes()) {
+  @ApiStatus.Internal
+  public void unregisterLanguage(@NotNull PluginDescriptor pluginDescriptor) {
+    IElementType.unregisterElementTypes(this, pluginDescriptor);
+    ReferenceProvidersRegistry referenceProvidersRegistry = ApplicationManager.getApplication().getServiceIfCreated(ReferenceProvidersRegistry.class);
+    if (referenceProvidersRegistry != null) {
+      referenceProvidersRegistry.unloadProvidersFor(this);
+    }
+    ourRegisteredLanguages.remove(getClass());
+    ourRegisteredIDs.remove(getID());
+    for (String mimeType : getMimeTypes()) {
       ourRegisteredMimeTypes.remove(mimeType);
     }
-    final Language baseLanguage = language.getBaseLanguage();
+    Language baseLanguage = getBaseLanguage();
     if (baseLanguage != null) {
-      baseLanguage.unregisterDialect(language);
+      baseLanguage.unregisterDialect(this);
     }
   }
 
   @ApiStatus.Internal
-  public void unregisterDialect(Language language) {
+  public void unregisterDialect(@NotNull Language language) {
     myDialects.remove(language);
   }
 
@@ -143,8 +153,8 @@ public abstract class Language extends UserDataHolderBase {
    * @return instance of the {@code klass} language registered if any.
    */
   public static <T extends Language> T findInstance(@NotNull Class<T> klass) {
-    @SuppressWarnings("unchecked") T t = (T)ourRegisteredLanguages.get(klass);
-    return t;
+    //noinspection unchecked
+    return (T)ourRegisteredLanguages.get(klass);
   }
 
   /**
@@ -172,11 +182,11 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   /**
-   * Returns a user-readable name of the language.
+   * Returns a user-readable name of the language (language names are not localized).
    *
    * @return the name of the language.
    */
-  public @NotNull String getID() {
+  public @NotNull @NlsSafe String getID() {
     return myID;
   }
 
@@ -185,18 +195,18 @@ public abstract class Language extends UserDataHolderBase {
   }
 
   @ApiStatus.Internal
-  public @Nullable LanguageFileType findMyFileType(FileType[] types) {
-    for (final FileType fileType : types) {
+  public @Nullable LanguageFileType findMyFileType(FileType @NotNull [] types) {
+    for (FileType fileType : types) {
       if (fileType instanceof LanguageFileType) {
-        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        LanguageFileType languageFileType = (LanguageFileType)fileType;
         if (languageFileType.getLanguage() == this && !languageFileType.isSecondary()) {
           return languageFileType;
         }
       }
     }
-    for (final FileType fileType : types) {
+    for (FileType fileType : types) {
       if (fileType instanceof LanguageFileType) {
-        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        LanguageFileType languageFileType = (LanguageFileType)fileType;
         if (isKindOf(languageFileType.getLanguage()) && !languageFileType.isSecondary()) {
           return languageFileType;
         }
@@ -210,7 +220,7 @@ public abstract class Language extends UserDataHolderBase {
     return myBaseLanguage;
   }
 
-  public @NotNull String getDisplayName() {
+  public @NotNull @NlsSafe String getDisplayName() {
     return getID();
   }
 
@@ -225,6 +235,7 @@ public abstract class Language extends UserDataHolderBase {
     return myBaseLanguage != null && myBaseLanguage.isCaseSensitive();
   }
 
+  @Contract(pure = true)
   public final boolean isKindOf(Language another) {
     Language l = this;
     while (l != null) {
@@ -234,7 +245,7 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
-  public final boolean isKindOf(@NotNull String anotherLanguageId) {
+  public final boolean isKindOf(@NotNull @NonNls String anotherLanguageId) {
     Language l = this;
     while (l != null) {
       if (l.getID().equals(anotherLanguageId)) return true;
@@ -247,7 +258,7 @@ public abstract class Language extends UserDataHolderBase {
     return myDialects;
   }
 
-  public static @Nullable Language findLanguageByID(String id) {
+  public static @Nullable Language findLanguageByID(@NonNls String id) {
     return id == null ? null : ourRegisteredIDs.get(id);
   }
 

@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.icons.AllIcons;
+import org.jetbrains.annotations.NotNull;
 
 class AxisLookup extends AbstractLookup {
     AxisLookup(String name) {
@@ -24,7 +25,7 @@ class AxisLookup extends AbstractLookup {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
         super.renderElement(presentation);
         presentation.setIcon(AllIcons.Nodes.J2eeParameter);
         presentation.setItemTextBold(true);

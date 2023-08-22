@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
+public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
   @NotNull private final DiffProvider myDiffProvider;
   @NotNull private final VirtualFile myFile;
   @NotNull private final Project myProject;
@@ -97,7 +97,7 @@ public class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
     VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(myFile);
 
     if (currentRevision == null) {
-      throw new VcsException("Failed to fetch current revision");
+      throw new VcsException(VcsBundle.message("changes.error.failed.to.fetch.current.revision"));
     }
 
     return currentRevision;
@@ -109,7 +109,7 @@ public class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
     ContentRevision contentRevision = myDiffProvider.createFileContent(currentRevision, myFile);
 
     if (contentRevision == null) {
-      throw new VcsException("Failed to create content for current revision");
+      throw new VcsException(VcsBundle.message("changes.error.failed.to.create.content.for.current.revision"));
     }
 
     byte[] bytes;
@@ -118,7 +118,7 @@ public class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
     }
     else {
       String content = contentRevision.getContent();
-      if (content == null) throw new VcsException("Can't get revision content");
+      if (content == null) throw new VcsException(VcsBundle.message("changes.error.can.t.get.revision.content"));
       bytes = content.getBytes(myFile.getCharset());
     }
     return Pair.create(currentRevision, bytes);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers
 
 typealias LookbackValue<T> = Pair<T, T?>
@@ -28,4 +28,8 @@ private class LookbackIterator<T>(private val iterator: Iterator<T>) : Iterator<
   }
 }
 
-fun <K, V : Any> Map<K, V>.reverse(): Map<V, K> = map { (k, v) -> v to k }.toMap()
+@Deprecated(
+  message = "Moved to another file",
+  level = DeprecationLevel.HIDDEN,
+)
+fun <K, V : Any> Map<K, V>.reverse(): Map<V, K> = reverse()

@@ -42,6 +42,11 @@ public class ApplicationConfigurationType implements ConfigurationType {
       public @NotNull String getId() {
         return ApplicationConfigurationType.this.getId();
       }
+
+      @Override
+      public boolean isEditableInDumbMode() {
+        return true;
+      }
     };
   }
 
@@ -68,7 +73,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
 
   @Override
   public String getHelpTopic() {
-    return "reference.dialogs.rundebug.Application";
+    return "concepts.run.configuration";
   }
 
   @Override

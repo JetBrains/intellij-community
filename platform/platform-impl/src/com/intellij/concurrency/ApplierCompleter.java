@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -23,6 +10,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
+import kotlin.coroutines.CoroutineContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,20 +32,19 @@ import java.util.concurrent.CountedCompleter;
  * reaches the top, in which case it invokes {@link java.util.concurrent.ForkJoinTask#quietlyComplete()} which causes the top level task to wake up and join successfully.
  * The exceptions from the sub tasks bubble up to the top and saved in {@link #throwable}.
  */
-class ApplierCompleter<T> extends CountedCompleter<Void> {
+final class ApplierCompleter<T> extends CountedCompleter<Void> {
   private final boolean runInReadAction;
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;
-  @NotNull
-  private final List<? extends T> array;
-  @NotNull
-  private final Processor<? super T> processor;
+  private final @NotNull List<? extends T> array;
+  private final @NotNull Processor<? super T> processor;
   private final int lo;
   private final int hi;
   private final ApplierCompleter<T> next; // keeps track of right-hand-side tasks
   volatile Throwable throwable;
   private static final AtomicFieldUpdater<ApplierCompleter, Throwable> throwableUpdater = AtomicFieldUpdater.forFieldOfType(ApplierCompleter.class, Throwable.class);
 
+  private final CoroutineContext threadContext;
   // if not null, the read action has failed and this list contains unfinished subtasks
   private final Collection<ApplierCompleter<T>> failedSubTasks;
 
@@ -88,19 +76,22 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
     this.hi = hi;
     this.failedSubTasks = failedSubTasks;
     this.next = next;
+    this.threadContext = ThreadContext.currentThreadContext();
   }
 
   @Override
   public void compute() {
-    if (failFastOnAcquireReadAction) {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(this::execAndForkSubTasks));
-    }
-    else {
-      wrapInReadActionAndIndicator(this::execAndForkSubTasks);
+    try (AccessToken ignored = ThreadContext.installThreadContext(threadContext, true)) {
+      if (failFastOnAcquireReadAction) {
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(this::execAndForkSubTasks));
+      }
+      else {
+        wrapInReadActionAndIndicator(this::execAndForkSubTasks);
+      }
     }
   }
 
-  private void wrapInReadActionAndIndicator(@NotNull final Runnable process) {
+  private void wrapInReadActionAndIndicator(final @NotNull Runnable process) {
     Runnable toRun = runInReadAction ? () -> {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(process)) {
         failedSubTasks.add(this);
@@ -121,8 +112,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
   static class ComputationAbortedException extends RuntimeException {}
   // executes tasks one by one and forks right halves if it takes too much time
   // returns the linked list of forked halves - they all need to be joined; null means all tasks have been executed, nothing was forked
-  @Nullable
-  private ApplierCompleter<T> execAndForkSubTasks() {
+  private @Nullable ApplierCompleter<T> execAndForkSubTasks() {
     int hi = this.hi;
     ApplierCompleter<T> right = null;
     Throwable throwable = null;
@@ -249,7 +239,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "("+lo+"-"+hi+")"+(getCompleter() == null ? "" : " parent: "+getCompleter());
   }
 }

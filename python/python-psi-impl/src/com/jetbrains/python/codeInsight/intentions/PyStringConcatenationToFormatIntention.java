@@ -24,9 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyStringConcatenationToFormatIntention extends PyBaseIntentionAction {
 
   @Override
@@ -119,7 +116,7 @@ public class PyStringConcatenationToFormatIntention extends PyBaseIntentionActio
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
     final boolean useFormatMethod = languageLevel.isAtLeast(LanguageLevel.PYTHON27);
 
-    NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"\'\\");
+    NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"'\\");
     StringBuilder stringLiteral = new StringBuilder();
     List<String> parameters = new ArrayList<>();
     Pair<String, String> quotes = Pair.create("\"", "\"");
@@ -136,7 +133,7 @@ public class PyStringConcatenationToFormatIntention extends PyBaseIntentionActio
           isUnicode = true;
         }
         if (!quotesDetected) {
-          quotes = PyStringLiteralUtil.getQuotes(expression.getText());
+          quotes = PyStringLiteralCoreUtil.getQuotes(expression.getText());
           quotesDetected = true;
         }
         String value = ((PyStringLiteralExpression)expression).getStringValue();

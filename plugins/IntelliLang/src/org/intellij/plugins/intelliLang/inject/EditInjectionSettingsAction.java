@@ -24,12 +24,11 @@ import java.util.Collections;
  * @author Gregory.Shrago
  */
 public class EditInjectionSettingsAction implements IntentionAction, LowPriorityAction {
-  public static final String EDIT_INJECTION_TITLE = "Language Injection Settings";
 
   @Override
   @NotNull
   public String getText() {
-    return EDIT_INJECTION_TITLE;
+    return IntelliLangBundle.message("intention.name.language.injection.settings");
   }
 
   @Override

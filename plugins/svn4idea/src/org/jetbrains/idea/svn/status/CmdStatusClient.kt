@@ -1,12 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status
 
-import com.intellij.openapi.util.Getter
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.util.containers.ContainerUtil.find
 import com.intellij.util.containers.Convertor
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.SvnUtil.append
 import org.jetbrains.idea.svn.SvnUtil.isSvnVersioned
@@ -19,6 +20,7 @@ import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
 import org.jetbrains.idea.svn.info.Info
 import org.jetbrains.idea.svn.lock.Lock
 import java.io.File
+import java.util.function.Supplier
 import javax.xml.bind.JAXBException
 import javax.xml.bind.annotation.*
 import javax.xml.bind.annotation.adapters.XmlAdapter
@@ -47,7 +49,7 @@ private fun parseResult(base: File,
   var hasEntries = false
 
   fun setUrlAndNotifyHandler(builder: Status.Builder) {
-    builder.infoProvider = Getter { infoProvider.convert(builder.file) }
+    builder.infoProvider = Supplier { infoProvider.convert(builder.file) }
 
     val file = builder.file
     val externalsBase = find(externalsMap.keys) { isAncestor(it, file, false) }
@@ -118,12 +120,14 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
   @Throws(SvnBindException::class)
   private fun parseResult(path: File, base: File, infoBase: Info?, command: CommandExecutor, handler: StatusConsumer) {
     val result = command.output
-    if (isEmptyOrSpaces(result)) throw SvnBindException("Status request returned nothing for command: ${command.commandText}")
+    if (isEmptyOrSpaces(result)) throw SvnBindException(message("error.svn.status.with.no.output", command.commandText))
 
     try {
       if (!parseResult(base, infoBase, createInfoGetter(), result, handler)) {
         if (!isSvnVersioned(myVcs, path)) {
-          throw SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, "Command - ${command.commandText}. Result - $result")
+          LOG.info("Status requested not in working copy. Command - ${command.commandText}. Result - $result")
+
+          throw SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, message("error.svn.status.not.in.working.copy", command.commandText))
         }
         else {
           // return status indicating "NORMAL" state
@@ -135,7 +139,7 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
 
           val status = Status.Builder(path)
           status.itemStatus = StatusType.STATUS_NORMAL
-          status.infoProvider = Getter { createInfoGetter().convert(path) }
+          status.infoProvider = Supplier { createInfoGetter().convert(path) }
           handler.consume(status.build())
         }
       }
@@ -159,6 +163,8 @@ class CmdStatusClient : BaseSvnClient(), StatusClient {
   }
 
   companion object {
+    private val LOG = logger<CmdStatusClient>()
+
     fun parseResult(base: File, result: String): Status? {
       val ref = Ref<Status?>()
       parseResult(base, null, Convertor { null }, result, StatusConsumer(ref::set))
@@ -221,6 +227,7 @@ private class Entry {
     revision = Revision.of(localStatus.revision ?: -1L)
     isWorkingCopyLocked = localStatus.isWorkingCopyLocked
     isCopied = localStatus.isCopied
+    movedFrom = localStatus.movedFrom?.let { SvnUtil.resolvePath(base, it) }
     isSwitched = localStatus.isSwitched
     isTreeConflicted = localStatus.isTreeConflicted
     commitInfo = localStatus.commit
@@ -260,6 +267,9 @@ private class WorkingCopyStatus {
 
   @XmlAttribute(name = "copied")
   var isCopied = false
+
+  @XmlAttribute(name = "moved-from")
+  var movedFrom: String? = null
 
   @XmlAttribute(name = "switched")
   var isSwitched = false

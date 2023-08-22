@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.RefGroup;
@@ -18,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class BranchPopupBuilder {
-  @NotNull protected final VcsLogDataPack myDataPack;
-  @Nullable private final Collection<? extends VirtualFile> myVisibleRoots;
-  @Nullable private final List<? extends List<String>> myRecentItems;
+  protected final @NotNull VcsLogDataPack myDataPack;
+  private final @Nullable Collection<? extends VirtualFile> myVisibleRoots;
+  private final @Nullable List<? extends List<String>> myRecentItems;
 
   protected BranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
                                @Nullable Collection<? extends VirtualFile> visibleRoots,
@@ -30,18 +33,16 @@ public abstract class BranchPopupBuilder {
     myRecentItems = recentItems;
   }
 
-  @NotNull
-  protected abstract AnAction createAction(@NotNull String name, @NotNull Collection<? extends VcsRef> refs);
+  protected abstract @NotNull AnAction createAction(@NotNull @NlsActions.ActionText String name, @NotNull Collection<? extends VcsRef> refs);
 
-  protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItem) {
+  protected void createRecentAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> recentItem) {
     assert myRecentItems == null;
   }
 
-  protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
+  protected void createFavoritesAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> favorites) {
   }
 
-  @NotNull
-  protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<? extends VcsRef> refs) {
+  protected @NotNull AnAction createCollapsedAction(@NotNull @NlsActions.ActionText String actionName, @NotNull Collection<? extends VcsRef> refs) {
     return createAction(actionName, refs);
   }
 
@@ -69,41 +70,44 @@ public abstract class BranchPopupBuilder {
     return filteredGroups;
   }
 
-  @NotNull
-  private DefaultActionGroup createActions(@NotNull Groups groups) {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (Map.Entry<String, Collection<VcsRef>> entry : groups.singletonGroups.entrySet()) {
+  private @NotNull DefaultActionGroup createActions(@NotNull Groups groups) {
+    List<AnAction> actionGroup = new ArrayList<>();
+    for (Map.Entry<@NlsActions.ActionText String, Collection<VcsRef>> entry : groups.singletonGroups.entrySet()) {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
     if (!groups.recentGroups.isEmpty()) {
-      DefaultActionGroup recentGroup = new DefaultActionGroup(VcsLogBundle.message("vcs.log.filter.recent"), true);
+      List<AnAction> recents = new ArrayList<>();
       for (List<String> recentItem : groups.recentGroups) {
-        createRecentAction(recentGroup, recentItem);
+        createRecentAction(recents, recentItem);
       }
+      DefaultActionGroup recentGroup = new DefaultActionGroup(VcsLogBundle.message("vcs.log.filter.recent"), recents);
+      recentGroup.setPopup(true);
       actionGroup.add(recentGroup);
     }
     if (groups.favoriteGroups.size() > 1) {
       createFavoritesAction(actionGroup, new ArrayList<>(ContainerUtil.map2LinkedSet(ContainerUtil.flatten(groups.favoriteGroups.values()),
                                                                                      ref -> ref.getName())));
     }
-    for (Map.Entry<String, Collection<VcsRef>> entry : groups.favoriteGroups.entrySet()) {
+    for (Map.Entry<@NlsActions.ActionText String, Collection<VcsRef>> entry : groups.favoriteGroups.entrySet()) {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
-    for (Map.Entry<String, TreeMap<String, Collection<VcsRef>>> group : groups.expandedGroups.entrySet()) {
-      actionGroup.addSeparator(group.getKey());
-      for (Map.Entry<String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
+    for (Map.Entry<@NlsContexts.Separator String, TreeMap<@NlsActions.ActionText String, Collection<VcsRef>>> group : groups.expandedGroups.entrySet()) {
+      actionGroup.add(Separator.create(group.getKey()));
+      for (Map.Entry<@NlsActions.ActionText String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
         actionGroup.add(createAction(entry.getKey(), entry.getValue()));
       }
     }
-    actionGroup.addSeparator();
-    for (Map.Entry<String, TreeMap<String, Collection<VcsRef>>> group : groups.collapsedGroups.entrySet()) {
-      DefaultActionGroup popupGroup = DefaultActionGroup.createPopupGroup(() -> group.getKey());
-      for (Map.Entry<String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
-        popupGroup.add(createCollapsedAction(entry.getKey(), entry.getValue()));
+    actionGroup.add(Separator.getInstance());
+    for (Map.Entry<@NlsActions.ActionText String, TreeMap<@NlsActions.ActionText String, Collection<VcsRef>>> group : groups.collapsedGroups.entrySet()) {
+      List<AnAction> collapsed = new ArrayList<>();
+      for (Map.Entry<@NlsActions.ActionText String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
+        collapsed.add(createCollapsedAction(entry.getKey(), entry.getValue()));
       }
+      DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), collapsed);
+      popupGroup.setPopup(true);
       actionGroup.add(popupGroup);
     }
-    return actionGroup;
+    return new DefaultActionGroup(actionGroup);
   }
 
   private static class Groups {

@@ -27,9 +27,11 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtensionsManager;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import org.jetbrains.annotations.NotNull;
@@ -56,14 +58,17 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
     final Project project = myEnvironment.getProject();
     RemoteServersView.getInstance(project).showServerConnection(connection);
 
-    final DebugConnector<?,?> debugConnector;
+    final DebugConnector<?, ?> debugConnector;
     if (DefaultDebugExecutor.getDebugExecutorInstance().equals(executor)) {
       debugConnector = myServer.getType().createDebugConnector();
     }
     else {
       debugConnector = null;
     }
-    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, debugConnector, myEnvironment),
+
+    DeploymentTask<D> task = new DeploymentTaskImpl<>(mySource, myConfiguration, project, debugConnector, myEnvironment);
+    DeployToServerRunConfigurationExtensionsManager.getInstance().patchDeploymentTask(task);
+    connection.deploy(task,
                       s -> RemoteServersView.getInstance(project).showDeployment(connection, (String)s));
     return null;
   }

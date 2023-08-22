@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyLineSeparatorUtil {
+public final class PyLineSeparatorUtil {
 
   private PyLineSeparatorUtil() {
   }

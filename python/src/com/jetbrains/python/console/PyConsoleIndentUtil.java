@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class PyConsoleIndentUtil {
+public final class PyConsoleIndentUtil {
   private static final int TAB_INDENT = 4;
 
   private static final Map<String, String> pythonBrackets = ImmutableMap.of(

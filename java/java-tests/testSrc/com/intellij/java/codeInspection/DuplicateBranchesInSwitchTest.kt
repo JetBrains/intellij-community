@@ -1,13 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   val inspection = DuplicateBranchesInSwitchInspection()
 
@@ -25,6 +24,7 @@ class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   fun testFallThrough() = doTest()
   fun testFallThroughBefore() = doTest()
   fun testAllFallThrough() = doTest()
+  fun testDuplicateFallThrough() = doTest()
   fun testNoLastBreak() = doTest()
   fun testFallThroughToBreak() = doTest()
   fun testThreeDuplicates() = doTest()
@@ -42,6 +42,9 @@ class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   fun testAssignment() = doTest()
   fun testNoExceptionWhenFirstLabelIsMissing() = doTest()
   fun testUnresolvedQualifier() = doTest()
+  fun testCatchTypeReference() = doTest()
+  fun testNullDuplicatesPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
 
   private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")

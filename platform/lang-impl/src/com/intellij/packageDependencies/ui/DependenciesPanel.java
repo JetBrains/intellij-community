@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -29,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -47,6 +47,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -65,14 +66,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
-public class DependenciesPanel extends JPanel implements Disposable, DataProvider {
+public final class DependenciesPanel extends JPanel implements Disposable, DataProvider {
   private final Map<PsiFile, Set<PsiFile>> myDependencies;
   private Map<VirtualFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private final MyTree myLeftTree = new MyTree();
   private final MyTree myRightTree = new MyTree();
   private final DependenciesUsagesPanel myUsagesPanel;
 
-  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
+  private static final Set<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
   private final TreeExpansionMonitor myRightTreeExpansionMonitor;
   private final TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
@@ -134,7 +135,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     splitter.setFirstComponent(treeSplitter);
     splitter.setSecondComponent(myUsagesPanel);
     add(splitter, BorderLayout.CENTER);
-    add(createToolbar(), BorderLayout.NORTH);
+
+    ActionToolbar toolbar = createToolbar();
+    toolbar.setTargetComponent(treeSplitter);
+    add(toolbar.getComponent(), BorderLayout.NORTH);
 
     myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree, myProject);
     myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree, myProject);
@@ -278,7 +282,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private JComponent createToolbar() {
+  private @NotNull ActionToolbar createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CloseAction());
     group.add(new RerunAction(this));
@@ -299,8 +303,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new EditDependencyRulesAction());
     group.add(CommonActionsManager.getInstance().createExportToTextFileAction(new DependenciesExporterToTextFile()));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("PackageDependencies", group, true);
-    return toolbar.getComponent();
+    return ActionManager.getInstance().createActionToolbar("PackageDependencies", group, true);
   }
 
   @NotNull
@@ -329,11 +332,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     EditSourceOnDoubleClickHandler.install(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree), ActionManager.getInstance());
-
-
+    PopupHandler.installPopupMenu(tree, createTreePopupActions(isRightTree), "DependenciesPopup");
   }
 
   private void updateRightTreeModel() {
@@ -384,7 +385,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     return group;
   }
 
-  private TreeModel buildTreeModel(Set<PsiFile> deps, Marker marker) {
+  private TreeModel buildTreeModel(Set<? extends PsiFile> deps, Marker marker) {
     return Objects.requireNonNull(PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE)).createTreeModel(myProject, deps, marker,
                                                                                                              mySettings);
   }
@@ -420,11 +421,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private Set<PsiFile> getSelectedScope(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
-    if (paths == null ) return EMPTY_FILE_SET;
+    return getSelectedScope(paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null);
+  }
+
+  private Set<PsiFile> getSelectedScope(Object[] nodes) {
+    if (nodes == null ) return EMPTY_FILE_SET;
     Set<PsiFile> result = new HashSet<>();
-    for (TreePath path : paths) {
-      PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-      node.fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
+    for (Object n : nodes) {
+      ((PackageDependenciesNode)n).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
     }
     return result;
   }
@@ -450,20 +454,16 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   @Nullable
   @NonNls
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      final PackageDependenciesNode selectedNode = myRightTree.getSelectedNode();
-      if (selectedNode != null) {
-        final PsiElement element = selectedNode.getPsiElement();
-        return element != null && element.isValid() ? element : null;
-      }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return myRightTree.getData(dataId);
     }
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "dependency.viewer.tool.window";
     }
     return null;
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(
       @NotNull JTree tree,
@@ -511,6 +511,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES = flag;
       mySettings.UI_FLATTEN_PACKAGES = flag;
@@ -527,6 +532,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_FILES;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -552,6 +562,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
       mySettings.UI_SHOW_MODULES = flag;
@@ -568,6 +583,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return mySettings.UI_SHOW_MODULE_GROUPS;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -597,6 +617,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
       mySettings.UI_GROUP_BY_SCOPE_TYPE = flag;
@@ -623,6 +648,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       setEmptyText(flag);
       rebuild();
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private void setEmptyText(boolean flag) {
@@ -646,7 +676,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class DependenciesExporterToTextFile implements ExporterToTextFile {
+  private final class DependenciesExporterToTextFile implements ExporterToTextFile {
     @NotNull
     @Override
     public String getReportText() {
@@ -694,7 +724,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
 
-  private class RerunAction extends AnAction {
+  private final class RerunAction extends AnAction {
     RerunAction(JComponent comp) {
       super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
@@ -707,6 +737,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         enabled &= builder.getScope().isValid();
       }
       e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -730,16 +765,29 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private static class MyTree extends Tree implements DataProvider {
+  private static final class MyTree extends Tree implements DataProvider {
     @Override
     public Object getData(@NotNull String dataId) {
       PackageDependenciesNode node = getSelectedNode();
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return node;
       }
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId) && node != null)  {
-        final PsiElement element = node.getPsiElement();
-        return element != null && element.isValid() ? element : null;
+      if (node != null && PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowDataId -> {
+          if (CommonDataKeys.PSI_ELEMENT.is(slowDataId)) {
+            final PsiElement element = node.getPsiElement();
+            return element != null && element.isValid() ? element : null;
+          }
+          return null;
+        };
+      }
+      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+        TreePath[] paths = getSelectionPaths();
+        return paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null;
+      }
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+        TreePath path = getSelectionPath();
+        return path != null ? path.getLastPathComponent() : null;
       }
       return null;
     }
@@ -752,7 +800,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class ShowDetailedInformationAction extends AnAction {
+  private final class ShowDetailedInformationAction extends AnAction {
     private ShowDetailedInformationAction() {
       super(ActionsBundle.messagePointer("action.ShowDetailedInformationAction.text"));
     }
@@ -780,23 +828,37 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
+      Pair<Set<PsiFile>, Set<PsiFile>> scopes = e.getUpdateSession()
+        .compute(this, "getSelectedScopes", ActionUpdateThread.EDT, () -> {
+          return Pair.create(getSelectedScope(myLeftTree), getSelectedScope(myRightTree));
+        });
       final boolean[] direct = new boolean[]{true};
-      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
+      processDependencies(scopes.first, scopes.second, path -> {
         direct [0] = false;
         return false;
       });
       e.getPresentation().setEnabled(!direct[0]);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
-  private class RemoveFromScopeAction extends AnAction {
+  private final class RemoveFromScopeAction extends AnAction {
     private RemoveFromScopeAction() {
       super(ActionsBundle.messagePointer("action.RemoveFromScopeAction.text"));
     }
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setEnabled(!getSelectedScope(myLeftTree).isEmpty());
+      e.getPresentation().setEnabled(!getSelectedScope(e.getData(PlatformCoreDataKeys.SELECTED_ITEMS)).isEmpty());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -812,19 +874,26 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class AddToScopeAction extends AnAction {
+  private final class AddToScopeAction extends AnAction {
     private AddToScopeAction() {
       super(ActionsBundle.messagePointer("action.AddToScopeAction.text"));
     }
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setEnabled(getScope() != null);
+      Set<PsiFile> scope = e.getUpdateSession()
+        .compute(this, "getScope", ActionUpdateThread.EDT, () -> getSelectedScope(myRightTree));
+      e.getPresentation().setEnabled(getScope(scope) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      final AnalysisScope scope = getScope();
+      final AnalysisScope scope = getScope(getSelectedScope(myRightTree));
       LOG.assertTrue(scope != null);
       final DependenciesBuilder builder;
       if (!myForward) {
@@ -843,8 +912,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Nullable
-    private AnalysisScope getScope() {
-      final Set<PsiFile> selectedScope = getSelectedScope(myRightTree);
+    private AnalysisScope getScope(Set<? extends PsiFile> selectedScope) {
       Set<PsiFile> result = new HashSet<>();
       ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
       selectedScope.removeAll(result);
@@ -865,7 +933,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class SelectInLeftTreeAction extends AnAction {
+  private final class SelectInLeftTreeAction extends AnAction {
     SelectInLeftTreeAction() {
       super(CodeInsightBundle.messagePointer("action.select.in.left.tree"),
             CodeInsightBundle.messagePointer("action.select.in.left.tree.description"), null);
@@ -873,8 +941,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      PackageDependenciesNode node = myRightTree.getSelectedNode();
+      PackageDependenciesNode node = (PackageDependenciesNode)e.getData(PlatformCoreDataKeys.SELECTED_ITEM);
       e.getPresentation().setEnabled(node != null && node.canSelectInLeftTree(myDependencies));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -906,7 +979,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class MarkAsIllegalAction extends AnAction {
+  private final class MarkAsIllegalAction extends AnAction {
     MarkAsIllegalAction() {
       super(CodeInsightBundle.messagePointer("mark.dependency.illegal.text"),
             CodeInsightBundle.messagePointer("mark.dependency.illegal.text"), AllIcons.Actions.Lightning);
@@ -967,21 +1040,26 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
-      final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
-      final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
-      if (leftNode != null && rightNode != null) {
+      Pair<PackageDependenciesNode, PackageDependenciesNode> pair = e.getUpdateSession()
+        .compute(this, "getSelectedNodes", ActionUpdateThread.EDT, () -> Pair.pair(myLeftTree.getSelectedNode(), myRightTree.getSelectedNode()));
+      if (pair.first != null && pair.second != null) {
         final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
         assert provider != null;
-        presentation.setEnabled((provider.createPackageSet(leftNode, true) != null || provider.createPackageSet(leftNode, false) != null) &&
-                                (provider.createPackageSet(rightNode, true) != null || provider.createPackageSet(rightNode, false) != null));
+        presentation.setEnabled((provider.createPackageSet(pair.first, true) != null || provider.createPackageSet(pair.first, false) != null) &&
+                                (provider.createPackageSet(pair.second, true) != null || provider.createPackageSet(pair.second, false) != null));
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
   private final class ChooseScopeTypeAction extends ComboBoxAction {
     @Override
     @NotNull
-    protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {
@@ -997,6 +1075,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
@@ -1006,7 +1089,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  public static class DependencyPanelSettings {
+  public static final class DependencyPanelSettings {
     public boolean UI_FLATTEN_PACKAGES;
     public boolean UI_SHOW_FILES;
     public boolean UI_SHOW_MODULES;

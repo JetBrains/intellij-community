@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.lang.Language;
@@ -21,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 
-import javax.swing.*;
 import java.util.List;
 
 public interface DiffUserDataKeys {
@@ -80,18 +65,47 @@ public interface DiffUserDataKeys {
   // Both data from DiffContext / DiffRequest will be used. Data from DiffRequest will be used first.
   //
 
-  /**
-   * Invert colors in three side conflict viewer.
-   * Default: "AB - B - AB" is colored as "Addition" (Left <- Base -> Right)
-   * With key: "AB - B - AB" is colored as "Deletion" (Left -> Merged <- Right)
-   */
-  Key<Boolean> THREESIDE_DIFF_WITH_RESULT = Key.create("Diff.ThreesideDiffWithResult");
+  enum ThreeSideDiffColors {
+    /**
+     * Default value, for merge conflict: "Left <- Base -> Right"
+     * "A - B - C" is Conflict
+     * "AB - B - AB" is Addition
+     * "B - B - AB" is Addition
+     * "AB - B - B" is Addition
+     * "B - AB - AB" is Deletion
+     */
+    MERGE_CONFLICT,
+    /**
+     * For result of a past merge: "Left -> Merged <- Right". Same as MERGE_CONFLICT, with inverted "Insertions" and "Deletions".
+     * "A - B - C" is Conflict
+     * "AB - B - AB" is Deletion
+     * "B - B - AB" is Deletion
+     * "AB - B - B" is Deletion
+     * "B - AB - AB" is Addition
+     */
+    MERGE_RESULT,
+    /**
+     * For intermediate state: "Head -> Staged -> Local"
+     * "A - B - C" is Modification
+     * "AB - B - AB" is Modification
+     * "B - B - AB" is Addition
+     * "AB - B - B" is Deletion
+     * "B - AB - AB" is Addition
+     */
+    LEFT_TO_RIGHT
+  }
+
+  Key<ThreeSideDiffColors> THREESIDE_DIFF_COLORS_MODE = Key.create("Diff.ThreesideDiffWithResult");
 
   Key<Side> MASTER_SIDE = Key.create("Diff.MasterSide");
   Key<Side> PREFERRED_FOCUS_SIDE = Key.create("Diff.PreferredFocusSide");
   Key<ThreeSide> PREFERRED_FOCUS_THREESIDE = Key.create("Diff.PreferredFocusThreeSide");
 
-  Key<List<JComponent>> NOTIFICATIONS = Key.create("Diff.Notifications");
+  /**
+   * Use {@link DiffUtil#addNotification}
+   */
+  Key<List<DiffNotificationProvider>> NOTIFICATION_PROVIDERS = Key.create("Diff.NotificationProviders");
+
   Key<List<AnAction>> CONTEXT_ACTIONS = Key.create("Diff.ContextActions");
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
   Key<Boolean> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");
@@ -112,4 +126,12 @@ public interface DiffUserDataKeys {
    * @see com.intellij.openapi.editor.EditorKind#DIFF
    */
   Key<Boolean> MERGE_EDITOR_FLAG = Key.create("Diff.mergeEditor");
+
+  /**
+   * Force aligning changes in side-by-side viewer.<br/>
+   * This can be used in viewers, where aligning is critical (e.g. {@link com.intellij.diff.tools.combined.CombinedDiffViewer}).
+   *
+   * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
+   */
+  Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
 }

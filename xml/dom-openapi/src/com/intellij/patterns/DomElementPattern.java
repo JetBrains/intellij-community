@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomElementPattern<T extends DomElement,Self extends DomElementPattern<T,Self>> extends TreeElementPattern<DomElement,T,Self> {
   protected DomElementPattern(final Class<T> aClass) {
     super(aClass);
@@ -63,11 +60,12 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
   }
 
   public Self withChild(@NonNls @NotNull final String localName, final ElementPattern pattern) {
-    return with(new PatternCondition<T>("withChild") {
+    return with(new PatternCondition<>("withChild") {
       @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         for (final AbstractDomChildrenDescription description : t.getGenericInfo().getChildrenDescriptions()) {
-          if (!(description instanceof DomChildrenDescription) || localName.equals(((DomChildrenDescription)description).getXmlElementName())) {
+          if (!(description instanceof DomChildrenDescription) ||
+              localName.equals(((DomChildrenDescription)description).getXmlElementName())) {
             for (final DomElement element : description.getValues(t)) {
               if (localName.equals(element.getXmlElementName()) && pattern.accepts(element, context)) {
                 return true;

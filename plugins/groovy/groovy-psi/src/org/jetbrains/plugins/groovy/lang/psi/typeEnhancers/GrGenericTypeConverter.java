@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.Iterator;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic;
+import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCompileStatic;
 
 /**
  * @author Max Medvedev
@@ -23,15 +23,10 @@ public class GrGenericTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {
-    switch (position) {
-      case METHOD_PARAMETER:
-      case GENERIC_PARAMETER:
-      case ASSIGNMENT:
-      case RETURN_VALUE:
-        return true;
-      default:
-        return false;
-    }
+    return switch (position) {
+      case METHOD_PARAMETER, GENERIC_PARAMETER, ASSIGNMENT, RETURN_VALUE -> true;
+      default -> false;
+    };
   }
 
   @Override

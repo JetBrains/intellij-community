@@ -3,7 +3,6 @@ package com.intellij.codeInsight.hints.presentation
 
 import java.awt.Graphics2D
 import java.awt.Point
-import java.awt.event.MouseEvent
 
 internal fun Graphics2D.withTranslated(x: Int, y: Int, block: () -> Unit) {
   try {
@@ -14,12 +13,12 @@ internal fun Graphics2D.withTranslated(x: Int, y: Int, block: () -> Unit) {
   }
 }
 
-internal fun MouseEvent.withTranslated(x: Int, y: Int, block: () -> Unit) {
+internal fun Graphics2D.withTranslated(x: Double, y: Double, block: () -> Unit) {
   try {
-    translatePoint(x, y)
+    translate(x, y)
     block()
   } finally {
-    translatePoint(-x, -y)
+    translate(-x, -y)
   }
 }
 

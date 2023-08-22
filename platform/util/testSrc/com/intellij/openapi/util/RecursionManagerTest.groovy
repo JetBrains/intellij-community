@@ -1,16 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.testFramework.UsefulTestCase
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 import junit.framework.TestCase
 
-/**
- * @author peter
- */
 @CompileStatic
 class RecursionManagerTest extends TestCase {
   private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")
@@ -42,7 +38,6 @@ class RecursionManagerTest extends TestCase {
     }
   }
 
-  @CompileDynamic
   void testAssertOnMissedCache() {
     assert "foo-return" == prevent("foo") {
       def stamp = RecursionManager.markStack()
@@ -277,9 +272,9 @@ class RecursionManagerTest extends TestCase {
   }
 
   void "test exception from hashCode on exiting"() {
-    def key1 = new ThrowingKey()
-    def key2 = new ThrowingKey()
-    def key3 = new ThrowingKey()
+    ThrowingKey key1 = new ThrowingKey()
+    ThrowingKey key2 = new ThrowingKey()
+    ThrowingKey key3 = new ThrowingKey()
     prevent(key1) {
       prevent(key2) {
         prevent(key3) {

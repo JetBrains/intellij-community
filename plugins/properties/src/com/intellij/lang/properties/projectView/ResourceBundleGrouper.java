@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.projectView;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -7,6 +7,8 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbAware;
@@ -99,7 +101,14 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(selected, slowId);
+    }
+    return null;
+  }
+
+  private static Object getSlowData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       for (AbstractTreeNode<?> selectedElement : selected) {
         Object element = selectedElement.getValue();

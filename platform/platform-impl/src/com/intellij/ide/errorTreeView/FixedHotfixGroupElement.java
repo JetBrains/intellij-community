@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
@@ -25,7 +26,8 @@ public class FixedHotfixGroupElement extends GroupingElement {
                                         int row,
                                         boolean hasFocus) {
         renderer.setIcon(AllIcons.General.Information);
-        renderer.append("Fixed: ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        renderer.append(IdeBundle.message("fixed.problem.prefix"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        renderer.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         final String[] text = getText();
         final String checkedText = ((text != null) && (text.length > 0)) ? text[0] : "";
         renderer.append(checkedText, SimpleTextAttributes.REGULAR_ATTRIBUTES);

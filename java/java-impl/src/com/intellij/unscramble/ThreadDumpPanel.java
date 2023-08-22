@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.CommonBundle;
@@ -10,6 +10,7 @@ import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.java.JavaBundle;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -25,7 +26,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
@@ -51,22 +51,22 @@ import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
  * @author Jeka
  * @author Konstantin Bulenkov
  */
-public class ThreadDumpPanel extends JPanel implements DataProvider {
-  private static final Icon PAUSE_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Pause, Daemon_sign);
-  private static final Icon LOCKED_ICON_DAEMON = new LayeredIcon(AllIcons.Debugger.MuteBreakpoints, Daemon_sign);
-  private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Resume, Daemon_sign);
-  private static final Icon SOCKET_ICON_DAEMON = new LayeredIcon(Socket, Daemon_sign);
-  private static final Icon IDLE_ICON_DAEMON = new LayeredIcon(Idle, Daemon_sign);
-  private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.ProfileCPU, Daemon_sign);
-  private static final Icon IO_ICON_DAEMON = new LayeredIcon(AllIcons.Actions.Menu_saveall, Daemon_sign);
-  private final JBList myThreadList;
+public final class ThreadDumpPanel extends JPanel implements DataProvider {
+  private static final Icon PAUSE_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Pause, Daemon_sign});
+  private static final Icon LOCKED_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Debugger.MuteBreakpoints, Daemon_sign});
+  private static final Icon RUNNING_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Resume, Daemon_sign});
+  private static final Icon SOCKET_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{Socket, Daemon_sign});
+  private static final Icon IDLE_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{Idle, Daemon_sign});
+  private static final Icon EDT_BUSY_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.ProfileCPU, Daemon_sign});
+  private static final Icon IO_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.MenuSaveall, Daemon_sign});
+  private final JBList<ThreadState> myThreadList;
   private final List<ThreadState> myThreadDump;
   private final List<ThreadState> myMergedThreadDump;
   private final JPanel myFilterPanel;
   private final SearchTextField myFilterField;
   private final ExporterToTextFile myExporterToTextFile;
 
-  public ThreadDumpPanel(final Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
+  public ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<ThreadState> threadDump) {
     super(new BorderLayout());
     myThreadDump = threadDump;
     myMergedThreadDump = new ArrayList<>();
@@ -100,19 +100,23 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     myFilterPanel.add(myFilterField);
     myFilterPanel.setVisible(false);
 
-    myThreadList = new JBList(new DefaultListModel());
+    myThreadList = new JBList<>(new DefaultListModel<>());
     myThreadList.setCellRenderer(new ThreadListCellRenderer());
     myThreadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myThreadList.addListSelectionListener(new ListSelectionListener() {
+      int currentSelectedIndex = -2; // to avoid multiple expensive invocations of printStackTrace()
       @Override
-      public void valueChanged(final ListSelectionEvent e) {
+      public void valueChanged(ListSelectionEvent e) {
         int index = myThreadList.getSelectedIndex();
-        if (index >= 0) {
-          ThreadState selection = (ThreadState)myThreadList.getModel().getElementAt(index);
-          AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace());
-        }
-        else {
-          AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
+        if (index != currentSelectedIndex) {
+          if (index >= 0) {
+            ThreadState selection = myThreadList.getModel().getElementAt(index);
+            AnalyzeStacktraceUtil.printStacktrace(consoleView, selection.getStackTrace());
+          }
+          else {
+            AnalyzeStacktraceUtil.printStacktrace(consoleView, "");
+          }
+          currentSelectedIndex = index;
         }
         myThreadList.repaint();
       }
@@ -135,16 +139,16 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     leftPanel.add(myFilterPanel, BorderLayout.NORTH);
     leftPanel.add(ScrollPaneFactory.createScrollPane(myThreadList, SideBorder.LEFT | SideBorder.RIGHT), BorderLayout.CENTER);
 
-    final Splitter splitter = new Splitter(false, 0.3f);
+    Splitter splitter = new Splitter(false, 0.3f);
     splitter.setFirstComponent(leftPanel);
     splitter.setSecondComponent(consoleView.getComponent());
     add(splitter, BorderLayout.CENTER);
 
-    new ListSpeedSearch(myThreadList).setComparator(new SpeedSearchComparator(false, true));
+    ListSpeedSearch.installOn(myThreadList).setComparator(new SpeedSearchComparator(false, true));
 
     updateThreadList();
 
-    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
+    Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
     if (editor != null) {
       editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
@@ -170,14 +174,13 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   private void updateThreadList() {
     String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
     Object selection = myThreadList.getSelectedValue();
-    DefaultListModel model = (DefaultListModel)myThreadList.getModel();
+    DefaultListModel<ThreadState> model = (DefaultListModel<ThreadState>)myThreadList.getModel();
     model.clear();
     int selectedIndex = 0;
     int index = 0;
     List<ThreadState> threadStates = UISettings.getInstance().getState().getMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
     for (ThreadState state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
-        //noinspection unchecked
         model.addElement(state);
         if (selection == state) {
           selectedIndex = index;
@@ -193,9 +196,9 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   }
 
   private static void highlightOccurrences(String filter, Project project, Editor editor) {
-    final HighlightManager highlightManager = HighlightManager.getInstance(project);
+    HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorManager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+    TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
     String documentText = editor.getDocument().getText();
     int i = -1;
     while (true) {
@@ -209,8 +212,8 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private static Icon getThreadStateIcon(final ThreadState threadState) {
-    final boolean daemon = threadState.isDaemon();
+  private static Icon getThreadStateIcon(ThreadState threadState) {
+    boolean daemon = threadState.isDaemon();
     if (threadState.isSleeping()) {
       return daemon ? PAUSE_ICON_DAEMON : AllIcons.Actions.Pause;
     }
@@ -221,7 +224,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       return daemon ? SOCKET_ICON_DAEMON : Socket;
     }
     if (threadState.getOperation() == ThreadOperation.IO) {
-      return daemon ? IO_ICON_DAEMON : AllIcons.Actions.Menu_saveall;
+      return daemon ? IO_ICON_DAEMON : AllIcons.Actions.MenuSaveall;
     }
     if (threadState.isEDT()) {
       if ("idle".equals(threadState.getThreadStateDetail())) {
@@ -233,7 +236,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   }
 
   private enum StateCode {RUN, RUN_IO, RUN_SOCKET, PAUSED, LOCKED, EDT, IDLE}
-  private static StateCode getThreadStateCode(final ThreadState state) {
+  private static StateCode getThreadStateCode(ThreadState state) {
     if (state.isSleeping()) return StateCode.PAUSED;
     if (state.isWaiting()) return StateCode.LOCKED;
     if (state.getOperation() == ThreadOperation.Socket) return StateCode.RUN_SOCKET;
@@ -244,7 +247,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     return StateCode.RUN;
   }
 
-  private static SimpleTextAttributes getAttributes(final ThreadState threadState) {
+  private static SimpleTextAttributes getAttributes(@NotNull ThreadState threadState) {
     if (threadState.isSleeping()) {
       return SimpleTextAttributes.GRAY_ATTRIBUTES;
     }
@@ -257,14 +260,12 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  private static class ThreadListCellRenderer extends ColoredListCellRenderer {
-
+  private static class ThreadListCellRenderer extends ColoredListCellRenderer<ThreadState> {
     @Override
-    protected void customizeCellRenderer(@NotNull final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
-      ThreadState threadState = (ThreadState) value;
+    protected void customizeCellRenderer(@NotNull JList<? extends ThreadState> list, ThreadState threadState, int index, boolean selected, boolean hasFocus) {
       setIcon(getThreadStateIcon(threadState));
       if (!selected) {
-        ThreadState selectedThread = (ThreadState)list.getSelectedValue();
+        ThreadState selectedThread = list.getSelectedValue();
         if (threadState.isDeadlocked()) {
           setBackground(LightColors.RED);
         }
@@ -296,7 +297,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     myThreadList.setSelectedIndex(index);
   }
 
-  private class SortThreadsAction extends DumbAwareAction {
+  private final class SortThreadsAction extends DumbAwareAction {
     private final Comparator<ThreadState> BY_TYPE = (o1, o2) -> {
       int c = getThreadStateCode(o1).compareTo(getThreadStateCode(o2));
       if (c == 0) {
@@ -308,10 +309,9 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     private final Comparator<ThreadState> BY_NAME = (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName());
     private Comparator<ThreadState> COMPARATOR = BY_TYPE;
-    private static final String TYPE_LABEL = "Sort threads by type";
-    private static final String NAME_LABEL = "Sort threads by name";
+
     private SortThreadsAction() {
-      super(TYPE_LABEL);
+      super(JavaBundle.message("sort.threads.by.type"));
     }
 
     @Override
@@ -324,13 +324,19 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(COMPARATOR == BY_TYPE ? AllIcons.ObjectBrowser.SortByType : AllIcons.ObjectBrowser.Sorted);
-      e.getPresentation().setText(COMPARATOR == BY_TYPE ? TYPE_LABEL : NAME_LABEL);
+      e.getPresentation().setText(COMPARATOR == BY_TYPE ? JavaBundle.message("sort.threads.by.type") :
+                                  JavaBundle.message("sort.threads.by.name"));
     }
   }
-  private static class CopyToClipboardAction extends DumbAwareAction {
-    private static final NotificationGroup GROUP = NotificationGroup.toolWindowGroup("Analyze thread dump", ToolWindowId.RUN, false);
+  private static final class CopyToClipboardAction extends DumbAwareAction {
+    private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Analyze thread dump");
     private final List<? extends ThreadState> myThreadDump;
     private final Project myProject;
 
@@ -342,7 +348,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final StringBuilder buf = new StringBuilder();
+      StringBuilder buf = new StringBuilder();
       buf.append("Full thread dump").append("\n\n");
       for (ThreadState state : myThreadDump) {
         buf.append(state.getStackTrace()).append("\n\n");
@@ -353,11 +359,16 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private class FilterAction extends ToggleAction implements DumbAware {
+  private final class FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
       super(CommonBundle.messagePointer("action.text.filter"), JavaBundle.messagePointer(
         "action.description.show.only.threads.containing.a.specific.string"), AllIcons.General.Filter);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -376,7 +387,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private class MergeStacktracesAction extends ToggleAction implements DumbAware {
+  private final class MergeStacktracesAction extends ToggleAction implements DumbAware {
     private MergeStacktracesAction() {
       super(JavaBundle.messagePointer("action.text.merge.identical.stacktraces"), JavaBundle.messagePointer(
         "action.description.group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);
@@ -385,6 +396,11 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return UISettings.getInstance().getState().getMergeEqualStackTraces();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -398,7 +414,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     return new MyToFileExporter(project, threadStates);
   }
 
-  private static class MyToFileExporter implements ExporterToTextFile {
+  private static final class MyToFileExporter implements ExporterToTextFile {
     private final Project myProject;
     private final List<? extends ThreadState> myThreadStates;
 
@@ -423,7 +439,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     @NotNull
     @Override
     public String getDefaultFilePath() {
-      final VirtualFile baseDir = myProject.getBaseDir();
+      VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir != null) {
         return baseDir.getPresentableUrl() + File.separator + DEFAULT_REPORT_FILE_NAME;
       }

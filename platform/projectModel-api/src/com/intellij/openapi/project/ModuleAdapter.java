@@ -18,6 +18,6 @@ package com.intellij.openapi.project;
 /**
  * @deprecated Please use {@link ModuleListener} directly.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class ModuleAdapter implements ModuleListener {
 }

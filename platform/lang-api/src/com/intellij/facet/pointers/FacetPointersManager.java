@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.NonExtendable
 public abstract class FacetPointersManager {
   public static FacetPointersManager getInstance(Project project) {
-    return project.getComponent(FacetPointersManager.class);
+    return project.getService(FacetPointersManager.class);
   }
 
   public abstract <F extends Facet> FacetPointer<F> create(F facet);

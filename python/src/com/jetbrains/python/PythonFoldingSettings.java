@@ -1,22 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@State(name = "PythonFoldingSettings", storages = {
-  @Storage("editor.xml"),
-  @Storage(value = "editor.codeinsight.xml", deprecated = true),
-})
+@State(name = "PythonFoldingSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class PythonFoldingSettings implements PersistentStateComponent<PythonFoldingSettings> {
   public boolean COLLAPSE_LONG_STRINGS;
   public boolean COLLAPSE_LONG_COLLECTIONS;
   public boolean COLLAPSE_SEQUENTIAL_COMMENTS;
+  public boolean COLLAPSE_TYPE_ANNOTATIONS;
 
   @Nullable
   @Override
@@ -26,7 +25,7 @@ public class PythonFoldingSettings implements PersistentStateComponent<PythonFol
 
   @NotNull
   public static PythonFoldingSettings getInstance() {
-    return ServiceManager.getService(PythonFoldingSettings.class);
+    return ApplicationManager.getApplication().getService(PythonFoldingSettings.class);
   }
 
   @Override
@@ -46,4 +45,7 @@ public class PythonFoldingSettings implements PersistentStateComponent<PythonFol
     return COLLAPSE_SEQUENTIAL_COMMENTS;
   }
 
+  public boolean isCollapseTypeAnnotations() {
+    return COLLAPSE_TYPE_ANNOTATIONS;
+  }
 }

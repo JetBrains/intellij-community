@@ -1,0 +1,77 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    SELECT_COMMAND
+      PsiElement(select)('select')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('f')
+      PsiWhiteSpace(' ')
+      PsiElement(in)('in')
+      PsiWhiteSpace(' ')
+      NUMBER
+        PsiElement(int)('1')
+      LIST_TERMINATOR
+        PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      DO_BLOCK
+        PsiElement(do)('do')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          SHELL_COMMAND
+            BLOCK
+              PsiElement({)('{')
+              COMPOUND_LIST
+                PsiElement(\n)('\n')
+                PsiWhiteSpace('    ')
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
+                PsiElement(\n)('\n')
+              PsiElement(})('}')
+          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected, got 'done'
+            <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('#missing terminator after the body')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SELECT_COMMAND
+      PsiElement(select)('select')
+      PsiWhiteSpace(' ')
+      PsiElement(word)('f')
+      PsiWhiteSpace(' ')
+      PsiElement(in)('in')
+      PsiWhiteSpace(' ')
+      NUMBER
+        PsiElement(int)('1')
+      LIST_TERMINATOR
+        PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      DO_BLOCK
+        PsiElement(do)('do')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          SHELL_COMMAND
+            BLOCK
+              PsiElement({)('{')
+              COMPOUND_LIST
+                PsiElement(\n)('\n')
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('echo')
+                  PsiWhiteSpace(' ')
+                  NUMBER
+                    PsiElement(int)('1')
+                PsiElement(\n)('\n')
+              PsiElement(})('}')
+          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected, got 'done'
+            <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('#missing terminator after the body')

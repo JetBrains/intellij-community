@@ -17,9 +17,6 @@ package com.intellij.util.xml;
 
 import java.util.List;
 
-/**
- * @author peter
-*/
 public interface MergedObject<V> {
   List<V> getImplementations();
 }

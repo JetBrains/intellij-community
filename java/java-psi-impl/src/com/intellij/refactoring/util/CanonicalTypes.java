@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,10 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author dsl
- */
-public class CanonicalTypes {
+public final class CanonicalTypes {
   private CanonicalTypes() { }
 
   public abstract static class Type {
@@ -44,12 +41,20 @@ public class CanonicalTypes {
     protected final TypeAnnotationProvider myProvider;
 
     AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
+      PsiAnnotation[] annotations = ContainerUtil.map(
+        provider.getAnnotations(),
+        annotation -> {
+          PsiElement copy = annotation.copy();
+          if (copy instanceof PsiAnnotation) return (PsiAnnotation)copy;
+          // copy is not implemented (e.g., for KtUltraLightSimpleAnnotation)
+          return JavaPsiFacade.getElementFactory(annotation.getProject()).createAnnotationFromText(annotation.getText(), annotation);
+        },
+        PsiAnnotation.EMPTY_ARRAY);
       myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }
 
-  private static class Primitive extends AnnotatedType {
+  private static final class Primitive extends AnnotatedType {
     private final PsiPrimitiveType myType;
 
     private Primitive(@NotNull PsiPrimitiveType type) {
@@ -64,7 +69,7 @@ public class CanonicalTypes {
 
     @Override
     public String getTypeText() {
-      return myType.getPresentableText();
+      return myType.getPresentableText(true);
     }
   }
 
@@ -99,7 +104,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class Ellipsis extends Array {
+  private static final class Ellipsis extends Array {
     private Ellipsis(@NotNull PsiType original, @NotNull Type componentType) {
       super(original, componentType);
     }
@@ -110,7 +115,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class WildcardType extends AnnotatedType {
+  private static final class WildcardType extends AnnotatedType {
     private final boolean myIsExtending;
     private final Type myBound;
 
@@ -128,7 +133,7 @@ public class CanonicalTypes {
       }
       else {
         PsiType boundType = myBound.getType(context, manager);
-        if (boundType.equals(PsiType.NULL)) {
+        if (boundType.equals(PsiTypes.nullType())) {
           throw new IncorrectOperationException("Bound type is null " + getTypeText());
         }
         if (boundType instanceof PsiWildcardType) {
@@ -162,7 +167,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class UnresolvedType extends Type {
+  private static final class UnresolvedType extends Type {
     private final String myPresentableText;
     private final String myCanonicalText;
 
@@ -187,7 +192,7 @@ public class CanonicalTypes {
     }
   }
 
-  private static class ClassType extends AnnotatedType {
+  private static final class ClassType extends AnnotatedType {
     private final String myPresentableText;
     private final String myClassQName;
     private final Map<String, Type> mySubstitutor;
@@ -230,10 +235,13 @@ public class CanonicalTypes {
           type.addImportsTo(fragment);
         }
       }
+      for (PsiAnnotation annotation : myProvider.getAnnotations()) {
+        fragment.addImportsFromString(annotation.getQualifiedName());
+      }
     }
   }
 
-  private static class LogicalOperationType extends Type {
+  private static final class LogicalOperationType extends Type {
     private final List<? extends Type> myTypes;
     private final boolean myDisjunction;
 

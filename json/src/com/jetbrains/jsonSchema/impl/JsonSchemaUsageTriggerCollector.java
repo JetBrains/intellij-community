@@ -1,12 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 
-public final class JsonSchemaUsageTriggerCollector {
+import java.util.Arrays;
+
+public final class JsonSchemaUsageTriggerCollector extends CounterUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("json.schema", 2);
+  private static final EventId1<String> COMPLETION_BY_SCHEMA_INVOKED =
+    GROUP.registerEvent("completion.by.schema.invoked", EventFields.String("schemaKind",
+                                                                           Arrays.asList("builtin", "schema", "user", "remote")));
+
   public static void trigger(String feature) {
-    FUCounterUsageLogger.getInstance().logEvent("json.schema", "completion.by.schema.invoked",
-                                                new FeatureUsageData().addData("schemaKind", feature));
+    COMPLETION_BY_SCHEMA_INVOKED.log(feature);
+  }
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 }

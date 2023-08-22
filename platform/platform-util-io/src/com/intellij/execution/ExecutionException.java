@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
+
+import com.intellij.openapi.util.NlsContexts;
 
 import java.io.IOException;
 
 public class ExecutionException extends Exception {
-  public ExecutionException(final String s) {
+  public ExecutionException(final @NlsContexts.DialogMessage String s) {
     super(s);
   }
 
@@ -12,7 +14,7 @@ public class ExecutionException extends Exception {
     super(cause == null ? null : cause.getMessage(), cause);
   }
 
-  public ExecutionException(final String s, Throwable cause) {
+  public ExecutionException(final @NlsContexts.DialogMessage String s, Throwable cause) {
     super(s, cause);
   }
 

@@ -21,11 +21,10 @@
     <extensionPoint qualifiedName="com.intellij.javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javaCompilerConfigurationProxy" interface="com.intellij.psi.JavaCompilerConfigurationProxy" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.lang.psiTypeAnnotationModifier" interface="com.intellij.psi.augment.TypeAnnotationModifier" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.inferredAnnotationProvider" interface="com.intellij.codeInsight.InferredAnnotationProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.psi.classFileDecompiler" interface="com.intellij.psi.compiled.ClassFileDecompilers$Decompiler"/>
+    <extensionPoint qualifiedName="com.intellij.psi.classFileDecompiler" interface="com.intellij.psi.compiled.ClassFileDecompilers$Decompiler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jvm.elementProvider" area="IDEA_PROJECT" interface="com.intellij.lang.jvm.facade.JvmElementProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.classTypePointerFactory" interface="com.intellij.psi.ClassTypePointerFactory" dynamic="true"/>
@@ -55,6 +54,9 @@
     <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
                     interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.uast.evaluation.uastEvaluatorExtension"
+                    interface="org.jetbrains.uast.evaluation.UEvaluatorExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jvm.declarationSearcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.jvm.source.JvmDeclarationSearcher"/>
     </extensionPoint>
@@ -62,15 +64,16 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false" description="Use pratt java expression parser" key="pratt.java.expression.parser" restartRequired="true" />
     <applicationService serviceInterface="com.intellij.psi.util.JavaClassSupers"
                         serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
     <applicationService serviceInterface="com.intellij.psi.PsiSubstitutorFactory"
                         serviceImplementation="com.intellij.psi.impl.PsiSubstitutorFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService"
+                        serviceImplementation="com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService$DefaultImpl"/>
 
-    <projectService serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
-    <projectService serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.PsiResolveHelper"
@@ -88,6 +91,7 @@
                     serviceImplementation="com.intellij.lang.jvm.facade.JvmFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.JavaPsiFacade"
                     serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
+    <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.PsiJavaModuleTreeChangePreprocessor"/>
     <projectService serviceImplementation="org.jetbrains.uast.UastContext"/>
 
     <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
@@ -122,17 +126,27 @@
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiDocTagValueManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.PsiLiteralExpression"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl"
+                             implementationClass="com.intellij.psi.impl.source.javadoc.SnippetDocTagManipulator"/>
+    <methodImplementor implementation="com.intellij.codeInsight.javadoc.SnippetDocTagMethodImplementor"/>
     <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.RecordAugmentProvider"/>
+    <psi.classFileDecompiler id="clsStubBuilder" implementation="com.intellij.psi.impl.compiled.ClsDecompilerImpl" order="last"/>
+    <registryKey key="java.empty.enum.constructor.ref" defaultValue="true"
+                 description="Make enum constructor reference have empty range at the end of the enum field identifier"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
     <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin"/>
     <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.java.generate.JavaUastCodeGenerationPlugin"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="30" description="UAST usages graph building depth limit" key="uast.usage.graph.default.recursion.depth.limit"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.jvm">

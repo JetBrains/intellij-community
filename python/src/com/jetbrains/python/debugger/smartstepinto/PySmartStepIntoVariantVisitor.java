@@ -3,7 +3,6 @@ package com.jetbrains.python.debugger.smartstepinto;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
@@ -14,19 +13,20 @@ import com.jetbrains.python.pyi.PyiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
   @NotNull @NonNls private static final ImmutableSet<String> BUILTINS_MODULES = ImmutableSet.of("builtins.py", "__builtin__.py");
-  
+
   int myVariantIndex = -1;
   @NotNull private final List<PySmartStepIntoVariant> myCollector;
   @NotNull private final List<Pair<String, Boolean>> myVariantsFromPython;
   @NotNull private final PySmartStepIntoContext myContext;
   @NotNull private final Map<String, Integer> mySeenVariants = Maps.newHashMap();
-  @NotNull private final Set<PsiElement> alreadyVisited = Sets.newHashSet();
+  @NotNull private final Set<PsiElement> alreadyVisited = new HashSet<>();
 
   public PySmartStepIntoVariantVisitor(@NotNull List<PySmartStepIntoVariant> collector,
                                        @NotNull List<Pair<String, Boolean>> variantsFromPython,
@@ -65,24 +65,15 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitElement(@NotNull PsiElement element) {
-    if (element instanceof PyDecorator) {
-      visitPyCallExpression((PyDecorator)element);
-    }
-    super.visitElement(element);
-  }
-
-  @Override
   public void visitPyDecoratorList(@NotNull PyDecoratorList node) {
     PyDecorator[] decorators = node.getDecorators();
     if (decorators.length > 0) {
       decorators[0].accept(this);
-      visitPyCallExpression(decorators[0]);
     }
   }
 
   @Override
-  public void visitPyComprehensionElement(PyComprehensionElement node) {
+  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
     node.acceptChildren(this);
 
     if (alreadyVisited.contains(node)) return;
@@ -141,9 +132,8 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     int callOrder = getCallOrder();
     mySeenVariants.put(myVariantsFromPython.get(myVariantIndex).first, ++callOrder);
 
-    PsiElement resolved = expression.getReference(
-      PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.userInitiated(
-        expression.getProject(), expression.getContainingFile()))).resolve();
+    var context = TypeEvalContext.userInitiated(expression.getProject(), expression.getContainingFile());
+    PsiElement resolved = expression.getReference(PyResolveContext.defaultContext(context)).resolve();
 
     if (resolved == null || isBuiltIn(resolved) || isAlreadySeen()) return;
 

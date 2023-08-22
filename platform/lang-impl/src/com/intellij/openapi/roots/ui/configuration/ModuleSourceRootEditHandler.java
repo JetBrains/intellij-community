@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,11 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Inherit from this class and register the implementation as {@code projectStructure.sourceRootEditHandler} extension in plugin.xml to
+ * specify how source roots of a custom {@link JpsModuleSourceRootType type} should be shown in Project Structure dialog. There must be only
+ * one instance of this class for each {@link JpsModuleSourceRootType}.
+ */
 public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   public static final ExtensionPointName<ModuleSourceRootEditHandler> EP_NAME = ExtensionPointName.create("com.intellij.projectStructure.sourceRootEditHandler");
   private final JpsModuleSourceRootType<P> myRootType;
@@ -37,7 +43,7 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   public abstract String getRootTypeName();
 
   @NotNull
-  public String getFullRootTypeName() {
+  public @Nls String getFullRootTypeName() {
     return ProjectBundle.message("module.paths.root.node", getRootTypeName());
   }
 
@@ -52,11 +58,6 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   @Nullable
   public Icon getRootFileLayerIcon() {
     return null;
-  }
-
-  @Nullable
-  public Icon getRootFileLayerIcon(@NotNull P properties) {
-    return getRootFileLayerIcon();
   }
 
   @Nullable
@@ -84,7 +85,7 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   public abstract String getUnmarkRootButtonText();
 
   @Nullable
-  public String getPropertiesString(@NotNull P properties) {
+  public @NlsSafe String getPropertiesString(@NotNull P properties) {
     return null;
   }
 

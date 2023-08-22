@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -24,7 +24,12 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-public class MainMenuCollector {
+@Service
+public final class MainMenuCollector {
+  public static MainMenuCollector getInstance() {
+    return ApplicationManager.getApplication().getService(MainMenuCollector.class);
+  }
+
   public void record(@NotNull AnAction action) {
     try {
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
@@ -41,15 +46,12 @@ public class MainMenuCollector {
       else if (e instanceof MouseEvent) {
         path = getPathFromMenuSelectionManager(action);
       }
-
-      if (!StringUtil.isEmpty(path)) {
-      }
     }
     catch (Exception ignore) {
     }
   }
 
-  protected String getPathFromMenuSelectionManager(@NotNull AnAction action) {
+  private String getPathFromMenuSelectionManager(@NotNull AnAction action) {
     List<String> groups = Arrays.stream(MenuSelectionManager.defaultManager().getSelectedPath())
       .filter(o -> o instanceof ActionMenu)
       .map(o -> ((ActionMenu)o).getAnAction().getTemplateText())
@@ -70,13 +72,11 @@ public class MainMenuCollector {
     return action.getTemplateText(); //avoid user data in Action Presentation
   }
 
-  @NotNull
-  private static String convertMenuItemsToKey(List<String> menuItems) {
+  private static @NotNull String convertMenuItemsToKey(List<String> menuItems) {
     return StringUtil.join(menuItems, " -> ");
   }
 
-  @NotNull
-  protected String getPathFromMenuItem(AWTEvent e, AnAction action) {
+  private @NotNull String getPathFromMenuItem(AWTEvent e, AnAction action) {
     Object src = e.getSource();
     ArrayList<String> items = new ArrayList<>();
     while (src instanceof MenuItem) {
@@ -89,13 +89,7 @@ public class MainMenuCollector {
     return convertMenuItemsToKey(items);
   }
 
-
-  public static MainMenuCollector getInstance() {
-    return ServiceManager.getService(MainMenuCollector.class);
-  }
-
-
-  public final static class State {
+  public static final class State {
     @Tag("counts")
     @MapAnnotation(surroundWithTag = false, keyAttributeName = "path", valueAttributeName = "count")
     public Map<String, Integer> myValues = new HashMap<>();

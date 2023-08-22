@@ -18,7 +18,7 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
 
   @Override
   @NotNull
-  InspectionToolWrapper getToolWrapper();
+  InspectionToolWrapper<?,?> getToolWrapper();
 
   default void patchToolNode(@NotNull InspectionTreeNode node,
                              @NotNull InspectionRVContentProvider provider,
@@ -36,9 +36,7 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
 
   void cleanup();
   @Nullable
-  QuickFix findQuickFixes(@NotNull CommonProblemDescriptor descriptor,
-                          RefEntity entity,
-                          String hint);
+  QuickFix<?> findQuickFixes(@NotNull CommonProblemDescriptor descriptor, RefEntity entity, String hint);
   @NotNull
   HTMLComposerImpl getComposer();
 
@@ -64,6 +62,12 @@ public interface InspectionToolPresentation extends InspectionToolResultExporter
   default JComponent getCustomActionsPanel(@NotNull CommonProblemDescriptor descriptor, @NotNull Disposable parent) {
     return null;
   }
+
+  /**
+   * @return true iff custom actions panel should be aligned to the left and
+   * fix toolbar to the right
+   */
+  default boolean shouldAlignCustomActionPanelToLeft() { return false; }
 
   /**
    * see {@link com.intellij.codeInspection.deadCode.DummyEntryPointsPresentation}

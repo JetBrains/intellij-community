@@ -1,17 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.diagnostic.PluginException
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiReference
-import com.intellij.psi.ReferenceRange
+import com.intellij.psi.util.leavesAroundOffset
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Entry point for obtaining target symbols by [offset] in a [file].
@@ -21,83 +22,92 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 fun targetSymbols(file: PsiFile, offset: Int): Collection<Symbol> {
   val (declaredData, referencedData) = declaredReferencedData(file, offset)
-  val data = declaredData
-             ?: referencedData
+                                       ?: return emptyList()
+  val data = referencedData
+             ?: declaredData
              ?: return emptyList()
-  return data.targets
+  return data.targets.map { it.symbol }
 }
 
-private val emptyData = DeclaredReferencedData(null, null)
+/**
+ * @return two collections: of declared and of referenced symbols
+ */
+@Experimental
+fun targetDeclarationAndReferenceSymbols(file: PsiFile, offset: Int): Pair<Collection<Symbol>, Collection<Symbol>> {
+  val (declaredData, referencedData) = declaredReferencedData(file, offset) ?: return Pair(emptyList(), emptyList())
+  return (declaredData?.targets?.map { it.symbol } ?: emptyList()) to (referencedData?.targets?.map { it.symbol } ?: emptyList())
+}
 
-internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData {
-  val allDeclarationsOrReferences = declarationsOrReferences(file, offset)
+internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData? {
+  val allDeclarationsOrReferences: List<DeclarationOrReference> = declarationsOrReferences(file, offset)
   if (allDeclarationsOrReferences.isEmpty()) {
-    return emptyData
+    return null
   }
 
-  val withMinimalRanges = chooseByRange(allDeclarationsOrReferences, offset, DeclarationOrReference::rangeWithOffset)
+  val withMinimalRanges: Collection<DeclarationOrReference> = try {
+    chooseByRange(allDeclarationsOrReferences, offset, DeclarationOrReference::rangeWithOffset)
+  }
+  catch (e: RangeOverlapException) {
+    val details = allDeclarationsOrReferences.joinToString(separator = "") { item ->
+      "\n${item.rangeWithOffset} : $item"
+    }
+    LOG.error("Range overlap", PluginException.createByClass(e, file.javaClass), details)
+    return null
+  }
 
-  var declaration: PsiSymbolDeclaration? = null
-  val references = ArrayList<PsiSymbolReference>()
-  var evaluatorData: TargetData.Evaluator? = null
+  val declarations = SmartList<DeclarationOrReference.Declaration>()
+  val references = SmartList<DeclarationOrReference.Reference>()
 
   for (dr in withMinimalRanges) {
     when (dr) {
-      is DeclarationOrReference.Declaration -> {
-        if (declaration != null) {
-          LOG.error(
-            """
-            Multiple declarations with the same range are not supported.
-            Declaration: $declaration; class: ${declaration.javaClass.name}.
-            Another declaration: ${dr.declaration}; class: ${dr.declaration.javaClass.name}.
-            """.trimIndent()
-          )
-        }
-        else {
-          declaration = dr.declaration
-        }
-      }
-      is DeclarationOrReference.Reference -> {
-        references += dr.reference
-      }
-      is DeclarationOrReference.Evaluator -> {
-        LOG.assertTrue(evaluatorData == null)
-        evaluatorData = dr.evaluatorData
-      }
+      is DeclarationOrReference.Declaration -> declarations.add(dr)
+      is DeclarationOrReference.Reference -> references.add(dr)
     }
   }
 
   return DeclaredReferencedData(
-    declaredData = declaration?.let(TargetData::Declared),
-    referencedData = evaluatorData ?: references.takeUnless { it.isEmpty() }?.let(TargetData::Referenced)
+    declaredData = declarations.takeUnless { it.isEmpty() }?.let(TargetData::Declared),
+    referencedData = references.takeUnless { it.isEmpty() }?.let(TargetData::Referenced)
   )
 }
 
-private sealed class DeclarationOrReference {
+@Internal
+sealed class DeclarationOrReference {
 
   abstract val rangeWithOffset: TextRange
 
+  abstract val ranges: List<TextRange>
+
   class Declaration(val declaration: PsiSymbolDeclaration) : DeclarationOrReference() {
+
     override val rangeWithOffset: TextRange get() = declaration.absoluteRange
+
+    override val ranges: List<TextRange> get() = listOf(declaration.absoluteRange)
+
+    override fun toString(): String = declaration.toString()
   }
 
-  class Reference(val reference: PsiSymbolReference) : DeclarationOrReference() {
-    override val rangeWithOffset: TextRange get() = reference.absoluteRange
-  }
+  class Reference(val reference: PsiSymbolReference, private val offset: Int) : DeclarationOrReference() {
 
-  class Evaluator(private val offset: Int, val evaluatorData: TargetData.Evaluator) : DeclarationOrReference() {
     override val rangeWithOffset: TextRange by lazy(LazyThreadSafetyMode.NONE) {
-      when (val origin: PsiOrigin = evaluatorData.origin) {
-        is PsiOrigin.Reference -> findRangeWithOffset(origin.reference)
-        is PsiOrigin.Leaf -> origin.leaf.textRange
-      }
+      referenceRanges(reference).find {
+        it.containsOffset(offset)
+      } ?: error("One of the ranges must contain offset at this point")
     }
 
-    private fun findRangeWithOffset(reference: PsiReference): TextRange {
-      return ReferenceRange.getAbsoluteRanges(reference).find {
-        it.containsOffset(offset)
-      } ?: error("One of the reference ranges must contain offset at this point")
-    }
+    override val ranges: List<TextRange> get() = referenceRanges(reference)
+
+    override fun toString(): String = reference.toString()
+  }
+}
+
+private fun referenceRanges(it: PsiSymbolReference): List<TextRange> {
+  return if (it is EvaluatorReference) {
+    it.origin.absoluteRanges
+  }
+  else {
+    // Symbol references don't support multi-ranges yet.
+    listOf(it.absoluteRange)
   }
 }
 
@@ -106,20 +116,50 @@ private sealed class DeclarationOrReference {
  */
 private fun declarationsOrReferences(file: PsiFile, offset: Int): List<DeclarationOrReference> {
   val result = SmartList<DeclarationOrReference>()
-  file.allDeclarationsAround(offset).mapTo(result, DeclarationOrReference::Declaration)
-  val allReferences = file.allReferencesAround(offset)
-  if (allReferences.isEmpty()) {
-    fromTargetEvaluator(file, offset)?.let { evaluatorData ->
-      result += DeclarationOrReference.Evaluator(offset, evaluatorData)
+
+  var foundNamedElement: PsiElement? = null
+
+  val allDeclarations = file.allDeclarationsAround(offset)
+  if (allDeclarations.isEmpty()) {
+    namedElement(file, offset)?.let { (namedElement, leaf) ->
+      foundNamedElement = namedElement
+      val declaration: PsiSymbolDeclaration = PsiElement2Declaration.createFromDeclaredPsiElement(namedElement, leaf)
+      result += DeclarationOrReference.Declaration(declaration)
     }
   }
   else {
-    allReferences.mapTo(result, DeclarationOrReference::Reference)
+    allDeclarations.mapTo(result, DeclarationOrReference::Declaration)
   }
+
+  val allReferences = file.allReferencesAround(offset)
+  if (allReferences.isEmpty()) {
+    fromTargetEvaluator(file, offset)?.let { evaluatorReference ->
+      if (foundNamedElement != null && evaluatorReference.targetElements.singleOrNull() === foundNamedElement) {
+        return@let // treat self-reference as a declaration
+      }
+      result += DeclarationOrReference.Reference(evaluatorReference, offset)
+    }
+  }
+  else {
+    allReferences.mapTo(result) { DeclarationOrReference.Reference(it, offset) }
+  }
+
   return result
 }
 
-private fun fromTargetEvaluator(file: PsiFile, offset: Int): TargetData.Evaluator? {
+private data class NamedElementAndLeaf(val namedElement: PsiElement, val leaf: PsiElement)
+
+private fun namedElement(file: PsiFile, offset: Int): NamedElementAndLeaf? {
+  for ((leaf, _) in file.leavesAroundOffset(offset)) {
+    val namedElement: PsiElement? = TargetElementUtil.getNamedElement(leaf)
+    if (namedElement != null) {
+      return NamedElementAndLeaf(namedElement, leaf)
+    }
+  }
+  return null
+}
+
+private fun fromTargetEvaluator(file: PsiFile, offset: Int): EvaluatorReference? {
   val editor = mockEditor(file) ?: return null
   val flags = TargetElementUtil.getInstance().allAccepted and
     TargetElementUtil.ELEMENT_NAME_ACCEPTED.inv() and
@@ -141,5 +181,5 @@ private fun fromTargetEvaluator(file: PsiFile, offset: Int): TargetData.Evaluato
   if (targetElements.isEmpty()) {
     return null
   }
-  return TargetData.Evaluator(origin, targetElements)
+  return EvaluatorReference(origin, targetElements)
 }

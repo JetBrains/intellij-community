@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,9 @@ import org.jetbrains.annotations.SystemIndependent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -57,12 +61,17 @@ public class PathMacroManagerTest {
     };
   }
 
-  private MockModule createModule(String basePath) {
+  private MockModule createModule(@NotNull String basePath) {
     MockProject project = createProject(basePath);
-    return new MockModule(project) {
+    return new MockModule(project, project) {
       @Override
-      public @NotNull String getModuleFilePath() {
-        return project.getBasePath() + "/module/module.iml";
+      public @NotNull Path getModuleNioFile() {
+        return Paths.get(project.getBasePath()).resolve("module/module.iml");
+      }
+
+      @Override
+      public @SystemIndependent @NotNull String getModuleFilePath() {
+        return basePath + "/module/module.iml";
       }
     };
   }
@@ -109,7 +118,7 @@ public class PathMacroManagerTest {
     ReplacePathToMacroMap map = new ProjectPathMacroManager(createProject("/home/user/foo")).getReplacePathMap();
     String src = "-Dfoo=/home/user/foo/bar/home -Dbar=\"/home/user\"";
     String dst = "-Dfoo=$PROJECT_DIR$/bar/home -Dbar=\"$PROJECT_DIR$/..\"";
-    assertThat(map.substituteRecursively(src, true)).isEqualTo(dst);
+    assertThat(map.substituteRecursively(src, true).toString()).isEqualTo(dst);
   }
 
   @Test
@@ -126,6 +135,7 @@ public class PathMacroManagerTest {
 
   @Test
   public void testProjectUnderWSL() {
+    IoTestUtil.assumeWindows();
     String wslHome = "//wsl$/Linux";
     MockModule module = createModule(wslHome + "/project");
     assertReplacements(

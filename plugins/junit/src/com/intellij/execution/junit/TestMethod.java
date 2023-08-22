@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.MetaAnnotationUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -12,13 +11,16 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UastContextKt;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
-class TestMethod extends TestObject {
+public class TestMethod extends TestObject {
   TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
@@ -32,6 +34,12 @@ class TestMethod extends TestObject {
   }
 
   @Override
+  protected @NotNull String getForkMode() {
+    String forkMode = super.getForkMode();
+    return JUnitConfiguration.FORK_METHOD.equals(forkMode) ? JUnitConfiguration.FORK_REPEAT : forkMode;
+  }
+
+  @Override
   protected void collectPackagesToOpen(List<String> options) {
     options.add(StringUtil.getPackageName(getConfiguration().getPersistentData().getMainClassName()));
   }
@@ -42,13 +50,17 @@ class TestMethod extends TestObject {
 
   @Override
   public String suggestActionName() {
-    return ProgramRunnerUtil.shortenName(getConfiguration().getPersistentData().getMethodName(), 2) + "()";
+    String parameters = getConfiguration().getPersistentData().getProgramParameters();
+    Integer index = JUnitConfiguration.Data.getIndexFromParameters(parameters);
+    String indexStr = index == null ? "" : JUnitBundle.message("junit.config.with.parameter.0", index + 1);
+    return ProgramRunnerUtil.shortenName(getConfiguration().getPersistentData().getMethodName(), 2) + "()" + indexStr;
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+  public RefactoringElementListener getListener(final PsiElement element) {
+    UElement uElement = UastContextKt.toUElement(element);
+    JUnitConfiguration configuration = getConfiguration();
+    if (uElement instanceof PsiMethod method) {
       if (!method.getName().equals(configuration.getPersistentData().getMethodName())) return null;
       //noinspection ConstantConditions
       if (!method.getContainingClass().equals(configuration.myClass.getPsiElement())) return null;
@@ -56,7 +68,7 @@ class TestMethod extends TestObject {
         @Override
         public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
           final boolean generatedName = configuration.isGeneratedName();
-          configuration.getPersistentData().setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
+          configuration.getPersistentData().setTestMethod(PsiLocation.fromPsiElement((PsiMethod)UastContextKt.toUElement(newElement)));
           if (generatedName) configuration.setGeneratedName();
         }
 
@@ -100,42 +112,41 @@ class TestMethod extends TestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
+    final PsiClass psiClass = checkClass();
+
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    final String methodName = data.getMethodName();
+    String methodNameWithSignature = data.getMethodNameWithSignature();
+    if (methodName == null || methodName.trim().isEmpty()) {
+      throw new RuntimeConfigurationError(JUnitBundle.message("method.name.not.specified.error.message"));
+    }
+    final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);
+
+    Predicate<String> hasMethod = name -> {
+      for (final PsiMethod method : psiClass.findMethodsByName(name, true)) {
+        if (filter.value(method) && Objects.equals(methodNameWithSignature, JUnitConfiguration.Data.getMethodPresentation(method))) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (!hasMethod.test(methodName) && !hasMethod.test(methodNameWithSignature)) {
+      throw new RuntimeConfigurationWarning(JUnitBundle.message("test.method.doesnt.exist.error.message", methodName));
+    }
+  }
+
+    @NotNull
+  public PsiClass checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String testClass = data.getMainClassName();
     final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, JUnitBundle.message("no.test.class.specified.error.text"));
 
-    final String methodName = data.getMethodName();
-    String methodNameWithSignature = data.getMethodNameWithSignature();
-    if (methodName == null || methodName.trim().length() == 0) {
-      throw new RuntimeConfigurationError(JUnitBundle.message("method.name.not.specified.error.message"));
+    TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
+    if (testFramework == null || !testFramework.isTestClass(psiClass)) {
+      throw new RuntimeConfigurationError(JUnitBundle.message("class.not.test.error.message", testClass));
     }
-    final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);
-    boolean found = false;
-    boolean testAnnotated = false;
-    for (final PsiMethod method : psiClass.findMethodsByName(methodName, true)) {
-      if (filter.value(method) && Objects.equals(methodNameWithSignature, JUnitConfiguration.Data.getMethodPresentation(method))) {
-        found = true;
-      }
-      if (JUnitUtil.isTestAnnotated(method)) testAnnotated = true;
-    }
-    if (!found) {
-      throw new RuntimeConfigurationWarning(JUnitBundle.message("test.method.doesnt.exist.error.message", methodName));
-    }
-
-    if (!testAnnotated &&
-        !AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY) &&
-        !MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(JUnitUtil.CUSTOM_TESTABLE_ANNOTATION))) {
-      try {
-        final PsiClass testCaseClass = JUnitUtil.getTestCaseClass(configurationModule.getModule());
-        if (!psiClass.isInheritor(testCaseClass, true)) {
-          throw new RuntimeConfigurationError(JUnitBundle.message("class.isnt.inheritor.of.testcase.error.message", testClass));
-        }
-      }
-      catch (JUnitUtil.NoJUnitException e) {
-        throw new RuntimeConfigurationWarning(
-          JUnitBundle.message("junit.jar.not.found.in.module.class.path.error.message", configurationModule.getModuleName()));
-      }
-    }
+    return psiClass;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -12,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Eugene.Kudelevsky
- */
-public class LiveTemplateBuilder {
+public final class LiveTemplateBuilder {
   @NonNls private static final String END_PREFIX = "____END";
   private static final Logger LOGGER = Logger.getInstance(LiveTemplateBuilder.class);
 
@@ -52,7 +49,7 @@ public class LiveTemplateBuilder {
     return name.startsWith(END_PREFIX);
   }
 
-  private static class VarOccurence {
+  private static final class VarOccurence {
     String myName;
     int myOffset;
 
@@ -310,7 +307,7 @@ public class LiveTemplateBuilder {
     return marker;
   }
 
-  public static class Marker {
+  public static final class Marker {
     int myStartOffset;
     int myEndOffset;
 

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.Nls;
+
 import java.io.Serializable;
 
 /**
@@ -23,7 +25,7 @@ import java.io.Serializable;
 public interface OperationDescriptor extends Serializable {
   long getEventTime();
 
-  String getDisplayName();
+  @Nls String getDisplayName();
 
-  String getHint();
+  @Nls String getHint();
 }

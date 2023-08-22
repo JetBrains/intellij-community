@@ -2,15 +2,14 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.roots.ui.configuration.GeneralProjectSettingsElement;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -20,16 +19,17 @@ public class UsagesInUnloadedModules extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
   private final GeneralProjectSettingsElement myContainingElement;
   private final ProjectStructureElement mySourceElement;
-  private final String myPresentableName;
+  private final @NlsContexts.Label String myPresentableName;
 
   public UsagesInUnloadedModules(@NotNull StructureConfigurableContext context, @NotNull GeneralProjectSettingsElement element,
                                  @NotNull ProjectStructureElement sourceElement, @NotNull Collection<UnloadedModuleDescription> unloadedModules) {
     myContext = context;
     myContainingElement = element;
     mySourceElement = sourceElement;
-    myPresentableName =
-      unloadedModules.size() > 1 ? unloadedModules.size() + " Unloaded Modules"
-                                 : "Unloaded Module '" + Objects.requireNonNull(ContainerUtil.getFirstItem(unloadedModules)).getName() + "'";
+    myPresentableName = unloadedModules.size() > 1
+                        ? JavaUiBundle.message("label.x.unloaded.modules", unloadedModules.size())
+                        : JavaUiBundle.message("label.unloaded.module", 
+                                               Objects.requireNonNull(ContainerUtil.getFirstItem(unloadedModules)).getName());
   }
 
   @Override
@@ -49,7 +49,7 @@ public class UsagesInUnloadedModules extends ProjectStructureElementUsage {
 
   @Override
   public PlaceInProjectStructure getPlace() {
-    Place configurablePlace = ProjectStructureConfigurable.getInstance(myContext.getProject()).createProjectConfigurablePlace();
+    Place configurablePlace = myContext.getModulesConfigurator().getProjectStructureConfigurable().createProjectConfigurablePlace();
     return new PlaceInProjectStructureBase(myContext.getProject(), configurablePlace, myContainingElement, false);
   }
 

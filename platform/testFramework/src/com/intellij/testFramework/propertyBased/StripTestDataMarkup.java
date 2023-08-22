@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-/**
- * @author peter
- */
 public class StripTestDataMarkup extends ActionOnFile {
   private static final String[] MARKUP = {"<caret>", "<ref>", "<selection>", "</selection>"};
 
@@ -41,7 +38,7 @@ public class StripTestDataMarkup extends ActionOnFile {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       Document document = getDocument();
       try {
-        new ExpectedHighlightingData(document, true, true, true, true, getFile()).init();
+        new ExpectedHighlightingData(document, true, true, true, true).init();
       }
       catch (AssertionError ignore) {
         // can fail on unpaired markups

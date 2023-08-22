@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -29,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
-class PreferMostUsedWeigher extends LookupElementWeigher {
+final class PreferMostUsedWeigher extends LookupElementWeigher {
   private static final PsiMethodPattern OBJECT_METHOD_PATTERN = psiMethod().withName(
     StandardPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
     inClass(CommonClassNames.JAVA_LANG_OBJECT);
@@ -45,10 +31,11 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
   }
 
   // optimization: do not even create weigher if compiler indices aren't available for now
-  @Nullable
-  static PreferMostUsedWeigher create(@NotNull PsiElement position) {
-    final CompilerReferenceService service = CompilerReferenceService.getInstance(position.getProject());
-    if (service == null) return null;
+  static @Nullable PreferMostUsedWeigher create(@NotNull PsiElement position) {
+    CompilerReferenceService service = CompilerReferenceService.getInstanceIfEnabled(position.getProject());
+    if (service == null) {
+      return null;
+    }
     return service.isActive() || UNIT_TEST_MODE ? new PreferMostUsedWeigher(service, JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) : null;
   }
 
@@ -74,12 +61,10 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
 
   //Objects.requireNonNull is an example
   private static boolean looksLikeHelperMethodOrConst(@NotNull PsiElement element) {
-    if (!(element instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)element;
+    if (!(element instanceof PsiMethod method)) return false;
     if (method.isConstructor()) return false;
     if (isRawDeepTypeEqualToObject(method.getReturnType())) return true;
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
       PsiType paramType = parameter.getType();
       if (isRawDeepTypeEqualToObject(paramType)) {

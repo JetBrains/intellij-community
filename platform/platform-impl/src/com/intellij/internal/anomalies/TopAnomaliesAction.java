@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.anomalies;
 
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Pair;
@@ -34,8 +21,10 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-public class TopAnomaliesAction extends ActionGroup {
+final class TopAnomaliesAction extends ActionGroup {
+
   private static final int LIMIT = 10;
+
   private static class Holder {
     private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
       int i = o2.getSecond() - o1.getSecond();
@@ -66,8 +55,7 @@ public class TopAnomaliesAction extends ActionGroup {
         top.clear();
         Window[] windows = Window.getWindows();
         for (Window window : windows) {
-          if (window.isVisible() && (window instanceof JFrame)) {
-            JFrame f = (JFrame)window;
+          if (window.isVisible() && (window instanceof JFrame f)) {
             checkParents((JComponent)f.getContentPane(), top, LIMIT);
           }
         }
@@ -114,8 +102,7 @@ public class TopAnomaliesAction extends ActionGroup {
         top.clear();
         Window[] windows = Window.getWindows();
         for (Window window : windows) {
-          if (window.isVisible() && (window instanceof JFrame)) {
-            JFrame f = (JFrame)window;
+          if (window.isVisible() && (window instanceof JFrame f)) {
             checkClientProperties((JComponent)f.getContentPane(), top, LIMIT);
           }
         }
@@ -169,9 +156,10 @@ public class TopAnomaliesAction extends ActionGroup {
 
     private static final ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
   }
+
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setText("Top " + LIMIT);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -190,7 +178,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
   }
 
-  private static <K, V extends Integer> String getChange(Set<Pair<K, V>> old, K key, int newResult) {
+  private static <K, V extends Integer> String getChange(Set<? extends Pair<K, V>> old, K key, int newResult) {
     for (Pair<K, V> oldPair : old) {
       if (oldPair.first == key) {
         int oldResult = oldPair.second.intValue();
@@ -203,11 +191,17 @@ public class TopAnomaliesAction extends ActionGroup {
     return "";
   }
 
-  private static abstract class ResettableAction extends AnAction {
+  private abstract static class ResettableAction extends AnAction {
+
     protected ResettableAction(@NotNull Supplier<String> dynamicText) {
       super(dynamicText);
     }
 
     abstract void reset();
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 }

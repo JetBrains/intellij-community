@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -19,9 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class SelectGroupingAction extends LabeledComboBoxAction implements DumbAware {
 
   @NotNull private final Project myProject;
@@ -34,13 +30,18 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText(myBrowser.getGroupingStrategy().toString());
   }
 
   @NotNull
   @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     return new DefaultActionGroup(
       ContainerUtil.map(collectStrategies(),
                         (NotNullFunction<ChangeListGroupingStrategy, DumbAwareAction>)strategy -> new SetGroupingAction(strategy)));
@@ -74,7 +75,7 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
     return result;
   }
 
-  private class SetGroupingAction extends DumbAwareAction {
+  private final class SetGroupingAction extends DumbAwareAction {
 
     @NotNull private final ChangeListGroupingStrategy myStrategy;
 
@@ -89,7 +90,7 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
     }
   }
 
-  private static class CustomChangeListColumnGroupingStrategy implements ChangeListGroupingStrategy {
+  private static final class CustomChangeListColumnGroupingStrategy implements ChangeListGroupingStrategy {
 
     @NotNull private final ChangeListColumn<CommittedChangeList> myColumn;
 
@@ -114,8 +115,7 @@ public class SelectGroupingAction extends LabeledComboBoxAction implements DumbA
     @Override
     public String getGroupName(@NotNull CommittedChangeList changeList) {
       Object value = myColumn.getValue(changeList);
-
-      return value != null ? value.toString() : null;
+      return value != null ? value.toString() : null; //NON-NLS
     }
 
     @Override

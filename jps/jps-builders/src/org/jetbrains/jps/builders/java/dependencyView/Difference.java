@@ -1,23 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
-/**
- * @author: db
- */
 public abstract class Difference {
 
   public static boolean weakerAccess(final int me, final int than) {
-    return ((me & Opcodes.ACC_PRIVATE) > 0 && (than & Opcodes.ACC_PRIVATE) == 0) ||
-           ((me & Opcodes.ACC_PROTECTED) > 0 && (than & Opcodes.ACC_PUBLIC) > 0) ||
-           (isPackageLocal(me) && (than & (Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) > 0);
+    return (isPrivate(me) && !isPrivate(than)) || (isProtected(me) && isPublic(than)) || (isPackageLocal(me) && (than & (Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) != 0);
   }
 
-  private static boolean isPackageLocal(final int access) {
+  public static boolean isPrivate(int access) {
+    return (access & Opcodes.ACC_PRIVATE) != 0;
+  }
+
+  public static boolean isPublic(int access) {
+    return (access & Opcodes.ACC_PUBLIC) != 0;
+  }
+
+  public static boolean isProtected(int access) {
+    return (access & Opcodes.ACC_PROTECTED) != 0;
+  }
+
+  public static boolean isPackageLocal(final int access) {
     return (access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0;
   }
 
@@ -41,9 +49,11 @@ public abstract class Difference {
     boolean unchanged();
   }
 
-  public static <T, D extends Difference> Specifier<T, D> make(final Set<T> past, final Set<T> now) {
-    if ((past == null || past.isEmpty()) && (now == null || now.isEmpty())) {
-      return new Specifier<T, D>() {
+  public static <T, D extends Difference> Specifier<T, D> make(@Nullable final Set<T> past, @Nullable final Set<T> now) {
+    boolean pastEmpty = past == null || past.isEmpty();
+    boolean nowEmpty = now == null || now.isEmpty();
+    if (pastEmpty && nowEmpty) {
+      return new Specifier<>() {
         @Override
         public Collection<T> added() {
           return Collections.emptySet();
@@ -66,9 +76,9 @@ public abstract class Difference {
       };
     }
 
-    if (past == null) {
-      final Collection<T> _now = Collections.unmodifiableCollection(now);
-      return new Specifier<T, D>() {
+    if (pastEmpty) {
+      final Collection<T> _now = Collections.unmodifiableSet(now);
+      return new Specifier<>() {
         @Override
         public Collection<T> added() {
           return _now;
@@ -76,12 +86,37 @@ public abstract class Difference {
 
         @Override
         public Collection<T> removed() {
-          return Collections.emptyList();
+          return Collections.emptySet();
         }
 
         @Override
         public Collection<Pair<T, D>> changed() {
-          return Collections.emptyList();
+          return Collections.emptySet();
+        }
+
+        @Override
+        public boolean unchanged() {
+          return false;
+        }
+      };
+    }
+
+    if (nowEmpty) {
+      final Collection<T> _past = Collections.unmodifiableSet(past);
+      return new Specifier<>() {
+        @Override
+        public Collection<T> added() {
+          return Collections.emptySet();
+        }
+
+        @Override
+        public Collection<T> removed() {
+          return _past;
+        }
+
+        @Override
+        public Collection<Pair<T, D>> changed() {
+          return Collections.emptySet();
         }
 
         @Override
@@ -126,7 +161,7 @@ public abstract class Difference {
       changed = Collections.emptySet();
     }
 
-    return new Specifier<T, D>() {
+    return new Specifier<>() {
       @Override
       public Collection<T> added() {
         return added;
@@ -161,6 +196,8 @@ public abstract class Difference {
   public abstract boolean no();
 
   public abstract boolean accessRestricted();
+
+  public abstract boolean accessExpanded();
 
   public abstract int addedModifiers();
 

@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.util.Arrays;
 import java.util.List;
 
 public interface ToolWindowEx extends ToolWindow {
@@ -21,34 +21,29 @@ public interface ToolWindowEx extends ToolWindow {
    */
   @NotNull ToolWindowType getInternalType();
 
-  @NotNull Project getProject();
-
   void stretchWidth(int value);
 
   void stretchHeight(int value);
 
-  @NotNull InternalDecorator getDecorator();
+  default boolean canCloseContents() {
+    return false;
+  }
 
-  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
+  @NotNull InternalDecorator getDecorator();
 
   /**
    * @deprecated Use {@link #setTitleActions(List)}
    */
   @Deprecated
   default void setTitleActions(@NotNull AnAction @NotNull ... actions) {
-    setTitleActions(Arrays.asList(actions));
+    setTitleActions(List.of(actions));
   }
 
   void setTabActions(@NotNull AnAction @NotNull ... actions);
 
   void setTabDoubleClickActions(@NotNull List<AnAction> actions);
 
-  /**
-   * @deprecated Not used.
-   */
-  @Deprecated
-  default void setUseLastFocusedOnActivation(@SuppressWarnings("unused") boolean focus) {
-  }
+  default @Nullable ToolWindowDecoration getDecoration() { return null; }
 
   final class Border extends EmptyBorder {
     public Border() {
@@ -59,4 +54,28 @@ public interface ToolWindowEx extends ToolWindow {
       super(top ? 2 : 0, left ? 2 : 0, right ? 2 : 0, bottom ? 2 : 0);
     }
   }
+
+  final class ToolWindowDecoration {
+    private final ActionGroup myActionGroup;
+    private final Icon myIcon;
+
+    public ToolWindowDecoration(Icon icon, ActionGroup actionGroup) {
+      myActionGroup = actionGroup;
+      myIcon = icon;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
+
+    public ActionGroup getActionGroup() {
+      return myActionGroup;
+    }
+  }
+
+  default @Nullable StatusText getEmptyText() {
+    return null;
+  }
+
+  default void updateContentUi() {}
 }

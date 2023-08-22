@@ -38,7 +38,7 @@ import java.util.Map;
 /**
  * Represents a class declaration in source.
  */
-public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
+public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
                                  ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors {
   PyClass[] EMPTY_ARRAY = new PyClass[0];
   ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
@@ -73,7 +73,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    *
    * @see #getSuperClassTypes(TypeEvalContext) for the full list of super classes.
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
-   * @param context
    */
   PyClass @NotNull [] getSuperClasses(@Nullable  TypeEvalContext context);
 
@@ -162,7 +161,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * Finds a property with the specified name in the class or one of its ancestors.
    *
    * @param name      of the property
-   * @param inherited
    * @param context   type eval (null to use loose context, but you better provide one)
    * @return descriptor of property accessors, or null if such property does not exist.
    */
@@ -178,14 +176,14 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * @param context   loose context will be used if no context provided
    * @see PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)
    */
-  boolean visitMethods(Processor<PyFunction> processor, boolean inherited, @Nullable TypeEvalContext context);
+  boolean visitMethods(Processor<? super PyFunction> processor, boolean inherited, @Nullable TypeEvalContext context);
 
   /**
    * Consider using {@link PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)}
    *
    * @see PyClassLikeType#visitMembers(Processor, boolean, TypeEvalContext)
    */
-  boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited, TypeEvalContext context);
+  boolean visitClassAttributes(Processor<? super PyTargetExpression> processor, boolean inherited, TypeEvalContext context);
 
   /**
    * Effectively collects assignments inside the class body.
@@ -220,6 +218,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * <p/>
    * This method does not access AST if underlying PSI is stub based.
    */
+  @NotNull
   List<PyTargetExpression> getInstanceAttributes();
 
   @Nullable
@@ -231,7 +230,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
   PyClass findNestedClass(String name, boolean inherited);
 
   /**
-   * @param context
    * @return true if the class is new-style and descends from 'object'.
    */
   boolean isNewStyleClass(TypeEvalContext context);
@@ -244,7 +242,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * @return a property that processor accepted, or null.
    */
   @Nullable
-  Property scanProperties(Processor<Property> processor, boolean inherited);
+  Property scanProperties(Processor<? super Property> processor, boolean inherited);
 
   /**
    * Non-recursively searches for a property for which the given function is a getter, setter or deleter.
@@ -256,7 +254,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
   Property findPropertyByCallable(PyCallable callable);
 
   /**
-   * @param parent
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */
   boolean isSubclass(PyClass parent, @Nullable  TypeEvalContext context);
@@ -303,7 +300,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    *
    * @deprecated Use {@link #getMetaClassType(boolean, TypeEvalContext)} with inherited=false.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   PyType getMetaClassType(@NotNull TypeEvalContext context);
 

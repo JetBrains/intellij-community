@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
 
+import java.util.Objects;
+
 public class MavenRepositoryModelImpl implements MavenRepositoryModel {
 
   private final String myName;
@@ -31,8 +33,8 @@ public class MavenRepositoryModelImpl implements MavenRepositoryModel {
 
     MavenRepositoryModelImpl model = (MavenRepositoryModelImpl)o;
 
-    if (myName != null ? !myName.equals(model.myName) : model.myName != null) return false;
-    if (myUrl != null ? !myUrl.equals(model.myUrl) : model.myUrl != null) return false;
+    if (!Objects.equals(myName, model.myName)) return false;
+    if (!Objects.equals(myUrl, model.myUrl)) return false;
 
     return true;
   }

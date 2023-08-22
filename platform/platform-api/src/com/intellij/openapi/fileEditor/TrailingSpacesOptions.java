@@ -5,6 +5,7 @@ public interface TrailingSpacesOptions {
 
   boolean isStripTrailingSpaces();
   boolean isEnsureNewLineAtEOF();
+  boolean isRemoveTrailingBlankLines();
   boolean isChangedLinesOnly();
   boolean isKeepTrailingSpacesOnCaretLine();
 

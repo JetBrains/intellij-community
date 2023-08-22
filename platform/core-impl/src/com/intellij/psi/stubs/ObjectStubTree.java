@@ -3,15 +3,15 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectObjectProcedure;
-import gnu.trove.TObjectProcedure;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -26,7 +26,7 @@ public class ObjectStubTree<T extends Stub> {
   private boolean myHasBackReference;
   private final List<T> myPlainList;
 
-  public ObjectStubTree(final @NotNull ObjectStubBase<?> root, boolean withBackReference) {
+  public ObjectStubTree(@NotNull ObjectStubBase<?> root, boolean withBackReference) {
     myRoot = root;
     myPlainList = enumerateStubs(root);
     if (withBackReference) {
@@ -47,16 +47,12 @@ public class ObjectStubTree<T extends Stub> {
     return getPlainList();
   }
 
-  @Deprecated
-  public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree() {
-    return indexStubTree(key -> ContainerUtil.canonicalStrategy());
-  }
-
-  public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@NotNull Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> keyHashingStrategyFunction) {
+  @ApiStatus.Internal
+  public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> indexStubTree(@Nullable Function<? super StubIndexKey<?, ?>, ? extends HashingStrategy<Object>> keyHashingStrategyFunction) {
     StubIndexSink sink = new StubIndexSink(keyHashingStrategyFunction);
-    final List<T> plainList = getPlainListFromAllRoots();
+    List<T> plainList = getPlainListFromAllRoots();
     for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {
-      final Stub stub = plainList.get(i);
+      Stub stub = plainList.get(i);
       sink.myStubIdx = i;
       StubSerializationUtil.getSerializer(stub).indexStub(stub, sink);
     }
@@ -72,7 +68,7 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   private static void enumerateStubsInto(@NotNull Stub root, @NotNull List<? super Stub> result) {
-    ((ObjectStubBase)root).id = result.size();
+    ((ObjectStubBase<?>)root).id = result.size();
     result.add(root);
     List<? extends Stub> childrenStubs = root.getChildrenStubs();
     //noinspection ForLoopReplaceableByForEach
@@ -82,7 +78,7 @@ public class ObjectStubTree<T extends Stub> {
     }
   }
 
-  public void setDebugInfo(@NotNull String info) {
+  public void setDebugInfo(@NotNull @NonNls String info) {
     ObjectStubTree<?> ref = getStubTree(myRoot);
     if (ref != null) {
       assert ref == this;
@@ -95,7 +91,7 @@ public class ObjectStubTree<T extends Stub> {
     return root.getUserData(STUB_TO_TREE_REFERENCE);
   }
 
-  public String getDebugInfo() {
+  public @NonNls String getDebugInfo() {
     return myHasBackReference ? myDebugInfo + "; with backReference" : myDebugInfo;
   }
 
@@ -104,22 +100,20 @@ public class ObjectStubTree<T extends Stub> {
     return getClass().getSimpleName() + "{myDebugInfo='" + getDebugInfo() + '\'' + ", myRoot=" + myRoot + '}' + hashCode();
   }
 
-  private static final class StubIndexSink implements IndexSink, TObjectProcedure<Map<Object, int[]>>, TObjectObjectProcedure<Object,int[]> {
-    private final THashMap<StubIndexKey<?, ?>, Map<Object, int[]>> myResult = new THashMap<>();
-    private final java.util.function.Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> myHashingStrategyFunction;
+  private static final class StubIndexSink implements IndexSink {
+    private final Map<StubIndexKey<?, ?>, Map<Object, int[]>> myResult = new HashMap<>();
+    private final @Nullable Function<? super StubIndexKey<?, ?>, ? extends HashingStrategy<Object>> myHashingStrategyFunction;
     private int myStubIdx;
-    private Map<Object, int[]> myProcessingMap;
 
-    private StubIndexSink(@NotNull java.util.function.Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> hashingStrategyFunction) {
+    private StubIndexSink(@Nullable Function<? super StubIndexKey<?, ?>, ? extends HashingStrategy<Object>> hashingStrategyFunction) {
       myHashingStrategyFunction = hashingStrategyFunction;
     }
 
     @Override
-    public void occurrence(final @NotNull StubIndexKey indexKey, final @NotNull Object value) {
+    public void occurrence(@NotNull StubIndexKey indexKey, @NotNull Object value) {
       Map<Object, int[]> map = myResult.get(indexKey);
       if (map == null) {
-        //noinspection unchecked
-        map = new THashMap<>((TObjectHashingStrategy<Object>)myHashingStrategyFunction.apply(indexKey));
+        map = myHashingStrategyFunction == null ? new HashMap<>() : CollectionFactory.createCustomHashingStrategyMap(myHashingStrategyFunction.apply((StubIndexKey<?, ?>)indexKey));
         myResult.put(indexKey, map);
       }
 
@@ -144,26 +138,20 @@ public class ObjectStubTree<T extends Stub> {
     }
 
     public @NotNull Map<StubIndexKey<?, ?>, Map<Object, int[]>> getResult() {
-      myResult.forEachValue(this);
-      return myResult;
-    }
+      for (Map<Object, int[]> map : myResult.values()) {
+        for (Map.Entry<Object, int[]> entry : map.entrySet()) {
+          int[] ints = entry.getValue();
+          if (ints.length == 1) {
+            continue;
+          }
 
-    @Override
-    public boolean execute(Map<Object, int[]> object) {
-      myProcessingMap = object;
-      ((THashMap<Object, int[]>)object).forEachEntry(this);
-      return true;
-    }
-
-    @Override
-    public boolean execute(Object a, int[] b) {
-      if (b.length == 1) return true;
-      int firstZero = ArrayUtil.indexOf(b, 0);
-      if (firstZero != -1) {
-        int[] shorterList = ArrayUtil.realloc(b, firstZero);
-        myProcessingMap.put(a, shorterList);
+          int firstZero = ArrayUtil.indexOf(ints, 0);
+          if (firstZero != -1) {
+            map.put(entry.getKey(), ArrayUtil.realloc(ints, firstZero));
+          }
+        }
       }
-      return true;
+      return myResult;
     }
   }
 }

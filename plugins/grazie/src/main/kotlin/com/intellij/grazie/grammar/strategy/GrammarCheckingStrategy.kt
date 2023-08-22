@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.grazie.grammar.strategy
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -11,15 +13,20 @@ import com.intellij.grazie.grammar.strategy.impl.RuleGroup
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.orTrue
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.lang.ParserDefinition
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.psi.tree.TokenSet
 
 /**
  * Strategy extracting elements for grammar checking used by Grazie plugin
  *
  * You need to implement [isMyContextRoot] and add com.intellij.grazie.grammar.strategy extension in your .xml config
  */
+@Deprecated("Use TextExtractor and ProblemFilter instead")
+@JvmDefaultWithCompatibility
 interface GrammarCheckingStrategy {
 
   /**
@@ -77,7 +84,7 @@ interface GrammarCheckingStrategy {
    *
    * @return name of this strategy
    */
-  @JvmDefault
+  @NlsSafe
   fun getName(): String {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
     return Language.findLanguageByID(extension.language)?.displayName ?: extension.language
@@ -90,7 +97,6 @@ interface GrammarCheckingStrategy {
    *
    * @return unique ID
    */
-  @JvmDefault
   fun getID(): String {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
     return "${extension.pluginDescriptor.pluginId}:${extension.language}"
@@ -105,11 +111,36 @@ interface GrammarCheckingStrategy {
   fun isMyContextRoot(element: PsiElement): Boolean
 
   /**
+   * Determine tokens which should be treated as whitespaces for the current [Language].
+   * Default implementation considers that these tokens are the same as [ParserDefinition.getWhitespaceTokens].
+   *
+   * @return [TokenSet] of whitespace tokens
+   */
+  fun getWhiteSpaceTokens(): TokenSet {
+    val extension = StrategyUtils.getStrategyExtensionPoint(this)
+    val language = Language.findLanguageByID(extension.language) ?: return TokenSet.WHITE_SPACE
+    return LanguageParserDefinitions.INSTANCE.forLanguage(language).whitespaceTokens
+  }
+
+  /**
+   * Determine PsiElement roots that should be considered as a continuous text including [root].
+   * [root] element MUST be present in chain.
+   * Passing any sub-element in chain must return the same list of all the elements in the chain.
+   * Chain roots must be in the same [TextDomain] and have the same [GrammarCheckingStrategy]
+   * or be one of [getWhiteSpaceTokens].
+   * For example, this method can be used to combine single-line comments into
+   * a single block of text for grammar check.
+   *
+   * @param root root element previously selected in [isMyContextRoot]
+   * @return list of root elements that should be considered as a continuous text with [getWhiteSpaceTokens] elements
+   */
+  fun getRootsChain(root: PsiElement): List<PsiElement> = listOf(root)
+
+  /**
    * Determine if this strategy enabled by default.
    *
    * @return true if enabled else false
    */
-  @JvmDefault
   fun isEnabledByDefault(): Boolean = !GraziePlugin.isBundled || ApplicationManager.getApplication()?.isUnitTestMode.orTrue()
 
   /**
@@ -118,8 +149,7 @@ interface GrammarCheckingStrategy {
    * @param root root element previously selected in [isMyContextRoot]
    * @return [TextDomain] for [root] element
    */
-  @JvmDefault
-  fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(root, default = PLAIN_TEXT)
+  fun getContextRootTextDomain(root: PsiElement) = StrategyUtils.getTextDomainOrDefault(this, root, default = PLAIN_TEXT)
 
   /**
    * Determine PsiElement behavior @see [ElementBehavior].
@@ -142,7 +172,7 @@ interface GrammarCheckingStrategy {
   fun getStealthyRanges(root: PsiElement, text: CharSequence): LinkedSet<IntRange> = StrategyUtils.emptyLinkedSet()
 
   /**
-   * Determine if typo is will be shown to user. The final check before add typo to [ProblemsHolder].
+   * Determine if typo will be shown to user. The final check before add typo to [ProblemsHolder].
    *
    * @param root root element previously selected in [isMyContextRoot]
    * @param typoRange range of the typo inside [root] element
@@ -152,14 +182,23 @@ interface GrammarCheckingStrategy {
   fun isTypoAccepted(root: PsiElement, typoRange: IntRange, ruleRange: IntRange) = true
 
   /**
+   * Determine if typo will be shown to user. The final check before add typo to [ProblemsHolder].
+   *
+   * @param parent common parent of [roots]
+   * @param roots roots from [getRootsChain] method
+   * @param typoRange range of the typo inside [parent] element
+   * @param ruleRange range of elements needed for rule to find typo
+   * @return true if typo should be accepted
+   */
+  fun isTypoAccepted(parent: PsiElement, roots: List<PsiElement>, typoRange: IntRange, ruleRange: IntRange) = true
+
+  /**
    * Get ignored typo categories for [child] element @see [Typo.Category].
    *
    * @param root root element previously selected in [isMyContextRoot]
    * @param child current checking element for which ignored categories are specified
    * @return set of the ignored categories for [child]
    */
-  @Deprecated("Use getIgnoredRuleGroup() or getContextRootDomain()")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   fun getIgnoredTypoCategories(root: PsiElement, child: PsiElement): Set<Typo.Category>? = null
 
 
@@ -179,7 +218,5 @@ interface GrammarCheckingStrategy {
    * @param root root element previously selected in [isMyContextRoot]
    * @return list of char replacement rules for whole root context
    */
-  @Deprecated("Use getStealthyRanges() if you don't need some chars")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   fun getReplaceCharRules(root: PsiElement): List<ReplaceCharRule> = emptyList()
 }

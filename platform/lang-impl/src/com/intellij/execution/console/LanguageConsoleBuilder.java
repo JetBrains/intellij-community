@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -32,20 +32,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @experimental
- */
+@ApiStatus.Experimental
 public final class LanguageConsoleBuilder {
   @Nullable
   private LanguageConsoleView consoleView;
-  @Nullable
-  private Condition<LanguageConsoleView> executionEnabled = Conditions.alwaysTrue();
+  private Condition<? super LanguageConsoleView> executionEnabled = Conditions.alwaysTrue();
 
   @Nullable
   private PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
@@ -74,7 +72,7 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
-  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<LanguageConsoleView> condition) {
+  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<? super LanguageConsoleView> condition) {
     executionEnabled = condition;
     return this;
   }
@@ -112,7 +110,7 @@ public final class LanguageConsoleBuilder {
                                                @NotNull final Consumer<? super String> executeActionHandler,
                                                @NotNull String historyType,
                                                @Nullable String historyPersistenceId,
-                                               @Nullable Condition<LanguageConsoleView> enabledCondition) {
+                                               @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
     ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
       @Override
       void doExecute(@NotNull String text, @NotNull LanguageConsoleView consoleView) {
@@ -132,7 +130,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
+   * @see EditorEx#setOneLineMode(boolean)
    */
   @SuppressWarnings("UnusedDeclaration")
   public LanguageConsoleBuilder oneLineInput() {
@@ -141,7 +139,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
+   * @see EditorEx#setOneLineMode(boolean)
    */
   public LanguageConsoleBuilder oneLineInput(boolean value) {
     oneLineInput = value;
@@ -178,7 +176,7 @@ public final class LanguageConsoleBuilder {
     return consoleView;
   }
 
-  public static class MyHelper extends LanguageConsoleImpl.Helper {
+  public static final class MyHelper extends LanguageConsoleImpl.Helper {
     private final PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
@@ -221,7 +219,7 @@ public final class LanguageConsoleBuilder {
     }
 
     @Override
-    int getMinHistoryLineCount() {
+    protected int getMinHistoryLineCount() {
       return 1;
     }
 
@@ -317,7 +315,7 @@ public final class LanguageConsoleBuilder {
       private final ConsoleGutterComponent lineEndGutter;
 
       private Task gutterSizeUpdater;
-      private RangeHighlighter lineSeparatorPainter;
+      private volatile RangeHighlighter lineSeparatorPainter;
 
       private final CustomHighlighterRenderer renderer = new CustomHighlighterRenderer() {
         @Override
@@ -350,7 +348,7 @@ public final class LanguageConsoleBuilder {
         // console view can invoke markupModel.removeAllHighlighters(), so, we must be aware of it
         getHistoryViewer().getMarkupModel().addMarkupModelListener(GutteredLanguageConsole.this, new MarkupModelListener() {
           @Override
-          public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+          public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
             if (lineSeparatorPainter == highlighter) {
               lineSeparatorPainter = null;
             }
@@ -363,7 +361,9 @@ public final class LanguageConsoleBuilder {
           return;
         }
 
-        RangeHighlighter highlighter = getHistoryViewer().getMarkupModel().addRangeHighlighter(0, getDocument().getTextLength(), HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE);
+        RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
+          .addRangeHighlighter(null, 0, getDocument().getTextLength(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                               HighlighterTargetArea.EXACT_RANGE);
         highlighter.setGreedyToRight(true);
         highlighter.setCustomRenderer(renderer);
         lineSeparatorPainter = highlighter;
@@ -439,7 +439,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  public static class MyConsoleRootType extends ConsoleRootType {
+  public static final class MyConsoleRootType extends ConsoleRootType {
     public MyConsoleRootType(String historyType) {
       super(historyType, null);
     }

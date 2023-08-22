@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,11 +25,6 @@ public class SuggestIndexNameMacro extends Macro {
   @Override
   public String getName() {
     return "suggestIndexName";
-  }
-
-  @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.suggest.index.name");
   }
 
   @Override
@@ -68,7 +62,7 @@ public class SuggestIndexNameMacro extends Macro {
           continue ChooseLetterLoop;
         }
       }
-      return new TextResult("" + letter);
+      return new TextResult(String.valueOf(letter));
     }
 
     return null;

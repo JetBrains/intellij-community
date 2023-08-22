@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor;
 
 import com.intellij.largeFilesEditor.actions.*;
@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 
-public class PlatformActionsReplacer {
+public final class PlatformActionsReplacer {
 
   private static final Logger logger = Logger.getInstance(PlatformActionsReplacer.class);
   private static boolean isPlatformActionsWereAdapted = false;
@@ -38,6 +38,7 @@ public class PlatformActionsReplacer {
     addEditorActionHandler(IdeActions.ACTION_FIND, LfeEditorActionHandlerFind::new);
     addDisablingEditorActionHandler(IdeActions.ACTION_REPLACE);
     addDisablingEditorActionHandler(IdeActions.ACTION_FIND_WORD_AT_CARET);
+    addDisablingEditorActionHandler(IdeActions.ACTION_FIND_PREV_WORD_AT_CARET);
     addDisablingEditorActionHandler(IdeActions.ACTION_SELECT_ALL_OCCURRENCES);
     addDisablingEditorActionHandler(IdeActions.ACTION_SELECT_NEXT_OCCURENCE);
     addDisablingEditorActionHandler(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE);

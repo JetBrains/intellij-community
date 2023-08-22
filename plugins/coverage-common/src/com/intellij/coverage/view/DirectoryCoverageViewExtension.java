@@ -7,7 +7,9 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -17,11 +19,12 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class DirectoryCoverageViewExtension extends CoverageViewExtension {
-  private final CoverageAnnotator myAnnotator;
+  protected final CoverageAnnotator myAnnotator;
 
   public DirectoryCoverageViewExtension(Project project,
                                         CoverageAnnotator annotator,
@@ -38,22 +41,25 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
-  public String getSummaryForNode(AbstractTreeNode node) {
+  public String getSummaryForNode(@NotNull AbstractTreeNode node) {
     String statInfo = myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(),
                                                                   mySuitesBundle,
                                                                   myCoverageDataManager);
-    statInfo = StringUtil.notNullize(statInfo, CoverageBundle.message("node.summary.no.coverage"));
-    return statInfo + " in '" + node.toString() + "'";
+    
+    if (statInfo == null) {
+      return CoverageBundle.message("node.summary.no.coverage", node.toString());
+    }
+    return CoverageBundle.message("node.summary.coverage.statistic", statInfo, node.toString());
   }
 
   @Override
-  public String getSummaryForRootNode(AbstractTreeNode childNode) {
+  public String getSummaryForRootNode(@NotNull AbstractTreeNode childNode) {
     final Object value = childNode.getValue();
     return myAnnotator.getDirCoverageInformationString(((PsiDirectory)value), mySuitesBundle, myCoverageDataManager);
   }
 
   @Override
-  public String getPercentage(int columnIdx, AbstractTreeNode node) {
+  public String getPercentage(int columnIdx, @NotNull AbstractTreeNode node) {
     final Object value = node.getValue();
     if (value instanceof PsiFile) {
       return myAnnotator.getFileCoverageInformationString((PsiFile)value, mySuitesBundle, myCoverageDataManager);
@@ -74,7 +80,11 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   @NotNull
   @Override
   public AbstractTreeNode createRootNode() {
-    final VirtualFile baseDir = myProject.getBaseDir();
+    VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+    if (baseDir == null) {
+      final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
+      baseDir = VfsUtil.getCommonAncestor(Arrays.asList(roots));
+    }
     return new CoverageListRootNode(myProject, PsiManager.getInstance(myProject).findDirectory(baseDir), mySuitesBundle, myStateBean);
   }
 
@@ -87,15 +97,29 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       final PsiDirectory psiDirectory = (PsiDirectory)val;
       final PsiDirectory[] subdirectories = ReadAction.compute(() -> psiDirectory.getSubdirectories());
       for (PsiDirectory subdirectory : subdirectories) {
-        children.add(new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean));
+        if (!myAnnotator.isLoading()) {
+          final String info = myAnnotator.getDirCoverageInformationString(subdirectory, mySuitesBundle, myCoverageDataManager);
+          if (info == null) {
+            continue;
+          }
+        }
+        final CoverageListNode e = new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean, false);
+        e.setParent(node);
+        if (!e.getChildren().isEmpty()) {
+          children.add(e);
+        }
       }
       final PsiFile[] psiFiles = ReadAction.compute(() -> psiDirectory.getFiles());
       for (PsiFile psiFile : psiFiles) {
-        children.add(new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean));
-      }
-
-      for (AbstractTreeNode childNode : children) {
-        childNode.setParent(node);
+        if (!myAnnotator.isLoading()) {
+          final String info = myAnnotator.getFileCoverageInformationString(psiFile, mySuitesBundle, myCoverageDataManager);
+          if (info == null) {
+            continue;
+          }
+        }
+        final CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean, true);
+        e.setParent(node);
+        children.add(e);
       }
     }
     return children;

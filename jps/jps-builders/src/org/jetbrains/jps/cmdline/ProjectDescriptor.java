@@ -15,19 +15,14 @@
  */
 package org.jetbrains.jps.cmdline;
 
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompilerEncodingConfiguration;
-import org.jetbrains.jps.incremental.FSCache;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
-import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -47,16 +42,9 @@ public final class ProjectDescriptor {
   private final JpsProject myProject;
   private final JpsModel myModel;
   public final BuildFSState fsState;
-  /**
-   * @deprecated use {@link #getProjectStamps()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public final ProjectTimestamps timestamps;
   private final ProjectStamps myProjectStamps;
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
-  private final BuildTargetsState myTargetsState;
   private final ModuleExcludeIndex myModuleExcludeIndex;
   private int myUseCounter = 1;
   private final Set<JpsSdk<?>> myProjectJavaSdks;
@@ -64,22 +52,19 @@ public final class ProjectDescriptor {
   private final BuildRootIndex myBuildRootIndex;
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
-  private FSCache myFSCache = FSCache.NO_CACHE;
 
   public ProjectDescriptor(JpsModel model,
                            BuildFSState fsState,
-                           ProjectTimestamps timestamps,
+                           ProjectStamps projectStamps,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager,
                            final ModuleExcludeIndex moduleExcludeIndex,
-                           final BuildTargetsState targetsState,
                            final BuildTargetIndex buildTargetIndex, final BuildRootIndex buildRootIndex, IgnoredFileIndex ignoredFileIndex) {
     myModel = model;
     myIgnoredFileIndex = ignoredFileIndex;
     myProject = model.getProject();
     this.fsState = fsState;
-    this.timestamps = timestamps;
-    myProjectStamps = timestamps;
+    myProjectStamps = projectStamps;
     this.dataManager = dataManager;
     myBuildTargetIndex = buildTargetIndex;
     myBuildRootIndex = buildRootIndex;
@@ -93,24 +78,6 @@ public final class ProjectDescriptor {
         myProjectJavaSdks.add(sdk);
       }
     }
-    myTargetsState = targetsState;
-  }
-
-  /**
-   * @deprecated not used after file traversal rewrite to NIO
-   */
-  @NotNull
-  @Deprecated
-  public FSCache getFSCache() {
-    return FSCache.NO_CACHE;
-  }
-
-  /**
-   * @deprecated not used after file traversal rewrite to NIO
-   */
-  @Deprecated
-  public void setFSCache(FSCache cache) {
-    myFSCache = cache == null? FSCache.NO_CACHE : cache;
   }
 
   public BuildRootIndex getBuildRootIndex() {
@@ -126,7 +93,7 @@ public final class ProjectDescriptor {
   }
 
   public BuildTargetsState getTargetsState() {
-    return myTargetsState;
+    return dataManager.getTargetsState();
   }
 
   public CompilerEncodingConfiguration getEncodingConfiguration() {

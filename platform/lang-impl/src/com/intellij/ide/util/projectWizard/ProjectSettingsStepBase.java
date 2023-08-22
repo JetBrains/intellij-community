@@ -6,8 +6,10 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
@@ -15,6 +17,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -23,12 +26,16 @@ import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,14 +45,17 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
-@SuppressWarnings("ComponentNotRegistered")
+/**
+ * {@link AbstractNewProjectStep}
+ */
 public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implements DumbAware, Disposable {
   protected DirectoryProjectGenerator<T> myProjectGenerator;
   protected AbstractNewProjectStep.AbstractCallback<T> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
-  protected File myProjectDirectory;
+  protected NotNullLazyValue<File> myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
@@ -57,7 +67,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
     myCallback = callback;
-    myProjectDirectory = findSequentNonExistingUntitled();
+    myProjectDirectory = NotNullLazyValue.lazy(() -> findSequentNonExistingUntitled());
   }
 
   @Override
@@ -94,7 +104,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     registerValidators();
     final JBScrollPane scrollPane = new JBScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(null);
+    scrollPane.setBorder(JBUI.Borders.empty());
     mainPanel.add(scrollPane, BorderLayout.CENTER);
 
     final JPanel bottomPanel = new JPanel(new BorderLayout());
@@ -134,7 +144,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+          try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+            myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+          }
         }
       }
     };
@@ -178,7 +190,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   protected void registerValidators() {
-    final DocumentAdapter documentAdapter = new DocumentAdapter() {
+    DocumentListener documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         checkValid();
@@ -230,7 +242,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   protected JPanel createAndFillContentPanel() {
-    WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper();
+    WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper(this);
     if (myProjectGenerator instanceof WebProjectTemplate) {
       getPeer().buildUI(settingsStep);
     }
@@ -266,15 +278,16 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     return scrollPanel;
   }
 
-  public void setErrorText(@Nullable String text) {
+  public void setErrorText(@Nullable @Nls String text) {
     myErrorLabel.setText(text);
     myErrorLabel.setForeground(MessageType.ERROR.getTitleForeground());
     myErrorLabel.setIcon(StringUtil.isEmpty(text) ? null : AllIcons.Actions.Lightning);
     myCreateButton.setEnabled(text == null);
   }
 
-  public void setWarningText(@Nullable String text) {
-    myErrorLabel.setText("<html><strong>Note:</strong> " + text + "  </html>");
+  public void setWarningText(@Nullable @Nls String text) {
+    myErrorLabel.setText(HtmlChunk.html().children(HtmlChunk.text(LangBundle.message("warning.prefix.note")).bold(),
+                                                   HtmlChunk.raw(" " + text + "  ")).toString());
     myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
     myErrorLabel.setIcon(StringUtil.isEmpty(text) ? null : AllIcons.Actions.Lightning);
   }
@@ -290,18 +303,17 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     return myProjectGenerator;
   }
 
-  public final String getProjectLocation() {
+  public String getProjectLocation() {
     return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(myLocationField.getText()));
   }
 
   public final void setLocation(@NotNull final String location) {
-    myLocationField.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(location)));
+    myLocationField.setText(getPresentablePath(location));
   }
 
-  protected final LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
+  protected LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
-    myProjectDirectory = findSequentNonExistingUntitled();
-    final String projectLocation = myProjectDirectory.toString();
+    final String projectLocation = myProjectDirectory.get().toString();
     myLocationField.setText(projectLocation);
     final int index = projectLocation.lastIndexOf(File.separator);
     if (index > 0) {
@@ -313,7 +325,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myLocationField.addBrowseFolderListener(IdeBundle.message("directory.project.location.title"),
                                             IdeBundle.message("directory.project.location.description"), null, descriptor);
-    return LabeledComponent.create(myLocationField, BundleBase.replaceMnemonicAmpersand(IdeBundle.message("directory.project.location.label")), BorderLayout.WEST);
+    return LabeledComponent.create(myLocationField,
+                                   BundleBase.replaceMnemonicAmpersand(IdeBundle.message("directory.project.location.label")),
+                                   BorderLayout.WEST);
   }
 
   @NotNull
@@ -322,5 +336,5 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   @Override
-  public void dispose() {}
+  public void dispose() { }
 }

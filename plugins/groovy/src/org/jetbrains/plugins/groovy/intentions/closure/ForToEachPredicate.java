@@ -27,10 +27,9 @@ class ForToEachPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrForStatement)) {
+    if (!(element instanceof GrForStatement statement)) {
       return false;
     }
-    final GrForStatement statement = (GrForStatement) element;
     final GrForClause clause = statement.getClause();
     if (!(clause instanceof GrForInClause) || ((GrForInClause) clause).getIteratedExpression() == null) {
       return false;

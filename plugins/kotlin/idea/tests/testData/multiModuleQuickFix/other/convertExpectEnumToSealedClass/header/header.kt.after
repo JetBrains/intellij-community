@@ -1,0 +1,7 @@
+// "Convert to sealed class" "true"
+
+expect sealed class <caret>E {
+    data object A : E
+    data object B : E
+    data object C : E
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.pointers;
 
 import com.intellij.openapi.Disposable;
@@ -13,25 +13,19 @@ public abstract class VirtualFilePointerManager extends SimpleModificationTracke
     return ApplicationManager.getApplication().getService(VirtualFilePointerManager.class);
   }
 
-  @NotNull
-  public abstract VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
+  public abstract @NotNull VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
 
-  @NotNull
-  public abstract VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
+  public abstract @NotNull VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
 
-  @NotNull
-  public abstract VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, @NotNull Disposable parent,
-                                               @Nullable VirtualFilePointerListener listener);
+  public abstract @NotNull VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer, @NotNull Disposable parent,
+                                                        @Nullable VirtualFilePointerListener listener);
 
-  @NotNull
-  public abstract VirtualFilePointerContainer createContainer(@NotNull Disposable parent);
+  public abstract @NotNull VirtualFilePointerContainer createContainer(@NotNull Disposable parent);
 
-  @NotNull
-  public abstract VirtualFilePointerContainer createContainer(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
+  public abstract @NotNull VirtualFilePointerContainer createContainer(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
 
-  @NotNull
-  public abstract VirtualFilePointer createDirectoryPointer(@NotNull String url,
-                                                            boolean recursively,
-                                                            @NotNull Disposable parent,
-                                                            @NotNull VirtualFilePointerListener listener);
+  public abstract @NotNull VirtualFilePointer createDirectoryPointer(@NotNull String url,
+                                                                     boolean recursively,
+                                                                     @NotNull Disposable parent,
+                                                                     @NotNull VirtualFilePointerListener listener);
 }

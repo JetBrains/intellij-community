@@ -111,8 +111,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
             name = descriptor.getName(tag).substring(prefix.length());
           }
           LookupElementBuilder element = LookupElementBuilder.create(name);
-          if (descriptor instanceof PsiPresentableMetaData) {
-            PsiPresentableMetaData presentableMetaData = (PsiPresentableMetaData)descriptor;
+          if (descriptor instanceof PsiPresentableMetaData presentableMetaData) {
             element = element.withIcon(presentableMetaData.getIcon());
             String typeName = presentableMetaData.getTypeName();
             if (!StringUtil.isEmpty(typeName)) {

@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -32,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.FormHighlightingPass;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -41,10 +29,6 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class UIFormEditor extends UserDataHolderBase implements FileEditor, PossiblyDumbAware {
   private final VirtualFile myFile;
   private final GuiEditor myEditor;
@@ -87,6 +71,12 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return myEditor;
   }
 
+  @NotNull
+  @Override
+  public VirtualFile getFile() {
+    return myFile;
+  }
+
   @Override
   public boolean isModified(){
     return false;
@@ -97,15 +87,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     //TODO[anton,vova] fire when changed
     return
       FileDocumentManager.getInstance().getDocument(myFile) != null &&
-      FileTypeRegistry.getInstance().isFileOfType(myFile, StdFileTypes.GUI_DESIGNER_FORM);
-  }
-
-  @Override
-  public void selectNotify(){
-  }
-
-  @Override
-  public void deselectNotify(){
+      FileTypeRegistry.getInstance().isFileOfType(myFile, GuiFormFileType.INSTANCE);
   }
 
   @Override
@@ -124,11 +106,6 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
       myBackgroundEditorHighlighter = new MyBackgroundEditorHighlighter(myEditor);
     }
     return myBackgroundEditorHighlighter;
-  }
-
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
   }
 
   @Override
@@ -168,11 +145,6 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     if (component != null) {
       FormEditingUtil.selectSingleComponent(getEditor(), component);
     }
-  }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
   }
 
   @Override

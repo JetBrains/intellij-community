@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+@SuppressWarnings("HardCodedStringLiteral")
 public class SsiProcessingState {
   protected static final String DEFAULT_CONFIG_ERR_MSG = "[an error occurred while processing this directive]";
   protected static final String DEFAULT_CONFIG_TIME_FMT = "%A, %d-%b-%Y %T %Z";

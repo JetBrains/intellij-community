@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.*
@@ -30,25 +30,26 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
                                        private val closureDriver: InferenceDriver,
                                        private val originalMethod: GrMethod,
                                        private val typeParameters: Collection<PsiTypeParameter>,
-                                       private val options: SignatureInferenceOptions) : InferenceDriver {
+                                       private val environment: SignatureInferenceEnvironment) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
 
   companion object {
 
-    internal fun createDirectlyFromMethod(method: GrMethod, options: SignatureInferenceOptions): InferenceDriver {
+    internal fun createDirectlyFromMethod(method: GrMethod, environment: SignatureInferenceEnvironment): InferenceDriver {
       if (method.parameters.isEmpty()) {
         return EmptyDriver
       }
       else {
-        return CommonDriver(method.parameters.toSet(), null, EmptyDriver, method, method.typeParameters.asList(), options)
+        return CommonDriver(method.parameters.toSet(), null, EmptyDriver, method, method.typeParameters.asList(), environment)
       }
     }
 
     fun createFromMethod(method: GrMethod,
-                         virtualMethod: GrMethod,
+                         virtualMethodPointer: SmartPsiElementPointer<GrMethod>,
                          generator: NameGenerator,
-                         options: SignatureInferenceOptions): InferenceDriver {
-      val elementFactory = GroovyPsiElementFactory.getInstance(virtualMethod.project)
+                         environment: SignatureInferenceEnvironment): InferenceDriver {
+      val elementFactory = GroovyPsiElementFactory.getInstance(virtualMethodPointer.project)
+      val virtualMethod = virtualMethodPointer.element ?: return EmptyDriver
       val targetParameters = setUpParameterMapping(method, virtualMethod)
         .filter { it.key.eligibleForExtendedInference() }
         .map { it.value }
@@ -57,8 +58,8 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       for (parameter in targetParameters) {
         val newTypeParameter = elementFactory.createProperTypeParameter(generator.name, null)
         typeParameters.add(newTypeParameter)
-        virtualMethod.typeParameterList!!.add(newTypeParameter)
-        parameter.setType(newTypeParameter.type())
+        virtualMethodPointer.element?.typeParameterList?.add(newTypeParameter) ?: return EmptyDriver
+        parameter.setTypeWithoutFormatting(newTypeParameter.type())
       }
       val varargParameter = targetParameters.find { it.isVarArgs }
       varargParameter?.ellipsisDots?.delete()
@@ -66,12 +67,12 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
         return EmptyDriver
       }
       else {
-        return CommonDriver(targetParameters, varargParameter, EmptyDriver, method, typeParameters, options)
+        return CommonDriver(targetParameters, varargParameter, EmptyDriver, method, typeParameters, environment)
       }
     }
 
     private fun GrParameter.setTypeWithoutFormatting(type: PsiType?) {
-      if (type == null || type == PsiType.NULL || (type is PsiWildcardType && !type.isBounded)) {
+      if (type == null || type == PsiTypes.nullType() || (type is PsiWildcardType && !type.isBounded)) {
         typeElementGroovy?.delete()
       }
       else try {
@@ -115,24 +116,26 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       newType.typeParameters.forEach { targetMethod.typeParameterList!!.add(it) }
       typeParameters.addAll(newType.typeParameters)
       if (parameter == varargParameter) {
-        newParameter.setType(newType.type.createArrayType())
+        newParameter.setTypeWithoutFormatting(newType.type.createArrayType())
       }
       else {
-        newParameter.setType(newType.type)
+        newParameter.setTypeWithoutFormatting(newType.type)
       }
     }
-    val copiedVirtualMethod = createVirtualMethod(targetMethod) ?: return EmptyDriver
-    val enrichedOptions = options.copy(signatureInferenceContext = options.signatureInferenceContext.ignoreMethod(originalMethod))
-    val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethod, manager.nameGenerator, enrichedOptions)
+    val copiedVirtualMethodPointer: SmartPsiElementPointer<GrMethod> = createVirtualMethod(targetMethod) ?: return EmptyDriver
+    val closureDriver = ClosureDriver.createFromMethod(originalMethod, copiedVirtualMethodPointer, manager.nameGenerator, environment)
     val signatureSubstitutor = closureDriver.collectSignatureSubstitutor()
-    val virtualToActualSubstitutor = createVirtualToActualSubstitutor(copiedVirtualMethod, targetMethod)
+    val virtualToActualSubstitutor = run {
+      val virtualMethod = copiedVirtualMethodPointer.element ?: return EmptyDriver
+      createVirtualToActualSubstitutor(virtualMethod, targetMethod)
+    }
     val erasureSubstitutor = RecursiveMethodAnalyzer.methodTypeParametersErasureSubstitutor(targetMethod)
     val newClosureDriver = closureDriver.createParameterizedDriver(manager, targetMethod,
                                                                    signatureSubstitutor compose (virtualToActualSubstitutor compose erasureSubstitutor))
     return CommonDriver(targetParameters.map { parameterMapping.getValue(it) }.toSet(),
                         parameterMapping[varargParameter],
                         newClosureDriver,
-                        originalMethod, typeParameters, options)
+                        originalMethod, typeParameters, environment)
   }
 
   override fun collectOuterConstraints(): Collection<ConstraintFormula> {
@@ -145,10 +148,10 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     for (parameter in targetParameters) {
       constraintCollector.add(ExpressionConstraint(ExpectedType(parameter.type, ASSIGNMENT), parameter.initializerGroovy ?: continue))
     }
-    val candidateSamParameters = targetParameters.map { it to PsiType.NULL as PsiType }.toMap(mutableMapOf())
+    val candidateSamParameters = targetParameters.map { it to PsiTypes.nullType() as PsiType }.toMap(mutableMapOf())
     val definitelySamParameters = mutableSetOf<GrParameter>()
     val mapping = setUpParameterMapping(originalMethod, method)
-    for (call in options.calls.value.mapNotNull { it.element.parent }) {
+    for (call in environment.getAllCallsToMethod(method).mapNotNull { it.element.parent }) {
       if (call is GrExpression) {
         constraintCollector.add(ExpressionConstraint(null, call))
         fetchSamCoercions(candidateSamParameters, definitelySamParameters, call, mapping)
@@ -164,13 +167,12 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
       override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
         val resolveResult = methodCallExpression.advancedResolve() as? GroovyMethodResult
         val argumentMapping = resolveResult?.candidate?.argumentMapping ?: return
-        for ((type, argument) in argumentMapping.expectedTypes) {
-          val properType = resolveResult.substitutor.substitute(type)
-          val typeParameter = (argument.type?.resolve() as? PsiTypeParameter).takeIf { it in typeParameters } ?: continue
-          if (properType == typeParameter.type()) {
-            continue
-          }
-          constraintCollector.add(TypeConstraint(properType, typeParameter.type(), method))
+        for (argument in argumentMapping.arguments) {
+          val expectedType = (argumentMapping.targetParameter(argument)?.psi as? GrParameter)?.typeGroovy ?: continue
+          val typeInCurrentMethod = (argument.type?.resolve() as? PsiTypeParameter).takeIf { it in typeParameters }?.type() ?: continue
+          val expectedSubstitutedType =
+            resolveResult.substitutor.substitute(expectedType).takeUnless { it == typeInCurrentMethod } ?: continue
+          constraintCollector.add(TypeConstraint(expectedSubstitutedType, typeInCurrentMethod, method))
         }
       }
 
@@ -220,9 +222,9 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
 
   override fun collectInnerConstraints(): TypeUsageInformation {
     val typeUsageInformation = closureDriver.collectInnerConstraints()
-    val analyzer = RecursiveMethodAnalyzer(method, options.signatureInferenceContext.ignoreMethod(originalMethod))
+    val analyzer = RecursiveMethodAnalyzer(method, environment.signatureInferenceContext.ignoreMethod(originalMethod))
     analyzer.runAnalyzer(method)
-    analyzer.visitOuterCalls(originalMethod, options.calls.value)
+    analyzer.visitOuterCalls(originalMethod, environment.getAllCallsToMethod(method))
     return analyzer.buildUsageInformation() + typeUsageInformation
   }
 
@@ -238,7 +240,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
           val component = virtualType.componentType
           (if (component is PsiWildcardType) component.bound else component)?.createArrayType()
         }
-        virtualParameter.typeElement == null -> PsiType.NULL
+        virtualParameter.typeElement == null -> PsiTypes.nullType()
         else -> virtualParameter.type
       }
       actualParameter.setTypeWithoutFormatting(newParamType)
@@ -249,12 +251,12 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
   override fun acceptTypeVisitor(visitor: PsiTypeMapper, resultMethod: GrMethod): InferenceDriver {
     val mapping = setUpParameterMapping(method, resultMethod)
     method.parameters.forEach {
-      val type = if (it.typeElement == null) PsiType.NULL else it.type
+      val type = if (it.typeElement == null) PsiTypes.nullType() else it.type
       mapping.getValue(it).setTypeWithoutFormatting(type.accept(visitor))
     }
     val newClosureDriver = closureDriver.acceptTypeVisitor(visitor, resultMethod)
     val newTypeParameters = typeParameters.mapNotNull { param -> resultMethod.typeParameters.find { it.name == param.name } }
     val newTargetParameters = targetParameters.map { mapping.getValue(it) }.toSet()
-    return CommonDriver(newTargetParameters, mapping[varargParameter], newClosureDriver, originalMethod, newTypeParameters, options)
+    return CommonDriver(newTargetParameters, mapping[varargParameter], newClosureDriver, originalMethod, newTypeParameters, environment)
   }
 }

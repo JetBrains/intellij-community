@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,7 +21,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeClassChooser createWithInnerClassesScopeChooser(String title,
+  public TreeClassChooser createWithInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,
                                                              GlobalSearchScope scope,
                                                              final ClassFilter classFilter,
                                                              PsiClass initialClass) {
@@ -29,7 +30,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeClassChooser createNoInnerClassesScopeChooser(String title,
+  public TreeClassChooser createNoInnerClassesScopeChooser(@NlsContexts.DialogTitle String title,
                                                            GlobalSearchScope scope,
                                                            ClassFilter classFilter,
                                                            PsiClass initialClass) {
@@ -38,25 +39,25 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeClassChooser createProjectScopeChooser(String title, PsiClass initialClass) {
+  public TreeClassChooser createProjectScopeChooser(@NlsContexts.DialogTitle String title, PsiClass initialClass) {
     return new TreeJavaClassChooserDialog(title, myProject, initialClass);
   }
 
   @Override
   @NotNull
-  public TreeClassChooser createProjectScopeChooser(String title) {
+  public TreeClassChooser createProjectScopeChooser(@NlsContexts.DialogTitle String title) {
     return new TreeJavaClassChooserDialog(title, myProject);
   }
 
   @Override
   @NotNull
-  public TreeClassChooser createAllProjectScopeChooser(String title) {
+  public TreeClassChooser createAllProjectScopeChooser(@NlsContexts.DialogTitle String title) {
     return new TreeJavaClassChooserDialog(title, myProject, GlobalSearchScope.allScope(myProject), null, null);
   }
 
   @Override
   @NotNull
-  public TreeClassChooser createInheritanceClassChooser(String title,
+  public TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title,
                                                         GlobalSearchScope scope,
                                                         PsiClass base,
                                                         boolean acceptsSelf,
@@ -69,20 +70,20 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass) {
+  public TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass) {
     return createInheritanceClassChooser(title, scope, base, initialClass, null);
   }
 
   @Override
   @NotNull
-  public TreeClassChooser createInheritanceClassChooser(String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
+  public TreeClassChooser createInheritanceClassChooser(@NlsContexts.DialogTitle String title, GlobalSearchScope scope, PsiClass base, PsiClass initialClass,
                                                         ClassFilter classFilter) {
     return new TreeJavaClassChooserDialog(title, myProject, scope, classFilter, base, initialClass, false);
   }
 
   @Override
   @NotNull
-  public TreeFileChooser createFileChooser(@NotNull String title,
+  public TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                            final PsiFile initialFile,
                                            FileType fileType,
                                            TreeFileChooser.PsiFileFilter filter) {
@@ -92,7 +93,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
   @Override
   @NotNull
   public
-  TreeFileChooser createFileChooser(@NotNull String title,
+  TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                     @Nullable PsiFile initialFile,
                                     @Nullable FileType fileType,
                                     @Nullable TreeFileChooser.PsiFileFilter filter,
@@ -103,7 +104,9 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
 
   @Override
   @NotNull
-  public TreeFileChooser createFileChooser(@NotNull String title, @Nullable PsiFile initialFile, @Nullable FileType fileType,
+  public TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
+                                           @Nullable PsiFile initialFile,
+                                           @Nullable FileType fileType,
                                            @Nullable TreeFileChooser.PsiFileFilter filter,
                                            boolean disableStructureProviders,
                                            boolean showLibraryContents) {

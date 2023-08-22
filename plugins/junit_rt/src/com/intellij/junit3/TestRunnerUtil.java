@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.junit3;
 
 import junit.framework.Test;
@@ -28,19 +14,20 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
-public class TestRunnerUtil {
+public final class TestRunnerUtil {
   /** @noinspection HardCodedStringLiteral*/
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("messages.RuntimeBundle");
 
   public static Test getTestSuite(JUnit3IdeaTestRunner runner, String[] suiteClassNames){
     if (suiteClassNames.length == 0) {
       return null;
     }
-    ArrayList<Test> result = new ArrayList<Test>();
+    ArrayList<Test> result = new ArrayList<>();
     for (String suiteClassName : suiteClassNames) {
       Test test;
       if (suiteClassName.charAt(0) == '@') {
@@ -48,7 +35,8 @@ public class TestRunnerUtil {
         String[] classNames;
         String suiteName;
         try {
-          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)), "UTF-8"));
+          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)),
+                                                                           StandardCharsets.UTF_8));
           ArrayList<String> vector;
           try {
             suiteName = reader.readLine();
@@ -56,7 +44,7 @@ public class TestRunnerUtil {
             reader.readLine(); //category
             reader.readLine();//filters
 
-            vector = new ArrayList<String>();
+            vector = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
               vector.add(line);
@@ -104,47 +92,45 @@ public class TestRunnerUtil {
 
     Class<?> testClass = loadTestClass(runner, suiteClassName);
     if (testClass == null) return null;
-    Test test = null;
+    Test test;
     if (methodName == null) {
-      if (test == null) {
+      try {
+        Method suiteMethod = testClass.getMethod(BaseTestRunner.SUITE_METHODNAME);
+        if (!Modifier.isStatic(suiteMethod.getModifiers())) {
+          String message = MessageFormat.format(ourBundle.getString("junit.suite.must.be.static"), testClass.getName());
+          System.err.println(message);
+          //runFailed(message);
+          return null;
+        }
         try {
-          Method suiteMethod = testClass.getMethod(BaseTestRunner.SUITE_METHODNAME);
-          if (!Modifier.isStatic(suiteMethod.getModifiers())) {
-            String message = MessageFormat.format(ourBundle.getString("junit.suite.must.be.static"), testClass.getName());
-            System.err.println(message);
-            //runFailed(message);
-            return null;
+          test = (Test)suiteMethod.invoke(null); // static method
+          if (test == null) {
+            return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME,
+                                      MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
+                                                           "method " + suiteClassName + ".suite() evaluates to null"),
+                                      null);
           }
-          try {
-            test = (Test)suiteMethod.invoke(null); // static method 
-            if (test == null) {
-              return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, 
-                                        MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
-                                                             "method " + suiteClassName + ".suite() evaluates to null"), 
-                                        null);
-            }
-            test = new SuiteMethodWrapper(test, suiteClassName);
-          }
-          catch (final InvocationTargetException e) {
-            final String message = MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
-                                                        testClass + " " + e.getTargetException().toString());
-            //System.err.println(message);
-            //runner.runFailed(message);
-            runner.clearStatus();
-            return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, message, e);
-          }
-          catch (IllegalAccessException e) {
-            String message = MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"), testClass + " " + e.toString());
-            //System.err.println(message);
-            //runner.runFailed(message);
-            return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, message, e);
-          }
+          test = new SuiteMethodWrapper(test, suiteClassName);
         }
-        catch (Throwable e) {
-          // try to extract a test suite automatically
+        catch (final InvocationTargetException e) {
+          final String message = MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"),
+                                                      testClass + " " + e.getTargetException().toString());
+          //System.err.println(message);
+          //runner.runFailed(message);
           runner.clearStatus();
-          test = new TestSuite(testClass);
+          return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, message, e);
         }
+        catch (IllegalAccessException e) {
+          String message = MessageFormat.format(ourBundle.getString("junit.failed.to.invoke.suite"), testClass + " " + e.toString());
+          //System.err.println(message);
+          //runner.runFailed(message);
+          return new FailedTestCase(testClass, BaseTestRunner.SUITE_METHODNAME, message, e);
+        }
+      }
+      catch (Throwable e) {
+        // try to extract a test suite automatically
+        runner.clearStatus();
+        test = new TestSuite(testClass);
       }
     }
     else {
@@ -212,7 +198,7 @@ public class TestRunnerUtil {
   }
 
   public static String testsFoundInPackageMessage(int testCount, String name) {
-    return MessageFormat.format(ourBundle.getString("tests.found.in.package"), new Integer(testCount), name);
+    return MessageFormat.format(ourBundle.getString("tests.found.in.package"), Integer.valueOf(testCount), name);
   }
 
   /** @noinspection JUnitTestClassNamingConvention, JUnitTestCaseWithNonTrivialConstructors, JUnitTestCaseWithNoTests */
@@ -236,6 +222,7 @@ public class TestRunnerUtil {
       return myMessage;
     }
 
+    @Override
     protected void runTest() {
       try {
         throw new RuntimeException(myMessage, myThrowable);
@@ -259,10 +246,12 @@ public class TestRunnerUtil {
       return myClassName;
     }
 
+    @Override
     public int countTestCases() {
       return mySuite.countTestCases();
     }
 
+    @Override
     public void run(TestResult result) {
       mySuite.run(result);
     }

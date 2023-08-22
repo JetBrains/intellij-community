@@ -69,7 +69,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     caretMarker.setGreedyToRight(true);
 
     final XmlNamespaceHelper.Runner<String, IncorrectOperationException> runAfter =
-      new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+      new XmlNamespaceHelper.Runner<>() {
 
         @Override
         public void run(final String namespacePrefix) {
@@ -105,8 +105,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
   protected boolean isNamespaceBound(PsiElement psiElement) {
     PsiElement parent = psiElement.getParent();
-    if (!(parent instanceof XmlTag)) return false;
-    final XmlTag tag = (XmlTag)parent;
+    if (!(parent instanceof XmlTag tag)) return false;
     final XmlElementDescriptor tagDescriptor = tag.getDescriptor();
     final String tagNamespace = tag.getNamespace();
     assert myNamespace != null;

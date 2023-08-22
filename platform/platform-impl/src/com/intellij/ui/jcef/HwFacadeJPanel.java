@@ -11,7 +11,7 @@ import java.awt.*;
  * @author tav
  */
 public class HwFacadeJPanel extends JPanel {
-  private final HwFacadeHelper myHwFacadeHelper = new HwFacadeHelper(this);
+  private final HwFacadeHelper myHwFacadeHelper = HwFacadeHelper.create(this);
 
   @Override
   public void addNotify() {

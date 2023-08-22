@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (caret == null) caret = editor.getCaretModel().getPrimaryCaret();
     Document document = editor.getDocument();
     Couple<Integer> lineRange = getTargetLineRange(caret);
@@ -39,8 +40,10 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
     int caretOffsetInLine = 0;
     if (!hasSelection) {
       int caretLine = caret.getLogicalPosition().line;
-      caretLineContent = lines[caretLine - startLine];
-      caretOffsetInLine = caret.getOffset() - document.getLineStartOffset(caretLine);
+      if (caretLine <= endLine) {
+        caretLineContent = lines[caretLine - startLine];
+        caretOffsetInLine = caret.getOffset() - document.getLineStartOffset(caretLine);
+      }
     }
     permute(lines);
     String newContent = String.join("\n", lines);
@@ -52,9 +55,9 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
       caret.moveToOffset(selectionEnd);
       caret.setSelection(toReplaceStart, selectionEnd);
     }
-    else {
+    else if (caretLineContent != null) {
       for (int i = 0; i < lineCount; i++) {
-        if (lines[i] == caretLineContent) {
+        if (Strings.areSameInstance(lines[i], caretLineContent)) {
           caret.moveToOffset(document.getLineStartOffset(startLine + i) + caretOffsetInLine);
           break;
         }
@@ -63,8 +66,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  @Nullable
-  private static Couple<Integer> getTargetLineRange(@NotNull Caret caret) {
+  private static @Nullable Couple<Integer> getTargetLineRange(@NotNull Caret caret) {
     Document document = caret.getEditor().getDocument();
     int startOffset = caret.hasSelection() ? caret.getSelectionStart() : 0;
     int endOffset = caret.hasSelection() ? caret.getSelectionEnd() : document.getTextLength();

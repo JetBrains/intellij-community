@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.model.descriptors;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -30,11 +31,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.PsiCachedValueImpl;
+import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -52,8 +55,14 @@ import org.xml.sax.Locator;
 
 import javax.xml.namespace.QName;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 public class RngElementDescriptor implements XmlElementDescriptor {
+
+  private static final Logger LOG = Logger.getInstance(RngElementDescriptor.class);
+
   private static final Key<ParameterizedCachedValue<XmlElementDescriptor, RngElementDescriptor>> DESCR_KEY = Key.create("DESCR");
   private static final Key<ParameterizedCachedValue<XmlAttributeDescriptor[], RngElementDescriptor>> ATTRS_KEY = Key.create("ATTRS");
 
@@ -74,7 +83,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       }
 
       final PsiElement element = getDeclarationImpl(decl, myElementPattern.getLocation());
-      
+
       return CachedValueProvider.Result.create(element, element.getContainingFile());
     });
   }
@@ -123,10 +132,15 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   @Override
   public final XmlElementDescriptor getElementDescriptor(final XmlTag childTag, XmlTag contextTag) {
-    final XmlElementDescriptor value = getCachedValue(childTag, this, DESCR_KEY, p -> {
-      final XmlElementDescriptor descriptor = p.findElementDescriptor(childTag);
-      return CachedValueProvider.Result.create(descriptor, p.getDependencies(), childTag);
-    });
+    final ConcurrentMap<RngElementDescriptor, CachedValue<XmlElementDescriptor>> descriptorMap =
+      CachedValuesManager.getCachedValue(
+        childTag, () -> CachedValueProvider.Result.create(ContainerUtil.createConcurrentWeakMap(), ModificationTracker.NEVER_CHANGED));
+    final XmlElementDescriptor value = descriptorMap.computeIfAbsent(this,  descr -> {
+      return CachedValuesManager.getManager(childTag.getProject()).createCachedValue(() -> {
+        final XmlElementDescriptor descriptor = descr.findElementDescriptor(childTag);
+        return CachedValueProvider.Result.create(descriptor, descr.getDependencies(), childTag);
+      });
+    }).getValue();
     return value == NULL ? null : value;
   }
 
@@ -398,20 +412,35 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return myElementPattern;
   }
 
-  private static class RncLocationPsiElement extends FakePsiElement implements NavigationItem {
+  private static final class RncLocationPsiElement extends FakePsiElement implements NavigationItem, HtmlSymbolDeclaration {
     private final PsiFile myFile;
     private final int myStartOffset;
     private final int myColumn;
+    private final String myName;
+    private final Kind myKind;
 
     private RncLocationPsiElement(PsiFile file, int startOffset, int column) {
       myFile = file;
       myStartOffset = startOffset;
       myColumn = column;
+      PsiElement definition = getNavigationElement();
+      myName = definition.getText();
+      PsiElement prevPrevSibling = doIfNotNull(definition.getPrevSibling(), PsiElement::getPrevSibling);
+      if (prevPrevSibling == null) {
+        LOG.error("Failed to locate type for RNC element - " + myName);
+      }
+      myKind = prevPrevSibling != null && "element".equals(prevPrevSibling.getText()) ? Kind.ELEMENT : Kind.ATTRIBUTE;
     }
 
     @Override
     public String getName() {
-      return getNavigationElement().getText();
+      return myName;
+    }
+
+    @NotNull
+    @Override
+    public HtmlSymbolDeclaration.Kind getKind() {
+      return myKind;
     }
 
     @NotNull
@@ -432,6 +461,11 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     @Override
     public PsiFile getContainingFile() {
       return myFile;
+    }
+
+    @Override
+    public boolean isWritable() {
+      return false;
     }
 
     @Override

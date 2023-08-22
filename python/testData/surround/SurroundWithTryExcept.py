@@ -1,2 +1,2 @@
 def foo():
-    pr<caret>int "hello"
+    pr<caret>int("hello")

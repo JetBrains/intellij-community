@@ -15,17 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
-import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
-
 public class GrMultiplicativeExpressionTypeCalculator extends GrNumericBinaryExpressionTypeCalculator {
   public static final GrMultiplicativeExpressionTypeCalculator INSTANCE = new GrMultiplicativeExpressionTypeCalculator();
-
-  @Nullable
-  @Override
-  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrOperatorExpression e) {
-    return GrBinaryExpressionUtil.getDefaultNumericResultType(ltype, rtype, e);
-  }
 }

@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,9 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class CustomTemplateCallback {
   private static final Logger LOGGER = Logger.getInstance(CustomTemplateCallback.class);
   private final TemplateManager myTemplateManager;
@@ -77,12 +75,12 @@ public class CustomTemplateCallback {
   }
 
   @Nullable
-  public TemplateImpl findApplicableTemplate(@NotNull String key) {
+  public TemplateImpl findApplicableTemplate(@NotNull @NlsSafe String key) {
     return ContainerUtil.getFirstItem(findApplicableTemplates(key));
   }
 
   @NotNull
-  public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
+  public List<TemplateImpl> findApplicableTemplates(@NotNull @NlsSafe String key) {
     List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : getMatchingTemplates(key)) {
       if (isAvailableTemplate(candidate)) {
@@ -94,7 +92,8 @@ public class CustomTemplateCallback {
 
   private boolean isAvailableTemplate(@NotNull TemplateImpl template) {
     if (myApplicableContextTypes == null) {
-      myApplicableContextTypes = TemplateManagerImpl.getApplicableContextTypes(myFile, myOffset);
+      myApplicableContextTypes =
+        TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.create(myFile, myEditor, myOffset, myOffset, false));
     }
     return !template.isDeactivated() && TemplateManagerImpl.isApplicable(template, myApplicableContextTypes);
   }
@@ -134,7 +133,10 @@ public class CustomTemplateCallback {
   }
 
   public void deleteTemplateKey(@NotNull String key) {
-    int caretAt = myEditor.getCaretModel().getOffset();
+    deleteTemplateKey(key, myEditor.getCaretModel().getOffset());
+  }
+
+  public void deleteTemplateKey(@NotNull String key, int caretAt) {
     int templateStart = caretAt - key.length();
     myEditor.getDocument().deleteString(templateStart, caretAt);
     myEditor.getCaretModel().moveToOffset(templateStart);
@@ -155,7 +157,7 @@ public class CustomTemplateCallback {
       Document document = documentManager.getDocument(file);
       if (document != null && !documentManager.isCommitted(document)) {
         LOGGER.error("Trying to access to injected template context on uncommited document, offset = " + offset,
-                     AttachmentFactory.createAttachment(file.getVirtualFile()));
+                     CoreAttachmentFactory.createAttachment(file.getVirtualFile()));
       }
       else {
         element = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, offset);

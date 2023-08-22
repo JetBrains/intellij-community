@@ -7,8 +7,8 @@ REGEXP_FILE
         PsiElement(GT)('>')
         RegExpPatternImpl: <{>
           RegExpBranchImpl: <{>
-            PsiErrorElement:Dangling metacharacter
+            PsiErrorElement:Unexpected start of quantifier '{'
               <empty list>
             PsiElement(LBRACE)('{')
-        PsiErrorElement:Unclosed group
+        PsiErrorElement:')' expected
           <empty list>

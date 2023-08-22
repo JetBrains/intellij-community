@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -32,6 +33,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
@@ -40,6 +42,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+/**
+ * @deprecated use {@link MavenNewProjectWizardStep} instead
+ */
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = null;
 
@@ -92,10 +99,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     loadSettings();
   }
 
-  /**
-   * @deprecated use {@link MavenModuleWizardStep#MavenModuleWizardStep(AbstractMavenModuleBuilder, WizardContext, boolean)} instead
-   */
-  @Deprecated
   public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
     this((AbstractMavenModuleBuilder)builder, context, includeArtifacts);
   }
@@ -201,15 +204,15 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     if (StringUtil.isEmptyOrSpaces(myGroupIdField.getText())) {
-      throw new ConfigurationException("Please, specify groupId");
+      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.wizard.please.specify.groupid"));
     }
 
     if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
-      throw new ConfigurationException("Please, specify artifactId");
+      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.wizard.please.specify.artifactid"));
     }
 
     if (StringUtil.isEmptyOrSpaces(myVersionField.getText())) {
-      throw new ConfigurationException("Please, specify version");
+      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.wizard.please.specify.version"));
     }
 
     return true;
@@ -310,8 +313,9 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     return "";
   }
 
+  @Nls
   private static String formatProjectString(MavenProject project) {
-    if (project == null) return "<none>";
+    if (project == null) return MavenProjectBundle.message("maven.parent.label.none");
     return project.getMavenId().getDisplayString();
   }
 

@@ -7,11 +7,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-public abstract class AbstractModelBuilderService implements ModelBuilderService {
+public abstract class AbstractModelBuilderService implements ModelBuilderService.Ex {
   @Override
   final public Object buildAll(String modelName, Project project) {
     throw new AssertionError("The method should not be called for this service: " + getClass());
   }
 
+  @Override
   public abstract Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context);
 }

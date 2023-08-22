@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl.blockEvaluator;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -29,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class PyBlockEvaluator {
   @NotNull
   private final PyEvaluationResult myEvaluationResult = new PyEvaluationResult();
@@ -49,7 +46,7 @@ public class PyBlockEvaluator {
    * @see PyEvaluationContext
    */
   public PyBlockEvaluator(@NotNull final PyEvaluationContext evaluationContext) {
-    this(Sets.newHashSet(), evaluationContext);
+    this(new HashSet<>(), evaluationContext);
   }
 
   /**
@@ -136,8 +133,7 @@ public class PyBlockEvaluator {
   @NotNull
   public List<String> getValueAsStringList(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
-    if (value instanceof List) {
-      List valueList = (List)value;
+    if (value instanceof List valueList) {
       for (Object o : valueList) {
         if (o != null && !(o instanceof String)) {
           return Collections.emptyList();
@@ -180,7 +176,7 @@ public class PyBlockEvaluator {
 
   private class MyPyElementVisitor extends PyElementVisitor {
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       PyExpression expression = node.getLeftHandSideExpression();
       if (expression instanceof PyTargetExpression) {
         String name = expression.getName();
@@ -209,7 +205,7 @@ public class PyBlockEvaluator {
     }
 
     @Override
-    public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+    public void visitPyAugAssignmentStatement(@NotNull PyAugAssignmentStatement node) {
       PyExpression target = node.getTarget();
       String name = target.getName();
       if (target instanceof PyReferenceExpression && !((PyReferenceExpression)target).isQualified() && name != null) {
@@ -228,18 +224,16 @@ public class PyBlockEvaluator {
     }
 
     @Override
-    public void visitPyExpressionStatement(PyExpressionStatement node) {
+    public void visitPyExpressionStatement(@NotNull PyExpressionStatement node) {
       node.getExpression().accept(this);
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       PyExpression callee = node.getCallee();
-      if (callee instanceof PyReferenceExpression) {
-        PyReferenceExpression calleeRef = (PyReferenceExpression)callee;
+      if (callee instanceof PyReferenceExpression calleeRef) {
         PyExpression qualifier = calleeRef.getQualifier();
-        if (qualifier instanceof PyReferenceExpression) {
-          PyReferenceExpression qualifierRef = (PyReferenceExpression)qualifier;
+        if (qualifier instanceof PyReferenceExpression qualifierRef) {
           if (!qualifierRef.isQualified()) {
             if (PyNames.EXTEND.equals(calleeRef.getReferencedName()) && node.getArguments().length == 1) {
               processExtendCall(node, qualifierRef.getReferencedName());
@@ -253,11 +247,10 @@ public class PyBlockEvaluator {
     }
 
     @Override
-    public void visitPyFromImportStatement(final PyFromImportStatement node) {
+    public void visitPyFromImportStatement(final @NotNull PyFromImportStatement node) {
       if (node.isFromFuture()) return;
       final PsiElement source = PyUtil.turnDirIntoInit(node.resolveImportSource());
-      if (source instanceof PyFile) {
-        final PyFile pyFile = (PyFile)source;
+      if (source instanceof PyFile pyFile) {
         PyEvaluationResult newlyEvaluatedResult = myContext.getCachedResult(pyFile);
 
         if (newlyEvaluatedResult == null) {
@@ -296,13 +289,13 @@ public class PyBlockEvaluator {
     }
 
     @Override
-    public void visitPyIfStatement(PyIfStatement node) {
+    public void visitPyIfStatement(@NotNull PyIfStatement node) {
       PyStatementList list = node.getIfPart().getStatementList();
       list.acceptChildren(this);
     }
 
     @Override
-    public void visitPyReturnStatement(PyReturnStatement node) {
+    public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
       myReturnValue = prepareEvaluator().evaluate(node.getExpression());
     }
   }

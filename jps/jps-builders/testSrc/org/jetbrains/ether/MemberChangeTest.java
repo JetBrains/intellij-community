@@ -15,15 +15,32 @@
  */
 package org.jetbrains.ether;
 
-/**
- * @author: db
- */
 public class MemberChangeTest extends IncrementalTestCase {
   public MemberChangeTest() {
     super("membersChange");
   }
 
   public void testAddAbstractMethod() {
+    doTest();
+  }
+
+  public void testAddSAMInterfaceMethod() {
+    doTest();
+  }
+
+  public void testDeleteSAMInterfaceMethod() {
+    doTest();
+  }
+
+  public void testRenameSAMInterfaceMethod() {
+    doTest();
+  }
+
+  public void testAddSAMInterfaceAbstractMethod() {
+    doTest();
+  }
+
+  public void testChangeSAMInterfaceMethodToAbstract() {
     doTest();
   }
 
@@ -44,6 +61,10 @@ public class MemberChangeTest extends IncrementalTestCase {
   }
 
   public void testAddFieldToInterface() {
+    doTest();
+  }
+
+  public void testAddFieldToEnum() {
     doTest();
   }
 

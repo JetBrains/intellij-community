@@ -40,13 +40,12 @@ abstract class RunAnythingCommandLineProviderTestCase : UsefulTestCase() {
 
       override fun run(dataContext: DataContext, commandLine: CommandLine) = true
     }
-    val emptyDataContext = DataContext { }
-    val values = provider.getValues(emptyDataContext, "$prefix $command")
+    val values = provider.getValues(DataContext.EMPTY_CONTEXT, "$prefix $command")
     assertTrue(values.all { it.startsWith("$prefix ") })
     return values.map { it.removePrefix("$prefix ") }
   }
 
-  fun withCommandLineFor(command: String, prefix: String = helpCommand, action: (CommandLine) -> Unit) {
+  fun withCommandLineFor(command: String, action: (CommandLine) -> Unit) {
     var isSuggestingTouched = false
     var isRunningTouched = false
     val provider = object : RunAnythingCommandLineProvider() {
@@ -66,10 +65,26 @@ abstract class RunAnythingCommandLineProviderTestCase : UsefulTestCase() {
         return true
       }
     }
-    val emptyDataContext = DataContext { }
-    provider.getValues(emptyDataContext, "$prefix $command")
-    provider.execute(emptyDataContext, "$prefix $command")
+    provider.getValues(DataContext.EMPTY_CONTEXT, command)
+    provider.execute(DataContext.EMPTY_CONTEXT, command)
     assertTrue(isSuggestingTouched)
     assertTrue(isRunningTouched)
+  }
+
+  fun assertMatchingValue(commandLine: String, expected: String?) {
+    val provider = object : RunAnythingCommandLineProvider() {
+      override fun getHelpCommand() = this@RunAnythingCommandLineProviderTestCase.helpCommand
+
+      override fun getHelpCommandAliases() = helpCommandAliases
+
+      override fun suggestCompletionVariants(dataContext: DataContext, commandLine: CommandLine): Sequence<String> {
+        return emptySequence()
+      }
+
+      override fun run(dataContext: DataContext, commandLine: CommandLine): Boolean {
+        return true
+      }
+    }
+    assertEquals(expected, provider.findMatchingValue(DataContext.EMPTY_CONTEXT, commandLine))
   }
 }

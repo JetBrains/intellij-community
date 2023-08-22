@@ -32,6 +32,7 @@ public class CompilerModuleOptionsComponent extends JPanel {
     myProject = project;
 
     myTable = new JBTable(new ModuleOptionsTableModel());
+    myTable.setShowGrid(false);
     myTable.setRowHeight(JBUIScale.scale(22));
     myTable.getEmptyText().setText(JavaCompilerBundle.message("settings.additional.compilation.options"));
 
@@ -48,7 +49,7 @@ public class CompilerModuleOptionsComponent extends JPanel {
     ExpandableTextField editor = new ExpandableTextField();
     InsertPathAction.addTo(editor, null, false);
     optionsColumn.setCellEditor(new DefaultCellEditor(editor));
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
 
     JPanel table = ToolbarDecorator.createDecorator(myTable)
       .disableUpAction()

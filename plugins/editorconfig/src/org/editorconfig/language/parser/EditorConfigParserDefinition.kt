@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.parser
 
 import com.intellij.lang.ASTNode
@@ -13,16 +13,14 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
 import org.editorconfig.language.EditorConfigLanguage
-import org.editorconfig.language.lexer.EditorConfigLexerAdapter
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigPsiFile
 
 class EditorConfigParserDefinition : ParserDefinition {
-  override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter();
+  override fun createLexer(project: Project) = EditorConfigLexerFactory.getAdapter()
   override fun createParser(project: Project): PsiParser = EditorConfigParser()
 
-  override fun getCommentTokens() = COMMENTS
-  override fun getWhitespaceTokens() = WHITE_SPACES
+  override fun getCommentTokens(): TokenSet = EditorConfigTokenSets.COMMENTS
   override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
   override fun getFileNodeType() = FILE
 
@@ -30,8 +28,10 @@ class EditorConfigParserDefinition : ParserDefinition {
   override fun createElement(node: ASTNode): PsiElement = EditorConfigElementTypes.Factory.createElement(node)
 
   private companion object {
-    val WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE)
-    val COMMENTS = TokenSet.create(EditorConfigElementTypes.LINE_COMMENT)
     val FILE = IFileElementType(EditorConfigLanguage)
   }
+}
+
+private object EditorConfigTokenSets {
+  val COMMENTS: TokenSet = TokenSet.create(EditorConfigElementTypes.LINE_COMMENT)
 }

@@ -2,6 +2,7 @@
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -22,6 +23,11 @@ public class ShowBorderAction extends ToggleAction implements DumbAware {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
         return isBorderVisible();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

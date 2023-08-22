@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.Consumer
 import com.intellij.vcs.log.data.SingleTaskController
 import com.jetbrains.changeReminder.ChangeReminderBundle
 
@@ -13,7 +12,7 @@ internal abstract class PredictionController(private val project: Project,
                                              name: String,
                                              parent: Disposable,
                                              handler: (PredictionData) -> Unit
-) : SingleTaskController<PredictionRequest, PredictionData>(name, Consumer { handler(it) }, parent) {
+) : SingleTaskController<PredictionRequest, PredictionData>(name, parent, { handler(it) }) {
   var inProgress = false
     private set(value) {
       field = value

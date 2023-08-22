@@ -1,6 +1,6 @@
 /*
 Value is always false (Objects.isNull(s); line#12)
-  According to inferred contract, method 'isNull' returns 'false' value when parameter != null (isNull; line#12)
+  According to inferred contract, method 'isNull' returns 'false' when s != null (isNull; line#12)
     's' was dereferenced (s; line#11)
  */
 

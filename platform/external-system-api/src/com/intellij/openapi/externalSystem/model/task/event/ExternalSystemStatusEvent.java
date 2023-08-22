@@ -20,7 +20,7 @@ package com.intellij.openapi.externalSystem.model.task.event;
  *
  * @author Vladislav.Soroka
  */
-public interface ExternalSystemStatusEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
+public interface ExternalSystemStatusEvent<T extends OperationDescriptor> extends ExternalSystemMessageEvent<T> {
   /**
    * The amount of work already performed by the build operation.
    *

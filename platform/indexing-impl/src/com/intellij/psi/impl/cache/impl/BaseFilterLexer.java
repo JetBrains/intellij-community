@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.lexer.DelegateLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +28,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
   private TodoScanningState myTodoScanningState;
   private CharSequence myCachedBufferSequence;
   private char[] myCachedArraySequence;
-  
+
   protected BaseFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer) {
     super(originalLexer);
     myOccurrenceConsumer = occurrenceConsumer;
@@ -54,40 +42,41 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
     if (start >= end) return; // this prevents scanning of the same comment twice
 
     CharSequence input = myCachedBufferSequence.subSequence(start, end);
-    myTodoScanningState = advanceTodoItemsCount(input, myOccurrenceConsumer, myTodoScanningState);
+    if (myTodoScanningState == null) myTodoScanningState = createTodoScanningState(IndexPatternUtil.getIndexPatterns());
+    advanceTodoItemsCount(input, myOccurrenceConsumer, myTodoScanningState);
 
     myTodoScannedBound = end;
   }
 
-  public static class TodoScanningState {
+  public static final class TodoScanningState {
     final IndexPattern[] myPatterns;
     final Matcher[] myMatchers;
-    TIntArrayList myOccurences;
+    final IntList myOccurrences;
 
     public TodoScanningState(IndexPattern[] patterns, Matcher[] matchers) {
       myPatterns = patterns;
       myMatchers = matchers;
-      myOccurences = new TIntArrayList(1);
+      myOccurrences = new IntArrayList(1);
     }
   }
 
-  public static TodoScanningState advanceTodoItemsCount(final CharSequence input, final OccurrenceConsumer consumer, TodoScanningState todoScanningState) {
-    if (todoScanningState == null) {
-      IndexPattern[] patterns = IndexPatternUtil.getIndexPatterns();
+  @NotNull
+  public static TodoScanningState createTodoScanningState(IndexPattern[] patterns) {
+    Matcher[] matchers = new Matcher[patterns.length];
+    TodoScanningState todoScanningState = new TodoScanningState(patterns, matchers);
 
-      Matcher[] matchers = new Matcher[patterns.length];
-      todoScanningState = new TodoScanningState(patterns, matchers);
+    for (int i = 0; i < patterns.length; ++i) {
+      Pattern pattern = patterns[i].getOptimizedIndexingPattern();
 
-      for (int i = 0; i < patterns.length; ++i) {
-        Pattern pattern = patterns[i].getOptimizedIndexingPattern();
-
-        if (pattern != null) {
-          matchers[i] = pattern.matcher("");
-        }
+      if (pattern != null) {
+        matchers[i] = pattern.matcher("");
       }
-    } else {
-      todoScanningState.myOccurences.resetQuick();
     }
+    return todoScanningState;
+  }
+
+  public static void advanceTodoItemsCount(CharSequence input, OccurrenceConsumer consumer, TodoScanningState todoScanningState) {
+    todoScanningState.myOccurrences.clear();
 
     for (int i = todoScanningState.myMatchers.length - 1; i >= 0; --i) {
       Matcher matcher = todoScanningState.myMatchers[i];
@@ -96,10 +85,11 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
 
       try {
         while (matcher.find()) {
+          ProgressManager.checkCanceled();
           int start = matcher.start();
-          if (start != matcher.end() && todoScanningState.myOccurences.indexOf(start) == -1) {
+          if (start != matcher.end() && !todoScanningState.myOccurrences.contains(start)) {
             consumer.incTodoOccurrence(todoScanningState.myPatterns[i]);
-            todoScanningState.myOccurences.add(start);
+            todoScanningState.myOccurrences.add(start);
           }
         }
       }
@@ -107,8 +97,6 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
         LOG.error(error); // do not reindex file, just ignore it
       }
     }
-
-    return todoScanningState;
   }
 
   @Override

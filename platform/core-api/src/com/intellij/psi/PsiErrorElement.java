@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +27,6 @@ public interface PsiErrorElement extends PsiElement {
    *
    * @return the error description.
    */
-  @NotNull
+  @NotNull @NlsContexts.DetailedDescription
   String getErrorDescription();
 }

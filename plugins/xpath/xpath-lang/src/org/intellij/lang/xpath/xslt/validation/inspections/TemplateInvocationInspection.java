@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -18,6 +18,7 @@ import org.intellij.lang.xpath.xslt.quickfix.AbstractFix;
 import org.intellij.lang.xpath.xslt.quickfix.AddParameterFix;
 import org.intellij.lang.xpath.xslt.quickfix.AddWithParamFix;
 import org.intellij.lang.xpath.xslt.quickfix.RemoveParamFix;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -40,11 +41,11 @@ public class TemplateInvocationInspection extends XsltInspection {
     @Override
     @NotNull
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-      if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
+        if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         final XsltElementFactory xsltElementFactory = XsltElementFactory.getInstance();
         return new XmlElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               if (XsltSupport.isTemplateCall(tag)) {
                   final XsltCallTemplate call = xsltElementFactory.wrapElement(tag, XsltCallTemplate.class);
                     checkTemplateInvocation(call, holder, isOnTheFly);
@@ -67,15 +68,14 @@ public class TemplateInvocationInspection extends XsltInspection {
                 if (argNames.containsKey(name)) {
                     final PsiElement token = arg.getNameIdentifier();
                     assert token != null;
-                    holder.registerProblem(token, "Duplicate Argument '" + name + "'");
+                    holder.registerProblem(token, XPathBundle.message("inspection.message.duplicate.argument", name));
                 }
                 argNames.put(name, arg);
             }
         }
 
-        if (call instanceof XsltCallTemplate) {
-            final XsltCallTemplate ct = ((XsltCallTemplate)call);
-            final PsiElement nameToken = ct.getNameIdentifier();
+        if (call instanceof XsltCallTemplate ct) {
+          final PsiElement nameToken = ct.getNameIdentifier();
             final XsltTemplate template = ct.getTemplate();
 
             if (template != null) {
@@ -85,8 +85,8 @@ public class TemplateInvocationInspection extends XsltInspection {
                         if (!argNames.containsKey(parameter.getName()) && !parameter.hasDefault()) {
 
                             final LocalQuickFix fix = new AddWithParamFix(parameter, call.getTag()).createQuickFix(onTheFly);
-                            holder.registerProblem(nameToken, "Missing template parameter: " + parameter.getName(),
-                                    AbstractFix.createFixes(fix));
+                          final String message = XPathBundle.message("inspection.message.missing.template.parameter", parameter.getName());
+                          holder.registerProblem(nameToken, message, AbstractFix.createFixes(fix));
                         }
                     }
                 }
@@ -100,11 +100,11 @@ public class TemplateInvocationInspection extends XsltInspection {
                         if (template.getParameter(s) == null) {
                             final LocalQuickFix fix1 = new AddParameterFix(s, template).createQuickFix(onTheFly);
                             final LocalQuickFix fix2 = new RemoveParamFix(argNames.get(s).getTag(), s).createQuickFix(onTheFly);
-                            holder.registerProblem(valueToken, "Undeclared template parameter: " + s,
-                                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, AbstractFix.createFixes(fix1, fix2));
+                            holder.registerProblem(valueToken, XPathBundle.message("inspection.message.undeclared.template.parameter", s),
+                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, AbstractFix.createFixes(fix1, fix2));
                         }
                     } else if (valueElement != null) {
-                        holder.registerProblem(valueElement, "Parameter name expected");
+                        holder.registerProblem(valueElement, XPathBundle.message("inspection.message.parameter.name.expected"));
                     }
                 }
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -19,16 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
-*/
 public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myMatcher;
   private final MinusculeMatcher myCaseInsensitiveMatcher;
   private final boolean myCaseSensitive;
   private static boolean ourForceStartMatching;
   private final boolean myTypoTolerant;
-
 
   public CamelHumpMatcher(@NotNull final String prefix) {
     this(prefix, true);
@@ -45,6 +41,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
     myTypoTolerant = typoTolerant;
     myMatcher = createMatcher(myCaseSensitive);
     myCaseInsensitiveMatcher = createMatcher(false);
+  }
+
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
   }
 
   @Override

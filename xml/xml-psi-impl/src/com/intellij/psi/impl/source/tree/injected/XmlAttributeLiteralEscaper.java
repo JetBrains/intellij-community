@@ -23,9 +23,6 @@ import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
-*/
 public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeValueImpl> {
   private final XmlAttribute myXmlAttribute;
 
@@ -38,13 +35,15 @@ public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeV
 
   @Override
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+    String displayValue = myXmlAttribute.getDisplayValue();
+    if (displayValue == null) {
+      return true;
+    }
     TextRange valueTextRange = myXmlAttribute.getValueTextRange();
     int startInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset() - valueTextRange.getStartOffset());
     int endInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getEndOffset() - valueTextRange.getStartOffset());
-    String displayValue = myXmlAttribute.getDisplayValue();
-    //todo investigate IIOB http://www.jetbrains.net/jira/browse/IDEADEV-16796
-    startInDecoded = startInDecoded < 0 ? 0 : startInDecoded > displayValue.length() ? displayValue.length() : startInDecoded;
-    endInDecoded = endInDecoded < 0 ? 0 : endInDecoded > displayValue.length() ? displayValue.length() : endInDecoded;
+    startInDecoded = Math.max(0, Math.min(startInDecoded, displayValue.length()));
+    endInDecoded = Math.max(0, Math.min(endInDecoded, displayValue.length()));
     if (startInDecoded > endInDecoded) endInDecoded = startInDecoded;
     outChars.append(displayValue, startInDecoded, endInDecoded);
     return true;

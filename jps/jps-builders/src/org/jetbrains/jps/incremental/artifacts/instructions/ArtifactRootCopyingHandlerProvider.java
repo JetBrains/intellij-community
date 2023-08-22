@@ -43,35 +43,10 @@ public abstract class ArtifactRootCopyingHandlerProvider {
    * or {@link JpsModuleOutputPackagingElement} (in that case {@code root} will be the module output directory)
    */
   @Nullable
-  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
-                                                @NotNull File root,
-                                                @NotNull File targetDirectory,
-                                                @NotNull JpsPackagingElement contextElement,
-                                                @NotNull JpsModel model,
-                                                @NotNull BuildDataPaths buildDataPaths) {
-    return createCustomHandler(artifact, root, model, buildDataPaths);
-  }
-
-  /**
-   * @deprecated override {@link #createCustomHandler(JpsArtifact, File, File, JpsPackagingElement, JpsModel, BuildDataPaths)} instead
-   */
-  @Deprecated
-  @Nullable
-  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
-                                                @NotNull File root,
-                                                @NotNull JpsPackagingElement contextElement,
-                                                @NotNull JpsModel model,
-                                                @NotNull BuildDataPaths buildDataPaths) {
-    return createCustomHandler(artifact, root, model, buildDataPaths);
-  }
-
-  /**
-   * @deprecated override {@link #createCustomHandler(JpsArtifact, File, File, JpsPackagingElement, JpsModel, BuildDataPaths)} instead
-   */
-  @Deprecated
-  @Nullable
-  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact, @NotNull File root, @NotNull JpsModel model,
-                                                @NotNull BuildDataPaths buildDataPaths) {
-    throw new UnsupportedOperationException();
-  }
+  public abstract FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
+                                                         @NotNull File root,
+                                                         @NotNull File targetDirectory,
+                                                         @NotNull JpsPackagingElement contextElement,
+                                                         @NotNull JpsModel model,
+                                                         @NotNull BuildDataPaths buildDataPaths);
 }

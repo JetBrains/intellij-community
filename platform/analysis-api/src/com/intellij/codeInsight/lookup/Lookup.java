@@ -3,8 +3,8 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,6 +22,7 @@ public interface Lookup {
   char REPLACE_SELECT_CHAR = '\t';
   char COMPLETE_STATEMENT_SELECT_CHAR = '\r';
   char AUTO_INSERT_SELECT_CHAR = (char) 0;
+  ColorKey LOOKUP_COLOR = ColorKey.createColorKey("LOOKUP_COLOR");
 
   /**
    * @return the offset in {@link #getTopLevelEditor()} which this lookup's left side should be aligned with. Note that if the lookup doesn't fit

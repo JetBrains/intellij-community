@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
@@ -9,15 +9,15 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.OptionTag
 
+private val defaultProviderType: ProviderType
+  get() = CredentialStoreManager.getInstance().defaultProvider()
+
 @Service
-@State(name = "PasswordSafe", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)])
-class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeSettings.PasswordSafeOptions> {
+@State(name = "PasswordSafe", storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
+class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeOptions> {
   companion object {
     @JvmField
-    val TOPIC = Topic.create("PasswordSafeSettingsListener", PasswordSafeSettingsListener::class.java)
-
-    private val defaultProviderType: ProviderType
-      get() = if (SystemInfo.isWindows) ProviderType.KEEPASS else ProviderType.KEYCHAIN
+    val TOPIC: Topic<PasswordSafeSettingsListener> = Topic("PasswordSafeSettingsListener", PasswordSafeSettingsListener::class.java)
   }
 
   private var state = PasswordSafeOptions()
@@ -48,7 +48,7 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
       }
 
       val oldValue = state.provider
-      if (newValue !== oldValue) {
+      if (newValue !== oldValue && CredentialStoreManager.getInstance().isSupported(newValue)) {
         state.provider = newValue
         ApplicationManager.getApplication()?.messageBus?.syncPublisher(TOPIC)?.typeChanged(oldValue, newValue)
       }
@@ -57,31 +57,30 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
   override fun getState() = state
 
   override fun loadState(state: PasswordSafeOptions) {
+    val credentialStoreManager = CredentialStoreManager.getInstance()
+    @Suppress("DEPRECATION")
+    if (state.provider === ProviderType.DO_NOT_STORE && !credentialStoreManager.isSupported(ProviderType.MEMORY_ONLY)
+        || state.provider !== ProviderType.DO_NOT_STORE && !credentialStoreManager.isSupported(state.provider)) {
+      LOG.error("Provider ${state.provider} from loaded credential store config is not supported in this environment")
+    }
+
     this.state = state
     providerType = state.provider
     state.keepassDb = state.keepassDb.nullize(nullizeSpaces = true)
   }
 
   override fun getStateModificationCount() = state.modificationCount
-
-  class PasswordSafeOptions : BaseState() {
-    // do not use it directly
-    @get:OptionTag("PROVIDER")
-    var provider by enum(defaultProviderType)
-
-    // do not use it directly
-    var keepassDb by string()
-    var isRememberPasswordByDefault by property(true)
-
-    // do not use it directly
-    var pgpKeyId by string()
-  }
 }
 
-enum class ProviderType {
-  MEMORY_ONLY, KEYCHAIN, KEEPASS,
+class PasswordSafeOptions : BaseState() {
+  // do not use it directly
+  @get:OptionTag("PROVIDER")
+  var provider by enum(defaultProviderType)
 
-  // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it
-  @Deprecated("")
-  DO_NOT_STORE
+  // do not use it directly
+  var keepassDb by string()
+  var isRememberPasswordByDefault by property(true)
+
+  // do not use it directly
+  var pgpKeyId by string()
 }

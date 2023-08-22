@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.embedding;
 
 import com.intellij.lang.ASTNode;
@@ -49,12 +35,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
   private final MasqueradingLexer myLexer;
 
-  public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
-                        @NotNull final ParserDefinition parserDefinition,
-                        @NotNull final MasqueradingLexer lexer,
-                        @NotNull final ASTNode chameleon,
-                        @NotNull final CharSequence text) {
-    super(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
+  public MasqueradingPsiBuilderAdapter(@NotNull PsiBuilder delegate) {
+    super(delegate);
 
     LOG.assertTrue(myDelegate instanceof PsiBuilderImpl);
     myBuilderDelegate = ((PsiBuilderImpl)myDelegate);
@@ -63,6 +45,14 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     myLexer = ((MasqueradingLexer)myBuilderDelegate.getLexer());
 
     initShrunkSequence();
+  }
+
+  public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
+                                       @NotNull final ParserDefinition parserDefinition,
+                                       @NotNull final MasqueradingLexer lexer,
+                                       @NotNull final ASTNode chameleon,
+                                       @NotNull final CharSequence text) {
+    this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
   }
 
   @NotNull
@@ -299,27 +289,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
 
-  private static class MyShiftedToken {
-    public final IElementType elementType;
-
-    public final int realStart;
-    public final int realEnd;
-
-    public final int shrunkStart;
-    public final int shrunkEnd;
-
-    MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
-      this.elementType = elementType;
-      this.realStart = realStart;
-      this.realEnd = realEnd;
-      this.shrunkStart = shrunkStart;
-      this.shrunkEnd = shrunkEnd;
-    }
-
-    @Override
-    public String toString() {
-      return "MSTk: [" + realStart + ", " + realEnd + "] -> [" + shrunkStart + ", " + shrunkEnd + "]: " + elementType.toString();
-    }
+  private record MyShiftedToken(IElementType elementType, int realStart, int realEnd, int shrunkStart, int shrunkEnd) {
   }
 
   private class MyMarker extends DelegateMarker {

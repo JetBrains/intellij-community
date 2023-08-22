@@ -11,7 +11,7 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface EvaluationContext extends StackFrameContext{
+public interface EvaluationContext extends StackFrameContext {
   @Override
   @NotNull
   DebugProcess getDebugProcess();
@@ -29,7 +29,7 @@ public interface EvaluationContext extends StackFrameContext{
   /**
    * @deprecated Use {@link #computeThisObject()} instead, EvaluationContext now may lazily compute this object
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   Value getThisObject();
 

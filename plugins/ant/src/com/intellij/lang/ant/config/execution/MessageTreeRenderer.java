@@ -31,8 +31,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
 
   @Override
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    if(value instanceof MessageNode) {
-      MessageNode messageNode = (MessageNode)value;
+    if(value instanceof MessageNode messageNode) {
       setText(messageNode.getText(), messageNode.getTypeString() + messageNode.getPositionString());
     }
     else {
@@ -48,8 +47,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
     if (foreground == null) {
       myDefaultForeground = foreground = getForeground();
     }
-    if (value instanceof MessageNode) {
-      MessageNode node = (MessageNode)value;
+    if (value instanceof MessageNode node) {
       AntBuildMessageView.MessageType type = node.getType();
       if (type == AntBuildMessageView.MessageType.BUILD) {
         icon = AntIcons.Build;

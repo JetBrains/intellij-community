@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messager;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -28,24 +15,24 @@ import java.awt.event.ActionListener;
 /**
  * @author kir
  */
-public class Callout {
+public final class Callout {
 
   public static final int NORTH_WEST = 1;
   public static final int NORTH_EAST = 2;
   public static final int SOUTH_WEST = 3;
   public static final int SOUTH_EAST = 4;
 
-  public static void showText(JTree tree, TreePath path, int direction, String text) {
+  public static void showText(JTree tree, TreePath path, int direction, @NlsContexts.Label String text) {
     showText(TreeUtil.getPointForPath(tree, path), direction, text);
   }
 
-  public static void showTextBelow(JComponent component, String text) {
+  public static void showTextBelow(JComponent component, @NlsContexts.Label String text) {
     final RelativePoint calloutPoint = RelativePoint.getSouthWestOf(component);
     calloutPoint.getPoint().x += 5;
     Callout.showText(calloutPoint, Callout.SOUTH_EAST, text);
   }
 
-  public static void showText(RelativePoint aPoint, int direction, String text) {
+  public static void showText(RelativePoint aPoint, int direction, @NlsContexts.Label String text) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     JLabel label = new JLabel(text);
@@ -55,7 +42,7 @@ public class Callout {
     callout.show(direction, aPoint);
   }
 
-  public static void showText(JComponent component, int direction, String text) {
+  public static void showText(JComponent component, int direction, @NlsContexts.Label String text) {
     final RelativePoint point = new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight() / 2));
     showText(point, direction, text);
   }

@@ -1,15 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
+
+import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.util.Objects;
 
 import static com.intellij.ui.paint.RectanglePainter.FILL;
+import static com.intellij.util.ui.UIUtil.getLcdContrastValue;
 
 public final class TextIcon implements Icon {
+  private static final Logger LOG = Logger.getInstance(TextIcon.class);
+
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
   private Integer myRound;
@@ -19,15 +27,23 @@ public final class TextIcon implements Icon {
   private String myText;
   private Rectangle myTextBounds;
   private FontRenderContext myContext;
+  private AffineTransform myFontTransform;
 
   private Rectangle getTextBounds() {
     if (myTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
-      Object aaHint = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
-      if (aaHint == null) aaHint = RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT;
-      Object fmHint = UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS);
-      if (fmHint == null) fmHint = RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT;
-      myContext = new FontRenderContext(null, aaHint, fmHint);
-      myTextBounds = getPixelBounds(myFont, myText, myContext);
+      myContext = createContext();
+      Font fnt = myFontTransform == null ? myFont : myFont.deriveFont(myFontTransform);
+      myTextBounds = getPixelBounds(fnt, myText, myContext);
+
+      if (myFontTransform != null) {
+        try {
+          AffineTransform reverseTransform = myFontTransform.createInverse();
+          myTextBounds = applyTransform(myTextBounds, reverseTransform);
+        }
+        catch (NoninvertibleTransformException e) {
+          LOG.error(e);
+        }
+      }
     }
     return myTextBounds;
   }
@@ -38,6 +54,10 @@ public final class TextIcon implements Icon {
     setBackground(background);
     setForeground(foreground);
     setText(text);
+  }
+
+  public void setFontTransform(AffineTransform fontTransform) {
+    myFontTransform = fontTransform;
   }
 
   public void setInsets(int top, int left, int bottom, int right) {
@@ -92,8 +112,10 @@ public final class TextIcon implements Icon {
     if (myForeground != null && bounds != null) {
       Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x, myInsets.top + y, bounds.width, bounds.height);
       try {
+        Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+        if (textLcdContrast == null) textLcdContrast = getLcdContrastValue(); // L&F is not properly updated
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, myContext.getAntiAliasingHint());
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST));
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, textLcdContrast);
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myContext.getFractionalMetricsHint());
         g2d.setColor(myForeground);
         g2d.setFont(myFont);
@@ -124,9 +146,27 @@ public final class TextIcon implements Icon {
     return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds);
   }
 
+  private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {
+    Point2D leftTop = at.transform(new Point(srcRect.x, srcRect.y), null);
+    Point2D rightBottom = at.transform(new Point(srcRect.x + srcRect.width, srcRect.y + srcRect.height), null);
+    int left = (int)Math.floor(leftTop.getX());
+    int top = (int)Math.floor(leftTop.getY());
+    int right = (int)Math.ceil(rightBottom.getX());
+    int bottom = (int)Math.ceil(rightBottom.getY());
+    return new Rectangle(left, top, right - left, bottom - top);
+  }
+
   private static Rectangle getPixelBounds(Font font, String text, FontRenderContext context) {
     return font.hasLayoutAttributes()
            ? new TextLayout(text, font, context).getPixelBounds(context, 0, 0)
            : font.createGlyphVector(context, text).getPixelBounds(context, 0, 0);
+  }
+
+  private static FontRenderContext createContext() {
+    Object aaHint = UIManager.get(RenderingHints.KEY_TEXT_ANTIALIASING);
+    if (aaHint == null) aaHint = RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT;
+    Object fmHint = UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS);
+    if (fmHint == null) fmHint = RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT;
+    return new FontRenderContext(null, aaHint, fmHint);
   }
 }

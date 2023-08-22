@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -38,18 +24,16 @@ class HighlightedSelectorsTable extends TableView<Selector> {
                                    @NotNull final Project project,
                                    @NotNull final List<Selector> selectors) {
     super(new ListTableModel<>(new ColumnInfo[]{
-      new ColumnInfo<Selector, String>("Name") {
-        @Nullable
+      new ColumnInfo<Selector, String>(TaskBundle.message("column.name.name")) {
         @Override
-        public String valueOf(Selector selector) {
+        public @NotNull String valueOf(Selector selector) {
           return selector.getName();
         }
       },
-      new ColumnInfo<Selector, String>("Path") {
+      new ColumnInfo<Selector, String>(TaskBundle.message("column.name.path")) {
 
-        @Nullable
         @Override
-        public String valueOf(Selector selector) {
+        public @NotNull String valueOf(Selector selector) {
           return selector.getPath();
         }
 
@@ -63,22 +47,21 @@ class HighlightedSelectorsTable extends TableView<Selector> {
           selector.setPath(value);
         }
 
-        @Nullable
         @Override
-        public TableCellRenderer getRenderer(Selector selector) {
+        public @NotNull TableCellRenderer getRenderer(Selector selector) {
           return new EditorTableCellViewer(valueFileType, project);
         }
 
-        @Nullable
         @Override
-        public TableCellEditor getEditor(Selector o) {
+        public @NotNull TableCellEditor getEditor(Selector o) {
           return new EditorTableCellViewer(valueFileType, project);
         }
       }
     }, selectors, 0));
+    setShowGrid(false);
   }
 
-  private static class EditorTableCellViewer extends AbstractTableCellEditor implements TableCellRenderer {
+  private static final class EditorTableCellViewer extends AbstractTableCellEditor implements TableCellRenderer {
     private final EditorTextField myEditorField;
 
     private EditorTableCellViewer(FileType fileType, Project project) {

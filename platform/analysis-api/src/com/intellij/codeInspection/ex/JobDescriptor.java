@@ -1,22 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class JobDescriptor {
-  @NotNull
-  private final String myDisplayName;
+  private final @NotNull @Nls String myDisplayName;
   private int myTotalAmount;
   private int myDoneAmount;
   public static final JobDescriptor[] EMPTY_ARRAY = new JobDescriptor[0];
 
-  public JobDescriptor(@NotNull String displayName) {
+  public JobDescriptor(@NotNull @Nls String displayName) {
     myDisplayName = displayName;
   }
 
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull @Nls String getDisplayName() {
     return myDisplayName;
   }
 

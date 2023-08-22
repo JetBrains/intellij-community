@@ -1,4 +1,4 @@
-// "Remove 'unchecked' suppression" "true"
+// "Remove 'unchecked' suppression" "true-preview"
 import java.util.*;
 
 public class Test {
@@ -7,6 +7,9 @@ public class Test {
     return null;
   }
 
+  /**
+   * Some javadoc with unchecked word inside
+   */
   void foo() {
     List<ArrayList<String>> list = foo(new ArrayList<String>());
   }

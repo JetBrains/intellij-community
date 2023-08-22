@@ -27,7 +27,7 @@ import javax.swing.*;
 
 class JavaSliceDereferenceUsage extends JavaSliceUsage {
   JavaSliceDereferenceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
-    super(element, parent, substitutor,0,"");
+    super(element, parent, substitutor);
   }
 
   @Override

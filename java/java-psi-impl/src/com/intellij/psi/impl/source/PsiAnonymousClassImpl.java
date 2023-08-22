@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -23,18 +10,22 @@ import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
+
+import static com.intellij.reference.SoftReference.dereference;
+
 public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousClass {
+  private static final Key<PsiAnonymousClassImpl> STUB_BASE_CLASS_REFERENCE_HOLDER = Key.create("STUB_BASE_CLASS_REFERENCE_HOLDER");
   private SoftReference<PsiClassType> myCachedBaseType;
 
-  public PsiAnonymousClassImpl(final PsiClassStub stub) {
+  public PsiAnonymousClassImpl(PsiClassStub stub) {
     super(stub, JavaStubElementTypes.ANONYMOUS_CLASS);
   }
 
-  public PsiAnonymousClassImpl(final ASTNode node) {
+  public PsiAnonymousClassImpl(ASTNode node) {
     super(node);
   }
 
@@ -59,7 +50,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   @Override
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
-    final PsiElement baseRef = getFirstChild();
+    PsiElement baseRef = getFirstChild();
     assert baseRef instanceof PsiJavaCodeReferenceElement : getText();
     return (PsiJavaCodeReferenceElement)baseRef;
   }
@@ -67,24 +58,24 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   @Override
   @NotNull
   public PsiClassType getBaseClassType() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub == null) {
       myCachedBaseType = null;
       return getTypeByTree();
     }
 
-    PsiClassType type = SoftReference.dereference(myCachedBaseType);
+    PsiClassType type = dereference(myCachedBaseType);
     if (type != null) return type;
 
     if (!isInQualifiedNew() && !isDiamond(stub)) {
-      final String refText = stub.getBaseClassReferenceText();
+      String refText = stub.getBaseClassReferenceText();
       assert refText != null : stub;
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
 
-      final PsiElement context = calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList());
       try {
-        final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(refText, context);
+        PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(refText, this);
         ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND);
+        ref.getContainingFile().putUserData(STUB_BASE_CLASS_REFERENCE_HOLDER, this);
         type = factory.createType(ref);
       }
       catch (IncorrectOperationException e) {
@@ -99,9 +90,9 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
     }
   }
   
-  private boolean isDiamond(@NotNull PsiClassStub stub) {
+  private boolean isDiamond(@NotNull PsiClassStub<?> stub) {
     if (PsiUtil.isLanguageLevel9OrHigher(this)) {
-      final String referenceText = stub.getBaseClassReferenceText();
+      String referenceText = stub.getBaseClassReferenceText();
       if (referenceText != null && referenceText.endsWith(">")) {
         return StringUtil.trimEnd(referenceText, ">").trim().endsWith("<");
       }
@@ -195,21 +186,34 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
                                      @NotNull PsiElement place) {
     if (lastParent instanceof PsiExpressionList) return true;
 
-    if (lastParent instanceof PsiJavaCodeReferenceElement/* IMPORTANT: do not call getBaseClassReference() for lastParent == null and lastParent which is not under our node - loads tree!*/
-        && lastParent.getParent() == this && lastParent == getBaseClassReference()) {
-      return true;
-    }
+    if (lastParent != null && isBaseClassReference(lastParent)) return true;
+
     return super.processDeclarations(processor, state, lastParent, place);
+  }
+
+  public boolean isBaseClassReference(@NotNull PsiElement element) {
+    if (element instanceof PsiJavaCodeReferenceElement) {
+      // IMPORTANT: do not call getBaseClassReference() for lastParent which is not under our node - loads tree!
+      PsiElement parent = element.getParent();
+      return parent == this && element == getBaseClassReference() ||
+             isBaseClassReferenceHolder(parent);
+    }
+
+    return isBaseClassReferenceHolder(element);
+  }
+
+  private boolean isBaseClassReferenceHolder(@NotNull PsiElement element) {
+    return element instanceof DummyHolder && element.getUserData(STUB_BASE_CLASS_REFERENCE_HOLDER) == this;
   }
 
   @Override
   public boolean isInQualifiedNew() {
-    final PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isAnonymousInQualifiedNew();
     }
 
-    final PsiElement parent = getParent();
+    PsiElement parent = getParent();
     return parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null;
   }
 

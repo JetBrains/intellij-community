@@ -5,32 +5,25 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.associatedModule
-import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pythonSdk
 
-/**
- * @author vlan
- */
-class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
+class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
   @Volatile
   private var packages: List<PyPackage>? = null
-
-  init {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk) {
-      PythonSdkType.getInstance().setupSdkPaths(sdk)
-    }
-  }
 
   override fun installManagement() {}
 
@@ -49,7 +42,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       runPipEnv(sdk, *args.toTypedArray())
     }
     finally {
-      sdk.associatedModule?.baseDir?.refresh(true, false)
+      sdk.associatedModuleDir?.refresh(true, false)
       refreshAndGetPackages(true)
     }
   }
@@ -61,7 +54,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
       runPipEnv(sdk, *args.toTypedArray())
     }
     finally {
-      sdk.associatedModule?.baseDir?.refresh(true, false)
+      sdk.associatedModuleDir?.refresh(true, false)
       refreshAndGetPackages(true)
     }
   }
@@ -79,7 +72,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
   }
 
   override fun createVirtualEnv(destinationDir: String, useGlobalSite: Boolean): String {
-    throw ExecutionException("Creating virtual environments based on Pipenv environments is not supported")
+    throw ExecutionException(PySdkBundle.message("python.sdk.pipenv.creating.venv.not.supported"))
   }
 
   override fun getPackages() = packages
@@ -141,7 +134,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
         .asSequence()
         .filterNotNull()
         .flatMap { sequenceOf(it.pkg) + it.dependencies.asSequence() }
-        .map { PyPackage(it.packageName, it.installedVersion, null, emptyList()) }
+        .map { PyPackage(it.packageName, it.installedVersion) }
         .distinct()
         .toList()
     }

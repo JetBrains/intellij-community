@@ -52,9 +52,9 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
     }
   };
 
-  public PropertiesFileStructureViewModel(PropertiesFileImpl file, Editor editor) {
+  public PropertiesFileStructureViewModel(PropertiesFileImpl file, Editor editor, String separator) {
     super(editor, file);
-    String separator = PropertiesSeparatorManager.getInstance(file.getProject()).getSeparator(file.getResourceBundle());
+
     myByWordPrefixesGrouper = new GroupByWordPrefixes(separator);
   }
 

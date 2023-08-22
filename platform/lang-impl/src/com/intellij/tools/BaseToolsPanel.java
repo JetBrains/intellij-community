@@ -2,14 +2,17 @@
 
 package com.intellij.tools;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,6 +145,11 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     }).createPanel(), BorderLayout.CENTER);
 
     myAddButton = ToolbarDecorator.findAddButton(this);
@@ -201,13 +209,8 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       Object object = ((CheckedTreeNode)value).getUserObject();
 
       if (object instanceof ToolsGroup) {
-        final String groupName = ((ToolsGroup)object).getName();
-        if (groupName != null) {
-          getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
-        else {
-          getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
+        final String groupName = ((ToolsGroup<?>)object).getName();
+        getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else if (object instanceof Tool) {
         getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -269,9 +272,8 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     if (node != null) {
       if (isMovingAvailable(node, direction)) {
         moveNode(node, direction);
-        if (node.getUserObject() instanceof Tool) {
+        if (node.getUserObject() instanceof Tool tool) {
           ToolsGroup group = (ToolsGroup)(((CheckedTreeNode)node.getParent()).getUserObject());
-          Tool tool = (Tool)node.getUserObject();
           moveElementInsideGroup(tool, group, direction);
         }
         TreePath path = new TreePath(node.getPath());
@@ -409,8 +411,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         return;
       }
       myIsModified = true;
-      if (node.getUserObject() instanceof Tool) {
-        Tool tool = (Tool)node.getUserObject();
+      if (node.getUserObject() instanceof Tool tool) {
         CheckedTreeNode parentNode = (CheckedTreeNode)node.getParent();
         ((ToolsGroup)parentNode.getUserObject()).removeElement(tool);
         removeNodeFromParent(node);
@@ -466,7 +467,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     }
   }
 
-  protected ToolEditorDialog createToolEditorDialog(String title) {
+  protected ToolEditorDialog createToolEditorDialog(@NlsContexts.DialogTitle String title) {
     return new ToolEditorDialog(this, title);
   }
 
@@ -486,7 +487,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     return null;
   }
 
-  private String[] getGroups() {
+  private String @Nls [] getGroups() {
     List<String> result = new ArrayList<>();
     for (ToolsGroup group : getGroupList()) {
       result.add(group.getName());

@@ -1,37 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.AcceptAllFilesAndDirectoriesIndexingHint;
+import com.intellij.util.indexing.hints.RejectAllIndexingHint;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class FilenameIndexImpl extends ScalarIndexExtension<String> {
-  @NotNull
+final class FilenameIndexImpl extends ScalarIndexExtension<String> {
   @Override
-  public ID<String,Void> getName() {
+  public @NotNull ID<String,Void> getName() {
     return FilenameIndex.NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return inputData -> Collections.singletonMap(inputData.getFileName(), null);
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> true;
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      return RejectAllIndexingHint.INSTANCE;
+    }
+    else {
+      return AcceptAllFilesAndDirectoriesIndexingHint.INSTANCE;
+    }
   }
 
   @Override
@@ -46,7 +48,7 @@ public class FilenameIndexImpl extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 3;
+    return 3 + (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX ? 0xff : 0);
   }
 
   @Override

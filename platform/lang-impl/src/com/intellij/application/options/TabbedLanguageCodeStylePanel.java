@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel;
@@ -27,13 +27,16 @@ import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EmptyIcon;
@@ -46,9 +49,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Rustam Vishnyakov
- */
+import static java.util.Arrays.stream;
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
   private CodeStyleAbstractPanel myActiveTab;
@@ -62,11 +63,11 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private Ref<LanguageCodeStyleSettingsProvider> myProviderRef;
 
-  protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+  protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, @NotNull CodeStyleSettings settings) {
     super(language, currentSettings, settings);
     myPredefinedCodeStyles = getPredefinedStyles();
     CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(
-      new ExtensionPointListener<CodeStyleSettingsProvider>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
@@ -80,7 +81,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
                                      @NotNull PluginDescriptor pluginDescriptor) {
           if (!extension.hasSettingsPage() && getDefaultLanguage() == extension.getLanguage()) {
             final String tabTitle = extension.getConfigurableDisplayName();
-            for (int i = 0; i < myTabbedPane.getTabCount(); i ++) {
+            for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
               if (myTabbedPane.getTitleAt(i).equals(tabTitle)) {
                 myTabbedPane.removeTabAt(i);
                 myTabs.stream().filter(
@@ -216,7 +217,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   private void addTab(Configurable configurable) {
-    ConfigurableWrapper wrapper = new ConfigurableWrapper(configurable, getSettings());
+    CodeStyleConfigurableWrapperPanel wrapper = new CodeStyleConfigurableWrapperPanel(configurable, getSettings());
     addTab(wrapper);
   }
 
@@ -247,7 +248,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     ensureTabs();
     return myActiveTab.createHighlighter(scheme);
   }
@@ -283,7 +284,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
       tab.apply(settings);
@@ -315,7 +316,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
       tab.resetImpl(settings);
@@ -324,7 +325,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
 
   @Override
-  public void setupCopyFromMenu(JPopupMenu copyMenu) {
+  public void setupCopyFromMenu(@NotNull JPopupMenu copyMenu) {
     super.setupCopyFromMenu(copyMenu);
     if (myPredefinedCodeStyles.length > 0) {
       fillPredefinedStylesAndLanguages(copyMenu);
@@ -384,15 +385,29 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private PredefinedCodeStyle[] getPredefinedStyles() {
     final Language language = getDefaultLanguage();
-    final List<PredefinedCodeStyle> result = new ArrayList<>();
+    if (language == null) return PredefinedCodeStyle.EMPTY_ARRAY;
 
-    for (PredefinedCodeStyle codeStyle : PredefinedCodeStyle.EP_NAME.getExtensions()) {
-      if (language != null && codeStyle.isApplicableToLanguage(language)) {
-        result.add(codeStyle);
-      }
+    PredefinedCodeStyle[] predefinedStyles = PredefinedCodeStyle.EP_NAME.getExtensions();
+    PredefinedCodeStyle[] styles = stream(predefinedStyles)
+      .filter(s -> s.isApplicableToLanguage(language))
+      .toArray(n -> new PredefinedCodeStyle[n]);
+    if (styles.length >= 2 && ContainerUtil.exists(styles, s -> s instanceof Weighted)) {
+      Arrays.sort(styles, WEIGHTED_COMPARATOR);
     }
-    return result.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
+    
+    return styles;
   }
+
+  private static final class WeightedComparator implements Comparator<Object> {
+    @Override
+    public int compare(Object o1, Object o2) {
+      double w1 = o1 instanceof Weighted ? ((Weighted)o1).getWeight() : Double.POSITIVE_INFINITY;
+      double w2 = o2 instanceof Weighted ? ((Weighted)o2).getWeight() : Double.POSITIVE_INFINITY;
+      return Double.compare(w1, w2);
+    }
+  }
+
+  private static final WeightedComparator WEIGHTED_COMPARATOR = new WeightedComparator();
 
 
   private void applyLanguageSettings(Language lang) {
@@ -447,9 +462,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
   }
 
-  protected class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
-
-    public MyBlankLinesPanel(CodeStyleSettings settings) {
+  final class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
+    MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
     }
 
@@ -474,12 +488,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   //========================================================================================================================================
 
-  private class ConfigurableWrapper extends CodeStyleAbstractPanel {
+  private final class CodeStyleConfigurableWrapperPanel extends CodeStyleAbstractPanel {
 
     private final Configurable myConfigurable;
     private JComponent myComponent;
 
-    ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
+    CodeStyleConfigurableWrapperPanel(@NotNull Configurable configurable, @NotNull CodeStyleSettings settings) {
       super(settings);
       myConfigurable = configurable;
 
@@ -493,7 +507,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Nullable
     @Override
-    protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+    protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
       return null;
     }
 
@@ -511,7 +525,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected String getTabTitle() {
+    protected @TabTitle @NotNull String getTabTitle() {
       return myConfigurable.getDisplayName();
     }
 
@@ -521,7 +535,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    public void apply(CodeStyleSettings settings) throws ConfigurationException {
+    public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
       if (myConfigurable instanceof CodeStyleConfigurable) {
         ((CodeStyleConfigurable)myConfigurable).apply(settings);
       }
@@ -545,7 +559,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected void resetImpl(CodeStyleSettings settings) {
+    protected void resetImpl(@NotNull CodeStyleSettings settings) {
       if (myConfigurable instanceof CodeStyleConfigurable) {
         ((CodeStyleConfigurable)myConfigurable).reset(settings);
       }
@@ -555,19 +569,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
   }
 
-  @NotNull
   @Override
-  public OptionsContainingConfigurable getOptionIndexer() {
+  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
     return new OptionsContainingConfigurable() {
-      @NotNull
       @Override
-      public Set<String> processListOptions() {
-        return Collections.emptySet();
-      }
-
-      @Override
-      public Map<String, Set<String>> processListOptionsWithPaths() {
-        final Map<String,Set<String>> result = new HashMap<>();
+      public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
+        final Map<String, Set<String>> result = new HashMap<>();
         for (CodeStyleAbstractPanel tab : myTabs) {
           result.put(tab.getTabTitle(), tab.processListOptions());
         }
@@ -579,18 +586,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   //========================================================================================================================================
 
   protected class MyIndentOptionsWrapper extends CodeStyleAbstractPanel {
-
     private final IndentOptionsEditor myEditor;
     private final JPanel myTopPanel = new JPanel(new BorderLayout());
-
-    /**
-     * @deprecated Use {@link #MyIndentOptionsWrapper(CodeStyleSettings, IndentOptionsEditor)}
-     */
-    @SuppressWarnings("unused")
-    @Deprecated
-    protected MyIndentOptionsWrapper(CodeStyleSettings settings, LanguageCodeStyleSettingsProvider provider, IndentOptionsEditor editor) {
-      this(settings, editor);
-    }
 
     protected MyIndentOptionsWrapper(CodeStyleSettings settings, IndentOptionsEditor editor) {
       super(settings);
@@ -615,7 +612,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+    protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
       return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
     }
 
@@ -633,16 +630,17 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected String getFileExt() {
-      if (getProvider() != null) {
-        String ext = getProvider().getFileExt();
+    protected @NotNull String getFileExt() {
+      LanguageCodeStyleSettingsProvider provider = getProvider();
+      if (provider != null) {
+        String ext = provider.getFileExt();
         if (ext != null) return ext;
       }
       return super.getFileExt();
     }
 
     @Override
-    public void apply(CodeStyleSettings settings) {
+    public void apply(@NotNull CodeStyleSettings settings) {
       CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
       if (indentOptions == null) return;
       myEditor.apply(settings, indentOptions);
@@ -661,7 +659,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected void resetImpl(CodeStyleSettings settings) {
+    protected void resetImpl(@NotNull CodeStyleSettings settings) {
       CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
       if (indentOptions == null && getProvider() != null) {
         myEditor.setEnabled(false);
@@ -682,7 +680,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected String getTabTitle() {
+    protected @TabTitle @NotNull String getTabTitle() {
       return ApplicationBundle.message("title.tabs.and.indents");
     }
 

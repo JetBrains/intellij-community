@@ -16,13 +16,14 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Extension point for providing custom jre to be shown at run configuration control.
  * 
- * @author Denis Zhdanov
  * @author Konstantin Bulenkov
  */
 public interface JreProvider {
@@ -39,7 +40,11 @@ public interface JreProvider {
   }
 
   @Contract(pure=true)
-  default String getPresentableName() {
+  default @NlsSafe String getPresentableName() {
     return getJrePath();
+  }
+
+  default @NonNls String getID() {
+    return null;
   }
 }

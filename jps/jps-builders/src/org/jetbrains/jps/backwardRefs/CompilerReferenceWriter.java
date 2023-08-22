@@ -39,6 +39,10 @@ public class CompilerReferenceWriter<Input> {
     }
   }
 
+  protected void force() {
+    myIndex.force();
+  }
+
   protected void close() {
     myIndex.close();
   }

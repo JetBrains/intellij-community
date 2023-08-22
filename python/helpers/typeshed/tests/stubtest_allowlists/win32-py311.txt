@@ -1,0 +1,14 @@
+
+_winapi.CreateFileMapping
+_winapi.MapViewOfFile
+_winapi.OpenFileMapping
+_winapi.VirtualQuerySize
+asyncio.IocpProactor.recvfrom
+asyncio.IocpProactor.recvfrom_into
+asyncio.IocpProactor.sendto
+asyncio.windows_events.IocpProactor.recvfrom
+asyncio.windows_events.IocpProactor.recvfrom_into
+asyncio.windows_events.IocpProactor.sendto
+msvcrt.GetErrorMode
+os.EX_OK
+subprocess.STARTUPINFO.copy

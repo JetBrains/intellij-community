@@ -1,43 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author peter
- */
-public class OffsetMap implements Disposable {
+public final class OffsetMap implements Disposable {
+  private static final Logger LOG = Logger.getInstance(OffsetMap.class);
   private final Document myDocument;
-  private final Map<OffsetKey, RangeMarker> myMap = new THashMap<>();
-  private final Set<OffsetKey> myModified = new THashSet<>();
+  private final Map<OffsetKey, RangeMarker> myMap = new HashMap<>();
+  private final Set<OffsetKey> myModified = new HashSet<>();
   private volatile boolean myDisposed;
 
   public OffsetMap(final Document document) {
@@ -56,7 +37,9 @@ public class OffsetMap implements Disposable {
       if (!marker.isValid()) {
         removeOffset(key);
         throw new IllegalStateException("Offset " + key + " is invalid: " + marker +
-                                        ", document.valid=" + (!(myDocument instanceof DocumentWindow) || ((DocumentWindow)myDocument).isValid()));
+           ", document.valid=" + (!(myDocument instanceof DocumentWindow) || ((DocumentWindow)myDocument).isValid()) +
+           (myDocument instanceof DocumentWindow ? " (injected: " + Arrays.toString(((DocumentWindow)myDocument).getHostRanges()) + ")" : "")
+        );
       }
 
       final int endOffset = marker.getEndOffset();
@@ -90,7 +73,7 @@ public class OffsetMap implements Disposable {
   }
 
   private void saveOffset(OffsetKey key, int offset, boolean externally) {
-    assert !myDisposed;
+    LOG.assertTrue(!myDisposed);
     if (externally && myMap.containsKey(key)) {
       myModified.add(key);
     }
@@ -105,7 +88,7 @@ public class OffsetMap implements Disposable {
   public void removeOffset(OffsetKey key) {
     synchronized (myMap) {
       ProgressManager.checkCanceled();
-      assert !myDisposed;
+      LOG.assertTrue(!myDisposed);
       myModified.add(key);
       RangeMarker old = myMap.get(key);
       if (old != null) old.dispose();
@@ -117,7 +100,7 @@ public class OffsetMap implements Disposable {
   public List<OffsetKey> getAllOffsets() {
     synchronized (myMap) {
       ProgressManager.checkCanceled();
-      assert !myDisposed;
+      LOG.assertTrue(!myDisposed);
       return ContainerUtil.filter(myMap.keySet(), this::containsOffset);
     }
   }
@@ -150,21 +133,23 @@ public class OffsetMap implements Disposable {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public OffsetMap copyOffsets(@NotNull Document anotherDocument) {
-    assert anotherDocument.getTextLength() == myDocument.getTextLength();
+  public @NotNull OffsetMap copyOffsets(@NotNull Document anotherDocument) {
+    if (anotherDocument.getTextLength() != myDocument.getTextLength()) {
+      LOG.error("Different document lengths: " + myDocument.getTextLength() +
+                " for " + myDocument +
+                " and " + anotherDocument.getTextLength() +
+                " for " + anotherDocument);
+    }
     return mapOffsets(anotherDocument, Function.identity());
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public OffsetMap mapOffsets(@NotNull Document anotherDocument, @NotNull Function<Integer, Integer> mapping) {
+  public @NotNull OffsetMap mapOffsets(@NotNull Document anotherDocument, @NotNull Function<? super Integer, Integer> mapping) {
     OffsetMap result = new OffsetMap(anotherDocument);
     for (OffsetKey key : getAllOffsets()) {
       result.addOffset(key, mapping.apply(getOffset(key)));

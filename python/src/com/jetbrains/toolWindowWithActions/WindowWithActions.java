@@ -57,6 +57,7 @@ public final class WindowWithActions {
                                             @Nullable final JComponent actionListenerComponent,
                                             @NotNull final String title,
                                             @NotNull final Project project,
+                                            @NotNull Icon icon,
                                             @Nullable final Collection<? extends Runnable> closeListeners,
                                             final AnAction @NotNull ... customActions) {
     final ConsoleStopProcessAction stopProcessAction = new ConsoleStopProcessAction(consoleWithProcess);
@@ -67,7 +68,7 @@ public final class WindowWithActions {
       resultCloseListeners.addAll(closeListeners);
     }
     final AnAction[] resultActions = ArrayUtil.mergeArrays(new AnAction[]{stopProcessAction}, customActions);
-    showConsole(consoleWithProcess, actionListenerComponent, title, project, resultCloseListeners, resultActions);
+    showConsole(consoleWithProcess, actionListenerComponent, title, project, icon, resultCloseListeners, resultActions);
   }
 
   /**
@@ -85,10 +86,11 @@ public final class WindowWithActions {
                                  @Nullable final JComponent actionListenerComponent,
                                  @NotNull final String title,
                                  @NotNull final Project project,
+                                 @NotNull Icon icon,
                                  @Nullable final Collection<? extends Runnable> closeListeners,
                                  final AnAction @NotNull ... customActions) {
     final AnAction[] actions = ArrayUtil.mergeArrays(customActions, consoleView.createConsoleActions());
-    show(consoleView.getComponent(), actionListenerComponent, title, project, closeListeners, actions);
+    show(consoleView.getComponent(), actionListenerComponent, title, icon, project, closeListeners, actions);
   }
 
   /**
@@ -105,10 +107,11 @@ public final class WindowWithActions {
   public static void show(@NotNull final JComponent dataComponent,
                           @Nullable final JComponent actionListenerComponent,
                           @NotNull final String title,
+                          @NotNull Icon icon,
                           @NotNull final Project project,
                           @Nullable final Collection<? extends Runnable> closeListeners,
                           final AnAction @NotNull ... customActions) {
-    final ToolWindowApi api = new ToolWindowApi(project, title);
+    final ToolWindowApi api = new ToolWindowApi(project, title, icon);
 
     final Collection<Runnable> closeListenersToAdd = new ArrayList<>(Collections.singleton(new MyToolWindowCloser(api)));
     if (closeListeners != null) {

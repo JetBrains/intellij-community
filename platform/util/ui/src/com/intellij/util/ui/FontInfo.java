@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.NlsSafe;
+
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.util.ArrayList;
@@ -16,16 +18,18 @@ public final class FontInfo {
   private static final String[] WRONG_SUFFIX = {".plain", ".bold", ".italic", ".bolditalic"};
   private static final String[] DEFAULT = {Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SANS_SERIF, Font.SERIF};
   private static final int DEFAULT_SIZE = 12;
+  private static final float SIZE_FOR_MONOSPACED_CHECK = 100; // should be large enough to cover all possible font sizes user can choose
+                                                              // (we're making it even larger to account with >1 monitor scales)
 
   private final String myName;
-  private final int myDefaultSize;
+  private final float myDefaultSize;
   private final boolean myMonospaced;
   private volatile Font myFont;
 
   private FontInfo(String name, Font font, boolean monospaced) {
     myName = name;
     myFont = font;
-    myDefaultSize = font.getSize();
+    myDefaultSize = font.getSize2D();
     myMonospaced = monospaced;
   }
 
@@ -48,9 +52,17 @@ public final class FontInfo {
    * @return a font with the specified size
    */
   public Font getFont(int size) {
+    return getFont((float)size);
+  }
+
+  /**
+   * @param size required font size
+   * @return a font with the specified size
+   */
+  public Font getFont(float size) {
     Font font = myFont;
-    if (size != font.getSize()) {
-      font = font.deriveFont((float)size);
+    if (size != font.getSize2D()) {
+      font = font.deriveFont(size);
       myFont = font;
     }
     return font;
@@ -60,7 +72,7 @@ public final class FontInfo {
    * @return a font name
    */
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     return myName != null ? myName : myFont.getFontName(ENGLISH);
   }
 
@@ -99,11 +111,22 @@ public final class FontInfo {
 
   private static FontInfo find(List<FontInfo> list, String name) {
     for (FontInfo info : list) {
-      if (info.toString().equalsIgnoreCase(name)) {
+      if (matches(info, name)) {
         return info;
       }
     }
     return null;
+  }
+
+  private static boolean matches(FontInfo info, String name) {
+    return info.toString().equalsIgnoreCase(name);
+  }
+
+  private boolean isLogicalFont() {
+    for (String logicalFontName : DEFAULT) {
+      if (matches(this, logicalFontName)) return true;
+    }
+    return false;
   }
 
   private static FontInfo byName(String name) {
@@ -136,11 +159,9 @@ public final class FontInfo {
     List<FontInfo> list = new ArrayList<>(fonts.length);
     for (Font font : fonts) {
       FontInfo info = byFont(font);
-      if (info != null) list.add(info);
-    }
-    for (String name : DEFAULT) {
-      FontInfo info = find(list, name);
-      if (info != null) list.remove(info);
+      if (info != null && !info.isLogicalFont()) {
+        list.add(info);
+      }
     }
     list.sort(COMPARATOR);
     return Collections.unmodifiableList(list);
@@ -156,17 +177,12 @@ public final class FontInfo {
           throw new IllegalArgumentException("not supported " + font);
         }
       }
-      else if (DEFAULT_SIZE != font.getSize()) {
+      else if ((float)DEFAULT_SIZE != font.getSize2D()) {
         font = font.deriveFont((float)DEFAULT_SIZE);
         name = font.getFontName(ENGLISH);
       }
-      int width = getFontWidth(font, Font.PLAIN);
-      if (!plainOnly) {
-        if (width != 0 && width != getFontWidth(font, Font.BOLD)) width = 0;
-        if (width != 0 && width != getFontWidth(font, Font.ITALIC)) width = 0;
-        if (width != 0 && width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
-      }
-      return new FontInfo(name, font, width > 0);
+      boolean monospaced = plainOnly ? isMonospaced(font) : isMonospacedWithStyles(font);
+      return new FontInfo(name, font, monospaced);
     }
     catch (Throwable ignored) {
       return null; // skip font that cannot be processed
@@ -187,12 +203,21 @@ public final class FontInfo {
       //noinspection MagicConstant
       font = font.deriveFont(mask ^ font.getStyle());
     }
+    font = font.deriveFont(SIZE_FOR_MONOSPACED_CHECK);
     int width = getCharWidth(font, ' ');
     return width == getCharWidth(font, 'l') && width == getCharWidth(font, 'W') ? width : 0;
   }
 
   public static boolean isMonospaced(Font font) {
     return getFontWidth(font, Font.PLAIN) > 0;
+  }
+
+   public static boolean isMonospacedWithStyles(Font font) {
+     int width = getFontWidth(font, Font.PLAIN);
+     if (width != 0 && width != getFontWidth(font, Font.BOLD)) width = 0;
+     if (width != 0 && width != getFontWidth(font, Font.ITALIC)) width = 0;
+     if (width != 0 && width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
+     return width > 0;
   }
 
   private static int getCharWidth(Font font, char ch) {

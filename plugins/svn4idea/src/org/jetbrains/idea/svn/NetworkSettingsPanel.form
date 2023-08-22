@@ -241,9 +241,7 @@
         <children>
           <component id="1283d" class="javax.swing.JCheckBox" binding="myUseCommonProxy">
             <constraints border-constraint="West"/>
-            <properties>
-              <text value="Use IDEA general proxy settings as default for Subversion" noi18n="true"/>
-            </properties>
+            <properties />
           </component>
           <component id="a8ce1" class="com.intellij.ui.components.labels.LinkLabel" binding="myNavigateToCommonProxyLink" custom-create="true">
             <constraints border-constraint="East"/>

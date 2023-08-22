@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,18 +15,18 @@ import java.util.List;
 public final class ErrorInfo {
   private static final String KEY = "Inspection.Errors";
 
-  private final String myName;
+  private final @Nls String myName;
   private final String myPropertyName;
   private final HighlightDisplayLevel myLevel;
   private final List<QuickFix> myQuickFixes = new ArrayList<>();
 
-  public ErrorInfo(@NotNull String name, @Nullable String propertyName, @NotNull HighlightDisplayLevel level) {
+  public ErrorInfo(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name, @Nullable String propertyName, @NotNull HighlightDisplayLevel level) {
     myName = name;
     myPropertyName = propertyName;
     myLevel = level;
   }
 
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getName() {
     return myName;
   }
 
@@ -47,8 +34,7 @@ public final class ErrorInfo {
     return myLevel;
   }
 
-  @Nullable
-  public String getPropertyName() {
+  public @Nullable String getPropertyName() {
     return myPropertyName;
   }
 

@@ -61,7 +61,7 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
     @NotNull
     protected Map<String, String> readProperties(File baseDir) {
       Map<String, String> result = new HashMap<>();
-      Maven3ServerEmbedder.readConfigFiles(baseDir, result);
+      MavenServerConfigUtil.readConfigFiles(baseDir, result);
       return result;
     }
   }

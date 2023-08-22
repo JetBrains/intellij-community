@@ -1,130 +1,98 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SmartList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author ven
- */
 public class TypesSemilattice implements Semilattice<TypeDfaState> {
+
   private final PsiManager myManager;
 
-  public TypesSemilattice(PsiManager manager) {
+  public TypesSemilattice(@NotNull PsiManager manager) {
     myManager = manager;
-  }
-
-  @Override
-  @NotNull
-  public TypeDfaState initial() {
-    return new TypeDfaState();
   }
 
   @NotNull
   @Override
   public TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
-    if (ins.isEmpty()) return new TypeDfaState();
-
-    TypeDfaState result = new TypeDfaState(ins.get(0));
+    if (ins.size() == 0) {
+      return TypeDfaState.EMPTY_STATE;
+    }
     if (ins.size() == 1) {
-      return result;
+      return ins.get(0);
     }
 
+    TypeDfaState result = ins.get(0);
+
     for (int i = 1; i < ins.size(); i++) {
-      result.joinState(ins.get(i), myManager);
+      if (ins.get(i) != TypeDfaState.EMPTY_STATE) {
+        result = TypeDfaState.merge(result, ins.get(i), myManager);
+      } else {
+        return TypeDfaState.EMPTY_STATE;
+      }
     }
     return result;
   }
 
   @Override
   public boolean eq(@NotNull TypeDfaState e1, @NotNull TypeDfaState e2) {
-    return e1.contentsEqual(e2);
-  }
-}
-
-class TypeDfaState {
-  private final Map<VariableDescriptor, DFAType> myVarTypes;
-
-  TypeDfaState() {
-    myVarTypes = new HashMap<>();
+    return e1 == e2 || e1.contentsEqual(e2);
   }
 
-  TypeDfaState(TypeDfaState another) {
-    myVarTypes = new HashMap<>(another.myVarTypes);
-  }
-
-  Map<VariableDescriptor, DFAType> getVarTypes() {
-    return myVarTypes;
-  }
-
-  TypeDfaState mergeWith(TypeDfaState another) {
-    if (another.myVarTypes.isEmpty()) {
-      return this;
+  @Contract(pure = true)
+  public static Int2ObjectMap<DFAType> mergeForCaching(@NotNull Int2ObjectMap<DFAType> cached,
+                                                       @Nullable TypeDfaState candidate) {
+    if (candidate == null || candidate.getRawVarTypes().isEmpty()) {
+      return cached;
     }
-    TypeDfaState state = new TypeDfaState(this);
-    state.myVarTypes.putAll(another.myVarTypes);
-    return state;
-  }
 
-  void joinState(TypeDfaState another, PsiManager manager) {
-    for (Map.Entry<VariableDescriptor, DFAType> entry : another.myVarTypes.entrySet()) {
-      final VariableDescriptor descriptor = entry.getKey();
-      final DFAType t1 = entry.getValue();
-      if (myVarTypes.containsKey(descriptor)) {
-        final DFAType t2 = myVarTypes.get(descriptor);
-        if (t1 != null && t2 != null) {
-          myVarTypes.put(descriptor, DFAType.create(t1, t2, manager));
-        }
-        else {
-          myVarTypes.put(descriptor, null);
-        }
+    List<Int2ObjectMap.Entry<DFAType>> newTypes = new SmartList<>();
+    for (Int2ObjectMap.Entry<DFAType> candidateEntry : candidate.getRawVarTypes().int2ObjectEntrySet()) {
+      int index = candidateEntry.getIntKey();
+      if (candidate.isProhibited(index) || (cached.containsKey(index) && checkDfaStatesConsistency(cached, candidateEntry))) {
+        continue;
       }
+      newTypes.add(candidateEntry);
     }
+    if (newTypes.isEmpty()) {
+      return cached;
+    }
+    Int2ObjectMap<DFAType> newState = new Int2ObjectOpenHashMap<>(cached.size() + newTypes.size());
+    newState.putAll(cached);
+    for (var entry : newTypes) {
+      newState.put(entry.getIntKey(), entry.getValue());
+    }
+    return newState;
   }
 
-  boolean contentsEqual(TypeDfaState another) {
-    return myVarTypes.equals(another.myVarTypes);
-  }
-
-  @Nullable
-  DFAType getVariableType(VariableDescriptor descriptor) {
-    return myVarTypes.get(descriptor);
-  }
-
-  @Contract("_ -> new")
-  @NotNull
-  DFAType getOrCreateVariableType(VariableDescriptor descriptor) {
-    DFAType result = getVariableType(descriptor);
-    return result == null ? DFAType.create(null) : result.copy();
-  }
-
-  Map<VariableDescriptor, DFAType> getBindings() {
-    return new HashMap<>(myVarTypes);
-  }
-
-  void putType(VariableDescriptor descriptor, @Nullable DFAType type) {
-    myVarTypes.put(descriptor, type);
-  }
-
-  @Override
-  public String toString() {
-    return myVarTypes.toString();
-  }
-
-  public boolean containsVariable(@NotNull VariableDescriptor descriptor) {
-    return myVarTypes.containsKey(descriptor);
-  }
-
-  public void removeBinding(VariableDescriptor descriptor) {
-    myVarTypes.remove(descriptor);
+  private static boolean checkDfaStatesConsistency(@NotNull Int2ObjectMap<DFAType> cached,
+                                                   @NotNull Int2ObjectMap.Entry<DFAType> incoming) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() ||
+        ApplicationManagerEx.isInStressTest() ||
+        DfaCacheConsistencyKt.mustSkipConsistencyCheck()) {
+      return true;
+    }
+    DFAType cachedType = cached.get(incoming.getIntKey());
+    if (cachedType != null && !Objects.equals(cachedType, incoming.getValue())) {
+      throw new IllegalStateException("Attempt to cache different types: for descriptor " +
+                                      incoming.getIntKey() +
+                                      ", existing was " +
+                                      cachedType +
+                                      " and incoming is " +
+                                      incoming.getValue());
+    }
+    return true;
   }
 }

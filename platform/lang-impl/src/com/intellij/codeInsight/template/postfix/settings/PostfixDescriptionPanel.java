@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
 
-class PostfixDescriptionPanel implements Disposable {
+final class PostfixDescriptionPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(IntentionDescriptionPanel.class);
   private JPanel myPanel;
 
@@ -70,7 +71,7 @@ class PostfixDescriptionPanel implements Disposable {
   }
 
   @NotNull
-  private static String getDescription(TextDescriptor url) {
+  private static @Nls String getDescription(TextDescriptor url) {
     try {
       return url.getText();
     }

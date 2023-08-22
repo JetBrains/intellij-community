@@ -1,0 +1,1 @@
+class ExtensionNoHighlighting implements MyExtension { }

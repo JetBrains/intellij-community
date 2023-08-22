@@ -12,6 +12,7 @@ import org.jetbrains.idea.svn.dialogs.browserCache.*;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -71,8 +72,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
 
   public TreeNode[] getPathToSubRoot(final TreeNode node) {
     final TreeNode[] path = getPathToRoot(node);
-    final TreeNode[] result = new TreeNode[path.length - 1];
-    System.arraycopy(path, 1, result, 0, path.length - 1);
+    final TreeNode[] result = Arrays.copyOfRange(path, 1, path.length);
     return result;
   }
 
@@ -131,9 +131,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
 
     TreeNode[] oldPath = getPathToRoot(oldNode);
     if (! (oldPath[0] instanceof RepositoryTreeNode)) {
-      final TreeNode[] result = new TreeNode[oldPath.length - 1];
-      System.arraycopy(oldPath, 1, result, 0, oldPath.length - 1);
-      oldPath = result;
+      oldPath = Arrays.copyOfRange(oldPath, 1, oldPath.length);
     }
 
     TreeNode root = (TreeNode) getRoot();
@@ -142,13 +140,13 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
       root = null;
       while (children.hasMoreElements()) {
         TreeNode node = (TreeNode) children.nextElement();
-        if ((node instanceof RepositoryTreeNode) && (((RepositoryTreeNode) node).getURL().equals(((RepositoryTreeNode) oldPath[0]).getURL()))) {
+        if ((node instanceof RepositoryTreeNode treeNode) && (treeNode.getURL().equals(((RepositoryTreeNode) oldPath[0]).getURL()))) {
           root = node;
           break;
         }
       }
     } else {
-      if ((root == null) || (! ((RepositoryTreeNode) root).getURL().equals(((RepositoryTreeNode) oldPath[0]).getURL()))) {
+      if (!((RepositoryTreeNode) root).getURL().equals(((RepositoryTreeNode) oldPath[0]).getURL())) {
         return null;
       }
     }
@@ -168,7 +166,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
   }
 
   @Nullable
-  private RepositoryTreeNode getChild(final RepositoryTreeNode node, final Url url) {
+  private static RepositoryTreeNode getChild(final RepositoryTreeNode node, final Url url) {
     final List<RepositoryTreeNode> children = node.getAlreadyLoadedChildren();
     for (RepositoryTreeNode child : children) {
       if (child.getURL().equals(url)) {

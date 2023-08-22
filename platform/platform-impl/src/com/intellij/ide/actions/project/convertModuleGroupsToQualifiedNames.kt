@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
-import com.intellij.application.runInAllowSaveMode
 import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+import com.intellij.configurationStore.runInAllowSaveMode
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runWriteAction
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
@@ -37,13 +39,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Color
 import java.awt.Font
-import java.util.function.Function
 import javax.swing.Action
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWrapper(project) {
+internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWrapper(project) {
   private val editorArea: EditorTextField
   private val document: Document
     get() = editorArea.document
@@ -69,7 +70,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
-    document.addDocumentListener(object: DocumentListener {
+    document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         modified = true
       }
@@ -79,17 +80,24 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     init()
   }
 
+  override fun show() {
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+    InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile!!, { customize() }) {
+      super.show()
+    }
+  }
+
   private fun setupHighlighting(editor: Editor) {
     editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false)
+  }
+
+  private fun customize(): InspectionProfileWrapper {
     val inspections = InspectionToolsSupplier.Simple(listOf(LocalInspectionToolWrapper(ModuleNamesListInspection())))
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
-    file?.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, Function {
-      val profile = InspectionProfileImpl("Module names", inspections, null)
-      for (spellCheckingToolName in SpellCheckingEditorCustomizationProvider.getInstance().spellCheckingToolNames) {
-        profile.getToolsOrNull(spellCheckingToolName, project)?.isEnabled = false
-      }
-      InspectionProfileWrapper(profile)
-    })
+    val profile = InspectionProfileImpl("Module names", inspections, null)
+    for (spellCheckingToolName in SpellCheckingEditorCustomizationProvider.getInstance().spellCheckingToolNames) {
+      profile.getToolsOrNull(spellCheckingToolName, project)?.isEnabled = false
+    }
+    return InspectionProfileWrapper(profile)
   }
 
   override fun createCenterPanel(): JPanel {
@@ -114,7 +122,8 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     if (groupPath == null) {
       return listOf(name)
     }
-    val group = LineExtensionInfo(groupPath.joinToString(separator = "/", prefix = " (", postfix = ")"), Color.GRAY, null, null, Font.PLAIN)
+    @NlsSafe val pathString = groupPath.joinToString(separator = "/", prefix = " (", postfix = ")")
+    val group = LineExtensionInfo(pathString, Color.GRAY, null, null, Font.PLAIN)
     return listOf(name, group)
   }
 
@@ -165,7 +174,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
 
     val renamingScheme = getRenamingScheme()
     if (renamingScheme.isNotEmpty()) {
-      val model = ModuleManager.getInstance(project).modifiableModel
+      val model = ModuleManager.getInstance(project).getModifiableModel()
       val byName = modules.associateBy { it.name }
       for (entry in renamingScheme) {
         model.renameModule(byName[entry.key]!!, entry.value)
@@ -189,12 +198,12 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   }
 
   override fun createActions(): Array<Action> {
-    return arrayOf(okAction, SaveModuleRenamingSchemeAction(this, { modified = false }),
+    return arrayOf(okAction, SaveModuleRenamingSchemeAction(this) { modified = false },
                    LoadModuleRenamingSchemeAction(this), cancelAction)
   }
 }
 
-class ConvertModuleGroupsToQualifiedNamesAction : DumbAwareAction(ProjectBundle.message("convert.module.groups.action.text"),
+internal class ConvertModuleGroupsToQualifiedNamesAction : DumbAwareAction(ProjectBundle.message("convert.module.groups.action.text"),
                                                                   ProjectBundle.message("convert.module.groups.action.description"), null) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
@@ -203,6 +212,10 @@ class ConvertModuleGroupsToQualifiedNamesAction : DumbAwareAction(ProjectBundle.
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && ModuleManager.getInstance(e.project!!).hasModuleGroups()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 

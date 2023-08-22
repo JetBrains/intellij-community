@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -11,6 +11,7 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.gradle.model.JpsGradleExtensionService;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -25,19 +26,18 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootDescriptor> {
-
-  GradleResourcesTarget(final GradleResourcesTargetType type, @NotNull JpsModule module) {
+public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootDescriptor> {
+  GradleResourcesTarget(@NotNull GradleResourcesTargetType type, @NotNull JpsModule module) {
     super(type, module);
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myModule.getName();
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     return Collections.emptyList();
   }
 
@@ -48,7 +48,7 @@ public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootD
 
   @NotNull
   @Override
-  public List<GradleResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
+  public List<GradleResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     final List<GradleResourceRootDescriptor> result = new ArrayList<>();
 
     GradleProjectConfiguration projectConfig = JpsGradleExtensionService.getInstance().getGradleProjectConfiguration(dataPaths);
@@ -82,7 +82,7 @@ public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootD
 
   @Nullable
   @Override
-  public GradleResourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+  public GradleResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
     for (GradleResourceRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       if (descriptor.getRootId().equals(rootId)) {
         return descriptor;
@@ -99,10 +99,10 @@ public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootD
 
   @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     GradleModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
-    final Set<File> result = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> result = FileCollectionFactory.createCanonicalFileSet();
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
       final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);
@@ -137,11 +137,12 @@ public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootD
   }
 
   @Override
-  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
     final BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
     final GradleModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration != null) {
-      out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests())));
+      PathRelativizerService pathRelativizerService = pd.dataManager.getRelativizer();
+      out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests(), pathRelativizerService)));
     }
   }
 }

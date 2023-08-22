@@ -116,6 +116,10 @@ public class YAMLTypingTest extends BasePlatformTestCase {
     doTest("\n");
   }
 
+  public void testDoNotInsertHyphen() {
+    doTest("\n");
+  }
+
   public void testAutoDecreaseHyphenIndent() {
     doTestForSettings("- ", false, true);
   }

@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.icons.AllIcons;
@@ -26,6 +25,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,12 +34,15 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.FileContentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -57,6 +60,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 
@@ -119,6 +123,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     decorator.disableUpDownActions();
     decorator.setAddActionUpdater(e -> !myAddActions.isEmpty());
     decorator.setAddAction(this::performAdd);
+    decorator.setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN);
     decorator.setRemoveActionUpdater(e -> {
       boolean enabled = false;
       for (InjInfo info : getSelectedInjections()) {
@@ -134,12 +139,12 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     decorator.setEditActionUpdater(e -> {
       AnAction edit = getEditAction();
       if (edit != null) edit.update(e);
-      return edit != null && edit.getTemplatePresentation().isEnabled();
+      return edit != null && e.getPresentation().isEnabled();
     });
     decorator.setEditAction(button -> performEditAction());
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.duplicate"),
+    decorator.addExtraAction(new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.duplicate"),
                                                        IntelliLangBundle.messagePointer("action.AnActionButton.description.duplicate"),
-                                                       PlatformIcons.COPY_ICON) {
+                                                       IconManager.getInstance().getPlatformIcon(PlatformIcons.Copy)) {
 
       @Override
       public boolean isEnabled() {
@@ -157,9 +162,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     });
 
     decorator.addExtraAction(
-      new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.enable.selected.injections"),
-                                IntelliLangBundle.messagePointer("action.AnActionButton.description.enable.selected.injections"),
-                                PlatformIcons.SELECT_ALL_ICON) {
+      new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.enable.selected.injections"),
+                                    IntelliLangBundle.messagePointer("action.AnActionButton.description.enable.selected.injections"),
+                                    com.intellij.util.PlatformIcons.SELECT_ALL_ICON) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -167,9 +172,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
     });
     decorator.addExtraAction(
-      new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.disable.selected.injections"),
-                                IntelliLangBundle.messagePointer("action.AnActionButton.description.disable.selected.injections"),
-                                PlatformIcons.UNSELECT_ALL_ICON) {
+      new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.disable.selected.injections"),
+                                    IntelliLangBundle.messagePointer("action.AnActionButton.description.disable.selected.injections"),
+                                    com.intellij.util.PlatformIcons.UNSELECT_ALL_ICON) {
 
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -185,6 +190,11 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         performToggleAction();
       }
@@ -192,8 +202,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
     if (myInfos.length > 1) {
       AnActionButton shareAction =
-        new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.move.to.ide.scope"),
-                                  PlatformIcons.IMPORT_ICON) {
+        new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.move.to.ide.scope"),
+                                  com.intellij.util.PlatformIcons.IMPORT_ICON) {
         {
           addCustomUpdater(e -> {
             CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
@@ -220,7 +230,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         }
 
         @Nullable
-        private CfgInfo getTargetCfgInfo(final List<? extends InjInfo> injections) {
+        private CfgInfo getTargetCfgInfo(final List<InjInfo> injections) {
           CfgInfo cfg = null;
           for (InjInfo info : injections) {
             if (info.bundled) {
@@ -239,9 +249,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       shareAction.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK)));
       decorator.addExtraAction(shareAction);
     }
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.import"),
-                                                       IntelliLangBundle.messagePointer("action.AnActionButton.description.import"),
-                                                       AllIcons.Actions.Install) {
+    decorator.addExtraAction(new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.import"),
+                                                           IntelliLangBundle.messagePointer("action.AnActionButton.description.import"),
+                                                           AllIcons.Actions.Install) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -249,20 +259,23 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         updateCountLabel();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.export"),
+    decorator.addExtraAction(new DumbAwareEDTUActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.export"),
                                                        IntelliLangBundle.messagePointer("action.AnActionButton.description.export"),
                                                        AllIcons.ToolbarDecorator.Export) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
-        final List<BaseInjection> injections = getInjectionList(getSelectedInjections());
-        final VirtualFileWrapper wrapper = FileChooserFactory.getInstance().createSaveFileDialog(
-          new FileSaverDescriptor(IntelliLangBundle.message("dialog.title.export.selected.injections.to.file"), "", "xml"), myProject).save(null, null);
-        if (wrapper == null) return;
-        final Configuration configuration = new Configuration();
+        List<BaseInjection> injections = getInjectionList(getSelectedInjections());
+        VirtualFileWrapper wrapper = FileChooserFactory.getInstance()
+          .createSaveFileDialog(new FileSaverDescriptor(IntelliLangBundle.message("dialog.title.export.selected.injections.to.file"), "", "xml"), myProject)
+          .save((Path)null, null);
+        if (wrapper == null) {
+          return;
+        }
+        Configuration configuration = new Configuration();
         configuration.setInjections(injections);
         try {
-          JdomKt.write(configuration.getState(), wrapper.getFile().toPath());
+          JDOMUtil.write(configuration.getState(), wrapper.getFile().toPath());
         }
         catch (IOException ex) {
           final String msg = ex.getLocalizedMessage();
@@ -302,9 +315,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
           if (place.isEnabled()) enablePlacesCount++;
         }
       }
-      myCountLabel.setText(IntelliLangBundle
-                             .message("label.text.0.injection.1.2.of.3.place.4.enabled", items.size(), items.size() > 1 ? "s" : "",
-                                      enablePlacesCount, placesCount, placesCount > 1 ? "s" : ""));
+      myCountLabel.setText(
+        IntelliLangBundle.message("label.text.0.injection.1.2.of.3.place.4.enabled", items.size(), enablePlacesCount, placesCount));
     }
     else {
       myCountLabel.setText(IntelliLangBundle.message("label.text.no.injections.configured"));
@@ -385,7 +397,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
   @Override
   public boolean isModified() {
-    return Arrays.stream(myInfos).anyMatch(CfgInfo::isModified);
+    return ContainerUtil.exists(myInfos, CfgInfo::isModified);
   }
 
   private void performSelectedInjectionsEnabled(final boolean enabled) {
@@ -425,7 +437,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   }
 
   private List<InjInfo> getSelectedInjections() {
-    final ArrayList<InjInfo> toRemove = new ArrayList<>();
+    List<InjInfo> toRemove = new ArrayList<>();
     for (int row : myInjectionsTable.getSelectedRows()) {
       toRemove.add(myInjectionsTable.getItems().get(myInjectionsTable.convertRowIndexToModel(row)));
     }
@@ -441,8 +453,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   private void performAdd(AnActionButton e) {
     DefaultActionGroup group = new DefaultActionGroup(myAddActions);
 
-    JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true,
-                                                        this::updateCountLabel, -1).show(e.getPreferredPopupPoint());
+    JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true, this::updateCountLabel, -1)
+      .show(e.getPreferredPopupPoint());
   }
 
   @Override
@@ -456,7 +469,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     return "reference.settings.injection.language.injection.settings";
   }
 
-  private class InjectionsTable extends TableView<InjInfo> {
+  private final class InjectionsTable extends TableView<InjInfo> {
     private InjectionsTable(final List<InjInfo> injections) {
       super(new ListTableModel<>(createInjectionColumnInfos(), injections, 1));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
@@ -498,13 +511,14 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       getColumnModel().getColumn(2).setMinWidth(preferred);
       getColumnModel().getColumn(2).setPreferredWidth(preferred);
       getColumnModel().getColumn(2).setMaxWidth(preferred);
-      new TableViewSpeedSearch<InjInfo>(this) {
+      TableViewSpeedSearch<InjInfo> search = new TableViewSpeedSearch<>(this, null) {
         @Override
         protected String getItemText(@NotNull InjInfo element) {
           final BaseInjection injection = element.injection;
           return injection.getSupportId() + " " + injection.getInjectedLanguageId() + " " + injection.getDisplayName();
         }
       };
+      search.setupListeners();
     }
 
   }
@@ -701,14 +715,14 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
 
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
       }
     };
     descriptor.setDescription(IntelliLangBundle.message("dialog.file.chooser.description.please.select.the.configuration.file"));
     descriptor.setTitle(IntelliLangBundle.message("dialog.file.chooser.title.import.configuration"));
 
-    descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, LangDataKeys.MODULE.getData(dataContext));
+    descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, PlatformCoreDataKeys.MODULE.getData(dataContext));
 
     final SplitterProportionsData splitterData = new SplitterProportionsDataImpl();
     splitterData.externalizeFromDimensionService("IntelliLang.ImportSettingsKey.SplitterProportions");
@@ -743,12 +757,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.emptyList()));
         final List<BaseInjection> currentInjections = getInjectionList(list);
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
-        if (currentInjections == null) {
-          newInjections.addAll(importingInjections);
-        }
-        else {
-          Configuration.importInjections(currentInjections, importingInjections, originalInjections, newInjections);
-        }
+        Configuration.importInjections(currentInjections, importingInjections, originalInjections, newInjections);
       }
       info.replace(originalInjections, newInjections);
       myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
@@ -779,7 +788,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     final Configuration cfg;
     final List<BaseInjection> originalInjections;
     final List<InjInfo> injectionInfos = new ArrayList<>();
-    final THashSet<BaseInjection> bundledInjections = new THashSet<>(new SameParamsAndPlacesStrategy());
+    final Set<BaseInjection> bundledInjections = new ObjectOpenCustomHashSet<>(new SameParamsAndPlacesStrategy());
     final String title;
 
     CfgInfo(Configuration cfg, final String title) {
@@ -842,27 +851,28 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
   }
 
-  private static class SameParamsAndPlacesStrategy implements TObjectHashingStrategy<BaseInjection> {
+  private static class SameParamsAndPlacesStrategy implements Hash.Strategy<BaseInjection> {
     @Override
-    public int computeHashCode(final BaseInjection object) {
-      return object.hashCode();
+    public int hashCode(@Nullable BaseInjection object) {
+      return object == null ? null : object.hashCode();
     }
 
     @Override
-    public boolean equals(final BaseInjection o1, final BaseInjection o2) {
-      return o1.sameLanguageParameters(o2) && Arrays.equals(o1.getInjectionPlaces(), o2.getInjectionPlaces());
+    public boolean equals(@Nullable BaseInjection o1, @Nullable BaseInjection o2) {
+      return o1 == o2 || (o1 != null && o2 != null && o1.sameLanguageParameters(o2) && Arrays.equals(o1.getInjectionPlaces(), o2.getInjectionPlaces()));
     }
   }
 
-  private static class InjInfo {
-    final BaseInjection injection;
-    final CfgInfo cfgInfo;
-    final boolean bundled;
+  private record InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
 
-    private InjInfo(BaseInjection injection, CfgInfo cfgInfo, boolean bundled) {
-      this.injection = injection;
-      this.cfgInfo = cfgInfo;
-      this.bundled = bundled;
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj;
+    }
+
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(this);
     }
   }
 
@@ -870,8 +880,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     return ContainerUtil.concat(infos, cfgInfo -> cfgInfo.injectionInfos);
   }
 
-  private static List<BaseInjection> getInjectionList(final List<? extends InjInfo> list) {
-    return new AbstractList<BaseInjection>() {
+  private static @NotNull List<BaseInjection> getInjectionList(final List<InjInfo> list) {
+    return new AbstractList<>() {
       @Override
       public BaseInjection get(final int index) {
         return list.get(index).injection;

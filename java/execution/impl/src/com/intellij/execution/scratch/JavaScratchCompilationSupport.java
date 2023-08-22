@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -53,13 +54,12 @@ final class JavaScratchCompilationSupport implements CompileTask {
     final Project project = context.getProject();
 
     final RunConfiguration configuration = CompileStepBeforeRun.getRunConfiguration(context);
-    if (!(configuration instanceof JavaScratchConfiguration)) {
+    if (!(configuration instanceof JavaScratchConfiguration scratchConfig)) {
       return true;
     }
-    final JavaScratchConfiguration scratchConfig = (JavaScratchConfiguration)configuration;
     final String scratchUrl = scratchConfig.getScratchFileUrl();
     if (scratchUrl == null) {
-      context.addMessage(CompilerMessageCategory.ERROR, "Associated scratch file not found", null, -1, -1);
+      context.addMessage(CompilerMessageCategory.ERROR, ExecutionBundle.message("run.java.scratch.associated.file.not.specified"), null, -1, -1);
       return false;
     }
     @Nullable
@@ -67,15 +67,15 @@ final class JavaScratchCompilationSupport implements CompileTask {
     final Sdk targetSdk = module != null? ModuleRootManager.getInstance(module).getSdk() : ProjectRootManager.getInstance(project).getProjectSdk();
     if (targetSdk == null) {
       final String message = module != null?
-                             "Cannot find associated SDK for run configuration module \"" + module.getName() + "\".\nPlease check project settings." :
-                             "Cannot find associated project SDK for the run configuration.\nPlease check project settings.";
+        ExecutionBundle.message("run.java.scratch.missing.jdk.module", module.getName()) :
+        ExecutionBundle.message("run.java.scratch.missing.jdk");
       context.addMessage(CompilerMessageCategory.ERROR, message, scratchUrl, -1, -1);
       return true;
     }
     if (!(targetSdk.getSdkType() instanceof JavaSdkType)) {
       final String message = module != null?
-                             "Expected Java SDK for run configuration module \"" + module.getName() + "\".\nPlease check project settings." :
-                             "Expected Java SDK for project \"" + project.getName() + "\".\nPlease check project settings.";
+        ExecutionBundle.message("run.java.scratch.java.sdk.required.module", module.getName()) :
+        ExecutionBundle.message("run.java.scratch.java.sdk.required.project", project.getName());
       context.addMessage(CompilerMessageCategory.ERROR, message, scratchUrl, -1, -1);
       return true;
     }

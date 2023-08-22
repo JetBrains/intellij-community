@@ -24,16 +24,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public interface DomExtension {
 
   @NotNull
   Type getType();
 
   DomExtension setDeclaringElement(@NotNull DomElement declaringElement);
+
+  DomExtension setDeclaringDomElement(@NotNull Supplier<? extends DomElement> declarationFinder);
 
   DomExtension setDeclaringElement(@NotNull PsiElement declaringElement);
 

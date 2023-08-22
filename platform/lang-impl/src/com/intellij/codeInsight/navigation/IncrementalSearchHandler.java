@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,15 +25,15 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +51,7 @@ public final class IncrementalSearchHandler {
 
   private static boolean ourActionsRegistered = false;
 
-  private static class PerHintSearchData {
+  private static final class PerHintSearchData {
     final Project project;
     final JLabel label;
 
@@ -65,9 +65,9 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  private static class PerEditorSearchData {
+  private static final class PerEditorSearchData {
     LightweightHint hint;
-    String lastSearch;
+    @NlsContexts.Label String lastSearch;
   }
 
   public static boolean isHintVisible(final Editor editor) {
@@ -111,7 +111,7 @@ public final class IncrementalSearchHandler {
     }
 
     JLabel label1 = new MyLabel(" " + CodeInsightBundle.message("incremental.search.tooltip.prefix"));
-    label1.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    label1.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
 
     JPanel panel = new MyPanel(label1);
     panel.add(label1, BorderLayout.WEST);
@@ -288,9 +288,9 @@ public final class IncrementalSearchHandler {
     else {
       data.label.setForeground(JBColor.foreground());
       if (matchLength > 0) {
-        TextAttributes attributes = editor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
         data.segmentHighlighter = editor.getMarkupModel()
-          .addRangeHighlighter(index, index + matchLength, HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+          .addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES, index, index + matchLength, HighlighterLayer.LAST + 1,
+                               HighlighterTargetArea.EXACT_RANGE);
       }
       data.ignoreCaretMove = true;
       editor.getCaretModel().moveToOffset(index);
@@ -313,8 +313,8 @@ public final class IncrementalSearchHandler {
     return hasUpperCase;
   }
 
-  private static class MyLabel extends JLabel {
-    MyLabel(String text) {
+  private static final class MyLabel extends JLabel {
+    MyLabel(@NlsContexts.Label String text) {
       super(text);
       this.setBackground(HintUtil.getInformationColor());
       this.setForeground(JBColor.foreground());
@@ -322,7 +322,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  private static class MyPanel extends JPanel{
+  private static final class MyPanel extends JPanel{
     private final Component myLeft;
 
     MyPanel(Component left) {
@@ -342,7 +342,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  public static class MyTypedHandler extends TypedActionHandlerBase {
+  public static final class MyTypedHandler extends TypedActionHandlerBase {
     public MyTypedHandler(@Nullable TypedActionHandler originalHandler) {
       super(originalHandler);
     }
@@ -370,7 +370,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  public static class BackSpaceHandler extends EditorActionHandler{
+  public static final class BackSpaceHandler extends EditorActionHandler{
     private final EditorActionHandler myOriginalHandler;
 
     public BackSpaceHandler(EditorActionHandler originalAction) {
@@ -396,7 +396,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  public static class UpHandler extends EditorActionHandler {
+  public static final class UpHandler extends EditorActionHandler {
     private final EditorActionHandler myOriginalHandler;
 
     public UpHandler(EditorActionHandler originalHandler) {

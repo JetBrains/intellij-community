@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.cmdline.PreloadedData;
@@ -13,7 +14,7 @@ public class CleanupTempDirectoryExtension implements PreloadedDataExtension {
   private Future<Void> myTask;
   
   @Override
-  public void preloadData(PreloadedData data) {
+  public void preloadData(@NotNull PreloadedData data) {
     final ProjectDescriptor pd = data.getProjectDescriptor();
     if (pd != null) {
       myTask = IncProjectBuilder.startTempDirectoryCleanupTask(pd);
@@ -36,7 +37,7 @@ public class CleanupTempDirectoryExtension implements PreloadedDataExtension {
   }
 
   @Override
-  public void buildSessionInitialized(PreloadedData data) {
+  public void buildSessionInitialized(@NotNull PreloadedData data) {
   }
 
   @Override

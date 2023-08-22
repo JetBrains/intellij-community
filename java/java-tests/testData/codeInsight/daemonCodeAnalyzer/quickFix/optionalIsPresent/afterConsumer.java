@@ -1,4 +1,4 @@
-// "Replace Optional.isPresent() condition with functional style expression" "GENERIC_ERROR_OR_WARNING"
+// "Replace Optional presence condition with functional style expression" "GENERIC_ERROR_OR_WARNING"
 
 import java.util.*;
 

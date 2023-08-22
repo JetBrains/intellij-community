@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.history.FileHistoryUi;
+import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,7 @@ import java.util.Objects;
 public class AnnotateRevisionFromHistoryAction extends FileHistoryMetadataAction {
 
   @Override
-  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsCommitMetadata detail, @NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull FileHistoryModel model, @Nullable VcsCommitMetadata detail, @NotNull AnActionEvent e) {
     VcsKey key = e.getData(VcsDataKeys.VCS);
     if (key == null) return false;
 
@@ -33,7 +33,7 @@ public class AnnotateRevisionFromHistoryAction extends FileHistoryMetadataAction
     if (provider == null) return false;
 
     if (detail != null) {
-      VcsFileRevision fileRevision = ui.createRevision(detail);
+      VcsFileRevision fileRevision = model.createRevision(detail);
       return AnnotateRevisionActionBase.isEnabled(vcs, FileHistoryUtil.createVcsVirtualFile(fileRevision), fileRevision);
     }
 
@@ -42,12 +42,12 @@ public class AnnotateRevisionFromHistoryAction extends FileHistoryMetadataAction
 
   @Override
   protected void performAction(@NotNull Project project,
-                               @NotNull FileHistoryUi ui,
+                               @NotNull FileHistoryModel model,
                                @NotNull VcsCommitMetadata detail,
                                @NotNull AnActionEvent e) {
     VcsKey vcsKey = e.getRequiredData(VcsDataKeys.VCS);
 
-    VcsFileRevision revision = ui.createRevision(detail);
+    VcsFileRevision revision = model.createRevision(detail);
     VirtualFile vcsVirtualFile = FileHistoryUtil.createVcsVirtualFile(revision);
 
     if (!VcsHistoryUtil.isEmpty(revision) && vcsVirtualFile != null) {

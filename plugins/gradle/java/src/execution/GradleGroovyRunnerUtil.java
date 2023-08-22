@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.Location;
@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.Collections;
 import java.util.List;
 
-public class GradleGroovyRunnerUtil {
+public final class GradleGroovyRunnerUtil {
   @NotNull
   public static List<String> getTasksTarget(@NotNull PsiElement element, @Nullable Module module) {
     PsiElement parent = element;
@@ -77,7 +77,7 @@ public class GradleGroovyRunnerUtil {
     if (containingFile != null) {
       VirtualFile virtualFile = containingFile.getVirtualFile();
       if (virtualFile != null) {
-        return ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile);
+        return ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile);
       }
     }
     return null;

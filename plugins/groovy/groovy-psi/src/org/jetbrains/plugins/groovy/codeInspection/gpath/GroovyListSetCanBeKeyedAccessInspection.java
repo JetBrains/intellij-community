@@ -24,10 +24,11 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -40,7 +41,7 @@ public class GroovyListSetCanBeKeyedAccessInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Call to '#ref' can be keyed access #loc";
+    return GroovyBundle.message("inspection.message.call.to.ref.can.be.keyed.access");
   }
 
   @NotNull
@@ -59,7 +60,7 @@ public class GroovyListSetCanBeKeyedAccessInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Replace with keyed access";
+      return GroovyBundle.message("intention.family.name.replace.with.keyed.access");
     }
 
     @Override
@@ -87,10 +88,9 @@ public class GroovyListSetCanBeKeyedAccessInspection extends BaseInspection {
         return;
       }
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression referenceExpression)) {
         return;
       }
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression) methodExpression;
       final String name = referenceExpression.getReferenceName();
       if (!"set".equals(name)) {
         return;
@@ -100,7 +100,7 @@ public class GroovyListSetCanBeKeyedAccessInspection extends BaseInspection {
       if (qualifier == null || PsiUtil.isThisOrSuperRef(qualifier)) {
         return;
       }
-      if (referenceExpression.getDotTokenType() == GroovyTokenTypes.mOPTIONAL_DOT) return;
+      if (GroovyTokenSets.SAFE_DOTS.contains(referenceExpression.getDotTokenType())) return;
       final PsiType type = qualifier.getType();
       if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) {
         return;

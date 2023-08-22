@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -17,7 +18,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
-import com.intellij.util.NullableFunction;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.zip.JBZipEntry;
@@ -143,9 +144,8 @@ public final class WorkingContextManager {
       JBZipFile zipFile = null;
       try {
         zipFile = new JBZipFile(file);
-        Notifications.Bus.notify(new Notification("Tasks", "Context Data Corrupted",
-                                                  "Context information history for " + myProject.getName() + " was corrupted.\n" +
-                                                  "The history was replaced with empty one.", NotificationType.ERROR), myProject);
+        Notifications.Bus.notify(new Notification("Tasks", TaskBundle.message("notification.title.context.data.corrupted"),
+                                                  TaskBundle.message("notification.content.context.information.history", myProject.getName()), NotificationType.ERROR), myProject);
       }
       catch (IOException e1) {
         LOG.error("Can't repair form context data corruption", e1);
@@ -175,7 +175,7 @@ public final class WorkingContextManager {
     });
   }
 
-  private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<JBZipEntry, Exception> action) {
+  private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<? super JBZipEntry, ? extends Exception> action) {
     if (!ENABLED) return false;
 
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
@@ -184,6 +184,9 @@ public final class WorkingContextManager {
         action.consume(entry);
         return true;
       }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
@@ -199,7 +202,7 @@ public final class WorkingContextManager {
     if (!ENABLED) return Collections.emptyList();
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
-      return ContainerUtil.mapNotNull(entries, (NullableFunction<JBZipEntry, ContextInfo>)entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
+      return ContainerUtil.mapNotNull(entries, entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
     }
     catch (Exception e) {
       LOG.error(e);

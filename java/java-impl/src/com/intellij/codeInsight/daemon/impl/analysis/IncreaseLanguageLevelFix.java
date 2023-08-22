@@ -1,20 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,9 +27,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
+import javax.swing.*;
+import java.util.Objects;
+
 public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
   private final LanguageLevel myLevel;
 
@@ -61,34 +63,45 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(file.getOriginalFile()));
+    return new IntentionPreviewInfo.Html(
+      JavaBundle.message("increase.language.level.preview.description", module.getName(), myLevel.toJavaVersion()));
+  }
+
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     Module module = ModuleUtilCore.findModuleForFile(file);
-    return module != null &&
-           JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel) &&
-           AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(myLevel);
+    return module != null && JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    LanguageLevel oldLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
-    if (module != null) {
-      JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
-      VirtualFile vFile = file.getVirtualFile();
+    if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(myLevel)) {
+      JComponent component = editor == null ? null : editor.getComponent();
+      if (AcceptedLanguageLevelsSettings.checkAccepted(component, myLevel) == null) {
+        return;
+      }
+    }
+    Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(file));
+    LanguageLevel oldLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
+    VirtualFile vFile = file.getVirtualFile();
+    WriteCommandAction.runWriteCommandAction(project, getText(), null, () -> {
+      JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel, true);
       if (oldLevel != null) {
         UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
           @Override
           public void undo() {
-            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, oldLevel);
+            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, oldLevel, true);
           }
 
           @Override
           public void redo() {
-            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel);
+            JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, myLevel, true);
           }
         });
       }
-    }
+    });
   }
 
   @Nullable
@@ -99,6 +112,6 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

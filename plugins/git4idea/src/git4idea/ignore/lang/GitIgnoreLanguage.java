@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Gitignore {@link IgnoreLanguage} definition.
  */
-public class GitIgnoreLanguage extends IgnoreLanguage {
+public final class GitIgnoreLanguage extends IgnoreLanguage {
 
   public static final GitIgnoreLanguage INSTANCE = new GitIgnoreLanguage();
 

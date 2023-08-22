@@ -2,6 +2,7 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -11,6 +12,9 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A variable wrapper to be used in [UastVisitor].
  */
 interface UVariable : UDeclaration, PsiVariable {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiVariable
 
   @Suppress("DEPRECATION")
@@ -65,6 +69,9 @@ private fun UVariable.visitContents(visitor: UastVisitor) {
 }
 
 interface UParameter : UVariable, PsiParameter {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiParameter
 
   override fun asLogString(): String = log("name = $name")
@@ -83,6 +90,9 @@ interface UParameterEx : UParameter, UDeclarationEx {
 }
 
 interface UField : UVariable, PsiField {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiField
 
   override fun asLogString(): String = log("name = $name")
@@ -101,6 +111,9 @@ interface UFieldEx : UField, UDeclarationEx {
 }
 
 interface ULocalVariable : UVariable, PsiLocalVariable {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiLocalVariable
 
   override fun asLogString(): String = log("name = $name")
@@ -119,6 +132,9 @@ interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
 }
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiEnumConstant
 
   val initializingClass: UClass?

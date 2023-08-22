@@ -3,6 +3,7 @@ package com.intellij.tasks.actions;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -43,12 +44,12 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
 
   @NotNull
   @Override
-  public List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
+  public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
+  public boolean filterElements(@NotNull ChooseByNameViewModel base,
                                 @NotNull final String pattern,
                                 final boolean everywhere,
                                 @NotNull final ProgressIndicator cancelled,

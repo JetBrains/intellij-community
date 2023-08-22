@@ -1,50 +1,36 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import com.intellij.psi.util.CachedValueProvider.Result
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
-import gnu.trove.TObjectIntHashMap
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement
+import org.jetbrains.plugins.groovy.util.findNodesOutsideCycles
+import org.jetbrains.plugins.groovy.util.mapGraph
+import java.util.*
 
-internal fun GrControlFlowOwner.getVarIndexes(): TObjectIntHashMap<VariableDescriptor> {
-  return CachedValuesManager.getCachedValue(this) {
-    Result.create(doGetVarIndexes(this), PsiModificationTracker.MODIFICATION_COUNT)
+internal fun getSimpleInstructions(flow: Array<Instruction>): BitSet =
+  findNodesOutsideCycles(mapGraph(flow.associateWith { it.allSuccessors().toList() })).fold(BitSet()) { bitSet, instr ->
+    bitSet.set(instr.num()); bitSet
   }
-}
-
-private fun doGetVarIndexes(owner: GrControlFlowOwner): TObjectIntHashMap<VariableDescriptor> {
-  val result = TObjectIntHashMap<VariableDescriptor>()
-  var num = 1
-  for (instruction in owner.controlFlow) {
-    if (instruction !is ReadWriteVariableInstruction) continue
-    val descriptor = instruction.descriptor
-    if (!result.containsKey(descriptor)) {
-      result.put(descriptor, num++)
-    }
-  }
-  return result
-}
 
 private typealias InstructionsByElement = (PsiElement) -> Collection<Instruction>
 private typealias ReadInstructions = Collection<ReadWriteVariableInstruction>
 
-internal fun findReadDependencies(writeInstruction: Instruction, instructionsByElement: InstructionsByElement): ReadInstructions {
+internal fun findReadDependencies(writeInstruction: Instruction, instructionsByElement: InstructionsByElement, cache: MutableMap<PsiElement, ReadInstructions>): ReadInstructions {
   require(
     writeInstruction is ReadWriteVariableInstruction && writeInstruction.isWrite ||
     writeInstruction is MixinTypeInstruction ||
@@ -52,13 +38,33 @@ internal fun findReadDependencies(writeInstruction: Instruction, instructionsByE
   )
   val element = writeInstruction.element ?: return emptyList()
   val scope = findDependencyScope(element) ?: return emptyList()
-  return findReadsInside(scope, instructionsByElement)
+  return findReadsInsideCacheable(scope, instructionsByElement, cache)
 }
 
 private fun findDependencyScope(element: PsiElement): PsiElement? {
-  return PsiTreeUtil.findFirstParent(element) {
-    (it.parent !is GrExpression || it is GrBinaryExpression || it is GrInstanceOfExpression || isExpressionStatement(it))
+  if (element is GrVariable) {
+    val parent = element.parent
+    if (parent is GrVariableDeclaration && parent.isTuple) {
+      return parent
+    }
   }
+  if (element is GrParameter && element.parent?.parent is GrFunctionalExpression) {
+    val funExpr = element.parent.parent as GrFunctionalExpression
+    val enclosingCall = funExpr.parentOfType<GrMethodCall>()?.takeIf { it.closureArguments.any { it === funExpr } }
+    if (enclosingCall != null) {
+      return enclosingCall
+    }
+  }
+  val lValue = if (element.parent is GrTuple) element.parent else element
+  return PsiTreeUtil.findFirstParent(lValue) {
+    (it.parent !is GrExpression || it is GrMethodCallExpression || it is GrBinaryExpression || it is GrInstanceOfExpression || isExpressionStatement(it))
+  }
+}
+
+private fun findReadsInsideCacheable(scope: PsiElement,
+                                     instructionsByElement: InstructionsByElement,
+                                     cache: MutableMap<PsiElement, ReadInstructions>): ReadInstructions {
+  return cache.computeIfAbsent(scope) { findReadsInside(scope, instructionsByElement) }
 }
 
 private fun findReadsInside(scope: PsiElement, instructionsByElement: InstructionsByElement): ReadInstructions {
@@ -75,6 +81,9 @@ private fun findReadsInside(scope: PsiElement, instructionsByElement: Instructio
           if (instruction !is ReadWriteVariableInstruction || instruction.isWrite) continue
           result += instruction
         }
+      }
+      if (element is GrClosableBlock) {
+        return
       }
       super.visitElement(element)
     }

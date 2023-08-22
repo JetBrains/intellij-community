@@ -42,7 +42,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +54,7 @@ public class JavaTestGenerator implements TestGenerator {
   public JavaTestGenerator() {
   }
 
+  @SuppressWarnings("Convert2Diamond")//due to internal java compiler error in corretto 11.0.7
   @Override
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
     return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
@@ -222,8 +222,17 @@ public class JavaTestGenerator implements TestGenerator {
     final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor,
                                                                             targetClass, sourceClass, null, true, existingNames);
     JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
-    final String prefix = elementFactory != null ? elementFactory.createMethodFromText(template.getTemplateText(), targetClass).getName() : "";
-    existingNames.addAll(ContainerUtil.map(targetClass.getAllMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
+    String prefix;
+    try {
+      prefix = elementFactory != null ? elementFactory.createMethodFromText(template.getTemplateText(), targetClass).getName() : "";
+    }
+    catch (IncorrectOperationException e) {
+      prefix = "";
+    }
+
+    for (PsiMethod existingMethod : targetClass.getAllMethods()) {
+      existingNames.add(StringUtil.decapitalize(StringUtil.trimStart(existingMethod.getName(), prefix)));
+    }
 
     for (MemberInfo m : methods) {
       anchor = generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, sourceClass, editor, m.getMember().getName(), existingNames, anchor);

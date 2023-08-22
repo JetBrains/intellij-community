@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
@@ -33,18 +33,21 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.exception.VelocityException;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -61,45 +64,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
 /**
 * @author Dmitry Avdeev
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
-  private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
+  private static final Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
 
-  private final ModuleType<?> myType;
-  private final List<WizardInputField<?>> myAdditionalFields;
+  private final NotNullLazyValue<ModuleType<?>> myType;
+  private final NotNullLazyValue<List<WizardInputField<?>>> myAdditionalFields;
   private final ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
-  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType<?> moduleType, @NotNull List<WizardInputField<?>> additionalFields) {
+  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType<?> moduleType, List<WizardInputField<?>> additionalFields) {
     myTemplate = template;
-    myType = moduleType;
-    myAdditionalFields = additionalFields;
+    myType = moduleType != null ? NotNullLazyValue.createConstantValue(moduleType) : NotNullLazyValue.lazy(() -> template.getModuleType());
+    myAdditionalFields = additionalFields != null ? NotNullLazyValue.createConstantValue(additionalFields) :  NotNullLazyValue.lazy(() -> template.getInputFields());
   }
 
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    ModuleBuilder builder = myType.createModuleBuilder();
+    ModuleBuilder builder = myType.getValue().createModuleBuilder();
     return builder.createWizardSteps(wizardContext, modulesProvider);
   }
 
   @Override
   public ModuleWizardStep[] createFinishingSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    ModuleBuilder builder = myType.createModuleBuilder();
+    ModuleBuilder builder = myType.getValue().createModuleBuilder();
     return builder.createFinishingSteps(wizardContext, modulesProvider);
   }
 
-  @NotNull
   @Override
-  protected List<WizardInputField<?>> getAdditionalFields() {
-    return myAdditionalFields;
+  protected @NotNull List<WizardInputField<?>> getAdditionalFields() {
+    return myAdditionalFields.getValue();
   }
 
   @Override
-  public Module commitModule(@NotNull final Project project, ModifiableModuleModel model) {
+  public Module commitModule(final @NotNull Project project, ModifiableModuleModel model) {
     if (myProjectMode) {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       if (modules.length > 0) {
@@ -113,17 +117,19 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           }
         });
 
-        StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            try {
-              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-              modifiableModuleModel.renameModule(module, module.getProject().getName());
-              modifiableModuleModel.commit();
-              fixModuleName(module);
-            }
-            catch (ModuleWithNameAlreadyExists exists) {
-              // do nothing
-            }
+        StartupManager.getInstance(project).registerStartupActivity(() -> {
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              try {
+                ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+                modifiableModuleModel.renameModule(module, module.getProject().getName());
+                modifiableModuleModel.commit();
+                fixModuleName(module);
+              }
+              catch (ModuleWithNameAlreadyExists exists) {
+                // do nothing
+              }
+            });
           });
         });
         return module;
@@ -135,15 +141,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  @NotNull
   @Override
-  public String getBuilderId() {
+  public @NotNull @NonNls String getBuilderId() {
     return myTemplate.getName();
   }
 
   @Override
   public ModuleType<?> getModuleType() {
-    return myType;
+    return myTemplate.getModuleType();
   }
 
   @Override
@@ -156,9 +161,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return true;
   }
 
-  @NotNull
   @Override
-  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
     final ExistingModuleLoader loader = ExistingModuleLoader.setUpLoader(getModuleFilePath());
@@ -173,7 +177,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   private void fixModuleName(@NotNull Module module) {
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    for (WizardInputField<?> field : myAdditionalFields) {
+    for (WizardInputField<?> field : getAdditionalFields()) {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
       if (factory != null) {
         factory.applyResult(field.getValue(), model);
@@ -209,8 +213,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     RunManager.getInstance(project).setSelectedConfiguration(selectedConfiguration);
   }
 
-  @Nullable
-  private WizardInputField<?> getBasePackageField() {
+  private @Nullable WizardInputField<?> getBasePackageField() {
     for (WizardInputField<?> field : getAdditionalFields()) {
       if (ProjectTemplateParameterFactory.IJ_BASE_PACKAGE.equals(field.getId())) {
         return field;
@@ -226,14 +229,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
                      boolean reportFailuresWithDialog) {
     final WizardInputField<?> basePackage = getBasePackageField();
     try {
-      final File dir = new File(path);
-      class ExceptionConsumer implements Consumer<VelocityException> {
+      Path dir = Paths.get(path);
+      final class ExceptionConsumer implements Consumer<VelocityException> {
         private String myPath;
         private String myText;
         private final SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
 
         @Override
-        public void consume(VelocityException e) {
+        public void accept(VelocityException e) {
           myFailures.add(Trinity.create(myPath, myText, e));
         }
 
@@ -254,20 +257,20 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             }
             else {
               StringBuilder dialogMessageBuilder = new StringBuilder();
-              dialogMessageBuilder.append("Failed to decode files: \n");
+              dialogMessageBuilder.append(LangBundle.message("dialog.message.failed.to.decode.files")).append('\n');
               for (Trinity<String, String, VelocityException> failure : myFailures) {
                 dialogMessageBuilder.append(failure.getFirst()).append("\n");
               }
-              dialogMessage = dialogMessageBuilder.toString();
+              dialogMessage = dialogMessageBuilder.toString(); //NON-NLS
             }
             Messages.showErrorDialog(dialogMessage, LangBundle.message("dialog.title.decoding.template"));
           }
 
-          StringBuilder reportBuilder = new StringBuilder();
+          @NonNls StringBuilder reportBuilder = new StringBuilder();
           for (Trinity<String, String, VelocityException> failure : myFailures) {
             reportBuilder.append("File: ").append(failure.getFirst()).append("\n");
             reportBuilder.append("Exception:\n").append(ExceptionUtil.getThrowableText(failure.getThird())).append("\n");
-            reportBuilder.append("File content:\n\'").append(failure.getSecond()).append("\'\n");
+            reportBuilder.append("File content:\n'").append(failure.getSecond()).append("'\n");
             reportBuilder.append("\n===========================================\n");
           }
 
@@ -301,7 +304,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             }
           }, true);
 
-          myTemplate.handleUnzippedDirectories(dir, filesToRefresh);
+          myTemplate.handleUnzippedDirectories(dir.toFile(), filesToRefresh);
           return null;
         }
       });
@@ -310,13 +313,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         pI.setText(LangBundle.message("progress.title.refreshing"));
       }
 
-      String iml = ContainerUtil.find(ObjectUtils.chooseNotNull(dir.list(), ArrayUtilRt.EMPTY_STRING_ARRAY), s -> s.endsWith(".iml"));
       if (isModuleMode) {
-        File from = new File(path, Objects.requireNonNull(iml));
-        File to = new File(getModuleFilePath());
-        if (!from.renameTo(to)) {
-          throw new IOException("Can't rename " + from + " to " + to);
+        Path from;
+        try (Stream<Path> list = Files.list(dir)) {
+          from = list.filter(it -> it.toString().endsWith(".iml")).findFirst().orElse(null);
         }
+        Files.move(Objects.requireNonNull(from), Paths.get(getModuleFilePath()));
       }
 
       RefreshQueue refreshQueue = RefreshQueue.getInstance();
@@ -336,27 +338,25 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  @NotNull
-  private static String getPathFragment(@NotNull String value) {
+  private static @NotNull String getPathFragment(@NotNull String value) {
     return "/" + value.replace('.', '/') + "/";
   }
 
-  @SuppressWarnings("UseOfPropertiesAsHashtable")
   private byte @Nullable [] processTemplates(@Nullable String projectName, String content, File file, Consumer<? super VelocityException> exceptionConsumer)
     throws IOException {
     String patchedContent = content;
     if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEscaped()) {
-      for (WizardInputField<?> field : myAdditionalFields) {
+      for (WizardInputField<?> field : getAdditionalFields()) {
         if (!field.acceptFile(file)) {
           return null;
         }
       }
       Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
-      for (WizardInputField<?> field : myAdditionalFields) {
+      for (WizardInputField<?> field : getAdditionalFields()) {
         properties.putAll(field.getValues());
       }
       if (projectName != null) {
-        properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
+        properties.setProperty(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
       }
       String merged = FileTemplateUtil.mergeTemplate(properties, content, true, exceptionConsumer);
       patchedContent = merged.replace("\\$", "$").replace("\\#", "#");
@@ -379,13 +379,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @Override
   public boolean isSuitableSdkType(SdkTypeId sdkType) {
-    return myType.createModuleBuilder().isSuitableSdkType(sdkType);
+    return myTemplate.getModuleType().createModuleBuilder().isSuitableSdkType(sdkType);
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, @NotNull String path) {
-    Path baseDir = Paths.get(path);
+  public @Nullable Project createProject(String name, @NotNull String path) {
+    Path baseDir = Path.of(path);
     LOG.assertTrue(Files.isDirectory(baseDir));
 
     List<Path> children;
@@ -398,8 +397,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     boolean isSomehowOverwriting = children.size() > 1 ||
                                    (children.size() == 1 && !PathMacroUtil.DIRECTORY_STORE_NAME.equals(children.get(0).getFileName().toString()));
 
-    return ProgressManager.getInstance().run(new Task.WithResult<Project, RuntimeException>(null, LangBundle
-      .message("progress.title.applying.template"), true) {
+    return ProgressManager.getInstance().run(new Task.WithResult<>(null, LangBundle.message("progress.title.applying.template"), true) {
       @Override
       public Project compute(@NotNull ProgressIndicator indicator) {
         try {
@@ -411,7 +409,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           cleanup();
           if (indicator.isCanceled() && !isSomehowOverwriting) {
             try {
-              FileUtil.delete(baseDir);
+              NioFiles.deleteRecursively(baseDir);
             }
             catch (IOException e) {
               LOG.error(e);

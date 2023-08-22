@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.scope.util;
 
@@ -22,11 +8,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -40,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class PsiScopesUtil {
+public final class PsiScopesUtil {
   private static final Logger LOG = Logger.getInstance(PsiScopesUtil.class);
 
   private PsiScopesUtil() {
@@ -62,6 +50,9 @@ public class PsiScopesUtil {
     PsiElement prevParent = entrance;
     PsiElement scope = entrance;
 
+    NameHint hint = processor.getHint(NameHint.KEY);
+    String name = hint == null ? null : hint.getName(state);
+
     while (scope != null) {
       ProgressIndicatorProvider.checkCanceled();
       if (scope instanceof PsiClass) {
@@ -75,7 +66,7 @@ public class PsiScopesUtil {
       prevParent = scope;
       processor.handleEvent(JavaScopeProcessorEvent.EXIT_LEVEL, scope);
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
-      scope = scope.getContext();
+      scope = scope instanceof PsiClassImpl ? ((PsiClassImpl)scope).getContext(name) : scope.getContext();
     }
 
     return true;
@@ -156,11 +147,15 @@ public class PsiScopesUtil {
       // Composite expression
       PsiElement target = null;
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-      if (qualifier instanceof PsiExpression || qualifier instanceof PsiJavaCodeReferenceElement) {
+      if (qualifier instanceof PsiExpression || qualifier instanceof PsiJavaCodeReferenceElement || qualifier instanceof PsiTypeElement) {
         PsiType type = null;
         if (qualifier instanceof PsiExpression) {
           type = ((PsiExpression)qualifier).getType();
           assert type == null || type.isValid() : type.getClass() + "; " + qualifier;
+          processTypeDeclarations(type, ref, processor);
+        }
+        else if (qualifier instanceof PsiTypeElement) {
+          type = ((PsiTypeElement)qualifier).getType();
           processTypeDeclarations(type, ref, processor);
         }
 
@@ -313,18 +308,9 @@ public class PsiScopesUtil {
             final PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
             if (resolve instanceof PsiEnumConstant) {
               final PsiEnumConstantInitializer initializingClass = ((PsiEnumConstant)resolve).getInitializingClass();
-              if (hasDesiredMethod(methodCall, type, initializingClass)) {
+              if (initializingClass != null && getOverridingMethod(initializingClass, methodCall.getMethodExpression().getReferenceName()) != null) {
                 processQualifierResult(new ClassCandidateInfo(initializingClass, PsiSubstitutor.EMPTY), processor, methodCall);
                 return;
-              }
-            }
-            else if (resolve instanceof PsiVariable && ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL) && ((PsiVariable)resolve).hasInitializer()) {
-              final PsiExpression initializer = ((PsiVariable)resolve).getInitializer();
-              if (initializer instanceof PsiNewExpression) {
-                final PsiAnonymousClass anonymousClass = ((PsiNewExpression)initializer).getAnonymousClass();
-                if (hasDesiredMethod(methodCall, type, anonymousClass)) {
-                  type = initializer.getType();
-                }
               }
             }
           }
@@ -404,21 +390,20 @@ public class PsiScopesUtil {
     return null;
   }
 
-  private static boolean hasDesiredMethod(PsiMethodCallExpression methodCall, PsiType type, PsiAnonymousClass anonymousClass) {
-    if (anonymousClass != null && type.equals(anonymousClass.getBaseClassType())) {
-      final PsiMethod[] refMethods = anonymousClass.findMethodsByName(methodCall.getMethodExpression().getReferenceName(), false);
-      if (refMethods.length > 0) {
-        final PsiClass baseClass = PsiUtil.resolveClassInType(type);
-        if (baseClass != null && !hasCovariantOverridingOrNotPublic(baseClass, refMethods)) {
-          for (PsiMethod method : refMethods) {
-            if (method.findSuperMethods(baseClass).length > 0) {
-              return true;
-            }
+  public static PsiMethod getOverridingMethod(PsiAnonymousClass anonymousClass,
+                                              String name) {
+    final PsiMethod[] refMethods = anonymousClass.findMethodsByName(name, false);
+    if (refMethods.length > 0) {
+      final PsiClass baseClass = PsiUtil.resolveClassInType(anonymousClass.getBaseClassType());
+      if (baseClass != null && !hasCovariantOverridingOrNotPublic(baseClass, refMethods)) {
+        for (PsiMethod method : refMethods) {
+          if (method.findSuperMethods(baseClass).length > 0) {
+            return method;
           }
         }
       }
     }
-    return false;
+    return null;
   }
 
   private static boolean hasCovariantOverridingOrNotPublic(PsiClass baseClass, PsiMethod[] refMethods) {
@@ -479,7 +464,7 @@ public class PsiScopesUtil {
       if (!(qualifier instanceof PsiSuperExpression)) {
         processor.setAccessClass((PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement());
       }
-      else if (((PsiSuperExpression)qualifier).getQualifier() != null && PsiUtil.isLanguageLevel8OrHigher(qualifier) && 
+      else if (((PsiSuperExpression)qualifier).getQualifier() != null && PsiUtil.isLanguageLevel8OrHigher(qualifier) &&
                CommonClassNames.JAVA_LANG_CLONEABLE.equals(((PsiClass)resolve).getQualifiedName()) && ((PsiClass)resolve).isInterface()) {
         processor.setAccessClass((PsiClass)resolve);
       }

@@ -1,12 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.method
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -15,12 +13,10 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author ilyas
- */
 class ExtractMethodTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + 'groovy/refactoring/extractMethod/'
@@ -90,7 +86,7 @@ class ExtractMethodTest extends LightGroovyTestCase {
       protected ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
         final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, name, owner, true)
         final PsiType type = helper.getOutputType()
-        if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || PsiType.VOID.equals(type)) {
+        if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || PsiTypes.voidType().equals(type)) {
           helper.setSpecifyType(false)
         }
         return helper
@@ -204,7 +200,16 @@ class ExtractMethodTest extends LightGroovyTestCase {
 
   void testUnassignedVar() { doTest() }
 
-  void testForInLoop() { doTest() }
+  void testForInLoop() {
+    def registryValue = Registry.is(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE)
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true)
+    try {
+      doTest()
+    }
+    finally {
+      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(registryValue)
+    }
+  }
 
   void testStringPart0() {
     doTest('''\

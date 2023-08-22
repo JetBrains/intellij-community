@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,7 +112,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
         catch (PatternSyntaxException e) {
           isTestFolder = false;
         }
-        String linked = expandLinkedResourcesPath(macroMap, path);
+        String linked = expandLinkedResourcesPath(myRootPath, macroMap, path);
         if (linked == null) {
           addSourceFolderToCurrentContentRoot(rootModel, srcUrl, isTestFolder);
         }
@@ -131,7 +132,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
     }
     else if (kind.equals(EclipseXml.OUTPUT_KIND)) {
       String output = getPathRelativeToRoot(path);
-      String linked = expandLinkedResourcesPath(macroMap, path);
+      String linked = expandLinkedResourcesPath(myRootPath, macroMap, path);
       if (linked != null) {
         output = linked;
         if (eclipseModuleManager != null) {
@@ -141,7 +142,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       setupOutput(rootModel, output);
     }
     else if (kind.equals(EclipseXml.LIB_KIND)) {
-      String linked = expandLinkedResourcesPath(macroMap, path);
+      String linked = expandLinkedResourcesPath(myRootPath, macroMap, path);
       String url;
       if (linked != null) {
         url = prepareValidUrlInsideJar(pathToUrl(linked));
@@ -160,7 +161,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       final String sourcePath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       String srcUrl = null;
       if (sourcePath != null) {
-        final String linkedSrc = expandLinkedResourcesPath(macroMap, sourcePath);
+        final String linkedSrc = expandLinkedResourcesPath(myRootPath, macroMap, sourcePath);
         if (linkedSrc != null) {
           srcUrl = prepareValidUrlInsideJar(pathToUrl(linkedSrc));
           if (eclipseModuleManager != null) {
@@ -247,7 +248,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
     return path.isEmpty() ? myRootPath : (myRootPath + "/" + path);
   }
 
-  private static String getNativeLibraryRoot(Element element) {
+  public static String getNativeLibraryRoot(Element element) {
     final Element attributes = element.getChild(EclipseXml.ATTRIBUTES_TAG);
     if (attributes != null) {
       for (Element attributeElement : attributes.getChildren(EclipseXml.ATTRIBUTE_TAG)) {
@@ -259,17 +260,17 @@ public abstract class AbstractEclipseClasspathReader<T> {
     return null;
   }
 
-  protected static int srcVarStart(String srcPath) {
+  public static int srcVarStart(String srcPath) {
     return srcPath.startsWith("/") ? 1 : 0;
   }
 
   @NotNull
-  protected static String getPresentableName(@NotNull String path) {
+  public static String getPresentableName(@NotNull String path) {
     return getPresentableName(path, null);
   }
 
   @NotNull
-  protected static String getPresentableName(@NotNull String path, Set<? super String> names) {
+  public static String getPresentableName(@NotNull String path, Set<? super String> names) {
     String pathComponent = getLastPathComponent(path);
     if (pathComponent != null && names != null && !names.add(pathComponent)) {
       return path;
@@ -286,16 +287,16 @@ public abstract class AbstractEclipseClasspathReader<T> {
   }
 
   @NotNull
-  protected static String getVariableRelatedPath(@NotNull String var, String path) {
+  public static String getVariableRelatedPath(@NotNull String var, String path) {
     return "$" + var + "$" + (path == null ? "" : "/" + path);
   }
 
   @NotNull
-  protected static String pathToUrl(@NotNull String path) {
+  protected static @NonNls String pathToUrl(@NotNull String path) {
     return "file://" + FileUtil.toSystemIndependentName(path);
   }
 
-  protected static EPathVariable createEPathVariable(String pathAttr, int varStart) {
+  public static EPathVariable createEPathVariable(String pathAttr, int varStart) {
     int slash = pathAttr.indexOf("/", varStart);
     if (slash > 0) {
       return new EPathVariable(pathAttr.substring(varStart, slash), pathAttr.substring(slash + 1));
@@ -312,9 +313,9 @@ public abstract class AbstractEclipseClasspathReader<T> {
   }
 
   @Nullable
-  protected String expandLinkedResourcesPath(final ExpandMacroToPathMap macroMap,
-                                             final String path) {
-    final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(myRootPath, path);
+  public static String expandLinkedResourcesPath(String rootPath, final ExpandMacroToPathMap macroMap,
+                                                 final String path) {
+    final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(rootPath, path);
     if (linkedResource != null) {
       if (linkedResource.containsPathVariable()) {
         final String toPathVariableFormat =
@@ -337,9 +338,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       return;
     }
 
-    InputStream in = null;
-    try {
-      in = new BufferedInputStream(new FileInputStream(manifestFile));
+    try (InputStream in = new BufferedInputStream(new FileInputStream(manifestFile))) {
       final Manifest manifest = new Manifest(in);
       final String attributes = manifest.getMainAttributes().getValue("Require-Bundle");
       if (!StringUtil.isEmpty(attributes)) {
@@ -363,18 +362,9 @@ public abstract class AbstractEclipseClasspathReader<T> {
     catch (IOException e) {
       throw new ConversionException(e.getMessage());
     }
-    finally {
-      if (in != null) {
-        try {
-          in.close();
-        }
-        catch (IOException ignored) {
-        }
-      }
-    }
   }
 
-  protected static class EPathVariable {
+  public static class EPathVariable {
     @NotNull
     private final String myVariable;
     private final String myRelatedPath;
@@ -382,6 +372,14 @@ public abstract class AbstractEclipseClasspathReader<T> {
     protected EPathVariable(@NotNull String variable, final String relatedPath) {
       myVariable = variable;
       myRelatedPath = relatedPath;
+    }
+
+    public @NotNull String getVariable() {
+      return myVariable;
+    }
+
+    public String getRelatedPath() {
+      return myRelatedPath;
     }
   }
 }

@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -64,7 +65,7 @@ public abstract class MembersBasedPresenterNoPreviewImpl<T extends MembersBasedV
    * @return Command name for this preview
    */
   @NotNull
-  protected abstract String getCommandName();
+  protected abstract @Command String getCommandName();
 
   /**
    * Do refactor with out of preview. Implement this method to do refactoring.

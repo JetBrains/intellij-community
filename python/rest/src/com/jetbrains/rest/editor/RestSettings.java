@@ -1,17 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.editor;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.jetbrains.rest.editor.RestConfigurable.JAVA_FX;
+import static com.jetbrains.rest.editor.RestConfigurable.JCEF;
+import static com.jetbrains.rest.editor.RestConfigurable.SWING;
 
 @State(name = "RestSettings", storages = @Storage(value="other.xml", roamingType = RoamingType.DISABLED))
 public class RestSettings implements PersistentStateComponent<RestSettings> {
-  @NotNull private String myCurrentPanel = JAVA_FX;
+  @NotNull private String myCurrentPanel = JBCefApp.isSupported() ? JCEF : SWING;
 
   @NotNull
+  @NlsSafe
   public String getCurrentPanel() {
     return myCurrentPanel;
   }
@@ -21,7 +26,7 @@ public class RestSettings implements PersistentStateComponent<RestSettings> {
   }
 
   public static RestSettings getInstance() {
-    return ServiceManager.getService(RestSettings.class);
+    return ApplicationManager.getApplication().getService(RestSettings.class);
   }
 
 

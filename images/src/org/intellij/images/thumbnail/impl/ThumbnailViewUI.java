@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.CopyPasteDelegator;
@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -25,6 +26,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
@@ -55,9 +57,9 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
+import static com.intellij.pom.Navigatable.EMPTY_NAVIGATABLE_ARRAY;
 
-    private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
+final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     private final ThumbnailView thumbnailView;
     private final CopyPasteSupport copyPasteSupport;
@@ -195,7 +197,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         float splitterProportion = previewSplitter.getProportion();
         if (enabled) {
             if (splitterProportion == 1) {
-                previewSplitter.setProportion(Float.valueOf(PropertiesComponent.getInstance(project).getValue(ToggleTagsPanelAction.TAGS_PANEL_PROPORTION, "0.5f")));
+                previewSplitter.setProportion(Float.parseFloat(PropertiesComponent.getInstance(project).getValue(ToggleTagsPanelAction.TAGS_PANEL_PROPORTION, "0.5f")));
             }
             if (tagsPanel == null) {
                 tagsPanel = createTagPreviewPanel();
@@ -311,7 +313,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     public boolean isSelected(VirtualFile file) {
-        int index = ((DefaultListModel) list.getModel()).indexOf(file);
+        int index = ((DefaultListModel<?>) list.getModel()).indexOf(file);
         return index != -1 && list.isSelectedIndex(index);
     }
 
@@ -337,9 +339,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         public Component getListCellRendererComponent(
                 JList list, Object value, int index, boolean isSelected, boolean cellHasFocus
         ) {
-            if (value instanceof VirtualFile) {
-                VirtualFile file = (VirtualFile) value;
-                setFileName(file.getName());
+            if (value instanceof VirtualFile file) {
+              setFileName(file.getName());
                 String toolTipText = IfsUtil.getReferencePath(thumbnailView.getProject(), file);
                 if (!isFileSizeVisible()) {
                     String description = getImageComponent().getDescription();
@@ -517,8 +518,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                     ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailViewActions.ACTION_PLACE, actionGroup);
                     JPopupMenu popupMenu = menu.getComponent();
                     popupMenu.pack();
-                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
-
+                    JBPopupMenu.showByEvent(e, popupMenu);
                     e.consume();
                 }
             }
@@ -640,7 +640,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         public void contentsChanged(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             if (list != null) {
-                int index = ((DefaultListModel) list.getModel()).indexOf(file);
+                int index = ((DefaultListModel<?>) list.getModel()).indexOf(file);
                 if (index != -1) {
                     Rectangle cellBounds = list.getCellBounds(index, index);
                     list.repaint(cellBounds);
@@ -656,7 +656,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 refresh();
             }
             if (list != null) {
-                ((DefaultListModel) list.getModel()).removeElement(file);
+                ((DefaultListModel<?>) list.getModel()).removeElement(file);
             }
         }
 
@@ -728,7 +728,12 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
             @Override
             public void update(@NotNull AnActionEvent e) {
-              e.getPresentation().setEnabledAndVisible(Arrays.stream(thumbnailView.getSelection()).noneMatch(file -> tagManager.hasTag(tag, file)));
+              e.getPresentation().setEnabledAndVisible(!ContainerUtil.exists(thumbnailView.getSelection(), file -> tagManager.hasTag(tag, file)));
+            }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
             }
           };
         }

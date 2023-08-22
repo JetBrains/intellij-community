@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.editor.Editor;
@@ -22,9 +23,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ReplaceAssignmentFromVoidWithStatementIntentionAction implements IntentionAction {
   private final PsiElement myParent;
@@ -62,5 +65,11 @@ public class ReplaceAssignmentFromVoidWithStatementIntentionAction implements In
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ReplaceAssignmentFromVoidWithStatementIntentionAction(PsiTreeUtil.findSameElementInCopy(myParent, target), 
+                                                                     PsiTreeUtil.findSameElementInCopy(myLExpr, target));
   }
 }

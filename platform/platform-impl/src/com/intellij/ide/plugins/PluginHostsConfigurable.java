@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.AnimatedIcon;
@@ -25,9 +26,10 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +42,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
-  private final ListTableModel<UrlInfo> myModel = new ListTableModel<UrlInfo>() {
+  private final ListTableModel<UrlInfo> myModel = new ListTableModel<>() {
     @Override
     public void addRow() {
       addRow(new UrlInfo(""));
@@ -100,13 +102,11 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     }
   };
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     myModel.setColumnInfos(new ColumnInfo[]{new ColumnInfo<UrlInfo, String>("") {
-      @Nullable
       @Override
-      public String valueOf(UrlInfo info) {
+      public @Nullable String valueOf(UrlInfo info) {
         return info.name;
       }
 
@@ -143,10 +143,11 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     myTable.setDefaultEditor(Object.class, editor);
 
     myTable.setDefaultRenderer(Object.class, new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
-        { setIpad(JBUI.emptyInsets());}
+        {
+          setIpad(JBInsets.emptyInsets());}
 
         @Override
-        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
           if (row >= 0 && row < myModel.getRowCount()) {
             UrlInfo info = myModel.getRowValue(row);
             setForeground(selected ? table.getSelectionForeground() : table.getForeground());
@@ -185,7 +186,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
   private void validateRepositories(@NotNull List<? extends UrlInfo> urls) {
     List<UrlInfo> infos = new ArrayList<>();
-    List<String> results = new ArrayList<>();
+    List<@Nls String> results = new ArrayList<>();
 
     for (UrlInfo info : urls) {
       info.progress = true;
@@ -200,12 +201,12 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
       public void run(@NotNull ProgressIndicator indicator) {
         for (int i = 0, size = infos.size(); i < size; i++) {
           try {
-            if (RepositoryHelper.loadPlugins(infos.get(i).name, indicator).size() == 0) {
-              results.set(i, "No plugins found. Please check log file for possible errors.");
+            if (RepositoryHelper.loadPlugins(infos.get(i).name, null, indicator).isEmpty()) {
+              results.set(i, IdeBundle.message("error.no.plugins.found"));
             }
           }
           catch (Exception ignore) {
-            results.set(i, "Connection failed.");
+            results.set(i, IdeBundle.message("error.connection.failed"));
           }
         }
       }
@@ -277,8 +278,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     }
   }
 
-  @NotNull
-  private static String correctRepositoryRule(@NotNull String input) {
+  private static @NotNull String correctRepositoryRule(@NotNull String input) {
     if (VirtualFileManager.extractProtocol(input) == null) {
       return VirtualFileManager.constructUrl(URLUtil.HTTP_PROTOCOL, input);
     }
@@ -286,9 +286,9 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
   }
 
   private static class UrlInfo {
-    String name;
+    @NlsSafe String name;
     boolean progress;
-    String errorTooltip;
+    @Nls String errorTooltip;
 
     UrlInfo(@NotNull String name) {
       this.name = name;

@@ -63,21 +63,6 @@ public class GrEnumConstantInitializerImpl extends GrAnonymousClassDefinitionImp
   }
 
   @Override
-  public boolean isInterface() {
-    return false;
-  }
-
-  @Override
-  public boolean isAnnotationType() {
-    return false;
-  }
-
-  @Override
-  public boolean isEnum() {
-    return false;
-  }
-
-  @Override
   public GrTypeParameterList getTypeParameterList() {
     return null;
   }

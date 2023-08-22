@@ -1,48 +1,37 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-class UnifiedEditorHighlighter implements EditorHighlighter {
+public class UnifiedEditorHighlighter implements EditorHighlighter {
   private static final Logger LOG = Logger.getInstance(UnifiedEditorHighlighter.class);
 
   @NotNull private final Document myDocument;
   @NotNull private final List<Element> myPieces;
 
   UnifiedEditorHighlighter(@NotNull Document document,
-                                  @NotNull EditorHighlighter highlighter1,
-                                  @NotNull EditorHighlighter highlighter2,
-                                  @NotNull List<HighlightRange> ranges,
-                                  int textLength) {
+                           @NotNull EditorHighlighter highlighter1,
+                           @NotNull EditorHighlighter highlighter2,
+                           @NotNull List<HighlightRange> ranges,
+                           int textLength) {
     myDocument = document;
     myPieces = new ArrayList<>();
     init(highlighter1.createIterator(0), highlighter2.createIterator(0), ranges, textLength);
@@ -50,10 +39,11 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
 
   private void init(@NotNull HighlighterIterator it1,
                     @NotNull HighlighterIterator it2,
-                    @NotNull List<HighlightRange> ranges,
+                    @NotNull List<? extends HighlightRange> ranges,
                     int textLength) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
+    int i = 0;
     int offset = 0;
 
     for (HighlightRange range : ranges) {
@@ -63,12 +53,13 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
       if (base.isEmpty()) continue;
 
       if (base.getStartOffset() > offset) {
-        addElement(new Element(offset, base.getStartOffset(), null, TextAttributes.ERASE_MARKER));
+        addElement(createEmptyElement(offset, base.getStartOffset()));
         offset = base.getStartOffset();
       }
 
       HighlighterIterator it = range.getSide().select(it1, it2);
       while (!it.atEnd() && changed.getStartOffset() >= it.getEnd()) {
+        if (i++ % 1024 == 0) ProgressManager.checkCanceled();
         it.advance();
       }
 
@@ -88,13 +79,15 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
         addElement(new Element(offset + relativeStart,
                                offset + relativeEnd,
                                it.getTokenType(),
-                               it.getTextAttributes()));
+                               it.getTextAttributes(),
+                               it.getTextAttributesKeys()));
 
         if (changed.getEndOffset() <= it.getEnd()) {
           offset += changed.getLength();
           break;
         }
 
+        if (i++ % 1024 == 0) ProgressManager.checkCanceled();
         it.advance();
         if (it.atEnd()) {
           LOG.error("Unexpected end of highlighter");
@@ -104,7 +97,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
     }
 
     if (offset < textLength) {
-      addElement(new Element(offset, textLength, null, TextAttributes.ERASE_MARKER));
+      addElement(createEmptyElement(offset, textLength));
     }
   }
 
@@ -114,13 +107,15 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
       Element oldElement = myPieces.get(myPieces.size() - 1);
       if (oldElement.getEnd() >= element.getStart() &&
           Comparing.equal(oldElement.getAttributes(), element.getAttributes()) &&
+          Comparing.equal(oldElement.getAttributesKeys(), element.getAttributesKeys()) &&
           Comparing.equal(oldElement.getElementType(), element.getElementType())) {
         merged = true;
         myPieces.remove(myPieces.size() - 1);
         myPieces.add(new Element(oldElement.getStart(),
                                  element.getEnd(),
                                  element.getElementType(),
-                                 element.getAttributes()));
+                                 element.getAttributes(),
+                                 element.getAttributesKeys()));
       }
     }
     if (!merged) {
@@ -131,7 +126,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), Comparator.comparingInt(Element::getStart));
+    int index = Collections.binarySearch(myPieces, createEmptyElement(startOffset, 0), Comparator.comparingInt(Element::getStart));
     // index: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
     // and we need index of the first element that is less or equal (floorElement)
     if (index < 0) index = Math.max(-index - 2, 0);
@@ -142,7 +137,12 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   public void setEditor(@NotNull HighlighterClient editor) {
   }
 
-  private static class ProxyIterator implements HighlighterIterator {
+  @NotNull
+  private static Element createEmptyElement(int startOffset, int endOffset) {
+    return new Element(startOffset, endOffset, null, TextAttributes.ERASE_MARKER, TextAttributesKey.EMPTY_ARRAY);
+  }
+
+  private static final class ProxyIterator implements HighlighterIterator {
     @NotNull
     private final Document myDocument;
     private int myIdx;
@@ -157,6 +157,11 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
     @Override
     public TextAttributes getTextAttributes() {
       return myPieces.get(myIdx).getAttributes();
+    }
+
+    @Override
+    public TextAttributesKey @NotNull [] getTextAttributesKeys() {
+      return myPieces.get(myIdx).getAttributesKeys();
     }
 
     @Override
@@ -200,33 +205,42 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
     }
   }
 
-  private static class Element {
+  private static final class Element {
     private final int myStart;
     private final int myEnd;
     private final IElementType myElementType;
     private final TextAttributes myAttributes;
+    private final TextAttributesKey @NotNull [] myAttributesKeys;
 
-    private Element(int start, int end, IElementType elementType, TextAttributes attributes) {
+    private Element(int start, int end,
+                    @Nullable IElementType elementType,
+                    @NotNull TextAttributes attributes,
+                    TextAttributesKey @NotNull [] keys) {
       myStart = start;
       myEnd = end;
       myElementType = elementType;
       myAttributes = attributes;
+      myAttributesKeys = keys;
     }
 
-    public int getStart() {
+    int getStart() {
       return myStart;
     }
 
-    public int getEnd() {
+    int getEnd() {
       return myEnd;
     }
 
-    public IElementType getElementType() {
+    IElementType getElementType() {
       return myElementType;
     }
 
-    public TextAttributes getAttributes() {
+    @NotNull TextAttributes getAttributes() {
       return myAttributes;
+    }
+
+    private TextAttributesKey @NotNull [] getAttributesKeys() {
+      return myAttributesKeys;
     }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -43,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,20 +37,47 @@ import java.io.File;
 import java.util.List;
 
 // TODO this should eventually replace PackageUtil from intellij.java.impl
-public class PlatformPackageUtil {
+public final class PlatformPackageUtil {
 
   private static final Logger LOG = Logger.getInstance(PlatformPackageUtil.class);
+
+  /**
+   * Returns package name for {@code directory} if it's located under source root or classes root of Java library, or {@code null} otherwise.
+   * This is an internal method, plugins must use {@link com.intellij.openapi.roots.PackageIndex#getPackageNameByDirectory} instead.
+   */
+  @ApiStatus.Internal
+  public static String getPackageName(@NotNull VirtualFile directory, @NotNull Project project) {
+    return DirectoryIndex.getInstance(project).getPackageName(directory);
+  }
+
+  /**
+   * Returns a query producing directories which correspond to {@code packageName}.
+   * This is an internal function, plugins must use {@link com.intellij.openapi.roots.PackageIndex#getDirsByPackageName} instead.
+   */
+  @ApiStatus.Internal
+  @NotNull
+  public static Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources, @NotNull Project project) {
+    return DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, includeLibrarySources);
+  }
+
+  /**
+   * Returns a query producing directories from {@code scope} which correspond to {@code packageName}.
+   * This is an internal function, plugins must use {@link com.intellij.openapi.roots.PackageIndex#getDirsByPackageName} instead.
+   */
+  @ApiStatus.Internal
+  public static Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, @NotNull GlobalSearchScope scope, @NotNull Project project) {
+    return DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, true).filtering(scope::contains);
+  }
+
 
   @Nullable
   private static String findLongestExistingPackage(Project project, String packageName, GlobalSearchScope scope) {
     final PsiManager manager = PsiManager.getInstance(project);
-    DirectoryIndex index = DirectoryIndex.getInstance(project);
-
     String nameToMatch = packageName;
     while (true) {
-      Query<VirtualFile> vFiles = index.getDirectoriesByPackageName(nameToMatch, false);
+      Query<VirtualFile> vFiles = getDirectoriesByPackageName(nameToMatch, false, project);
       PsiDirectory directory = getWritableModuleDirectory(vFiles, scope, manager);
-      if (directory != null) return index.getPackageName(directory.getVirtualFile());
+      if (directory != null) return getPackageName(directory.getVirtualFile(), project);
 
       int lastDotIndex = nameToMatch.lastIndexOf('.');
       if (lastDotIndex >= 0) {
@@ -193,7 +207,7 @@ public class PlatformPackageUtil {
   private static PsiDirectory[] getPackageDirectories(Project project, String rootPackage, final GlobalSearchScope scope) {
     final PsiManager manager = PsiManager.getInstance(project);
 
-    Query<VirtualFile> query = DirectoryIndex.getInstance(scope.getProject()).getDirectoriesByPackageName(rootPackage, true);
+    Query<VirtualFile> query = getDirectoriesByPackageName(rootPackage, true, project);
     query = new FilteredQuery<>(query, scope::contains);
 
     List<PsiDirectory> directories = ContainerUtil.mapNotNull(query.findAll(), manager::findDirectory);

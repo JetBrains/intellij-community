@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.NameValue;
@@ -25,5 +26,5 @@ import com.intellij.util.xml.NameValue;
 public abstract class AntDomNamedElement extends AntDomElement {
   @Attribute("name")
   @NameValue
-  public abstract GenericAttributeValue<String> getName();
+  public abstract GenericAttributeValue<@NlsSafe String> getName();
 }

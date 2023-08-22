@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.google.common.collect.Lists;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
@@ -30,9 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* @author yole
-*/
 public class ResolveResultList extends ArrayList<RatedResolveResult> {
   public static List<RatedResolveResult> to(PsiElement element) {
     if (element== null) {
@@ -52,7 +50,8 @@ public class ResolveResultList extends ArrayList<RatedResolveResult> {
   }
 
 
-  public static List<PsiElement> getElements(@NotNull List<? extends RatedResolveResult> from) {
+  public static List<PsiElement> getElements(@NotNull List<? extends ResolveResult> from) {
+    if (from.isEmpty()) return Collections.emptyList();
     return Lists.transform(from, res -> res != null ? res.getElement() : null);
   }
 

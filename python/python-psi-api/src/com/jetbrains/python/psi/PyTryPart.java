@@ -20,8 +20,6 @@ package com.jetbrains.python.psi;
  * @see PyExceptPart
  * @see PyFinallyPart
  * @see PyElsePart
- *
- * @author dcheryasov
  */
 public interface PyTryPart extends PyStatementPart {
 }

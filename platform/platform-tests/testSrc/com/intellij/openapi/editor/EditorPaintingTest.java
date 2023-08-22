@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.impl.IndentsPass;
@@ -31,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
+import java.util.Collections;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
 public class EditorPaintingTest extends EditorPaintingTestCase {
@@ -53,32 +41,32 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     addRangeHighlighter(2, 3, HighlighterLayer.ERROR, Color.black, null);
     checkResult();
   }
-  
+
   public void testCaretRowWinsOverSyntaxEvenInPresenceOfHighlighter() throws Exception {
     initText("foo");
     setUniformEditorHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN));
     addRangeHighlighter(0, 3, 0, null, Color.blue);
     checkResult();
   }
-  
+
   public void testEmptyBorderInEmptyDocument() throws Exception {
     initText("");
     addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
     checkResult();
   }
-  
+
   public void testPrefixWithEmptyText() throws Exception {
     initText("");
     ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes(Color.blue, Color.gray, null, null, Font.PLAIN));
     checkResult();
   }
-  
+
   public void testBorderAtLastLine() throws Exception {
     initText("a\nbc");
     addBorderHighlighter(3, 4, HighlighterLayer.WARNING, Color.red);
     checkResult();
   }
-  
+
   public void testFoldedRegionShownOnlyWithBorder() throws Exception {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
@@ -177,7 +165,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   public void testIndentGuideOverBlockInlayWithSoftWraps() throws Exception {
     initText("  a\n    b c");
-    configureSoftWraps(5);
+    configureSoftWraps(5, false);
     runIndentsPass();
     addBlockInlay(0);
     checkResult();
@@ -238,6 +226,79 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResultWithGutter();
   }
 
+  public void testAfterLineEndInlayWithLineExtension() throws Exception {
+    initText("");
+    getEditor().getInlayModel().addAfterLineEndElement(0, false, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Inlay inlay) {
+        return 10;
+      }
+
+      @Override
+      public void paint(@NotNull Inlay inlay,
+                        @NotNull Graphics g,
+                        @NotNull Rectangle targetRegion,
+                        @NotNull TextAttributes textAttributes) {
+        g.setColor(Color.red);
+        g.fillRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);
+      }
+    });
+    ((EditorEx)getEditor()).registerLineExtensionPainter(
+      line -> Collections.singleton(new LineExtensionInfo("ABC", new TextAttributes(Color.black, null, null, null, Font.PLAIN)))
+    );
+    paintEditor(false, null, null); // first paint triggers size update due to line extensions
+    checkResult();
+  }
+
+  public void testEmptyBorderAtInlay1() throws Exception {
+    initText("ab");
+    getEditor().getInlayModel().addInlineElement(1, false, new MyInlayRenderer());
+    addBorderHighlighter(1, 1, 0, Color.red);
+    checkResult();
+  }
+
+  public void testEmptyBorderAtInlay2() throws Exception {
+    initText("ab");
+    getEditor().getInlayModel().addInlineElement(1, true, new MyInlayRenderer());
+    addBorderHighlighter(1, 1, 0, Color.red);
+    checkResult();
+  }
+
+  public void testCaretAtFoldRegion() throws Exception {
+    initText("test");
+    addCollapsedFoldRegion(0, 4, ".");
+    checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegion() throws Exception {
+    initText("a\nb\nc");
+    addCustomLinesFolding(1, 1);
+    checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionWithCaret() throws Exception {
+    initText("a\n<caret>b\nc");
+    addCustomLinesFolding(1, 1);
+    checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionWithCaretAtEnd() throws Exception {
+    initText("a\nb<caret>\nc");
+    addCustomLinesFolding(1, 1);
+    checkResultWithGutter();
+  }
+
+  public void testCustomFoldRegionInsideSelection() throws Exception {
+    initText("<selection>\ntext\n<caret></selection>");
+    addCustomLinesFolding(1, 1);
+    checkResult();
+  }
+
+  private void addCustomLinesFolding(int startLine, int endLine) {
+    FoldingModel foldingModel = getEditor().getFoldingModel();
+    foldingModel.runBatchFoldingOperation(() -> foldingModel.addCustomLinesFolding(startLine, endLine, new OurCustomFoldRegionRenderer()));
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
@@ -250,7 +311,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     highlighter.setLineSeparatorPlacement(placement);
   }
 
-  private static class ColorGutterIconRenderer extends GutterIconRenderer {
+  private static final class ColorGutterIconRenderer extends GutterIconRenderer {
     private final Icon myIcon;
 
     private ColorGutterIconRenderer(@NotNull Color color) {
@@ -273,7 +334,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     }
   }
 
-  private static class ColorBlockElementRenderer implements EditorCustomElementRenderer {
+  private static final class ColorBlockElementRenderer implements EditorCustomElementRenderer {
     private final GutterIconRenderer myGutterIconRenderer;
 
     private ColorBlockElementRenderer(@NotNull Color color) {
@@ -291,6 +352,38 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     @Override
     public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
       return myGutterIconRenderer;
+    }
+  }
+
+  private static class OurCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
+    private static final int WIDTH = 25;
+    private static final int HEIGHT = 15;
+
+    @Override
+    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+      return WIDTH;
+    }
+
+    @Override
+    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+      return HEIGHT;
+    }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
+                      @NotNull TextAttributes textAttributes) {
+      g.setColor(Color.pink);
+      Rectangle r = targetRegion.getBounds();
+      int startX = r.x;
+      int endX = r.x + r.width - 1;
+      int startY = r.y;
+      int endY = r.y + r.height - 1;
+      g.drawLine(startX, startY, startX, endY);
+      g.drawLine(startX, endY, endX, endY);
+      g.drawLine(endX, endY, endX, startY);
+      g.drawLine(endX, startY, startX, startY);
     }
   }
 }

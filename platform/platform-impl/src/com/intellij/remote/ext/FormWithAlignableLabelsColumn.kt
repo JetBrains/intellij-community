@@ -12,6 +12,6 @@ interface FormWithAlignableLabelsColumn {
 
   companion object {
     @JvmStatic
-    fun FormWithAlignableLabelsColumn.findLabelWithMaxPreferredWidth(): JBLabel? = labelsColumn.maxBy { it.preferredSize.width }
+    fun FormWithAlignableLabelsColumn.findLabelWithMaxPreferredWidth(): JBLabel? = labelsColumn.maxByOrNull { it.preferredSize.width }
   }
 }

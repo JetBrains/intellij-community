@@ -19,9 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Adjusts indentation after a final part keyword is inserted, e.g. an "else:".
- * User: dcheryasov
  */
-public class PyUnindentingInsertHandler implements InsertHandler<PythonLookupElement> {
+public final class PyUnindentingInsertHandler implements InsertHandler<PythonLookupElement> {
   public final static PyUnindentingInsertHandler INSTANCE = new PyUnindentingInsertHandler();
 
   private PyUnindentingInsertHandler() {
@@ -35,9 +34,6 @@ public class PyUnindentingInsertHandler implements InsertHandler<PythonLookupEle
   /**
    * Unindent current line to be flush with a starting part, detecting the part if necessary.
    *
-   * @param project
-   * @param editor
-   * @param file
    * @return true if unindenting succeeded
    */
   public static boolean unindentAsNeeded(Project project, Editor editor, PsiFile file) {

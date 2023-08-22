@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
 import com.intellij.ide.projectView.impl.nodes.NestingTreeNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,13 +14,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -35,7 +30,7 @@ import java.util.function.Function;
  * @see ProjectViewFileNestingService
  * @see FileNestingInProjectViewDialog
  */
-public class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
+public final class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
 
   @NotNull
@@ -44,7 +39,10 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
                                              @NotNull Collection<AbstractTreeNode<?>> children,
                                             ViewSettings settings) {
     if (!(settings instanceof ProjectViewSettings) || !((ProjectViewSettings)settings).isUseFileNestingRules()) return children;
-    if (!(parent instanceof PsiDirectoryNode)) return children;
+
+    ProjectViewNode<?> parentNode = parent instanceof ProjectViewNode ? (ProjectViewNode)parent : null;
+    VirtualFile virtualFile = parentNode == null ? null : parentNode.getVirtualFile();
+    if (virtualFile == null || !virtualFile.isDirectory()) return children;
 
     final ArrayList<PsiFileNode> childNodes = new ArrayList<>();
     for (AbstractTreeNode<?> node : children) {
@@ -64,7 +62,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     // initial ArrayList size may be not exact, not a big problem
     final Collection<AbstractTreeNode<?>> newChildren = new ArrayList<>(children.size() - parentToChildren.size());
 
-    final Set<PsiFileNode> childrenToMoveDown = new THashSet<>(parentToChildren.values());
+    final Set<PsiFileNode> childrenToMoveDown = new HashSet<>(parentToChildren.values());
 
     for (AbstractTreeNode<?> node : children) {
       if (!(node instanceof PsiFileNode)) {
@@ -93,10 +91,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
                                                                                @NotNull final VirtualFile parentFile) {
     LOG.assertTrue(!parentFile.isDirectory());
 
-    final AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
-    if (pane instanceof ProjectViewPane) {
-      if (!((ProjectViewPane)pane).isUseFileNestingRules()) return Collections.emptyList();
-    }
+    if (!ProjectViewState.getInstance(project).getUseFileNestingRules()) return Collections.emptyList();
 
     final Collection<NestingRule> rules = FileNestingBuilder.getInstance().getNestingRules();
     if (rules.isEmpty()) return Collections.emptyList();
@@ -177,13 +172,6 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     return result;
   }
 
-  public static class ChildFileInfo {
-    @NotNull public final VirtualFile file;
-    @NotNull public final String namePartCommonWithParentFile;
-
-    public ChildFileInfo(@NotNull final VirtualFile file, @NotNull final String namePartCommonWithParentFile) {
-      this.file = file;
-      this.namePartCommonWithParentFile = namePartCommonWithParentFile;
-    }
+  public record ChildFileInfo(@NotNull VirtualFile file, @NotNull String namePartCommonWithParentFile) {
   }
 }

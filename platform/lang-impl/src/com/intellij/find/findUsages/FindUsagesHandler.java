@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * @author peter
  * @see FindUsagesHandlerFactory
  */
 public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements FindUsagesHandlerUi {
@@ -27,6 +27,9 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
 
   protected FindUsagesHandler(@NotNull PsiElement psiElement) {
     super(psiElement);
+  }
+  protected FindUsagesHandler(@NotNull PsiElement psiElement, Project project) {
+    super(psiElement, project);
   }
 
   @Override
@@ -40,7 +43,7 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
                                                                        boolean toShowInNewTab,
                                                                        boolean mustOpenInNewTab,
                                                                        @NotNull FindUsagesHandlerBase handler) {
-    @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
+    DataContext ctx = DataManager.getInstance().getDataContext();
     return new CommonFindUsagesDialog(handler.getPsiElement(), handler.getProject(), handler.getFindUsagesOptions(ctx), toShowInNewTab, mustOpenInNewTab, isSingleFile,
                                       handler);
   }
@@ -51,9 +54,9 @@ public abstract class FindUsagesHandler extends FindUsagesHandlerBase implements
     return FindUsagesManager.getHelpID(myPsiElement);
   }
 
-  private static class NullFindUsagesHandler extends FindUsagesHandler {
+  private static final class NullFindUsagesHandler extends FindUsagesHandler {
     private NullFindUsagesHandler() {
-      super(PsiUtilCore.NULL_PSI_ELEMENT);
+      super(PsiUtilCore.NULL_PSI_ELEMENT, null);
     }
 
     @NotNull

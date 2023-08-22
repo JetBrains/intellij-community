@@ -1,6 +1,11 @@
 import java.util.Arrays;
 
 public final class ArrayLength {
+  void testArrayLengthNonZeroUnknownIndex(int[] arr, int a, int b, int c) {
+    arr[a+b+c] = 0;
+    if (<warning descr="Condition 'arr.length == 0' is always 'false'">arr.length == 0</warning>) {}
+  }
+
   public static void diff(String[] args, String[] args2) {
     String[] arr = new String[args2.length - args.length];
     if (arr.length > 0) {}
@@ -75,7 +80,7 @@ public final class ArrayLength {
       System.out.println("Impossible");
     }
     Arrays.fill(x, -1);
-    Arrays.<warning descr="The call to 'fill' always fails as index is out of bounds">fill</warning>(x, -1, -1, -1);
+    Arrays.<warning descr="The call to 'fill' always fails as an argument is out of bounds">fill</warning>(x, -1, -1, -1);
   }
 
   static final String[] ARR1 = {};

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.function.Function;
 
-public class PsiPolyExpressionUtil {
+public final class PsiPolyExpressionUtil {
   public static boolean hasStandaloneForm(PsiExpression expression) {
     return !(expression instanceof PsiFunctionalExpression) &&
            !(expression instanceof PsiParenthesizedExpression) &&
@@ -60,7 +60,7 @@ public class PsiPolyExpressionUtil {
   }
 
   private static boolean isMethodCallTypeDependsOnInference(PsiExpression expression, PsiMethod method) {
-    final Set<PsiTypeParameter> typeParameters = ContainerUtil.set(method.getTypeParameters());
+    final Set<PsiTypeParameter> typeParameters = ContainerUtil.newHashSet(method.getTypeParameters());
     if (!typeParameters.isEmpty()) {
       final PsiType returnType = method.getReturnType();
       if (returnType != null) {
@@ -73,7 +73,7 @@ public class PsiPolyExpressionUtil {
     return false;
   }
 
-  private static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
+  public static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
     final PsiElement context = PsiUtil.skipParenthesizedExprUp(expr.getParent());
     return context instanceof PsiExpressionList ||
            context instanceof PsiArrayInitializerExpression ||
@@ -84,8 +84,8 @@ public class PsiPolyExpressionUtil {
 
   private static boolean isSwitchExpressionAssignmentOrInvocationContext(PsiExpression expr) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr).getParent();
-    if (parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiSwitchLabeledRuleStatement || 
-        parent instanceof PsiBreakStatement || 
+    if (parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiSwitchLabeledRuleStatement ||
+        parent instanceof PsiBreakStatement ||
         parent instanceof PsiYieldStatement ||
         parent instanceof PsiThrowStatement) {
       PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(expr, PsiSwitchExpression.class, true, PsiMember.class, PsiLambdaExpression.class);
@@ -117,7 +117,7 @@ public class PsiPolyExpressionUtil {
   public static boolean isExpressionOfPrimitiveType(@Nullable PsiExpression arg) {
     if (arg != null && !isPolyExpression(arg)) {
       final PsiType type = arg.getType();
-      return type instanceof PsiPrimitiveType && type != PsiType.NULL;
+      return type instanceof PsiPrimitiveType && type != PsiTypes.nullType();
     }
     else if (arg instanceof PsiNewExpression || arg instanceof PsiFunctionalExpression) {
       return false;
@@ -143,6 +143,14 @@ public class PsiPolyExpressionUtil {
 
   private enum ConditionalKind {
     BOOLEAN, NUMERIC, NULL
+  }
+  
+  public static boolean sameBooleanOrNumeric(PsiExpression thenExpression, PsiExpression elseExpression) {
+    final ConditionalKind thenKind = isBooleanOrNumeric(thenExpression);
+    final ConditionalKind elseKind = isBooleanOrNumeric(elseExpression);
+    if (thenKind == elseKind || elseKind == ConditionalKind.NULL) return thenKind != null;
+    if (thenKind == ConditionalKind.NULL) return elseKind != null;
+    return false;
   }
 
   private static ConditionalKind isBooleanOrNumeric(PsiExpression expr) {
@@ -183,7 +191,7 @@ public class PsiPolyExpressionUtil {
       if (thenKind == elseKind || elseKind == ConditionalKind.NULL) return thenKind;
       if (thenKind == ConditionalKind.NULL) return elseKind;
     }
-    
+
     if (expr instanceof PsiSwitchExpression) {
       ConditionalKind switchKind = null;
       for (PsiExpression resultExpression : PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)expr)) {
@@ -207,7 +215,7 @@ public class PsiPolyExpressionUtil {
 
   @Nullable
   private static ConditionalKind isBooleanOrNumericType(PsiType type) {
-    if (type == PsiType.NULL) {
+    if (type == PsiTypes.nullType()) {
       return ConditionalKind.NULL;
     }
 

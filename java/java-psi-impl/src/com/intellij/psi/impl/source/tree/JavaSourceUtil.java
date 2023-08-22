@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
@@ -18,7 +18,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaSourceUtil {
+public final class JavaSourceUtil {
   private static final Logger LOG = Logger.getInstance(JavaSourceUtil.class);
 
   private static final TokenSet REF_FILTER = TokenSet.orSet(

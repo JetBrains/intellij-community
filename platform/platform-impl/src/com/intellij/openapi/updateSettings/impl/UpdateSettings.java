@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -10,25 +14,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true), reportStatistic = true)
+@State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true))
 public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   public static UpdateSettings getInstance() {
-    return ServiceManager.getService(UpdateSettings.class);
+    return ApplicationManager.getApplication().getService(UpdateSettings.class);
   }
 
   private UpdateOptions myState = new UpdateOptions();
 
-  public boolean isPlatformUpdateEnabled() {
-    return ExternalUpdateManager.ACTUAL == null;
-  }
-
-  @NotNull
   @Override
-  public UpdateOptions getState() {
+  public @NotNull UpdateOptions getState() {
     return myState;
   }
 
@@ -37,13 +35,11 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState = state;
   }
 
-  @Nullable
-  public String getLastBuildChecked() {
+  public @Nullable String getLastBuildChecked() {
     return myState.getLastBuildChecked();
   }
 
-  @NotNull
-  public List<String> getStoredPluginHosts() {
+  public @NotNull List<String> getStoredPluginHosts() {
     return myState.getPluginHosts();
   }
 
@@ -55,29 +51,35 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState.setCheckNeeded(value);
   }
 
-  public List<String> getEnabledExternalUpdateSources() {
-    return myState.getEnabledExternalComponentSources();
+  public boolean isPluginsCheckNeeded() {
+    return myState.isPluginsCheckNeeded();
   }
 
-  public List<String> getKnownExternalUpdateSources() {
-    return myState.getKnownExternalComponentSources();
+  public void setPluginsCheckNeeded(boolean value) {
+    myState.setPluginsCheckNeeded(value);
   }
 
-  public Map<String, String> getExternalUpdateChannels() {
-    return myState.getExternalUpdateChannels();
+  public boolean isShowWhatsNewEditor() {
+    return myState.isShowWhatsNewEditor();
+  }
+
+  public int getWhatsNewShownFor() {
+    return myState.getWhatsNewShownFor();
+  }
+
+  public void setWhatsNewShownFor(int version) {
+    myState.setWhatsNewShownFor(version);
   }
 
   public long getLastTimeChecked() {
     return myState.getLastTimeChecked();
   }
 
-  @NotNull
-  public List<String> getIgnoredBuildNumbers() {
+  public @NotNull List<String> getIgnoredBuildNumbers() {
     return myState.getIgnoredBuildNumbers();
   }
 
-  @NotNull
-  public ChannelStatus getSelectedChannelStatus() {
+  public @NotNull ChannelStatus getSelectedChannelStatus() {
     return ChannelStatus.fromCode(myState.getUpdateChannelType());
   }
 
@@ -85,16 +87,14 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     myState.setUpdateChannelType(channel.getCode());
   }
 
-  @NotNull
-  public List<ChannelStatus> getActiveChannels() {
+  public @NotNull List<ChannelStatus> getActiveChannels() {
     UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
     return Stream.of(ChannelStatus.values())
       .filter(ch -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  public ChannelStatus getSelectedActiveChannel() {
+  public @NotNull ChannelStatus getSelectedActiveChannel() {
     UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
     ChannelStatus current = getSelectedChannelStatus();
     return tweaker.isChannelActive(current)
@@ -102,15 +102,14 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
            : getActiveChannels().stream().filter(ch -> ch.compareTo(current) > 0).findFirst().orElse(ChannelStatus.RELEASE);
   }
 
-  @NotNull
-  public List<String> getPluginHosts() {
+  public @NotNull List<String> getPluginHosts() {
     List<String> hosts = new ArrayList<>(myState.getPluginHosts());
     String pluginHosts = System.getProperty("idea.plugin.hosts");
     if (pluginHosts != null) {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
 
-    UpdateSettingsProviderHelper.addPluginRepositories(hosts);
+    hosts.addAll(UpdateSettingsProviderHelper.getPluginRepositories());
     ContainerUtil.removeDuplicates(hosts);
     return hosts;
   }
@@ -120,8 +119,8 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   }
 
   public void saveLastCheckedInfo() {
-    myState.setLastTimeChecked(System.currentTimeMillis());
     myState.setLastBuildChecked(ApplicationInfo.getInstance().getBuild().asString());
+    myState.setLastTimeChecked(System.currentTimeMillis());
   }
 
   public boolean isThirdPartyPluginsAllowed() {
@@ -130,5 +129,13 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
 
   public void setThirdPartyPluginsAllowed(boolean value) {
     myState.setThirdPartyPluginsAllowed(value);
+  }
+
+  public boolean isObsoleteCustomRepositoriesCleanNeeded() {
+    return myState.isObsoleteCustomRepositoriesCleanNeeded();
+  }
+
+  public void setObsoleteCustomRepositoriesCleanNeeded(boolean value) {
+    myState.setObsoleteCustomRepositoriesCleanNeeded(value);
   }
 }

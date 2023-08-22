@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -18,15 +18,13 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor.getPostfixLiveTemplate;
 
-class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
+final class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
     Editor editor = parameters.getEditor();
     if (!isCompletionEnabled(parameters) || LiveTemplateCompletionContributor.shouldShowAllTemplates() ||
         editor.getCaretModel().getCaretCount() != 1) {
-      /*
-        disabled or covered with {@link com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor}
-       */
+      // disabled or covered with com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
       return;
     }
 
@@ -57,7 +55,7 @@ class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionPa
     return true;
   }
 
-  private static class MyPrefixMatcher extends PrefixMatcher {
+  private static final class MyPrefixMatcher extends PrefixMatcher {
     protected MyPrefixMatcher(String prefix) {
       super(prefix);
     }

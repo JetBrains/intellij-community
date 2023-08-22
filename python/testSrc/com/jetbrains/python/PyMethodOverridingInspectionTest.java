@@ -18,12 +18,8 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
   public void testArgsKwargsOverrideArg() {
     doTest();
@@ -92,27 +88,34 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
 
   // PY-32556
   public void testOverriddingWithDecorator() {
-    doTestByText("class BaseClass():\n" +
-                 "    def method(self, arg1):\n" +
-                 "        pass\n" +
-                 "\n" +
-                 "def my_decorator(func):\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "class Child(BaseClass):\n" +
-                 "    @my_decorator\n" +
-                 "    def method(self, arg1, arg2):\n" +
-                 "        pass\n");
+    doTestByText("""
+                   class BaseClass():
+                       def method(self, arg1):
+                           pass
+
+                   def my_decorator(func):
+                       pass
+
+                   class Child(BaseClass):
+                       @my_decorator
+                       def method(self, arg1, arg2):
+                           pass
+                   """);
   }
 
   // PY-28506
   public void testDunderPostInitInDataclassHierarchy() {
-    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-35512
   public void testPositionalOnlyParameters() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+    doTest();
+  }
+
+  // PY-17828
+  public void testDunderPrepare() {
+    doTest();
   }
 
   @NotNull

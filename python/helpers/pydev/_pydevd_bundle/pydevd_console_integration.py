@@ -1,14 +1,14 @@
 from _pydevd_bundle.pydevd_constants import dict_keys, dict_iter_items
 
 try:
-    from code import InteractiveConsole
+    from code import InteractiveConsole, InteractiveInterpreter
 except ImportError:
-    from _pydevd_bundle.pydevconsole_code_for_ironpython import InteractiveConsole
+    from _pydevd_bundle.pydevconsole_code_for_ironpython import IronPythonInteractiveConsole as InteractiveConsole, \
+        IronPythonInteractiveInterpreter as InteractiveInterpreter
 
 import os
 import sys
 import traceback
-from code import InteractiveInterpreter, InteractiveConsole
 from code import compile_command
 
 from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
@@ -16,6 +16,10 @@ from _pydev_bundle.pydev_console_types import CodeFragment, Command
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle import pydevd_vars, pydevd_save_locals
 from _pydevd_bundle.pydevd_console_pytest import enable_pytest_output
+from _pydevd_bundle.pydevd_constants import IS_ASYNCIO_DEBUGGER_ENV
+from _pydevd_asyncio_util.pydevd_asyncio_utils import asyncio_command_compiler, exec_async_code
+if IS_ASYNCIO_DEBUGGER_ENV:
+    from _pydevd_asyncio_util.pydevd_nest_asyncio import apply
 
 try:
     import __builtin__
@@ -53,7 +57,7 @@ try:
         exitfunc = None
 
     if IPYTHON:
-        from _pydev_bundle.pydev_ipython_code_executor import CodeExecutor
+        from _pydev_bundle.pydev_ipython_code_executor import IPythonCodeExecutor as CodeExecutor
         if exitfunc is not None:
             sys.exitfunc = exitfunc
         else:
@@ -94,16 +98,16 @@ def get_code_executor():
 # Debugger integration
 # ===============================================================================
 
-def exec_code(code, globals, locals, debugger):
+def ipython_exec_code(code, globals, locals, debugger):
     code_executor = get_code_executor()
     code_executor.interpreter.update(globals, locals)
 
     res = code_executor.need_more(code)
 
     if res:
-        return True
+        return True, False
 
-    code_executor.add_exec(code, debugger)
+    more, exception_occurred = code_executor.add_exec(code, debugger)
 
     ipython = code_executor.interpreter.ipython
     for key in dict_keys(ipython.user_ns):
@@ -112,7 +116,7 @@ def exec_code(code, globals, locals, debugger):
         if key not in ipython.user_ns:
             locals.pop(key)
 
-    return False
+    return more, exception_occurred
 
 
 class ConsoleWriter(InteractiveInterpreter):
@@ -175,7 +179,6 @@ def console_exec(thread_id, frame_id, expression, dbg):
     """
     frame = pydevd_vars.find_frame(thread_id, frame_id)
 
-    is_multiline = expression.count('@LINE@') > 1
     try:
         expression = str(expression.replace('@LINE@', '\n'))
     except UnicodeEncodeError as e:
@@ -192,41 +195,58 @@ def console_exec(thread_id, frame_id, expression, dbg):
         enable_pytest_output()
 
     if IPYTHON:
-        need_more = exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
+        if IS_ASYNCIO_DEBUGGER_ENV:
+            apply()
+        need_more, exception_occurred = ipython_exec_code(CodeFragment(expression), updated_globals, updated_globals, dbg)
         if not need_more:
             update_frame_local_variables_and_save(frame, updated_globals)
-        return need_more
+        return need_more, exception_occurred
 
     interpreter = ConsoleWriter()
 
-    if not is_multiline:
+    try:
+        if IS_ASYNCIO_DEBUGGER_ENV:
+            compiler = asyncio_command_compiler
+        else:
+            compiler = compile_command
         try:
-            code = compile_command(expression)
+            code = compiler(expression)
         except (OverflowError, SyntaxError, ValueError):
-            # Case 1
-            interpreter.showsyntaxerror()
-            return False
-        if code is None:
-            # Case 2
-            return True
-    else:
-        code = expression
+            code = compiler(expression, symbol='exec')
+    except (OverflowError, SyntaxError, ValueError):
+        # Case 1
+        interpreter.showsyntaxerror()
+        return False, True
+    if code is None:
+        # Case 2
+        return True, False
 
     # Case 3
-
+    code_executor = get_code_executor()
+    code_executor.interruptable = True
+    exception_occurred = False
     try:
-        # It is important that globals and locals we pass to the exec function are the same object.
-        # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
-        # because it contains globals and locals in the right precedence.
-        # See: https://stackoverflow.com/questions/15866398/why-is-a-python-generator-confusing-its-scope-with-global-in-an-execd-script.
-        Exec(code, updated_globals, updated_globals)
-    except SystemExit:
-        raise
+        if IS_ASYNCIO_DEBUGGER_ENV:
+            exec_async_code(code, updated_globals)
+        else:
+            # It is important that globals and locals we pass to the exec function are the same object.
+            # Otherwise generator expressions can confuse their scope. Passing updated_globals dictionary seems to be a safe option here
+            # because it contains globals and locals in the right precedence.
+            # See: https://stackoverflow.com/questions/15866398/why-is-a-python-generator-confusing-its-scope-with-global-in-an-execd-script.
+            Exec(code, updated_globals, updated_globals)
     except:
         interpreter.showtraceback()
+        exception_occurred = True
     else:
         update_frame_local_variables_and_save(frame, updated_globals)
-    return False
+    finally:
+        code_executor.interruptable = False
+    return False, exception_occurred
+
+
+def interrupt_debug_console():
+    code_executor = get_code_executor()
+    code_executor.interrupt()
 
 
 def update_frame_local_variables_and_save(frame, values):

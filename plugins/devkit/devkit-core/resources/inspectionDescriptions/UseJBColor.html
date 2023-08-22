@@ -1,6 +1,22 @@
 <html>
 <body>
-Use dark theme aware <code>JBColor</code> instead of <code>java.awt.Color</code>.
-Use the <code>JBColor</code> constructor to specify regular and dark theme colors, to avoid using bad looking colors under dark themes.
+Reports usages of <code>java.awt.Color</code>.
+<p>
+  These are not aware of "dark" themes (e.g., bundled "Darcula") and might result in bad looking UI.
+</p>
+<p>
+  Quick-fix replaces usages with <code>JBColor</code>, which defines "dark" color variant.
+</p>
+<p>Examples:</p>
+<pre><code lang="java">
+// bad:
+Color darkGreen = new Color(12, 58, 27);
+Color blue = Color.BLUE;
+
+// good:
+Color darkGreen = new JBColor(12, 58, 27);
+Color blue = JBColor.BLUE;
+Color green = new JBColor(new Color(12, 58, 27), new Color(27, 112, 39));
+</code></pre>
 </body>
 </html>

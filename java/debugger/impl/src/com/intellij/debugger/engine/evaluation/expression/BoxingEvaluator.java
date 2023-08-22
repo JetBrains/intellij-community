@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -8,7 +8,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.Value;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +19,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class BoxingEvaluator implements Evaluator{
+public class BoxingEvaluator implements Evaluator {
   private final Evaluator myOperand;
 
   public BoxingEvaluator(Evaluator operand) {
@@ -29,8 +32,7 @@ public class BoxingEvaluator implements Evaluator{
   }
 
   public static Object box(Object value, EvaluationContextImpl context) throws EvaluateException {
-    if (value instanceof PrimitiveValue) {
-      PrimitiveValue primitiveValue = (PrimitiveValue)value;
+    if (value instanceof PrimitiveValue primitiveValue) {
       PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name());
       if (primitiveType != null) {
         return convertToWrapper(context, primitiveValue, primitiveType.getBoxedTypeName());
@@ -40,7 +42,7 @@ public class BoxingEvaluator implements Evaluator{
   }
 
   private static Value convertToWrapper(EvaluationContextImpl context, PrimitiveValue value, String wrapperTypeName) throws
-                                                                                                                            EvaluateException {
+                                                                                                                     EvaluateException {
     final DebugProcessImpl process = context.getDebugProcess();
     final ClassType wrapperClass = (ClassType)process.findClass(context, wrapperTypeName, null);
     final String methodSignature = "(" + JVMNameUtil.getPrimitiveSignature(value.type().name()) + ")L" + wrapperTypeName.replace('.', '/') + ";";

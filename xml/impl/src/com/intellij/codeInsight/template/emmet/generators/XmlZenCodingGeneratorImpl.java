@@ -19,6 +19,8 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.HtmlTextContextType;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
+import com.intellij.ide.highlighter.XHtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
@@ -29,8 +31,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -40,14 +44,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   public static final XmlZenCodingGeneratorImpl INSTANCE = new XmlZenCodingGeneratorImpl();
 
   private static boolean isTrueXml(FileType type) {
-    return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
+    return type == XHtmlFileType.INSTANCE || type == StdFileTypes.JSPX || type == XmlFileType.INSTANCE;
   }
 
   @Override
@@ -57,10 +58,12 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
                          boolean hasChildren,
                          @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
+    PsiFile file = tag.getContainingFile();
     if (isTrueXml(fileType)) {
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> closeUnclosingTags(tag));
+      closeUnclosingTags(tag);
     }
-    return tag.getContainingFile().getText();
+
+    return file.getText();
   }
 
   @Override
@@ -117,31 +120,24 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
     root.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlTag(final XmlTag tag) {
+      public void visitXmlTag(final @NotNull XmlTag tag) {
         if (!isTagClosed(tag)) {
           tagToClose.add(pointerManager.createSmartPsiElementPointer(tag));
         }
       }
     });
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    for (final SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
-      final XmlTag tag = pointer.getElement();
-      if (tag != null) {
-        final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
-        if (child != null) {
-          final int offset = child.getTextRange().getStartOffset();
-          VirtualFile file = tag.getContainingFile().getVirtualFile();
-          if (file != null) {
-            final Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document != null) {
-              documentManager.doPostponedOperationsAndUnblockDocument(document);
-              ApplicationManager.getApplication().runWriteAction(() -> {
-                document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-                documentManager.commitDocument(document);
-              });
-            }
-          }
-        }
+    for (SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
+      XmlTag element = pointer.getElement();
+      if (element == null) continue;
+
+      String elementText = element.getText();
+      if (!elementText.endsWith(">")) continue;
+
+      PsiFile text = PsiFileFactory.getInstance(root.getProject())
+        .createFileFromText("dummy.html", root.getLanguage(), StringUtil.trimEnd(element.getText(), ">") + "/>", false, true);
+      XmlTag newTag = PsiTreeUtil.findChildOfType(text, XmlTag.class);
+      if (newTag != null) {
+        element.replace(newTag);
       }
     }
   }

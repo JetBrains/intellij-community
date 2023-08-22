@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -30,14 +28,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class I18nUtil {
+public final class I18nUtil {
   @NotNull
   public static List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {
     if (resourceBundleName == null) return Collections.emptyList();
     PsiFile containingFile = context.getContainingFile();
     PsiElement containingFileContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     if (containingFileContext != null) containingFile = containingFileContext.getContainingFile();
-    
+
     VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) {
       virtualFile = containingFile.getOriginalFile().getVirtualFile();
@@ -82,8 +80,8 @@ public class I18nUtil {
     }
   }
 
-  public static List<String> defaultSuggestPropertiesFiles(@NotNull Project project,
-                                                           @NotNull Set<Module> contextModules) {
+  public static @NotNull List<String> defaultSuggestPropertiesFiles(@NotNull Project project,
+                                                                    @NotNull Set<? extends Module> contextModules) {
     List<String> relevantPaths = new ArrayList<>();
     List<String> otherPaths = new ArrayList<>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

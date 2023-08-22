@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.comparison.ComparisonManagerImpl;
@@ -43,8 +29,8 @@ import static com.intellij.diff.tools.util.base.HighlightPolicy.*;
 import static com.intellij.diff.tools.util.base.IgnorePolicy.*;
 
 public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implements TwosideTextDiffProvider {
-  private static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES, IGNORE_WHITESPACES_CHUNKS, FORMATTING};
-  private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, BY_CHAR, DO_NOT_HIGHLIGHT};
+  public static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES, IGNORE_WHITESPACES_CHUNKS, FORMATTING};
+  public static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, BY_CHAR, DO_NOT_HIGHLIGHT};
 
   @Nullable private final Project myProject;
   @NotNull private final DiffContent myContent1;
@@ -174,7 +160,7 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     return null;
   }
 
-  public static class NoIgnore extends SmartTextDiffProvider implements TwosideTextDiffProvider.NoIgnore {
+  public static final class NoIgnore extends SmartTextDiffProvider implements TwosideTextDiffProvider.NoIgnore {
     private NoIgnore(@Nullable Project project,
                      @NotNull DiffContent content1,
                      @NotNull DiffContent content2,
@@ -199,7 +185,7 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     @Override
     public List<List<LineFragment>> compare(@NotNull CharSequence text1,
                                             @NotNull CharSequence text2,
-                                            @NotNull List<Range> linesRanges,
+                                            @NotNull List<? extends Range> linesRanges,
                                             @NotNull ProgressIndicator indicator) {
       //noinspection ConstantConditions
       return super.compare(text1, text2, linesRanges, indicator);

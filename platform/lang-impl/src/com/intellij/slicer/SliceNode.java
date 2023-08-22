@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -27,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.DuplicateNodeRenderer;
+import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -39,11 +26,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class SliceNode extends AbstractTreeNode<SliceUsage> implements DuplicateNodeRenderer.DuplicatableNode<SliceNode>, MyColoredTreeCellRenderer {
-  protected List<SliceNode> myCachedChildren;
+  protected volatile List<SliceNode> myCachedChildren;
   boolean dupNodeCalculated;
   protected SliceNode duplicate;
   public final DuplicateMap targetEqualUsages;
@@ -83,7 +67,11 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       }
 
       synchronized (nodes) {
-        myCachedChildren = nodes;
+        if (myCachedChildren != null) {
+          nodes = myCachedChildren;
+        } else {
+          myCachedChildren = nodes;
+        }
       }
       return nodes;
     }
@@ -142,10 +130,13 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @Override
   protected void update(@NotNull PresentationData presentation) {
-    if (presentation != null) {
-      presentation.setChanged(presentation.isChanged() || changed);
-      changed = false;
+    SliceUsage sliceUsage = getValue();
+    if (sliceUsage != null) {
+      sliceUsage.updateCachedPresentation();
     }
+
+    presentation.setChanged(presentation.isChanged() || changed);
+    changed = false;
   }
 
   public void calculateDupNode() {
@@ -196,7 +187,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       renderer.setToolTipText(sliceUsage.getPresentation().getTooltipText());
     }
     else {
-      renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
+      renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
     }
   }
 

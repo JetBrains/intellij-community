@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.util.ArrayUtil;
@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/**
- * @author peter
- */
 public final class JavaMethodSignature {
   private static final Set<String> OBJECT_METHOD_NAMES = ContainerUtil.map2Set(Object.class.getDeclaredMethods(), Method::getName);
   private final String myMethodName;
@@ -39,7 +36,7 @@ public final class JavaMethodSignature {
   }
 
   @Nullable
-  public final Method findMethod(@NotNull Class<?> aClass) {
+  public Method findMethod(@NotNull Class<?> aClass) {
     Method method = getDeclaredMethod(aClass);
     if (method == null && aClass.isInterface() && OBJECT_METHOD_NAMES.contains(myMethodName)) {
       method = ReflectionUtil.getDeclaredMethod(Object.class, myMethodName, myMethodParameters);

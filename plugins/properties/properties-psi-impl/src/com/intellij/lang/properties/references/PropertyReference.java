@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class PropertyReference extends PropertyReferenceBase implements LocalQuickFixProvider {
   @Nullable private final String myBundleName;
 
@@ -56,7 +53,7 @@ public class PropertyReference extends PropertyReferenceBase implements LocalQui
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     List<PropertiesFile> propertiesFiles = retrievePropertyFilesByBundleName(myBundleName, getElement());
     LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createCreatePropertyFix(myElement, myKey, propertiesFiles);
     return new LocalQuickFix[] {fix};

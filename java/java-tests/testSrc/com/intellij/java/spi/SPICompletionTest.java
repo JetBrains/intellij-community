@@ -19,15 +19,14 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public class SPICompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
+  @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for SPI")
   public void testQualifiedReference() {
     myFixture.addClass("package com.foo; public class Interface {}");
     myFixture.addClass("package com.foo; public class Implementation extends Interface {}");
@@ -37,6 +36,7 @@ public class SPICompletionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResult("com.foo.Implementation");
   }
 
+  @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for SPI")
   public void testCompletionAfterRenaming() throws IOException {
     VirtualFile file = myFixture.addFileToProject("META-INF/services/aaa", "<caret>").getVirtualFile();
     myFixture.configureFromExistingVirtualFile(file);

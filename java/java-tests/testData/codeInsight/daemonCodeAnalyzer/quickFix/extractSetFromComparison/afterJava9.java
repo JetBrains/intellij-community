@@ -1,6 +1,6 @@
 import java.util.Set;
 
-// "Extract Set from comparison chain" "true"
+// "Extract Set from comparison chain" "true-preview"
 public class Test {
     private static final Set<String> PROPERTIES = Set.of("foo", "bar", "baz");
 

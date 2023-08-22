@@ -1,7 +1,19 @@
 <html>
 <body>
-Reports accesses to static fields of any non-thread-safe type specified below,
-which is accessed from an instance field or a non-synchronized block. It is possible that the static
-field is accessed from multiple threads, which can lead to unspecified side effects.
+Reports accesses to a non-constant static field which is
+locked on either <code>this</code> or an instance field of <code>this</code>.
+<p>
+  Locking a static field on instance data does not prevent the field from being
+  modified by other instances, and thus may result in surprising race conditions.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  static String s;
+  def foo() {
+      synchronized (this) {
+          System.out.println(s); // warning
+      }
+  }
+</code></pre>
 </body>
 </html>

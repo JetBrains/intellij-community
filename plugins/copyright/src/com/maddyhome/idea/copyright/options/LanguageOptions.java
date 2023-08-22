@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -8,7 +7,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public class LanguageOptions implements Cloneable {
+import java.util.Objects;
+
+public final class LanguageOptions implements Cloneable {
   public static final int NO_COPYRIGHT = 1;
   public static final int USE_TEMPLATE = 2;
   public static final int USE_TEXT = 3;
@@ -32,6 +33,7 @@ public class LanguageOptions implements Cloneable {
     fileTypeOverride = USE_TEMPLATE;
     relativeBefore = true;
     addBlankAfter = true;
+    addBlankBefore = false;
     fileLocation = 1;
   }
 
@@ -60,6 +62,14 @@ public class LanguageOptions implements Cloneable {
     this.addBlankAfter = addBlankAfter;
   }
 
+  public boolean isAddBlankBefore() {
+    return addBlankBefore;
+  }
+
+  public void setAddBlankBefore(boolean addBlankBefore) {
+    this.addBlankBefore = addBlankBefore;
+  }
+
   public int getFileLocation() {
     return fileLocation;
   }
@@ -74,7 +84,7 @@ public class LanguageOptions implements Cloneable {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, DEFAULT_SETTINGS_HOLDER));
+    DefaultJDOMExternalizer.write(this, element, new DifferenceFilter<>(this, DEFAULT_SETTINGS_HOLDER));
   }
 
   public boolean equals(Object o) {
@@ -88,6 +98,9 @@ public class LanguageOptions implements Cloneable {
     final LanguageOptions that = (LanguageOptions)o;
 
     if (addBlankAfter != that.addBlankAfter) {
+      return false;
+    }
+    if(addBlankBefore != that.addBlankBefore){
       return false;
     }
     if (fileLocation != that.fileLocation) {
@@ -105,7 +118,7 @@ public class LanguageOptions implements Cloneable {
     if (box != that.box) {
       return false;
     }
-    if (filler != that.filler) {
+    if (!Objects.equals(filler, that.filler)) {
       return false;
     }
     if (lenAfter != that.lenAfter) {
@@ -137,35 +150,32 @@ public class LanguageOptions implements Cloneable {
     result = 29 * result + fileTypeOverride;
     result = 29 * result + (relativeBefore ? 1 : 0);
     result = 29 * result + (addBlankAfter ? 1 : 0);
+    result = 29 * result + (addBlankBefore ? 1 : 0);
     result = 29 * result + fileLocation;
     return result;
   }
 
   public String toString() {
-    final StringBuilder sb = new StringBuilder();
-    sb.append("LanguageOptions");
-
-    sb.append(", fileTypeOverride=").append(fileTypeOverride);
-    sb.append(", relativeBefore=").append(relativeBefore);
-    sb.append(", addBlankAfter=").append(addBlankAfter);
-    sb.append(", fileLocation=").append(fileLocation);
-    sb.append(", block=").append(block);
-    sb.append(", separateBefore=").append(separateBefore);
-    sb.append(", separateAfter=").append(separateAfter);
-    sb.append(", prefixLines=").append(prefixLines);
-    sb.append(", lenBefore=").append(lenBefore);
-    sb.append(", lenAfter=").append(lenAfter);
-    sb.append(", box=").append(box);
-    sb.append(", filler=").append(filler);
-    sb.append('}');
-
-    return sb.toString();
+    return "LanguageOptions" +
+           ", fileTypeOverride=" + fileTypeOverride +
+           ", relativeBefore=" + relativeBefore +
+           ", addBlankAfter=" + addBlankAfter +
+           ", addBlankBefore=" + addBlankBefore +
+           ", fileLocation=" + fileLocation +
+           ", block=" + block +
+           ", separateBefore=" + separateBefore +
+           ", separateAfter=" + separateAfter +
+           ", prefixLines=" + prefixLines +
+           ", lenBefore=" + lenBefore +
+           ", lenAfter=" + lenAfter +
+           ", box=" + box +
+           ", filler=" + filler +
+           '}';
   }
 
   @Override
   public LanguageOptions clone() throws CloneNotSupportedException {
-    LanguageOptions res = (LanguageOptions)super.clone();
-    return res;
+    return (LanguageOptions)super.clone();
   }
 
   public boolean isBlock() {
@@ -240,9 +250,12 @@ public class LanguageOptions implements Cloneable {
     this.trim = trim;
   }
 
+  public void setNotice(String notice){this.notice = notice;}
+
   public int fileTypeOverride;
   public boolean relativeBefore;
   public boolean addBlankAfter;
+  public boolean addBlankBefore;
   public int fileLocation;
 
   public boolean block;
@@ -254,4 +267,5 @@ public class LanguageOptions implements Cloneable {
   public boolean box;
   public String filler;
   public boolean trim;
+  public String notice;
 }

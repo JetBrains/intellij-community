@@ -40,14 +40,13 @@ public class XslZenCodingFilter extends ZenCodingFilter {
       if (token.getAttributes().containsKey(SELECT_ATTR_NAME)) {
         return node;
       }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        if (isOurTag(tag, node.getChildren().size() > 0)) {
-          XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
-          if (attribute != null) {
-            attribute.delete();
-          }
+      if (isOurTag(tag, !node.getChildren().isEmpty())) {
+        XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
+        if (attribute != null) {
+          //fake file processing, no write-action needed
+          attribute.delete();
         }
-      });
+      }
       return node;
     }
     return node;

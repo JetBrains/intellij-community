@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.interactive.dialog
 
 import com.intellij.openapi.actionSystem.*
@@ -18,6 +18,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -28,12 +29,15 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.GitRebaseTodoModel
-import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.SwingConstants
+
+@ApiStatus.Internal
+const val GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
 
 internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   private val project: Project,
@@ -42,7 +46,6 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
 ) : DialogWrapper(project, true) {
   companion object {
     private const val DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion"
-    private const val DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
     internal const val PLACE = "Git.Interactive.Rebase.Dialog"
 
     private const val DIALOG_HEIGHT = 550
@@ -50,7 +53,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   }
 
   private val commitsTableModel = GitRebaseCommitsTableModel(entries)
-  private val resetEntriesLabel = LinkLabel<Any?>(GitBundle.getString("rebase.interactive.dialog.reset.link.text"), null).apply {
+  private val resetEntriesLabel = LinkLabel<Any?>(GitBundle.message("rebase.interactive.dialog.reset.link.text"), null).apply {
     isVisible = false
     setListener(
       LinkListener { _, _ ->
@@ -72,7 +75,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   }
   private val modalityState = window?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
-    @CalledInBackground
+    @RequiresBackgroundThread
     @Throws(VcsException::class)
     override fun loadChanges(commits: List<VcsCommitMetadata>): List<Change> {
       val changes = mutableListOf<Change>()
@@ -111,16 +114,15 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
         addSeparator()
         addAll(contextMenuOnlyActions)
       },
-      PLACE,
-      ActionManager.getInstance()
+      PLACE
     )
 
-    title = GitBundle.getString("rebase.interactive.dialog.title")
-    setOKButtonText(GitBundle.getString("rebase.interactive.dialog.start.rebase"))
+    title = GitBundle.message("rebase.interactive.dialog.title")
+    setOKButtonText(GitBundle.message("rebase.interactive.dialog.start.rebase"))
     init()
   }
 
-  override fun getDimensionServiceKey() = DIMENSION_KEY
+  override fun getDimensionServiceKey() = GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY
 
   override fun createCenterPanel() = BorderLayoutPanel().apply {
     val decorator = ToolbarDecorator.createDecorator(commitsTable)
@@ -161,11 +163,11 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
     if (modified) {
       val result = Messages.showDialog(
         rootPane,
-        GitBundle.getString("rebase.interactive.dialog.discard.modifications.message"),
-        GitBundle.getString("rebase.interactive.dialog.discard.modifications.cancel"),
+        GitBundle.message("rebase.interactive.dialog.discard.modifications.message"),
+        GitBundle.message("rebase.interactive.dialog.discard.modifications.cancel"),
         arrayOf(
-          GitBundle.getString("rebase.interactive.dialog.discard.modifications.discard"),
-          GitBundle.getString("rebase.interactive.dialog.discard.modifications.continue")
+          GitBundle.message("rebase.interactive.dialog.discard.modifications.discard"),
+          GitBundle.message("rebase.interactive.dialog.discard.modifications.continue")
         ),
         0,
         Messages.getQuestionIcon()
@@ -177,13 +179,17 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
     super.doCancelAction()
   }
 
-  override fun getHelpId(): String? {
+  override fun getHelpId(): String {
     return "reference.VersionControl.Git.RebaseCommits"
   }
 
   private class AnActionButtonSeparator : AnActionButton(), CustomComponentAction, DumbAware {
     companion object {
       private val SEPARATOR_HEIGHT = JBUI.scale(20)
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
     override fun actionPerformed(e: AnActionEvent) {

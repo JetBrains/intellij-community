@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ReadAction;
@@ -20,19 +16,20 @@ import java.util.List;
 final class ProjectLocatorImpl extends ProjectLocator {
   @Override
   @Nullable
-  public Project guessProjectForFile(@Nullable VirtualFile file) {
+  public Project guessProjectForFile(@Nullable("for plugin compatibility only; actually it should have been notnull") VirtualFile file) {
+    if (file == null) {
+      return null;
+    }
+
     // StubUpdatingIndex calls this method very often, so, optimized implementation is required
-    @SuppressWarnings("deprecation")
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null && !project.isDisposed()) {
       return project;
     }
 
-    if (file != null) {
-      project = getPreferredProject(file);
-      if (project != null) {
-        return project;
-      }
+    project = getPreferredProject(file);
+    if (project != null) {
+      return project;
     }
 
     ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
@@ -43,10 +40,6 @@ final class ProjectLocatorImpl extends ProjectLocator {
     Project[] openProjects = projectManager.getOpenProjects();
     if (openProjects.length == 1) {
       return openProjects[0];
-    }
-
-    if (file == null) {
-      return null;
     }
 
     return ReadAction.compute(() -> {

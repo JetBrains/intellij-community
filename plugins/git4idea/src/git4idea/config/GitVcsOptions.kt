@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("PropertyName")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.dvcs.branch.DvcsBranchSettings
@@ -30,11 +29,15 @@ class GitVcsOptions : BaseState() {
   var gcAuto by string()
   @com.intellij.configurationStore.Property(description = "core.longpaths")
   var coreLongpaths by string()
+  @com.intellij.configurationStore.Property(description = "core.untrackedcache")
+  var coreUntrackedCache by string()
+  @com.intellij.configurationStore.Property(description = "core.fsmonitor")
+  var coreFsMonitor by string()
+  @com.intellij.configurationStore.Property(description = "feature.manyFiles")
+  var featureManyFiles by string()
 
   @get:OptionTag("PUSH_AUTO_UPDATE")
   var isPushAutoUpdate by property(false)
-  @get:OptionTag("PUSH_UPDATE_ALL_ROOTS")
-  var isPushUpdateAllRoots by property(true)
   @get:OptionTag("ROOT_SYNC")
   var rootSync by enum(DvcsSyncSettings.Value.NOT_DECIDED)
 
@@ -44,9 +47,6 @@ class GitVcsOptions : BaseState() {
   val recentBranchByRepository by map<String, String>()
   @get:OptionTag("RECENT_COMMON_BRANCH")
   var recentCommonBranch by string()
-
-  @get:OptionTag("AUTO_COMMIT_ON_REVERT")
-  var isAutoCommitOnRevert by property(false)
 
   @get:OptionTag("WARN_ABOUT_CRLF")
   var warnAboutCrlf by property(true)

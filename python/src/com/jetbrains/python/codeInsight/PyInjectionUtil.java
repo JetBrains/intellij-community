@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.lang.Language;
@@ -18,10 +18,7 @@ import java.util.List;
 
 import static com.jetbrains.python.PyStringFormatParser.*;
 
-/**
- * @author vlan
- */
-public class PyInjectionUtil {
+public final class PyInjectionUtil {
 
   public static class InjectionResult {
     public static final InjectionResult EMPTY = new InjectionResult(false, true);
@@ -48,8 +45,8 @@ public class PyInjectionUtil {
   }
 
   public static final List<Class<? extends PsiElement>> ELEMENTS_TO_INJECT_IN =
-    ContainerUtil.immutableList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
-                                PyCallExpression.class, PsiComment.class);
+    List.of(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
+            PyCallExpression.class, PsiComment.class);
 
   private PyInjectionUtil() {}
 
@@ -90,8 +87,7 @@ public class PyInjectionUtil {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
       return contained != null && isStringLiteralPart(contained, context);
     }
-    else if (element instanceof PyBinaryExpression) {
-      final PyBinaryExpression expr = (PyBinaryExpression)element;
+    else if (element instanceof PyBinaryExpression expr) {
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
       if (expr.isOperator("+")) {
@@ -116,8 +112,7 @@ public class PyInjectionUtil {
   @Nullable
   private static PyExpression getFormatCallQualifier(@NotNull PyCallExpression element) {
     final PyExpression callee = element.getCallee();
-    if (callee instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)callee;
+    if (callee instanceof PyQualifiedExpression qualifiedExpr) {
       final PyExpression qualifier = qualifiedExpr.getQualifier();
       if (qualifier != null && PyNames.FORMAT.equals(qualifiedExpr.getReferencedName())) {
         return qualifier;
@@ -149,9 +144,7 @@ public class PyInjectionUtil {
                                  .toList();
           }
           else {
-            subsRanges = StreamEx.of(((PyFormattedStringElement)stringElem).getFragments())
-                                 .map(PsiElement::getTextRangeInParent)
-                                 .toList();
+            subsRanges = ContainerUtil.map(((PyFormattedStringElement)stringElem).getFragments(), PsiElement::getTextRangeInParent);
           }
           if (!subsRanges.isEmpty()) {
             strict = false;
@@ -209,8 +202,7 @@ public class PyInjectionUtil {
         return processStringLiteral(contained, registrar, prefix, suffix, formatting);
       }
     }
-    else if (element instanceof PyBinaryExpression) {
-      final PyBinaryExpression expr = (PyBinaryExpression)element;
+    else if (element instanceof PyBinaryExpression expr) {
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
       final boolean isLeftString = isStringLiteralPart(left, null);

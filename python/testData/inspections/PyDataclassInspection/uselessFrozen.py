@@ -1,7 +1,7 @@
 import dataclasses
 
 
-@dataclasses.dataclass(<error descr="'frozen' should be false if the class defines '__setattr__' or '__delattr__'">frozen=True</error>)
+@dataclasses.dataclass(<error descr="'frozen' should be False if the class defines '__setattr__' or '__delattr__'">frozen=True</error>)
 class A4:
     a: int = 1
 
@@ -19,7 +19,7 @@ class Derived4(Base4):
     d: int = 1
 
 
-@dataclasses.dataclass(<error descr="'frozen' should be false if the class defines '__setattr__' or '__delattr__'">frozen=True</error>)
+@dataclasses.dataclass(<error descr="'frozen' should be False if the class defines '__setattr__' or '__delattr__'">frozen=True</error>)
 class A2:
     a: int = 1
 

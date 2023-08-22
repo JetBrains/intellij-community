@@ -1,13 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public enum HighlightingFeature {
   GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
@@ -32,40 +36,69 @@ public enum HighlightingFeature {
   MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
   LVTI(LanguageLevel.JDK_10, "feature.lvti"),
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
-  ENHANCED_SWITCH(LanguageLevel.JDK_13_PREVIEW, "feature.enhanced.switch"){
+  ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
+  SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
+  RECORDS(LanguageLevel.JDK_16, "feature.records"),
+  PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
+  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
+  TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks"),
+  SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
+  LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
+  LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
+  INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
+  PARENTHESIZED_PATTERNS(LanguageLevel.JDK_20_PREVIEW, "feature.parenthesised.patterns"){
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
+      LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
+      return until == useSiteLevel;
     }
 
     @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_14;
+    boolean isLimited() {
+      return true;
     }
   },
-  SWITCH_EXPRESSION(LanguageLevel.JDK_13_PREVIEW, "feature.switch.expressions") {
+  PATTERNS_IN_SWITCH(LanguageLevel.JDK_21, "feature.patterns.in.switch") {
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
+      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_20_PREVIEW == useSiteLevel;
+    }
+  },
+  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_21, "feature.pattern.guard.and.record.patterns"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_20_PREVIEW == useSiteLevel;
+    }
+  },
+  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
+      return until == useSiteLevel;
     }
 
     @Override
-    LanguageLevel getStandardLevel() {
-      return LanguageLevel.JDK_14;
+    boolean isLimited() {
+      return true;
     }
   },
-  TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
-  RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records"),
-  PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof"),
-  TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences");
+  ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
+  STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates"),
+  UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_21_PREVIEW, "feature.unnamed.vars");
+
+  public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
+  public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
 
   final LanguageLevel level;
-  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
-  final String key;
+  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) final String key;
 
   HighlightingFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String key) {
     this.level = level;
     this.key = key;
+  }
+
+  public LanguageLevel getLevel() {
+    return level;
   }
 
   /**
@@ -77,13 +110,82 @@ public enum HighlightingFeature {
   }
 
   boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-    return useSiteLevel.isAtLeast(level) && (!level.isPreview() || useSiteLevel.isPreview());
+    return useSiteLevel.isAtLeast(level) &&
+           (!level.isPreview() || useSiteLevel.isPreview());
   }
 
+  boolean isLimited() {
+    return false;
+  }
   /**
    * Override if feature was preview and then accepted as standard
    */
   LanguageLevel getStandardLevel() {
     return level.isPreview() ? null : level;
+  }
+
+  @Nullable
+  @Contract(value = "null -> null", pure = true)
+  public static HighlightingFeature fromPreviewFeatureAnnotation(@Nullable PsiAnnotation annotation) {
+    if (annotation == null) return null;
+    if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE) &&
+        !annotation.hasQualifiedName(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)) {
+      return null;
+    }
+
+    PsiNameValuePair feature = AnnotationUtil.findDeclaredAttribute(annotation, "feature");
+    if (feature == null) return null;
+
+    PsiReferenceExpression referenceExpression = tryCast(feature.getDetachedValue(), PsiReferenceExpression.class);
+    if (referenceExpression == null) return null;
+
+    PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
+    if (enumConstant == null) return null;
+
+    return convertFromPreviewFeatureName(enumConstant.getName());
+  }
+
+  @Nullable
+  @Contract(pure = true)
+  private static HighlightingFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
+    return switch (feature) {
+      case "PATTERN_MATCHING_IN_INSTANCEOF" -> PATTERNS;
+      case "TEXT_BLOCKS" -> TEXT_BLOCKS;
+      case "RECORDS" -> RECORDS;
+      case "SEALED_CLASSES" -> SEALED_CLASSES;
+      default -> null;
+    };
+  }
+
+  @Nullable
+  @Contract(value = "null -> null", pure = true)
+  public static PsiAnnotation getPreviewFeatureAnnotation(@Nullable PsiModifierListOwner owner) {
+    if (owner == null) return null;
+
+    PsiAnnotation annotation = getAnnotation(owner);
+    if (annotation != null) return annotation;
+
+    if (owner instanceof PsiMember member && !owner.hasModifier(JvmModifier.STATIC)) {
+      PsiAnnotation result = getPreviewFeatureAnnotation(member.getContainingClass());
+      if (result != null) return result;
+    }
+
+    PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
+    if (psiPackage == null) return null;
+
+    PsiAnnotation packageAnnotation = getAnnotation(psiPackage);
+    if (packageAnnotation != null) return packageAnnotation;
+
+    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
+    if (module == null) return null;
+
+    return getAnnotation(module);
+  }
+
+  private static PsiAnnotation getAnnotation(@NotNull PsiModifierListOwner owner) {
+    PsiAnnotation annotation = owner.getAnnotation(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE);
+    if (annotation != null) return annotation;
+
+    return owner.getAnnotation(JDK_INTERNAL_PREVIEW_FEATURE);
   }
 }

@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +19,13 @@ import java.io.IOException;
  */
 public abstract class LightVirtualFileBase extends VirtualFile {
   private FileType myFileType;
-  private String myName;
+  private @NlsSafe String myName;
   private long myModStamp;
   private boolean myIsWritable = true;
   private boolean myValid = true;
   private VirtualFile myOriginalFile;
 
-  public LightVirtualFileBase(final String name, final FileType fileType, final long modificationStamp) {
+  public LightVirtualFileBase(final @NlsSafe String name, final FileType fileType, final long modificationStamp) {
     myName = name;
     myFileType = fileType;
     myModStamp = modificationStamp;
@@ -41,22 +43,20 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     myOriginalFile = originalFile;
   }
 
-  private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
-    private static final String PROTOCOL = "mock";
+  private static final class MyVirtualFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
+    private static final @NonNls String PROTOCOL = "mock";
 
     private MyVirtualFileSystem() {
       startEventPropagation();
     }
 
     @Override
-    @NotNull
-    public String getProtocol() {
+    public @NotNull String getProtocol() {
       return PROTOCOL;
     }
 
     @Override
-    @Nullable
-    public VirtualFile findFileByPath(@NotNull String path) {
+    public @Nullable VirtualFile findFileByPath(@NotNull String path) {
       return null;
     }
 
@@ -64,8 +64,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     public void refresh(boolean asynchronous) { }
 
     @Override
-    @Nullable
-    public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
+    public @Nullable VirtualFile refreshAndFindFileByPath(@NotNull String path) {
       return null;
     }
   }
@@ -73,26 +72,22 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   private static final MyVirtualFileSystem ourFileSystem = new MyVirtualFileSystem();
 
   @Override
-  @NotNull
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return ourFileSystem;
   }
 
-  @Nullable
-  public FileType getAssignedFileType() {
+  public @Nullable FileType getAssignedFileType() {
     return myFileType;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     VirtualFile parent = getParent();
     return (parent == null ? "" : parent.getPath()) + "/" + getName();
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     return myName;
   }
 
@@ -172,16 +167,14 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     }
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull String name) throws IOException {
     assertWritable();
     return super.createChildDirectory(requestor, name);
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+  public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
     assertWritable();
     return super.createChildData(requestor, name);
   }

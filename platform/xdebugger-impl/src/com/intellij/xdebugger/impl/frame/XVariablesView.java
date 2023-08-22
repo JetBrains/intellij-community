@@ -1,53 +1,62 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.lang.ref.WeakReference;
+import java.util.*;
 
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  private final JPanel myComponent;
+  protected final JPanel myComponent;
+  protected final WeakReference<XDebugSessionImpl> mySession;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
-    myComponent = new BorderLayoutPanel();
-    myComponent.add(super.getPanel());
+    mySession = new WeakReference<>(session);
+    myComponent = createMainPanel(super.getPanel());
     DataManager.registerDataProvider(myComponent, this);
+  }
+
+  protected JPanel createMainPanel(JComponent localsPanel) {
+    return new BorderLayoutPanel().addToCenter(localsPanel);
   }
 
   @Override
   public JPanel getPanel() {
     return myComponent;
+  }
+
+  @Override
+  public JComponent getMainComponent() {
+    return getPanel();
+  }
+
+  protected void beforeTreeBuild(@NotNull SessionEvent event) {
   }
 
   @Override
@@ -61,16 +70,17 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     }
 
     XStackFrame stackFrame = session.getCurrentStackFrame();
-    DebuggerUIUtil.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       getTree().markNodesObsolete();
       if (stackFrame != null) {
         cancelClear();
+        beforeTreeBuild(event);
         buildTreeAndRestoreState(stackFrame);
       }
       else {
         requestClear();
       }
-    });
+    }, session.getProject().getDisposed());
   }
 
   @Override
@@ -89,7 +99,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     XDebugSession session = getSession(getPanel());
     if (session != null) {
       if (!session.isStopped() && session.isPaused()) {
-        root.setInfoMessage("Frame is not available", null);
+        root.setInfoMessage(XDebuggerBundle.message("message.frame.is.not.available"), null);
       }
       else {
         XDebugProcess debugProcess = session.getDebugProcess();
@@ -113,16 +123,23 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return getCurrentFile(getTree());
+      XDebugSessionImpl session = mySession.get();
+      if (session != null) {
+        XSourcePosition position = session.getCurrentPosition();
+        if (position != null) {
+          return position.getFile();
+        }
+      }
     }
     return null;
   }
 
-  public static class InlineVariablesInfo {
-    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new THashMap<>();
-    private final TObjectLongHashMap<VirtualFile> myTimestamps = new ObjectLongHashMap<>();
+  public static final class InlineVariablesInfo {
     private static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
 
+    private List<InlineDebugRenderer> myInlays = null;
+
+    @Nullable
     public static InlineVariablesInfo get(@Nullable XDebugSession session) {
       if (session != null) {
         return DEBUG_VARIABLES.get(((XDebugSessionImpl)session).getSessionData());
@@ -136,58 +153,13 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       }
     }
 
-    @Nullable
-    public synchronized List<XValueNodeImpl> get(@NotNull VirtualFile file, int line, long currentTimestamp) {
-      long timestamp = myTimestamps.get(file);
-      if (timestamp == -1 || timestamp < currentTimestamp) {
-        return null;
-      }
-      Set<Entry> entries = myData.get(Pair.create(file, line));
-      if (entries == null) return null;
-      return ContainerUtil.map(entries, entry -> entry.myNode);
+    public void setInlays(List<InlineDebugRenderer> inlays) {
+      myInlays = inlays;
     }
 
-    public synchronized void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node, long timestamp) {
-      myTimestamps.put(file, timestamp);
-      Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
-      myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
-    }
-
-    private static class Entry implements Comparable<Entry> {
-      private final long myOffset;
-      private final XValueNodeImpl myNode;
-
-      Entry(long offset, @NotNull XValueNodeImpl node) {
-        myOffset = offset;
-        myNode = node;
-      }
-
-      @Override
-      public int compareTo(Entry o) {
-        if (myNode == o.myNode) return 0;
-        int res = Comparing.compare(myOffset, o.myOffset);
-        if (res == 0) {
-          return XValueNodeImpl.COMPARATOR.compare(myNode, o.myNode);
-        }
-        return res;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Entry entry = (Entry)o;
-
-        if (!myNode.equals(entry.myNode)) return false;
-
-        return true;
-      }
-
-      @Override
-      public int hashCode() {
-        return myNode.hashCode();
-      }
+    @NotNull
+    public List<InlineDebugRenderer> getInlays() {
+      return ObjectUtils.notNull(myInlays, Collections::emptyList);
     }
   }
 }

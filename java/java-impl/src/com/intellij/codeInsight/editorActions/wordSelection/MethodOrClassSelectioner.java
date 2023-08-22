@@ -42,7 +42,7 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
       result.add(range);
       result.addAll(expandToWholeLinesWithBlanks(editorText, range));
 
-      range = TextRange.create(firstChild.getTextRange());
+      range = firstChild.getTextRange();
       result.addAll(expandToWholeLinesWithBlanks(editorText, range));
 
       firstChild = children[i++];

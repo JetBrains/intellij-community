@@ -3,4 +3,4 @@ class A():
         self.method2()
 
     def metho<caret>d2(self):
-        print 1
+        print(1)

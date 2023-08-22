@@ -1,12 +1,13 @@
- // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+ import com.intellij.concurrency.ConcurrentCollectionFactory;
  import com.intellij.diagnostic.PerformanceWatcher;
  import com.intellij.openapi.application.ApplicationManager;
  import com.intellij.openapi.application.ModalityState;
  import com.intellij.openapi.application.impl.LaterInvocator;
  import com.intellij.testFramework.LightPlatformTestCase;
- import com.intellij.util.containers.ContainerUtil;
+ import com.intellij.testFramework.LoggedErrorProcessor;
  import com.intellij.util.ui.UIUtil;
  import org.jetbrains.annotations.NotNull;
 
@@ -30,16 +31,6 @@ package com.intellij.util;
 
   public void testAlarmRequestsShouldExecuteSequentiallyEvenInPooledThread() throws Exception {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    assertRequestsExecuteSequentially(alarm);
-  }
-
-  public void testAlarmRequestsShouldExecuteSequentiallyEveryWhere() throws Exception {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getTestRootDisposable());
-    assertRequestsExecuteSequentially(alarm);
-  }
-
-  public void testAlarmRequestsShouldExecuteSequentiallyAbsolutelyEveryWhere() throws Exception {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);
   }
 
@@ -75,7 +66,7 @@ package com.intellij.util;
     Alarm alarm = new Alarm(getTestRootDisposable());
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
-    Set<Thread> used = ContainerUtil.newConcurrentSet();
+    Set<Thread> used = ConcurrentCollectionFactory.createConcurrentSet();
     for (int i = 0; i < N; i++) {
       alarm.addRequest(() -> {
         executed.incrementAndGet();
@@ -91,10 +82,10 @@ package com.intellij.util;
   }
 
   public void testManyAlarmsDoNotStartTooManyThreads() {
-    Set<Thread> used = ContainerUtil.newConcurrentSet();
+    Set<Thread> used = ConcurrentCollectionFactory.createConcurrentSet();
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
-    List<Alarm> alarms = Stream.generate(() -> new Alarm(getTestRootDisposable())).limit(N).collect(Collectors.toList());
+    List<Alarm> alarms = Stream.generate(() -> new Alarm(getTestRootDisposable())).limit(N).toList();
     alarms.forEach(alarm -> alarm.addRequest(() -> {
       executed.incrementAndGet();
       used.add(Thread.currentThread());
@@ -115,9 +106,9 @@ package com.intellij.util;
     LaterInvocator.enterModal(modal);
 
     try {
-      ApplicationManager.getApplication().invokeLater(() -> TimeoutUtil.sleep(10), ModalityState.NON_MODAL);
-      alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
-      alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> TimeoutUtil.sleep(10), ModalityState.nonModal());
+      alarm.addRequest(() -> sb.append("1"), 0, ModalityState.nonModal());
+      alarm.addRequest(() -> sb.append("2"), 5, ModalityState.nonModal());
       UIUtil.dispatchAllInvocationEvents();
       assertEquals("", sb.toString());
     }
@@ -136,8 +127,8 @@ package com.intellij.util;
     Alarm alarm = new Alarm();
     StringBuilder sb = new StringBuilder();
 
-    alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
-    alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
+    alarm.addRequest(() -> sb.append("1"), 0, ModalityState.nonModal());
+    alarm.addRequest(() -> sb.append("2"), 5, ModalityState.nonModal());
     assertEquals("", sb.toString());
     alarm.drainRequestsInTest();
     assertEquals("12", sb.toString());
@@ -176,5 +167,29 @@ package com.intellij.util;
     alarm.waitForAllExecuted(3000, TimeUnit.MILLISECONDS);
 
     assertEquals(2, sb.length());
+  }
+
+  public void testExceptionDuringAlarmExecutionMustManifestItselfInTests() {
+    Alarm alarm = new Alarm(getTestRootDisposable());
+    Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(() -> {
+      alarm.addRequest(() -> {
+        throw new RuntimeException("wtf");
+      }, 1);
+      boolean caught = false;
+      while (!alarm.isEmpty()) {
+        try {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        catch (RuntimeException e) {
+          caught |= "wtf".equals(e.getMessage());
+        }
+      }
+      assertTrue(caught);
+    });
+    assertEquals("wtf", error.getMessage());
+  }
+
+  public void testSingleAlarmMustRefuseToInstantiateWithWrongModality() {
+    assertThrows(IllegalArgumentException.class, () -> new SingleAlarm(() -> {}, 1, null, Alarm.ThreadToUse.SWING_THREAD, null));
   }
 }

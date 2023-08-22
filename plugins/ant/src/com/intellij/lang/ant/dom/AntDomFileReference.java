@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -32,7 +33,7 @@ public class AntDomFileReference extends FileReference implements AntDomReferenc
 
   @Override
   @Nullable
-  public String getText() {
+  public @NlsSafe String getText() {
     final AntDomFileReferenceSet refSet = getFileReferenceSet();
     final String _path = AntStringResolver.computeString(refSet.getAttributeValue(), super.getText());
     final String text = FileUtil.toSystemIndependentName(_path);

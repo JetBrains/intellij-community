@@ -1,0 +1,36 @@
+from collections.abc import Generator
+from typing import Any
+
+from openpyxl.descriptors.serialisable import Serialisable
+
+class Relationship(Serialisable):
+    tagname: str
+    Type: Any
+    Target: Any
+    target: Any
+    TargetMode: Any
+    Id: Any
+    id: Any
+    def __init__(
+        self,
+        Id: Any | None = ...,
+        Type: Any | None = ...,
+        type: Any | None = ...,
+        Target: Any | None = ...,
+        TargetMode: Any | None = ...,
+    ) -> None: ...
+
+class RelationshipList(Serialisable):
+    tagname: str
+    Relationship: Any
+    def __init__(self, Relationship=...) -> None: ...
+    def append(self, value) -> None: ...
+    def __len__(self): ...
+    def __bool__(self): ...
+    def find(self, content_type) -> Generator[Any, None, None]: ...
+    def __getitem__(self, key): ...
+    def to_tree(self): ...
+
+def get_rels_path(path): ...
+def get_dependents(archive, filename): ...
+def get_rel(archive, deps, id: Any | None = ..., cls: Any | None = ...): ...

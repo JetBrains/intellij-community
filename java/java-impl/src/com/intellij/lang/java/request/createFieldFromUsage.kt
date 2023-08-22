@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CreateFieldFromUsage")
 
 package com.intellij.lang.java.request
@@ -15,6 +15,7 @@ import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiImplUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
@@ -115,7 +116,7 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
     val request = CreateFieldFromJavaUsageRequest(
       modifiers = modifiers,
       reference = myRef,
-      useAnchor = target.toJavaClassOrNull() == ownerClass,
+      useAnchor = ownerClass != null && PsiTreeUtil.isAncestor(target.toJavaClassOrNull(), ownerClass, false),
       isConstant = false
     )
     addRequest(target, request)

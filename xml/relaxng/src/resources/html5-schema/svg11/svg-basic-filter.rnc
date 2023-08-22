@@ -131,7 +131,22 @@ grammar {
         attribute in2 { text },
         [ a:defaultValue = "normal" ]
         attribute mode {
-            string "normal" | string "multiply" | string "screen" | string "darken" | string "lighten"
+            string "normal"
+            | string "multiply"
+            | string "screen"
+            | string "overlay"
+            | string "darken"
+            | string "lighten"
+            | string "color-dodge"
+            | string "color-burn"
+            | string "hard-light"
+            | string "soft-light"
+            | string "difference"
+            | string "exclusion"
+            | string "hue"
+            | string "saturation"
+            | string "color"
+            | string "luminosity"
         }?
     a:documentation [
         "\x{a}" ~
@@ -184,7 +199,7 @@ grammar {
         attribute in2 { text },
         [ a:defaultValue = "over" ]
         attribute operator {
-            string "over" | string "in" | string "out" | string "atop" | string "xor" | string "arithmetic"
+            string "over" | string "in" | string "out" | string "atop" | string "xor" | string "lighter" | string "arithmetic"
         }?,
         attribute k1 { Number.datatype }?,
         attribute k2 { Number.datatype }?,

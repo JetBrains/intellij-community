@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.DownloadableLibraryDescription;
@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +50,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,10 +110,9 @@ public class LibraryOptionsPanel implements Disposable {
     final DownloadableLibraryDescription description = getDownloadableDescription(libraryDescription);
     if (description != null) {
       showCard("loading");
-      description.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
+      description.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<>() {
         @Override
         public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             if (!myDisposed) {
               showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption, versions);
@@ -132,20 +131,21 @@ public class LibraryOptionsPanel implements Disposable {
   @Nullable
   private String getPresentableVersion() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         LibraryDownloadSettings settings = mySettings.getDownloadSettings();
         if (settings != null) {
           return settings.getVersion().getVersionNumber();
         }
-        break;
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         LibraryEditor item = myLibraryComboBoxModel.getSelectedItem();
         if (item instanceof ExistingLibraryEditor) {
           return item.getName();
         }
-        break;
-      default:
+      }
+      default -> {
         return null;
+      }
     }
     return null;
   }
@@ -218,12 +218,12 @@ public class LibraryOptionsPanel implements Disposable {
         onVersionChanged(getPresentableVersion());
       }
     });
-    myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer<LibraryEditor>() {
+    myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends LibraryEditor> list, LibraryEditor value, int index, boolean selected,
                                            boolean hasFocus) {
         if (value == null) {
-          append("[No library selected]");
+          append(JavaUiBundle.message("library.options.panel.existing.library.combobox.label.no.library.selected"));
         }
         else if (value instanceof ExistingLibraryEditor) {
           final Library library = ((ExistingLibraryEditor)value).getLibrary();
@@ -233,7 +233,7 @@ public class LibraryOptionsPanel implements Disposable {
         else if (value instanceof NewLibraryEditor) {
           setIcon(PlatformIcons.LIBRARY_ICON);
           final String name = value.getName();
-          append(name != null ? name : "<unnamed>");
+          append(name != null ? name : JavaUiBundle.message("unnamed.title"));
         }
       }
     });
@@ -292,17 +292,20 @@ public class LibraryOptionsPanel implements Disposable {
 
   private void doConfigure() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         final LibraryDownloadSettings oldDownloadSettings = mySettings.getDownloadSettings();
         LOG.assertTrue(oldDownloadSettings != null);
+        List<? extends FrameworkLibraryVersion> versions = mySettings.getCompatibleVersions();
+        if (versions.isEmpty()) {
+          LOG.error("No compatible version for " + mySettings.getLibraryDescription() + " with filter " + mySettings.getVersionFilter());
+        }
         final LibraryDownloadSettings newDownloadSettings = DownloadingOptionsDialog.showDialog(myPanel, oldDownloadSettings,
-                                                                                                mySettings.getCompatibleVersions(), true);
+                                                                                                versions, true);
         if (newDownloadSettings != null) {
           mySettings.setDownloadSettings(newDownloadSettings);
         }
-        break;
-
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item instanceof LibraryEditor) {
           EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings, (LibraryEditor)item);
@@ -311,11 +314,9 @@ public class LibraryOptionsPanel implements Disposable {
             WriteAction.run(() -> ((ExistingLibraryEditor)item).commit());
           }
         }
-        break;
-
-      case USE_FROM_PROVIDER:
-      case SETUP_LIBRARY_LATER:
-        break;
+      }
+      case USE_FROM_PROVIDER, SETUP_LIBRARY_LATER -> {
+      }
     }
     updateState();
   }
@@ -408,33 +409,31 @@ public class LibraryOptionsPanel implements Disposable {
     String message = "";
     boolean showConfigurePanel = true;
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
-        message = getDownloadFilesMessage();
-        break;
-      case USE_FROM_PROVIDER:
+      case DOWNLOAD -> message = getDownloadFilesMessage();
+      case USE_FROM_PROVIDER -> {
         if (myLibraryProvider != null) {
-          message = "Library from " + myLibraryProvider.getPresentableName() + " will be used";
+          message =
+            JavaUiBundle.message("library.options.panel.update.state.library.from.0.will.be.used", myLibraryProvider.getPresentableName());
         }
         myConfigureButton.setVisible(false);
-        break;
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item == null) {
           myMessageLabel.setIcon(AllIcons.General.BalloonError);
-          message = "<b>Error:</b> library is not specified";
+          message = JavaUiBundle.message("library.options.panel.update.state.error.library.is.not.specified");
           myConfigureButton.setVisible(false);
         }
         else if (item instanceof NewLibraryEditor) {
           final LibraryEditor libraryEditor = (LibraryEditor)item;
           message = JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
-                                      libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
+                                         libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
         else {
-          message = MessageFormat.format("<b>{0}</b> library will be used", ((ExistingLibraryEditor)item).getName());
+          message = JavaUiBundle.message("label.existing.library.will.be.used", ((ExistingLibraryEditor)item).getName());
         }
-        break;
-      default:
-        showConfigurePanel = false;
+      }
+      default -> showConfigurePanel = false;
     }
 
     if (myLibraryProvider != null) {
@@ -453,7 +452,7 @@ public class LibraryOptionsPanel implements Disposable {
     myMessageLabel.setText(XmlStringUtil.wrapInHtml(message));
   }
 
-  private String getDownloadFilesMessage() {
+  private @NlsContexts.Label String getDownloadFilesMessage() {
     final LibraryDownloadSettings downloadSettings = mySettings.getDownloadSettings();
     if (downloadSettings == null) return "";
 
@@ -466,12 +465,11 @@ public class LibraryOptionsPanel implements Disposable {
     else {
       path = PathUtil.getFileName(downloadPath);
     }
-    return MessageFormat.format("{0} {0, choice, 1#JAR|2#JARs} will be downloaded into <b>{1}</b> directory<br>" +
-                                   "{2} library <b>{3}</b> will be created",
-                                   downloadSettings.getSelectedDownloads().size(),
-                                   path,
-                                   downloadSettings.getLibraryLevel(),
-                                   downloadSettings.getLibraryName());
+    return JavaUiBundle.message("library.options.panel.update.state.download.files.message",
+                                downloadSettings.getSelectedDownloads().size(),
+                                path,
+                                downloadSettings.getLibraryLevel(),
+                                downloadSettings.getLibraryName());
   }
 
   public LibraryCompositionSettings getSettings() {

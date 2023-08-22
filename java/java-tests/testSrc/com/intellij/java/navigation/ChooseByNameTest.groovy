@@ -1,23 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ObjectUtils
 import com.intellij.util.indexing.FindSymbolParameters
@@ -25,18 +25,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
-/**
- * @author peter
- */
 class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
-
   static final ELEMENTS_LIMIT = 30
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown()
-  }
 
   void "test goto class order by matching degree"() {
     def startMatch = myFixture.addClass("class UiUtil {}")
@@ -68,6 +58,11 @@ class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assert gotoClass("@Anno") == [match]
   }
 
+  void "test class a in same-named package and partially matching subpackage"() {
+    def c = myFixture.addClass("package com.intellij.codeInsight.template.impl; class TemplateListPanel {}")
+    assert gotoClass("templistpa") == [c]
+  }
+
   void "test no result for empty patterns"() {
     myFixture.addClass("@interface Anno1 {}")
     myFixture.addClass("class Anno2 {}")
@@ -97,6 +92,20 @@ class Impl extends Intf {
 
     assert impl.findMethodsByName('xxx3', false)[0] in elements
     assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
+  }
+  
+  void "test goto symbol inner class dollar sign"() {
+    def method = myFixture.addClass('''
+package pkg;
+class Cls {
+  class Inner {
+    void paint() {}
+  }
+}
+''').innerClasses[0].methods
+    assert gotoSymbol('pkg.Cls.Inner.paint') == [method]
+    assert gotoSymbol('pkg.Cls$Inner.paint') == [method]
+    assert gotoSymbol('pkg.Cls$Inner#paint') == [method]
   }
 
   void "test goto symbol by Copy Reference result"() {
@@ -191,10 +200,10 @@ class Intf {
     def fooContext = addEmptyFile("foo/context.html")
     def barContext = addEmptyFile("bar/context.html")
 
-    def contributor = createFileContributor(project, fooContext)
+    def contributor = createFileContributor(project, testRootDisposable, fooContext)
     assert calcContributorElements(contributor, "index") == [fooIndex, barIndex]
 
-    contributor = createFileContributor(project, barContext)
+    contributor = createFileContributor(project, testRootDisposable, barContext)
     assert calcContributorElements(contributor, "index") == [barIndex, fooIndex]
   }
 
@@ -218,7 +227,7 @@ class Intf {
     PsiFile fooIndex = addEmptyFile("foo/index.html")
     PsiFile barIndex = addEmptyFile("bar.txt/bar.txt")
 
-    def contributor = createFileContributor(project, fooIndex)
+    def contributor = createFileContributor(project, testRootDisposable, fooIndex)
 
     def fooDir = fooIndex.containingDirectory
     def barDir = barIndex.containingDirectory
@@ -245,7 +254,7 @@ class Intf {
     def fooFile = addEmptyFile('dir/fooFile.txt')
     def fooDir = addEmptyFile('foo/barFile.txt').containingDirectory
 
-    def contributor = createFileContributor(project)
+    def contributor = createFileContributor(project, testRootDisposable)
     def popupElements = calcContributorElements(contributor, 'foo')
 
     assert popupElements == [fooFile, fooDir]
@@ -359,7 +368,7 @@ class Intf {
     def wanted = myFixture.addClass('class XFile {}')
     def smth1 = myFixture.addClass('class xfilterExprOwner {}')
     def smth2 = myFixture.addClass('class xfile_baton_t {}')
-    def contributor = createClassContributor(project)
+    def contributor = createClassContributor(project, testRootDisposable)
     def popupElements = calcContributorElements(contributor, 'xfile')
 
     assert popupElements == [wanted, smth2, smth1]
@@ -368,7 +377,7 @@ class Intf {
   void "test prefer prefix match"() {
     def wanted = myFixture.addClass('class PsiClassImpl {}')
     def smth = myFixture.addClass('class DroolsPsiClassImpl {}')
-    def contributor = createClassContributor(project)
+    def contributor = createClassContributor(project, testRootDisposable)
     def popupElements = calcContributorElements(contributor, 'PsiCl')
 
     assert popupElements == [wanted, smth]
@@ -384,7 +393,7 @@ class Intf {
     def foo = myFixture.addClass('package foo; class List {}')
     def bar = myFixture.addClass('package bar; class List {}')
 
-    def contributor = createClassContributor(project, myFixture.addClass('class Context {}').containingFile)
+    def contributor = createClassContributor(project, testRootDisposable, myFixture.addClass('class Context {}').containingFile)
     assert calcContributorElements(contributor, "List") == [bar, foo]
 
     JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, 'bar')
@@ -457,6 +466,24 @@ class Intf {
     def index = addEmptyFile("content/objc/features/index.html")
     def i18n = addEmptyFile("content/objc/features/screenshots/i18n.html")
     assert gotoFile('objc/features/i') == [index, i18n]
+  }
+
+  void "test search for full name"() {
+    def file1 = addEmptyFile("Folder/Web/SubFolder/Flow.html")
+    def file2 = addEmptyFile("Folder/Web/SubFolder/Flow/Helper.html")
+
+    def contributor = createFileContributor(project, testRootDisposable)
+    def files = calcWeightedContributorElements(contributor as WeightedSearchEverywhereContributor<?>, "Folder/Web/SubFolder/Flow.html")
+    assert files == [file1, file2]
+  }
+
+  void "test prefer name match over path match"() {
+    def nameMatchFile = addEmptyFile("JBCefBrowser.java")
+    def pathMatchFile = addEmptyFile("com/elements/folder/WebBrowser.java")
+
+    def contributor = createFileContributor(project, testRootDisposable)
+    def files = calcWeightedContributorElements(contributor as WeightedSearchEverywhereContributor<?>, "CefBrowser")
+    assert files == [nameMatchFile, pathMatchFile]
   }
 
   void "test matching file in a matching directory"() {
@@ -533,15 +560,15 @@ class Intf {
   }
 
   private List<Object> gotoClass(String text, boolean checkboxState = false, PsiElement context = null) {
-    return getContributorElements(createClassContributor(project, context, checkboxState), text)
+    return getContributorElements(createClassContributor(project, testRootDisposable, context, checkboxState), text)
   }
 
   private List<Object> gotoSymbol(String text, boolean checkboxState = false, PsiElement context = null) {
-    return getContributorElements(createSymbolContributor(project, context, checkboxState), text)
+    return getContributorElements(createSymbolContributor(project, testRootDisposable, context, checkboxState), text)
   }
 
   private List<Object> gotoFile(String text, boolean checkboxState = false, PsiElement context = null) {
-    return getContributorElements(createFileContributor(project, context, checkboxState), text)
+    return getContributorElements(createFileContributor(project, testRootDisposable, context, checkboxState), text)
   }
 
   private static List<Object> getContributorElements(SearchEverywhereContributor<?> contributor, String text) {
@@ -552,30 +579,50 @@ class Intf {
     return contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).items
   }
 
-  static SearchEverywhereContributor<Object> createClassContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+  static List<Object> calcWeightedContributorElements(WeightedSearchEverywhereContributor<?> contributor, String text) {
+    def items = contributor.searchWeightedElements(text, new MockProgressIndicator(), ELEMENTS_LIMIT).items
+    return new ArrayList<>(items)
+      .sort{-(it as FoundItemDescriptor<?>).weight}
+      .collect{(it as FoundItemDescriptor<?>).item}
+  }
+
+  static SearchEverywhereContributor<Object> createClassContributor(Project project,
+                                                                    Disposable parentDisposable,
+                                                                    PsiElement context = null,
+                                                                    boolean everywhere = false) {
     def res = new TestClassContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
-    Disposer.register(project, res)
+    Disposer.register(parentDisposable, res)
     return res
   }
 
-  static SearchEverywhereContributor<Object> createFileContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+  static SearchEverywhereContributor<Object> createFileContributor(Project project,
+                                                                   Disposable parentDisposable,
+                                                                   PsiElement context = null,
+                                                                   boolean everywhere = false) {
     def res = new TestFileContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
-    Disposer.register(project, res)
+    Disposer.register(parentDisposable, res)
     return res
   }
 
-  static SearchEverywhereContributor<Object> createSymbolContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+  static SearchEverywhereContributor<Object> createSymbolContributor(Project project,
+                                                                     Disposable parentDisposable,
+                                                                     PsiElement context = null,
+                                                                     boolean everywhere = false) {
     def res = new TestSymbolContributor(createEvent(project, context))
     res.setEverywhere(everywhere)
-    Disposer.register(project, res)
+    Disposer.register(parentDisposable, res)
     return res
   }
 
   static AnActionEvent createEvent(Project project, PsiElement context = null) {
-    def dataContext = SimpleDataContext.getSimpleContext(
-      CommonDataKeys.PSI_FILE.name, ObjectUtils.tryCast(context, PsiFile.class), SimpleDataContext.getProjectContext(project))
+    assert project != null
+    def dataContext = SimpleDataContext.getProjectContext(project)
+    PsiFile file = ObjectUtils.tryCast(context, PsiFile.class)
+    if (file != null) {
+      dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_FILE, file, dataContext)
+    }
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
   }
 
@@ -588,6 +635,12 @@ class Intf {
     void setEverywhere(boolean state) {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
+
+    @NotNull
+    @Override
+    String getSearchProviderId() {
+      return "ClassSearchEverywhereContributor"
+    }
   }
 
   private static class TestFileContributor extends FileSearchEverywhereContributor {
@@ -599,6 +652,12 @@ class Intf {
     void setEverywhere(boolean state) {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
+
+    @NotNull
+    @Override
+    String getSearchProviderId() {
+      return "FileSearchEverywhereContributor"
+    }
   }
 
   private static class TestSymbolContributor extends SymbolSearchEverywhereContributor {
@@ -609,6 +668,12 @@ class Intf {
 
     void setEverywhere(boolean state) {
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
+    }
+
+    @NotNull
+    @Override
+    String getSearchProviderId() {
+      return "SymbolSearchEverywhereContributor"
     }
   }
 }

@@ -44,7 +44,7 @@ public abstract class ReferenceInForm implements PsiReference {
   @Override
   @NotNull
   public TextRange getRangeInElement() {
-    return TextRange.create(myRangeMarker);
+    return myRangeMarker.getTextRange();
   }
 
   @Override

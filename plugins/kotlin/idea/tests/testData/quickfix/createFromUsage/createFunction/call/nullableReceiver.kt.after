@@ -1,0 +1,9 @@
+// "Create extension function 'String?.notExistingFun'" "true"
+fun context(p: String?) {
+    p.notExistingFun()
+}
+
+private fun String?.notExistingFun() {
+    TODO("Not yet implemented")
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

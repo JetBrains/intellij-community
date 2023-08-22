@@ -15,9 +15,6 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
@@ -30,7 +27,6 @@ import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.options.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -92,11 +88,10 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof ImageFileEditorState) {
+    if (state instanceof ImageFileEditorState editorState) {
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
-      ImageFileEditorState editorState = (ImageFileEditorState)state;
       ImageZoomModel zoomModel = imageEditor.getZoomModel();
       imageEditor.setTransparencyChessboardVisible(editorState.isBackgroundVisible());
       imageEditor.setGridVisible(editorState.isGridVisible());
@@ -118,14 +113,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  public void selectNotify() {
-  }
-
-  @Override
-  public void deselectNotify() {
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -142,21 +129,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
-  }
-
-  @Override
   public void dispose() {
   }
 
@@ -166,8 +138,9 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     return imageEditor;
   }
 
+  @NotNull
   @Override
-  public @Nullable VirtualFile getFile() {
+  public VirtualFile getFile() {
     return imageEditor.getFile();
   }
 }

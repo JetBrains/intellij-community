@@ -18,7 +18,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Open in new tab"/>
+          <text resource-bundle="messages/XPathBundle" key="checkbox.open.in.new.tab"/>
         </properties>
       </component>
       <grid id="5b7e2" binding="myOptionsPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="2" vgap="2">
@@ -32,14 +32,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Match Options"/>
+        <border type="none" title-resource-bundle="messages/XPathBundle" title-key="border.title.match.options"/>
         <children>
           <component id="2897" class="javax.swing.JRadioButton" binding="myMatchRootNode">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="E&amp;valuate expression on document"/>
+              <text resource-bundle="messages/XPathBundle" key="radio.button.evaluate.expression.on.document"/>
             </properties>
           </component>
           <component id="fd6f4" class="javax.swing.JRadioButton" binding="myMatchEachNode">
@@ -47,8 +47,8 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Match pattern on each node"/>
-              <toolTipText value="Entered expression is treated as an XSLT pattern"/>
+              <text resource-bundle="messages/XPathBundle" key="radio.button.match.pattern.on.each.node"/>
+              <toolTipText resource-bundle="messages/XPathBundle" key="entered.expression.is.treated.as.an.xslt.pattern"/>
             </properties>
           </component>
         </children>

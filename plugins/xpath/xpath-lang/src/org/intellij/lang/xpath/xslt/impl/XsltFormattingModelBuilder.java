@@ -31,7 +31,7 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
+final class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
   private final FormattingModelBuilder myBuilder;
 
   XsltFormattingModelBuilder() {
@@ -58,16 +58,14 @@ class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
   }
 
   @Override
-  @NotNull
-  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-    FormattingModel baseModel = myBuilder.createModel(element, settings);
-    return new DelegatingFormattingModel(baseModel, getDelegatingBlock(settings, baseModel));
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    FormattingModel baseModel = myBuilder.createModel(formattingContext);
+    return new DelegatingFormattingModel(baseModel, getDelegatingBlock(formattingContext.getCodeStyleSettings(), baseModel));
   }
 
   static Block getDelegatingBlock(final CodeStyleSettings settings, FormattingModel baseModel) {
     final Block block = baseModel.getRootBlock();
-    if (block instanceof XmlBlock) {
-      final XmlBlock xmlBlock = (XmlBlock)block;
+    if (block instanceof XmlBlock xmlBlock) {
 
       final XmlPolicy xmlPolicy = new XmlPolicy(settings, baseModel.getDocumentModel()) {
         @Override

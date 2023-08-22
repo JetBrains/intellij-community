@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -10,9 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class ThreadState {
   private final String myName;
   private final String myState;
@@ -27,7 +26,7 @@ public class ThreadState {
 
   @Nullable
   private ThreadOperation myOperation;
-  private boolean myKnownJDKThread;
+  private Boolean myKnownJDKThread;
   private int myStackDepth;
 
   public ThreadState(final String name, final String state) {
@@ -35,22 +34,22 @@ public class ThreadState {
     myState = state.trim();
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
-  public String getState() {
+  public @NlsSafe String getState() {
     return myState;
   }
 
-  public String getStackTrace() {
+  public @NlsSafe String getStackTrace() {
     return myStackTrace;
   }
 
   public void setStackTrace(@NotNull String stackTrace, boolean isEmpty) {
     myStackTrace = stackTrace;
     myEmptyStackTrace = isEmpty;
-    myKnownJDKThread = ThreadDumpParser.isKnownJdkThread(stackTrace);
+    myKnownJDKThread = null;
     myStackDepth = StringUtil.countNewLines(myStackTrace);
   }
 
@@ -59,6 +58,13 @@ public class ThreadState {
   }
 
   public boolean isKnownJDKThread() {
+    String stackTrace = myStackTrace;
+    if (stackTrace == null) {
+      return false;
+    }
+    if (myKnownJDKThread == null) {
+      myKnownJDKThread = ThreadDumpParser.isKnownJdkThread(stackTrace);
+    }
     return myKnownJDKThread;
   }
 
@@ -82,7 +88,7 @@ public class ThreadState {
     return myJavaThreadState;
   }
 
-  public String getThreadStateDetail() {
+  public @NlsSafe String getThreadStateDetail() {
     if (myOperation != null) {
       return myOperation.toString();
     }
@@ -93,7 +99,7 @@ public class ThreadState {
     return myEmptyStackTrace;
   }
 
-  public String getExtraState() {
+  public @NlsSafe String getExtraState() {
     return myExtraState;
   }
 

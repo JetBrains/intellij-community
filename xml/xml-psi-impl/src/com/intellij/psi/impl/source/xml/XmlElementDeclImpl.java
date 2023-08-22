@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -10,33 +9,14 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl, XmlElementType {
-  private static final Logger LOG = Logger.getInstance(XmlElementDeclImpl.class);
-
   public XmlElementDeclImpl() {
     super(XML_ELEMENT_DECL);
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else if (i == XML_ELEMENT_CONTENT_SPEC) {
-      return XmlChildRole.XML_ELEMENT_CONTENT_SPEC;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 
   @Override
@@ -47,12 +27,14 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
 
   @Override
   public XmlElement getNameElement() {
-    return (XmlElement)findChildByRoleAsPsiElement(XmlChildRole.XML_NAME);
+    ASTNode child = getNode().findChildByType(XML_NAME);
+    return child != null ? child.getPsi(XmlElement.class) : null;
   }
 
   @Override
   public XmlElementContentSpec getContentSpecElement() {
-    return (XmlElementContentSpec)findChildByRoleAsPsiElement(XmlChildRole.XML_ELEMENT_CONTENT_SPEC);
+    ASTNode child = getNode().findChildByType(XML_ELEMENT_CONTENT_SPEC);
+    return child != null ? child.getPsi(XmlElementContentSpec.class) : null;
   }
 
   @Override

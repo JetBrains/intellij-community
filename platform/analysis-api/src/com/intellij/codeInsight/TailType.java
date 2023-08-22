@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -13,7 +13,11 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * An object representing a simple document change done at {@link InsertionContext#getTailOffset()} after completion,
+ * namely, inserting a character, sometimes with spaces for formatting.
+ * Please consider putting this logic into {@link com.intellij.codeInsight.lookup.LookupElement#handleInsert} or
+ * {@link com.intellij.codeInsight.completion.InsertHandler},
+ * as they're more flexible, and having all document modification code in one place will probably be more comprehensive.
  */
 public abstract class TailType {
 
@@ -69,8 +73,7 @@ public abstract class TailType {
     return psiFile.getFileType();
   }
 
-  @NotNull
-  private static PsiFile getFile(Editor editor) {
+  private static @NotNull PsiFile getFile(Editor editor) {
     Project project = editor.getProject();
     assert project != null;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -87,7 +90,7 @@ public abstract class TailType {
    */
   public static final TailType INSERT_SPACE = new CharTailType(' ', false);
   /**
-   * insert a space unless there's one at the caret position already, followed by a word
+   * insert a space unless there's one at the caret position already, followed by a word or '@'
    */
   public static final TailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
 
@@ -95,8 +98,11 @@ public abstract class TailType {
     public boolean isApplicable(@NotNull InsertionContext context) {
       CharSequence text = context.getDocument().getCharsSequence();
       int tail = context.getTailOffset();
-      if (text.length() > tail + 1 && text.charAt(tail) == ' ' && Character.isLetter(text.charAt(tail + 1))) {
-        return false;
+      if (text.length() > tail + 1 && text.charAt(tail) == ' ') {
+        char ch = text.charAt(tail + 1);
+        if (ch == '@' || Character.isLetter(ch)) {
+          return false;
+        }
       }
       return super.isApplicable(context);
     }
@@ -109,6 +115,8 @@ public abstract class TailType {
   public static final TailType DOT = new CharTailType('.');
 
   public static final TailType CASE_COLON = new CharTailType(':');
+
+  public static final TailType EQUALS = new CharTailType('=');
   public static final TailType COND_EXPR_COLON = new TailType(){
     @Override
     public int processTail(final Editor editor, final int tailOffset) {
@@ -137,7 +145,7 @@ public abstract class TailType {
     return new CharTailType(c);
   }
 
-  public boolean isApplicable(@NotNull final InsertionContext context) {
+  public boolean isApplicable(final @NotNull InsertionContext context) {
     return true;
   }
 }

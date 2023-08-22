@@ -96,13 +96,13 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
     assert APP_WORDS.stream().allMatch(projectWord -> appDictionary.contains(projectWord) == null);
   }
 
-  public void testGetSuggestions(){
+  public void testGetSuggestions() {
     final List<String> suggestions = new ArrayList<>();
     APP_DICTIONARY.consumeSuggestions("AAAB", suggestions::add);
     assert suggestions.isEmpty(); // TODO: change current behavior
   }
 
-  public void testNoSuggestions(){
+  public void testNoSuggestions() {
     final List<String> suggestions = new ArrayList<>();
     APP_DICTIONARY.consumeSuggestions("EEEE", suggestions::add);
     assert suggestions.isEmpty();

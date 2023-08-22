@@ -15,7 +15,10 @@
  */
 package org.jetbrains.jps.javac;
 
-import javax.tools.*;
+import org.jetbrains.annotations.Nls;
+
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.util.Locale;
 
 /**
@@ -23,9 +26,10 @@ import java.util.Locale;
  */
 public class PlainMessageDiagnostic implements Diagnostic<JavaFileObject>{
   private final Kind myKind;
+  @Nls
   private final String myMessage;
 
-  public PlainMessageDiagnostic(Kind kind, String message) {
+  public PlainMessageDiagnostic(Kind kind, @Nls String message) {
     myKind = kind;
     myMessage = message;
   }

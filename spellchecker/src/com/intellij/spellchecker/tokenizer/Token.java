@@ -46,11 +46,11 @@ public class Token<T extends PsiElement> {
     this(element, text, useRename, splitter);
     this.offset = offset;
   }
-  
+
   public Token(T element, Splitter splitter) {
     this(element, element.getText(), false, splitter);
   }
-  
+
   public Token(T element, boolean useRename, Splitter splitter) {
     this(element, element.getText(), useRename, splitter);
   }
@@ -78,8 +78,8 @@ public class Token<T extends PsiElement> {
 
   @NotNull
   public TextRange getRange() {
-    if (range==null){
-      range = new TextRange(0,(text!=null?text.length():0));
+    if (range == null) {
+      range = new TextRange(0, (text != null ? text.length() : 0));
     }
     return range;
   }
@@ -90,6 +90,4 @@ public class Token<T extends PsiElement> {
     }
     splitter.split(text, getRange(), consumer);
   }
-
-
 }

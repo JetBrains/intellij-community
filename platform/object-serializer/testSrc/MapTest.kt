@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.serialization
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -26,8 +28,8 @@ class MapTest {
     @Suppress("unused")
     class TestBean {
       @JvmField
-      val a: MutableMap<String, String> = THashMap()
-      val b: MutableMap<String, String> = THashMap()
+      val a: MutableMap<String, String> = HashMap()
+      val b: MutableMap<String, String> = HashMap()
     }
 
     serializer.write(TestBean(), ByteArrayOutputStream())
@@ -59,7 +61,7 @@ class MapTest {
   fun `parametrized type as map value`() {
     class TestBean {
       @JvmField
-      val map: MutableMap<String, Set<String>> = THashMap()
+      val map: MutableMap<String, Set<String>> = HashMap()
     }
 
     val bean = TestBean()
@@ -72,7 +74,7 @@ class MapTest {
   fun `empty map`() {
     class TestBean {
       @JvmField
-      val map: MutableMap<String, Set<String>> = THashMap()
+      val map: MutableMap<String, Set<String>> = HashMap()
     }
 
     val bean = TestBean()
@@ -95,12 +97,28 @@ class MapTest {
     bean.beanMap.put(key, value)
     test(bean, WriteConfiguration(binary = false, orderMapEntriesByKeys = true))
   }
+
+  @Test
+  fun `fastutil Int2Int`() {
+    class Bean {
+      @JvmField val map = Int2IntOpenHashMap()
+    }
+
+    val bean = Bean()
+    bean.map.put(42, 12)
+    bean.map.put(43, 15)
+
+    test(bean, WriteConfiguration(binary = false, orderMapEntriesByKeys = true))
+  }
 }
 
 private class TestMapBean {
   @JvmField
-  val map: MutableMap<String, String> = THashMap()
+  val map: MutableMap<String, String> = HashMap()
 
   @JvmField
-  val beanMap: MutableMap<TestMapBean, TestMapBean> = THashMap()
+  val beanMap: MutableMap<TestMapBean, TestMapBean> = HashMap()
+
+  @JvmField
+  val emptyMap = emptyMap<String, String>()
 }

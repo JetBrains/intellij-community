@@ -16,6 +16,7 @@
 
 package com.intellij.util.xml;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public abstract class WrappingConverter extends Converter<Object> {
   @NotNull
   public List<Converter> getConverters(@NotNull final GenericDomValue domElement) {
     final Converter converter = getConverter(domElement);
-    return converter == null ? Collections.emptyList() : Collections.singletonList(converter);
+    return ContainerUtil.createMaybeSingletonList(converter);
   }
 
   @Nullable

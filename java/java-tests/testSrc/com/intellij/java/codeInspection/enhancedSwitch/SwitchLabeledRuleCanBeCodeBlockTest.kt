@@ -6,14 +6,9 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.enhancedSwitch.SwitchLabeledRuleCanBeCodeBlockInspection
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class SwitchLabeledRuleCanBeCodeBlockTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_13
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/switchLabeledRuleCanBeCodeBlock"
 
   fun testInExpression() = doTest()
@@ -23,7 +18,7 @@ class SwitchLabeledRuleCanBeCodeBlockTest : LightJavaCodeInsightFixtureTestCase(
     val inspection = SwitchLabeledRuleCanBeCodeBlockInspection()
     myFixture.enableInspections(inspection)
     val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-    currentProfile.setErrorLevel(HighlightDisplayKey.find(inspection.shortName), HighlightDisplayLevel.WARNING, project)
+    currentProfile.setErrorLevel(HighlightDisplayKey.find(inspection.shortName)!!, HighlightDisplayLevel.WARNING, project)
     myFixture.testHighlighting("${getTestName(false)}.java")
   }
 }

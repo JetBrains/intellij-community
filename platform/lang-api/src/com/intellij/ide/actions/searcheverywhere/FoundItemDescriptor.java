@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 public class FoundItemDescriptor<I> {
-
   private final I item;
   private final int weight;
 
@@ -18,5 +17,4 @@ public class FoundItemDescriptor<I> {
   public int getWeight() {
     return weight;
   }
-
 }

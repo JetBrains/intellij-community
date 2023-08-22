@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class OrderEntryUtil {
+public final class OrderEntryUtil {
   private OrderEntryUtil() { }
 
   @Nullable
@@ -221,8 +221,7 @@ public class OrderEntryUtil {
     OrderEntry[] orderEntries = model.getOrderEntries();
     List<Library> libraries = new ArrayList<>();
     for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;
+      if (orderEntry instanceof LibraryOrderEntry entry) {
         if (entry.isModuleLevel()) {
           libraries.add(entry.getLibrary());
         }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -24,10 +10,10 @@ import javax.swing.*;
 
 public class GeneratorPeerImpl<T> implements ProjectGeneratorPeer<T> {
   private static final Object DEFAULT_SETTINGS = new Object();
-  @NotNull private final T mySettings;
-  @NotNull private final JComponent myComponent;
+  private final @NotNull T mySettings;
+  private final @NotNull JComponent myComponent;
 
-  public GeneratorPeerImpl(@NotNull final T settings, @NotNull final JComponent component) {
+  public GeneratorPeerImpl(final @NotNull T settings, final @NotNull JComponent component) {
     mySettings = settings;
     myComponent = component;
   }
@@ -37,24 +23,21 @@ public class GeneratorPeerImpl<T> implements ProjectGeneratorPeer<T> {
     this((T)DEFAULT_SETTINGS, new JPanel());
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 
   @Override
   public void buildUI(@NotNull SettingsStep settingsStep) {}
 
-  @NotNull
   @Override
-  public T getSettings() {
+  public @NotNull T getSettings() {
     return mySettings;
   }
 
-  @Nullable
   @Override
-  public ValidationInfo validate() {
+  public @Nullable ValidationInfo validate() {
     return null;
   }
 

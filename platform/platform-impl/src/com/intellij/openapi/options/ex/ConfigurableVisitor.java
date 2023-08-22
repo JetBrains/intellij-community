@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.Predicates;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public abstract class ConfigurableVisitor implements Predicate<Configurable> {
-  public static final Predicate<Configurable> ALL = configurable -> true;
+  public static final Predicate<Configurable> ALL = Predicates.alwaysTrue();
 
   @Override
   public boolean test(Configurable configurable) {
@@ -24,23 +25,19 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
 
   protected abstract boolean accept(@NotNull Configurable configurable);
 
-  @Nullable
-  public final Configurable find(ConfigurableGroup @NotNull ... groups) {
+  public final @Nullable Configurable find(ConfigurableGroup @NotNull ... groups) {
     return find(this, Arrays.asList(groups));
   }
 
-  @Nullable
-  public static Configurable findById(@NotNull String id, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static @Nullable Configurable findById(@NotNull String id, @NotNull List<? extends ConfigurableGroup> groups) {
     return find(configurable -> id.equals(getId(configurable)), groups);
   }
 
-  @Nullable
-  public static Configurable findByType(@NotNull Class<? extends Configurable> type, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static @Nullable Configurable findByType(@NotNull Class<? extends Configurable> type, @NotNull List<? extends ConfigurableGroup> groups) {
     return find(configurable -> ConfigurableWrapper.cast(type, configurable) != null, groups);
   }
 
-  @Nullable
-  public static Configurable find(@NotNull Predicate<Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static @Nullable Configurable find(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     for (ConfigurableGroup group : groups) {
       Configurable result = find(visitor, group.getConfigurables());
       if (result != null) {
@@ -50,8 +47,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     return null;
   }
 
-  @Nullable
-  public static Configurable find(@NotNull Predicate<Configurable> visitor, Configurable @NotNull [] configurables) {
+  public static @Nullable Configurable find(@NotNull Predicate<? super Configurable> visitor, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       if (visitor.test(configurable)) {
         return configurable;
@@ -59,8 +55,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     }
 
     for (Configurable configurable : configurables) {
-      if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite)configurable;
+      if (configurable instanceof Configurable.Composite composite) {
         Configurable result = find(visitor, composite.getConfigurables());
         if (result != null) {
           return result;
@@ -70,8 +65,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     return null;
   }
 
-  @NotNull
-  public static List<Configurable> findAll(@NotNull Predicate<Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static @NotNull List<Configurable> findAll(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     List<Configurable> list = new ArrayList<>();
     Consumer<Configurable> consumer = configurable -> {
       if (visitor.test(configurable)) {
@@ -85,7 +79,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   }
 
   @ApiStatus.Internal
-  public static void collect(@NotNull Consumer<Configurable> visitor, Configurable @NotNull [] configurables) {
+  public static void collect(@NotNull Consumer<? super Configurable> visitor, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       visitor.accept(configurable);
       if (configurable instanceof Configurable.Composite) {
@@ -94,30 +88,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     }
   }
 
-  /**
-   * @deprecated Use {@link #findById}
-   */
-  @Deprecated
-  public static final class ByID extends ConfigurableVisitor {
-    private final String id;
-
-    public ByID(@NotNull String id) {
-      this.id = id;
-    }
-
-    @Override
-    protected boolean accept(@NotNull Configurable configurable) {
-      return id.equals(getId(configurable));
-    }
-
-    @Nullable
-    public Configurable find(@NotNull List<? extends ConfigurableGroup> groups) {
-      return find(this, groups);
-    }
-  }
-
-  @NotNull
-  public static String getId(@NotNull Configurable configurable) {
+  public static @NotNull String getId(@NotNull Configurable configurable) {
     return configurable instanceof SearchableConfigurable
            ? ((SearchableConfigurable)configurable).getId()
            : configurable.getClass().getName();

@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.AnimatedIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ public class ProgressBarLoadingDecorator extends LoadingDecorator {
   }
 
   @Override
-  protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
+  protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AnimatedIcon icon) {
     parent.setLayout(new BorderLayout());
     NonOpaquePanel result = new NonOpaquePanel();
     result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
@@ -29,8 +29,12 @@ public class ProgressBarLoadingDecorator extends LoadingDecorator {
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 2);
     myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
     result.add(myProgressBar);
-    parent.add(result, BorderLayout.NORTH);
+    parent.add(result, isOnTop() ? BorderLayout.NORTH : BorderLayout.SOUTH);
     return result;
+  }
+
+  protected boolean isOnTop() {
+    return true;
   }
 
   @NotNull
@@ -38,10 +42,15 @@ public class ProgressBarLoadingDecorator extends LoadingDecorator {
     return myProgressBar;
   }
 
-  public void startLoading() {
+  @Override
+  public void startLoading(boolean takeSnapshot) {
     if (loadingStarted.compareAndSet(false, true)) {
-      super.startLoading(false);
+      super.startLoading(takeSnapshot);
     }
+  }
+
+  public void startLoading() {
+    startLoading(false);
   }
 
   @Override

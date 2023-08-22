@@ -15,7 +15,7 @@ class InstanceOfNonReified {
   public static void main(String [] args) {
 
     Object o = new ArrayList<Object>();
-    if (o instanceof <error descr="'Object' cannot be safely cast to 'ArrayList<Integer>'">ArrayList<Integer></error> ai) {
+    if (o instanceof <error descr="'Object' cannot be safely cast to 'ArrayList<Integer>'">ArrayList<Integer> ai</error>) {
       System.out.println("");
     }
   }

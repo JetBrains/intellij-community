@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.search;
 
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -18,33 +15,22 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.indexing.IdFilter;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
 
-    if (scope == GlobalSearchScope.EMPTY_SCOPE) {
+    if (SearchScope.isEmptyScope(scope)) {
       return true;
     }
 
     if (scope instanceof GlobalSearchScope) {
       PsiManager manager = PsiManager.getInstance(queryParameters.getProject());
-      manager.startBatchFilesProcessingMode();
-      try {
-        return processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer);
-      }
-      finally {
-        manager.finishBatchFilesProcessingMode();
-      }
+      return manager.runInBatchFilesMode(() -> processAllClassesInGlobalScope((GlobalSearchScope)scope, queryParameters, consumer));
     }
 
     PsiElement[] scopeRoots = ((LocalSearchScope)scope).getScope();
@@ -57,8 +43,9 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   private static boolean processAllClassesInGlobalScope(@NotNull final GlobalSearchScope scope,
                                                         @NotNull final AllClassesSearch.SearchParameters parameters,
                                                         @NotNull Processor<? super PsiClass> processor) {
-    final Set<String> names = new THashSet<>(10000);
-    processClassNames(parameters.getProject(), scope, s -> {
+    final Set<String> names = new HashSet<>(10000);
+    Project project = parameters.getProject();
+    processClassNames(project, scope, s -> {
       if (parameters.nameMatches(s)) {
         names.add(s);
       }
@@ -68,7 +55,9 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     List<String> sorted = new ArrayList<>(names);
     sorted.sort(String.CASE_INSENSITIVE_ORDER);
 
-    return processClassesByNames(parameters.getProject(), scope, sorted, processor);
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(sorted, ProgressIndicatorProvider.getGlobalProgressIndicator(), name ->
+      processByName(project, scope, processor, cache, name));
   }
 
   public static boolean processClassesByNames(@NotNull Project project,
@@ -78,11 +67,20 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     for (final String name : names) {
       ProgressIndicatorProvider.checkCanceled();
-      for (PsiClass psiClass : DumbService.getInstance(project).runReadActionInSmartMode(() -> cache.getClassesByName(name, scope))) {
-        ProgressIndicatorProvider.checkCanceled();
-        if (!processor.process(psiClass)) {
-          return false;
-        }
+      if (!processByName(project, scope, processor, cache, name)) return false;
+    }
+    return true;
+  }
+
+  private static boolean processByName(Project project,
+                                       GlobalSearchScope scope,
+                                       Processor<? super PsiClass> processor,
+                                       PsiShortNamesCache cache,
+                                       String name) {
+    for (PsiClass psiClass : DumbService.getInstance(project).runReadActionInSmartMode(() -> cache.getClassesByName(name, scope))) {
+      ProgressIndicatorProvider.checkCanceled();
+      if (!processor.process(psiClass)) {
+        return false;
       }
     }
     return true;
@@ -93,7 +91,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       PsiShortNamesCache.getInstance(project).processAllClassNames(s -> {
         ProgressManager.checkCanceled();
         return processor.process(s);
-      }, scope, IdFilter.getProjectIdFilter(project, true)));
+      }, scope, null));
 
     ProgressManager.checkCanceled();
     return success;
@@ -111,7 +109,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }
@@ -124,7 +122,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }

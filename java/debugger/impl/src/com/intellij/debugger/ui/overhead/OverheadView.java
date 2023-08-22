@@ -1,18 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.CommonBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -21,6 +23,7 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +33,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
+
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public class OverheadView extends BorderLayoutPanel implements Disposable, DataProvider {
   @NotNull private final DebugProcessImpl myProcess;
@@ -52,8 +59,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     myModel = new ListTableModel<>(new ColumnInfo[]{
       ENABLED_COLUMN,
       NAME_COLUMN,
-      new TimingColumnInfo("Hits", s -> OverheadTimings.getHits(myProcess, s)),
-      new TimingColumnInfo("Time (ms)", s -> OverheadTimings.getTime(myProcess, s))},
+      new TimingColumnInfo(JavaDebuggerBundle.message("column.name.hits"), s -> OverheadTimings.getHits(myProcess, s)),
+      new TimingColumnInfo(JavaDebuggerBundle.message("column.name.time.ms"), s -> OverheadTimings.getTime(myProcess, s))},
                                    new ArrayList<>(OverheadTimings.getProducers(process)),
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
@@ -95,6 +102,11 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         myTable.getSelection().forEach(c -> c.setEnabled(!c.isEnabled()));
         myTable.repaint();
@@ -104,18 +116,26 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        getSelectedNavigatables().findFirst().ifPresent(b -> b.navigate(true));
+        ReadAction.nonBlocking(
+            () -> getFirstItem(mapNotNull(getSelectedBreakpoints(), XBreakpoint::getNavigatable)))
+          .expireWith(OverheadView.this)
+          .finishOnUiThread(ModalityState.nonModal(), navigatable -> {
+            if (navigatable != null) {
+              navigatable.navigate(true);
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
         return true;
       }
     }.installOn(myTable);
   }
 
 
-  private StreamEx<Navigatable> getSelectedNavigatables() {
+  private List<XBreakpoint> getSelectedBreakpoints() {
     return StreamEx.of(myTable.getSelection())
       .select(Breakpoint.class)
       .map(Breakpoint::getXBreakpoint).nonNull()
-      .map(XBreakpoint::getNavigatable).nonNull();
+      .toList();
   }
 
 
@@ -126,10 +146,19 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      var selectedBreakpoints = getSelectedBreakpoints(); // gather in EDT
+      return (DataProvider)realDataId -> getSlowData(selectedBreakpoints, realDataId);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Object getSlowData(@NotNull List<XBreakpoint> selected, @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      Navigatable[] navigatables = getSelectedNavigatables().toArray(Navigatable.class);
-      if (navigatables.length > 0) {
-        return navigatables;
+      List<Navigatable> navigatables = mapNotNull(selected, XBreakpoint::getNavigatable);
+      if (!navigatables.isEmpty()) {
+        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
     }
     return null;
@@ -183,9 +212,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     public TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
-          if (value instanceof OverheadProducer) {
-            OverheadProducer overheadProducer = (OverheadProducer)value;
+        protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+          if (value instanceof OverheadProducer overheadProducer) {
             if (overheadProducer.isObsolete()) {
               overrideAttributes(overheadProducer, STRIKEOUT_ATTRIBUTES);
             }
@@ -212,7 +240,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
   private static class TimingColumnInfo extends ColumnInfo<OverheadProducer, OverheadProducer> {
     private final Function<? super OverheadProducer, Long> myGetter;
 
-    TimingColumnInfo(@NotNull String name, Function<? super OverheadProducer, Long> getter) {
+    TimingColumnInfo(@NotNull @NlsContexts.ColumnName String name, Function<? super OverheadProducer, Long> getter) {
       super(name);
       myGetter = getter;
     }
@@ -233,16 +261,15 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     public TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table,
+        protected void customizeCellRenderer(@NotNull JTable table,
                                              @Nullable Object value,
                                              boolean selected,
                                              boolean hasFocus,
                                              int row,
                                              int column) {
-          if (value instanceof OverheadProducer) {
-            OverheadProducer overheadProducer = (OverheadProducer)value;
+          if (value instanceof OverheadProducer overheadProducer) {
             Long val = myGetter.apply(overheadProducer);
-            append(val != null ? String.valueOf(val) : "",
+            append(val != null ? String.valueOf((long)val) : "",
                    overheadProducer.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }

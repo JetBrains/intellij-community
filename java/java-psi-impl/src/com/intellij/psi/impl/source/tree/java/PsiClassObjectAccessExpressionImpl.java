@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -10,8 +10,8 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,15 +23,13 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     super(CLASS_OBJECT_ACCESS_EXPRESSION);
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return PsiImplUtil.getType(this);
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement getOperand() {
+  public @NotNull PsiTypeElement getOperand() {
     return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
@@ -92,10 +90,10 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
   }
 
   @Override
-  @NotNull
-  public Icon getElementIcon(final int flags) {
-    final RowIcon rowIcon = IconManager.getInstance().createLayeredIcon(this, PlatformIcons.FIELD_ICON, 0);
-    rowIcon.setIcon(PlatformIcons.PUBLIC_ICON, 1);
+  public @NotNull Icon getElementIcon(final int flags) {
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon rowIcon = iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Field), 0);
+    rowIcon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Public), 1);
     return rowIcon;
   }
 }

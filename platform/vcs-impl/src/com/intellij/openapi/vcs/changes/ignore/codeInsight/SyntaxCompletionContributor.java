@@ -55,7 +55,7 @@ public class SyntaxCompletionContributor extends CompletionContributor {
   public SyntaxCompletionContributor() {
     extend(CompletionType.BASIC,
            StandardPatterns.instanceOf(PsiElement.class),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,

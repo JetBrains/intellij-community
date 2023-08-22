@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.fileEditor;
 
-/**
- * @author Vladimir Kondratyev
- */
 public enum FileEditorStateLevel {
   FULL,
   UNDO,

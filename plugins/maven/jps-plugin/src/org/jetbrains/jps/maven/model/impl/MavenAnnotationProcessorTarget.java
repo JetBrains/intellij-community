@@ -25,13 +25,12 @@ import java.util.stream.Collectors;
 /**
  * Class is used to provide implicit dependencies between modules. It is used in cases when one module uses other project modules as
  * annotation processors, which is possible using "annotationProcessorPaths" option of "maven-compiler-plugin"
- * @author ibessonov
  */
-public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
-
+public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
+  @NotNull
   private final MavenAnnotationProcessorTargetType myTargetType;
 
-  public MavenAnnotationProcessorTarget(MavenAnnotationProcessorTargetType targetType, JpsModule module) {
+  public MavenAnnotationProcessorTarget(@NotNull MavenAnnotationProcessorTargetType targetType, JpsModule module) {
     super(targetType, module);
     myTargetType = targetType;
   }
@@ -57,7 +56,7 @@ public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRo
    * {@link JpsMavenModuleExtension}
    */
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     JpsMavenModuleExtension moduleExtension = JpsMavenExtensionService.getInstance().getExtension(myModule);
     if (moduleExtension == null) return Collections.emptyList();
 
@@ -71,16 +70,16 @@ public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRo
 
   @NotNull
   @Override
-  public List<BuildRootDescriptor> computeRootDescriptors(JpsModel model,
-                                                          ModuleExcludeIndex index,
-                                                          IgnoredFileIndex ignoredFileIndex,
-                                                          BuildDataPaths dataPaths) {
+  public List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                          @NotNull ModuleExcludeIndex index,
+                                                          @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                          @NotNull BuildDataPaths dataPaths) {
     return Collections.emptyList();
   }
 
   @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     return Collections.emptyList();
   }
 }

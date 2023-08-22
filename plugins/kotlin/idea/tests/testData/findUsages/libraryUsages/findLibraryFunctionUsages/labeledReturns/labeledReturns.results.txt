@@ -1,0 +1,9 @@
+[labeledReturns.0.kt] Function call 13 foo(fun(): Boolean { return@foo false })
+[labeledReturns.0.kt] Function call 9 foo {
+[labeledReturns.0.kt] Unclassified 10 return@foo false
+[labeledReturns.0.kt] Unclassified 13 foo(fun(): Boolean { return@foo false })
+[labeledReturns.0.kt] Usage in import 6 import library.foo
+[labeledReturns.kt] Function call 10 foo(fun(): Boolean { return@foo false })
+[labeledReturns.kt] Function call 6 foo {
+[labeledReturns.kt] Unclassified 10 foo(fun(): Boolean { return@foo false })
+[labeledReturns.kt] Unclassified 7 return@foo false

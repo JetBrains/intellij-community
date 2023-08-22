@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class StaticDescriptorImpl
@@ -15,17 +13,19 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.StaticDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.TypeComponent;
 
-public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDescriptor{
+public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDescriptor {
 
   private final ReferenceType myType;
   private final boolean myHasStaticFields;
 
   public StaticDescriptorImpl(ReferenceType refType) {
     myType = refType;
-    myHasStaticFields = myType.allFields().stream().anyMatch(TypeComponent::isStatic);
+    myHasStaticFields = ContainerUtil.exists(myType.allFields(), TypeComponent::isStatic);
   }
 
   @Override
@@ -35,7 +35,6 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
 
   @Override
   public String getName() {
-    //noinspection HardCodedStringLiteral
     return "static";
   }
 
@@ -52,6 +51,7 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-    return getName() + " = " + classRenderer.renderTypeName(myType.name());
+    @NlsSafe String representation = getName() + " = " + classRenderer.renderTypeName(myType.name());
+    return representation;
   }
 }

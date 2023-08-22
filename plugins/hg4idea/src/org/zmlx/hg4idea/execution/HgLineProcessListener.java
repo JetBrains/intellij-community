@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,8 @@ public abstract class HgLineProcessListener {
 
   public void finish() throws VcsException {
     if (myExitCode != 0 && myErrorOutput.length() != 0) {
-      throw new VcsException(myErrorOutput.toString());
+      @NlsSafe String message = myErrorOutput.toString();
+      throw new VcsException(message);
     }
   }
 

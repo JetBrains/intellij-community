@@ -30,7 +30,7 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
 
   @NotNull
   public Self ofType(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<T>("ofType") {
+    return with(new PatternCondition<>("ofType") {
       @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return pattern.accepts(t.getType(), context);
@@ -40,7 +40,7 @@ public class GroovyExpressionPattern<T extends GrExpression, Self extends Groovy
 
   @NotNull
   public Self skipParentheses(final ElementPattern<? extends GrExpression> expressionPattern) {
-    return with(new PatternCondition<T>("skipParentheses") {
+    return with(new PatternCondition<>("skipParentheses") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
         GrExpression expression = t;

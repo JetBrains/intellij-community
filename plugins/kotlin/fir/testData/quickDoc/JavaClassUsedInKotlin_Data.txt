@@ -1,0 +1,7 @@
+/**
+ * Some Java Class
+ * @param <T>
+ */
+public class SomeClass<T extends String> {
+
+}

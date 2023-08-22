@@ -12,9 +12,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenFixedValueReferenceProvider implements MavenParamReferenceProvider, MavenSoftAwareReferenceProvider {
 
   private final String[] myValues;
@@ -38,7 +35,7 @@ public class MavenFixedValueReferenceProvider implements MavenParamReferenceProv
     }
 
     return new PsiReference[] {
-      new PsiReferenceBase<PsiElement>(element, mySoft) {
+      new PsiReferenceBase<>(element, mySoft) {
         @Nullable
         @Override
         public PsiElement resolve() {

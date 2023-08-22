@@ -5,17 +5,19 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
+  private static final @NlsSafe String TEMPLATE_DESCRIPTION = "try / except";
+
   @Override
   @Nullable
   protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
@@ -55,6 +57,7 @@ public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
 
   @Override
   public String getTemplateDescription() {
-    return PyBundle.message("surround.with.try.except.template");
+    //noinspection DialogTitleCapitalization
+    return TEMPLATE_DESCRIPTION;
   }
 }

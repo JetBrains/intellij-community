@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.Gray;
+import com.intellij.ui.ShadowJava2DPainter;
 import com.intellij.util.ui.ImageUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
@@ -12,10 +13,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * @author spleaner
  * @author Konstantin Bulenkov
  */
-public class ShadowBorderPainter {
+public final class ShadowBorderPainter {
   public static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Ide.Shadow.Top,
                                                                          AllIcons.Ide.Shadow.TopRight,
                                                                          AllIcons.Ide.Shadow.Right,
@@ -30,8 +30,19 @@ public class ShadowBorderPainter {
   private ShadowBorderPainter() {
   }
 
-  @SuppressWarnings("unused")
+  private static BufferedImage createJava2dShadow(JComponent component, int width, int height) {
+    BufferedImage image = component.getGraphicsConfiguration().createCompatibleImage(width, height, Transparency.TRANSLUCENT);
+    ShadowJava2DPainter painter = new ShadowJava2DPainter("Ide", false, Gray.x00.withAlpha(30));
+    Graphics2D g = image.createGraphics();
+    painter.paintShadow(g, 0, 0, width, height);
+    g.dispose();
+    return image;
+  }
+
   public static BufferedImage createShadow(final JComponent c, final int width, final int height, boolean isPopup) {
+    if (ShadowJava2DPainter.Companion.enabled()) {
+      return createJava2dShadow(c, width, height);
+    }
     return ourShadowPainter.createShadow(c, width, height);
   }
 
@@ -60,7 +71,7 @@ public class ShadowBorderPainter {
     graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     graphics.drawImage(scaled, 0, 0, null);
 
-    final BufferedImage shadow = new ShadowRenderer(shadowSize, .25f, Gray.x00).createShadow(s);
+    final BufferedImage shadow = new ShadowRenderer(shadowSize, .2f, Gray.x00).createShadow(s);
     if (paintSource) {
       final Graphics imgG = shadow.getGraphics();
       final double d = shadowSize * 0.5;

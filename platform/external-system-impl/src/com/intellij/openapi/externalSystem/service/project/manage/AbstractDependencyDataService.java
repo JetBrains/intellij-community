@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public abstract class AbstractDependencyDataService<E extends AbstractDependencyData<?>, I extends ExportableOrderEntry>
   extends AbstractProjectDataService<E, I> {
@@ -34,7 +31,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
 
 
   @Override
-  public void importData(@NotNull Collection<DataNode<E>> toImport,
+  public void importData(@NotNull Collection<? extends DataNode<E>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -64,13 +61,13 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     }
   }
 
-  protected abstract Map<OrderEntry, OrderAware> importData(@NotNull Collection<DataNode<E>> nodesToImport,
+  protected abstract Map<OrderEntry, OrderAware> importData(@NotNull Collection<? extends DataNode<E>> nodesToImport,
                                                             @NotNull Module module,
                                                             @NotNull IdeModifiableModelsProvider modelsProvider);
 
   @NotNull
   @Override
-  public Computable<Collection<I>> computeOrphanData(@NotNull final Collection<DataNode<E>> toImport,
+  public Computable<Collection<I>> computeOrphanData(final @NotNull Collection<? extends DataNode<E>> toImport,
                                                      @NotNull final ProjectData projectData,
                                                      @NotNull final Project project,
                                                      @NotNull final IdeModifiableModelsProvider modelsProvider) {
@@ -104,7 +101,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
           // do not remove recently created library w/o name
           if (entry instanceof LibraryOrderEntry &&
               ((LibraryOrderEntry)entry).getLibraryName() == null &&
-              entry.getUrls(OrderRootType.CLASSES).length == 0) {
+              ((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES).length == 0) {
             continue;
           }
           if (getOrderEntryType().isInstance(entry)) {
@@ -130,8 +127,8 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
   }
 
   @Override
-  public void removeData(@NotNull Computable<Collection<I>> toRemoveComputable,
-                         @NotNull Collection<DataNode<E>> toIgnore,
+  public void removeData(Computable<? extends Collection<? extends I>> toRemoveComputable,
+                         @NotNull Collection<? extends DataNode<E>> toIgnore,
                          @NotNull ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -179,7 +176,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
           return PathUtil.toPresentableUrl(url);
         }
         else {
-          return ProjectModelBundle.message("library.empty.library.item");
+          return ProjectModelBundle.message("empty.library.title");
         }
       }
     }

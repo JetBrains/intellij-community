@@ -1,4 +1,4 @@
-// "Create inner class 'AInner'" "true"
+// "Create inner class 'AInner'" "true-preview"
 class Test {
   {
     AInner aInner = new AInner<String>(42);

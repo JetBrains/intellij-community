@@ -22,10 +22,10 @@ import com.jetbrains.python.refactoring.PyReplaceExpressionUtil
 class PyAsyncCallInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    return Visitor(holder, session)
+    return Visitor(holder, PyInspectionVisitor.getContext(session))
   }
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyExpressionStatement(node: PyExpressionStatement) {
       val expr = node.expression
@@ -76,8 +76,6 @@ class PyAsyncCallInspection : PyInspection() {
                                         "asyncio.tasks.ensure_future",
                                         "asyncio.ensure_future")
 
-    const val coroutineIsNotAwaited = "Coroutine is not awaited"
-
     private fun getCalledCoroutineName(callExpression: PyCallExpression, resolveContext: PyResolveContext): String? {
       val callee = callExpression.callee as? PyReferenceExpression ?: return null
       val function = callExpression.multiResolveCalleeFunction(resolveContext).firstOrNull() as? PyFunction ?: return null
@@ -95,7 +93,7 @@ class PyAsyncCallInspection : PyInspection() {
   }
 
   private class PyAddAwaitCallForCoroutineFix(val type: AwaitableType) : LocalQuickFix {
-    override fun getFamilyName() = coroutineIsNotAwaited
+    override fun getFamilyName() = PyPsiBundle.message("QFIX.coroutine.is.not.awaited")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val psiElement = descriptor.psiElement

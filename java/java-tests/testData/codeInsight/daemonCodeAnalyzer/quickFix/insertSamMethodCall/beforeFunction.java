@@ -1,4 +1,4 @@
-// "Insert '.apply' to call functional interface method" "true"
+// "Insert '.apply' to call functional interface method" "true-preview"
 import java.util.function.Function;
 
 public class Test {

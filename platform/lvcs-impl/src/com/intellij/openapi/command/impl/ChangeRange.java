@@ -6,6 +6,7 @@ import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.UndoChangeRevertingVisitor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 public class ChangeRange {
+  private static final Logger LOG = Logger.getInstance(ChangeRange.class);
+
   private final IdeaGateway myGateway;
   private final LocalHistoryFacade myVcs;
   private final Long myFromChangeId;
@@ -41,6 +44,7 @@ public class ChangeRange {
     };
     myVcs.addListener(l, null);
     try {
+      LOG.debug("Reverting: " + myFromChangeId + " -> " + myToChangeId);
       myVcs.accept(new UndoChangeRevertingVisitor(myGateway, myToChangeId, myFromChangeId));
     }
     catch (UndoChangeRevertingVisitor.RuntimeIOException e) {

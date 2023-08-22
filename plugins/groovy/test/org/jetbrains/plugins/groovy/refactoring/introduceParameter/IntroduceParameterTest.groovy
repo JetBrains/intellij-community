@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter
 
@@ -25,11 +11,13 @@ import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import gnu.trove.TIntArrayList
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author Maxim.Medvedev
  */
@@ -43,13 +31,13 @@ class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase {
     final String afterGroovy = getTestName(false) + "After.groovy"
     final String javaClass = getTestName(false) + "MyClass.java"
     myFixture.configureByFiles(javaClass, beforeGroovy)
-    executeRefactoring(true, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, conflicts)
+    executeRefactoring(IntroduceVariableBase.JavaReplaceChoice.ALL, replaceFieldsWithGetters, "anObject", searchForSuper, declareFinal, removeUnusedParameters, conflicts)
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     myFixture.checkResultByFile(beforeGroovy, afterGroovy, true)
   }
 
 
-  private boolean executeRefactoring(boolean replaceAllOccurrences,
+  private boolean executeRefactoring(IntroduceVariableBase.JavaReplaceChoice replaceAllOccurrences,
                                      int replaceFieldsWithGetters,
                                      @NonNls String parameterName,
                                      boolean searchForSuper,
@@ -67,7 +55,7 @@ class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase {
             boolean accept(ElementToWorkOn el) {
               return true
             }
-      
+
             @Override
             void pass(final ElementToWorkOn e) {
               if (e == null) return
@@ -94,11 +82,11 @@ class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiExpression initializer = expr == null ? localVar.initializer : expr
     assert initializer != null
-    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, null) : new TIntArrayList()
+    IntArrayList parametersToRemove = removeUnusedParameters ? new IntArrayList(Util.findParametersToRemove(method, initializer, null)) : new IntArrayList()
     final Project project = myFixture.project
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(project, method, methodToSearchFor, initializer, expr, localVar, true, parameterName,
-                                      replaceAllOccurrences, replaceFieldsWithGetters, declareFinal, generateDelegate, null,
+                                      replaceAllOccurrences, replaceFieldsWithGetters, declareFinal, generateDelegate, false, null,
                                       parametersToRemove)
 
     try {

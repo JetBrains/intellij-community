@@ -1,14 +1,11 @@
 <html>
 <body>
-Signals places where an unchecked warning is issued
-by the compiler, for example:
+Reports code on which an unchecked warning will be issued by the javac compiler.
+Every unchecked warning may potentially trigger <code>ClassCastException</code> at runtime.
+<p>Example:</p>
 <pre><code>
-
-  <b>void</b> f(HashMap map) {
-    map.put("key", "value");
-  }
-  
+  List items = Arrays.asList("string", "string");
+  List&lt;Integer&gt; numbers = Collections.unmodifiableList(items); // unchecked assignment
 </code></pre>
-Hint: Pass -Xlint:unchecked to javac to get more details.
 </body>
 </html>

@@ -4,25 +4,15 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import org.jetbrains.idea.maven.server.security.MavenToken;
+import java.util.HashSet;
 
-public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
-  @Override
-  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      Maven3ServerGlobals.set(logger, downloadListener);
-    }
-    catch (Exception e) {
-      throw rethrowException(e);
-    }
-  }
-
+public class Maven3ServerImpl extends MavenServerBase {
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
     MavenServerUtil.checkToken(token);
@@ -32,7 +22,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -50,7 +40,7 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
       return result;
     }
     catch (RemoteException e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -59,10 +49,10 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
+      return Maven3XProfileUtil.interpolateAndAlignModel(model, basedir);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -70,10 +60,10 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
+      return Maven3ModelInheritanceAssembler.assembleInheritance(model, parentModel);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -81,18 +71,13 @@ public class Maven3ServerImpl extends MavenRemoteObject implements MavenServer {
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,
-                                                Collection<String> alwaysOnProfiles, MavenToken token) {
+                                                HashSet<String> alwaysOnProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven3ServerEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+      return Maven3XProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
-      throw rethrowException(e);
+      throw wrapToSerializableRuntimeException(e);
     }
-  }
-
-  @Override
-  public synchronized void unreferenced() {
-    System.exit(0);
   }
 }

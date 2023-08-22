@@ -1,4 +1,4 @@
-// "Replace with expression lambda" "true"
+// "Replace with expression lambda" "true-preview"
 
 import java.io.File;
 import java.util.function.Supplier;

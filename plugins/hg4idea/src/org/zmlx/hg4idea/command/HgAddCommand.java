@@ -21,6 +21,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -43,11 +44,11 @@ public class HgAddCommand {
    * Adds given files to their Mercurial repositories.
    * @param files files to be added.
    */
-  public void executeInCurrentThread(@NotNull Collection<VirtualFile> files) {
+  public void executeInCurrentThread(@NotNull Collection<? extends VirtualFile> files) {
     executeInCurrentThread(files, null);
   }
 
-  public void addWithProgress(final Collection<VirtualFile> files) {
+  public void addWithProgress(final Collection<? extends VirtualFile> files) {
     if (files.size() >= HgUtil.MANY_FILES) {
       new Task.Backgroundable(myProject, HgBundle.message("hg4idea.add.progress"), true) {
         @Override
@@ -58,11 +59,11 @@ public class HgAddCommand {
       }.queue();
     }
     else {
-      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> executeInCurrentThread(files));
+      BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> executeInCurrentThread(files));
     }
   }
 
-  private void executeInCurrentThread(@NotNull Collection<VirtualFile> files, @Nullable ProgressIndicator indicator) {
+  private void executeInCurrentThread(@NotNull Collection<? extends VirtualFile> files, @Nullable ProgressIndicator indicator) {
     final Map<VirtualFile, Collection<VirtualFile>> sorted = HgUtil.sortByHgRoots(myProject, files);
     for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sorted.entrySet()) {
       if (indicator != null) {
@@ -74,7 +75,7 @@ public class HgAddCommand {
     }
   }
 
-  private void addFilesSynchronously(VirtualFile repo, Collection<VirtualFile> files, @Nullable ProgressIndicator indicator) {
+  private void addFilesSynchronously(VirtualFile repo, Collection<? extends VirtualFile> files, @Nullable ProgressIndicator indicator) {
     final List<List<String>> chunks = VcsFileUtil.chunkFiles(repo, files);
     int currentChunk = 0;
     for (List<String> paths : chunks) {

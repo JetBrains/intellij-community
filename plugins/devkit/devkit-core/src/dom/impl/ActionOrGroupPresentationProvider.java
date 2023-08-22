@@ -74,7 +74,7 @@ public class ActionOrGroupPresentationProvider extends PresentationProvider<Acti
     // icon field initializer may not be available if there're no attached sources for containing class
     if (referenceFound) {
       String value = iconAttrValue.getValue();
-      Icon icon = IconLoader.findIcon(value, false);
+      Icon icon = IconLoader.findIcon(value, ActionOrGroupPresentationProvider.class, false, false);
       if (icon != null) {
         return icon;
       }

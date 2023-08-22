@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.psi.PsiElement;
@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
  */
 public class GrImportFilteringRule extends ImportFilteringRule {
   @Override
-  public boolean isVisible(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  public boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget @NotNull [] targets) {
     if (usage instanceof PsiElementUsage) {
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
       if (psiElement != null) {

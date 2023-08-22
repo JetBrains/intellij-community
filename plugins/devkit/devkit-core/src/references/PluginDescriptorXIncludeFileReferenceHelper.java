@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,15 +32,16 @@ import java.util.stream.Collectors;
  */
 public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHelper {
   @Override
-  public boolean isMine(Project project, @NotNull VirtualFile file) {
-    return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) &&
+  public boolean isMine(@NotNull Project project, @NotNull VirtualFile file) {
+    return !DumbService.isDumb(project) &&
+           FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) &&
            PsiUtil.isPluginProject(project) &&
            DescriptorUtil.isPluginXml(PsiManager.getInstance(project).findFile(file));
   }
 
   @NotNull
   @Override
-  public Collection<PsiFileSystemItem> getContexts(Project project, @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
     return getRootsContainingPluginXmlFiles(project);
   }
 
@@ -53,7 +55,7 @@ public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHe
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
 
       Collection<VirtualFile> pluginXmlFilesInProductionScope =
-        DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project,
+        DomService.getInstance().getDomFileCandidates(IdeaPlugin.class,
                                                       PluginRelatedLocatorsUtils.getCandidatesScope(project));
 
       ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);

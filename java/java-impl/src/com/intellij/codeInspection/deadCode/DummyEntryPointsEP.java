@@ -4,7 +4,7 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +16,8 @@ public final class DummyEntryPointsEP extends InspectionEP {
     implementationClass = "";
     shortName = "";
     ClassLoader classLoader = DummyEntryPointsEP.class.getClassLoader();
-    setPluginDescriptor(classLoader instanceof PluginClassLoader
-                        ? ((PluginClassLoader)classLoader).getPluginDescriptor()
+    setPluginDescriptor(classLoader instanceof PluginAwareClassLoader
+                        ? ((PluginAwareClassLoader)classLoader).getPluginDescriptor()
                         : new DefaultPluginDescriptor(PluginId.getId("DummyEntryPointsEP"), classLoader));
   }
 

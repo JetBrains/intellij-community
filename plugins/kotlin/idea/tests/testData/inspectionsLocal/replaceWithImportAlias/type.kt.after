@@ -1,0 +1,7 @@
+package foo
+
+import foo.Foo as Bar
+
+class Foo
+
+fun test(): Bar? = null

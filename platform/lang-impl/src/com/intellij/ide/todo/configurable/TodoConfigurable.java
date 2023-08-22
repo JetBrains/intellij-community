@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.configurable;
 
@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.TodoAttributesUtil;
@@ -30,9 +29,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class TodoConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final int HEADER_GAP = JBUIScale.scale(20);
   /*
@@ -95,7 +91,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     stopEditing();
     TodoConfiguration.getInstance().setMultiLine(myMultiLineCheckBox.isSelected());
     if (arePatternsModified()) {
@@ -123,6 +119,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
     myMultiLineCheckBox = new JCheckBox(IdeBundle.message("label.todo.multiline"));
 
     myPatternsTable = new JBTable(myPatternsModel);
+    myPatternsTable.setShowGrid(false);
     myPatternsTable.getEmptyText().setText(IdeBundle.message("text.todo.no.patterns"));
     TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
     JTableHeader tableHeader = myPatternsTable.getTableHeader();
@@ -221,6 +218,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
 
     // Panel with filters
     myFiltersTable = new JBTable(myFiltersModel);
+    myFiltersTable.setShowGrid(false);
     myFiltersTable.getEmptyText().setText(IdeBundle.message("text.todo.no.filters"));
 
     // Column "Name"

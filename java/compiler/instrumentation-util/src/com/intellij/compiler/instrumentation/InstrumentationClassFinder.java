@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.instrumentation;
 
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -26,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -37,7 +24,7 @@ public class InstrumentationClassFinder {
   private static final PseudoClass[] EMPTY_PSEUDOCLASS_ARRAY = new PseudoClass[0];
   private static final String CLASS_RESOURCE_EXTENSION = ".class";
   private static final URL[] URL_EMPTY_ARRAY = new URL[0];
-  private final Map<String, PseudoClass> myLoaded = new HashMap<String, PseudoClass>(); // className -> class object
+  private final Map<String, PseudoClass> myLoaded = new HashMap<>(); // className -> class object
   private final ClassFinderClasspath myPlatformClasspath;
   private final ClassFinderClasspath myClasspath;
   private final URL[] myPlatformUrls;
@@ -229,7 +216,7 @@ public class InstrumentationClassFinder {
     return new PseudoClass(this, visitor.myName, visitor.mySuperclassName, visitor.myInterfaces, visitor.myModifiers, visitor.myMethods);
   }
 
-  public static class PseudoClass {
+  public static final class PseudoClass {
     static final PseudoClass NULL_OBJ = new PseudoClass(null, null, null, null, 0, null);
     private final String myName;
     private final String mySuperClass;
@@ -269,7 +256,7 @@ public class InstrumentationClassFinder {
     }
 
     public List<PseudoMethod> findMethods(String name) {
-      final List<PseudoMethod> result = new ArrayList<PseudoMethod>();
+      final List<PseudoMethod> result = new ArrayList<>();
       for (PseudoMethod method : myMethods) {
         if (method.getName().equals(name)){
           result.add(method);
@@ -427,12 +414,12 @@ public class InstrumentationClassFinder {
     }
   }
 
-  private static class V extends ClassVisitor {
+  private static final class V extends ClassVisitor {
     public String mySuperclassName = null;
     public String[] myInterfaces = null;
     public String myName = null;
     public int myModifiers;
-    private final List<PseudoMethod> myMethods = new ArrayList<PseudoMethod>();
+    private final List<PseudoMethod> myMethods = new ArrayList<>();
 
     private V() {
       super(Opcodes.API_VERSION);
@@ -460,17 +447,12 @@ public class InstrumentationClassFinder {
   }
 
   static class ClassFinderClasspath {
-
-    private final Stack<URL> myUrls = new Stack<URL>();
-    private final List<Loader> myLoaders = new ArrayList<Loader>();
-    private final Map<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
+    private final Queue<URL> myUrls;
+    private final List<Loader> myLoaders = new ArrayList<>();
+    private final Map<URL,Loader> myLoadersMap = new HashMap<>();
 
     ClassFinderClasspath(URL[] urls) {
-      if (urls.length > 0) {
-        for (int i = urls.length - 1; i >= 0; i--) {
-          myUrls.push(urls[i]);
-        }
-      }
+      myUrls = new ArrayDeque<>(Arrays.asList(urls));
     }
 
     public Resource getResource(String s) {
@@ -495,12 +477,9 @@ public class InstrumentationClassFinder {
 
     private synchronized Loader getLoader(int i) {
       while (myLoaders.size() < i + 1) {
-        URL url;
-        synchronized (myUrls) {
-          if (myUrls.empty()) {
-            return null;
-          }
-          url = myUrls.pop();
+        URL url = myUrls.poll();
+        if (url == null) {
+          return null;
         }
 
         if (myLoadersMap.containsKey(url)) {
@@ -725,7 +704,7 @@ public class InstrumentationClassFinder {
     while (i < len) {
       char c = s.charAt(i);
       if (c == '%') {
-        List<Integer> bytes = new ArrayList<Integer>();
+        List<Integer> bytes = new ArrayList<>();
         while (i + 2 < len && s.charAt(i) == '%') {
           final int d1 = decode(s.charAt(i + 1));
           final int d2 = decode(s.charAt(i + 2));
@@ -742,12 +721,8 @@ public class InstrumentationClassFinder {
           for (int j = 0; j < bytes.size(); j++) {
             bytesArray[j] = (byte)bytes.get(j).intValue();
           }
-          try {
-            decoded.append(new String(bytesArray, "UTF-8"));
-            continue;
-          }
-          catch (UnsupportedEncodingException ignored) {
-          }
+          decoded.append(new String(bytesArray, StandardCharsets.UTF_8));
+          continue;
         }
       }
 

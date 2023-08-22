@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -25,7 +26,8 @@ import java.util.List;
 import static com.intellij.util.Functions.identity;
 import static com.intellij.util.containers.ContainerUtil.map;
 
-public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
+@Service(Service.Level.PROJECT)
+public final class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
   private final static Logger LOG = Logger.getInstance(GitOutgoingChangesProvider.class);
   private final Project myProject;
 

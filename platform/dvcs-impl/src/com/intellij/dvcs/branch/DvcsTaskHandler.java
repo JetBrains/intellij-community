@@ -20,13 +20,14 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,17 +58,17 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     List<R> map = new ArrayList<>();
     if (!problems.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
-          Messages.showDialog(myProject,
-                              DvcsBundle.message("dialog.message.following.repositories.already.have.specified", myBranchType, taskName,
-                                                 StringUtil.join(problems, "<br>"), myBranchType),
-                              DvcsBundle.message("dialog.title.already.exists", StringUtil.capitalize(myBranchType)),
-                              new String[]{Messages.getYesButton(), Messages.getNoButton()}, 0,
-                              Messages.getWarningIcon()) == 0) {
+          MessageDialogBuilder
+            .yesNo(DvcsBundle.message("dialog.title.already.exists", StringUtil.capitalize(myBranchType)),
+                   DvcsBundle.message("dialog.message.following.repositories.already.have.specified",
+                                      myBranchType, taskName, StringUtil.join(problems, UIUtil.BR), myBranchType))
+            .icon(Messages.getWarningIcon())
+            .ask(myProject)) {
         checkout(taskName, problems, null);
         map.addAll(problems);
       }
+      repositories = ContainerUtil.filter(repositories, r->!problems.contains(r));
     }
-    repositories.removeAll(problems);
     if (!repositories.isEmpty()) {
       checkoutAsNewBranch(taskName, repositories);
     }
@@ -84,7 +85,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     if (!notFound.isEmpty()) {
       checkoutAsNewBranch(branchName, notFound);
     }
-    repositories.removeAll(notFound);
+    repositories = new ArrayList<>(ContainerUtil.subtract(repositories, notFound));
     if (!repositories.isEmpty()) {
       checkout(branchName, repositories, invokeAfter);
       return true;
@@ -115,7 +116,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     }
     if (tasks.size() == 0) return new TaskInfo[0];
     if (isSyncEnabled()) {
-      return new TaskInfo[] { tasks.values().iterator().next() };
+      return new TaskInfo[]{tasks.values().iterator().next()};
     }
     else {
       return tasks.values().toArray(new TaskInfo[0]);
@@ -145,7 +146,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   @NotNull
   private List<R> getRepositories(@NotNull Collection<String> urls) {
     final List<R> repositories = myRepositoryManager.getRepositories();
-    return ContainerUtil.mapNotNull(urls, (NullableFunction<String, R>)s -> ContainerUtil.find(repositories, repository -> s.equals(repository.getPresentableUrl())));
+    return ContainerUtil.mapNotNull(urls, s -> ContainerUtil.find(repositories, repository -> s.equals(repository.getPresentableUrl())));
   }
 
   protected abstract void checkout(@NotNull String taskName, @NotNull List<? extends R> repos, @Nullable Runnable callInAwtLater);

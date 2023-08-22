@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleMainPanel;
@@ -17,17 +17,20 @@ import java.util.Set;
 
 public class CodeStyleConfigurableWrapper
   implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable {
-  private boolean myInitialResetInvoked;
-  protected CodeStyleMainPanel myPanel;
+
   private final CodeStyleSettingsProvider myProvider;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesConfigurable myOwner;
 
-  public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider, @NotNull CodeStyleSettingsPanelFactory factory, CodeStyleSchemesConfigurable owner) {
+  private @Nullable CodeStyleMainPanel myPanel;
+  private boolean myInitialResetInvoked = false;
+
+  public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider,
+                                      @NotNull CodeStyleSettingsPanelFactory factory,
+                                      @NotNull CodeStyleSchemesConfigurable owner) {
     myProvider = provider;
     myFactory = factory;
     myOwner = owner;
-    myInitialResetInvoked = false;
   }
 
   @Override
@@ -50,6 +53,10 @@ public class CodeStyleConfigurableWrapper
       myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
     return myPanel;
+  }
+
+  public void setSchemesPanelVisible(boolean isVisible) {
+    if (myPanel != null) myPanel.setSchemesPanelVisible(isVisible);
   }
 
   protected boolean canBeShared() {
@@ -116,6 +123,8 @@ public class CodeStyleConfigurableWrapper
     if (myPanel != null) {
       myPanel.disposeUIResources();
     }
+    myPanel = null;
+    myInitialResetInvoked = false;
   }
 
   public boolean isPanelModified() {
@@ -135,7 +144,7 @@ public class CodeStyleConfigurableWrapper
   }
 
   @Override
-  public Map<String, Set<String>> processListOptionsWithPaths() {
+  public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
     return getOptionIndexer().processListOptionsWithPaths();
   }
 
@@ -145,6 +154,11 @@ public class CodeStyleConfigurableWrapper
       myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
     return myPanel.getOptionIndexer();
+  }
+
+  @Override
+  public void focusOn(@Nls @NotNull String label) {
+    selectTab(label);
   }
 
   public void selectTab(@NotNull String tab) {

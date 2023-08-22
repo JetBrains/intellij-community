@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.openapi.module.Module;
@@ -7,6 +7,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public class ModulesComboBox extends ComboBox<Module> {
     setSwingPopup(false);
   }
 
-  public void allowEmptySelection(@NotNull String emptySelectionText) {
+  public void allowEmptySelection(@NotNull @NlsContexts.ListItem String emptySelectionText) {
     myAllowEmptySelection = true;
     myModel.add(null);
     setRenderer(new ModuleListCellRenderer(emptySelectionText));

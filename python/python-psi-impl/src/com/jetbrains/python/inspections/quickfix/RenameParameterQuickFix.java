@@ -12,8 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Parameter renaming.
-* User: dcheryasov
-*/
+ */
 public class RenameParameterQuickFix implements LocalQuickFix {
   private final String myNewName;
 
@@ -32,13 +31,13 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.rename.parameter");
+    return PyPsiBundle.message("QFIX.NAME.rename.parameter");
   }
 
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.rename.parameter.to.$0", myNewName);
+    return PyPsiBundle.message("QFIX.rename.parameter", myNewName);
   }
 
   @Override

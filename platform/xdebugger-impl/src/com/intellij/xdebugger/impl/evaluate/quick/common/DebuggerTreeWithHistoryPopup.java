@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.editor.Editor;
@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -24,12 +25,15 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
-class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D> {
+import static com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup.setAutoResize;
+
+final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D> {
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
   private JBPopup myPopup;
   private final Editor myEditor;
   private final Point myPoint;
   @Nullable private final Runnable myHideRunnable;
+  private JComponent myToolbar;
 
   private DebuggerTreeWithHistoryPopup(@NotNull D initialItem,
                                        @NotNull DebuggerTreeCreator<D> creator,
@@ -48,6 +52,12 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
     new DebuggerTreeWithHistoryPopup<>(initialItem, creator, editor, point, project, hideRunnable).updateTree(initialItem);
   }
 
+  @Override
+  protected JComponent createToolbar(JPanel parent, Tree tree) {
+    myToolbar = super.createToolbar(parent, tree);
+    return myToolbar;
+  }
+
   private TreeModelListener createTreeListener(final Tree tree) {
     return new TreeModelAdapter() {
       @Override
@@ -58,7 +68,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
   }
 
   @Override
-  protected void updateContainer(final Tree tree, String title) {
+  protected void updateContainer(final Tree tree, @NlsContexts.PopupTitle String title) {
     if (myPopup != null) {
       myPopup.cancel();
     }
@@ -108,8 +118,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
       return;
     }
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
-
-    updateInitialBounds(tree);
+    setAutoResize(tree, myToolbar, myPopup);
   }
 
   private void resize(final TreePath path, JTree tree) {
@@ -132,18 +141,4 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
     popupWindow.repaint();
   }
 
-  private void updateInitialBounds(final Tree tree) {
-    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
-    final Dimension size = tree.getPreferredSize();
-    final Point location = popupWindow.getLocation();
-    final Rectangle windowBounds = popupWindow.getBounds();
-    final Rectangle targetBounds = new Rectangle(location.x,
-                                                 location.y,
-                                                 Math.max(size.width + 250, windowBounds.width),
-                                                 Math.max(size.height, windowBounds.height));
-    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    popupWindow.setBounds(targetBounds);
-    popupWindow.validate();
-    popupWindow.repaint();
-  }
 }

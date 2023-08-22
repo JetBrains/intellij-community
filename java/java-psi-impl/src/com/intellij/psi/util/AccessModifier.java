@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,10 +16,13 @@ import java.util.List;
  */
 public enum AccessModifier {
   PUBLIC(PsiModifier.PUBLIC), PROTECTED(PsiModifier.PROTECTED), PACKAGE_LOCAL(PsiModifier.PACKAGE_LOCAL), PRIVATE(PsiModifier.PRIVATE);
-  public static final List<AccessModifier> ALL_MODIFIERS = ContainerUtil.immutableList(values());
-  
-  private static final List<AccessModifier> PUBLIC_PACKAGE = ContainerUtil.immutableList(PUBLIC, PACKAGE_LOCAL);
-  private static final List<AccessModifier> PUBLIC_PRIVATE = ContainerUtil.immutableList(PUBLIC, PRIVATE);
+  @Unmodifiable
+  public static final List<AccessModifier> ALL_MODIFIERS = Arrays.asList(values());
+
+  @Unmodifiable
+  private static final List<AccessModifier> PUBLIC_PACKAGE = Arrays.asList(PUBLIC, PACKAGE_LOCAL);
+  @Unmodifiable
+  private static final List<AccessModifier> PUBLIC_PRIVATE = Arrays.asList(PUBLIC, PRIVATE);
 
   @NotNull @PsiModifier.ModifierConstant
   private final String myModifier;
@@ -99,14 +102,13 @@ public enum AccessModifier {
   }
 
   @Override
-  public String toString() {
-    String psiModifier = toPsiModifier();
-    return psiModifier.equals(PACKAGE_LOCAL.myModifier) ? "package-private" : psiModifier;
+  public @Nls String toString() {
+    return JavaPsiBundle.visibilityPresentation(toPsiModifier());
   }
 
   @NotNull
-  public static List<AccessModifier> getAvailableModifiers(PsiMember member) {
-    if (member == null) return Collections.emptyList();
+  @Unmodifiable
+  public static List<AccessModifier> getAvailableModifiers(@NotNull PsiMember member) {
     PsiClass containingClass = member.getContainingClass();
     if (member instanceof PsiField) {
       if (member instanceof PsiEnumConstant || containingClass == null || containingClass.isInterface()) return Collections.emptyList();
@@ -115,10 +117,17 @@ public enum AccessModifier {
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
       if (containingClass == null || containingClass.isEnum() && method.isConstructor()) return Collections.emptyList();
-      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null ||
-          JavaPsiRecordUtil.isCompactConstructor(method) ||
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+        return Collections.singletonList(PUBLIC);
+      }
+      if (JavaPsiRecordUtil.isCompactConstructor(method) ||
           JavaPsiRecordUtil.isExplicitCanonicalConstructor(method) ||
           method instanceof LightRecordCanonicalConstructor) {
+        PsiModifierList list = containingClass.getModifierList();
+        if (list != null) {
+          AccessModifier classModifier = fromModifierList(list);
+          return ContainerUtil.filter(ALL_MODIFIERS, m -> !classModifier.isWeaker(m));
+        }
         return Collections.singletonList(PUBLIC);
       }
       if (containingClass.isInterface()) {

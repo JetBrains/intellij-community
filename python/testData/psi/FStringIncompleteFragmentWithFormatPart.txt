@@ -19,6 +19,6 @@ PyFile:FStringIncompleteFragmentWithFormatPart.py
               PyReferenceExpression: width
                 PsiElement(Py:IDENTIFIER)('width')
               PsiElement(Py:FSTRING_FRAGMENT_END)('}')
-          PsiErrorElement:} expected
+          PsiErrorElement:'}' expected
             <empty list>
         PsiElement(Py:FSTRING_END)('"')

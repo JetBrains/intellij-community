@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.ArrayChunk;
@@ -47,7 +48,7 @@ public class GetArrayCommand extends GetFrameCommand {
 
   @Override
   protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
-    if (response.getCommand() >= 900 && response.getCommand() < 1000) {
+    if (isErrorCommand(response.getCommand())) {
       final String payload = response.getPayload();
       if (payload.contains("ExceedingArrayDimensionsException")) {
         throw new IllegalArgumentException(myVariableName + " has more than two dimensions");

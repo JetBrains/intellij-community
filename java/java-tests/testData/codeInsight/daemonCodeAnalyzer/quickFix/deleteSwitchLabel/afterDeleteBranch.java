@@ -1,4 +1,4 @@
-// "Remove switch branch '"baz"'" "true"
+// "Remove switch branch '"baz"'" "true-preview"
 class Main {
     public void test() {
         switch ("foo") {

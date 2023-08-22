@@ -17,9 +17,6 @@ package org.jetbrains.idea.svn.auth;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public enum AcceptResult {
 
   REJECTED("r"),

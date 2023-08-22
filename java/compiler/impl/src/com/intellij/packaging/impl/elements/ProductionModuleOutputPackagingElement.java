@@ -11,6 +11,12 @@ import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -46,5 +52,27 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
   @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, ProductionModuleOutputElementType.ELEMENT_TYPE));
+  }
+
+  @Override
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
+                                        @NotNull EntitySource source,
+                                        @NotNull Project project) {
+    WorkspaceEntity existingEntity = getExistingEntity(diff);
+    if (existingEntity != null) return existingEntity;
+
+    String moduleName = this.getModuleName();
+    ModuleOutputPackagingElementEntity addedEntity;
+    if (moduleName != null) {
+      addedEntity = diff.addEntity(ModuleOutputPackagingElementEntity.create(source, entityBuilder -> {
+        entityBuilder.setModule(new ModuleId(moduleName));
+        return Unit.INSTANCE;
+      }));
+    }
+    else {
+      addedEntity = diff.addEntity(ModuleOutputPackagingElementEntity.create(source));
+    }
+    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
+    return addedEntity;
   }
 }

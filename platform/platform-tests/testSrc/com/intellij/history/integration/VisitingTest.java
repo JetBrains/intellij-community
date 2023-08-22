@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.changes.ChangeSet;
@@ -24,36 +10,39 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class VisitingTest extends IntegrationTestCase {
   @Test
-  public void testSimpleVisit() throws Exception {
+  public void testSimpleVisit() throws IOException {
     createFile("f.txt");
     createFile("dir");
-    assertVisitorLog("begin create end begin create end begin create end finished ");
+    assertVisitorLog("begin create end begin create end begin create end begin create end finished ");
   }
 
   @Test
-  public void testVisitChangeSet() throws Exception {
+  public void testVisitChangeSet() throws IOException {
     getVcs().beginChangeSet();
     createFile("f.txt");
     createFile("dir");
     getVcs().endChangeSet(null);
 
-    assertVisitorLog("begin create create end begin create end finished ");
+    assertVisitorLog("begin create create end begin create end begin create end finished ");
   }
 
   @Test
-  public void testVisitingChangesInNotFinishedChangeSet() throws Exception {
+  public void testVisitingChangesInNotFinishedChangeSet() throws IOException {
     getVcs().beginChangeSet();
     createFile("f.txt");
     createFile("dir");
 
-    assertVisitorLog("begin create create end begin create end finished ");
+    assertVisitorLog("begin create create end begin create end begin create end finished");
   }
 
   @Test
-  public void testVisitingAllChanges() throws Exception {
+  public void testVisitingAllChanges() throws IOException {
     createFile("f.txt");
     getVcs().beginChangeSet();
     VirtualFile dir = createFile("dir");
@@ -61,11 +50,11 @@ public class VisitingTest extends IntegrationTestCase {
     getVcs().beginChangeSet();
     rename(dir, "newDir");
 
-    assertVisitorLog("begin rename end begin create end begin create end begin create end finished ");
+    assertVisitorLog("begin rename end begin create end begin create end begin create end begin create end finished");
   }
 
   @Test
-  public void testStop() throws Exception {
+  public void testStop() throws IOException {
     createFile("f.txt");
     createFile("dir");
 
@@ -83,7 +72,7 @@ public class VisitingTest extends IntegrationTestCase {
   }
 
   @Test
-  public void testAddingChangesWhileVisiting() throws Exception {
+  public void testAddingChangesWhileVisiting() throws IOException {
     getVcs().beginChangeSet();
     createFile("f.txt");
     createFile("dir");
@@ -99,17 +88,17 @@ public class VisitingTest extends IntegrationTestCase {
           createFile("f" + count[0]);
         }
         catch (IOException e) {
-          throw new RuntimeException(e);
+          throw new UncheckedIOException(e);
         }
       }
     };
 
-    assertVisitorLog("begin create create end begin create end finished ", visitor);
-    assertEquals(3, count[0]);
+    assertVisitorLog("begin create create end begin create end begin create end finished ", visitor);
+    assertEquals(4, count[0]);
   }
 
   @Test
-  public void testPurgingDuringVisit() throws Exception {
+  public void testPurgingDuringVisit() throws IOException {
     Clock.setTime(10);
     getVcs().beginChangeSet();
     createFile("f.txt");
@@ -122,7 +111,7 @@ public class VisitingTest extends IntegrationTestCase {
 
     TestVisitor visitor = new TestVisitor();
     getVcs().accept(visitor);
-    assertEquals("begin create end begin create end begin create end finished ", visitor.log);
+    assertEquals("begin create end begin create end begin create end begin create end finished ", visitor.log);
 
     visitor = new TestVisitor() {
       @Override
@@ -147,7 +136,7 @@ public class VisitingTest extends IntegrationTestCase {
 
   private void assertVisitorLog(String expected, TestVisitor visitor) {
     getVcs().accept(visitor);
-    assertEquals(expected, visitor.log);
+    assertThat(visitor.log.trim()).isEqualTo(expected.trim());
   }
 
   private static class TestVisitor extends ChangeVisitor {

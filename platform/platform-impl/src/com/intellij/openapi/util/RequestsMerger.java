@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -34,25 +19,21 @@ import java.util.Map;
  * - at the moment only one refresh action is being done
  * - if request had been submitted while refresh action was in progress, new refresh action is initiated right after first refresh action finishes
  */
-@SomeQueue
-public class RequestsMerger {
+public final class RequestsMerger {
   private static final Logger LOG = Logger.getInstance(RequestsMerger.class);
-
-  private final MyWorker myWorker;
 
   private final Object myLock = new Object();
 
-  private MyState myState;
-  private final Consumer<? super Runnable> myAlarm;
+  private MyState myState = MyState.empty;
+  private final @NotNull Runnable myRunnable;
+  private final @NotNull Consumer<? super Runnable> myExecutor;
 
   private final List<Runnable> myWaitingStartListeners = new ArrayList<>();
   private final List<Runnable> myWaitingFinishListeners = new ArrayList<>();
 
-  public RequestsMerger(final Runnable runnable, final Consumer<? super Runnable> alarm) {
-    myAlarm = alarm;
-    myWorker = new MyWorker(runnable);
-
-    myState = MyState.empty;
+  public RequestsMerger(@NotNull Runnable runnable, @NotNull Consumer<? super Runnable> executor) {
+    myRunnable = runnable;
+    myExecutor = executor;
   }
 
   public void request() {
@@ -74,29 +55,14 @@ public class RequestsMerger {
     request();
   }
 
-  private class MyWorker implements Runnable {
-    private volatile boolean myInitialized;
-    private final Runnable myRunnable;
-
-    private MyWorker(Runnable runnable) {
-      myRunnable = runnable;
+  private void run() {
+    LOG.debug("worker: started refresh");
+    try {
+      doAction(MyAction.start);
+      myRunnable.run();
     }
-
-    @Override
-    public void run() {
-      LOG.debug("worker: started refresh");
-      try {
-        doAction(MyAction.start);
-        myRunnable.run();
-        myInitialized = true;
-      }
-      finally {
-        doAction(MyAction.finish);
-      }
-    }
-
-    public boolean isInitialized() {
-      return myInitialized;
+    finally {
+      doAction(MyAction.finish);
     }
   }
 
@@ -132,9 +98,7 @@ public class RequestsMerger {
     if (exitActions != null) {
       for (MyExitAction exitAction : exitActions) {
         if (MyExitAction.submitRequestToExecutor.equals(exitAction)) {
-          myAlarm.consume(myWorker);
-          //myAlarm.addRequest(myWorker, ourDelay);
-          //ApplicationManager.getApplication().executeOnPooledThread(myWorker);
+          myExecutor.consume((Runnable)() -> run());
         }
       }
     }
@@ -149,8 +113,7 @@ public class RequestsMerger {
   private enum MyState {
     empty() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.request.equals(action)) {
           return MyState.requestSubmitted;
         }
@@ -160,8 +123,7 @@ public class RequestsMerger {
     },
     inProgress() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.finish.equals(action)) {
           return empty;
         }
@@ -174,8 +136,7 @@ public class RequestsMerger {
     },
     inProgressRequestSubmitted() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.finish.equals(action)) {
           return MyState.requestSubmitted;
         }
@@ -187,8 +148,7 @@ public class RequestsMerger {
     },
     requestSubmitted() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.start.equals(action)) {
           return inProgress;
         }
@@ -202,15 +162,14 @@ public class RequestsMerger {
     };
 
     // under lock
-    @NotNull
-    public abstract MyState transition(final MyAction action);
+    public abstract @NotNull MyState transition(final MyAction action);
 
     private static void logWrongAction(final MyState state, final MyAction action) {
       LOG.info("Wrong action: state=" + state.name() + ", action=" + action.name());
     }
   }
 
-  private static class MyTransitionAction {
+  private static final class MyTransitionAction {
     private static final Map<Couple<MyState>, MyExitAction[]> myMap = new HashMap<>();
 
     static {
@@ -234,7 +193,6 @@ public class RequestsMerger {
   }
 
   private enum MyExitAction {
-    empty,
     submitRequestToExecutor,
     markStart,
     markEnd

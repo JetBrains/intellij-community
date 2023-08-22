@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger
 
 import com.intellij.xdebugger.frame.XCompositeNode
@@ -20,7 +6,10 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
 import org.jetbrains.debugger.values.ObjectValue
 import org.jetbrains.debugger.values.ValueType
-import java.util.*
+import kotlin.math.ceil
+import kotlin.math.ln
+import kotlin.math.min
+import kotlin.math.pow
 
 internal fun lazyVariablesGroup(variables: ObjectValue, start: Int, end: Int, context: VariableContext) = LazyVariablesGroup(variables, start, end, context)
 
@@ -56,10 +45,10 @@ class LazyVariablesGroup(private val value: ObjectValue, private val startInclus
 fun computeNotSparseGroups(value: ObjectValue, context: VariableContext, _fromInclusive: Int, toExclusive: Int, bucketThreshold: Int): List<XValueGroup> {
   var fromInclusive = _fromInclusive
   val size = toExclusive - fromInclusive
-  val bucketSize = Math.pow(bucketThreshold.toDouble(), Math.ceil(Math.log(size.toDouble()) / Math.log(bucketThreshold.toDouble())) - 1).toInt()
-  val groupList = ArrayList<XValueGroup>(Math.ceil((size / bucketSize).toDouble()).toInt())
+  val bucketSize = bucketThreshold.toDouble().pow(ceil(ln(size.toDouble()) / ln(bucketThreshold.toDouble())) - 1).toInt()
+  val groupList = ArrayList<XValueGroup>(ceil((size / bucketSize).toDouble()).toInt())
   while (fromInclusive < toExclusive) {
-    groupList.add(LazyVariablesGroup(value, fromInclusive, fromInclusive + (Math.min(bucketSize, toExclusive - fromInclusive) - 1), context, ValueType.NUMBER, false))
+    groupList.add(LazyVariablesGroup(value, fromInclusive, fromInclusive + (min(bucketSize, toExclusive - fromInclusive) - 1), context, ValueType.NUMBER, false))
     fromInclusive += bucketSize
   }
   return groupList
@@ -84,14 +73,14 @@ internal fun <T> addGroups(data: T,
                   bucketSize: Int,
                   context: VariableContext) {
   var from = _from
-  var to = Math.min(bucketSize, limit)
+  var to = min(bucketSize, limit)
   var done = false
   do {
     val groupFrom = from
     var groupTo = to
 
     from += bucketSize
-    to = from + Math.min(bucketSize, limit - from)
+    to = from + min(bucketSize, limit - from)
 
     // don't create group for only one member
     if (to - from == 1) {

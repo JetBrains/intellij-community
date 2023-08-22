@@ -15,7 +15,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 
@@ -25,8 +24,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
   @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -196,9 +195,9 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), file);
     annotation.setCloser(() -> {
       closer.run();
-      listener.unregisterAnnotation(file, annotation);
+      listener.unregisterAnnotation(annotation);
     });
-    listener.registerAnnotation(file, annotation);
+    listener.registerAnnotation(annotation);
   }
 
   private void assertRevision(@NotNull VirtualFile file, final long number) {

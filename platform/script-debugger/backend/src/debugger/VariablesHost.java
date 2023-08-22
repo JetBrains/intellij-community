@@ -27,7 +27,7 @@ import java.util.List;
 public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
   @SuppressWarnings("unchecked")
   private static final PromiseManager<VariablesHost, List<Variable>> VARIABLES_LOADER =
-    new PromiseManager<VariablesHost, List<Variable>>(VariablesHost.class) {
+    new PromiseManager<>(VariablesHost.class) {
       @Override
       public boolean isUpToDate(@NotNull VariablesHost host, @NotNull List<Variable> data) {
         return host.valueManager.getCacheStamp() == host.cacheStamp;

@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +18,9 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
     super(schemesPanel);
   }
 
-  @Nullable
-  public abstract String getDescription(@NotNull T scheme);
+  public abstract @Nullable @NlsContexts.DetailedDescription String getDescription(@NotNull T scheme);
 
-  protected abstract void setDescription(@NotNull T scheme, @NotNull String newDescription);
+  protected abstract void setDescription(@NotNull T scheme, @NlsContexts.DetailedDescription @NotNull String newDescription);
 
   @Override
   protected void addAdditionalActions(@NotNull List<? super AnAction> defaultActions) {
@@ -37,6 +38,11 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
                                  : IdeBundle.message("action.DescriptionAwareSchemeActions.edit.description.text");
         e.getPresentation().setEnabledAndVisible(true);
         e.getPresentation().setText(text);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

@@ -15,10 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroInsetsProperty extends IntrospectedProperty<Insets> {
   private final Property[] myChildren;
   private final InsetsPropertyRenderer myRenderer;

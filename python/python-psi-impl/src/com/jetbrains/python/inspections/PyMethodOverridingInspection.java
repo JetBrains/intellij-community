@@ -13,12 +13,10 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyMethodOverridingInspection extends PyInspection {
 
   @NotNull
@@ -26,16 +24,16 @@ public class PyMethodOverridingInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
-    public void visitPyFunction(final PyFunction function) {
+    public void visitPyFunction(final @NotNull PyFunction function) {
       final PyClass cls = function.getContainingClass();
       if (cls == null) return;
 
@@ -46,8 +44,7 @@ public class PyMethodOverridingInspection extends PyInspection {
       }
 
       for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext)) {
-        if (psiElement instanceof PyFunction) {
-          final PyFunction baseMethod = (PyFunction)psiElement;
+        if (psiElement instanceof PyFunction baseMethod) {
           if (!PyUtil.isSignatureCompatibleTo(function, baseMethod, myTypeEvalContext)) {
             final PyClass baseClass = baseMethod.getContainingClass();
             final String msg = PyPsiBundle.message("INSP.signature.mismatch",

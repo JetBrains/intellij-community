@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -28,12 +28,12 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     myChildren = children.toArray(EMPTY_ARRAY);
   }
 
-  private static class RendererAction extends ToggleAction {
+  private static final class RendererAction extends ToggleAction {
 
     private final PyNodeRenderer myPyNodeRenderer;
 
     private RendererAction(PyNodeRenderer pyNodeRenderer) {
-      super(pyNodeRenderer.getName());
+      super(pyNodeRenderer.getName()); //NON-NLS
       myPyNodeRenderer = pyNodeRenderer;
     }
 
@@ -79,10 +79,21 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     public PyNodeRenderer getRenderer() {
       return myPyNodeRenderer;
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   public ViewAsGroup() {
     super(Presentation.NULL_STRING, true);
+    getTemplatePresentation().setHideGroupIfEmpty(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -100,11 +111,6 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
 
     return myChildren;
-  }
-
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return true;
   }
 
   @NotNull

@@ -26,41 +26,51 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PythonHighlightingLexerTest extends PyLexerTestCase {
 
   public void testFromFutureUnicode() {
-    doTest(LanguageLevel.PYTHON26, "from __future__ import unicode_literals\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             from __future__ import unicode_literals
+
+             s = "some string\"""",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
            "Py:LINE_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
   public void testFromFutureUnicodeDocstring() {
-    doTest(LanguageLevel.PYTHON26, "\"\"\"docstring\"\"\"\n" +
-                                   "from __future__ import unicode_literals\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             ""\"docstring""\"
+             from __future__ import unicode_literals
+
+             s = "some string\"""",
            "Py:DOCSTRING", "Py:LINE_BREAK",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
            "Py:LINE_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
   public void testFromFutureUnicodeWithBackslash() {
-    doTest(LanguageLevel.PYTHON26, "from __future__ \\\nimport unicode_literals\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             from __future__ \\
+             import unicode_literals
+
+             s = "some string\"""",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:BACKSLASH", "Py:LINE_BREAK",
            "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LINE_BREAK",
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
   public void testFromFutureUnicodeWithBrace() {
-    doTest(LanguageLevel.PYTHON26, "from __future__ import (unicode_literals)\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             from __future__ import (unicode_literals)
+
+             s = "some string\"""",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE",
            "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:LINE_BREAK",
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_UNICODE");
   }
 
   public void testFromFutureUnicodeComment() {
-    doTest(LanguageLevel.PYTHON26, "#one comment\n" +
-                                   "from __future__ import ((unicode_literals))\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             #one comment
+             from __future__ import ((unicode_literals))
+             s = "some string\"""",
            "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE",
            "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:LPAR", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:RPAR",
            "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
@@ -93,9 +103,11 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   }
 
   public void testDoubleFromFutureUnicode() {
-    doTest(LanguageLevel.PYTHON26, "from __future__ import absolute_import\n" +
-                                   "from __future__ import (unicode_literals)\n\n" +
-                                   "s = \"some string\"",
+    doTest(LanguageLevel.PYTHON26, """
+             from __future__ import absolute_import
+             from __future__ import (unicode_literals)
+
+             s = "some string\"""",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
            "Py:LINE_BREAK", "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE",
            "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:LINE_BREAK",
@@ -119,10 +131,12 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   }
 
   public void testFromFutureUnicodeFail() {
-    doTest(LanguageLevel.PYTHON26, "a = 2\n" +
-                                   "from __future__ import unicode_literals\n\n" +
-                                   "s = \"some string\"",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE","Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+    doTest(LanguageLevel.PYTHON26, """
+             a = 2
+             from __future__ import unicode_literals
+
+             s = "some string\"""",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER",
            "Py:LINE_BREAK", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING");
   }
@@ -146,10 +160,11 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   }
 
   public void testFromFuturePrintNotFirstFail() {
-    doTest(LanguageLevel.PYTHON27, "a = 2\n" +
-                                   "from __future__ import print_function\n" +
-                                   "print(1)",
-           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE","Py:INTEGER_LITERAL", "Py:LINE_BREAK",
+    doTest(LanguageLevel.PYTHON27, """
+             a = 2
+             from __future__ import print_function
+             print(1)""",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:LINE_BREAK",
            "Py:FROM_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LINE_BREAK",
            "Py:PRINT_KEYWORD", "Py:LPAR", "Py:INTEGER_LITERAL", "Py:RPAR");
   }
@@ -180,19 +195,21 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
   }
 
   public void testSingleDocstringFunction() {
-    doTest(LanguageLevel.PYTHON27, "def foo():\n" +
-                                   "  \"\"\"function foo\"\"\"\n" +
-                                   "  a = \"string\"",
-                      "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
-                      "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE",
-                      "Py:SINGLE_QUOTED_STRING");
+    doTest(LanguageLevel.PYTHON27, """
+             def foo():
+               ""\"function foo""\"
+               a = "string\"""",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:SPACE", "Py:DOCSTRING", "Py:LINE_BREAK", "Py:SPACE", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE",
+           "Py:SINGLE_QUOTED_STRING");
   }
 
   public void testNotDocstring() { // PY-4481
-      doTest(LanguageLevel.PYTHON27, "d = {\n" +
-                                     " 'abc': 'def',\n" +
-                                     " 'ghi': 'jkl'\n" +
-                                     " }",
+      doTest(LanguageLevel.PYTHON27, """
+               d = {
+                'abc': 'def',
+                'ghi': 'jkl'
+                }""",
              "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LBRACE", "Py:LINE_BREAK", "Py:SPACE", "Py:SINGLE_QUOTED_STRING",
              "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:COMMA", "Py:LINE_BREAK", "Py:SPACE", "Py:SINGLE_QUOTED_STRING",
              "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK", "Py:SPACE", "Py:RBRACE");

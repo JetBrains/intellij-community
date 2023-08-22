@@ -10,7 +10,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
 class DefaultDelegatesToProvider : GrDelegatesToProvider {
@@ -21,6 +22,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     val method = result.element as? PsiMethod ?: return null
 
     if (GdkMethodUtil.isWithOrIdentity(method)) {
+      // this code cannot be deleted because https://issues.apache.org/jira/browse/GROOVY-6926
       val qualifier = inferCallQualifier(call as GrMethodCall) ?: return null
       return DelegatesToInfo(qualifier.type, DELEGATE_FIRST)
     }
@@ -43,13 +45,13 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     }
 
     val modifierList = parameter.modifierList ?: return null
-    val delegatesTo = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO) ?: return null
+    val delegatesTo = modifierList.findAnnotation(GROOVY_LANG_DELEGATES_TO) ?: return null
     val strategyValue = getStrategyValue(delegatesTo.findAttributeValue("strategy"))
     val delegateType = if (strategyValue == OWNER_ONLY || strategyValue == TO_SELF) {
       null
     }
     else {
-      getFromValue(delegatesTo)
+      getFromValue(delegatesTo)?.takeUnless { it.equalsToText(GROOVY_LANG_DELEGATES_TO_TARGET) }
       ?: getFromTarget(method.parameterList, delegatesTo, argumentMapping)
       ?: getFromType(call, result, delegatesTo)
     }

@@ -37,9 +37,7 @@ public class ChangeListInfo {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ChangeListInfo)) return false;
-
-    ChangeListInfo that = (ChangeListInfo)o;
+    if (!(o instanceof ChangeListInfo that)) return false;
 
     return Objects.equals(id, that.id);
   }

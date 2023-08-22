@@ -9,9 +9,7 @@ import com.jetbrains.python.psi.PyIfPart;
 import com.jetbrains.python.psi.PyIfStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyIfStatementImpl extends PyPartitionedElementImpl implements PyIfStatement {
   public PyIfStatementImpl(ASTNode astNode) {
     super(astNode);

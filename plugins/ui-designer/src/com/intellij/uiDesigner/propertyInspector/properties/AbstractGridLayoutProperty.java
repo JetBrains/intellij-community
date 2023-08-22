@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -15,9 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public abstract class AbstractGridLayoutProperty extends Property<RadContainer, Boolean> {
   protected final BooleanRenderer myRenderer = new BooleanRenderer();
   protected final BooleanEditor myEditor = new BooleanEditor();
@@ -29,18 +27,16 @@ public abstract class AbstractGridLayoutProperty extends Property<RadContainer, 
   @Override
   public Boolean getValue(final RadContainer component) {
     final LayoutManager layoutManager = component.getLayout();
-    if (!(layoutManager instanceof GridLayoutManager)) return null;
-    final GridLayoutManager gridLayoutManager = (GridLayoutManager) layoutManager;
+    if (!(layoutManager instanceof GridLayoutManager gridLayoutManager)) return null;
     return getGridLayoutPropertyValue(gridLayoutManager);
   }
 
   @Override
   protected void setValueImpl(final RadContainer component, final Boolean value) throws Exception {
     final AbstractLayout layoutManager=(AbstractLayout) component.getLayout();
-    if (!(layoutManager instanceof GridLayoutManager)) {
+    if (!(layoutManager instanceof GridLayoutManager gridLayoutManager)) {
       throw new IllegalArgumentException("grid layout expected: "+layoutManager);
     }
-    final GridLayoutManager gridLayoutManager = (GridLayoutManager)layoutManager;
     setGridLayoutPropertyValue(gridLayoutManager, value.booleanValue());
   }
 

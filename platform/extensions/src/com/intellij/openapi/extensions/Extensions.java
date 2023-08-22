@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,14 +46,6 @@ public final class Extensions {
   }
 
   /**
-   * @deprecated Use {@link ExtensionPointName#getExtensions()}
-   */
-  @Deprecated
-  public static Object @NotNull [] getExtensions(@NonNls @NotNull String extensionPointName) {
-    return getRootArea().getExtensionPoint(extensionPointName).getExtensions();
-  }
-
-  /**
    * @deprecated Use {@link ExtensionPointName#getExtensionList()}
    */
   @Deprecated
@@ -71,26 +62,10 @@ public final class Extensions {
   }
 
   /**
-   * @deprecated Use {@link ExtensionPointName#getExtensions()}
-   */
-  @Deprecated
-  public static <T> T @NotNull [] getExtensions(@NotNull String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
-    return getArea(areaInstance).<T>getExtensionPoint(extensionPointName).getExtensions();
-  }
-
-  /**
    * @deprecated Use {@link ExtensionPointName#findExtensionOrFail(Class)}
    */
   @Deprecated
   public static @NotNull <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
     return extensionPointName.findExtensionOrFail(extClass);
-  }
-
-  /**
-   * @deprecated Not needed.
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static void registerAreaClass(@NonNls @NotNull String areaClass, @Nullable @NonNls String parentAreaClass) {
   }
 }

@@ -1,21 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
+import com.intellij.ide.plugins.PluginStateListener;
+import com.intellij.ide.plugins.PluginStateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -23,124 +26,121 @@ import java.util.function.Consumer;
  */
 public class PluginUpdatesService {
   private static final List<PluginUpdatesService> SERVICES = new ArrayList<>();
-  private static Collection<PluginDownloader> myCache;
+  private static final Object ourLock = new Object();
+  private static Collection<IdeaPluginDescriptor> myCache;
   private static boolean myPrepared;
   private static boolean myPreparing;
   private static boolean myReset;
 
-  private Consumer<Integer> myTreeCallback;
-  private Consumer<Integer> myTabCallback;
-  private Consumer<? super Collection<PluginDownloader>> myInstalledPanelCallback;
-  private Consumer<? super Collection<PluginDownloader>> myUpdatePanelCallback;
+  private Consumer<? super Integer> myCountCallback;
+  private Consumer<? super Collection<IdeaPluginDescriptor>> myUpdateCallback;
 
-  @NotNull
-  public static PluginUpdatesService connectTreeRenderer(@NotNull Consumer<Integer> callback) {
-    checkAccess();
+  static {
+    PluginStateManager.addStateListener(new PluginStateListener() {
+      @Override
+      public void install(@NotNull IdeaPluginDescriptor descriptor) {
+        finishUpdate(descriptor);
+      }
 
+      @Override
+      public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
+        install(descriptor);
+      }
+    });
+  }
+
+  public static @NotNull PluginUpdatesService connectWithCounter(@NotNull Consumer<? super Integer> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
-    SERVICES.add(service);
-    service.myTreeCallback = callback;
+    service.myCountCallback = callback;
 
-    if (myPrepared) {
-      callback.accept(getCount());
+    synchronized (ourLock) {
+      SERVICES.add(service);
+
+      if (myPrepared) {
+        callback.accept(getCount());
+        return service;
+      }
     }
-    else {
-      calculateUpdates();
+
+    calculateUpdates();
+    return service;
+  }
+
+  public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
+    PluginUpdatesService service = new PluginUpdatesService();
+    service.myUpdateCallback = callback;
+
+    synchronized (ourLock) {
+      SERVICES.add(service);
+
+      if (myPrepared) {
+        callback.accept(myCache);
+      }
     }
 
     return service;
   }
 
-  @NotNull
-  public static PluginUpdatesService connectConfigurable(@NotNull Consumer<Integer> callback) {
-    checkAccess();
+  public void calculateUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
+    synchronized (ourLock) {
+      myUpdateCallback = callback;
 
-    PluginUpdatesService service = new PluginUpdatesService();
-    SERVICES.add(service);
-    service.myTabCallback = callback;
-
-    if (myPrepared) {
-      callback.accept(getCount());
-    }
-    else {
-      calculateUpdates();
-    }
-
-    return service;
-  }
-
-  public void connectInstalled(@NotNull Consumer<? super Collection<PluginDownloader>> callback) {
-    checkAccess();
-    myInstalledPanelCallback = callback;
-
-    if (myPrepared) {
-      callback.accept(myCache);
-    }
-    else {
-      calculateUpdates();
-    }
-  }
-
-  public void calculateUpdates(@NotNull Consumer<? super Collection<PluginDownloader>> callback) {
-    checkAccess();
-    myUpdatePanelCallback = callback;
-
-    if (myPrepared) {
-      callback.accept(myCache);
-    }
-    else {
-      calculateUpdates();
-    }
-  }
-
-  public void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
-    checkAccess();
-
-    if (!myPrepared || myCache == null) {
-      return;
-    }
-
-    for (Iterator<PluginDownloader> I = myCache.iterator(); I.hasNext(); ) {
-      PluginDownloader downloader = I.next();
-
-      if (downloader.getDescriptor() == descriptor) {
-        I.remove();
-
-        Integer countValue = getCount();
-        for (PluginUpdatesService service : SERVICES) {
-          service.runCountCallbacks(countValue);
-        }
-
+      if (myPrepared) {
+        callback.accept(myCache);
         return;
+      }
+    }
+    calculateUpdates();
+  }
+
+  private static void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
+    synchronized (ourLock) {
+      if (!myPrepared || myCache == null) {
+        return;
+      }
+
+      for (Iterator<IdeaPluginDescriptor> I = myCache.iterator(); I.hasNext(); ) {
+        IdeaPluginDescriptor downloadedDescriptor = I.next();
+
+        if (Objects.equals(downloadedDescriptor.getPluginId(), descriptor.getPluginId())) {
+          I.remove();
+
+          Integer countValue = getCount();
+          for (PluginUpdatesService service : SERVICES) {
+            service.runCountCallbacks(countValue);
+          }
+
+          return;
+        }
       }
     }
   }
 
   public void finishUpdate() {
-    checkAccess();
+    synchronized (ourLock) {
+      if (!myPrepared || myCache == null) {
+        return;
+      }
 
-    if (!myPrepared || myCache == null) {
-      return;
-    }
-
-    Integer countValue = getCount();
-    for (PluginUpdatesService service : SERVICES) {
-      service.runCountCallbacks(countValue);
+      Integer countValue = getCount();
+      for (PluginUpdatesService service : SERVICES) {
+        service.runCountCallbacks(countValue);
+      }
     }
   }
 
   public void recalculateUpdates() {
-    checkAccess();
+    synchronized (ourLock) {
+      for (PluginUpdatesService service : SERVICES) {
+        service.runAllCallbacks(null);
+      }
 
-    for (PluginUpdatesService service : SERVICES) {
-      service.runAllCallbacks(0);
-    }
-
-    if (myPreparing) {
-      resetUpdates();
-    }
-    else {
-      calculateUpdates();
+      if (myPreparing) {
+        resetUpdates();
+      }
+      else {
+        calculateUpdates();
+      }
     }
   }
 
@@ -149,28 +149,30 @@ public class PluginUpdatesService {
   }
 
   public void dispose() {
-    checkAccess();
     dispose(this);
   }
 
   private static void dispose(@NotNull PluginUpdatesService service) {
-    SERVICES.remove(service);
+    synchronized (ourLock) {
+      SERVICES.remove(service);
 
-    if (SERVICES.isEmpty()) {
-      myCache = null;
-      myPrepared = false;
-      myPreparing = false;
+      if (SERVICES.isEmpty()) {
+        myCache = null;
+        myPrepared = false;
+        myPreparing = false;
+      }
     }
   }
 
   public static boolean isNeedUpdate(@NotNull IdeaPluginDescriptor descriptor) {
-    checkAccess();
-
     PluginId pluginId = descriptor.getPluginId();
-    if (myPrepared && myCache != null) {
-      for (PluginDownloader downloader : myCache) {
-        if (pluginId == downloader.getId()) {
-          return true;
+
+    synchronized (ourLock) {
+      if (myPrepared && myCache != null) {
+        for (IdeaPluginDescriptor downloader : myCache) {
+          if (pluginId.equals(downloader.getPluginId())) {
+            return true;
+          }
         }
       }
     }
@@ -178,39 +180,55 @@ public class PluginUpdatesService {
     return InstalledPluginsState.getInstance().hasNewerVersion(pluginId);
   }
 
-  @Nullable
-  public static Collection<PluginDownloader> getUpdates() {
-    checkAccess();
-    return !myPrepared || myPreparing || myCache == null ? null : myCache;
+  public static @Nullable Collection<IdeaPluginDescriptor> getUpdates() {
+    synchronized (ourLock) {
+      return !myPrepared || myPreparing || myCache == null ? null : myCache;
+    }
+  }
+
+  public static @Nullable @Nls String getUpdatesTooltip() {
+    Collection<IdeaPluginDescriptor> updates = getUpdates();
+    if (ContainerUtil.isEmpty(updates)) {
+      return null;
+    }
+    return IdeBundle.message("updates.plugin.ready.tooltip", StringUtil.join(updates, plugin -> plugin.getName(), ", "), updates.size());
   }
 
   private static void calculateUpdates() {
-    if (myPreparing) {
+    synchronized (ourLock) {
+      if (myPreparing) {
+        return;
+      }
+      myPreparing = true;
+      myCache = null;
+    }
+
+    // for example, if executed as part of Traverse UI - don't wait check updates
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return;
     }
-    myPreparing = true;
-    myCache = null;
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
+    NonUrgentExecutor.getInstance().execute(() -> {
+      List<IdeaPluginDescriptor> cache = ContainerUtil.map(UpdateChecker.getInternalPluginUpdates().getPluginUpdates().getAll(),
+                                                           PluginDownloader::getDescriptor);
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        checkAccess();
+        synchronized (ourLock) {
+          myPreparing = false;
 
-        myPreparing = false;
+          if (myReset) {
+            myReset = false;
+            calculateUpdates();
+            return;
+          }
 
-        if (myReset) {
-          myReset = false;
-          calculateUpdates();
-          return;
-        }
+          myPrepared = true;
+          myCache = cache;
 
-        myPrepared = true;
-        myCache = updates;
-
-        Integer countValue = getCount();
-        for (PluginUpdatesService service : SERVICES) {
-          service.runAllCallbacks(countValue);
+          Integer countValue = getCount();
+          for (PluginUpdatesService service : SERVICES) {
+            service.runAllCallbacks(countValue);
+          }
         }
       }, ModalityState.any());
     });
@@ -219,29 +237,18 @@ public class PluginUpdatesService {
   private void runAllCallbacks(@Nullable Integer countValue) {
     runCountCallbacks(countValue);
 
-    if (myInstalledPanelCallback != null) {
-      myInstalledPanelCallback.accept(myCache);
-    }
-    if (myUpdatePanelCallback != null) {
-      myUpdatePanelCallback.accept(myCache);
+    if (myUpdateCallback != null) {
+      myUpdateCallback.accept(countValue == null ? null : myCache);
     }
   }
 
   private void runCountCallbacks(@Nullable Integer countValue) {
-    if (myTreeCallback != null) {
-      myTreeCallback.accept(countValue);
-    }
-    if (myTabCallback != null) {
-      myTabCallback.accept(countValue);
+    if (myCountCallback != null) {
+      myCountCallback.accept(countValue);
     }
   }
 
-  @Nullable
-  private static Integer getCount() {
+  private static @Nullable Integer getCount() {
     return myCache == null ? null : myCache.size();
-  }
-
-  private static void checkAccess() {
-    assert SwingUtilities.isEventDispatchThread();
   }
 }

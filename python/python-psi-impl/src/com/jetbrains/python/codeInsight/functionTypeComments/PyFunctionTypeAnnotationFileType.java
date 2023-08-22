@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyFunctionTypeAnnotationFileType extends PythonFileType {
   public static final PyFunctionTypeAnnotationFileType INSTANCE = new PyFunctionTypeAnnotationFileType();
 
-  public PyFunctionTypeAnnotationFileType() {
+  private PyFunctionTypeAnnotationFileType() {
     super(PyFunctionTypeAnnotationDialect.INSTANCE);
   }
 
@@ -40,7 +40,7 @@ public class PyFunctionTypeAnnotationFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return PyPsiBundle.message("python.function.type.annotation.file.type.description");
+    return PyPsiBundle.message("filetype.python.function.type.annotation.description");
   }
 
   @NotNull

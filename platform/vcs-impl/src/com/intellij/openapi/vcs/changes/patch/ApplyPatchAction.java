@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -35,9 +36,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +47,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_CANNOT_FIND_PATCH_FILE;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
-public class ApplyPatchAction extends DumbAwareAction {
+public final class ApplyPatchAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(ApplyPatchAction.class);
 
   @Override
@@ -63,6 +65,11 @@ public class ApplyPatchAction extends DumbAwareAction {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(project != null);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -96,23 +103,25 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   // used by TeamCity plugin
-  public static void showApplyPatch(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public static void showApplyPatch(@NotNull Project project, @NotNull VirtualFile file) {
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(
       project, new ApplyPatchDefaultExecutor(project),
       Collections.singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
     dialog.show();
   }
 
-  @CalledInAwt
-  public static Boolean showAndGetApplyPatch(@NotNull final Project project, @NotNull final File file) {
+  @RequiresEdt
+  public static Boolean showAndGetApplyPatch(@NotNull Project project, @NotNull File file) {
     VirtualFile vFile = VfsUtil.findFileByIoFile(file, true);
     String patchPath = file.getPath();
     if (vFile == null) {
-      VcsNotifier.getInstance(project).notifyWeakError(VcsBundle.message("patch.apply.can.t.find.patch.file.warning", patchPath));
+      VcsNotifier.getInstance(project).notifyWeakError(PATCH_APPLY_CANNOT_FIND_PATCH_FILE,
+                                                       VcsBundle.message("patch.apply.can.t.find.patch.file.warning", patchPath));
       return false;
     }
     if (!isPatchFile(vFile)) {
-      VcsNotifier.getInstance(project).notifyWeakError(VcsBundle.message("patch.apply.not.patch.type.file.error", patchPath));
+      VcsNotifier.getInstance(project).notifyWeakError(PATCH_APPLY_NOT_PATCH_FILE,
+                                                       VcsBundle.message("patch.apply.not.patch.type.file.error", patchPath));
       return false;
     }
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
@@ -122,53 +131,48 @@ public class ApplyPatchAction extends DumbAwareAction {
     return dialog.showAndGet();
   }
 
-  public static void applySkipDirs(final List<? extends FilePatch> patches, final int skipDirs) {
-    if (skipDirs < 1) {
-      return;
-    }
-    for (FilePatch patch : patches) {
-      patch.setBeforeName(skipN(patch.getBeforeName(), skipDirs));
-      patch.setAfterName(skipN(patch.getAfterName(), skipDirs));
-    }
-  }
+  public static @NotNull ApplyPatchStatus applyContent(@NotNull Project project,
+                                                       @NotNull ApplyFilePatchBase<?> patch,
+                                                       @Nullable ApplyPatchContext context,
+                                                       @NotNull VirtualFile file,
+                                                       @Nullable CommitContext commitContext,
+                                                       boolean reverse,
+                                                       @Nullable String leftPanelTitle,
+                                                       @Nullable String rightPanelTitle) {
+    ApplyFilePatch.Result result = tryApplyPatch(project, patch, context, file, commitContext);
 
-  private static String skipN(final String path, final int num) {
-    final String[] pieces = path.split("/");
-    final StringBuilder sb = new StringBuilder();
-    for (int i = num; i < pieces.length; i++) {
-      final String piece = pieces[i];
-      sb.append('/').append(piece);
-    }
-    return sb.toString();
-  }
-
-  @NotNull
-  public static ApplyPatchStatus applyContent(@Nullable final Project project,
-                                              @NotNull final ApplyFilePatchBase patch,
-                                              @Nullable final ApplyPatchContext context,
-                                              @NotNull final VirtualFile file,
-                                              @Nullable final CommitContext commitContext,
-                                              boolean reverse,
-                                              @Nullable String leftPanelTitle,
-                                              @Nullable String rightPanelTitle) {
-    final ApplyFilePatch.Result result = tryApplyPatch(project, patch, context, file, commitContext);
-
-    final ApplyPatchStatus status = result.getStatus();
+    ApplyPatchStatus status = result.getStatus();
     if (ApplyPatchStatus.ALREADY_APPLIED.equals(status) || ApplyPatchStatus.SUCCESS.equals(status)) {
       return status;
     }
 
-    final ApplyPatchForBaseRevisionTexts mergeData = result.getMergeData();
-    if (mergeData == null) return status;
+    ApplyPatchForBaseRevisionTexts mergeData = result.getMergeData();
+    if (mergeData == null) {
+      return status;
+    }
 
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return ApplyPatchStatus.FAILURE;
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) {
+      return ApplyPatchStatus.FAILURE;
+    }
+
+    if (mergeData.getBase() == null && ApplyPatchStatus.PARTIAL.equals(status)) {
+      WriteAction.run(() -> {
+        VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(mergeData.getPatched()));
+        FileDocumentManager.getInstance().saveDocument(document);
+      });
+      return status;
+    }
 
     String baseContent = convertLineSeparators(mergeData.getBase());
     String localContent = convertLineSeparators(mergeData.getLocal());
     String patchedContent = mergeData.getPatched();
 
-    final Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
+    if (localContent.equals(patchedContent)) {
+      return ApplyPatchStatus.ALREADY_APPLIED;
+    }
+
+    Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
     Consumer<MergeResult> callback = result13 -> {
       FileDocumentManager.getInstance().saveDocument(document);
       applyPatchStatusReference.setIfNull(result13 != MergeResult.CANCEL ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE);
@@ -194,7 +198,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
       else {
         TextFilePatch textPatch = (TextFilePatch)patch.getPatch();
-        final GenericPatchApplier applier = new GenericPatchApplier(localContent, textPatch.getHunks());
+        GenericPatchApplier applier = new GenericPatchApplier(localContent, textPatch.getHunks());
         applier.execute();
 
         final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
@@ -208,15 +212,8 @@ public class ApplyPatchAction extends DumbAwareAction {
         String yesText = VcsBundle.message("patch.apply.abort.and.rollback.action");
         String noText = VcsBundle.message("patch.apply.skip.action");
         String cancelText = VcsBundle.message("patch.apply.continue.resolve.action");
-        int result1 = 0;
-
-        if (Messages.canShowMacSheetPanel()) {
-          result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), "", message, yesText, noText, cancelText, Messages.getQuestionIcon());
-        }
-        else {
-          result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), message, title, yesText, noText, cancelText, Messages.getQuestionIcon());
-        }
-
+        int result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), message, title, yesText, noText, cancelText,
+                                                     Messages.getQuestionIcon());
         if (result1 == Messages.YES) {
           applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
         }
@@ -234,24 +231,21 @@ public class ApplyPatchAction extends DumbAwareAction {
     }
   }
 
-  @NotNull
-  private static ApplyFilePatch.Result tryApplyPatch(@Nullable final Project project,
-                                                     @NotNull final ApplyFilePatchBase patch,
-                                                     @Nullable final ApplyPatchContext context,
-                                                     @NotNull final VirtualFile file,
-                                                     @Nullable final CommitContext commitContext) {
-    final FilePatch patchBase = patch.getPatch();
+  private static @NotNull ApplyFilePatch.Result tryApplyPatch(@NotNull Project project,
+                                                              @NotNull ApplyFilePatchBase<?> patch,
+                                                              @Nullable ApplyPatchContext context,
+                                                              @NotNull VirtualFile file,
+                                                              @Nullable CommitContext commitContext) {
+    FilePatch patchBase = patch.getPatch();
     return WriteAction.compute(() -> {
       try {
         return patch.apply(file, context, project, VcsUtil.getFilePath(file), () -> {
-          assert project != null;
-          final BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class, project);
-          final String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
-          return baseRevisionTextPatchEP.provideContent(path, commitContext);
+          String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
+          return BaseRevisionTextPatchEP.getBaseContent(project, path, commitContext);
         }, commitContext);
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.warn(e);
         return ApplyFilePatch.FAILURE;
       }
     });

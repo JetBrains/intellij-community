@@ -5,6 +5,7 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,20 +13,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class ZenCodingFilter {
   private static final ExtensionPointName<ZenCodingFilter> EP_NAME = new ExtensionPointName<>("com.intellij.xml.zenCodingFilter");
 
-  private static final ZenCodingFilter[] OUR_STANDARD_FILTERS = new ZenCodingFilter[]{
-    new XslZenCodingFilter(),
-    new CommentZenCodingFilter(),
-    new EscapeZenCodingFilter(),
-    new SingleLineEmmetFilter(),
-    new BemEmmetFilter(),
-    new TrimZenCodingFilter()
-  };
+  private static class Holder {
+    private static final ZenCodingFilter[] OUR_STANDARD_FILTERS = new ZenCodingFilter[]{
+      new XslZenCodingFilter(),
+      new CommentZenCodingFilter(),
+      new EscapeZenCodingFilter(),
+      new SingleLineEmmetFilter(),
+      new BemEmmetFilter(),
+      new TrimZenCodingFilter()
+    };
+  }
 
   @NotNull
   public String filterText(@NotNull String text, @NotNull TemplateToken token) {
@@ -43,15 +43,22 @@ public abstract class ZenCodingFilter {
   public abstract boolean isMyContext(@NotNull PsiElement context);
 
   public boolean isAppliedByDefault(@NotNull PsiElement context) {
-    return EmmetOptions.getInstance().isFilterEnabledByDefault(this);
+    return isSystem() || EmmetOptions.getInstance().isFilterEnabledByDefault(this);
+  }
+
+  /**
+   * @return true if the filter shouldn't be shown in the emmet-related UI. Also, such filters are always enabled by default
+   */
+  public boolean isSystem() {
+    return false;
   }
 
   @NotNull
-  public abstract String getDisplayName();
+  public abstract @NlsContexts.Label String getDisplayName();
 
   public static List<ZenCodingFilter> getInstances() {
     List<ZenCodingFilter> generators = new ArrayList<>();
-    Collections.addAll(generators, OUR_STANDARD_FILTERS);
+    Collections.addAll(generators, Holder.OUR_STANDARD_FILTERS);
     generators.addAll(EP_NAME.getExtensionList());
     return generators;
   }

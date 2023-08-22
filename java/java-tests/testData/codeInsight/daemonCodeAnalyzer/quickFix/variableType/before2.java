@@ -1,4 +1,4 @@
-// "Change variable 'i' type to 'String'" "true"
+// "Change variable 'i' type to 'String'" "true-preview"
 import java.io.*;
 
 class a {

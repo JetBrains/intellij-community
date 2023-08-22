@@ -3,6 +3,8 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.ide.util.AbstractTreeClassChooserDialog;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -10,20 +12,20 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleValueActionListener<T> {
-  private final String myTitle;
+  protected final @NlsContexts.DialogTitle String myTitle;
 
-  public ClassBrowser(@NotNull Project project, String title) {
+  public ClassBrowser(@NotNull Project project, @NlsContexts.DialogTitle String title) {
     super(project);
     myTitle = title;
   }
@@ -41,7 +43,7 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
     }
 
     TreeClassChooser dialog = createClassChooser(classFilter);
-    configureDialog(dialog);
+    ((AbstractTreeClassChooserDialog<?>)dialog).setInitialSelection(objects -> findClass(getText()));
     dialog.showDialog();
     PsiClass psiClass = dialog.getSelected();
     if (psiClass == null) return null;
@@ -57,49 +59,39 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
   }
 
   protected void onClassChosen(@NotNull PsiClass psiClass) {
-    onClassChoosen(psiClass);
-  }
-
-  /** @deprecated override {@link #onClassChosen(PsiClass)} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @SuppressWarnings({"DeprecatedIsStillUsed", "SpellCheckingInspection", "unused"})
-  protected void onClassChoosen(PsiClass psiClass) { }
-
-  private void configureDialog(TreeClassChooser dialog) {
-    PsiClass psiClass = findClass(getText());
-    if (psiClass == null) return;
-    PsiDirectory directory = psiClass.getContainingFile().getContainingDirectory();
-    if (directory != null) dialog.selectDirectory(directory);
-    dialog.select(psiClass);
   }
 
   protected abstract PsiClass findClass(String className);
 
   /** @deprecated use {@link AppClassBrowser#AppClassBrowser(Project, ConfigurationModuleSelector)} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("rawtypes")
   public static ClassBrowser createApplicationClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector) {
     return new AppClassBrowser(project, moduleSelector);
   }
 
   public abstract static class MainClassBrowser<T extends JComponent> extends ClassBrowser<T> {
-    private final ConfigurationModuleSelector myModuleSelector;
+    private final Computable<? extends Module> myModuleSelector;
 
-    public MainClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector, String title) {
+    public MainClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector, @NlsContexts.DialogTitle String title) {
+      this(project, () -> moduleSelector.getModule(), title);
+    }
+
+    public MainClassBrowser(@NotNull Project project, @NotNull Computable<? extends Module> moduleSelector, @NlsContexts.DialogTitle String title) {
       super(project, title);
       myModuleSelector = moduleSelector;
     }
 
     @Override
     protected PsiClass findClass(String className) {
-      return myModuleSelector.findClass(className);
+      final JavaRunConfigurationModule configurationModule = new JavaRunConfigurationModule(getProject(), false);
+      configurationModule.setModule(myModuleSelector.get());
+      return configurationModule.findClass(className);
     }
 
     @Override
     protected ClassFilter.ClassFilterWithScope getFilter() {
-      Module module = myModuleSelector.getModule();
+      Module module = myModuleSelector.get();
       GlobalSearchScope scope =
         module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(getProject());
       ClassFilter filter = createFilter(module);
@@ -127,6 +119,11 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
       aClass -> PsiMethodUtil.MAIN_CLASS.value(aClass) && ReadAction.compute(() -> PsiMethodUtil.findMainMethod(aClass)) != null;
 
     public AppClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector) {
+      super(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title"));
+    }
+
+    public AppClassBrowser(@NotNull Project project,
+                           @NotNull Computable<? extends Module> moduleSelector) {
       super(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title"));
     }
 

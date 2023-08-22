@@ -26,10 +26,12 @@ package com.intellij.openapi.vcs.changes.ignore.codeInsight;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntryDirectory;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntryFile;
@@ -43,6 +45,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -51,7 +54,7 @@ import java.util.regex.Pattern;
  * {@link LineMarkerProvider} that marks ignore entry lines with {@link PlatformIcons#FOLDER_ICON} if they point to the directory in file
  * system.
  */
-public final class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
+public final class IgnoreDirectoryMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
@@ -90,6 +93,16 @@ public final class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
         }
       }
     }
+  }
+
+  @Override
+  public @NotNull String getName() {
+    return VcsBundle.message("gutter.name.version.control.ignored.directories");
+  }
+
+  @Override
+  public @NotNull Icon getIcon() {
+    return PlatformIcons.FOLDER_ICON;
   }
 
   @Nullable

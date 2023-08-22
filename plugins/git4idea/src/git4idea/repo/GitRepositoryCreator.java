@@ -17,7 +17,7 @@ final class GitRepositoryCreator implements VcsRepositoryCreator {
   @Nullable
   public Repository createRepositoryIfValid(@NotNull Project project, @NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
     VirtualFile gitDir = GitUtil.findGitDir(root);
-    return gitDir == null ? null : GitRepositoryImpl.createInstance(root, gitDir, project, parentDisposable, true);
+    return gitDir == null ? null : GitRepositoryImpl.createInstance(root, gitDir, project, parentDisposable);
   }
 
   @NotNull

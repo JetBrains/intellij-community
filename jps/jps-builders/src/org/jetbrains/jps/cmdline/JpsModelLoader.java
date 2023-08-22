@@ -15,10 +15,11 @@
  */
 package org.jetbrains.jps.cmdline;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.IOException;
 
 public interface JpsModelLoader {
-  JpsModel loadModel() throws IOException;
+  @NotNull JpsModel loadModel() throws IOException;
 }

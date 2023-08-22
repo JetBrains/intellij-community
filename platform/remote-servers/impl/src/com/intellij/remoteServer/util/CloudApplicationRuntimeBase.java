@@ -5,6 +5,7 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentApplication;
 import com.intellij.remoteServer.agent.util.CloudAgentDeploymentCallback;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntime {
@@ -25,7 +26,7 @@ public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntim
       }
 
       @Override
-      public void errorOccurred(String errorMessage) {
+      public void errorOccurred(@Nls String errorMessage) {
         callback.errorOccurred(errorMessage);
       }
     }), callback);

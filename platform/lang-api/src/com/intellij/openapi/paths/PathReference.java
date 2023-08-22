@@ -38,7 +38,7 @@ public class PathReference {
 
   public PathReference(@NotNull String path, final @NotNull Function<? super PathReference, ? extends Icon> icon) {
     myPath = path;
-    myIcon = new NullableLazyValue<Icon>() {
+    myIcon = new NullableLazyValue<>() {
       @Override
       protected Icon compute() {
         return icon.fun(PathReference.this);
@@ -69,9 +69,9 @@ public class PathReference {
   public static String trimPath(final String url) {
     for (int i = 0; i < url.length(); i++) {
       switch (url.charAt(i)) {
-        case '?':
-        case '#':
+        case '?', '#' -> {
           return url.substring(0, i);
+        }
       }
     }
     return url;

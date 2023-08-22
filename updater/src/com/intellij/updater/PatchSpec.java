@@ -30,11 +30,14 @@ public class PatchSpec {
   private boolean myIsStrict;
   private List<String> myIgnoredFiles = Collections.emptyList();
   private List<String> myCriticalFiles = Collections.emptyList();
+  // A conflict in an essential file makes a patch update impossible; the IDE must be reinstalled from scratch.
+  private List<String> myStrictFiles = Collections.emptyList();
   private List<String> myOptionalFiles = Collections.emptyList();
   private boolean myIsNormalized;
   private Map<String, String> myWarnings = Collections.emptyMap();
   private List<String> myDeleteFiles = Collections.emptyList();
   private String myRoot = "";
+  private int myTimeout = 0;
 
   public String getOldVersionDescription() {
     return myOldVersionDescription;
@@ -117,6 +120,15 @@ public class PatchSpec {
     return this;
   }
 
+  public List<String> getStrictFiles() {
+    return myStrictFiles;
+  }
+
+  public PatchSpec setStrictFiles(List<String> strictFiles) {
+    myStrictFiles = strictFiles;
+    return this;
+  }
+
   public List<String> getOptionalFiles() {
     return myOptionalFiles;
   }
@@ -169,5 +181,14 @@ public class PatchSpec {
 
   public String getRoot() {
     return myRoot;
+  }
+
+  public int getTimeout() {
+    return myTimeout;
+  }
+
+  public PatchSpec setTimeout(int timeout) {
+    myTimeout = timeout;
+    return this;
   }
 }

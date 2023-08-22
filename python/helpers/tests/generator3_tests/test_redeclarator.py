@@ -6,6 +6,7 @@ NOTE: does not work in Jython 2.2 or IronPython 1.x, because pyparsing does not.
 
 import unittest
 from generator3.module_redeclarator import *
+from generator3_tests import GeneratorTestCase
 
 M = ModuleRedeclarator
 
@@ -14,12 +15,13 @@ import sys
 IS_CLI = sys.platform == 'cli'
 VERSION = sys.version_info[:2] # only (major, minor)
 
-class TestRestoreFuncByDocComment(unittest.TestCase):
+class TestRestoreFuncByDocComment(GeneratorTestCase):
     """
     Tries to restore function signatures by doc strings.
     """
 
     def setUp(self):
+        super(TestRestoreFuncByDocComment, self).setUp()
         self.m = ModuleRedeclarator(None, '', '/dev/null', None)
 
     def testTrivial(self):
@@ -180,12 +182,13 @@ class TestRestoreFuncByDocComment(unittest.TestCase):
         self.assertEqual(note, M.SIG_DOC_NOTE)
 
 
-class TestRestoreMethodByDocComment(unittest.TestCase):
+class TestRestoreMethodByDocComment(GeneratorTestCase):
     """
     Restoring with a class name set
     """
 
     def setUp(self):
+        super(TestRestoreMethodByDocComment, self).setUp()
         self.m = ModuleRedeclarator(None, '', '/dev/null', None)
 
     def testPlainMethod(self):
@@ -199,12 +202,13 @@ class TestRestoreMethodByDocComment(unittest.TestCase):
         self.assertEqual(note, M.SIG_DOC_NOTE)
 
 
-class TestAnnotatedParameters(unittest.TestCase):
+class TestAnnotatedParameters(GeneratorTestCase):
     """
     f(foo: int) and friends; in doc comments, happen in 2.x world, too.
     """
 
     def setUp(self):
+        super(TestAnnotatedParameters, self).setUp()
         self.m = ModuleRedeclarator(None, '', '/dev/null', None)
 
     def testMixed(self):
@@ -224,12 +228,13 @@ class TestAnnotatedParameters(unittest.TestCase):
 
 
 if not IS_CLI and VERSION < (3, 0):
-    class TestInspect(unittest.TestCase):
+    class TestInspect(GeneratorTestCase):
         """
         See that inspect actually works if needed
         """
 
         def setUp(self):
+            super(TestInspect, self).setUp()
             self.m = ModuleRedeclarator(None, '', '/dev/null', None)
 
         def testSimple(self):
@@ -252,42 +257,14 @@ if not IS_CLI and VERSION < (3, 0):
             result = restore_by_inspect(target)
             self.assertEqual(result, "(a, (b, c), d, e=1)")
 
-class _DiffPrintingTestCase(unittest.TestCase):
-    def assertEqual(self, etalon, specimen, msg=None):
-        if type(etalon) == str and type(specimen) == str and etalon != specimen:
-            print("%s" % "\n")
-            # print side by side
-            ei = iter(etalon.split("\n"))
-            si = iter(specimen.split("\n"))
-            if VERSION < (3, 0):
-                si_next = si.next
-            else:
-                si_next = si.__next__
-            for el in ei:
-                try: sl = si_next()
-                except StopIteration: break # I wish the exception would just work as break
-                if el != sl:
-                    print("!%s" % el)
-                    print("?%s" % sl)
-                else:
-                    print(">%s" % sl)
-                    # one of the iters might not end yet
-            for el in ei:
-                print("!%s" % el)
-            for sl in si:
-                print("?%s" % sl)
-            raise self.failureException(msg)
-        else:
-            unittest.TestCase.assertEqual(self, etalon, specimen, msg)
 
-
-class TestSpecialCases(unittest.TestCase):
+class TestSpecialCases(GeneratorTestCase):
     """
     Tests cases where predefined overrides kick in
     """
 
     def setUp(self):
-
+        super(TestSpecialCases, self).setUp()
         if VERSION >= (3, 0):
             import builtins as the_builtins
 
@@ -326,19 +303,20 @@ class TestSpecialCases(unittest.TestCase):
 
         # we could want to test a class without __dict__, but it takes a C extension to really create one,
 
-class TestDataOutput(_DiffPrintingTestCase):
+class TestDataOutput(GeneratorTestCase):
     """
     Tests for sanity of output of data members
     """
 
     def setUp(self):
+        super(TestDataOutput, self).setUp()
         self.m = ModuleRedeclarator(self, '', 4, None)  # Pass anything with __dict__ as module
 
     def checkFmtValue(self, data, expected):
         buf = Buf(self.m)
         self.m.fmt_value(buf.out, data, 0)
         result = "".join(buf.data).strip()
-        self.assertEqual(expected, result)
+        self.assertMultiLineEqual(expected, result)
 
     def testRecursiveDict(self):
         data = {'a': 1}
@@ -371,12 +349,13 @@ class TestDataOutput(_DiffPrintingTestCase):
         self.checkFmtValue(data, expected)
 
 if not IS_CLI:
-    class TestReturnTypes(unittest.TestCase):
+    class TestReturnTypes(GeneratorTestCase):
         """
         Tests for sanity of output of data members
         """
 
         def setUp(self):
+            super(TestReturnTypes, self).setUp()
             self.m = ModuleRedeclarator(None, '', 4, None)
 
         def checkRestoreFunction(self, doc, expected):

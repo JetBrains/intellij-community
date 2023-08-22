@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -11,6 +13,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,14 +37,22 @@ public abstract class CoverageViewExtension {
     myCoverageViewManager = CoverageViewManager.getInstance(myProject);
   }
 
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
   @Nullable
-  public abstract String getSummaryForNode(AbstractTreeNode<?> node);
+  @Deprecated
+  public abstract @Nls String getSummaryForNode(@NotNull AbstractTreeNode<?> node);
+
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
+  @Nullable
+  @Deprecated
+  public abstract @Nls String getSummaryForRootNode(@NotNull AbstractTreeNode<?> childNode);
 
   @Nullable
-  public abstract String getSummaryForRootNode(AbstractTreeNode<?> childNode);
-
-  @Nullable
-  public abstract String getPercentage(int columnIdx, AbstractTreeNode<?> node);
+  public abstract String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node);
 
   public abstract List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode<?> node);
 
@@ -82,5 +94,23 @@ public abstract class CoverageViewExtension {
 
   public boolean supportFlattenPackages() {
     return false;
+  }
+
+  /**
+   * @return extra actions which will be added to {@link CoverageView} toolbar menu
+   * directly after all the default actions (Flatten Packages, Generate Coverage Report)
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public List<AnAction> createExtraToolbarActions() {
+    return Collections.emptyList();
+  }
+
+  public String getElementsName() {
+    return CoverageBundle.message("coverage.files");
+  }
+
+  public String getElementsCapitalisedName() {
+    return CoverageBundle.message("coverage.files.capitalised");
   }
 }

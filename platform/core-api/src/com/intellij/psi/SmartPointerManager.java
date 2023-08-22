@@ -1,17 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to create references to PSI elements that can survive a reparse and return the corresponding
+ * Allows creating references to PSI elements that can survive a reparse and return the corresponding
  * element in the PSI tree after the reparse.
  */
 public abstract class SmartPointerManager {
-  @NotNull
-  public abstract SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range);
+  public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range);
 
   public static SmartPointerManager getInstance(Project project) {
     return project.getService(SmartPointerManager.class);
@@ -26,8 +26,7 @@ public abstract class SmartPointerManager {
    * @return a pointer to the specified element which can survive PSI reparse
    * @see #createSmartPsiElementPointer(PsiElement)
    */
-  @NotNull
-  public static <E extends PsiElement> SmartPsiElementPointer<E> createPointer(@NotNull E element) {
+  public static @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createPointer(@NotNull E element) {
     return getInstance(element.getProject()).createSmartPsiElementPointer(element);
   }
 
@@ -38,8 +37,7 @@ public abstract class SmartPointerManager {
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
-  @NotNull
-  public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
+  public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
 
   /**
    * Creates a smart pointer to the specified PSI element.
@@ -48,8 +46,7 @@ public abstract class SmartPointerManager {
    * @param containingFile the result of {@code element.getContainingFile()}.
    * @return the smart pointer instance.
    */
-  @NotNull
-  public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);
+  public abstract @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);
 
   /**
    * Creates a smart pointer to the specified PSI element which doesn't hold a strong reference to the PSI
@@ -60,8 +57,8 @@ public abstract class SmartPointerManager {
    * @deprecated use {@link #createSmartPsiElementPointer(PsiElement)} instead
    */
   @Deprecated
-  @NotNull
-  public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
+  @ApiStatus.ScheduledForRemoval
+  public @NotNull <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
     return createSmartPsiElementPointer(element);
   }
 

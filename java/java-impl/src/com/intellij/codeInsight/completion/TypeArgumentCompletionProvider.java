@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -25,10 +24,7 @@ import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
-* @author peter
-*/
-class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
+class TypeArgumentCompletionProvider {
   static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance(TypeArgumentCompletionProvider.class);
   private final boolean mySmart;
@@ -37,11 +33,6 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
   TypeArgumentCompletionProvider(boolean smart, @Nullable JavaCompletionSession session) {
     mySmart = smart;
     mySession = session;
-  }
-
-  @Override
-  protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext processingContext, @NotNull final CompletionResultSet resultSet) {
-    addTypeArgumentVariants(parameters, resultSet, resultSet.getPrefixMatcher());
   }
 
   void addTypeArgumentVariants(CompletionParameters parameters, Consumer<? super LookupElement> result, PrefixMatcher matcher) {
@@ -130,9 +121,8 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     if (parameterList == null) return null;
 
     PsiElement parent = parameterList.getParent();
-    if (!(parent instanceof PsiJavaCodeReferenceElement)) return null;
+    if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) return null;
 
-    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
     final int parameterIndex;
 
     int index = 0;
@@ -194,7 +184,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       myTypeItems.get(0).renderElement(presentation);
       presentation.setItemText(getLookupString());
       if (myTypeItems.size() > 1) {

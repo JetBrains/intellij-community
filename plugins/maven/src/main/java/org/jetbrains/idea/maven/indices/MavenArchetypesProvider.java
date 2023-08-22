@@ -20,6 +20,10 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 
 import java.util.Collection;
 
+/**
+ * Extension point for additional maven custom archetypes list.
+ * Used when creating a new maven project.
+ */
 public interface MavenArchetypesProvider {
   ExtensionPointName<MavenArchetypesProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.archetypesProvider");
 

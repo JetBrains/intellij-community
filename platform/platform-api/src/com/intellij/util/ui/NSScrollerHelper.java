@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
@@ -16,9 +16,7 @@ import java.util.EventListener;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.intellij.ui.mac.foundation.Foundation.invoke;
-
-class NSScrollerHelper {
+final class NSScrollerHelper {
   private static final Callback APPEARANCE_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
@@ -32,22 +30,22 @@ class NSScrollerHelper {
     }
   };
 
-  public enum ClickBehavior {NextPage, JumpToSpot}
+  enum ClickBehavior {NextPage, JumpToSpot}
 
-  public enum Style {Legacy, Overlay}
+  enum Style {Legacy, Overlay}
 
-  private static ClickBehavior ourClickBehavior = null;
+  private static ClickBehavior ourClickBehavior;
   private static final List<Reference<ScrollbarStyleListener>> ourStyleListeners = new ArrayList<>();
 
   static {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       initNotificationObserver();
       updateBehaviorPreferences();
     }
   }
 
   private static boolean isOverlayScrollbarSupported() {
-    return SystemInfo.isMac && SystemInfo.isMacOSMountainLion;
+    return SystemInfoRt.isMac;
   }
 
   private static void initNotificationObserver() {
@@ -66,25 +64,25 @@ class NSScrollerHelper {
 
       Foundation.registerObjcClassPair(delegateClass);
     }
-    ID delegate = invoke("NSScrollerChangesObserver", "new");
+    ID delegate = Foundation.invoke("NSScrollerChangesObserver", "new");
 
     try {
       ID center;
-      center = invoke("NSNotificationCenter", "defaultCenter");
-      invoke(center, "addObserver:selector:name:object:",
+      center = Foundation.invoke("NSNotificationCenter", "defaultCenter");
+      Foundation.invoke(center, "addObserver:selector:name:object:",
              delegate,
              Foundation.createSelector("handleScrollerStyleChanged:"),
              Foundation.nsString("NSPreferredScrollerStyleDidChangeNotification"),
              ID.NIL
       );
 
-      center = invoke("NSDistributedNotificationCenter", "defaultCenter");
-      invoke(center, "addObserver:selector:name:object:",
-             delegate,
-             Foundation.createSelector("handleBehaviorChanged:"),
-             Foundation.nsString("AppleNoRedisplayAppearancePreferenceChanged"),
-             ID.NIL,
-             2 // NSNotificationSuspensionBehaviorCoalesce
+      center = Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter");
+      Foundation.invoke(center, "addObserver:selector:name:object:",
+                        delegate,
+                        Foundation.createSelector("handleBehaviorChanged:"),
+                        Foundation.nsString("AppleNoRedisplayAppearancePreferenceChanged"),
+                        ID.NIL,
+                        2 // NSNotificationSuspensionBehaviorCoalesce
       );
     }
     finally {
@@ -93,19 +91,19 @@ class NSScrollerHelper {
   }
 
   @Nullable
-  public static ClickBehavior getClickBehavior() {
-    if (!SystemInfo.isMac) return null;
+  static ClickBehavior getClickBehavior() {
+    if (!SystemInfoRt.isMac) return null;
     return ourClickBehavior;
   }
 
   private static void updateBehaviorPreferences() {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfoRt.isMac) return;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
-      ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
-      invoke(defaults, "synchronize");
-      ourClickBehavior = invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior")).intValue() == 1
+      ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+      Foundation.invoke(defaults, "synchronize");
+      ourClickBehavior = Foundation.invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior")).booleanValue()
                          ? ClickBehavior.JumpToSpot : ClickBehavior.NextPage;
     }
     finally {
@@ -114,7 +112,7 @@ class NSScrollerHelper {
   }
 
   @Nullable
-  public static Style getScrollerStyle() {
+  static Style getScrollerStyle() {
     if (!isOverlayScrollbarSupported()) return null;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
@@ -131,11 +129,11 @@ class NSScrollerHelper {
     return Style.Legacy;
   }
 
-  public static void addScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
+  static void addScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
     processReferences(listener, null, null);
   }
 
-  public static void removeScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
+  static void removeScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
     processReferences(null, listener, null);
   }
 
@@ -166,7 +164,7 @@ class NSScrollerHelper {
     }
   }
 
-  public interface ScrollbarStyleListener extends EventListener {
+  interface ScrollbarStyleListener extends EventListener {
     void styleChanged();
   }
 }

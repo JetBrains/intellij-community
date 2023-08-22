@@ -12,13 +12,15 @@ class JetBrainsAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Collections.singletonList(AnnotationUtil.NOT_NULL);
-      case NULLABLE:
-        return Collections.singletonList(AnnotationUtil.NULLABLE);
-      default:
-        return Collections.emptyList();
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Collections.singletonList(AnnotationUtil.NOT_NULL);
+      case NULLABLE -> Collections.singletonList(AnnotationUtil.NULLABLE);
+      case UNKNOWN -> Collections.singletonList(AnnotationUtil.UNKNOWN_NULLABILITY);
+    };
+  }
+
+  @Override
+  public boolean isTypeUseAnnotationLocationRestricted() {
+    return true;
   }
 }

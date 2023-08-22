@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class AbsoluteSymbolPosition {
+final class AbsoluteSymbolPosition {
 
   long pageNumber;
   int symbolOffsetInPage;
@@ -25,8 +26,7 @@ class AbsoluteSymbolPosition {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof AbsoluteSymbolPosition) {
-      AbsoluteSymbolPosition other = (AbsoluteSymbolPosition)obj;
+    if (obj instanceof AbsoluteSymbolPosition other) {
       if (pageNumber == other.pageNumber && symbolOffsetInPage == other.symbolOffsetInPage) {
         return true;
       }
@@ -59,7 +59,7 @@ class AbsoluteSymbolPosition {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "("+pageNumber+","+symbolOffsetInPage+")";
   }
 }

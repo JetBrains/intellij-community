@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
@@ -10,10 +10,6 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntEnumEditor extends PropertyEditor<Integer> {
   private JComboBox myCbx;
   private final Pair[] myPairs;
@@ -23,13 +19,13 @@ public final class IntEnumEditor extends PropertyEditor<Integer> {
   }
 
   @Override
-  public final void updateUI() {
+  public void updateUI() {
     SwingUtilities.updateComponentTreeUI(getCbx());
     SwingUtilities.updateComponentTreeUI((JComponent)getCbx().getRenderer());
   }
 
   @Override
-  public final Integer getValue() throws Exception {
+  public Integer getValue() throws Exception {
     final Object selectedItem = getCbx().getSelectedItem();
     final Pair pair = (Pair)selectedItem;
     return pair.myValue;

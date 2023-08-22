@@ -28,9 +28,6 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class StringTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   private Document myDocument;
   private final Project myProject;
@@ -49,10 +46,8 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
             }
           };
     myDocument = editorTextField.getDocument();
-    if (myDocument != null) {
-      for (DocumentListener listener : myListeners) {
-        editorTextField.addDocumentListener(listener);
-      }
+    for (DocumentListener listener : myListeners) {
+      editorTextField.addDocumentListener(listener);
     }
     return editorTextField;
   }

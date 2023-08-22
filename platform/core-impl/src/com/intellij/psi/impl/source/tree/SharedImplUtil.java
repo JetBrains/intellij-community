@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -33,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 //TODO: rename/regroup?
 
-public class SharedImplUtil {
+public final class SharedImplUtil {
   private static final Logger LOG = Logger.getInstance(SharedImplUtil.class);
   private static final boolean CHECK_FOR_READ_ACTION = DebugUtil.DO_EXPENSIVE_CHECKS || ApplicationManager.getApplication().isInternal();
 
@@ -51,8 +37,7 @@ public class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(element.getFirstChildNode());
   }
 
-  @Nullable
-  public static PsiElement getLastChild(@NotNull ASTNode element) {
+  public static @Nullable PsiElement getLastChild(@NotNull ASTNode element) {
     return SourceTreeToPsiMap.treeElementToPsi(element.getLastChildNode());
   }
 
@@ -99,8 +84,7 @@ public class SharedImplUtil {
     return null;
   }
 
-  @NotNull
-  public static CharTable findCharTableByTree(ASTNode tree) {
+  public static @NotNull CharTable findCharTableByTree(ASTNode tree) {
     for (ASTNode o = tree; o != null; o = o.getTreeParent()) {
       CharTable charTable = o.getUserData(CharTable.CHAR_TABLE_KEY);
       if (charTable != null) {
@@ -119,7 +103,7 @@ public class SharedImplUtil {
                                     ASTNode anchor,
                                     Boolean before) throws IncorrectOperationException {
     CheckUtil.checkWritable(thisElement);
-    final CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
+    CharTable table = findCharTableByTree(SourceTreeToPsiMap.psiElementToTree(thisElement));
 
     TreeElement copyFirst = null;
     ASTNode copyLast = null;
@@ -153,7 +137,7 @@ public class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(copyFirst);
   }
 
-  public static PsiManager getManagerByTree(final ASTNode node) {
+  public static PsiManager getManagerByTree(ASTNode node) {
     if(node instanceof FileElement) return node.getPsi().getManager();
     return node.getTreeParent().getPsi().getManager();
   }
@@ -163,7 +147,7 @@ public class SharedImplUtil {
     if (count == 0) {
       return ASTNode.EMPTY_ARRAY;
     }
-    final ASTNode[] result = new ASTNode[count];
+    ASTNode[] result = new ASTNode[count];
     count = 0;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == elementType) {
@@ -189,7 +173,7 @@ public class SharedImplUtil {
     ASTNode childNode = root.getFirstChildNode();
 
     while (childNode != null) {
-      final PsiElement psi;
+      PsiElement psi;
       if (childNode instanceof PsiElement) {
         psi = (PsiElement)childNode;
       }
@@ -209,8 +193,6 @@ public class SharedImplUtil {
     TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
     treeParent.replaceChildInternal(treeElement, elementCopy);
     elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    final PsiElement result = SourceTreeToPsiMap.treeElementToPsi(elementCopy);
-    treeElement.invalidate();
-    return result;
+    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
   }
 }

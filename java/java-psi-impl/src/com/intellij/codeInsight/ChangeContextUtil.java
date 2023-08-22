@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.ASTNode;
@@ -27,7 +13,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ChangeContextUtil {
+import java.util.Objects;
+
+public final class ChangeContextUtil {
   private static final Logger LOG = Logger.getInstance(ChangeContextUtil.class);
 
   private static final Key<ASTNode> HARD_REF_TO_AST = Key.create("HARD_REF_TO_AST");
@@ -89,7 +77,8 @@ public class ChangeContextUtil {
               refExpr.putCopyableUserData(REF_CLASS_KEY, (PsiClass)refElement);
             }
           }
-          else if (refElement instanceof PsiMember){
+          else if (refElement instanceof PsiMember && 
+                   !Objects.equals(((PsiMember)refElement).getContainingClass(), topLevelScope)) {
             refExpr.putCopyableUserData(REF_MEMBER_KEY, ( (PsiMember)refElement));
             final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
             if (resolveScope instanceof PsiClass && !PsiTreeUtil.isAncestor(topLevelScope, resolveScope, false)) {
@@ -217,7 +206,7 @@ public class ChangeContextUtil {
 
       if (refMember != null && refMember.isValid()){
         PsiClass containingClass = refMember.getContainingClass();
-        if (refMember.hasModifierProperty(PsiModifier.STATIC)){
+        if (containingClass != null && containingClass.isValid() && refMember.hasModifierProperty(PsiModifier.STATIC)){
           PsiElement refElement = refExpr.resolve();
           if (!manager.areElementsEquivalent(refMember, refElement)){
             final PsiClass currentClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
@@ -234,7 +223,7 @@ public class ChangeContextUtil {
             boolean needQualifier = true;
             PsiElement refElement = refExpr.resolve();
             if (refMember.equals(refElement) ||
-                (refElement instanceof PsiMethod && refMember instanceof PsiMethod && 
+                (refElement instanceof PsiMethod && refMember instanceof PsiMethod &&
                  MethodSignatureUtil.isSuperMethod((PsiMethod)refMember, (PsiMethod)refElement))) {
               if (thisAccessExpr instanceof PsiThisExpression && ((PsiThisExpression)thisAccessExpr).getQualifier() == null) {
                 //Trivial qualifier

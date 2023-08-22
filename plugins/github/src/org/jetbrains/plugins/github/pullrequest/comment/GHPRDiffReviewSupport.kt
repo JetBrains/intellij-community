@@ -1,28 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface GHPRDiffReviewSupport {
 
-  @get:CalledInAwt
-  @set:CalledInAwt
-  var showReviewThreads: Boolean
+  @get:RequiresEdt
+  @set:RequiresEdt
+  var discussionsViewOption: DiscussionsViewOption
 
-  @get:CalledInAwt
-  @set:CalledInAwt
-  var showResolvedReviewThreads: Boolean
-
-  @get:CalledInAwt
+  @get:RequiresEdt
   val isLoadingReviewData: Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun install(viewer: DiffViewerBase)
 
-  @CalledInAwt
+  @RequiresEdt
   fun reloadReviewData()
 
   companion object {

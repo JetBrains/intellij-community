@@ -1,30 +1,13 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class ImmutableUserMap {
   public static final ImmutableUserMap EMPTY = new ImmutableUserMap() {
     @Override
-    public <T> T get(@NotNull final Key<T> key) {
+    public <T> T get(final @NotNull Key<T> key) {
       return null;
     }
   };
@@ -34,11 +17,11 @@ public abstract class ImmutableUserMap {
 
   public abstract <T> T get(@NotNull Key<T> key);
 
-  public final <T> ImmutableUserMap put(@NotNull final Key<T> key, final T value) {
+  public final <T> ImmutableUserMap put(final @NotNull Key<T> key, final T value) {
     return new ImmutableUserMapImpl<>(key, value, this);
   }
 
-  private static class ImmutableUserMapImpl<V> extends ImmutableUserMap {
+  private static final class ImmutableUserMapImpl<V> extends ImmutableUserMap {
     private final Key<V> myKey;
     private final V myValue;
     private final ImmutableUserMap myNext;
@@ -50,7 +33,7 @@ public abstract class ImmutableUserMap {
     }
 
     @Override
-    public <T> T get(@NotNull final Key<T> key) {
+    public <T> T get(final @NotNull Key<T> key) {
       if (key.equals(myKey)) return (T)myValue;
       return myNext.get(key);
     }

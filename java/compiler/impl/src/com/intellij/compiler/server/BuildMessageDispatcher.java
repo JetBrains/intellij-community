@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -31,7 +31,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   }
 
   private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private final Set<UUID> myCanceledSessions = ContainerUtil.newConcurrentSet();
+  private final Set<UUID> myCanceledSessions = ConcurrentCollectionFactory.createConcurrentSet();
 
   public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
     final BuilderMessageHandler wrappedHandler = new DelegatingMessageHandler() {
@@ -148,11 +148,8 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
       final CmdlineRemoteProto.Message.Type messageType = message.getType();
       switch (messageType) {
-        case FAILURE:
-          handler.handleFailure(sessionId, message.getFailure());
-          break;
-
-        case BUILDER_MESSAGE:
+        case FAILURE -> handler.handleFailure(sessionId, message.getFailure());
+        case BUILDER_MESSAGE -> {
           final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
           final CmdlineRemoteProto.Message.BuilderMessage.Type msgType = builderMessage.getType();
           if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
@@ -180,16 +177,13 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
           else {
             handler.handleBuildMessage(context.channel(), sessionId, builderMessage);
           }
-          break;
-
-        default:
-          LOG.info("Unsupported message type " + messageType);
-          break;
+        }
+        default -> LOG.info("Unsupported message type " + messageType);
       }
     }
     finally {
       if ((isFirstMessage && myCanceledSessions.contains(sessionId)) || (handler == null && !isBuilderEvent(message))) {
-        // handle the case when the session had been cancelled before communication even started  
+        // handle the case when the session had been cancelled before communication even started
         // or if message handling is not possible due to missing handler
         context.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
       }

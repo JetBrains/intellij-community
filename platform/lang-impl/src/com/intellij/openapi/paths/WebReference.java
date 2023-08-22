@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.paths;
 
 import com.intellij.ide.BrowserUtil;
@@ -23,9 +9,6 @@ import com.intellij.psi.impl.FakePsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class WebReference extends PsiReferenceBase<PsiElement> {
   @Nullable private final String myUrl;
   
@@ -47,6 +30,10 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
     myUrl = url;
   }
 
+  public boolean isHttpRequestTarget() {
+    return true;
+  }
+
   @Override
   public PsiElement resolve() {
     return new MyFakePsiElement();
@@ -56,7 +43,7 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
     return myUrl != null ? myUrl : getValue();
   }
 
-  class MyFakePsiElement extends FakePsiElement implements SyntheticElement {
+  final class MyFakePsiElement extends FakePsiElement implements SyntheticElement {
     @Override
     public PsiElement getParent() {
       return myElement;
@@ -91,6 +78,6 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
    * @return true if the element is able to contain WebReference
    */
   public static boolean isWebReferenceWorthy(@NotNull PsiElement element) {
-    return element instanceof PsiLanguageInjectionHost || element instanceof HintedReferenceHost || element instanceof ContributedReferenceHost || element instanceof PsiExternalReferenceHost;
+    return element instanceof HintedReferenceHost || element instanceof ContributedReferenceHost || element instanceof PsiExternalReferenceHost;
   }
 }

@@ -1,0 +1,8 @@
+{
+  "mainFile": "a/A.kt",
+  "type": "MOVE_KOTLIN_METHOD",
+  "methodToMove": "foo",
+  "sourceProperty": "b",
+  "outerInstanceParameter": "a",
+  "enabledInK2": "false"
+}

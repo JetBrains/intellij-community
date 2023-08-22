@@ -11,6 +11,7 @@ import com.jetbrains.rest.RestBundle;
 import com.jetbrains.rest.RestFileType;
 import com.jetbrains.rest.run.docutils.DocutilsRunConfiguration;
 import com.jetbrains.rest.run.sphinx.SphinxRunConfiguration;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,10 +67,10 @@ public final class RestRunConfigurationType implements ConfigurationType {
   }
 
   private static abstract class RestConfigurationFactory extends PythonConfigurationFactoryBase {
-    private final String myName;
+    private final @Nls String myName;
     private final String myId;
 
-    RestConfigurationFactory(@NotNull final ConfigurationType type, @NotNull String name, @NotNull @NonNls String id) {
+    RestConfigurationFactory(@NotNull final ConfigurationType type, @NotNull @Nls String name, @NotNull @NonNls String id) {
       super(type);
       myName = name;
       myId = id;
@@ -89,7 +90,7 @@ public final class RestRunConfigurationType implements ConfigurationType {
 
   private static class DocutilsRunConfigurationFactory extends RestConfigurationFactory {
     protected DocutilsRunConfigurationFactory(ConfigurationType type) {
-      super(type, "Docutils task", "Docutils task");
+      super(type, RestBundle.message("runcfg.docutils.docutils.task"), "Docutils task");
     }
 
     @Override
@@ -101,7 +102,7 @@ public final class RestRunConfigurationType implements ConfigurationType {
 
   private static class SphinxRunConfigurationFactory extends RestConfigurationFactory {
     protected SphinxRunConfigurationFactory(ConfigurationType type) {
-      super(type, "Sphinx task", "Sphinx task");
+      super(type, RestBundle.message("runcfg.docutils.sphinx.task"), "Sphinx task");
     }
 
     @Override

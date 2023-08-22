@@ -1,0 +1,43 @@
+// FILE: first.before.kt
+// "Import extension function 'Shadow.shade'" "true"
+// ERROR: No type arguments expected for fun shade(): Unit
+// ACTION: Create type parameter in function 'shade'
+/* IGNORE_FIR */
+
+package pack_one
+
+class Shadow {
+    fun shade() {}
+}
+
+fun main() {
+    Shadow().shade<caret><Shadow>()
+}
+
+// FILE: second.kt
+package pack_one.sub
+
+import pack_one.Shadow
+
+fun <X> Shadow.shade() {}
+
+
+// FILE: first.after.kt
+// "Import extension function 'Shadow.shade'" "true"
+// ERROR: No type arguments expected for fun shade(): Unit
+// ACTION: Create type parameter in function 'shade'
+/* IGNORE_FIR */
+
+package pack_one
+
+import pack_one.sub.shade
+
+class Shadow {
+    fun shade() {}
+}
+
+fun main() {
+    Shadow().shade<caret><Shadow>()
+}
+
+

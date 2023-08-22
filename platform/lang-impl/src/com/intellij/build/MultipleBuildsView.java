@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
@@ -51,7 +54,7 @@ import java.util.stream.IntStream;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public class MultipleBuildsView implements BuildProgressListener, Disposable {
+public final class MultipleBuildsView implements BuildProgressListener, Disposable {
   private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);
   @NonNls private static final String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
 
@@ -69,6 +72,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   private volatile Content myContent;
   private volatile DefaultActionGroup myToolbarActions;
   private volatile boolean myDisposed;
+  private BuildView myActiveView;
 
   public MultipleBuildsView(Project project,
                             BuildContentManager buildContentManager,
@@ -82,6 +86,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     myBuildsList = new JBList<>();
     myBuildsList.setModel(new DefaultListModel<>());
     myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
+    AnsiEscapeDecoder ansiEscapeDecoder = new AnsiEscapeDecoder();
     myBuildsList.installCellRenderer(obj -> {
       JPanel panel = new JPanel(new BorderLayout());
       SimpleColoredComponent mainComponent = new SimpleColoredComponent();
@@ -92,7 +97,9 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
       if (obj.statusMessage != null) {
         SimpleColoredComponent statusComponent = new SimpleColoredComponent();
         statusComponent.setIcon(EmptyIcon.ICON_16);
-        statusComponent.append(obj.statusMessage, SimpleTextAttributes.GRAY_ATTRIBUTES);
+        ansiEscapeDecoder.escapeText(obj.statusMessage, ProcessOutputTypes.STDOUT, (text, attributes) -> {
+          statusComponent.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES); //NON-NLS
+        });
         panel.add(statusComponent, BorderLayout.SOUTH);
       }
       return panel;
@@ -105,6 +112,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   @Override
   public void dispose() {
     myDisposed = true;
+    myProgressWatcher.stopWatching();
   }
 
   public Content getContent() {
@@ -123,8 +131,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
     List<Runnable> runOnEdt = new SmartList<>();
     AbstractViewManager.BuildInfo buildInfo;
-    if (event instanceof StartBuildEvent) {
-      StartBuildEvent startBuildEvent = (StartBuildEvent)event;
+    if (event instanceof StartBuildEvent startBuildEvent) {
       if (isInitializeStarted.get()) {
         clearOldBuilds(runOnEdt, startBuildEvent);
       }
@@ -148,12 +155,13 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         listModel.addElement(buildInfo);
 
         RunContentDescriptor contentDescriptor;
-        Supplier<RunContentDescriptor> contentDescriptorSupplier = buildInfo.getContentDescriptorSupplier();
+        Supplier<? extends RunContentDescriptor> contentDescriptorSupplier = buildInfo.getContentDescriptorSupplier();
         contentDescriptor = contentDescriptorSupplier != null ? contentDescriptorSupplier.get() : null;
         final Runnable activationCallback;
         if (contentDescriptor != null) {
           buildInfo.setActivateToolWindowWhenAdded(contentDescriptor.isActivateToolWindowWhenAdded());
           if (contentDescriptor instanceof BuildContentDescriptor) {
+            buildInfo.setNavigateToError(((BuildContentDescriptor)contentDescriptor).isNavigateToError());
             buildInfo.setActivateToolWindowWhenFailed(((BuildContentDescriptor)contentDescriptor).isActivateToolWindowWhenFailed());
           }
           buildInfo.setAutoFocusContent(contentDescriptor.isAutoFocusContent());
@@ -164,14 +172,8 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         }
 
         BuildView view = myViewMap.computeIfAbsent(buildInfo, info -> {
-          final DefaultBuildDescriptor buildDescriptor = new DefaultBuildDescriptor(
-            buildInfo.getId(), buildInfo.getTitle(), buildInfo.getWorkingDir(), buildInfo.getStartTime());
-          buildDescriptor.setActivateToolWindowWhenAdded(buildInfo.isActivateToolWindowWhenAdded());
-          buildDescriptor.setActivateToolWindowWhenFailed(buildInfo.isActivateToolWindowWhenFailed());
-          buildDescriptor.setAutoFocusContent(buildInfo.isAutoFocusContent());
-
           String selectionStateKey = "build.toolwindow." + myViewManager.getViewName() + ".selection.state";
-          final BuildView buildView = new BuildView(myProject, buildDescriptor, selectionStateKey, myViewManager);
+          BuildView buildView = new BuildView(myProject, buildInfo, selectionStateKey, myViewManager);
           Disposer.register(this, buildView);
           if (contentDescriptor != null) {
             Disposer.register(buildView, contentDescriptor);
@@ -180,8 +182,6 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         });
         view.onEvent(buildId, event);
 
-        myContent.setPreferredFocusedComponent(view::getPreferredFocusableComponent);
-
         myBuildContentManager.setSelectedContent(myContent,
                                                  buildInfo.isAutoFocusContent(),
                                                  buildInfo.isAutoFocusContent(),
@@ -189,9 +189,8 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
                                                  activationCallback);
         buildInfo.content = myContent;
 
-        if (myThreeComponentsSplitter.getSecondComponent() == null) {
-          myThreeComponentsSplitter.setSecondComponent(view);
-          myViewManager.configureToolbar(myToolbarActions, this, view);
+        if (myActiveView == null) {
+          setActiveView(view);
         }
         if (myBuildsList.getModel().getSize() > 1) {
           JBScrollPane scrollPane = new JBScrollPane();
@@ -257,18 +256,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
             public void valueChanged(ListSelectionEvent e) {
               AbstractViewManager.BuildInfo selectedBuild = myBuildsList.getSelectedValue();
               if (selectedBuild == null) return;
-
-              BuildView view = myViewMap.get(selectedBuild);
-              JComponent lastComponent = myThreeComponentsSplitter.getSecondComponent();
-              if (view != null && lastComponent != view.getComponent()) {
-                myThreeComponentsSplitter.setSecondComponent(view.getComponent());
-                view.getComponent().setVisible(true);
-                if (lastComponent != null) {
-                  lastComponent.setVisible(false);
-                }
-                myViewManager.configureToolbar(myToolbarActions, MultipleBuildsView.this, view);
-                view.getComponent().repaint();
-              }
+              setActiveView(myViewMap.get(selectedBuild));
             }
           });
 
@@ -280,19 +268,15 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           tb.getComponent().setBorder(JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true));
           consoleComponent.add(tb.getComponent(), BorderLayout.WEST);
 
-          myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true);
-          Disposer.register(myContent, new Disposable() {
+          myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true) {
             @Override
             public void dispose() {
+              super.dispose();
               Disposer.dispose(MultipleBuildsView.this);
-            }
-          });
-          Disposer.register(myContent, new Disposable() {
-            @Override
-            public void dispose() {
               myViewManager.onBuildsViewRemove(MultipleBuildsView.this);
             }
-          });
+          };
+
           Icon contentIcon = myViewManager.getContentIcon();
           if (contentIcon != null) {
             myContent.setIcon(contentIcon);
@@ -318,6 +302,27 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     }
   }
 
+  private void setActiveView(@Nullable BuildView view) {
+    if (myActiveView == view) {
+      return;
+    }
+    if (myActiveView != null) {
+      myActiveView.getComponent().setVisible(false);
+    }
+    myActiveView = view;
+    if (view == null) {
+      myThreeComponentsSplitter.setSecondComponent(null);
+      myContent.setPreferredFocusableComponent(null);
+    } else {
+      JComponent viewComponent = view.getComponent();
+      myThreeComponentsSplitter.setSecondComponent(viewComponent);
+      myContent.setPreferredFocusedComponent(view::getPreferredFocusableComponent);
+      myViewManager.configureToolbar(myToolbarActions, this, view);
+      viewComponent.setVisible(true);
+      viewComponent.repaint();
+    }
+  }
+
   private void clearOldBuilds(List<Runnable> runOnEdt, StartBuildEvent startBuildEvent) {
     long currentTime = System.currentTimeMillis();
     DefaultListModel<AbstractViewManager.BuildInfo> listModel = (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();
@@ -325,12 +330,16 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     List<AbstractViewManager.BuildInfo> sameBuildsToClear = new SmartList<>();
     for (int i = 0; i < listModel.getSize(); i++) {
       AbstractViewManager.BuildInfo build = listModel.getElementAt(i);
-      boolean sameBuild = build.getWorkingDir().equals(startBuildEvent.getBuildDescriptor().getWorkingDir());
-      if (!build.isRunning() && sameBuild) {
+      boolean sameBuildKind = build.getWorkingDir().equals(startBuildEvent.getBuildDescriptor().getWorkingDir());
+      boolean differentBuildsFromSameBuildGroup = !build.getId().equals(startBuildEvent.getBuildDescriptor().getId()) &&
+                                                  build.getGroupId() != null &&
+                                                  build.getGroupId().equals(startBuildEvent.getBuildDescriptor().getGroupId());
+
+      if (!build.isRunning() && sameBuildKind && !differentBuildsFromSameBuildGroup) {
         sameBuildsToClear.add(build);
       }
       boolean buildFinishedRecently = currentTime - build.endTime < TimeUnit.SECONDS.toMillis(1);
-      if (build.isRunning() || !sameBuild && buildFinishedRecently) {
+      if (build.isRunning() || !sameBuildKind && buildFinishedRecently || differentBuildsFromSameBuildGroup) {
         clearAll = false;
       }
     }
@@ -344,7 +353,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
       runOnEdt.add(() -> {
         myBuildsList.setVisible(false);
         myThreeComponentsSplitter.setFirstComponent(null);
-        myThreeComponentsSplitter.setSecondComponent(null);
+        setActiveView(null);
       });
       myToolbarActions.removeAll();
       isFirstErrorShown.set(false);
@@ -367,7 +376,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     return myViewMap.get(buildInfo);
   }
 
-  private class MultipleBuildsPanel extends JPanel implements OccurenceNavigator {
+  private final class MultipleBuildsPanel extends JPanel implements OccurenceNavigator {
     MultipleBuildsPanel() {super(new BorderLayout());}
 
     @Override
@@ -452,10 +461,12 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     }
   }
 
-  private class ProgressWatcher implements Runnable {
+  private final class ProgressWatcher implements Runnable {
 
-    private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    private final Set<AbstractViewManager.BuildInfo> myBuilds = ContainerUtil.newConcurrentSet();
+    private final Alarm myRefreshAlarm = new Alarm();
+    private final Set<AbstractViewManager.BuildInfo> myBuilds = ConcurrentCollectionFactory.createConcurrentSet();
+
+    private volatile boolean myIsStopped = false;
 
     @Override
     public void run() {
@@ -471,6 +482,10 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     }
 
     void addBuild(AbstractViewManager.BuildInfo buildInfo) {
+      if (myIsStopped) {
+        LOG.warn("Attempt to add new build " + buildInfo + ";title=" + buildInfo.getTitle() + " to stopped watcher instance");
+        return;
+      }
       myBuilds.add(buildInfo);
       if (myBuilds.size() > 1) {
         myRefreshAlarm.cancelAllRequests();
@@ -480,6 +495,11 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
 
     void stopBuild(AbstractViewManager.BuildInfo buildInfo) {
       myBuilds.remove(buildInfo);
+    }
+
+    public void stopWatching() {
+      myIsStopped = true;
+      myRefreshAlarm.cancelAllRequests();
     }
   }
 }

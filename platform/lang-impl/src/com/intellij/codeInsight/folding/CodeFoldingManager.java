@@ -6,9 +6,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 public abstract class CodeFoldingManager {
   public static CodeFoldingManager getInstance(Project project) {
@@ -35,9 +37,15 @@ public abstract class CodeFoldingManager {
 
   public abstract void releaseFoldings(@NotNull Editor editor);
 
+  /**
+   * @deprecated use {@link #buildInitialFoldings(Document)} from background thread and then {@link CodeFoldingState#setToEditor(Editor)} in EDT
+   */
+  @TestOnly
+  @Deprecated
   public abstract void buildInitialFoldings(@NotNull Editor editor);
 
   @Nullable
+  @RequiresBackgroundThread
   public abstract CodeFoldingState buildInitialFoldings(@NotNull Document document);
 
   /**
@@ -48,8 +56,8 @@ public abstract class CodeFoldingManager {
   public abstract Boolean isCollapsedByDefault(@NotNull FoldRegion region);
 
   /**
-   * Schedules recalculation of foldings in editor ({@link com.intellij.codeInsight.daemon.impl.CodeFoldingPass CodeFoldingPass}), which
-   * will happen even if document (and other dependencies declared by {@link com.intellij.lang.folding.FoldingBuilder FoldingBuilder})
+   * Schedules recalculation of foldings in editor (see {@link com.intellij.codeInsight.folding.impl.CodeFoldingPass CodeFoldingPass}),
+   * which will happen even if the document (or other dependencies declared by {@link com.intellij.lang.folding.FoldingBuilder FoldingBuilder})
    * haven't changed.
    */
   public abstract void scheduleAsyncFoldingUpdate(@NotNull Editor editor);

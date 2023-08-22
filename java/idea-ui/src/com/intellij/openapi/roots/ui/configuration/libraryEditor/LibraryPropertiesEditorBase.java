@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,15 +31,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public abstract class LibraryPropertiesEditorBase<P extends LibraryProperties, T extends LibraryType<P>> extends LibraryPropertiesEditor {
+  protected final Logger logger = Logger.getInstance(getClass());
+
+  private boolean myModified;
   private JPanel myMainPanel;
   private JLabel myDescriptionLabel;
   private JButton myEditButton;
-  private boolean myModified;
+  protected JButton myReloadButton;
   protected final LibraryEditorComponent<P> myEditorComponent;
   protected final T myLibraryType;
 
   protected LibraryPropertiesEditorBase(final LibraryEditorComponent<P> editorComponent,
-                                        T libraryType, @Nullable String editButtonText) {
+                                        T libraryType, @Nullable @NlsContexts.Button String editButtonText) {
     myEditorComponent = editorComponent;
     myLibraryType = libraryType;
     updateDescription();
@@ -59,7 +64,9 @@ public abstract class LibraryPropertiesEditorBase<P extends LibraryProperties, T
   }
 
   protected void updateDescription() {
-    myDescriptionLabel.setText(myLibraryType.getDescription(myEditorComponent.getProperties()));
+    String description = myLibraryType.getDescription(myEditorComponent.getProperties());
+    myDescriptionLabel.setText(description);
+    myDescriptionLabel.setToolTipText(description);
   }
 
   protected abstract void edit();

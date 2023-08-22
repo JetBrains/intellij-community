@@ -1,27 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author peter
  * @see ProcessingContext
  */
-public class SharedProcessingContext {
+public final class SharedProcessingContext {
   private final Map<Object, Object> myMap = new ConcurrentHashMap<>();
 
-  public Object get(@NonNls final @NotNull String key) {
+  public Object get(final @NonNls @NotNull String key) {
     return myMap.get(key);
   }
 
-  public void put(@NonNls final @NotNull String key, final @NotNull Object value) {
+  public void put(final @NonNls @NotNull String key, final @NotNull Object value) {
     myMap.put(key, value);
   }
 
@@ -44,11 +43,7 @@ public class SharedProcessingContext {
   }
 
   public <T> void put(@NotNull Key<T> key, Object element, T value) {
-    Map map = (Map)myMap.get(key);
-    if (map == null) {
-      map = new THashMap();
-      myMap.put(key, map);
-    }
-    map.put(element, value);
+    //noinspection unchecked
+    ((Map)myMap.computeIfAbsent(key, __ -> new HashMap<>())).put(element, value);
   }
 }

@@ -8,7 +8,7 @@ public class TestClassLoop {
    }
 
    public static void testFinally() {
-      boolean var0 = Math.random() > 0.0D;// 29
+      boolean var0 = Math.random() > 0.0;// 29
 
       while(true) {
          try {
@@ -22,7 +22,7 @@ public class TestClassLoop {
    }
 
    public static void testFinallyContinue() {
-      boolean var0 = Math.random() > 0.0D;// 45
+      boolean var0 = Math.random() > 0.0;// 45
 
       while(true) {
          while(true) {

@@ -26,9 +26,6 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractRemoteExternalSystemServiceWrapper<S extends ExternalSystemExecutionSettings, T extends RemoteExternalSystemService<S>>
   implements RemoteExternalSystemService<S>
 {

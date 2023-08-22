@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.Condition;
@@ -30,7 +30,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   @Override
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
-    addDirectoryCopyInstructions(directory, filter, FileCopyingHandler.DEFAULT);
+    addDirectoryCopyInstructions(directory, filter, FilterCopyHandler.DEFAULT);
   }
 
   @Override
@@ -54,13 +54,12 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile,
                                              @NotNull String pathInJar,
-                                             @NotNull Condition<String> pathInJarFilter) {
+                                             @NotNull Condition<? super String> pathInJarFilter) {
     //an entry of a jar file is excluded if and only if the jar file itself is excluded. In that case we should unpack entries to the artifact
     //because the jar itself is explicitly added to the artifact layout.
-    boolean includeExcluded = true;
 
     final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
-                                                                 myInstructionsBuilder.getIgnoredFileIndex(), includeExcluded);
+                                                                 myInstructionsBuilder.getIgnoredFileIndex(), true);
     DestinationInfo destination = createDirectoryDestination();
     if (destination != null) {
       ArtifactRootDescriptor descriptor = myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter, destination, pathInJarFilter);
@@ -83,10 +82,9 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     return current;
   }
 
-
   @Override
   public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
-    addFileCopyInstruction(file, outputFileName, FileCopyingHandler.DEFAULT);
+    addFileCopyInstruction(file, outputFileName, FilterCopyHandler.DEFAULT);
   }
 
   @Override
@@ -112,7 +110,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   protected abstract void onAdded(ArtifactRootDescriptor descriptor);
 
-  private static class SourceFileFilterImpl extends SourceFileFilter {
+  private static final class SourceFileFilterImpl extends SourceFileFilter {
     private final SourceFileFilter myBaseFilter;
     private final ModuleExcludeIndex myRootsIndex;
     private final IgnoredFileIndex myIgnoredFileIndex;

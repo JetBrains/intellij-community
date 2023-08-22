@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public final class BasicRendererProperties implements Cloneable {
     myEnabledDefaultValue = enabledDefaultValue;
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -67,23 +68,18 @@ public final class BasicRendererProperties implements Cloneable {
     for (Element option : element.getChildren("option")) {
       final String optionName = option.getAttributeValue("name");
       switch (optionName) {
-        case NAME_OPTION:
-          myName = option.getAttributeValue("value");
-          break;
-        case ENABLED_OPTION:
+        case NAME_OPTION -> myName = option.getAttributeValue("value");
+        case ENABLED_OPTION -> {
           // default is false
           String value = option.getAttributeValue("value");
           if (value != null) {
             myEnabled = Boolean.parseBoolean(value);
           }
-          break;
-        case CLASSNAME_OPTION:
-          myClassName = option.getAttributeValue("value");
-          break;
-        case SHOW_TYPE_OPTION:
+        }
+        case CLASSNAME_OPTION -> myClassName = option.getAttributeValue("value");
+        case SHOW_TYPE_OPTION ->
           // default is true
           myShowType = !"false".equalsIgnoreCase(option.getAttributeValue("value"));
-          break;
       }
     }
 
@@ -110,7 +106,7 @@ public final class BasicRendererProperties implements Cloneable {
   }
 
   @Override
-  public BasicRendererProperties clone()  {
+  public BasicRendererProperties clone() {
     try {
       return (BasicRendererProperties)super.clone();
     }

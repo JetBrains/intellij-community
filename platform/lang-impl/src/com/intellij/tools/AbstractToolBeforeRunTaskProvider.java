@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBeforeRunTask> extends BeforeRunTaskProvider<T> {
+public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBeforeRunTask<?, ?>> extends BeforeRunTaskProvider<T> {
   protected static final Logger LOG = Logger.getInstance(ToolBeforeRunTaskProvider.class);
 
   @Override
@@ -59,8 +59,9 @@ public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBe
       return ToolsBundle.message("tools.unknown.external.tool");
     }
     String groupName = tool.getGroup();
+    String description = StringUtil.isEmpty(groupName) ? tool.getName() : groupName + "/" + tool.getName();
     return ToolsBundle
-      .message("tools.before.run.description", StringUtil.isEmpty(groupName) ? tool.getName() : groupName + "/" + tool.getName()) + (!tool.isEnabled() ? " (disabled)" : "");
+      .message("tools.before.run.description", description, tool.isEnabled() ? 1 : 0);
   }
 
   @Override

@@ -83,6 +83,10 @@ public class OptionalPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  public void testInReturn() {
+    doTest();
+  }
+
   public void testNotNullMethodCall() {
     myFixture.addClass("package org.jetbrains.annotations;" +
                        "public @interface NotNull {}");

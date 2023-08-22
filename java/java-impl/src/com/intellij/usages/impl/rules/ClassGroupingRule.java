@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -21,6 +21,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,9 +88,9 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     return index < 0? name : name.substring(0, index);
   }
 
-  private static class ClassUsageGroup implements UsageGroup, TypeSafeDataProvider {
+  private static class ClassUsageGroup implements UsageGroup, DataProvider {
     private final SmartPsiElementPointer<PsiClass> myClassPointer;
-    private final String myText;
+    private final @NlsSafe String myText;
     private final String myQName;
     private final Icon myIcon;
 
@@ -100,11 +101,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    @Override
-    public void update() {
-    }
-
-    private static String createText(PsiClass aClass) {
+    private static @NlsSafe String createText(PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {
@@ -115,13 +112,13 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myText;
     }
 
@@ -167,21 +164,27 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiClass());
+    public Object getData(@NotNull String dataId) {
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)this::getSlowData;
       }
-      if (UsageView.USAGE_INFO_KEY == key) {
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NonNls String dataId) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getPsiClass();
+      }
+      else if (UsageView.USAGE_INFO_KEY.is(dataId)) {
         PsiClass psiClass = getPsiClass();
-        if (psiClass != null) {
-          sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(psiClass));
-        }
+        return psiClass == null ? null : new UsageInfo(psiClass);
       }
+      return null;
     }
   }
 }

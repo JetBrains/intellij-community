@@ -28,11 +28,13 @@ WHITE_SPACE=\s+
 
 LINE_COMMENT=[#;].*
 
+PATTERN_WHITE_SPACE=\s+
 PATTERN_LETTER=[^:=\s\[\]\{\}\\,*?!#;]|\\.|\\\R
-IDENTIFIER_LETTER=[^:=\s\[\],#;\.]
+IDENTIFIER_EDGE_LETTER=[^:=\s\[\],#;\.]
+IDENTIFIER_LETTER=[^:=\r\n\[\],#;\.]
 
 PATTERN_IDENTIFIER=({PATTERN_LETTER})+
-IDENTIFIER={IDENTIFIER_LETTER}+
+IDENTIFIER={IDENTIFIER_EDGE_LETTER}|({IDENTIFIER_EDGE_LETTER}{IDENTIFIER_LETTER}*{IDENTIFIER_EDGE_LETTER})
 
 %state YYHEADER
 %state YYCHARCLASS
@@ -41,7 +43,6 @@ IDENTIFIER={IDENTIFIER_LETTER}+
 
 "="                         { yybegin(YYINITIAL); return SEPARATOR; }
 ","                         { return COMMA; }
-{WHITE_SPACE}               { return WHITE_SPACE; }
 {LINE_COMMENT}              { return LINE_COMMENT; }
 
 <YYCHARCLASS> {
@@ -58,6 +59,7 @@ IDENTIFIER={IDENTIFIER_LETTER}+
   "]"                       { yybegin(YYINITIAL); return R_BRACKET; }
   "{"                       { return L_CURLY; }
   "}"                       { return R_CURLY; }
+  {PATTERN_WHITE_SPACE}     { return PATTERN_WHITE_SPACE; }
   {PATTERN_IDENTIFIER}      { return PATTERN_IDENTIFIER; }
 }
 
@@ -66,6 +68,7 @@ IDENTIFIER={IDENTIFIER_LETTER}+
   "["                       { yybegin(YYHEADER); return L_BRACKET; }
   "]"                       { return R_BRACKET; }
   ":"                       { return COLON; }
+  {WHITE_SPACE}             { return WHITE_SPACE; }
   {IDENTIFIER}              { return IDENTIFIER; }
 }
 

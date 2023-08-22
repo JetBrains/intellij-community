@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
  */
 package com.intellij.tools;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,8 +30,13 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("HardCodedStringLiteral")
-public class ScanSourceCommentsAction extends AnAction {
+public final class ScanSourceCommentsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ScanSourceCommentsAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -52,7 +44,9 @@ public class ScanSourceCommentsAction extends AnAction {
     final Project p = e.getProject();
     final String file =
       Messages.showInputDialog(p, "Enter path to the file comments will be extracted to", "Comments File Path", Messages.getQuestionIcon());
-
+    if (file  == null) {
+      return;
+    }
     try (final PrintStream stream = new PrintStream(file)){
       stream.println("Comments in " + p.getName());
 
@@ -115,7 +109,7 @@ public class ScanSourceCommentsAction extends AnAction {
   }
 
 
-  private static class CommentDescriptor {
+  private static final class CommentDescriptor {
     private final String myText;
     private final Set<VirtualFile> myFiles = new LinkedHashSet<>();
 

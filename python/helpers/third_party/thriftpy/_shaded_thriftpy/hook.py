@@ -22,6 +22,8 @@ class ThriftImporter(object):
 
     def load_module(self, fullname):
         return load_module(fullname)
+
+
 _imp = ThriftImporter()
 
 

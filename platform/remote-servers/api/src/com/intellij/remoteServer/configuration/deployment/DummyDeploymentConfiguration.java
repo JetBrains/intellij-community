@@ -7,6 +7,9 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DummyDeploymentConfiguration extends DeploymentConfiguration implements PersistentStateComponent<DummyDeploymentConfiguration> {
   @Override
   public PersistentStateComponent<?> getSerializer() {
@@ -25,6 +28,17 @@ public class DummyDeploymentConfiguration extends DeploymentConfiguration implem
 
   @Override
   public void checkConfiguration(RemoteServer<?> server, DeploymentSource deploymentSource) throws RuntimeConfigurationException {
+
+  }
+
+  @NotNull
+  @Override
+  public List<Option> getSelectedOptions() {
+    return new ArrayList<>();
+  }
+
+  @Override
+  public void setSelectedOptions(@NotNull List<Option> selectedOptions) {
 
   }
 }

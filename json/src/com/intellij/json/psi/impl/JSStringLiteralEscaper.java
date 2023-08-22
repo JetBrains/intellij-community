@@ -7,7 +7,15 @@ import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost> extends LiteralTextEscaper<T> {
+  /**
+   * Offset in injected string -> offset in host string
+   * Last element contains imaginary offset for the character after the last one in injected string. It would be host string length.
+   * E.g. for "aa\nbb" it is [0,1,2,4,5,6]
+   */
   private int[] outSourceOffsets;
 
   public JSStringLiteralEscaper(T host) {
@@ -39,19 +47,17 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
   }
 
   public static boolean parseStringCharacters(String chars, StringBuilder outChars, Ref<int[]> sourceOffsetsRef, boolean regExp, boolean escapeBacktick) {
-    int[] sourceOffsets = new int[chars.length() + 1];
-    sourceOffsetsRef.set(sourceOffsets);
-
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);
-      for (int i = 0; i < sourceOffsets.length; i++) {
-        sourceOffsets[i] = i;
-      }
+      sourceOffsetsRef.set(IntStream.range(0, chars.length() + 1).toArray());
       return true;
     }
 
+    int[] sourceOffsets = new int[chars.length() + 1];
     int index = 0;
     final int outOffset = outChars.length();
+    boolean result = true;
+    loop:
     while (index < chars.length()) {
       char c = chars.charAt(index++);
 
@@ -62,7 +68,10 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
         outChars.append(c);
         continue;
       }
-      if (index == chars.length()) return false;
+      if (index == chars.length()) {
+        result = false;
+        break;
+      }
       c = chars.charAt(index++);
       if (escapeBacktick && c == '`') {
         outChars.append(c);
@@ -75,53 +84,16 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
       }
       else {
         switch (c) {
-          case 'b':
-            outChars.append('\b');
-            break;
-
-          case 't':
-            outChars.append('\t');
-            break;
-
-          case 'n':
-            outChars.append('\n');
-            break;
-
-          case 'f':
-            outChars.append('\f');
-            break;
-
-          case 'r':
-            outChars.append('\r');
-            break;
-
-          case '"':
-            outChars.append('"');
-            break;
-
-          case '/':
-            outChars.append('/');
-            break;
-
-          case '\n':
-            outChars.append('\n');
-            break;
-          case '\'':
-            outChars.append('\'');
-            break;
-
-          case '\\':
-            outChars.append('\\');
-            break;
-
-          case '0':
-          case '1':
-          case '2':
-          case '3':
-          case '4':
-          case '5':
-          case '6':
-          case '7': {
+          case 'b' -> outChars.append('\b');
+          case 't' -> outChars.append('\t');
+          case 'n', '\n' -> outChars.append('\n');
+          case 'f' -> outChars.append('\f');
+          case 'r' -> outChars.append('\r');
+          case '"' -> outChars.append('"');
+          case '/' -> outChars.append('/');
+          case '\'' -> outChars.append('\'');
+          case '\\' -> outChars.append('\\');
+          case '0', '1', '2', '3', '4', '5', '6', '7' -> {
             char startC = c;
             int v = (int)c - '0';
             if (index < chars.length()) {
@@ -146,8 +118,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
             }
             outChars.append((char)v);
           }
-          break;
-          case 'x':
+          case 'x' -> {
             if (index + 2 <= chars.length()) {
               try {
                 int v = Integer.parseInt(chars.substring(index, index + 2), 16);
@@ -155,52 +126,68 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
                 index += 2;
               }
               catch (Exception e) {
-                return false;
+                result = false;
+                break loop;
               }
             }
             else {
-              return false;
+              result = false;
+              break loop;
             }
-            break;
-          case 'u':
+          }
+          case 'u' -> {
             if (index + 3 <= chars.length() && chars.charAt(index) == '{') {
               int end = chars.indexOf('}', index + 1);
-              if (end < 0) return false;
+              if (end < 0) {
+                result = false;
+                break loop;
+              }
               try {
                 int v = Integer.parseInt(chars.substring(index + 1, end), 16);
                 c = chars.charAt(index + 1);
-                if (c == '+' || c == '-') return false;
+                if (c == '+' || c == '-') {
+                  result = false;
+                  break loop;
+                }
                 outChars.appendCodePoint(v);
                 index = end + 1;
-              } catch (Exception e) {
-                return false;
+              }
+              catch (Exception e) {
+                result = false;
+                break loop;
               }
             }
             else if (index + 4 <= chars.length()) {
               try {
                 int v = Integer.parseInt(chars.substring(index, index + 4), 16);
                 c = chars.charAt(index);
-                if (c == '+' || c == '-') return false;
+                if (c == '+' || c == '-') {
+                  result = false;
+                  break loop;
+                }
                 outChars.append((char)v);
                 index += 4;
               }
               catch (Exception e) {
-                return false;
+                result = false;
+                break loop;
               }
             }
             else {
-              return false;
+              result = false;
+              break loop;
             }
-            break;
-
-          default:
-            outChars.append(c);
-            break;
+          }
+          default -> outChars.append(c);
         }
       }
 
       sourceOffsets[outChars.length() - outOffset] = index;
     }
-    return true;
+
+    sourceOffsets[outChars.length() - outOffset] = chars.length();
+
+    sourceOffsetsRef.set(Arrays.copyOf(sourceOffsets, outChars.length() - outOffset + 1));
+    return result;
   }
 }

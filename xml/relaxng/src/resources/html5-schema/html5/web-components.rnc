@@ -51,5 +51,28 @@ namespace c = "http://n.validator.nu/custom-elements/"
 ## The "is" attribute
 	common.attrs.other &= attribute is { common.data.custom.element.name }?
 
+## Slot: <slot>
+
+	slot.elem.flow =
+		element slot { slot.inner.flow & slot.attrs }
+	slot.elem.phrasing =
+		element slot { slot.inner.phrasing & slot.attrs }
+	slot.attrs =
+		(	common.attrs
+		&	slot.attrs.name?
+		&	common.attrs.aria?
+		)
+	slot.attrs.name =
+			attribute name {
+				string
+			}
+	slot.inner.flow =
+		( common.inner.transparent.flow )
+	slot.inner.phrasing =
+		( common.inner.phrasing )
+
+	common.elem.flow |= slot.elem.flow
+	common.elem.phrasing |= slot.elem.phrasing
+
 ## The "slot" attribute
 	common.attrs.other &= attribute slot { text }?

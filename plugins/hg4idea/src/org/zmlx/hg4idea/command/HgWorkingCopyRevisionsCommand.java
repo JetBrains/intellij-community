@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -49,7 +50,7 @@ public class HgWorkingCopyRevisionsCommand {
    * Current repository revision(s).
    * @param repo repository to work on.
    * @return List of parent's revision numbers.
-   * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
+   * @see #parents(VirtualFile, VirtualFile, HgRevisionNumber)
    * TODO: return Pair
    */
   @NotNull
@@ -58,7 +59,7 @@ public class HgWorkingCopyRevisionsCommand {
   }
 
   /**
-   * @see #parents(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.vfs.VirtualFile, org.zmlx.hg4idea.HgRevisionNumber)
+   * @see #parents(VirtualFile, VirtualFile, HgRevisionNumber)
    */
   @NotNull
   public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file) {
@@ -99,11 +100,11 @@ public class HgWorkingCopyRevisionsCommand {
   @NotNull
   public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
     final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision, true);
-    switch (revisions.size()) {
-      case 1: return Couple.of(revisions.get(0), null);
-      case 2: return Couple.of(revisions.get(0), revisions.get(1));
-      default: return Couple.of(null, null);
-    }
+    return switch (revisions.size()) {
+      case 1 -> Couple.of(revisions.get(0), null);
+      case 2 -> Couple.of(revisions.get(0), revisions.get(1));
+      default -> Couple.of(null, null);
+    };
   }
 
   @Nullable
@@ -178,7 +179,7 @@ public class HgWorkingCopyRevisionsCommand {
    * @return List of revisions.
    */
   public @NotNull List<HgRevisionNumber> getRevisions(@NotNull VirtualFile repo,
-                                              @NotNull String command,
+                                              @NotNull @NonNls String command,
                                               @Nullable FilePath file,
                                               @Nullable HgRevisionNumber revision,
                                               boolean silent) {

@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
@@ -11,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLinkHandler> {
   public static final ExtensionPointName<TooltipLinkHandlerEP> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.linkHandler");
 
@@ -23,13 +22,12 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
   @Attribute("handlerClass")
   public String handlerClassName;
 
-  @Nullable
   @Override
-  protected String getImplementationClassName() {
+  protected @Nullable String getImplementationClassName() {
     return handlerClassName;
   }
 
-  public static boolean handleLink(@NotNull final String ref, @NotNull final Editor editor) {
+  public static boolean handleLink(final @NotNull String ref, final @NotNull Editor editor) {
     return EP_NAME.computeSafeIfAny(ep -> {
       if (ref.startsWith(ep.prefix)) {
         String refSuffix = ref.substring(ep.prefix.length());
@@ -39,8 +37,7 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
     }) == Boolean.TRUE;
   }
 
-  @Nullable
-  public static String getDescription(@NotNull final String ref, @NotNull final Editor editor) {
+  public static @Nullable @InspectionMessage String getDescription(final @NotNull String ref, final @NotNull Editor editor) {
     return EP_NAME.computeSafeIfAny(ep -> {
       if (ref.startsWith(ep.prefix)) {
         String refSuffix = ref.substring(ep.prefix.length());
@@ -50,14 +47,13 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
     });
   }
 
-  @NotNull
-  public static String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
+  public static @NotNull String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
     return Objects.requireNonNull(EP_NAME.computeSafeIfAny(ep -> {
       if (ref.startsWith(ep.prefix)) {
         String refSuffix = ref.substring(ep.prefix.length());
         return ep.getInstance().getDescriptionTitle(refSuffix, editor);
       }
-      return TooltipLinkHandler.INSPECTION_INFO;
+      return IdeBundle.message("inspection.message.inspection.info");
     }));
   }
 }

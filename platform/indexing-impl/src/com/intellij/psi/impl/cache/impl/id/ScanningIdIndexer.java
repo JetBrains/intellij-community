@@ -7,15 +7,11 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class ScanningIdIndexer implements IdIndexer {
 
   protected abstract WordsScanner createScanner();
@@ -26,7 +22,7 @@ public abstract class ScanningIdIndexer implements IdIndexer {
     final CharSequence chars = inputData.getContentAsText();
     final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
     final IdDataConsumer consumer = new IdDataConsumer();
-    createScanner().processWords(chars, new Processor<WordOccurrence>() {
+    createScanner().processWords(chars, new Processor<>() {
       @Override
       public boolean process(final WordOccurrence t) {
         if (charsArray != null && t.getBaseText() == chars) {

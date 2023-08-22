@@ -1,0 +1,14 @@
+buildscript {
+  ext.t = '1.1.10'
+
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${t}"
+  }
+}
+
+apply plugin: 'java'
+apply plugin: 'kotlin'

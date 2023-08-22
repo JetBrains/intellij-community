@@ -22,20 +22,17 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-/**
- * @author vlan
- */
 public class PyOperatorReference extends PyReferenceImpl {
   public PyOperatorReference(PyQualifiedExpression element, @NotNull PyResolveContext context) {
     super(element, context);
@@ -80,7 +77,7 @@ public class PyOperatorReference extends PyReferenceImpl {
 
   public String getReadableOperatorName() {
     final String name = myElement.getReferencedName();
-    if (PyNames.SUBSCRIPTION_OPERATORS.contains(name)) {
+    if (name != null && PyNames.SUBSCRIPTION_OPERATORS.contains(name)) {
       return "[]";
     }
     else {
@@ -130,9 +127,15 @@ public class PyOperatorReference extends PyReferenceImpl {
       typeEvalContext.trace("Side text is %s, type is %s", object.getText(), type);
       if (type != null) {
         final List<? extends RatedResolveResult> res =
-          type instanceof PyClassLikeType && ((PyClassLikeType)type).isDefinition()
-          ? resolveDefinitionMember((PyClassLikeType)type, object, name)
-          : type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+          PyTypeUtil
+            .toStream(type)
+            .nonNull()
+            .flatCollection(
+              it -> it instanceof PyClassLikeType && ((PyClassLikeType)it).isDefinition()
+                    ? resolveDefinitionMember((PyClassLikeType)it, object, name)
+                    : it.resolveMember(name, object, AccessDirection.of(myElement), myContext)
+            )
+            .toList();
 
         if (!ContainerUtil.isEmpty(res)) {
           results.addAll(res);

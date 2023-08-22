@@ -1,5 +1,6 @@
 package com.intellij.tasks.redmine.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +24,7 @@ public class RedmineProject {
   @Override
   public final boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof RedmineProject)) return false;
-
-    RedmineProject project = (RedmineProject)o;
+    if (!(o instanceof RedmineProject project)) return false;
 
     return id == project.id;
   }
@@ -48,7 +47,7 @@ public class RedmineProject {
   }
 
   @NotNull
-  public String getName() {
+  public @NlsSafe String getName() {
     return name;
   }
 

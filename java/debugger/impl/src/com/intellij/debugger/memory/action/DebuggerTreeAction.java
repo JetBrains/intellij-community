@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
@@ -14,10 +14,10 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class DebuggerTreeAction extends XDebuggerTreeActionBase {
   @Nullable
-  protected ObjectReference getObjectReference(@NotNull XValueNodeImpl node) {
+  public static ObjectReference getObjectReference(@NotNull XValueNodeImpl node) {
     XValue valueContainer = node.getValueContainer();
     if (valueContainer instanceof NodeDescriptorProvider) {
-      NodeDescriptor descriptor = ((NodeDescriptorProvider) valueContainer).getDescriptor();
+      NodeDescriptor descriptor = ((NodeDescriptorProvider)valueContainer).getDescriptor();
       if (descriptor instanceof ValueDescriptorImpl) {
         if (((ValueDescriptorImpl)descriptor).isValueReady()) {
           Value value = ((ValueDescriptorImpl)descriptor).getValue();

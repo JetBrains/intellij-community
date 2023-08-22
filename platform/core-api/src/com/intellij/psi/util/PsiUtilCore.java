@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
@@ -17,6 +18,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
@@ -29,33 +31,24 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
 public class PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtilCore.class);
   public static final PsiElement NULL_PSI_ELEMENT = new NullPsiElement();
   protected static class NullPsiElement implements PsiElement {
     @Override
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       throw createException();
     }
 
     @Override
-    @NotNull
-    public Language getLanguage() {
+    public @NotNull Language getLanguage() {
       throw createException();
     }
 
@@ -75,26 +68,22 @@ public class PsiUtilCore {
     }
 
     @Override
-    @Nullable
-    public PsiElement getFirstChild() {
+    public @Nullable PsiElement getFirstChild() {
       throw createException();
     }
 
     @Override
-    @Nullable
-    public PsiElement getLastChild() {
+    public @Nullable PsiElement getLastChild() {
       throw createException();
     }
 
     @Override
-    @Nullable
-    public PsiElement getNextSibling() {
+    public @Nullable PsiElement getNextSibling() {
       throw createException();
     }
 
     @Override
-    @Nullable
-    public PsiElement getPrevSibling() {
+    public @Nullable PsiElement getPrevSibling() {
       throw createException();
     }
 
@@ -124,8 +113,7 @@ public class PsiUtilCore {
     }
 
     @Override
-    @Nullable
-    public PsiReference findReferenceAt(int offset) {
+    public @Nullable PsiReference findReferenceAt(int offset) {
       throw createException();
     }
 
@@ -254,8 +242,7 @@ public class PsiUtilCore {
     }
 
     @Override
-    @Nullable
-    public PsiReference getReference() {
+    public @Nullable PsiReference getReference() {
       throw createException();
     }
 
@@ -293,14 +280,12 @@ public class PsiUtilCore {
     }
 
     @Override
-    @NotNull
-    public GlobalSearchScope getResolveScope() {
+    public @NotNull GlobalSearchScope getResolveScope() {
       throw createException();
     }
 
     @Override
-    @NotNull
-    public SearchScope getUseScope() {
+    public @NotNull SearchScope getUseScope() {
       throw createException();
     }
 
@@ -346,8 +331,7 @@ public class PsiUtilCore {
     return lang == Language.ANY ? getNotAnyLanguage(node.getTreeParent()) : lang;
   }
 
-  @Nullable
-  public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
+  public static @Nullable VirtualFile getVirtualFile(@Nullable PsiElement element) {
     // optimisation: call isValid() on file only to reduce walks up and down
     if (element == null) {
       return null;
@@ -371,26 +355,34 @@ public class PsiUtilCore {
   }
 
   public static int compareElementsByPosition(@Nullable PsiElement element1, @Nullable PsiElement element2) {
-    if (element1 != null && element2 != null) {
-      if (element1.equals(element2)) return 0;
-      final PsiFile psiFile1 = element1.getContainingFile();
-      final PsiFile psiFile2 = element2.getContainingFile();
-      if (Comparing.equal(psiFile1, psiFile2)){
-        final TextRange textRange1 = element1.getTextRange();
-        final TextRange textRange2 = element2.getTextRange();
-        if (textRange1 != null && textRange2 != null) {
-          return textRange1.getStartOffset() - textRange2.getStartOffset();
-        }
-      }
-      else if (psiFile1 != null && psiFile2 != null){
-        final String name1 = psiFile1.getName();
-        final String name2 = psiFile2.getName();
-        return name1.compareToIgnoreCase(name2);
-      }
+    if (element1 == null && element2 == null) return 0;
+    if (element1 == null) return -1;
+    if (element2 == null) return 1;
+    if (element1.equals(element2)) return 0;
+
+    final PsiFile psiFile1 = element1.getContainingFile();
+    final PsiFile psiFile2 = element2.getContainingFile();
+    if (psiFile1 == null && psiFile2 == null) return 0;
+    if (psiFile1 == null) return -1;
+    if (psiFile2 == null) return 1;
+
+    if (Comparing.equal(psiFile1, psiFile2)) {
+      final TextRange textRange1 = element1.getTextRange();
+      final TextRange textRange2 = element2.getTextRange();
+      if (textRange1 == null && textRange2 == null) return 0;
+      if (textRange1 == null) return -1;
+      if (textRange2 == null) return 1;
+      return textRange1.getStartOffset() - textRange2.getStartOffset();
     }
-    return 0;
+
+    final String name1 = psiFile1.getName();
+    final String name2 = psiFile2.getName();
+    return name1.compareToIgnoreCase(name2);
   }
 
+  /**
+   * Returns whether the element has a child that is an instance of {@link PsiErrorElement} or not.
+   */
   public static boolean hasErrorElementChild(@NotNull PsiElement element) {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiErrorElement) return true;
@@ -398,8 +390,7 @@ public class PsiUtilCore {
     return false;
   }
 
-  @NotNull
-  public static PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
+  public static @NotNull PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
     PsiElement elt = file.findElementAt(offset);
     if (elt == null && offset > 0) {
       elt = file.findElementAt(offset - 1);
@@ -421,13 +412,8 @@ public class PsiUtilCore {
     return collection.toArray(PsiFile.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static <VF extends VirtualFile> List<PsiFile> toPsiFiles(@NotNull PsiManager psiManager,
-                                                                  @NotNull Collection<VF> virtualFiles) {
-    return virtualFiles.stream()
-      .map(psiManager::findFile)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+  public static @NotNull @Unmodifiable List<PsiFile> toPsiFiles(@NotNull PsiManager psiManager, @NotNull Collection<? extends VirtualFile> virtualFiles) {
+    return ContainerUtil.mapNotNull(virtualFiles, psiManager::findFile);
   }
 
   /**
@@ -457,10 +443,12 @@ public class PsiUtilCore {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  public static Language narrowLanguage(final Language language, @NotNull Language candidate) {
+  protected static Language narrowLanguage(final Language language, @NotNull Language candidate) {
     if (candidate.isKindOf(language)) return candidate;
     return language;
   }
+
+  private static final boolean ourSleepDuringValidityCheck = Registry.is("psi.sleep.in.validity.check");
 
   /**
    * Checks if the element is valid. If not, throws {@link PsiInvalidElementAccessException} with
@@ -469,17 +457,18 @@ public class PsiUtilCore {
    */
   public static void ensureValid(@NotNull PsiElement element) {
     if (!element.isValid()) {
-      TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the element valid again (which is a bug)
-      if (element.isValid()) {
-        LOG.error("PSI resurrected: " + element + " of " + element.getClass());
-        return;
+      if (ourSleepDuringValidityCheck) {
+        TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the element valid again (which is a bug)
+        if (element.isValid()) {
+          LOG.error("PSI resurrected: " + element + " of " + element.getClass());
+          return;
+        }
       }
-      throw new PsiInvalidElementAccessException(element);
+      throw PluginException.createByClass(new PsiInvalidElementAccessException(element), element.getClass());
     }
   }
 
-  @Nullable
-  public static PsiFileSystemItem findFileSystemItem(@Nullable Project project, @Nullable VirtualFile file) {
+  public static @Nullable PsiFileSystemItem findFileSystemItem(@Nullable Project project, @Nullable VirtualFile file) {
     if (project == null || file == null) return null;
     if (project.isDisposed() || !file.isValid()) return null;
     PsiManager psiManager = PsiManager.getInstance(project);
@@ -489,8 +478,7 @@ public class PsiUtilCore {
   /**
    * Tries to find PSI file for a virtual file and throws assertion error with debug info if it is null.
    */
-  @NotNull
-  public static PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @NotNull PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiManager psiManager = PsiManager.getInstance(project);
     PsiFile psi = psiManager.findFile(file);
     if (psi != null) return psi;
@@ -501,7 +489,7 @@ public class PsiUtilCore {
     VirtualFile vDir = file.getParent();
     PsiDirectory psiDir = vDir == null ? null : PsiManager.getInstance(project).findDirectory(vDir);
     FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
-    StringBuilder sb = new StringBuilder();
+    @NonNls StringBuilder sb = new StringBuilder();
     sb.append("valid=").append(file.isValid()).
       append(" isDirectory=").append(file.isDirectory()).
       append(" hasDocument=").append(document != null).
@@ -512,7 +500,7 @@ public class PsiUtilCore {
     sb.append("\nfileType=").append(fileType.getName()).append("/").append(fileType.getClass().getName());
     sb.append("\nisIgnored=").append(ignored);
     sb.append(" underIgnored=").append(indexFacade.isUnderIgnored(file));
-    sb.append(" inLibrary=").append(indexFacade.isInLibrarySource(file) || indexFacade.isInLibraryClasses(file));
+    sb.append(" inLibrary=").append(indexFacade.isInLibrary(file));
     sb.append(" parentDir=").append(vDir == null ? "no-vfs" : vDir.isDirectory() ? "has-vfs-dir" : "has-vfs-file").
       append("/").append(psiDir == null ? "no-psi" : "has-psi");
     sb.append("\nviewProvider=").append(viewProvider == null ? "null" : viewProvider.getClass().getName());
@@ -534,8 +522,7 @@ public class PsiUtilCore {
    * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
    */
   @Deprecated
-  @Nullable
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
+  public static @Nullable <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();
     final PsiFile originalFile = psiFile.getOriginalFile();
     if (originalFile == psiFile) return psiElement;
@@ -551,8 +538,7 @@ public class PsiUtilCore {
     return parent;
   }
 
-  @NotNull
-  public static Language findLanguageFromElement(@NotNull PsiElement elt) {
+  public static @NotNull Language findLanguageFromElement(@NotNull PsiElement elt) {
     if (!(elt instanceof PsiFile) && elt.getFirstChild() == null) { //is leaf
       final PsiElement parent = elt.getParent();
       if (parent != null) {
@@ -563,8 +549,7 @@ public class PsiUtilCore {
     return elt.getLanguage();
   }
 
-  @NotNull
-  public static Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
+  public static @NotNull Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
     final PsiElement elt = file.findElementAt(offset);
     if (elt == null) return file.getLanguage();
     if (elt instanceof PsiWhiteSpace) {
@@ -580,8 +565,7 @@ public class PsiUtilCore {
     return findLanguageFromElement(elt);
   }
 
-  @NotNull
-  public static Project getProjectInReadAction(@NotNull final PsiElement element) {
+  public static @NotNull Project getProjectInReadAction(final @NotNull PsiElement element) {
     return ReadAction.compute(() -> element.getProject());
   }
 
@@ -593,7 +577,7 @@ public class PsiUtilCore {
   @Contract("null -> null")
   public static IElementType getElementType(@Nullable PsiElement element) {
     return element == null ? null :
-           element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getElementType() :
+           element instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)element).getElementType() :
            element instanceof PsiFile ? ((PsiFile)element).getFileElementType() :
            getElementType(element.getNode());
   }
@@ -625,15 +609,13 @@ public class PsiUtilCore {
       throw createException();
     }
 
-    @NotNull
     @Override
-    public PsiFile getOriginalFile() {
+    public @NotNull PsiFile getOriginalFile() {
       throw createException();
     }
 
-    @NotNull
     @Override
-    public FileType getFileType() {
+    public @NotNull FileType getFileType() {
       throw createException();
     }
 
@@ -642,9 +624,8 @@ public class PsiUtilCore {
       throw createException();
     }
 
-    @NotNull
     @Override
-    public FileViewProvider getViewProvider() {
+    public @NotNull FileViewProvider getViewProvider() {
       throw createException();
     }
 
@@ -658,20 +639,18 @@ public class PsiUtilCore {
       throw createException();
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       throw createException();
     }
 
     @Override
-    public boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor) {
+    public boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
       throw createException();
     }
 
-    @Nullable
     @Override
-    public ItemPresentation getPresentation() {
+    public @Nullable ItemPresentation getPresentation() {
       throw createException();
     }
 

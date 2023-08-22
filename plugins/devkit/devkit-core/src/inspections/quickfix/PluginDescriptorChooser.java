@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -29,6 +15,8 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -41,6 +29,7 @@ import com.intellij.util.xml.DomService;
 import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
@@ -49,21 +38,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class PluginDescriptorChooser {
+public final class PluginDescriptorChooser {
 
   private static final Map<String, String> INTELLIJ_MODULES =
-    ContainerUtil.<String, String>immutableMapBuilder()
-      .put("intellij.platform.ide", "PlatformExtensions.xml")
-      .put("intellij.platform.ide.impl", "PlatformExtensions.xml")
-      .put("intellij.platform.lang", "LangExtensions.xml")
-      .put("intellij.platform.execution.impl", "LangExtensions.xml")
-      .put("intellij.platform.lang.impl", "LangExtensions.xml")
-      .put("intellij.platform.vcs", "VcsExtensions.xml")
-      .put("intellij.platform.vcs.impl", "VcsExtensions.xml")
-      .put("intellij.java", "IdeaPlugin.xml")
-      .put("intellij.java.impl", "IdeaPlugin.xml")
-      .put("intellij.java.analysis.impl", "IdeaPlugin.xml")
-      .build();
+    Map.ofEntries(
+      Map.entry("intellij.platform.ide", "PlatformExtensions.xml"),
+      Map.entry("intellij.platform.ide.impl", "PlatformExtensions.xml"),
+      Map.entry("intellij.platform.lang", "LangExtensions.xml"),
+      Map.entry("intellij.platform.execution.impl", "LangExtensions.xml"),
+      Map.entry("intellij.platform.lang.impl", "LangExtensions.xml"),
+      Map.entry("intellij.platform.vcs", "VcsExtensions.xml"),
+      Map.entry("intellij.platform.vcs.impl", "VcsExtensions.xml"),
+      Map.entry("intellij.java", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.impl", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.impl.inspections", "IdeaPlugin.xml"),
+      Map.entry("intellij.java.analysis.impl", "IdeaPlugin.xml"));
 
   public static void show(final Project project,
                           final Editor editor,
@@ -82,7 +71,7 @@ public class PluginDescriptorChooser {
     elements = findAppropriateIntelliJModule(module.getName(), elements);
 
     if (elements.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "Cannot find plugin descriptor");
+      HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("plugin.descriptor.chooser.cannot.find"));
       return;
     }
 
@@ -92,7 +81,7 @@ public class PluginDescriptorChooser {
     }
 
     final BaseListPopupStep<PluginDescriptorCandidate> popupStep =
-      new BaseListPopupStep<PluginDescriptorCandidate>("Choose Plugin Descriptor", createCandidates(module, elements)) {
+      new BaseListPopupStep<>(DevKitBundle.message("plugin.descriptor.chooser.popup.title"), createCandidates(module, elements)) {
 
         @Override
         public boolean isSpeedSearchEnabled() {
@@ -104,15 +93,13 @@ public class PluginDescriptorChooser {
           return candidate.getIcon();
         }
 
-        @NotNull
         @Override
-        public String getTextFor(PluginDescriptorCandidate candidate) {
+        public @NotNull String getTextFor(PluginDescriptorCandidate candidate) {
           return candidate.getText();
         }
 
-        @Nullable
         @Override
-        public ListSeparator getSeparatorAbove(PluginDescriptorCandidate candidate) {
+        public @Nullable ListSeparator getSeparatorAbove(PluginDescriptorCandidate candidate) {
           final String separatorText = candidate.getSeparatorText();
           if (separatorText != null) {
             return new ListSeparator(separatorText);
@@ -129,11 +116,9 @@ public class PluginDescriptorChooser {
     JBPopupFactory.getInstance().createListPopup(popupStep).showInBestPositionFor(editor);
   }
 
-  @NotNull
-  public static Extensions findOrCreateExtensionsForEP(DomFileElement<? extends IdeaPlugin> domFileElement, String epName) {
+  public static @NotNull Extensions findOrCreateExtensionsForEP(DomFileElement<? extends IdeaPlugin> domFileElement, String epName) {
     final IdeaPlugin ideaPlugin = domFileElement.getRootElement();
-    final List<Extensions> extensionsList = ideaPlugin.getExtensions();
-    for (Extensions extensions : extensionsList) {
+    for (Extensions extensions : ideaPlugin.getExtensions()) {
       if (extensions.getXmlTag() instanceof IncludedXmlTag) {
         continue;
       }
@@ -165,8 +150,8 @@ public class PluginDescriptorChooser {
       }
 
       if (module1 != null && module2 != null) {
-        int groupComparison = Comparing.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
-                                                groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
+        int groupComparison = Integer.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),
+                                              groupMatchLevel(groupPath, grouper.getGroupPath(module1)));
         if (groupComparison != 0) {
           return groupComparison;
         }
@@ -208,8 +193,8 @@ public class PluginDescriptorChooser {
     return Math.min(targetGroupPath.size(), groupPath.size());
   }
 
-  public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
-                                                                                List<DomFileElement<IdeaPlugin>> elements) {
+  public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(@NotNull String moduleName,
+                                                                               List<DomFileElement<IdeaPlugin>> elements) {
     String extensionsFile = INTELLIJ_MODULES.get(moduleName);
     if (extensionsFile != null) {
       for (DomFileElement<IdeaPlugin> element : elements) {
@@ -222,7 +207,7 @@ public class PluginDescriptorChooser {
   }
 
 
-  private static class PluginDescriptorCandidate {
+  private static final class PluginDescriptorCandidate {
     private final DomFileElement<IdeaPlugin> myDomFileElement;
     private final boolean myStartsNewGroup;
 
@@ -232,7 +217,7 @@ public class PluginDescriptorChooser {
       myStartsNewGroup = startsNewGroup;
     }
 
-    public String getText() {
+    public @NlsContexts.ListItem String getText() {
       final String name = myDomFileElement.getFile().getName();
       final String pluginId = getPluginId();
       return pluginId != null ? name + " [" + pluginId + "]" : name;
@@ -242,14 +227,14 @@ public class PluginDescriptorChooser {
       return getPluginId() != null ? AllIcons.Nodes.Plugin : EmptyIcon.create(AllIcons.Nodes.Plugin);
     }
 
-    public String getSeparatorText() {
+    public @NlsContexts.Separator String getSeparatorText() {
       if (!myStartsNewGroup) return null;
 
       final Module module = myDomFileElement.getModule();
       return module == null ? null : module.getName();
     }
 
-    private String getPluginId() {
+    private @NlsSafe String getPluginId() {
       return myDomFileElement.getRootElement().getPluginId();
     }
   }

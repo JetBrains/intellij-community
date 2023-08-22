@@ -7,7 +7,7 @@ class Main {
 		Function<A<String>, String> f1 = A<String>::getName;
 		Function<A<String>, String> f10 = A::getName;
 		Function<B, String> f2 = B::getName;
-		Function<B, String> f3 = b::<error descr="Cannot resolve method 'getName'">getName</error>;
+		Function<B, String> f3 = b::<error descr="Reference to 'getName' is ambiguous, both 'getName()' and 'getName(I)' match">getName</error>;
 	}
 }
 

@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
-import com.intellij.coverage.CoverageRunner;
-import com.intellij.coverage.IDEACoverageRunner;
-import com.intellij.coverage.JavaCoverageEngine;
-import com.intellij.coverage.JavaCoverageRunner;
+import com.intellij.coverage.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.value.TargetEnvironmentFunctions;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -21,16 +21,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Base class for java run configurations with enabled code coverage
- * @author ven
  */
-public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfiguration {
-  private static final Logger LOG = Logger.getInstance(JavaCoverageEnabledConfiguration.class);
-
+public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfiguration {
   private ClassFilter[] myCoveragePatterns;
 
   private boolean myIsMergeWithPreviousResults = false;
@@ -47,6 +46,14 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     setCoverageRunner(CoverageRunner.getInstance(IDEACoverageRunner.class));
   }
 
+  public void downloadReport(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator indicator) throws IOException {
+    String coverageFilePath = getCoverageFilePath();
+    if (coverageFilePath != null) {
+      Path path = Paths.get(coverageFilePath);
+      TargetEnvironmentFunctions.downloadFromTarget(environment, path, indicator);
+    }
+  }
+
   @Nullable
   public static JavaCoverageEnabledConfiguration getFrom(@NotNull final RunConfigurationBase configuration) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreate(configuration);
@@ -56,29 +63,31 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return null;
   }
 
-  public void appendCoverageArgument(RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
+  public void appendCoverageArgument(@NotNull RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
-    try {
-      if (runner instanceof JavaCoverageRunner) {
-        final String path = getCoverageFilePath();
-        assert path != null; // cannot be null here if runner != null
+    if (runner instanceof JavaCoverageRunner javaCoverageRunner) {
+      final String path = getCoverageFilePath();
+      assert path != null; // cannot be null here if runner != null
 
-        String sourceMapPath = null;
-        if (JavaCoverageEngine.isSourceMapNeeded(configuration)) {
-          sourceMapPath = getSourceMapPath(path);
-        }
-
-        ((JavaCoverageRunner)runner).appendCoverageArgument(new File(path).getCanonicalPath(),
-                                                            getPatterns(),
-                                                            getExcludePatterns(),
-                                                            javaParameters,
-                                                            isTrackPerTestCoverage() && !isSampling(),
-                                                            isSampling(),
-                                                            sourceMapPath);
+      String sourceMapPath = null;
+      if (JavaCoverageEngine.isSourceMapNeeded(configuration)) {
+        sourceMapPath = getSourceMapPath(path);
       }
-    }
-    catch (IOException e) {
-      LOG.info(e);
+
+      final String[] patterns = getPatterns();
+      final String[] excludePatterns = getExcludePatterns();
+      final Project project = configuration.getProject();
+      CoverageLogger.logStarted(javaCoverageRunner, isBranchCoverageEnabled(), isTrackPerTestCoverage(),
+                                patterns == null ? 0 : patterns.length,
+                                excludePatterns == null ? 0 : excludePatterns.length);
+      javaCoverageRunner.appendCoverageArgument(new File(path).getAbsolutePath(),
+                                                patterns,
+                                                excludePatterns,
+                                                javaParameters,
+                                                isTrackPerTestCoverage() && isBranchCoverageEnabled(),
+                                                isBranchCoverageEnabled(),
+                                                sourceMapPath,
+                                                project);
     }
   }
 

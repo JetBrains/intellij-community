@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.quickFix;
 
@@ -37,11 +37,10 @@ import static java.util.Collections.singletonList;
 /**
  * @author Maxim.Mossienko
  */
-public class FileReferenceQuickFixProvider {
+public final class FileReferenceQuickFixProvider {
   private FileReferenceQuickFixProvider() {}
 
-  @NotNull
-  public static List<? extends LocalQuickFix> registerQuickFix(@NotNull FileReference reference) {
+  public static @NotNull List<? extends @NotNull LocalQuickFix> registerQuickFix(@NotNull FileReference reference) {
     final FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
     int index = reference.getIndex();
 
@@ -85,18 +84,16 @@ public class FileReferenceQuickFixProvider {
     }
   }
 
-  @Nullable
-  public static NewFileLocation getNewFileLocation(@NotNull FileReference reference,
-                                                   String newFileName,
-                                                   boolean isDirectory) {
+  public static @Nullable NewFileLocation getNewFileLocation(@NotNull FileReference reference,
+                                                             String newFileName,
+                                                             boolean isDirectory) {
     return getNewFileLocation(reference, newFileName, reference.getElement().getContainingFile(), isDirectory);
   }
 
-  @Nullable
-  private static NewFileLocation getNewFileLocation(@NotNull FileReference reference,
-                                                    String newFileName,
-                                                    PsiFile containingFile,
-                                                    boolean isDirectory) {
+  private static @Nullable NewFileLocation getNewFileLocation(@NotNull FileReference reference,
+                                                              String newFileName,
+                                                              PsiFile containingFile,
+                                                              boolean isDirectory) {
     @Nullable
     Module module = ModuleUtilCore.findModuleForPsiElement(containingFile);
 
@@ -107,11 +104,10 @@ public class FileReferenceQuickFixProvider {
     return new NewFileLocation(targetDirectories, getPathToReferencePart(reference), newFileName);
   }
 
-  @NotNull
-  private static List<TargetDirectory> getTargets(@NotNull FileReference reference,
-                                                  @Nullable Module module,
-                                                  String newFileName,
-                                                  boolean isDirectory) {
+  private static @NotNull List<TargetDirectory> getTargets(@NotNull FileReference reference,
+                                                           @Nullable Module module,
+                                                           String newFileName,
+                                                           boolean isDirectory) {
     List<FileTargetContext> contexts = getSuitableContexts(reference, module);
 
     List<TargetDirectory> targetDirectories = new SmartList<>();
@@ -217,8 +213,7 @@ public class FileReferenceQuickFixProvider {
     return path;
   }
 
-  @NotNull
-  private static List<FileTargetContext> getSuitableContexts(@NotNull FileReference reference, @Nullable Module module) {
+  private static @NotNull List<FileTargetContext> getSuitableContexts(@NotNull FileReference reference, @Nullable Module module) {
     FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
 
     Collection<FileTargetContext> targetContexts = fileReferenceSet.getTargetContexts();
@@ -246,13 +241,12 @@ public class FileReferenceQuickFixProvider {
     return contexts;
   }
 
-  @Nullable
-  private static Module getModuleForContext(@NotNull PsiFileSystemItem context) {
+  private static @Nullable Module getModuleForContext(@NotNull PsiFileSystemItem context) {
     VirtualFile file = context.getVirtualFile();
     return file != null ? ModuleUtilCore.findModuleForFile(file, context.getProject()) : null;
   }
 
-  private static class MyCreateFileFix extends CreateFilePathFix {
+  private static final class MyCreateFileFix extends CreateFilePathFix {
     private final String myNewFileTemplateName;
 
     private MyCreateFileFix(@NotNull PsiElement psiElement,

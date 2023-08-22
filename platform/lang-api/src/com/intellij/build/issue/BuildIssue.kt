@@ -11,8 +11,13 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface BuildIssue {
-  val title: @BuildEventsNls.Title String
-  val description: @BuildEventsNls.Description String
+  @get:BuildEventsNls.Title
+  val title: String
+
+  @get:BuildEventsNls.Description
+  val description: String
+
   val quickFixes: List<BuildIssueQuickFix>
+
   fun getNavigatable(project: Project): Navigatable?
 }

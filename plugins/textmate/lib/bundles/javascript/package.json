@@ -1,18 +1,19 @@
 {
   "name": "javascript",
-  "displayName": "%displayName%",
-  "description": "%description%",
   "version": "1.0.0",
-  "publisher": "vscode",
+  "description": "%description%",
   "license": "MIT",
-  "engines": {
-    "vscode": "0.10.x"
-  },
   "contributes": {
+    "configurationDefaults": {
+      "[javascript]": {
+        "editor.maxTokenizationLineLength": 2500
+      }
+    },
     "languages": [
       {
         "id": "javascriptreact",
         "aliases": [
+          "JavaScript JSX",
           "JavaScript React",
           "jsx"
         ],
@@ -62,6 +63,9 @@
           "meta.embedded.expression.js": "javascriptreact"
         },
         "tokenTypes": {
+          "meta.template.expression": "other",
+          "meta.template.expression string": "string",
+          "meta.template.expression comment": "comment",
           "entity.name.type.instance.jsdoc": "other",
           "entity.name.function.tagged-template": "other",
           "meta.import string.quoted": "other",
@@ -79,6 +83,9 @@
           "meta.embedded.expression.js": "javascript"
         },
         "tokenTypes": {
+          "meta.template.expression": "other",
+          "meta.template.expression string": "string",
+          "meta.template.expression comment": "comment",
           "entity.name.type.instance.jsdoc": "other",
           "entity.name.function.tagged-template": "other",
           "meta.import string.quoted": "other",
@@ -94,27 +101,59 @@
       {
         "language": "javascript",
         "scopes": {
-          "property": ["variable.other.property.js"],
-          "property.readonly": ["variable.other.constant.property.js"],
-          "variable": ["variable.other.readwrite.js"],
-          "variable.readonly": ["variable.other.constant.object.js"],
-          "function": ["entity.name.function.js"],
-          "namespace": ["entity.name.type.module.js"],
-          "variable.defaultLibrary": ["support.variable.js"],
-          "function.defaultLibrary": ["support.function.js"]
+          "property": [
+            "variable.other.property.js"
+          ],
+          "property.readonly": [
+            "variable.other.constant.property.js"
+          ],
+          "variable": [
+            "variable.other.readwrite.js"
+          ],
+          "variable.readonly": [
+            "variable.other.constant.object.js"
+          ],
+          "function": [
+            "entity.name.function.js"
+          ],
+          "namespace": [
+            "entity.name.type.module.js"
+          ],
+          "variable.defaultLibrary": [
+            "support.variable.js"
+          ],
+          "function.defaultLibrary": [
+            "support.function.js"
+          ]
         }
       },
       {
         "language": "javascriptreact",
         "scopes": {
-          "property": ["variable.other.property.jsx"],
-          "property.readonly": ["variable.other.constant.property.jsx"],
-          "variable": ["variable.other.readwrite.jsx"],
-          "variable.readonly": ["variable.other.constant.object.jsx"],
-          "function": ["entity.name.function.jsx"],
-          "namespace": ["entity.name.type.module.jsx"],
-          "variable.defaultLibrary": ["support.variable.js"],
-          "function.defaultLibrary": ["support.function.js"]
+          "property": [
+            "variable.other.property.jsx"
+          ],
+          "property.readonly": [
+            "variable.other.constant.property.jsx"
+          ],
+          "variable": [
+            "variable.other.readwrite.jsx"
+          ],
+          "variable.readonly": [
+            "variable.other.constant.object.jsx"
+          ],
+          "function": [
+            "entity.name.function.jsx"
+          ],
+          "namespace": [
+            "entity.name.type.module.jsx"
+          ],
+          "variable.defaultLibrary": [
+            "support.variable.js"
+          ],
+          "function.defaultLibrary": [
+            "support.function.js"
+          ]
         }
       }
     ],

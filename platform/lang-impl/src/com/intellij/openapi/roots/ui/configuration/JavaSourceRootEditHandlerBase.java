@@ -27,9 +27,8 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     return properties.isForGeneratedSources() ? getGeneratedRootIcon() : getRootIcon();
   }
 
-  @Nullable
   @Override
-  public Icon getRootFileLayerIcon(@NotNull JavaSourceRootProperties properties) {
+  public @Nullable Icon getRootFileLayerIcon() {
     return AllIcons.Modules.SourceRootFileLayer;
   }
 
@@ -72,7 +71,7 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     return panel;
   }
 
-  private static class SourceRootPropertiesDialog extends DialogWrapper {
+  private static final class SourceRootPropertiesDialog extends DialogWrapper {
     private final JTextField myPackagePrefixField;
     private final JCheckBox myIsGeneratedCheckBox;
     private final JPanel myMainPanel;

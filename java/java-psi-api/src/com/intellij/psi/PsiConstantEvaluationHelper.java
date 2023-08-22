@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Service for evaluating values of constant expressions.
  *
- * @author ven
  * @see JavaPsiFacade#getConstantEvaluationHelper()
  */
 public abstract class PsiConstantEvaluationHelper {

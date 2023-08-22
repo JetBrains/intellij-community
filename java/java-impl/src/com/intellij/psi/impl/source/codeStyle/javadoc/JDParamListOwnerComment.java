@@ -50,7 +50,7 @@ public class JDParamListOwnerComment extends JDComment {
   private static TagDescription getNameDesc(@Nullable String name, @Nullable List<TagDescription> list) {
     if (list == null) return null;
     for (TagDescription aList : list) {
-      if (aList.name.equals(name)) {
+      if (aList.name().equals(name)) {
         return aList;
       }
     }
@@ -76,21 +76,21 @@ public class JDParamListOwnerComment extends JDComment {
     StringUtil.repeatSymbol(fill, ' ', maxNameLength + 1 + tag.length());
 
     for (TagDescription nd : tagBlocks) {
-      if (isNull(nd.desc) && !generate_empty_tags) continue;
+      if (isNull(nd.desc()) && !generate_empty_tags) continue;
 
-      if (descriptionOnNewLine && !isNull(nd.desc)) {
-        sb.append(prefix).append(tag).append(nd.name).append("\n");
-        sb.append(formatJDTagDescription(nd.desc, prefix + continuationIndent()));
+      if (descriptionOnNewLine && !isNull(nd.desc())) {
+        sb.append(prefix).append(tag).append(nd.name()).append("\n");
+        sb.append(formatJDTagDescription(nd.desc(), prefix + continuationIndent()));
       }
       else if (align_comments) {
-        int spacesNumber = maxNameLength + 1 - nd.name.length();
+        int spacesNumber = maxNameLength + 1 - nd.name().length();
         String spaces = StringUtil.repeatSymbol(' ', Math.max(0, spacesNumber));
-        String firstLinePrefix = prefix + tag + nd.name + spaces;
-        sb.append(formatJDTagDescription(nd.desc, firstLinePrefix, fill));
+        String firstLinePrefix = prefix + tag + nd.name() + spaces;
+        sb.append(formatJDTagDescription(nd.desc(), firstLinePrefix, fill));
       }
       else {
-        String description = (nd.desc == null) ? "" : nd.desc;
-        StringBuilder tagDescription = formatJDTagDescription(tag + nd.name + " " + description, prefix, prefix + javadocContinuationIndent());
+        String description = (nd.desc() == null) ? "" : nd.desc();
+        StringBuilder tagDescription = formatJDTagDescription(tag + nd.name() + " " + description, prefix, prefix + javadocContinuationIndent());
         sb.append(tagDescription);
       }
     }
@@ -105,8 +105,8 @@ public class JDParamListOwnerComment extends JDComment {
 
     if (align_comments && !descriptionOnNewLine) {
       for (TagDescription tagDescription: tagBlocks) {
-        int current = tagDescription.name.length();
-        if (isNull(tagDescription.desc) && !generate_empty_tags) continue;
+        int current = tagDescription.name().length();
+        if (isNull(tagDescription.desc()) && !generate_empty_tags) continue;
         if (current > max) {
           max = current;
         }

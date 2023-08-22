@@ -45,7 +45,6 @@ import java.util.Set;
  */
 @SuppressWarnings({"UnusedDeclaration"})
 public class TaskConfigurable extends BindableConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
-
   private JPanel myPanel;
 
   @BindControl("updateEnabled")
@@ -77,13 +76,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
 
   private final Project myProject;
   private Configurable[] myConfigurables;
-  private final NotNullLazyValue<ControlBinder> myControlBinder = new NotNullLazyValue<ControlBinder>() {
-    @NotNull
-    @Override
-    protected ControlBinder compute() {
-      return new ControlBinder(getConfig());
-    }
-  };
+  private final NotNullLazyValue<ControlBinder> myControlBinder;
 
   public TaskConfigurable(Project project) {
     super();
@@ -94,6 +87,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
         enableCachePanel();
       }
     });
+    myControlBinder = NotNullLazyValue.lazy(() -> new ControlBinder(getConfig()));
   }
 
   private TaskManagerImpl.Config getConfig() {
@@ -130,10 +124,6 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     }
     boolean oldUpdateEnabled = getConfig().updateEnabled;
     super.apply();
-    TaskManager manager = TaskManager.getManager(myProject);
-    if (getConfig().updateEnabled && !oldUpdateEnabled) {
-      manager.updateIssues(null);
-    }
     TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = myAlwaysDisplayTaskCombo.isSelected();
     int oldConnectionTimeout = TaskSettings.getInstance().CONNECTION_TIMEOUT;
     int connectionTimeout = Integer.parseInt(myConnectionTimeout.getText());
@@ -141,6 +131,11 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     TaskSettings.getInstance().LOWER_CASE_BRANCH = myLowerCase.isSelected();
     TaskSettings.getInstance().REPLACE_SPACES = myReplaceSpaces.getText();
 
+    if (myProject.isDefault()) return;
+    TaskManager manager = TaskManager.getManager(myProject);
+    if (getConfig().updateEnabled && !oldUpdateEnabled) {
+      manager.updateIssues(null);
+    }
     if (connectionTimeout != oldConnectionTimeout) {
       for (TaskRepository repository : manager.getAllRepositories()) {
         if (repository instanceof BaseRepositoryImpl) {
@@ -154,7 +149,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   public boolean isModified() {
     return super.isModified() ||
            TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected() ||
-           TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText()) ||
+           TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.parseInt(myConnectionTimeout.getText()) ||
            TaskSettings.getInstance().LOWER_CASE_BRANCH != myLowerCase.isSelected() ||
            !Objects.equals(TaskSettings.getInstance().REPLACE_SPACES, myReplaceSpaces.getText());
   }
@@ -215,8 +210,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
           for (CommitPlaceholderProvider provider : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
             placeholders.addAll(Arrays.asList(provider.getPlaceholders(null)));
           }
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(TaskBundle.message("settings.placeholders"),
-                                                                                     ArrayUtilRt.toStringArray(placeholders)) {
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(TaskBundle.message("settings.placeholders"),
+                                                                               ArrayUtilRt.toStringArray(placeholders)) {
             @Override
             public PopupStep onChosen(String selectedValue, boolean finalChoice) {
               WriteCommandAction.runWriteCommandAction(myProject, () -> editor.getDocument()

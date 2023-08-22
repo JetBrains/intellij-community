@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -14,9 +14,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
   private final PopupChooserBuilder myBuilder;
   private final JTree myTree;
@@ -33,7 +31,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
 
   @Override
   public void setItemChosenCallback(Consumer<? super T> callback) {
-    myBuilder.setItemChoosenCallback(() -> {
+    myBuilder.setItemChosenCallback(() -> {
       TreePath path = myTree.getSelectionModel().getLeadSelectionPath();
       T component = (T)path.getLastPathComponent();
       if (component != null) {
@@ -44,7 +42,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
 
   @Override
   public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
-    myBuilder.setItemChoosenCallback(() -> {
+    myBuilder.setItemChosenCallback(() -> {
       final Set<T> selection = new HashSet<>();
       for (TreePath path : myTree.getSelectionModel().getSelectionPaths()) {
         Object component = path.getLastPathComponent();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchTask;
 
 import com.intellij.largeFilesEditor.Utils;
@@ -7,11 +7,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
-public class RangeSearchTask extends SearchTaskBase {
+public final class RangeSearchTask extends SearchTaskBase {
   private static final Logger logger = Logger.getInstance(RangeSearchTask.class);
 
   private final Callback myCallback;
@@ -27,7 +30,7 @@ public class RangeSearchTask extends SearchTaskBase {
     myCallback = callback;
   }
 
-  public String getTitleForBackgroundableTask() {
+  public @NlsContexts.ProgressTitle String getTitleForBackgroundableTask() {
     final int maxStrToFindLength = 16;
     final int maxFileNameLength = 20;
 
@@ -152,7 +155,7 @@ public class RangeSearchTask extends SearchTaskBase {
 
     void tellSearchIsFinished(RangeSearchTask caller, long lastScannedPageNumber);
 
-    void tellFrameSearchResultsFound(RangeSearchTask caller, long curPageNumber, ArrayList<SearchResult> allMatchesAtFrame);
+    void tellFrameSearchResultsFound(RangeSearchTask caller, long curPageNumber, @NotNull List<? extends SearchResult> allMatchesAtFrame);
 
     void tellSearchIsStopped(long curPageNumber);
 

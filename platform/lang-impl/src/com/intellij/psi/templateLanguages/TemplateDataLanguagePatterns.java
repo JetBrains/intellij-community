@@ -1,44 +1,44 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.fileTypes.impl.FileTypeAssocTableUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author peter
- */
 @State(
     name = "TemplateDataLanguagePatterns",
-    storages = @Storage("templateLanguages.xml") )
-public class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
-  private FileTypeAssocTable<Language> myAssocTable = new FileTypeAssocTable<>();
-  @NonNls private static final String SEPARATOR = ";";
+    storages = @Storage("templateLanguages.xml"),
+    category = SettingsCategory.CODE )
+public final class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
+  private FileTypeAssocTable<Language> myAssocTable = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
+  private static final @NonNls String SEPARATOR = ";";
 
   public static TemplateDataLanguagePatterns getInstance() {
-    return ServiceManager.getService(TemplateDataLanguagePatterns.class);
+    return ApplicationManager.getApplication().getService(TemplateDataLanguagePatterns.class);
   }
 
   public FileTypeAssocTable<Language> getAssocTable() {
     return myAssocTable.copy();
   }
 
-  @Nullable
-  public Language getTemplateDataLanguageByFileName(VirtualFile file) {
+  public @Nullable Language getTemplateDataLanguageByFileName(VirtualFile file) {
     return myAssocTable.findAssociatedFileType(file.getName());
   }
 
@@ -50,7 +50,7 @@ public class TemplateDataLanguagePatterns implements PersistentStateComponent<El
   public void loadState(@NotNull Element state) {
     myAssocTable = new FileTypeAssocTable<>();
 
-    final THashMap<String, Language> dialectMap = new THashMap<>();
+    final Map<String, Language> dialectMap = new HashMap<>();
     for (Language dialect : TemplateDataLanguageMappings.getTemplateableLanguages()) {
       dialectMap.put(dialect.getID(), dialect);
     }

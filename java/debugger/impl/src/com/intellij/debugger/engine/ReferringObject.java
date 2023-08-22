@@ -4,6 +4,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.frame.XValueNode;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,9 @@ public interface ReferringObject {
 
   @Nullable
   String getNodeName(int order);
+
+  @Nullable
+  ObjectReference getReference();
 
   @NotNull
   Function<XValueNode, XValueNode> getNodeCustomizer();

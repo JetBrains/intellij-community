@@ -1,4 +1,4 @@
-// "Make 'a.f' return 'int'" "false"
+// "Make 'a.f()' return 'int'" "false"
 class a {
  private void f() {
    return ;

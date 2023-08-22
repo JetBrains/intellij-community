@@ -24,20 +24,9 @@ import com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContribut
 import com.intellij.psi.javadoc.PsiDocToken;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
-import static com.intellij.patterns.XmlPatterns.xmlTag;
-
-/**
- * @author peter
- */
-public class JavaReferenceContributor extends PsiReferenceContributor{
+public final class JavaReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
-
-    final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();
-    registrar.registerReferenceProvider(xmlAttributeValue(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
-    registrar.registerReferenceProvider(xmlTag(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
-
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull String text, int offset, boolean soft) {

@@ -1,4 +1,4 @@
-// "Fix all 'Redundant String operation' problems in file" "true"
+// "Fix all 'Redundant 'String' operation' problems in file" "true"
 
 class StringBuilderToString {
 
@@ -18,6 +18,10 @@ class StringBuilderToString {
     System.out.println(new StringBuilder()./* 1 */toString()/* 2 */.substring(1, 3).length());
     System.out.println(new StringBuilder().substring(1, 3));
     System.out.println(new StringBuilder().substring(1, 3).length());
+
+    "hello".substring(sb.toString());
+    System.out.println((((new StringBuilder()))).substring(1, 3));
+    System.out.println((new StringBuilder()).substring(1, 3).length());
   }
 
   void builder(StringBuilder sb) {

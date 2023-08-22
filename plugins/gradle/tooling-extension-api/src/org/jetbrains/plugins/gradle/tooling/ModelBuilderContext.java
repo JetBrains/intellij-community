@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.invocation.Gradle;
@@ -7,12 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-public interface ModelBuilderContext {
-  /**
-   * @return root Gradle instance
-   */
-  @NotNull
-  Gradle getRootGradle();
+public interface ModelBuilderContext extends MessageReporter {
 
   /**
    * @return cached data if it's already created, newly created data otherwise
@@ -21,7 +16,11 @@ public interface ModelBuilderContext {
   <T> T getData(@NotNull DataProvider<T> provider);
 
   interface DataProvider<T> {
+    /**
+     * Create data value to be shared.
+     * Returned value should be thread-safe.
+     */
     @NotNull
-    T create(@NotNull Gradle gradle);
+    T create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter);
   }
 }

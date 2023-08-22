@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,18 +19,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyFunction;
-  }
-
-  @Override
-  public boolean forcesShowPreview() {
-    return true;
   }
 
   @Override
@@ -74,14 +67,11 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
                                               deepestSuperMethod.getContainingClass().getQualifiedName());
       final int rc =
         Messages.showYesNoCancelDialog(element.getProject(), message, PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
-      switch (rc) {
-        case Messages.YES:
-          return deepestSuperMethod;
-        case Messages.NO:
-          return function;
-        default:
-          return null;
-      }
+      return switch (rc) {
+        case Messages.YES -> deepestSuperMethod;
+        case Messages.NO -> function;
+        default -> null;
+      };
     }
 
     final Property property = containingClass.findPropertyByCallable(function);
@@ -94,14 +84,11 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
         final int rc =
           Messages.showYesNoCancelDialog(element.getProject(),
                                          PyBundle.message("python.rename.processor.property", property.getName(), function.getName()), PyBundle.message("refactoring.rename"), Messages.getQuestionIcon());
-        switch (rc) {
-          case Messages.YES:
-            return site;
-          case Messages.NO:
-            return function;
-          default:
-            return null;
-        }
+        return switch (rc) {
+          case Messages.YES -> site;
+          case Messages.NO -> function;
+          default -> null;
+        };
       }
     }
 
@@ -124,6 +111,16 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     PyiUtil
       .getOverloads(function, TypeEvalContext.codeInsightFallback(element.getProject()))
       .forEach(overload -> allRenames.put(overload, newName));
+
+    final PsiElement originalElement = PyiUtil.getOriginalElement(function);
+    if (originalElement != null) {
+      allRenames.put(originalElement, newName);
+    }
+
+    final PsiElement stubElement = PyiUtil.getPythonStub(function);
+    if (stubElement != null) {
+      allRenames.put(stubElement, newName);
+    }
 
     final PyClass containingClass = function.getContainingClass();
     if (containingClass != null) {

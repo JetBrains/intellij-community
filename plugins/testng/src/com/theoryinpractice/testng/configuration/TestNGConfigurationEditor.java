@@ -12,6 +12,8 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -34,6 +36,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.TestngBundle;
@@ -105,7 +108,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
         protected void onClassChoosen(PsiClass psiClass) {
           final JTextField textField = myPatternTextField.getTextField();
           final String text = textField.getText();
-          textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+          textField.setText(text + (!text.isEmpty() ? "||" : "") + psiClass.getQualifiedName());
         }
 
         @Override
@@ -135,7 +138,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       }
     }
     myTestKind.setModel(testKindModel);
-    myTestKind.addActionListener(e -> TestNGConfigurationEditor.this.model.setType((TestType)myTestKind.getSelectedItem()));
+    myTestKind.addActionListener(e -> this.model.setType((TestType)myTestKind.getSelectedItem()));
     myTestKind.setRenderer(SimpleListCellRenderer.create("", value -> value.getPresentableName()));
     registerListener(new JRadioButton[]{packagesInProject, packagesInModule, packagesAcrossModules}, null);
     packagesInProject.addChangeListener(e -> evaluateModuleClassPath());
@@ -158,7 +161,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
       browseListeners[i].setField((ComponentWithBrowseButton)field);
       if (browseListeners[i] instanceof MethodBrowser) {
-        final EditorTextField childComponent = (EditorTextField)((ComponentWithBrowseButton)field).getChildComponent();
+        final EditorTextField childComponent = (EditorTextField)((ComponentWithBrowseButton<?>)field).getChildComponent();
         ((MethodBrowser)browseListeners[i]).installCompletion(childComponent);
         document = childComponent.getDocument();
       }
@@ -170,7 +173,12 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     commonJavaParameters.setProgramParametersLabel(TestngBundle.message("junit.configuration.test.runner.parameters.label"));
 
-    myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK, getModulesComponent()));
+    myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK, getModulesComponent()) {
+      @Override
+      protected boolean productionOnly() {
+        return false;
+      }
+    });
     setAnchor(outputDirectory.getLabel());
     alternateJDK.setAnchor(moduleClasspath.getLabel());
     commonJavaParameters.setAnchor(moduleClasspath.getLabel());
@@ -178,7 +186,6 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseModulePath.setAnchor(moduleClasspath.getLabel());
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
-    myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0);
   }
 
   private void evaluateModuleClassPath() {
@@ -268,7 +275,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       packagesInProject.setSelected(true);
     }
     evaluateModuleClassPath();
-    alternateJDK.setPathOrName(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
+    alternateJDK.setPathOrName(config.getAlternativeJrePath(), config.ALTERNATIVE_JRE_PATH_ENABLED);
     propertiesList.clear();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
@@ -277,6 +284,13 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
     myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenCommandLine());
     myUseModulePath.getComponent().setSelected(config.isUseModulePath());
+    if (!project.isDefault()) {
+      SwingUtilities.invokeLater(() ->
+                                   ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0)
+                                     .expireWith(this)
+                                     .finishOnUiThread(ModalityState.stateForComponent(myUseModulePath), visible -> myUseModulePath.setVisible(visible))
+                                     .submit(NonUrgentExecutor.getInstance()));
+    }
   }
 
   @Override
@@ -298,7 +312,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
     commonJavaParameters.applyTo(config);
-    config.ALTERNATIVE_JRE_PATH = alternateJDK.getJrePathOrName();
+    config.setAlternativeJrePath(alternateJDK.getJrePathOrName());
     config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isAlternativeJreSelected();
 
     data.TEST_PROPERTIES.clear();
@@ -513,7 +527,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       final TestListenerFilter filter = new TestListenerFilter(searchScope, project);
 
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-        .createWithInnerClassesScopeChooser("Choose Listener Class", filter.getScope(), filter, null);
+        .createWithInnerClassesScopeChooser(TestngBundle.message("testng.config.editor.dialog.title.choose.listener.class"), filter.getScope(), filter, null);
       chooser.showDialog();
       PsiClass psiclass = chooser.getSelected();
       if (psiclass == null) {

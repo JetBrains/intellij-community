@@ -1,11 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots
 
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import org.assertj.core.api.Assertions.assertThat
@@ -79,6 +75,19 @@ class ContentEntriesInRootModelTest {
 
     run {
       val model = createModifiableModel(module)
+      model.removeContentEntry(model.contentEntries.single())
+      val committed = commitModifiableRootModel(model)
+      assertThat(committed.contentEntries).isEmpty()
+    }
+  }
+
+  @Test
+  fun `add remove excluded pattern`() {
+    val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("content")
+    ModuleRootModificationUtil.addContentRoot(module, contentRoot)
+
+    run {
+      val model = createModifiableModel(module)
       val entry = model.contentEntries.single()
       entry.addExcludePattern("*.txt")
       checkContentEntryConsistency(entry)
@@ -88,12 +97,24 @@ class ContentEntriesInRootModelTest {
       assertThat(committedEntry.file).isEqualTo(contentRoot)
       assertThat(committedEntry.excludePatterns).containsExactly("*.txt")
     }
+    
+    run {
+      val model = createModifiableModel(module)
+      val entry = model.contentEntries.single()
+      entry.addExcludePattern("*.xml")
+      entry.removeExcludePattern("*.txt")
+      assertThat(entry.excludePatterns).containsExactly("*.xml")
+      val committed = commitModifiableRootModel(model)
+      assertThat(committed.contentEntries.single().excludePatterns).containsExactly("*.xml")
+    }
 
     run {
       val model = createModifiableModel(module)
-      model.removeContentEntry(model.contentEntries.single())
+      val entry = model.contentEntries.single()
+      entry.excludePatterns = listOf("*.js", "*.ts")
+      assertThat(entry.excludePatterns).containsExactly("*.js", "*.ts")
       val committed = commitModifiableRootModel(model)
-      assertThat(committed.contentEntries).isEmpty()
+      assertThat(committed.contentEntries.single().excludePatterns).containsExactly("*.js", "*.ts")
     }
   }
 
@@ -177,7 +198,7 @@ class ContentEntriesInRootModelTest {
       assertThat(excluded1.contentEntry).isEqualTo(contentEntry)
       assertThat(excluded2.contentEntry).isEqualTo(contentEntry)
       assertThat(contentEntry.excludeFolders).containsExactly(excluded1, excluded2)
-      
+
       val committed = commitModifiableRootModel(model)
       val committedEntry = committed.contentEntries.single()
       assertThat(committedEntry.excludeFolderFiles).containsExactly(excludedRoot1, excludedRoot2)
@@ -233,5 +254,36 @@ class ContentEntriesInRootModelTest {
     assertThat(committed.contentEntries).isEmpty()
     val moduleSourceEntry = committed.orderEntries.single() as ModuleSourceOrderEntry
     assertThat(moduleSourceEntry.ownerModule).isSameAs(module)
+  }
+
+  @Test
+  fun `test source roots are determined correctly for content roots`() {
+    val projectDir = projectModel.baseProjectDir
+    val firstContentRoot = projectDir.newVirtualDirectory("src")
+    val secondContentRoot = projectDir.newVirtualDirectory("src/main")
+
+    val model = createModifiableModel(module)
+    var firstContentEntry = model.addContentEntry(firstContentRoot)
+    val sourceFolderForFirstContentEntry = projectDir.newVirtualDirectory("src/main/java")
+    firstContentEntry.addSourceFolder(firstContentRoot, false)
+    firstContentEntry.addSourceFolder(sourceFolderForFirstContentEntry, true)
+
+    var secondContentEntry = model.addContentEntry(secondContentRoot)
+    val sourceFolderForSecondContentEntry = projectDir.newVirtualDirectory("src/main/resources")
+    secondContentEntry.addSourceFolder(secondContentRoot, false)
+    secondContentEntry.addSourceFolder(sourceFolderForSecondContentEntry, true)
+    val committed = commitModifiableRootModel(model)
+
+    assertThat(committed.contentEntries.size).isEqualTo(2)
+    val sortedContentEntries = committed.contentEntries.sortedBy { it.url }
+    firstContentEntry = sortedContentEntries[0]
+    assertThat(firstContentEntry.url).isEqualTo(firstContentRoot.url)
+    assertThat(firstContentEntry.sourceFolders.map {it.url}).containsExactlyInAnyOrder(firstContentRoot.url,
+                                                                                       sourceFolderForFirstContentEntry.url)
+
+    secondContentEntry = sortedContentEntries[1]
+    assertThat(secondContentEntry.url).isEqualTo(secondContentRoot.url)
+    assertThat(secondContentEntry.sourceFolders.map { it.url }).containsExactlyInAnyOrder(secondContentRoot.url,
+                                                                                          sourceFolderForSecondContentEntry.url)
   }
 }

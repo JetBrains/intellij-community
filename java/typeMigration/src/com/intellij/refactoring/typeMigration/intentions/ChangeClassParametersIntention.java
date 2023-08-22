@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -19,10 +17,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
-import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
-import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -80,7 +78,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
         final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
 
         final String oldTypeText = typeElement.getText();
-        final String varName = "param";
+        final @NonNls String varName = "param";
         templateBuilder.replaceElement(typeElement, varName, new TypeExpression(project, new PsiType[]{typeElement.getType()}), true);
 
         final Template template = templateBuilder.buildInlineTemplate();
@@ -107,27 +105,25 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               try {
                 final PsiType targetParam = elementFactory.createTypeFromText(myNewType, aClass);
-                if (!(targetParam instanceof PsiClassType)) {
+                if (!(targetParam instanceof PsiClassType classType)) {
                   HintManager.getInstance().showErrorHint(editor,
                                                           JavaErrorBundle.message("generics.type.argument.cannot.be.of.primitive.type"));
                   return;
                 }
-                final PsiClassType classType = (PsiClassType)targetParam;
                 final PsiClass target = classType.resolve();
                 if (target == null) {
                   HintManager.getInstance().showErrorHint(editor, JavaErrorBundle.message("cannot.resolve.symbol",
                                                                                           classType.getPresentableText()));
                   return;
                 }
-                final TypeMigrationRules myRules = new TypeMigrationRules(project);
                 final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, targetParam);
                 final PsiType targetClassType = elementFactory.createType(baseClass, substitutor);
-                myRules.setBoundScope(new LocalSearchScope(aClass));
-                TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, myRules,
-                                                                    ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), targetClassType);
+                var supportProvider = CommonJavaRefactoringUtil.getRefactoringSupport();
+                var handler = supportProvider.getChangeTypeSignatureHandler();
+                handler.runHighlightingTypeMigrationSilently(project, editor, new LocalSearchScope(aClass), ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), targetClassType);
               }
               catch (IncorrectOperationException e) {
-                HintManager.getInstance().showErrorHint(editor, "Incorrect type");
+                HintManager.getInstance().showErrorHint(editor, TypeMigrationBundle.message("change.class.parameter.incorrect.type.error.hint"));
               }
             }
           }

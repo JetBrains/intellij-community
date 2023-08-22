@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -37,32 +37,30 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION || 
-        !ParameterInfoController.existsForEditor(editor)) return false;
+        !ParameterInfoControllerBase.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
-
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
     if (exprList == null) return false;
 
     int lbraceOffset = exprList.getTextRange().getStartOffset();
-    ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, lbraceOffset);
+    ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, lbraceOffset);
     return controller != null && controller.isHintShown(false);
   }
 
   @Nullable
   private static PsiElement getExpressionList(@NotNull Editor editor, int offset, @NotNull Project project) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    return file != null ? ParameterInfoController.findArgumentList(file, offset, -1) : null;
+    return file != null ? ParameterInfoControllerBase.findArgumentList(file, offset, -1) : null;
   }
 
   @Override
   protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION &&
-        ParameterInfoController.existsWithVisibleHintForEditor(editor, false)) {
+        ParameterInfoControllerBase.existsWithVisibleHintForEditor(editor, false)) {
       doSwitch(editor, caret == null ? editor.getCaretModel().getPrimaryCaret() : caret, project);
     }
   }
@@ -74,9 +72,9 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
     if (!(exprList instanceof PsiExpressionList)) return;
     PsiElement call = exprList.getParent();
-    if (!(call instanceof PsiCall)) return;
+    if (!(call instanceof PsiCall methodCall)) return;
     int lbraceOffset = exprList.getTextRange().getStartOffset();
-    ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, lbraceOffset);
+    ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, lbraceOffset);
     if (controller == null || !controller.isHintShown(false)) return;
 
     Object[] objects = controller.getObjects();
@@ -121,13 +119,12 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
 
     updateParameterValues(editor, caret, targetMethod, exprList, lbraceOffset, enteredParameters, virtualComma);
 
-    PsiCall methodCall = (PsiCall)call;
     JavaMethodCallElement.setCompletionModeIfNotSet(methodCall, controller);
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     CompletionMemory.registerChosenMethod(targetMethod, methodCall);
     controller.setPreservedOnHintHidden(true);
-    ParameterHintsPass.syncUpdate(call, editor);
+    ParameterHintsPass.asyncUpdate(call, editor);
     controller.showHint(false, false);
   }
 

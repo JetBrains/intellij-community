@@ -23,9 +23,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import java.util.*
 
-/**
- * @author peter
- */
 object CompletionMemory {
   private val LAST_CHOSEN_METHODS = Key.create<LinkedList<RangeMarker>>("COMPLETED_METHODS")
   private val CHOSEN_METHODS = Key.create<SmartPsiElementPointer<PsiMethod>>("CHOSEN_METHODS")
@@ -62,7 +59,7 @@ object CompletionMemory {
   @JvmStatic
   fun getChosenMethod(call: PsiCall): PsiMethod? {
     val range = getAnchorRange(call) ?: return null
-    val completedMethods = call.containingFile.viewProvider.document?.getUserData(LAST_CHOSEN_METHODS)
+    val completedMethods = call.containingFile.originalFile.viewProvider.document?.getUserData(LAST_CHOSEN_METHODS)
     val marker = completedMethods?.let { it.find { m -> haveSameRange(m, range) } }
     return marker?.getUserData(CHOSEN_METHODS)?.element
   }

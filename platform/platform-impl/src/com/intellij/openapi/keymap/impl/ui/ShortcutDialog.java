@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -10,6 +11,7 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -51,7 +53,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   }
 
   String getActionPath(String actionId) {
-    return myGroup == null ? null : myGroup.getActionQualifiedPath(actionId);
+    return myGroup == null ? null : myGroup.getActionQualifiedPath(actionId, true);
   }
 
   boolean hasConflicts() {
@@ -109,15 +111,13 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
 
   protected void addSystemActionsIfPresented(Group group) {}
 
-  @Nullable
   @Override
-  protected Border createContentPaneBorder() {
+  protected @Nullable Border createContentPaneBorder() {
     return JBUI.Borders.empty();
   }
 
-  @Nullable
   @Override
-  protected JComponent createSouthPanel() {
+  protected @Nullable JComponent createSouthPanel() {
     JComponent panel = super.createSouthPanel();
     if (panel != null) {
       panel.setBorder(JBUI.Borders.empty(8, 12));
@@ -125,9 +125,8 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     return panel;
   }
 
-  @Nullable
   @Override
-  protected JComponent createNorthPanel() {
+  protected @Nullable JComponent createNorthPanel() {
     myAction.setIpad(JBUI.insets(10, 10, 5, 10));
     myShortcutPanel.addPropertyChangeListener("shortcut", new PropertyChangeListener() {
       @Override
@@ -174,7 +173,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     return newShortcut == null ? oldShortcut == null : newShortcut.equals(oldShortcut);
   }
 
-  private static void fill(SimpleColoredComponent component, String id, String path) {
+  private static void fill(SimpleColoredComponent component, @NlsSafe String id, @NlsSafe String path) {
     if (path == null) {
       component.append(id, SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
     }
@@ -185,8 +184,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
       }
       else {
         component.append(path.substring(index + 3), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        component.append(" in ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        component.append(path.substring(0, index), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        component.append(" " + IdeBundle.message("shortcut.in.group.text", path.substring(0, index)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
   }

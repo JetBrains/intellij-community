@@ -226,8 +226,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   private static boolean isKeywordContainerCall(@Nullable PsiElement element, @NotNull PyParameter keywordContainer) {
     if (element instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)element).getCallee();
-      if (callee instanceof PyQualifiedExpression) {
-        final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
+      if (callee instanceof PyQualifiedExpression qualifiedCallee) {
         final PyExpression qualifier = qualifiedCallee.getQualifier();
 
         if (qualifier instanceof PyReferenceExpression) {
@@ -282,7 +281,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
                               p -> p.hasDefaultValue() || p instanceof PyNamedParameter && ((PyNamedParameter)p).isKeywordContainer());
   }
 
-  private static class Usages {
+  private static final class Usages {
 
     private final boolean hasMoreReferences;
 
@@ -306,7 +305,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     }
   }
 
-  private static class DefaultValue {
+  private static final class DefaultValue {
 
     private final boolean unableToHasDefaultValue;
 

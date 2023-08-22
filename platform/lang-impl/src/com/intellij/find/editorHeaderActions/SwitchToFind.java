@@ -1,12 +1,10 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindModel;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -14,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SwitchToFind extends DumbAwareAction implements LightEditCompatible {
+public final class SwitchToFind extends DumbAwareAction implements LightEditCompatible {
   public SwitchToFind(@NotNull JComponent shortcutHolder) {
     AnAction findAction = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND);
     if (findAction != null) {
@@ -35,6 +33,11 @@ public class SwitchToFind extends DumbAwareAction implements LightEditCompatible
       final EditorAction action = (EditorAction)ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
       action.update(search.getEditor(), e.getPresentation(), e.getDataContext());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

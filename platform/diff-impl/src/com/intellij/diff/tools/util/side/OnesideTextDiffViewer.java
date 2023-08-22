@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +54,14 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
     super.onInit();
     installEditorListeners();
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyEditorListeners();
     super.onDispose();
@@ -81,7 +81,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   @Nullable
   @Override
   protected JComponent createTitle() {
-    List<JComponent> textTitles = DiffUtil.createTextTitles(myRequest, Arrays.asList(getEditor(), getEditor()));
+    List<JComponent> textTitles = DiffUtil.createTextTitles(this, myRequest, Arrays.asList(getEditor(), getEditor()));
     return getSide().select(textTitles);
   }
 
@@ -103,12 +103,12 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   // Listeners
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void installEditorListeners() {
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyEditorListeners() {
   }
 
@@ -141,7 +141,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void scrollToLine(int line) {
     DiffUtil.scrollEditor(getEditor(), line, false);
   }

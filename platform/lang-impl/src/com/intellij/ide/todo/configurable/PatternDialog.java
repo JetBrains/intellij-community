@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.configurable;
 
@@ -42,7 +28,7 @@ import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 
-class PatternDialog extends DialogWrapper {
+final class PatternDialog extends DialogWrapper {
   private final TodoPattern myPattern;
 
   private final ComboBox<Icon> myIconComboBox;
@@ -52,9 +38,9 @@ class PatternDialog extends DialogWrapper {
   private final ColorAndFontDescription myColorAndFontDescription;
   private final JBCheckBox myUsedDefaultColorsCheckBox;
   private final int myPatternIndex;
-  private final List<? extends TodoPattern> myExistingPatterns;
+  private final List<TodoPattern> myExistingPatterns;
 
-  PatternDialog(Component parent, TodoPattern pattern, int patternIndex, List<? extends TodoPattern> existingPatterns) {
+  PatternDialog(Component parent, TodoPattern pattern, int patternIndex, List<TodoPattern> existingPatterns) {
     super(parent, true);
     myPatternIndex = patternIndex;
     myExistingPatterns = existingPatterns;
@@ -80,7 +66,7 @@ class PatternDialog extends DialogWrapper {
     myColorAndFontDescriptionPanel = new ColorAndFontDescriptionPanel();
 
     TextAttributes attributes = myPattern.getAttributes().getCustomizedTextAttributes();
-    myColorAndFontDescription = new TextAttributesDescription("null", null, attributes, null,
+    myColorAndFontDescription = new TextAttributesDescription("null", null, attributes, null, //NON-NLS
                                                               EditorColorsManager.getInstance().getGlobalScheme(), null, null) {
       @Override
       public boolean isErrorStripeEnabled() {

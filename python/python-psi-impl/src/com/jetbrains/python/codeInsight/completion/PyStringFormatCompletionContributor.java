@@ -5,6 +5,7 @@ package com.jetbrains.python.codeInsight.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
@@ -25,11 +26,11 @@ import java.util.stream.Collectors;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-public class PyStringFormatCompletionContributor extends CompletionContributor {
+public class PyStringFormatCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String DICT_NAME = "dict";
 
   private static final PatternCondition<PyReferenceExpression> FORMAT_CALL_PATTERN_CONDITION =
-    new PatternCondition<PyReferenceExpression>("isFormatFunction") {
+    new PatternCondition<>("isFormatFunction") {
 
       @Override
       public boolean accepts(@NotNull PyReferenceExpression expression, ProcessingContext context) {
@@ -39,7 +40,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
     };
 
   private static final PatternCondition<PyReferenceExpression> DICT_CALL_PATTERN_CONDITION =
-    new PatternCondition<PyReferenceExpression>("isDictCall") {
+    new PatternCondition<>("isDictCall") {
 
       @Override
       public boolean accepts(@NotNull PyReferenceExpression expression, ProcessingContext context) {
@@ -48,7 +49,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
       }
     };
 
-  private static final PsiElementPattern.Capture<PyStringLiteralExpression> FORMAT_STRING_CAPTURE =
+  public static final PsiElementPattern.Capture<PyStringLiteralExpression> FORMAT_STRING_CAPTURE =
     psiElement(PyStringLiteralExpression.class)
       .withParent(psiElement(PyReferenceExpression.class).with(FORMAT_CALL_PATTERN_CONDITION))
       .withSuperParent(2, PyCallExpression.class);
@@ -58,7 +59,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
 
 
   @Nullable private static final PatternCondition<PyBinaryExpression> PERCENT_BINARY_EXPRESSION_PATTERN =
-    new PatternCondition<PyBinaryExpression>("isBinaryFormatExpression") {
+    new PatternCondition<>("isBinaryFormatExpression") {
       @Override
       public boolean accepts(@NotNull PyBinaryExpression expression, ProcessingContext context) {
         return expression.isOperator("%");

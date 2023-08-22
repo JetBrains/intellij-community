@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Editor;
@@ -44,9 +42,8 @@ class TabFragment implements LineFragment {
     return g -> {};
   }
 
-  @NotNull
   @Override
-  public LineFragment subFragment(int startOffset, int endOffset) {
+  public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
     return this;
   }
 

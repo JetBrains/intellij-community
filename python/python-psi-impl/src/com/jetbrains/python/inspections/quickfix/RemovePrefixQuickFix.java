@@ -27,10 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class RemovePrefixQuickFix implements LocalQuickFix {
   private final String myPrefix;
 
@@ -41,13 +37,13 @@ public class RemovePrefixQuickFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return PyPsiBundle.message("INTN.remove.leading.$0", myPrefix);
+    return PyPsiBundle.message("QFIX.remove.string.prefix", myPrefix);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.remove.leading.prefix");
+    return PyPsiBundle.message("QFIX.NAME.remove.string.prefix");
   }
 
   @Override

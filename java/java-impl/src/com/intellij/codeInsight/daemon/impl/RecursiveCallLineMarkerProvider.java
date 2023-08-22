@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -36,9 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Danila Ponomarenko
- */
 public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
@@ -53,8 +36,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
 
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
-      if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+      if (element instanceof PsiMethodCallExpression methodCall) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement.class, true, PsiMethod.class);
         if (!statements.contains(statement) && isRecursiveMethodCall(methodCall)) {
           statements.add(statement);
@@ -66,7 +48,8 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
 
   public static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall) {
     final PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+    if (qualifier != null && !(qualifier instanceof PsiThisExpression) && 
+        !(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass)) {
       return false;
     }
 
@@ -90,7 +73,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
     return AllIcons.Gutter.RecursiveMethod;
   }
 
-  private static class RecursiveMethodCallMarkerInfo extends LineMarkerInfo<PsiElement> {
+  private static final class RecursiveMethodCallMarkerInfo extends LineMarkerInfo<PsiElement> {
     private static RecursiveMethodCallMarkerInfo create(@NotNull PsiMethodCallExpression methodCall) {
       PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
       if (nameElement != null) {
@@ -100,14 +83,14 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
     }
 
     private RecursiveMethodCallMarkerInfo(@NotNull PsiElement name) {
-      super(name, name.getTextRange(), AllIcons.Gutter.RecursiveMethod, FunctionUtil.constant("Recursive call"), null,
+      super(name, name.getTextRange(), AllIcons.Gutter.RecursiveMethod, FunctionUtil.constant(JavaBundle.message("tooltip.recursive.call")), null,
             GutterIconRenderer.Alignment.RIGHT);
     }
 
     @Override
     public GutterIconRenderer createGutterRenderer() {
       if (myIcon == null) return null;
-      return new LineMarkerGutterIconRenderer<PsiElement>(this){
+      return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
           return null; // to place breakpoint on mouse click

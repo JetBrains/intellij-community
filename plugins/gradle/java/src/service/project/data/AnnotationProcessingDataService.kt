@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.text.StringUtil
@@ -31,9 +32,9 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.util.*
-import kotlin.collections.ArrayList
 
 @Order(ExternalSystemConstants.UNORDERED)
 class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationProcessingData, ProcessorConfigProfile>() {
@@ -69,7 +70,8 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
           projectData.linkedExternalProjectPath)?.delegatedBuild ?: true
 
         clearGeneratedSourceFolders(ideModule, node, modifiableModelsProvider)
-        addGeneratedSourceFolders(ideModule, node, isDelegatedBuild, modifiableModelsProvider, sourceFolderManager)
+        val externalSource = ExternalSystemApiUtil.toExternalSource(moduleData.owner)
+        addGeneratedSourceFolders(ideModule, node, isDelegatedBuild, modifiableModelsProvider, sourceFolderManager, externalSource)
       }
     }
   }
@@ -110,25 +112,26 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
                                         node: DataNode<AnnotationProcessingData>,
                                         delegatedBuild: Boolean,
                                         modelsProvider: IdeModifiableModelsProvider,
-                                        sourceFolderManager: SourceFolderManager) {
+                                        sourceFolderManager: SourceFolderManager,
+                                        externalSource: ProjectModelExternalSource) {
 
     if (delegatedBuild) {
       val outputs = ExternalSystemApiUtil.findAll(node, AnnotationProcessingData.OUTPUT_KEY)
       outputs.forEach {
         val outputPath = it.data.outputPath
         val isTestSource = it.data.isTestSources
-        addGeneratedSourceFolder(ideModule, outputPath, isTestSource, modelsProvider, sourceFolderManager)
+        addGeneratedSourceFolder(ideModule, outputPath, isTestSource, modelsProvider, sourceFolderManager, externalSource)
       }
     }
     else {
       val outputPath = getAnnotationProcessorGenerationPath(ideModule, false, modelsProvider)
       if (outputPath != null) {
-        addGeneratedSourceFolder(ideModule, outputPath, false, modelsProvider, sourceFolderManager)
+        addGeneratedSourceFolder(ideModule, outputPath, false, modelsProvider, sourceFolderManager, externalSource)
       }
 
       val testOutputPath = getAnnotationProcessorGenerationPath(ideModule, true, modelsProvider)
       if (testOutputPath != null) {
-        addGeneratedSourceFolder(ideModule, testOutputPath, true, modelsProvider, sourceFolderManager)
+        addGeneratedSourceFolder(ideModule, testOutputPath, true, modelsProvider, sourceFolderManager, externalSource)
       }
     }
   }
@@ -138,7 +141,8 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
                                        path: String,
                                        isTest: Boolean,
                                        modelsProvider: IdeModifiableModelsProvider,
-                                       sourceFolderManager: SourceFolderManager) {
+                                       sourceFolderManager: SourceFolderManager,
+                                       externalSource: ProjectModelExternalSource) {
     val type = if (isTest) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
     val url = VfsUtilCore.pathToUrl(path)
     val vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
@@ -150,7 +154,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
       val contentEntry = MarkRootActionBase.findContentEntry(modifiableRootModel, vf)
                          ?: modifiableRootModel.addContentEntry(url)
       val properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true)
-      contentEntry.addSourceFolder(url, type, properties)
+      contentEntry.addSourceFolder(url, type, properties, externalSource)
     }
   }
 
@@ -189,28 +193,35 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
   }
 
 
-  override fun computeOrphanData(toImport: MutableCollection<DataNode<AnnotationProcessingData>>,
+  override fun computeOrphanData(toImport: Collection<DataNode<AnnotationProcessingData>>,
                                  projectData: ProjectData,
                                  project: Project,
-                                 modelsProvider: IdeModifiableModelsProvider): Computable<MutableCollection<ProcessorConfigProfile>> =
+                                 modelsProvider: IdeModifiableModelsProvider): Computable<Collection<ProcessorConfigProfile>> =
     Computable {
-      val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+      val profiles = ArrayList((CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl).moduleProcessorProfiles)
       val importedProcessingProfiles = ArrayList(toImport).asSequence()
         .map { it.data }
         .distinct()
         .map { createProcessorConfigProfile(it) }
         .toList()
 
-      val orphans = config
-        .moduleProcessorProfiles
-        .filter { importedProcessingProfiles.none { imported -> imported.matches(it) } }
+      val orphans = profiles
+        .filter {
+          it.moduleNames.all { configuredModule -> isGradleModule(configuredModule, modelsProvider) }
+          && importedProcessingProfiles.none { imported -> imported.matches(it) }
+        }
         .toMutableList()
 
       orphans
     }
 
-  override fun removeData(toRemoveComputable: Computable<MutableCollection<ProcessorConfigProfile>>,
-                          toIgnore: MutableCollection<DataNode<AnnotationProcessingData>>,
+  private fun isGradleModule(moduleName: String, modelsProvider: IdeModifiableModelsProvider): Boolean {
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID,
+      modelsProvider.findIdeModule(moduleName))
+  }
+
+  override fun removeData(toRemoveComputable: Computable<out Collection<ProcessorConfigProfile>>,
+                          toIgnore: Collection<DataNode<AnnotationProcessingData>>,
                           projectData: ProjectData,
                           project: Project,
                           modelsProvider: IdeModifiableModelsProvider) {
@@ -241,7 +252,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
 
   private fun CompilerConfigurationImpl.findOrCreateProcessorConfigProfile(data: AnnotationProcessingData): ProcessorConfigProfile {
     val newProfile = createProcessorConfigProfile(data)
-    return this.moduleProcessorProfiles
+    return ArrayList(this.moduleProcessorProfiles)
              .find { existing -> existing.matches(newProfile) }
            ?: newProfile.also { addModuleProcessorProfile(it) }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.inspection;
 
@@ -20,7 +20,12 @@ import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
+import java.util.Arrays;
+import java.util.Collection;
+
+public final class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
+  private static final Collection<String> FIELD_ANNOTATIONS = Arrays.asList(JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, 
+                                                                            JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION);
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
   @Override
@@ -45,7 +50,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
           if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, !isJUnit5, true)) {
             return true;
           }
-          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
+          final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<>() {
             @Override
             protected boolean accept(PsiClass psiClass) {
               return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -56,8 +61,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
         return true;
       }
     }
-    else if (psiElement instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)psiElement;
+    else if (psiElement instanceof PsiMethod method) {
       if (method.isConstructor() && method.getParameterList().isEmpty()) {
         final PsiClass aClass = method.getContainingClass();
         return aClass != null && JUnitUtil.isTestClass(aClass);
@@ -65,7 +69,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
       if (JUnitUtil.isTestMethodOrConfig(method)) return true;
     }
     else if (psiElement instanceof PsiField) {
-      return AnnotationUtil.isAnnotated((PsiField)psiElement, JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, 0);
+      return AnnotationUtil.isAnnotated((PsiField)psiElement, FIELD_ANNOTATIONS, 0);
     }
     return false;
   }
@@ -96,7 +100,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public String getTitle() {
-    return "Suggest package-private visibility level for junit 5 tests";
+    return JUnitBundle.message("junit.entry.point.suggest.package.private.visibility.junit5");
   }
 
   @Override

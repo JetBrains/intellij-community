@@ -1,14 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -61,26 +63,14 @@ public class NotificationMessageElement extends NavigatableMessageElement {
       }
 
       @NotNull
-      private Icon getIcon(@NotNull ErrorTreeElementKind kind) {
-        Icon icon = ICON_16;
-        switch (kind) {
-          case INFO:
-            icon = AllIcons.General.Information;
-            break;
-          case ERROR:
-            icon = AllIcons.General.Error;
-            break;
-          case WARNING:
-            icon = AllIcons.General.Warning;
-            break;
-          case NOTE:
-            icon = AllIcons.General.Tip;
-            break;
-          case GENERIC:
-            icon = ICON_16;
-            break;
-        }
-        return icon;
+      private static Icon getIcon(@NotNull ErrorTreeElementKind kind) {
+        return switch (kind) {
+          case INFO -> AllIcons.General.Information;
+          case ERROR -> AllIcons.General.Error;
+          case WARNING -> AllIcons.General.Warning;
+          case NOTE -> AllIcons.General.Tip;
+          case GENERIC -> ICON_16;
+        };
       }
     };
 
@@ -103,7 +93,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
     String message = StringUtil.join(this.getText(), "<br>");
     myEditorPane.setEditable(false);
     myEditorPane.setOpaque(false);
-    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+    myEditorPane.setEditorKit(HTMLEditorKitBuilder.simple());
     myEditorPane.setHighlighter(null);
 
     final StyleSheet styleSheet = ((HTMLDocument)myEditorPane.getDocument()).getStyleSheet();
@@ -134,7 +124,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
     htmlDocument.setCharacterAttributes(0, htmlDocument.getLength(), style, false);
   }
 
-  private class MyCustomizeColoredTreeCellRendererReplacement extends CustomizeColoredTreeCellRendererReplacement {
+  private final class MyCustomizeColoredTreeCellRendererReplacement extends CustomizeColoredTreeCellRendererReplacement {
     @NotNull
     private final JEditorPane myEditorPane;
 
@@ -161,7 +151,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
      * that eventually ends up in a tree view node makes the user
      * experience confusing for visually impaired users.
      */
-    private class MyEditorPane extends JEditorPane {
+    private static class MyEditorPane extends JEditorPane {
       @Override
       public AccessibleContext getAccessibleContext() {
         if (accessibleContext == null) {
@@ -181,7 +171,9 @@ public class NotificationMessageElement extends NavigatableMessageElement {
           try {
             Document document = MyEditorPane.this.getDocument();
             String result = document.getText(0, document.getLength());
-            return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(result);
+            @NlsSafe String resultWithPunctuation =
+              AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(result);
+            return resultWithPunctuation;
           }
           catch (BadLocationException e) {
             return super.getAccessibleName();

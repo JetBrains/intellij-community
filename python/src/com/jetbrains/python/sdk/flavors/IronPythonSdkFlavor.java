@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -20,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -27,13 +14,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
-public class IronPythonSdkFlavor extends PythonSdkFlavor {
+
+public final class IronPythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
   public static final Pattern VERSION_RE = Pattern.compile("\\w+ ([0-9\\.]+).*");
 
   private IronPythonSdkFlavor() {
@@ -44,15 +30,18 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
     return true;
   }
 
-  @Nullable
   @Override
-  public String envPathParam() {
+  public @NotNull String envPathParam() {
     return "IRONPYTHONPATH";
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  public @NotNull Class<PyFlavorData.Empty> getFlavorDataClass() {
+    return PyFlavorData.Empty.class;
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<String> result = new TreeSet<>();
     String root = System.getenv("ProgramFiles(x86)");
     if (root == null) {
@@ -73,7 +62,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
     }
     WinPythonSdkFlavor.findInPath(result, "ipy.exe");
     WinPythonSdkFlavor.findInPath(result, "ipy64.exe");
-    return result;
+    return ContainerUtil.map(result, Path::of);
   }
 
   @Override
@@ -90,22 +79,17 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public String getVersionOption() {
-    return "-V";
-  }
-
-  @Override
-  public Collection<String> getExtraDebugOptions() {
+  public @NotNull Collection<String> getExtraDebugOptions() {
     return Collections.singletonList("-X:Frames");
   }
 
   @Override
-  public void initPythonPath(GeneralCommandLine cmd, boolean passParentEnvs, Collection<String> path) {
+  public void initPythonPath(@NotNull GeneralCommandLine cmd, boolean passParentEnvs, @NotNull Collection<String> path) {
     initPythonPath(path, passParentEnvs, cmd.getEnvironment());
   }
 
   @Override
-  public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
+  public void initPythonPath(@NotNull Collection<String> path, boolean passParentEnvs, @NotNull Map<String, String> env) {
     PythonEnvUtil.addToEnv("IRONPYTHONPATH", StringUtil.join(path, File.pathSeparator), env);
   }
 
@@ -116,7 +100,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return PythonIcons.Python.Dotnet;
   }
 }

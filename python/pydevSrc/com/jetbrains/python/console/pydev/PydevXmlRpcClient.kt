@@ -1,4 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.console.pydev
 
 import com.intellij.openapi.diagnostic.Logger
@@ -77,7 +78,7 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
     }
     //make an async call so that we can keep track of not actually having an answer.
     try {
-      impl.executeAsync(command, Vector(Arrays.asList(*args)), object : AsyncCallback {
+      impl.executeAsync(command, Vector(listOf(*args)), object : AsyncCallback {
 
         override fun handleError(error: Exception, url: URL, method: String) {
           requestSynchronizer.release()
@@ -100,7 +101,7 @@ constructor(private val process: Process, hostname: String?, port: Int) : IPydev
       progress.checkCanceled()
       val exitValue = process.waitFor(10, TimeUnit.MILLISECONDS)
       if (exitValue) {
-        result[0] = makeError(String.format("Console already exited with value: %s while waiting for an answer.\n", exitValue))
+        result[0] = makeError(String.format("Console already exited with value: %s while waiting for an answer.\n", true))
         break
       }
     }

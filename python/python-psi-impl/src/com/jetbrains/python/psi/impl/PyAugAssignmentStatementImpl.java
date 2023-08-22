@@ -11,9 +11,7 @@ import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAugAssignmentStatement {
   public PyAugAssignmentStatementImpl(ASTNode astNode) {
     super(astNode);

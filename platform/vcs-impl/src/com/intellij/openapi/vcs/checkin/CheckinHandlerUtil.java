@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -14,6 +14,8 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,16 +23,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class CheckinHandlerUtil {
-  public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project) {
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
-    List<VirtualFile> result = new ArrayList<>(files.size());
-    for (VirtualFile file : files) {
-      if (!fileIndex.isExcluded(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
-        result.add(file);
-      }
-    }
-    return result;
+public final class CheckinHandlerUtil {
+  public static boolean isGeneratedOrExcluded(@NotNull Project project, @NotNull VirtualFile file) {
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    return fileIndex.isExcluded(file) || GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
+  }
+
+  @NotNull
+  public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files,
+                                                                     @NotNull Project project) {
+    return ContainerUtil.filter(files, file -> !isGeneratedOrExcluded(project, file));
   }
 
   public static PsiFile[] getPsiFiles(final Project project, final Collection<? extends VirtualFile> selectedFiles) {
@@ -61,7 +63,7 @@ public class CheckinHandlerUtil {
       .anyMatch(checker -> FileTypeRegistry.getInstance().isFileOfType(file, checker.getFileType()) && checker.isOutOfSources(project, file));
   }
 
-  public static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull String tooltip) {
+  public static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull @Nls String tooltip) {
     boolean dumb = DumbService.isDumb(project);
     checkBox.setEnabled(!dumb);
     checkBox.setToolTipText(dumb ? tooltip : "");

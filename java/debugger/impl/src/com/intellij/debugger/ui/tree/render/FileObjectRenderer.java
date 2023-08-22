@@ -4,15 +4,24 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.util.registry.Registry;
 
-public class FileObjectRenderer extends CompoundReferenceRenderer {
-  public FileObjectRenderer() {
-    super("File", null, NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null));
-    setClassName("java.io.File");
-    setEnabled(true);
+public class FileObjectRenderer extends CompoundRendererProvider {
+  @Override
+  protected String getName() {
+    return "File";
   }
 
   @Override
-  public boolean isEnabled() {
+  protected ChildrenRenderer getChildrenRenderer() {
+    return NodeRendererSettings.createExpressionChildrenRenderer("listFiles()", null);
+  }
+
+  @Override
+  protected String getClassName() {
+    return "java.io.File";
+  }
+
+  @Override
+  protected boolean isEnabled() {
     return Registry.is("debugger.renderers.file");
   }
 }

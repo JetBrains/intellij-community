@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
-class CreatePackageHandler extends CreateGroupHandler {
+final class CreatePackageHandler extends CreateGroupHandler {
 
   private static final String DELIMITER = ".";
   private static final String REGEX_DELIMITER = Pattern.quote(DELIMITER);
@@ -83,10 +83,6 @@ class CreatePackageHandler extends CreateGroupHandler {
   @Override
   public boolean canClose(String packageName) {
     if (packageName.isEmpty() || packageName.equals(myInitialText)) {
-      Messages.showMessageDialog(myProject,
-                                 IdeBundle.message("error.name.should.be.specified"),
-                                 CommonBundle.getErrorTitle(),
-                                 Messages.getErrorIcon());
       return false;
     }
 

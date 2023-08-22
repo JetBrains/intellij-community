@@ -12,9 +12,7 @@ import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class LightNamedElement extends LightElement implements PyElement, PsiNamedElement {
   protected final String myName;
 
@@ -30,12 +28,7 @@ public class LightNamedElement extends LightElement implements PyElement, PsiNam
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitElement(this);
-  }
-
-  @Override
-  public PsiElement copy() {
-    return null;
+    super.accept(visitor);
   }
 
   @Override

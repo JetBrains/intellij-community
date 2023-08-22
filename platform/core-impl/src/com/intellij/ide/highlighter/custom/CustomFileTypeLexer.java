@@ -23,9 +23,6 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public final class CustomFileTypeLexer extends AbstractCustomLexer {
   public CustomFileTypeLexer(SyntaxTable table, boolean forHighlighting) {
     super(buildTokenParsers(table, forHighlighting));
@@ -52,7 +49,7 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
     final QuotedStringParser quotedStringParser = new QuotedStringParser("\"", CustomHighlighterTokenType.STRING, table.isHasStringEscapes());
 
     final QuotedStringParser quotedStringParser2 = new QuotedStringParser(
-        "\'",
+      "'",
         forHighlighting ? CustomHighlighterTokenType.SINGLE_QUOTED_STRING:CustomHighlighterTokenType.STRING,
         table.isHasStringEscapes()
     );

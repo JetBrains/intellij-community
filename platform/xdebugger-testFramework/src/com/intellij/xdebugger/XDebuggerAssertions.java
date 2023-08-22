@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.concurrency.FutureResult;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -29,9 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 
 import static org.junit.Assert.*;
 
@@ -70,6 +69,13 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
 
   public static void assertCurrentPosition(@NotNull XDebugSession session, @NotNull VirtualFile file, int line) throws IOException {
     assertPosition(session.getCurrentPosition(), file, line);
+  }
+
+  public static void assertVariable(@NotNull Collection<? extends XValue> vars,
+                                    @Nullable String name,
+                                    @Nullable String type,
+                                    @Nullable String value) {
+    assertVariable(vars, name, type, value, null, null);
   }
 
   public static void assertVariable(@NotNull Collection<? extends XValue> vars,
@@ -152,17 +158,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
                                     @Nullable String value,
                                     @Nullable Boolean hasChildren,
                                     @Nullable Icon icon) {
-    assertVariable(var, name, type, value, hasChildren, icon, XDebuggerTestUtil::waitFor);
-  }
-
-  public static void assertVariable(@NotNull XValue var,
-                                    @Nullable String name,
-                                    @Nullable String type,
-                                    @Nullable String value,
-                                    @Nullable Boolean hasChildren,
-                                    @Nullable Icon icon,
-                                    @NotNull BiFunction<? super Semaphore, ? super Long, Boolean> waitFunction) {
-    XTestValueNode node = computePresentation(var, waitFunction);
+    XTestValueNode node = computePresentation(var);
     assertVariable(node, name, type, value, hasChildren, icon);
   }
 
@@ -253,17 +249,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
                                                 @Nullable @RegExp String valuePattern,
                                                 @Nullable Boolean hasChildren,
                                                 @Nullable Icon icon) {
-    assertVariableValueMatches(var, name, type, valuePattern, hasChildren, icon, XDebuggerTestUtil::waitFor);
-  }
-
-  public static void assertVariableValueMatches(@NotNull XValue var,
-                                                @Nullable String name,
-                                                @Nullable String type,
-                                                @Nullable @RegExp String valuePattern,
-                                                @Nullable Boolean hasChildren,
-                                                @Nullable Icon icon,
-                                                @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    XTestValueNode node = computePresentation(var, waitFunction);
+    XTestValueNode node = computePresentation(var);
     assertVariable(node, name, type, null, hasChildren, icon);
     if (valuePattern != null) {
       assertTrue("Expected value: " + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
@@ -294,7 +280,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
                                                @Nullable @RegExp String typePattern,
                                                @Nullable String value,
                                                @Nullable Boolean hasChildren) {
-    assertVariableTypeMatches(var, name, typePattern, value, hasChildren, null, XDebuggerTestUtil::waitFor);
+    assertVariableTypeMatches(var, name, typePattern, value, hasChildren, null);
   }
 
   public static void assertVariableTypeMatches(@NotNull XValue var,
@@ -302,9 +288,8 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
                                                @Nullable @RegExp String typePattern,
                                                @Nullable String value,
                                                @Nullable Boolean hasChildren,
-                                               @Nullable Icon icon,
-                                               @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) {
-    XTestValueNode node = computePresentation(var, waitFunction);
+                                               @Nullable Icon icon) {
+    XTestValueNode node = computePresentation(var);
     assertVariable(node, name, null, value, hasChildren, icon);
     if (typePattern != null) {
       assertTrue("Expected type: " + typePattern + " Actual type: " + node.myType,
@@ -314,38 +299,51 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
 
   public static void assertVariableFullValue(@NotNull XValue var,
                                              @Nullable String value) throws Exception {
-    assertVariableFullValue(var, value, XDebuggerTestUtil::waitFor);
-  }
-
-  public static void assertVariableFullValue(@NotNull XValue var,
-                                             @Nullable String value,
-                                             @NotNull BiFunction<Semaphore, Long, Boolean> waitFunction) throws Exception {
-    XTestValueNode node = computePresentation(var, waitFunction);
+    XTestValueNode node = computePresentation(var);
 
     if (value == null) {
       assertNull("full value evaluator should be null", node.myFullValueEvaluator);
     }
     else {
-      final FutureResult<String> result = new FutureResult<>();
-      node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
-        @Override
-        public void evaluated(@NotNull String fullValue) {
-          result.set(fullValue);
-        }
-
-        @Override
-        public void evaluated(@NotNull String fullValue, @Nullable Font font) {
-          result.set(fullValue);
-        }
-
-        @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          result.set(errorMessage);
-        }
-      });
-
-      assertEquals(value, result.get(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+      final String actualValue = computeFullValue(node);
+      assertEquals(value, actualValue);
     }
+  }
+
+  public static void assertVariableFullValueMatches(@NotNull XValue var,
+                                                    @RegExp @Nullable String valueRegexp) throws Exception {
+    XTestValueNode node = computePresentation(var);
+
+    if (valueRegexp == null) {
+      assertNull("full value evaluator should be null", node.myFullValueEvaluator);
+    }
+    else {
+      final String value = computeFullValue(node);
+      assertTrue(value + " is not matched by " + valueRegexp, value.matches(valueRegexp));
+    }
+  }
+
+  private static String computeFullValue(@NotNull XTestValueNode node) throws Exception {
+    assertNotNull("full value evaluator should be not null", node.myFullValueEvaluator);
+    CompletableFuture<String> result = new CompletableFuture<>();
+    node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
+      @Override
+      public void evaluated(@NotNull String fullValue) {
+        result.complete(fullValue);
+      }
+
+      @Override
+      public void evaluated(@NotNull String fullValue, @Nullable Font font) {
+        result.complete(fullValue);
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        result.complete(errorMessage);
+      }
+    });
+
+    return result.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
   }
 
   public static void assertVariableFullValue(@NotNull Collection<? extends XValue> vars, @Nullable String name, @Nullable String value)
@@ -354,7 +352,6 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
   }
 
   public static void assertVariables(@NotNull List<? extends XValue> vars, String... names) {
-    List<String> expectedNames = new ArrayList<>(Arrays.asList(names));
 
     List<String> actualNames = new ArrayList<>();
     for (XValue each : vars) {
@@ -362,7 +359,7 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
     }
 
     Collections.sort(actualNames);
-    Collections.sort(expectedNames);
+    List<String> expectedNames = ContainerUtil.sorted(Arrays.asList(names));
     UsefulTestCase.assertOrderedEquals(actualNames, expectedNames);
   }
 
@@ -378,6 +375,21 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
     assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
                + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
                expectedNames.isEmpty()
+    );
+  }
+
+  public static void assertVariablesDontContain(@NotNull List<? extends XValue> vars, String... notExpected) {
+    List<String> actualNames = new ArrayList<>();
+    for (XValue each : vars) {
+      actualNames.add(computePresentation(each).myName);
+    }
+
+    String allVariablesNames = StringUtil.join(actualNames, ", ");
+    actualNames.retainAll(List.of(notExpected));
+
+    assertTrue("Present variables: " + StringUtil.join(actualNames, ", ")
+               + "\nAll Variables: " + allVariablesNames,
+               actualNames.isEmpty()
     );
   }
 

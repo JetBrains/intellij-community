@@ -1,5 +1,5 @@
 class Foreign {
-    void foo(Test test) {
+    void foo (Test test) {
         test.field++;
     }
 }

@@ -1,4 +1,4 @@
-// "Reuse previous variable 'i' declaration" "false"
+// "Reuse previous variable 'i'" "false"
 import java.io.*;
 
 class a {

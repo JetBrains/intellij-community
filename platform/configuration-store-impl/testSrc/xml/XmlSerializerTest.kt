@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PropertyName")
 
 package com.intellij.configurationStore.xml
@@ -162,7 +162,6 @@ internal class XmlSerializerTest {
 
     override fun equals(other: Any?): Boolean {
       // any instance of this class is equal
-      @Suppress("SuspiciousEqualsCombination")
       return this === other || (other != null && javaClass == other.javaClass)
     }
   }
@@ -433,7 +432,7 @@ internal class XmlSerializerTest {
         <vValue v="3"/>
       </bean>"""))
     assertThat(bean.intV).isEqualTo(2)
-    assertThat("[1, 2, 3]").isEqualTo(Arrays.asList(*bean.v).toString())
+    assertThat("[1, 2, 3]").isEqualTo(listOf(*bean.v).toString())
   }
 
   private class BeanWithPropertiesBoundToAttribute {

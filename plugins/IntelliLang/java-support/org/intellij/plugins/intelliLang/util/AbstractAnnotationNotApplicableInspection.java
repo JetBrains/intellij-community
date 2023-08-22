@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.RemoveAnnotationQuickFix;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,7 +16,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 public abstract class AbstractAnnotationNotApplicableInspection extends LocalInspectionTool {
   protected abstract String getAnnotationName(Project project);
   protected abstract boolean isTypeApplicable(PsiType type);
-  protected abstract String getDescriptionTemplate();
+  protected abstract @InspectionMessage String getDescriptionTemplate();
 
 
   @Override
@@ -25,7 +26,7 @@ public abstract class AbstractAnnotationNotApplicableInspection extends LocalIns
       final String annotationName = getAnnotationName(holder.getProject());
 
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         final String name = annotation.getQualifiedName();
         if (annotationName.equals(name)) {
           checkAnnotation(annotation, holder);

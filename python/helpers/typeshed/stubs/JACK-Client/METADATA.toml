@@ -1,0 +1,4 @@
+version = "0.5.*"
+
+[tool.stubtest]
+apt_dependencies = ["libjack-dev"]

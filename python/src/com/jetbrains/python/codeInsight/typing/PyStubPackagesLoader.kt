@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.CatchingConsumer
-import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.packaging.PyPIPackageUtil
@@ -28,7 +27,7 @@ fun loadStubPackagesForSources(sourcesToLoad: Set<String>,
     sourceToStubPackagesAvailableToInstall,
     packageManagementService,
     BiConsumer { source, stubPackagesForSource ->
-      ServiceManager.getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk).put(source, stubPackagesForSource)
+      ApplicationManager.getApplication().getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk).put(source, stubPackagesForSource)
     }
   )
 }
@@ -115,7 +114,7 @@ private fun loadRequirementAndExtraArgsForPackageAndThenContinueForSource(state:
               emptyList()
             }
 
-          state.result[name] = t!!.first() to extraArgs
+          state.result[name] = t.first() to extraArgs
         }
 
         continueLoadingRequirementsAndExtraArgsForSource(state)

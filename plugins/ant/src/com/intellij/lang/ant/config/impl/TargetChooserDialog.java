@@ -78,8 +78,7 @@ public class TargetChooserDialog extends DialogWrapper {
         if (selectionPath != null) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
           final Object userObject = node.getUserObject();
-          if (userObject instanceof AntTargetNodeDescriptor) {
-            final AntTargetNodeDescriptor antBuildTarget = (AntTargetNodeDescriptor)userObject;
+          if (userObject instanceof AntTargetNodeDescriptor antBuildTarget) {
             mySelectedTarget = antBuildTarget.getAntTarget();
           }
           else {
@@ -92,7 +91,7 @@ public class TargetChooserDialog extends DialogWrapper {
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree, path -> {
+    TreeSpeedSearch.installOn(tree, false, path -> {
       final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
       if (userObject instanceof AntTargetNodeDescriptor) {
         final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getAntTarget();
@@ -170,21 +169,19 @@ public class TargetChooserDialog extends DialogWrapper {
 
   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      if (value instanceof DefaultMutableTreeNode) {
-        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
+      if (value instanceof DefaultMutableTreeNode treeNode) {
         final Object userObject = treeNode.getUserObject();
         if (userObject instanceof AntBuildFile) {
           append(((AntBuildFile)userObject).getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
-        else if (userObject instanceof AntTargetNodeDescriptor) {
-          final AntTargetNodeDescriptor descriptor = (AntTargetNodeDescriptor)userObject;
+        else if (userObject instanceof AntTargetNodeDescriptor descriptor) {
           final AntBuildTarget antTarget = descriptor.getAntTarget();
           final String antTargetName = antTarget.getName();
           append(antTargetName, SimpleTextAttributes.REGULAR_ATTRIBUTES);

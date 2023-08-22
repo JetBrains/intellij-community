@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.util.KeyedLazyInstance;
@@ -15,15 +15,13 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
     super(epName);
   }
 
-  @NotNull
   @Override
-  protected String keyToString(@NotNull Class key) {
+  protected @NotNull String keyToString(@NotNull Class key) {
     return key.getName();
   }
 
-  @NotNull
   @Override
-  protected List<T> buildExtensions(@NotNull String key, @NotNull Class classKey) {
+  protected @NotNull List<T> buildExtensions(@NotNull String key, @NotNull Class classKey) {
     final Set<String> allSupers = new LinkedHashSet<>();
     collectSupers(classKey, allSupers);
     return buildExtensionsWithInheritance(allSupers);
@@ -56,8 +54,7 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
     }
   }
 
-  @Nullable
-  public T forClass(@NotNull Class t) {
+  public @Nullable T forClass(@NotNull Class t) {
     final List<T> ts = forKey(t);
     return ts.isEmpty() ? null : ts.get(0);
   }

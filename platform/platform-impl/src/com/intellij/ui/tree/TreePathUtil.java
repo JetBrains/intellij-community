@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.util.ArrayUtil;
@@ -17,17 +17,16 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ui.tree.TreeUtil.EMPTY_TREE_PATH;
 
-public class TreePathUtil {
+public final class TreePathUtil {
   /**
    * @param parent    the parent path or {@code null} to indicate the root
    * @param component the last path component
    * @return a tree path with all the parent components plus the given component
    */
-  @NotNull
-  public static TreePath createTreePath(TreePath parent, @NotNull Object component) {
+  public static @NotNull TreePath createTreePath(TreePath parent, @NotNull Object component) {
     return parent != null
            ? parent.pathByAddingChild(component)
-           : new TreePath(component);
+           : new CachingTreePath(component);
   }
 
   /**
@@ -74,7 +73,6 @@ public class TreePathUtil {
    */
   private static <T> T[] convertTreePathToArray(@NotNull TreePath path, @NotNull Function<Object, ? extends T> converter, @NotNull Class<T> type) {
     int count = path.getPathCount();
-    if (count <= 0) return null;
     T[] array = ArrayUtil.newArray(type, count);
     while (path != null && count > 0) {
       Object component = path.getLastPathComponent();
@@ -220,7 +218,7 @@ public class TreePathUtil {
    * @param predicate a predicate that tests every ancestor of the given path
    * @return an ancestor of the given path, or {@code null} if the path does not have any applicable ancestor
    */
-  public static TreePath findAncestor(TreePath path, @NotNull Predicate<TreePath> predicate) {
+  public static TreePath findAncestor(TreePath path, @NotNull Predicate<? super TreePath> predicate) {
     while (path != null) {
       if (predicate.test(path)) return path;
       path = path.getParentPath();

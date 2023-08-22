@@ -3,9 +3,6 @@ package com.intellij.util.containers;
 
 import junit.framework.TestCase;
 
-/**
- * @author peter
- */
 public class PathInternerTest extends TestCase {
   private final PathInterner.PathEnumerator interner = new PathInterner.PathEnumerator();
 

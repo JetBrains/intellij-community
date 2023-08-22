@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.issue.quickfix
 
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.ide.actions.ShowSettingsUtilImpl
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.options.ex.ConfigurableVisitor
@@ -24,7 +24,7 @@ class GradleSettingsQuickFix(private val myProjectPath: String, private val myRe
 
   override val id: String = "fix_gradle_settings"
 
-  override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(myProjectPath)
                           ?: return CompletableFuture.completedFuture(false)
     val future = CompletableFuture<Boolean>()
@@ -43,6 +43,12 @@ class GradleSettingsQuickFix(private val myProjectPath: String, private val myRe
         requestImport(project, myProjectPath, GradleConstants.SYSTEM_ID)
       else
         CompletableFuture.completedFuture(null)
+    }
+  }
+
+  object GradleJvmChangeDetector : BiPredicate<GradleProjectSettings, GradleProjectSettings> {
+    override fun test(t: GradleProjectSettings, u: GradleProjectSettings): Boolean {
+      return t.gradleJvm != u.gradleJvm
     }
   }
 }

@@ -25,7 +25,7 @@ import java.util.Set;
 
 public interface BuildTargetIndex extends BuildTargetRegistry {
 
-  List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context);
+  @NotNull List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context);
 
   /**
    * Returns {@code true} if target is {@link BuildTargetType#isFileBased() file-based} and has no source roots so it may be skipped during build.
@@ -35,7 +35,7 @@ public interface BuildTargetIndex extends BuildTargetRegistry {
   /**
    * @deprecated use {@link #getDependencies(BuildTarget, CompileContext)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context);
 
   @NotNull

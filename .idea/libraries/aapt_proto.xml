@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="aapt-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.android.tools.build:aapt2-proto:0.3.1" />
+    <properties include-transitive-deps="false" maven-id="com.android.tools.build:aapt2-proto:0.3.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/android/tools/build/aapt2-proto/0.3.1/aapt2-proto-0.3.1.jar">
+          <sha256sum>a503219b89b0aaf7b7c6c9b3b17d69e655a6c619072b684a1ea4fbf1d7dc49da</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/build/aapt2-proto/0.3.1/aapt2-proto-0.3.1.jar!/" />
     </CLASSES>

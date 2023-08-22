@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -28,7 +14,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class CopyElementAction extends AnAction {
+public final class CopyElementAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
@@ -36,9 +28,7 @@ public class CopyElementAction extends AnAction {
     if (project == null) {
       return;
     }
-
-    CommandProcessor.getInstance().executeCommand(project, () -> PsiDocumentManager.getInstance(project).commitAllDocuments(), "", null
-    );
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
@@ -97,7 +87,7 @@ public class CopyElementAction extends AnAction {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     PsiElement element = getTargetElement(editor, project);
-    Ref<String> actionName = new Ref<>();
+    Ref<@NlsActions.ActionText String> actionName = new Ref<>();
     boolean result = element != null && CopyHandler.canCopy(new PsiElement[]{element}, actionName);
 
     if (!result && file != null) {
@@ -113,7 +103,7 @@ public class CopyElementAction extends AnAction {
 
   protected void updateForToolWindow(DataContext dataContext, Presentation presentation) {
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    Ref<String> actionName = new Ref<>();
+    Ref<@NlsActions.ActionText String> actionName = new Ref<>();
     presentation.setEnabled(elements != null && CopyHandler.canCopy(elements, actionName));
     if (!actionName.isNull()) {
       presentation.setText(actionName.get());

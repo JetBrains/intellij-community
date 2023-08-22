@@ -52,7 +52,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     final PsiFile containingFile = place.getContainingFile();
     if (containingFile == null) {
       PsiUtilCore.ensureValid(place);
-      ResolveUtilKt.getLog().error(place.getClass());
+      ResolveUtilKt.getLog().error("Containing file is null for " + place.getClass());
       return;
     }
     final PsiFile file = containingFile.getOriginalFile();
@@ -77,10 +77,10 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     final Project project = file.getProject();
     SoftFactoryMap<Class[], PsiFile> map = project.getUserData(PATTERN_INJECTION_CONTEXT);
     if (map == null) {
-      map = new SoftFactoryMap<Class[], PsiFile>() {
+      map = new SoftFactoryMap<>() {
 
         @Override
-        protected PsiFile create(Class[] key) {
+        protected PsiFile create(Class @NotNull [] key) {
           String text = PatternCompilerFactory.getFactory().getPatternCompiler(key).dumpContextDeclarations();
           return PsiFileFactory.getInstance(project).createFileFromText("context.groovy", GroovyFileType.GROOVY_FILE_TYPE, text);
         }
@@ -129,7 +129,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     CachedValue<Set<String>> cachedValue = project.getUserData(PATTERN_CLASSES);
     if (cachedValue == null) {
       cachedValue = CachedValuesManager.getManager(project).createCachedValue(
-        () -> CachedValueProvider.Result.create(calcDevPatternClassNames(project), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT), false);
+        () -> CachedValueProvider.Result.create(calcDevPatternClassNames(project), PsiModificationTracker.MODIFICATION_COUNT), false);
       project.putUserData(PATTERN_CLASSES, cachedValue);
     }
     return cachedValue.getValue();
@@ -150,7 +150,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
         return true;
       };
       final StringSearcher searcher = new StringSearcher("patternClass", true, true);
-      CacheManager.SERVICE.getInstance(beanClass.getProject()).processFilesWithWord(psiFile -> {
+      CacheManager.getInstance(beanClass.getProject()).processFilesWithWord(psiFile -> {
         LowLevelSearchUtil.processElementsContainingWordInElement(occurenceProcessor, psiFile, searcher, true,
                                                                    new EmptyProgressIndicator());
         return true;

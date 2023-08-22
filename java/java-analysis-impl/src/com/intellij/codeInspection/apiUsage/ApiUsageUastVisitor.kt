@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.apiUsage
 
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
+import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -14,8 +13,9 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
  * Non-recursive UAST visitor that detects usages of APIs in source code of UAST-supporting languages
  * and reports them via [ApiUsageProcessor] interface.
  */
+
 @ApiStatus.Experimental
-class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : AbstractUastNonRecursiveVisitor() {
+open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : AbstractUastNonRecursiveVisitor() {
 
   companion object {
     @JvmStatic
@@ -41,9 +41,17 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       return true
     }
     val resolved = node.resolve()
-    if (resolved is PsiMethod) {
-      if (isClassReferenceInConstructorInvocation(node) || isClassReferenceInKotlinSuperClassConstructor(node)) {
-        /*
+    if (processClassReferenceInConstructorInvocation(node, resolved)) return true
+    if (resolved is PsiModifierListOwner) {
+      apiUsageProcessor.processReference(node, resolved, null)
+      return true
+    }
+    return true
+  }
+
+  private fun processClassReferenceInConstructorInvocation(node: UReferenceExpression, resolved: PsiElement?): Boolean {
+    if (resolved is PsiMethod && isClassReferenceInConstructorInvocation(node)) {
+      /*
           Suppose a code:
           ```
              object : SomeClass(42) { }
@@ -60,31 +68,13 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
           So we resolve it manually to the class because the constructor will be handled separately
           in "visitObjectLiteralExpression" or "visitCallExpression".
         */
-        val resolvedClass = resolved.containingClass
-        if (resolvedClass != null) {
-          apiUsageProcessor.processReference(node, resolvedClass, null)
-        }
-        return true
+      val resolvedClass = resolved.containingClass
+      if (resolvedClass != null) {
+        apiUsageProcessor.processReference(node, resolvedClass, null)
       }
-    }
-    if (resolved is PsiModifierListOwner) {
-      apiUsageProcessor.processReference(node, resolved, null)
       return true
     }
-    if (resolved == null) {
-      /*
-       * KT-30522 UAST for Kotlin: reference to annotation parameter resolves to null.
-       */
-      val psiReferences = node.sourcePsi?.references.orEmpty()
-      for (psiReference in psiReferences) {
-        val target = psiReference.resolve()?.toUElement()?.javaPsi as? PsiAnnotationMethod
-        if (target != null) {
-          apiUsageProcessor.processReference(node, target, null)
-          return true
-        }
-      }
-    }
-    return true
+    return false
   }
 
   override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
@@ -100,6 +90,7 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     if (resolved == null) {
       resolved = node.selector.tryResolve()
     }
+    if (processClassReferenceInConstructorInvocation(node, resolved)) return true
     if (resolved is PsiModifierListOwner) {
       apiUsageProcessor.processReference(node.selector, resolved, node.receiver)
     }
@@ -213,14 +204,10 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     return true
   }
 
-  override fun visitElement(node: UElement): Boolean {
-    if (node is UNamedExpression) {
-      //IDEA-209279: UAstVisitor lacks a hook for UNamedExpression
-      //KT-30522: Kotlin does not generate UNamedExpression for annotation's parameters.
-      processNamedExpression(node)
-      return true
-    }
-    return super.visitElement(node)
+  override fun visitNamedExpression(node: UNamedExpression): Boolean {
+    //KT-30522: Kotlin does not generate UNamedExpression for annotation's parameters.
+    processNamedExpression(node)
+    return true
   }
 
   override fun visitClass(node: UClass): Boolean {
@@ -248,7 +235,7 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       //a reference to the functional interface will be added by compiler
       val resolved = PsiUtil.resolveGenericsClassInType(node.functionalInterfaceType).element
       if (resolved != null) {
-        apiUsageProcessor.processReference(node, resolved, null)
+        apiUsageProcessor.processLambda(node, resolved)
       }
     }
     return true
@@ -269,22 +256,8 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
 
   private fun maybeProcessReferenceInsideImportStatement(node: UReferenceExpression): Boolean {
     if (isInsideImportStatement(node)) {
-      if (isKotlin(node)) {
-        /*
-        UAST for Kotlin 1.3.30 import statements have bugs.
-
-        KT-30546: some references resolve to nulls.
-        KT-30957: simple references for members resolve incorrectly to class declaration, not to the member declaration
-
-        Therefore, we have to fallback to base PSI for Kotlin references.
-         */
-        val resolved = node.sourcePsi?.reference?.resolve()
-        val target = (resolved?.toUElement()?.javaPsi ?: resolved) as? PsiModifierListOwner
-        if (target != null) {
-          apiUsageProcessor.processImportReference(node, target)
-        }
-      }
-      else {
+      val parentingQualifier = node.asSafely<USimpleNameReferenceExpression>()?.uastParent.asSafely<UQualifiedReferenceExpression>()
+      if (node != parentingQualifier?.selector) {
         val resolved = node.resolve() as? PsiModifierListOwner
         if (resolved != null) {
           apiUsageProcessor.processImportReference(node.referenceNameElement ?: node, resolved)
@@ -295,12 +268,12 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     return false
   }
 
-  private fun isInsideImportStatement(node: UElement): Boolean {
-    val sourcePsi = node.sourcePsi
-    if (sourcePsi != null && sourcePsi.language == JavaLanguage.INSTANCE) {
-      return PsiTreeUtil.getParentOfType(sourcePsi, PsiImportStatementBase::class.java) != null
+  private fun isInsideImportStatement(node: UReferenceExpression): Boolean {
+    var parent = node.uastParent
+    while (parent is UReferenceExpression) {
+      parent = parent.uastParent
     }
-    return sourcePsi.findContaining(UImportStatement::class.java) != null
+    return parent is UImportStatement
   }
 
   private fun maybeProcessImplicitConstructorInvocationAtSubclassDeclaration(sourceNode: UElement, subclassDeclaration: UClass) {
@@ -321,7 +294,7 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     }
   }
 
-  private fun checkImplicitCallOfSuperEmptyConstructor(constructor: UMethod) {
+  protected fun checkImplicitCallOfSuperEmptyConstructor(constructor: UMethod) {
     val containingUClass = constructor.getContainingUClass() ?: return
     val superClass = containingUClass.javaPsi.superClass ?: return
     val uastBody = constructor.uastBody
@@ -358,40 +331,6 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     }
   }
 
-  /**
-   * UAST for Kotlin generates UAST tree with "UnknownKotlinExpression (CONSTRUCTOR_CALLEE)" for the following expressions:
-   * 1) an object literal expression: `object : BaseClass() { ... }`
-   * 2) a super class constructor invocation `class Derived : BaseClass(42) { ... }`
-   *
-   *
-   * ```
-   * UObjectLiteralExpression
-   *     UnknownKotlinExpression (CONSTRUCTOR_CALLEE)
-   *         UTypeReferenceExpression (BaseClass)
-   *             USimpleNameReferenceExpression (BaseClass)
-   * ```
-   *
-   * and
-   *
-   * ```
-   * UCallExpression (kind = CONSTRUCTOR_CALL)
-   *     UnknownKotlinExpression (CONSTRUCTOR_CALLEE)
-   *         UTypeReferenceExpression (BaseClass)
-   *             USimpleNameReferenceExpression (BaseClass)
-   * ```
-   *
-   * This method checks if the given simple reference points to the `BaseClass` part,
-   * which is treated by Kotlin UAST as a reference to `BaseClass'` constructor, not to the `BaseClass` itself.
-   */
-  private fun isClassReferenceInKotlinSuperClassConstructor(expression: USimpleNameReferenceExpression): Boolean {
-    val parent1 = expression.uastParent
-    val parent2 = parent1?.uastParent
-    val parent3 = parent2?.uastParent
-    return parent1 is UTypeReferenceExpression
-           && parent2 != null && parent2.asLogString().contains("CONSTRUCTOR_CALLEE")
-           && (parent3 is UObjectLiteralExpression || parent3 is UCallExpression && parent3.kind == UastCallKind.CONSTRUCTOR_CALL)
-  }
-
   private fun isSelectorOfQualifiedReference(expression: USimpleNameReferenceExpression): Boolean {
     val qualifiedReference = expression.uastParent as? UQualifiedReferenceExpression ?: return false
     return haveSameSourceElement(expression, qualifiedReference.selector)
@@ -402,25 +341,25 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     return callExpression.kind == UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
   }
 
-  private fun isSuperOrThisCall(simpleReference: USimpleNameReferenceExpression): Boolean {
+  private fun isSuperOrThisCall(simpleReference: UReferenceExpression): Boolean {
     val callExpression = simpleReference.uastParent as? UCallExpression ?: return false
     return callExpression.kind == UastCallKind.CONSTRUCTOR_CALL &&
            (callExpression.methodIdentifier?.name == "super" || callExpression.methodIdentifier?.name == "this")
   }
 
-  private fun isClassReferenceInConstructorInvocation(simpleReference: USimpleNameReferenceExpression): Boolean {
-    if (isSuperOrThisCall(simpleReference)) {
+  private fun isClassReferenceInConstructorInvocation(reference: UReferenceExpression): Boolean {
+    if (isSuperOrThisCall(reference)) {
       return false
     }
-    val callExpression = simpleReference.uastParent as? UCallExpression ?: return false
+    val callExpression = reference.uastParent as? UCallExpression ?: return false
     if (callExpression.kind != UastCallKind.CONSTRUCTOR_CALL) {
       return false
     }
     val classReferenceNameElement = callExpression.classReference?.referenceNameElement
     if (classReferenceNameElement != null) {
-      return haveSameSourceElement(classReferenceNameElement, simpleReference.referenceNameElement)
+      return haveSameSourceElement(classReferenceNameElement, reference.referenceNameElement)
     }
-    return callExpression.resolve()?.name == simpleReference.resolvedName
+    return callExpression.resolve()?.name == reference.resolvedName
   }
 
   private fun isMethodReferenceOfCallExpression(expression: USimpleNameReferenceExpression): Boolean {

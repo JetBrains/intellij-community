@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import groovy.transform.CompileStatic
@@ -16,7 +16,7 @@ class GroovyStringKindTest extends GroovyLatestTest {
   private static void doEscapeTests(StringKind kind, Map<String, String> data) {
     TestUtils.runAll(data) { unescaped, expectedEscaped ->
       assertEquals(expectedEscaped, kind.escape(unescaped))
-    }.run()
+    }
   }
 
   @Test
@@ -137,9 +137,10 @@ class GroovyStringKindTest extends GroovyLatestTest {
       '\f'            : '\\u000C',
       /a\b/           : /a\b/,
       $/5/6/$         : $/5/6/$,
-      $/$$/$          : /$$/,
+      //$/$$/$          : /$$/, //caused compilation error in Groovy 3.0.9 because of Groovy bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10406)
       $/'/$           : $/'/$,
       $/"/$           : $/"/$,
+      '$_'           : '$$_',
       'hello $ world' : 'hello $ world',
       'hello / world' : 'hello / world',
       'hello $/ world': 'hello $$/ world',

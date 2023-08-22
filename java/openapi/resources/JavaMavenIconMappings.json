@@ -1,0 +1,10 @@
+{
+  "icons": {
+    "expui": {
+      "maven.svg": "icons/repositoryLibraryLogo.svg",
+      "mavenBind.svg": "icons/mavenBind.svg",
+      "mavenChecksum.svg": "icons/mavenChecksum.svg",
+      "mavenBindChecksum.svg": "icons/mavenBindChecksum.svg"
+    }
+  }
+}

@@ -18,6 +18,7 @@ package com.intellij.packageDependencies;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -64,14 +65,6 @@ public abstract class DependenciesBuilder {
   @NotNull
   public AnalysisScope getScope() {
     return myScope;
-  }
-
-  /**
-   * @deprecated use {@link BackwardDependenciesBuilder#getScopeOfInterest()} instead
-   */
-  @Deprecated
-  public AnalysisScope getScopeOfInterest() {
-    return null;
   }
 
   @NotNull
@@ -141,23 +134,7 @@ public abstract class DependenciesBuilder {
     return result;
   }
 
-  /**
-   * @deprecated use {@link ForwardDependenciesBuilder#isTransitive()} instead
-   */
-  @Deprecated
-  public boolean isTransitive() {
-    return false;
-  }
-
-  /**
-   * @deprecated use {@link ForwardDependenciesBuilder#getTransitiveBorder()} instead
-   */
-  @Deprecated
-  public int getTransitiveBorder() {
-    return 0;
-  }
-
-  String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
+  @NlsSafe String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
     return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
   }
 

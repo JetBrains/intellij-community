@@ -11,8 +11,8 @@ public class TestInnerLocal {
       }
 
       new Inner("test");// 11
-      new TestInnerLocal.Inner1Static("test");// 12
-      new TestInnerLocal.Inner1Static.Inner2Static("test");// 13
+      new Inner1Static("test");// 12
+      new Inner1Static.Inner2Static("test");// 13
    }// 14
 
    public void testMethod() {
@@ -25,9 +25,9 @@ public class TestInnerLocal {
       }
 
       new Inner("test");// 23
-      new TestInnerLocal.Inner1Static("test");// 24
-      new TestInnerLocal.Inner1("test");// 25
-      new TestInnerLocal.Inner1Static.Inner2Static("test");// 26
+      new Inner1Static("test");// 24
+      new Inner1("test");// 25
+      new Inner1Static.Inner2Static("test");// 26
    }// 27
 
    static class Inner1Static {

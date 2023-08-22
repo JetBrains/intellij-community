@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T> {
-  private String myTitle;
+  private @PopupTitle String myTitle;
   private List<T> myValues;
   private List<? extends Icon> myIcons;
   private int myDefaultOptionIndex = -1;
@@ -54,20 +54,17 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
   }
 
   @Override
-  @Nullable
-  public final String getTitle() {
+  public final @Nullable String getTitle() {
     return myTitle;
   }
 
   @Override
-  @NotNull
-  public final List<T> getValues() {
+  public final @NotNull List<T> getValues() {
     return myValues;
   }
 
   @Override
-  @Nullable
-  public PopupStep onChosen(T selectedValue, final boolean finalChoice) {
+  public @Nullable PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
     return FINAL_CHOICE;
   }
 
@@ -82,25 +79,22 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     }
   }
 
-  @Nullable
-  public Color getBackgroundFor(T value) {
+  public @Nullable Color getBackgroundFor(T value) {
     return null;
   }
 
-  @Nullable
-  public Color getForegroundFor(T value) {
+  public @Nullable Color getForegroundFor(@SuppressWarnings("unused") T value) {
     return null;
   }
 
   @Override
-  @NotNull
-  public String getTextFor(T value) {
+  public @NotNull String getTextFor(T value) {
+    //noinspection HardCodedStringLiteral (can't be fixed without upgrading the inspection or breaking clients)
     return value.toString();
   }
 
   @Override
-  @Nullable
-  public ListSeparator getSeparatorAbove(T value) {
+  public @Nullable ListSeparator getSeparatorAbove(T value) {
     return null;
   }
 
@@ -115,8 +109,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
   }
 
   @Override
-  public void canceled() {
-  }
+  public void canceled() { }
 
   public void setDefaultOptionIndex(int aDefaultOptionIndex) {
     myDefaultOptionIndex = aDefaultOptionIndex;

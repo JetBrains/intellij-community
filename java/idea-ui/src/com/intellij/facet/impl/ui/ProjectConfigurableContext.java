@@ -18,8 +18,6 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -37,23 +35,22 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ProjectConfigurableContext extends FacetEditorContextBase {
   private final Module myModule;
+  private final ProjectStructureConfigurable myProjectStructureConfigurable;
   private final boolean myNewFacet;
   private final ModuleConfigurationState myModuleConfigurationState;
 
-  public ProjectConfigurableContext(final @NotNull Facet facet, final boolean isNewFacet,
+  public ProjectConfigurableContext(final @NotNull Facet facet,
+                                    final boolean isNewFacet,
                                     @Nullable FacetEditorContext parentContext,
-                                    final ModuleConfigurationState state, final UserDataHolder sharedModuleData,
-                                    final UserDataHolder sharedProjectData) {
+                                    final ModuleConfigurationState state,
+                                    final UserDataHolder sharedModuleData,
+                                    final UserDataHolder sharedProjectData,
+                                    ProjectStructureConfigurable projectStructureConfigurable) {
     super(facet, parentContext, state.getFacetsProvider(), state.getModulesProvider(), sharedModuleData, sharedProjectData);
     myModuleConfigurationState = state;
     myNewFacet = isNewFacet;
     myModule = facet.getModule();
-  }
-
-  @Override
-  @Nullable
-  public ModuleBuilder getModuleBuilder() {
-    return null;
+    myProjectStructureConfigurable = projectStructureConfigurable;
   }
 
   @Override
@@ -86,12 +83,6 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
   }
 
   @Override
-  @Nullable
-  public WizardContext getWizardContext() {
-    return null;
-  }
-
-  @Override
   public Library createProjectLibrary(final String baseName, final VirtualFile[] roots, final VirtualFile[] sources) {
     return getContainer().createLibrary(baseName, LibrariesContainer.LibraryLevel.PROJECT, roots, sources);
   }
@@ -104,6 +95,6 @@ public abstract class ProjectConfigurableContext extends FacetEditorContextBase 
   @NotNull
   @Override
   public ArtifactsStructureConfigurableContext getArtifactsStructureContext() {
-    return ProjectStructureConfigurable.getInstance(getProject()).getArtifactsStructureConfigurable().getArtifactsStructureContext();
+    return myProjectStructureConfigurable.getArtifactsStructureConfigurable().getArtifactsStructureContext();
   }
 }

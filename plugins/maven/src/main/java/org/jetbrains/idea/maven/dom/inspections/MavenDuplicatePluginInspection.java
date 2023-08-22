@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import java.util.Collection;
 import java.util.Map;
@@ -37,8 +38,8 @@ public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenD
   }
 
   @Override
-  public void checkFileElement(DomFileElement<MavenDomProjectModel> domFileElement,
-                               DomElementAnnotationHolder holder) {
+  public void checkFileElement(@NotNull DomFileElement<MavenDomProjectModel> domFileElement,
+                               @NotNull DomElementAnnotationHolder holder) {
     MavenDomProjectModel projectModel = domFileElement.getRootElement();
 
     MultiMap<Pair<String,String>, MavenDomPlugin> duplicates = MultiMap.createSet();
@@ -61,7 +62,8 @@ public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenD
       if (set.size() <= 1) continue;
 
       for (MavenDomPlugin dependency : set) {
-        holder.createProblem(dependency, HighlightSeverity.WARNING, "Duplicated plugin declaration");
+        holder.createProblem(dependency, HighlightSeverity.WARNING,
+                             MavenProjectBundle.message("inspection.message.duplicated.plugin.declaration"));
       }
     }
   }

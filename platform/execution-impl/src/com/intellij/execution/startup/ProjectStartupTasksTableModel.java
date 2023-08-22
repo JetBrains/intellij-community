@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.startup;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EditableModel;
@@ -9,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.table.AbstractTableModel;
 import java.util.*;
 
-/**
- * @author Irina.Chernushina on 8/26/2015.
- */
 public class ProjectStartupTasksTableModel extends AbstractTableModel implements EditableModel {
   public static final int NAME_COLUMN = 0;
   public static final int IS_SHARED_COLUMN = 1;
@@ -103,8 +101,8 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
   @NotNull
   @Override
   public String getColumnName(int column) {
-    if (NAME_COLUMN == column) return "Run Configuration";
-    if (IS_SHARED_COLUMN == column) return "Shared";
+    if (NAME_COLUMN == column) return ExecutionBundle.message("project.startup.task.table.name.column");
+    if (IS_SHARED_COLUMN == column) return ExecutionBundle.message("project.startup.task.table.is.shared.column");
     return "";
   }
 

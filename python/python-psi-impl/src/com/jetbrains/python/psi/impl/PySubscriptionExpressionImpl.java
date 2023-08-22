@@ -16,27 +16,28 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypedDictType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
-/**
- * @author yole
- */
+
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
   public PySubscriptionExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -72,51 +73,26 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   @Nullable
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PsiPolyVariantReference reference = getReference(PyResolveContext.defaultContext().withTypeEvalContext(context));
-    final List<PyType> members = new ArrayList<>();
     final PyExpression indexExpression = getIndexExpression();
     final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
-    if (type instanceof PyTupleType) {
-      final PyTupleType tupleType = (PyTupleType)type;
+    if (type instanceof PyTupleType tupleType) {
       return Optional
         .ofNullable(PyEvaluator.evaluate(indexExpression, Integer.class))
         .map(tupleType::getElementType)
         .orElse(null);
     }
-    if (type instanceof PyTypedDictType) {
-      final PyTypedDictType typedDictType = (PyTypedDictType)type;
+    if (type instanceof PyTypedDictType typedDictType) {
       return Optional
         .ofNullable(PyEvaluator.evaluate(indexExpression, String.class))
         .map(typedDictType::getElementType)
         .orElse(null);
     }
-    for (PsiElement resolved : PyUtil.multiResolveTopPriority(reference)) {
-      PyType res = null;
-      if (resolved instanceof PyCallable) {
-        res = ((PyCallable)resolved).getCallType(context, this);
-      }
-      if (PyTypeChecker.isUnknown(res, context) || res instanceof PyNoneType) {
-        final PyClass cls = (type instanceof PyClassType) ? ((PyClassType)type).getPyClass() : null;
-        if (cls != null && PyABCUtil.isSubclass(cls, PyNames.MAPPING, context)) {
-          return res;
-        }
-        if (type instanceof PyCollectionType) {
-          res = ((PyCollectionType)type).getIteratedItemType();
-        }
-      }
-      members.add(res);
-    }
-
-    if (type instanceof PyUnionType && ((PyUnionType)type).isWeak()) {
-      return PyUnionType.createWeakType(PyUnionType.union(members));
-    }
-
-    return PyUnionType.union(members);
+    return PyCallExpressionHelper.getCallType(this, context, key);
   }
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull
@@ -143,19 +119,11 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Override
   public String getReferencedName() {
-    String res = PyNames.GETITEM;
-    switch (AccessDirection.of(this)) {
-      case READ:
-        res = PyNames.GETITEM;
-        break;
-      case WRITE:
-        res = PyNames.SETITEM;
-        break;
-      case DELETE:
-        res = PyNames.DELITEM;
-        break;
-    }
-    return res;
+    return switch (AccessDirection.of(this)) {
+      case READ -> PyNames.GETITEM;
+      case WRITE -> PyNames.SETITEM;
+      case DELETE -> PyNames.DELITEM;
+    };
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -8,7 +8,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClassOwner;
@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,20 +39,19 @@ public class PackagePatternProvider extends PatternDialectProvider {
   @Override
   public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     GeneralGroupNode groupParent = getGroupParent(node);
-    String scope1 = PatternPackageSet.SCOPE_ANY;
+    PatternPackageSet.Scope scope = PatternPackageSet.Scope.ANY;
     if (groupParent != null) {
       String name = groupParent.toString();
       if (TreeModelBuilder.getProductionName().equals(name)) {
-        scope1 = PatternPackageSet.SCOPE_SOURCE;
+        scope = PatternPackageSet.Scope.SOURCE;
       }
       else if (TreeModelBuilder.getTestName().equals(name)) {
-        scope1 = PatternPackageSet.SCOPE_TEST;
+        scope = PatternPackageSet.Scope.TEST;
       }
       else if (TreeModelBuilder.getLibraryName().equals(name)) {
-        scope1 = PatternPackageSet.SCOPE_LIBRARY;
+        scope = PatternPackageSet.Scope.LIBRARY;
       }
     }
-    final String scope = scope1;
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
       return new PatternPackageSet("*..*", scope, PatternDialectProvider.getGroupModulePattern((ModuleGroupNode)node));
@@ -71,17 +71,15 @@ public class PackagePatternProvider extends PatternDialectProvider {
 
       return new PatternPackageSet(pattern, scope, getModulePattern(node));
     }
-    else if (node instanceof FileNode) {
+    else if (node instanceof FileNode fNode) {
       if (recursively) return null;
-      FileNode fNode = (FileNode)node;
       final PsiElement element = fNode.getPsiElement();
       String qName = null;
-      if (element instanceof PsiClassOwner) {
-        final PsiClassOwner javaFile = (PsiClassOwner)element;
+      if (element instanceof PsiClassOwner javaFile) {
         final VirtualFile virtualFile = javaFile.getVirtualFile();
         LOG.assertTrue(virtualFile != null);
         final String packageName =
-          ProjectRootManager.getInstance(element.getProject()).getFileIndex().getPackageNameByDirectory(virtualFile.getParent());
+          PackageIndex.getInstance(element.getProject()).getPackageNameByDirectory(virtualFile.getParent());
         final String name = virtualFile.getNameWithoutExtension();
         if (!PsiNameHelper.getInstance(element.getProject()).isIdentifier(name)) return null;
         qName = StringUtil.getQualifiedName(packageName, name);
@@ -122,6 +120,12 @@ public class PackagePatternProvider extends PatternDialectProvider {
   @NotNull
   public String getShortName() {
     return PACKAGES;
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getHintMessage() {
+    return JavaBundle.message("package.pattern.provider.hint.label");
   }
 
   @Override

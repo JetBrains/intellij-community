@@ -1,4 +1,4 @@
-// "Replace static import with qualified access to Arrays" "true"
+// "Replace static import with qualified access to Arrays" "true-preview"
 import static java.util.Array<caret>s.*;
 
 class Test {

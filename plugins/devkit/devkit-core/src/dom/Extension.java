@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionOrderConverter;
@@ -12,11 +13,11 @@ import org.jetbrains.idea.devkit.dom.impl.ExtensionOrderConverter;
 @Presentation(typeName = DevkitDomPresentationConstants.EXTENSION)
 public interface Extension extends DomElement {
 
-  String ID_ATTRIBUTE = "id";
-  String ORDER_ATTRIBUTE = "order";
-  String OS_ATTRIBUTE = "os";
+  @NonNls String ID_ATTRIBUTE = "id";
+  @NonNls String ORDER_ATTRIBUTE = "order";
+  @NonNls String OS_ATTRIBUTE = "os";
 
-  String IMPLEMENTATION_ATTRIBUTE = "implementation";
+  @NonNls String IMPLEMENTATION_ATTRIBUTE = "implementation";
 
   @NotNull
   @Override
@@ -34,7 +35,7 @@ public interface Extension extends DomElement {
 
   @NotNull
   @Attribute(OS_ATTRIBUTE)
-  GenericAttributeValue<IdeaPluginDescriptorImpl.OS> getOs();
+  GenericAttributeValue<ExtensionDescriptor.Os> getOs();
 
   /**
    * @return extension declaration or {@code null} if unresolved
@@ -42,11 +43,13 @@ public interface Extension extends DomElement {
   @Nullable
   ExtensionPoint getExtensionPoint();
 
-  static boolean isClassField(@NotNull String fieldName) {
+  static boolean isClassField(@NotNull @NonNls String fieldName) {
     return fieldName.equals(IMPLEMENTATION_ATTRIBUTE) ||
            fieldName.equals("className") ||
            fieldName.equals("serviceInterface") ||
            fieldName.equals("serviceImplementation") ||
+           fieldName.equals("class") ||
+           fieldName.endsWith("ClassName") ||
            (fieldName.endsWith("Class") && !fieldName.equals("forClass"));
   }
 }

@@ -101,7 +101,8 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     int count = template.getSegmentsCount();
     if (count == 0) return;
 
-    Set<String> variables = new HashSet<>();
+    // Using LinkedHashSet for a saving variables orders
+    Set<String> variables = new LinkedHashSet<>();
     for (int i = 0; i < count; i++) {
       variables.add(template.getSegmentName(i));
     }

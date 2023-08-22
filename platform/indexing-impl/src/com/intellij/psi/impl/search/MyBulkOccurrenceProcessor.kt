@@ -13,7 +13,7 @@ internal class MyBulkOccurrenceProcessor(
   private val processors: RequestProcessors
 ) : BulkOccurrenceProcessor {
   companion object {
-    val LOG = Logger.getInstance(MyBulkOccurrenceProcessor::class.java)
+    val LOG: Logger = Logger.getInstance(MyBulkOccurrenceProcessor::class.java)
   }
   override fun execute(scope: PsiElement, offsetsInScope: IntArray, searcher: StringSearcher): Boolean {
     if (offsetsInScope.isEmpty()) {

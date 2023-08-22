@@ -1,6 +1,6 @@
 class Test {
   void foo(Param param) {
-    if (param.getI().lenght == 0) {
+    if (param.i().lenght == 0) {
     }
   }
 

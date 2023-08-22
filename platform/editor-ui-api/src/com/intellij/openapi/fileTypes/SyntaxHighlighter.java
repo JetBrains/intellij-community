@@ -39,7 +39,7 @@ public interface SyntaxHighlighter {
    * {@link SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   SyntaxHighlighterProvider PROVIDER = new FileTypeExtensionFactory<>(SyntaxHighlighterProvider.class, EP_NAME).get();
 
   /**

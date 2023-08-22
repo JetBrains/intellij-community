@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.Ref;
@@ -71,7 +70,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     repository.setShared(true);
     myTaskManager.setRepositories(Collections.singletonList(repository));
 
-    TaskProjectConfiguration configuration = ServiceManager.getService(getProject(), TaskProjectConfiguration.class);
+    TaskProjectConfiguration configuration = getProject().getService(TaskProjectConfiguration.class);
     TaskProjectConfiguration state = configuration.getState();
     assertNotNull(state);
     assertEquals(1, state.servers.size());
@@ -97,7 +96,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
     myTaskManager.setRepositories(Collections.emptyList());
 
-    TaskProjectConfiguration configuration = ServiceManager.getService(getProject(), TaskProjectConfiguration.class);
+    TaskProjectConfiguration configuration = getProject().getService(TaskProjectConfiguration.class);
     assertEquals(0, configuration.getState().servers.size());
   }
 
@@ -124,7 +123,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     TestRepository repository = new TestRepository();
     int historyLength = myTaskManager.getState().taskHistoryLength;
     for (int i = 0; i < historyLength + 100; i++) {
-      myTaskManager.addTask(new TaskTestUtil.TaskBuilder(Integer.toString(i), "", repository));
+      myTaskManager.addTask(new TaskTestUtil.TaskBuilder(Integer.toString(i), "", repository).withClosed(true));
     }
     assertEquals(historyLength, myTaskManager.getLocalTasks().size());
     assertEquals(Integer.toString(historyLength + 100 - 1), myTaskManager.getLocalTasks().get(historyLength - 1).getId());
@@ -194,7 +193,6 @@ public class TaskManagerTest extends TaskManagerTestCase {
     repository.setUsername("me");
     String password = "foo";
     repository.setEncodedPassword(PasswordUtil.encodePassword(password));
-    repository.setRepositoryType(new TestRepositoryType());
     repository.initializeRepository();
     assertEquals(password, repository.getPassword());
     assertNull(repository.getEncodedPassword());

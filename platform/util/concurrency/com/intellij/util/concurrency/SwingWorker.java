@@ -21,7 +21,7 @@ import java.util.concurrent.Future;
  * creating it.
  */
 public abstract class SwingWorker<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.SwingWorker");
+  private static final Logger LOG = Logger.getInstance(SwingWorker.class);
   private Future<?> myFuture;
   private volatile T value;
   // see getValue(), setValue()

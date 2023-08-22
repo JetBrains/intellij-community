@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -35,6 +34,7 @@ import org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationIns
 import org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     }
 
   @Override
-  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
+  public @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
@@ -70,13 +70,13 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
 
         @Override
-        public Icon getIcon(boolean isOpen) {
+        public Icon getIcon() {
             return myTemplate.getIcon(0);
         }
 
         @Override
         @NotNull
-        public String getText(UsageView view) {
+        public String getPresentableGroupText() {
             final StringBuilder sb = new StringBuilder();
 
             final XPathExpression expr = myTemplate.getMatchExpression();
@@ -87,22 +87,12 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
                 if (sb.length() > 0) sb.append(", ");
                 sb.append("mode='").append(mode.toString()).append("'");
             }
-            return "Template (" + sb.toString() + ")";
-        }
-
-        @Override
-        @Nullable
-        public FileStatus getFileStatus() {
-            return null;
+            return XPathBundle.message("list.item.template", sb);
         }
 
         @Override
         public boolean isValid() {
             return myTemplate.isValid();
-        }
-
-        @Override
-        public void update() {
         }
 
         @Override
@@ -147,12 +137,10 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         @Nullable
         @Override
         protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
-            if (usage instanceof UsageInfo2UsageAdapter) {
-                final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
-                final UsageInfo usageInfo = u.getUsageInfo();
-                if (usageInfo instanceof MoveRenameUsageInfo) {
-                    final MoveRenameUsageInfo info = (MoveRenameUsageInfo)usageInfo;
-                    return buildGroup(info.getReferencedElement(), usageInfo, true);
+            if (usage instanceof UsageInfo2UsageAdapter u) {
+              final UsageInfo usageInfo = u.getUsageInfo();
+                if (usageInfo instanceof MoveRenameUsageInfo info) {
+                  return buildGroup(info.getReferencedElement(), usageInfo, true);
                 } else {
                     for (UsageTarget target : targets) {
                         UsageGroup group = target instanceof PsiElementUsageTarget ?
@@ -167,9 +155,8 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
 
         @Nullable
         private static UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
-            if (referencedElement instanceof XsltParameter) {
-                final XsltParameter parameter = (XsltParameter)referencedElement;
-                final PsiElement element = u.getElement();
+            if (referencedElement instanceof XsltParameter parameter) {
+              final PsiElement element = u.getElement();
                 if (element == null) return null;
                 final XsltTemplate template = XsltCodeInsightUtil.getTemplate(element, false);
                 if (template == null) return null;

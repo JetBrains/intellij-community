@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
@@ -6,12 +6,15 @@ import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -23,7 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,14 +36,21 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
+import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
+
+public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory, Disposable {
   private final ConcurrentMap<LanguageLevel, PsiClass> myArrayClasses = new ConcurrentHashMap<>();
-  private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = ContainerUtil.createConcurrentSoftMap();
+  private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = CollectionFactory.createConcurrentSoftMap();
+  private static final Key<Boolean> ARRAY_CLASS = Key.create("JavaSyntheticArrayClass");
 
   public PsiElementFactoryImpl(@NotNull Project project) {
     super(project);
-
-    ((PsiManagerEx)myManager).registerRunnableToRunOnChange(myCachedObjectType::clear);
+    project.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        if (isPhysical) myCachedObjectType.clear();
+      }
+    });
   }
 
   @Override
@@ -50,14 +60,20 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   private PsiClass createArrayClass(LanguageLevel level) {
     String text = level.isAtLeast(LanguageLevel.JDK_1_5) ?
-                  "public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
-                  "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
+                  "public static class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
+                  "public static class __Array__{\n public final int length;\n public Object clone() {}\n}";
     PsiClass psiClass = ((PsiExtensibleClass)createClassFromText(text, null)).getOwnInnerClasses().get(0);
     ensureNonWritable(psiClass);
     PsiFile file = psiClass.getContainingFile();
     file.clearCaches();
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(file, level);
+    ARRAY_CLASS.set(psiClass, true);
     return psiClass;
+  }
+
+  @Override
+  public boolean isArrayClass(@NotNull PsiClass psiClass) {
+    return Boolean.TRUE.equals(ARRAY_CLASS.get(psiClass));
   }
 
   private static void ensureNonWritable(PsiClass arrayClass) {
@@ -106,13 +122,18 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   @Override
+  public @NotNull PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
+    return createClassInner("record", name);
+  }
+
+  @Override
   public @NotNull PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException {
     return createClassInner("@interface", name);
   }
 
   private PsiClass createClassInner(String type, String name) {
     PsiUtil.checkIsIdentifier(myManager, name);
-    PsiJavaFile aFile = createDummyJavaFile("public " + type +  " " +  name +  " { }");
+    PsiJavaFile aFile = createDummyJavaFile("public " + type +  " " +  name + ("record".equals(type) ? "()" : "") + " { }");
     PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
       throw new IncorrectOperationException("Incorrect " + type + " name \"" + name + "\".");
@@ -159,14 +180,14 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
       return createMethodFromText(builder.toString(), null).getTypeParameters()[0];
     }
     catch (RuntimeException e) {
-      throw new IncorrectOperationException("type parameter text: " + builder.toString(), (Throwable)e);
+      throw new IncorrectOperationException("type parameter text: " + builder, (Throwable)e);
     }
   }
 
   @Override
   public @NotNull PsiField createField(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (PsiType.NULL.equals(type)) {
+    if (PsiTypes.nullType().equals(type)) {
       throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
 
@@ -189,7 +210,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiMethod createMethod(@NotNull String name, PsiType returnType) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (PsiType.NULL.equals(returnType)) {
+    if (PsiTypes.nullType().equals(returnType)) {
       throw new IncorrectOperationException("Cannot create method with type \"null\".");
     }
 
@@ -240,7 +261,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiParameter createParameter(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
-    if (PsiType.NULL.equals(type)) {
+    if (PsiTypes.nullType().equals(type)) {
       throw new IncorrectOperationException("Cannot create parameter with type \"null\".");
     }
 
@@ -538,7 +559,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     if (!isIdentifier(name)) {
       throw new IncorrectOperationException("\"" + name + "\" is not an identifier.");
     }
-    if (PsiType.NULL.equals(type)) {
+    if (PsiTypes.nullType().equals(type)) {
       throw new IncorrectOperationException("Cannot create variable with type \"null\".");
     }
 
@@ -548,7 +569,8 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
     replace(variable.getTypeElement(), createTypeElement(GenericsUtil.getVariableTypeByExpressionType(type)), text);
 
-    boolean generateFinalLocals = JavaCodeStyleSettingsFacade.getInstance(myManager.getProject()).isGenerateFinalLocals();
+    boolean generateFinalLocals =
+      context != null && JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isGenerateFinalLocals();
     PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, generateFinalLocals);
 
     if (initializer != null) {
@@ -713,6 +735,45 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   @Override
+  @NotNull
+  public PsiFragment createStringTemplateFragment(@NotNull String newText, @NotNull IElementType tokenType, @Nullable PsiElement context) {
+    int index;
+    if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
+      newText += "}\"\"\"";
+      index = 0;
+    }
+    else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID) {
+      newText = "\"\"\"\n\\{" + newText + "}\"\"\"";
+      index = 1;
+    }
+    else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) {
+      newText = "\"\"\"\n\\{" + newText;
+      index = 1;
+    }
+    else if (tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN) {
+      newText += "}\"";
+      index = 0;
+    }
+    else if (tokenType == JavaTokenType.STRING_TEMPLATE_MID) {
+      newText = "\"\\{" + newText + "}\"";
+      index = 1;
+    }
+    else if (tokenType == JavaTokenType.STRING_TEMPLATE_END) {
+      newText = "\"\\{" + newText;
+      index = 1;
+    }
+    else {
+      throw new IllegalArgumentException();
+    }
+    PsiTemplateExpression expression = (PsiTemplateExpression)createExpressionFromText(newText, context);
+    PsiTemplate template = expression.getTemplate();
+    assert template != null;
+    PsiFragment fragment = template.getFragments().get(index);
+    GeneratedMarkerVisitor.markGenerated(fragment);
+    return fragment;
+  }
+
+  @Override
   public boolean isValidClassName(@NotNull String name) {
     return isIdentifier(name);
   }
@@ -739,5 +800,10 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   private boolean isIdentifier(@NotNull String name) {
     return PsiNameHelper.getInstance(myManager.getProject()).isIdentifier(name);
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }

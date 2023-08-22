@@ -1,4 +1,4 @@
-// "Create constructor" "true"
+// "Create constructor" "true-preview"
 class Outer {
     public Outer(String s) {
     }

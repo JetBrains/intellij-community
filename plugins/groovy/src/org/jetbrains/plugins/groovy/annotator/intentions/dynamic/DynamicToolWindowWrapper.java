@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -61,13 +61,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class DynamicToolWindowWrapper {
+public final class DynamicToolWindowWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicToolWindowWrapper.class);
 
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
   private static final int TYPE_COLUMN = 1;
 
-  private static final String[] myColumnNames = {"Dynamic Element", "Type"};
+  private static final @ColumnName String[] myColumnNames = {
+    GroovyBundle.message("dynamic.members.column.name.element"),
+    GroovyBundle.message("dynamic.members.column.name.type")
+  };
 
   private final Project myProject;
   private ToolWindow myToolWindow = null;
@@ -82,7 +85,7 @@ public class DynamicToolWindowWrapper {
   }
 
   public static DynamicToolWindowWrapper getInstance(Project project) {
-    return ServiceManager.getService(project, DynamicToolWindowWrapper.class);
+    return project.getService(DynamicToolWindowWrapper.class);
   }
 
   public TreeTable getTreeTable() {
@@ -196,14 +199,13 @@ public class DynamicToolWindowWrapper {
   }
 
   private JScrollPane createTable(final MutableTreeNode myTreeRoot) {
-    ColumnInfo[] columnInfos =
-      {new ClassColumnInfo(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[TYPE_COLUMN])};
+    ColumnInfo[] columnInfos = {new ClassColumnInfo(), new PropertyTypeColumnInfo()};
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
 
     myTreeTable = new MyTreeTable(myTreeTableModel);
 
-    new TreeTableSpeedSearch(myTreeTable, o -> {
+    TreeTableSpeedSearch.installOn(myTreeTable, o -> {
       final Object node = o.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {
         final Object object = ((DefaultMutableTreeNode)node).getUserObject();
@@ -214,11 +216,7 @@ public class DynamicToolWindowWrapper {
       return "";
     });
 
-    PopupHandler.installUnknownPopupHandler(
-      myTreeTable,
-      new DefaultActionGroup(new RemoveDynamicAction()),
-      ActionManager.getInstance()
-    );
+    PopupHandler.installPopupMenu(myTreeTable, new DefaultActionGroup(new RemoveDynamicAction()), "DynamicToolWindowWrapperPopup");
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
@@ -260,15 +258,14 @@ public class DynamicToolWindowWrapper {
 
         String newTypeValue = ((MyPropertyTypeCellEditor)e.getSource()).getCellEditorValue();
 
-        if (newTypeValue == null || tree == null) {
+        if (tree == null) {
           myTreeTable.editingStopped(e);
           return;
         }
 
         try {
           final PsiType type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(newTypeValue, null);
-          String canonical = type.getCanonicalText();
-          if (canonical != null) newTypeValue = canonical;
+          newTypeValue = type.getCanonicalText();
         }
         catch (IncorrectOperationException ex) {
           //do nothing in case bad string is entered
@@ -289,12 +286,11 @@ public class DynamicToolWindowWrapper {
         final Object editingPropertyObject = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), CLASS_OR_ELEMENT_NAME_COLUMN);
         final Object editingClassObject = myTreeTable.getValueAt(tree.getRowForPath(editingClassPath), CLASS_OR_ELEMENT_NAME_COLUMN);
 
-        if (!(editingPropertyObject instanceof DItemElement) || !(editingClassObject instanceof DClassElement)) {
+        if (!(editingPropertyObject instanceof DItemElement dynamicElement) || !(editingClassObject instanceof DClassElement)) {
           myTreeTable.editingStopped(e);
           return;
         }
 
-        final DItemElement dynamicElement = (DItemElement)editingPropertyObject;
         final String name = dynamicElement.getName();
         final String className = ((DClassElement)editingClassObject).getName();
 
@@ -410,11 +406,8 @@ public class DynamicToolWindowWrapper {
         final Object classRow = parent.getLastPathComponent();
         final Object dynamicRow = selectionPath.getLastPathComponent();
 
-        if (!(classRow instanceof DefaultMutableTreeNode)) return;
-        if (!(dynamicRow instanceof DefaultMutableTreeNode)) return;
-
-        final DefaultMutableTreeNode dynamicItemNode = (DefaultMutableTreeNode)dynamicRow;
-        final DefaultMutableTreeNode classNode = (DefaultMutableTreeNode)classRow;
+        if (!(classRow instanceof DefaultMutableTreeNode classNode)) return;
+        if (!(dynamicRow instanceof DefaultMutableTreeNode dynamicItemNode)) return;
 
         final boolean removeClass = classNode.getChildCount() == 1;
         if (!removeDynamicElement(dynamicItemNode, isShowDialog, rowsCount)) return;
@@ -487,8 +480,9 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
-    PropertyTypeColumnInfo(String name) {
-      super(name);
+
+    PropertyTypeColumnInfo() {
+      super(GroovyBundle.message("dynamic.members.column.name.type"));
     }
 
     @Override
@@ -509,8 +503,9 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
-    ClassColumnInfo(String name) {
-      super(name);
+
+    ClassColumnInfo() {
+      super(GroovyBundle.message("dynamic.members.column.name.element"));
     }
 
     @Override
@@ -564,16 +559,10 @@ public class DynamicToolWindowWrapper {
         append(classShortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
 
-      if (value instanceof DItemElement) {
-        final DItemElement itemElement = ((DItemElement)value);
-        final String substringToHighlight = itemElement.getHighlightedText();
+      if (value instanceof DItemElement itemElement) {
         final String name = itemElement.getName();
 
-        if (substringToHighlight != null) {
-          appendHighlightName(substringToHighlight, name);
-        } else {
-          appendName(name);
-        }
+        appendName(name);
 
         if (value instanceof DMethodElement) {
           appendMethodParameters((DMethodElement)value);
@@ -581,18 +570,7 @@ public class DynamicToolWindowWrapper {
       }
     }
 
-    private void appendHighlightName(String substringToHighlight, String name) {
-      final int begin = name.indexOf(substringToHighlight);
-//          if (name.length() <= begin) return;
-      final String first = name.substring(0, begin);
-      append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-      final TextAttributes textAttributes = new TextAttributes();
-      textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground(true));
-      append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
-      append(name.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-    }
-
-    private void appendName(String name) {
+    private void appendName(@NlsContexts.Label String name) {
       append(name, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
 
@@ -609,6 +587,7 @@ public class DynamicToolWindowWrapper {
       }
       buffer.append(")");
 
+      //noinspection HardCodedStringLiteral
       append(buffer.toString(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
 
@@ -653,17 +632,17 @@ public class DynamicToolWindowWrapper {
     @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        return getSelectedElement();
-      }
-      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-        final PsiElement element = getSelectedElement();
-
-        if (element == null) return null;
-        return element.getContainingFile();
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        TreePath path = getTree().getSelectionPath();
+        return path == null ? null : (DataProvider)slowId -> getSlowData(slowId, path);
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         return new DeleteProvider() {
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
+
           @Override
           public void deleteElement(@NotNull DataContext dataContext) {
             deleteRow();
@@ -679,19 +658,25 @@ public class DynamicToolWindowWrapper {
       return null;
     }
 
-    private PsiElement getSelectedElement() {
-      final TreePath path = getTree().getSelectionPath();
+    private @Nullable Object getSlowData(@NotNull String dataId, @NotNull TreePath path) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getElementFromPath(path);
+      }
+      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+        PsiElement element = getElementFromPath(path);
+        return element == null ? null : element.getContainingFile();
+      }
+      return null;
+    }
 
-      if (path == null) return null;
+    private @Nullable PsiElement getElementFromPath(@NotNull TreePath path) {
       final Object selectedObject = path.getLastPathComponent();
-      if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
+      if (!(selectedObject instanceof DefaultMutableTreeNode selectedNode)) return null;
 
-      final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selectedObject;
       final Object userObject = selectedNode.getUserObject();
       if (!(userObject instanceof DNamedElement)) return null;
 
-      if (userObject instanceof DClassElement) {
-        final DClassElement classElement = (DClassElement)userObject;
+      if (userObject instanceof DClassElement classElement) {
 
         try {
           PsiType type  = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(classElement.getName(), null);
@@ -707,8 +692,7 @@ public class DynamicToolWindowWrapper {
         catch (IncorrectOperationException e) {
           return null;
         }
-      } else if (userObject instanceof DItemElement) {
-        final DItemElement itemElement = (DItemElement)userObject;
+      } else if (userObject instanceof DItemElement itemElement) {
 
         final TreeNode parentNode = selectedNode.getParent();
         if (!(parentNode instanceof DefaultMutableTreeNode)) return null;

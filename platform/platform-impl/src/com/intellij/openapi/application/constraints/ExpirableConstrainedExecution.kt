@@ -18,8 +18,8 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
  */
 internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E>>(
   constraints: Array<ContextConstraint>,
-  protected val cancellationConditions: Array<BooleanSupplier>,
-  protected val expirationSet: Set<Expiration>
+  private val cancellationConditions: Array<BooleanSupplier>,
+  private val expirationSet: Set<Expiration>
 ) : BaseConstrainedExecution<E>(constraints) {
 
   protected abstract fun cloneWith(constraints: Array<ContextConstraint>,
@@ -86,11 +86,13 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
               runnable.run()
             }
           }
-          else if (runOnce.isActive) dispatchLaterUnconstrained(this)
+          else if (!runOnce.hasRun()) {
+            dispatchLaterUnconstrained(this)
+          }
         }
       }
       val expirationHandle = expiration.invokeOnExpiration(invokeWhenCompletelyExpiredRunnable)
-      if (runOnce.isActive) {
+      if (!runOnce.hasRun()) {
         constraint.schedule(Runnable {
           runOnce {
             expirationHandle.unregisterHandler()
@@ -105,10 +107,12 @@ internal abstract class ExpirableConstrainedExecution<E : ConstrainedExecution<E
 
   companion object {
     internal class RunOnce : (() -> Unit) -> Unit {
-      val isActive get() = hasNotRunYet.get()  // inherently race-prone
-      private val hasNotRunYet = AtomicBoolean(true)
+      private val hasRun = AtomicBoolean()
+      fun hasRun():Boolean = hasRun.get()
       override operator fun invoke(block: () -> Unit) {
-        if (hasNotRunYet.compareAndSet(true, false)) block()
+        if (!hasRun.getAndSet(true)) {
+          block()
+        }
       }
     }
   }

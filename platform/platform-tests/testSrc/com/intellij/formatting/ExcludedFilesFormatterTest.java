@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor;
+import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.actions.DirectoryFormattingOptions;
 import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.codeInsight.actions.TextRangeType;
-import com.intellij.formatting.fileSet.PatternDescriptor;
-import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
@@ -17,20 +17,20 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-@SuppressWarnings("SameParameterValue")
 public class ExcludedFilesFormatterTest extends FileSetTestCase {
 
   public static final String UNFORMATTED_SAMPLE = "<a><b></b></a>";
   public static final String FORMATTED_SAMPLE = "<a>\n    <b></b>\n</a>";
 
   public void testSimpleNoExclusions() throws IOException {
-    PsiTestUtil.addContentRoot(myModule, getProject().getBaseDir());
+    PsiTestUtil.addContentRoot(myModule, PlatformTestUtil.getOrCreateProjectBaseDir(getProject()));
     VirtualFile f1 = createFile("src/f1.xml", UNFORMATTED_SAMPLE);
     VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
     formatProjectFiles(false, false);
@@ -39,7 +39,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
   }
 
   public void testPatternExclusions() throws IOException {
-    PsiTestUtil.addContentRoot(myModule, getProject().getBaseDir());
+    PsiTestUtil.addContentRoot(myModule, PlatformTestUtil.getOrCreateProjectBaseDir(getProject()));
     addPatternExclusions("*2.xml", "test/*");
     VirtualFile f1 = createFile("src/f1.xml", UNFORMATTED_SAMPLE);
     VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
@@ -58,7 +58,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
     VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
     VirtualFile f3 = createFile("src/subdir/test/f3.xml", UNFORMATTED_SAMPLE);
     NamedScopesHolder localHolder = NamedScopeManager.getInstance(getProject());
-    @SuppressWarnings("unused") NamedScope testScope = createScope(localHolder, "testScope", "file:*2.xml");
+    createScope(localHolder, "testScope", "file:*2.xml");
     CodeStyle.getSettings(getProject()).getExcludedFiles().addDescriptor(new NamedScopeDescriptor("testScope"));
     try {
       formatProjectFiles(false, false);
@@ -108,7 +108,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
     assertFormatted(f3);
   }
 
-  private static NamedScope createScope(@NotNull NamedScopesHolder holder, @NotNull String name, @NotNull String pattern)
+  private static @NotNull NamedScope createScope(@NotNull NamedScopesHolder holder, @NotNull String name, @NotNull String pattern)
     throws ParsingException {
     PackageSet fileSet = PackageSetFactory.getInstance().compile(pattern);
     NamedScope scope = holder.createScope(name, fileSet);
@@ -116,10 +116,10 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
     return scope;
   }
 
-  private void addPatternExclusions(String... patterns) {
+  private void addPatternExclusions(String @NotNull ... patterns) {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     for (String pattern : patterns) {
-      settings.getExcludedFiles().addDescriptor(new PatternDescriptor(pattern));
+      settings.getExcludedFiles().addDescriptor(new GlobPatternDescriptor(pattern));
     }
   }
 
@@ -134,7 +134,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
   }
 
   private void formatProjectFiles(boolean optimizeImports, boolean rearrangeCode) {
-    final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(myProject.getBaseDir());
+    final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(getOrCreateProjectBaseDir());
     ReformatCodeAction.reformatDirectory(
       getProject(),
       psiDirectory,

@@ -39,6 +39,7 @@ public class PyWithIfElseSurrounder extends PyStatementSurrounder {
 
   @Override
   public String getTemplateDescription() {
+    //noinspection DialogTitleCapitalization
     return CodeInsightBundle.message("surround.with.ifelse.template");
   }
 }

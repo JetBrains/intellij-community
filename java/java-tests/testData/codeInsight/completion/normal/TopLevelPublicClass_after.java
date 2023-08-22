@@ -1,0 +1,2 @@
+public class TopLevelPublicClass <caret>{
+}

@@ -16,12 +16,13 @@
 
 package org.intellij.plugins.relaxNG.model.annotation;
 
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,8 @@ abstract class CommonAnnotationHolder<C> {
 
   public abstract void createAnnotation(@NotNull HighlightSeverity severity,
                                         @NotNull C element,
-                                        @Nullable String message, @Nullable GutterIconRenderer renderer);
+                                        @Nullable @InspectionMessage String message,
+                                        @Nullable GutterIconRenderer renderer);
 
   private static class DomHolderAdapter<T extends DomElement> extends CommonAnnotationHolder<T> {
     private final DomElementAnnotationHolder myHolder;
@@ -50,10 +52,22 @@ abstract class CommonAnnotationHolder<C> {
     @Override
     public void createAnnotation(@NotNull HighlightSeverity severity,
                                  @NotNull DomElement element,
-                                 String message, @Nullable GutterIconRenderer renderer) {
-      final Annotation annotation = myHolder.createAnnotation(element, severity, message);
-      annotation.setTooltip(message);  // no tooltip by default??
-      annotation.setGutterIconRenderer(renderer);
+                                 @Nullable @InspectionMessage String message,
+                                 @Nullable GutterIconRenderer renderer) {
+      AnnotationHolder annotationHolder = myHolder.getAnnotationHolder();
+      final XmlElement xmlElement = element.getXmlElement();
+      if (xmlElement == null) return;
+
+      AnnotationBuilder builder = message == null ? annotationHolder.newSilentAnnotation(severity) : annotationHolder.newAnnotation(severity, message);
+      builder = builder.range(xmlElement.getNavigationElement());
+
+      if (message != null) {
+        builder = builder.tooltip(message);  // no tooltip by default??
+      }
+      if (renderer != null) {
+        builder = builder.gutterIconRenderer(renderer);
+      }
+      builder.create();
     }
   }
 
@@ -67,7 +81,7 @@ abstract class CommonAnnotationHolder<C> {
     @Override
     public void createAnnotation(@NotNull HighlightSeverity severity,
                                  @NotNull T element,
-                                 @Nullable String message,
+                                 @Nullable @InspectionMessage String message,
                                  @Nullable GutterIconRenderer renderer) {
       AnnotationBuilder builder = message == null ? myHolder.newSilentAnnotation(severity) : myHolder.newAnnotation(severity, message);
       if (renderer != null) {

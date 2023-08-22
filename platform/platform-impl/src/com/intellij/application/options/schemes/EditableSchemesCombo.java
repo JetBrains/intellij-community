@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -8,6 +9,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +24,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
 public class EditableSchemesCombo<T extends Scheme> {
 
-  // region Message constants
-  public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
-  public static final String NAME_ALREADY_EXISTS_MESSAGE = "Name is already in use. Please change to unique name.";
-  public static final String EDITING_HINT = "Enter to save, Esc to cancel";
   public static final int COMBO_WIDTH = 200;
   // endregion
 
@@ -36,9 +34,9 @@ public class EditableSchemesCombo<T extends Scheme> {
   private final JTextField myNameEditorField;
   private @Nullable NameEditData myNameEditData;
 
-  private final static KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
-  private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
-  private final static Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
+  private static final KeyStroke ESC_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
+  private static final KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
+  private static final Color MODIFIED_ITEM_FOREGROUND = JBColor.namedColor("ComboBox.modifiedItemForeground", JBColor.BLUE);
 
   public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
@@ -96,7 +94,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private void showHint() {
-    mySchemesPanel.showInfo(EDITING_HINT, MessageType.INFO);
+    mySchemesPanel.showInfo(IdeBundle.message("hint.scheme.editing"), MessageType.INFO);
   }
 
   private void revertSchemeName() {
@@ -134,7 +132,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private void createCombo() {
-    myComboBox = new SchemesCombo<T>() {
+    myComboBox = new SchemesCombo<>() {
       @Override
       protected boolean supportsProjectSchemes() {
         return mySchemesPanel.supportsProjectSchemes();
@@ -150,13 +148,12 @@ public class EditableSchemesCombo<T extends Scheme> {
         return mySchemesPanel.getIndent(scheme);
       }
 
-      @NotNull
       @Override
-      protected SimpleTextAttributes getSchemeAttributes(T scheme) {
+      protected @NotNull SimpleTextAttributes getSchemeAttributes(T scheme) {
         SchemesModel<T> model = mySchemesPanel.getModel();
         SimpleTextAttributes baseAttributes = !useBoldForNonRemovableSchemes() || model.canDeleteScheme(scheme)
-               ? SimpleTextAttributes.REGULAR_ATTRIBUTES
-               : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+                                              ? SimpleTextAttributes.REGULAR_ATTRIBUTES
+                                              : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         if (mySchemesPanel.highlightNonDefaultSchemes() && model.canResetScheme(scheme) && model.differsFromDefault(scheme)) {
           return baseAttributes.derive(-1, MODIFIED_ITEM_FOREGROUND, null, null);
         }
@@ -186,8 +183,7 @@ public class EditableSchemesCombo<T extends Scheme> {
     myComboBox.resetSchemes(schemes);
   }
 
-  @Nullable
-  public T getSelectedScheme() {
+  public @Nullable T getSelectedScheme() {
     return myComboBox.getSelectedScheme();
   }
 
@@ -203,21 +199,20 @@ public class EditableSchemesCombo<T extends Scheme> {
     return mySchemesPanel.useBoldForNonRemovableSchemes();
   }
 
-  @Nullable
-  private String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
+  private @Nullable @Nls String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
     if (myNameEditData != null && name.equals(myNameEditData.initialName)) return null;
     if (isEmptyOrSpaces(name)) {
-      return EMPTY_NAME_MESSAGE;
+      return IdeBundle.message("error.empty.name");
     }
     else if (mySchemesPanel.getModel().containsScheme(name, isProjectScheme)) {
-      return NAME_ALREADY_EXISTS_MESSAGE;
+      return IdeBundle.message("error.name.already.exists");
     }
     return null;
   }
 
-  private static class NameEditData {
-    private @NotNull final String initialName;
-    private @NotNull final Consumer<? super String> nameConsumer;
+  private static final class NameEditData {
+    private final @NotNull String initialName;
+    private final @NotNull Consumer<? super String> nameConsumer;
     private final boolean isProjectScheme;
 
     private NameEditData(@NotNull String name, @NotNull Consumer<? super String> nameConsumer, boolean isProjectScheme) {

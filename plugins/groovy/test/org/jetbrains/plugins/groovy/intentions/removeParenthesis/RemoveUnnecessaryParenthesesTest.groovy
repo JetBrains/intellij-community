@@ -74,6 +74,18 @@ class RemoveUnnecessaryParenthesesTest extends LightJavaCodeInsightFixtureTestCa
     doTest 'a = <caret>foo(1)', 'a = foo 1'
   }
 
+  void 'test list literal argument'() {
+    doTest '<caret>foo([])'
+  }
+
+  void 'test list literal with content argument'() {
+    doTest '<caret>foo([1])'
+  }
+
+  void 'test map literal with content argument'() {
+    doTest '<caret>foo([a: 1])'
+  }
+
   private void doTest(String before, String after = null) {
     myFixture.configureByText "_.groovy", before
     def actions = myFixture.filterAvailableIntentions(getINTENTION_NAME())

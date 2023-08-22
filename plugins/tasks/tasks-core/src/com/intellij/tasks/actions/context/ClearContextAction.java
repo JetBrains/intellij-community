@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.actions.BaseTaskAction;
 import com.intellij.tasks.context.WorkingContextManager;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,6 @@ public class ClearContextAction extends BaseTaskAction {
         WorkingContextManager.getInstance(project).clearContext();
       }
     };
-    UndoableCommand.execute(project, action, "Clear context", "Context");
+    UndoableCommand.execute(project, action, TaskBundle.message("task.clear.context.action.name"), "Context");
   }
 }

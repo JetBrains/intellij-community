@@ -4,10 +4,10 @@
     <vendor>JetBrains</vendor>
     <version>1.0</version>
 
-    <xi:include href="/pluginWithXInclude-extensionPointsWithModule.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/pluginWithXInclude-extensionPointsWithModule.xml"/>
     <extensionPoints>
         <extensionPoint name="bar" interface="java.util.List"/>
-        <xi:include href="/pluginWithXInclude-extensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+        <xi:include href="/META-INF/pluginWithXInclude-extensionPoints.xml"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="foo">
@@ -15,7 +15,8 @@
         <bar implementation="java.util.ArrayList"/>
         <extensionX/>
         <extension2/>
-        <<error descr="Element extensionUnknown is not allowed here">extensionUnknown</error>/>
+        <<error descr="Cannot resolve extension point 'foo.extensionUnknown' in dependencies (Reference: Plugin Dependencies)">extensionUnknown</error>/>
     </extensions>
 
+    <xi:include href="<error descr="Cannot resolve file 'INVALID_VALUE.xml'">INVALID_VALUE.xml</error>"/>
 </idea-plugin>

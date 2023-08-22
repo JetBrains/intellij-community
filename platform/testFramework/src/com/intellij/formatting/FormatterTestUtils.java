@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,30 +14,29 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.containers.ContainerUtil;
-import org.junit.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public class FormatterTestUtils {
+public final class FormatterTestUtils {
 
 
   public interface TestFormatAction {
     void run(PsiFile psiFile, int startOffset, int endOffset);
   }
-  
+
   public enum Action {
-    REFORMAT, 
-    INDENT, 
-    REFORMAT_WITH_CONTEXT, 
+    REFORMAT,
+    INDENT,
+    REFORMAT_WITH_CONTEXT,
     REFORMAT_WITH_INSERTED_LINE_CONTEXT
   }
-  
+
   public static final Map<Action, TestFormatAction> ACTIONS = new EnumMap<>(Action.class);
-  
+
   public static class FormatData {
     public int startOffset;
     public int endOffset;
@@ -61,7 +48,7 @@ public class FormatterTestUtils {
       this.endOffset = endOffset;
     }
   }
-  
+
   public static void testFormatting(@NotNull Project project,
                                     @NotNull String ext,
                                     @NotNull String before,
@@ -91,7 +78,7 @@ public class FormatterTestUtils {
   private static FormatData extractFormatData(@NotNull String before) {
     final String SELECTION_START = "<selection>";
     final String SELECTION_END = "<selection/>";
-    
+
     int startOffset = before.indexOf(SELECTION_START);
     if (startOffset > 0) {
       int endOffset = before.indexOf(SELECTION_END) - SELECTION_START.length();
@@ -100,7 +87,7 @@ public class FormatterTestUtils {
         .replace(SELECTION_END, "");
       return new FormatData(text, startOffset, endOffset);
     }
-    
+
     return new FormatData(before, 0, before.length());
   }
 
@@ -112,7 +99,7 @@ public class FormatterTestUtils {
         CodeStyleManager.getInstance(project).reformatText(psiFile, startOffset, endOffset);
       }
     });
-    
+
     ACTIONS.put(Action.INDENT, new TestFormatAction() {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
@@ -120,24 +107,26 @@ public class FormatterTestUtils {
         CodeStyleManager.getInstance(project).adjustLineIndent(psiFile, startOffset);
       }
     });
-    
+
     ACTIONS.put(Action.REFORMAT_WITH_CONTEXT, new TestFormatAction() {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        List<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(startOffset, endOffset));
-        Project project = psiFile.getProject();
-        CodeStyleManager.getInstance(project).reformatTextWithContext(psiFile, ranges);
+        FormattingService formattingService = FormattingServiceUtil.findService(psiFile, false, false);
+        FormatTextRanges formatRanges = new FormatTextRanges();
+        formatRanges.add(new TextRange(startOffset, endOffset), true);
+        formatRanges.setExtendToContext(true);
+        formattingService.formatRanges(psiFile, formatRanges, true, true);
       }
     });
-    
+
     ACTIONS.put(Action.REFORMAT_WITH_INSERTED_LINE_CONTEXT, new TestFormatAction() {
       @Override
       public void run(PsiFile psiFile, int startOffset, int endOffset) {
-        List<TextRange> ranges = ContainerUtil.newArrayList(new TextRange(startOffset, endOffset));
+        List<TextRange> ranges = List.of(new TextRange(startOffset, endOffset));
         Project project = psiFile.getProject();
-        CodeStyleManager.getInstance(project).reformatTextWithContext(psiFile, new ChangedRangesInfo(ranges, ranges));
+        CodeStyleManager.getInstance(project).reformatChanges(psiFile, new ChangedRangesInfo(ranges, ranges));
       }
     });
   }
-  
+
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -15,6 +15,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -38,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import java.io.IOException;
 import java.util.*;
 
-public class GroovyOverrideImplementUtil {
+public final class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance(GroovyOverrideImplementUtil.class);
 
   private GroovyOverrideImplementUtil() {
@@ -170,7 +171,7 @@ public class GroovyOverrideImplementUtil {
   private static void setupTraitMethodBody(Project project, GrMethod resultMethod, GrTraitMethod traitMethod) {
     PsiClass traitClass = traitMethod.getPrototype().getContainingClass();
 
-    StringBuilder builder = new StringBuilder();
+    @NlsSafe StringBuilder builder = new StringBuilder();
     builder.append("\nreturn ");
     builder.append(traitClass.getQualifiedName());
     builder.append(".super.");
@@ -223,8 +224,7 @@ public class GroovyOverrideImplementUtil {
       for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
         CandidateInfo candidate = iterator.next();
         PsiElement element = candidate.getElement();
-        if (element instanceof GrMethod) {
-          GrMethod method = (GrMethod)element;
+        if (element instanceof GrMethod method) {
           if (GrTraitUtil.isTrait(method.getContainingClass()) && !GrTraitUtil.isMethodAbstract(method)) {
             iterator.remove();
             secondary.add(candidate);
@@ -248,7 +248,7 @@ public class GroovyOverrideImplementUtil {
   @NotNull
   private static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (!superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
+    if (!superMethod.isConstructor() && !PsiTypes.voidType().equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     buffer.append("super");

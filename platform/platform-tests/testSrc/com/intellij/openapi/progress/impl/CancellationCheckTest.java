@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Clock;
@@ -33,6 +34,8 @@ public class CancellationCheckTest extends LightPlatformTestCase {
   }
 
   public void testExceededThreshold() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
     CancellationCheck cancellation = new CancellationCheck(1);
 
     assertThrows(Throwable.class,
@@ -40,6 +43,35 @@ public class CancellationCheckTest extends LightPlatformTestCase {
                  () -> {
                    runWithCheckCancellation(cancellation, 10, 1, 1);
                  });
+  }
+
+
+  public void testTraceLastCheck() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
+    CancellationCheck cancellation = new CancellationCheck(1000);
+
+    try {
+      cancellation.withCancellationCheck(() -> {
+        Clock.setTime(1L);
+        myProgressIndicator.checkCanceled();
+        Clock.setTime(10L);
+        myProgressIndicator.checkCanceled();
+        Clock.setTime(1000L);
+        myProgressIndicator.checkCanceled();
+        Clock.setTime(10000L);
+        myProgressIndicator.checkCanceled();
+        return null;
+      });
+      fail("This code should not be executed");
+    }
+    catch (AssertionError e) {
+      Throwable cancellationFailure = e.getCause();
+      if(cancellationFailure == null) throw e;
+      assertTrue(cancellationFailure.getMessage().startsWith("AWT-EventQueue-0 last checkCanceled was 9000 ms ago"));
+      Throwable lastRecordedCheck = cancellationFailure.getCause();
+      assertEquals("previous check cancellation call", lastRecordedCheck.getMessage());
+    }
   }
 
   private void runWithCheckCancellation(CancellationCheck cancellation, int period, int times, int depth) {

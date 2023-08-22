@@ -11,11 +11,7 @@ import org.jetbrains.annotations.NotNull;
  */
 final class SideStack {
   private static final Logger LOG = Logger.getInstance(SideStack.class);
-  private final Stack<WindowInfoImpl> stack;
-
-  SideStack() {
-    stack = new Stack<>();
-  }
+  private final Stack<WindowInfoImpl> stack = new Stack<>();
 
   /**
    * Pushes {@code info} into the stack. The method stores cloned copy of original {@code info}.

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveType;
@@ -6,12 +6,11 @@ import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -19,9 +18,8 @@ import java.util.Objects;
 /**
  * Represents primitive types of Java language.
  */
-public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
-
-  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<>();
+public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
+  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new HashMap<>();
 
   private final JvmPrimitiveTypeKind myKind;
   private final String myName;
@@ -62,16 +60,6 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     myName = name;
   }
 
-  /**
-   * @deprecated please don't use {@link PsiPrimitiveType} to represent fake types
-   */
-  @Deprecated
-  public PsiPrimitiveType(@NotNull String name, PsiAnnotation @NotNull [] annotations) {
-    super(annotations);
-    myKind = null;
-    myName = name;
-  }
-
   @NotNull
   @Contract(pure = true)
   private static String getName(@Nullable JvmPrimitiveTypeKind kind) {
@@ -80,7 +68,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
 
   @NotNull
   @Override
-  public final JvmPrimitiveTypeKind getKind() {
+  public JvmPrimitiveTypeKind getKind() {
     return Objects.requireNonNull(
       myKind,
       "getKind() called on PsiType.NULL\n" +
@@ -191,7 +179,35 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
   }
 
   /**
-   * This method is nullable since {@link PsiType#NULL} has no FQN.<br/>
+   * @param descriptor one letter JVM type descriptor ('B' for byte, 'J' for long, etc.)
+   * @return corresponding primitive type, null if the supplied character is not a valid JVM type descriptor
+   */
+  @Contract(pure = true)
+  public static @Nullable PsiPrimitiveType fromJvmTypeDescriptor(char descriptor) {
+    switch (descriptor) {
+      case 'B':
+        return PsiTypes.byteType();
+      case 'C':
+        return PsiTypes.charType();
+      case 'D':
+        return PsiTypes.doubleType();
+      case 'F':
+        return PsiTypes.floatType();
+      case 'Z':
+        return PsiTypes.booleanType();
+      case 'I':
+        return PsiTypes.intType();
+      case 'J':
+        return PsiTypes.longType();
+      case 'S':
+        return PsiTypes.shortType();
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * This method is nullable since {@link PsiTypes#nullType()} has no FQN.<br/>
    * Consider using {@link JvmPrimitiveTypeKind#getBoxedFqn()} if you know the type you need to get FQN of,
    * e.g. instead of {@code PsiType.INT.getBoxedTypeName()} use {@code JvmPrimitiveTypeKind.INT.getBoxedFqn()}.
    *
@@ -236,14 +252,6 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     if (aClass == null) return null;
 
     return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aClass);
-  }
-
-  /**
-   * @deprecated please use {@link JvmPrimitiveTypeKind#getBoxedFqns}
-   */
-  @Deprecated
-  public static Collection<String> getAllBoxedTypeNames() {
-    return JvmPrimitiveTypeKind.getBoxedFqns();
   }
 
   @Override

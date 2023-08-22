@@ -18,25 +18,12 @@ package org.intellij.lang.xpath.completion;
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import javax.xml.namespace.QName;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
@@ -44,32 +31,26 @@ import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.context.functions.Function;
-import org.intellij.lang.xpath.psi.PrefixedName;
-import org.intellij.lang.xpath.psi.QNameElement;
-import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
-import org.intellij.lang.xpath.psi.XPathElement;
-import org.intellij.lang.xpath.psi.XPathLocationPath;
-import org.intellij.lang.xpath.psi.XPathNodeTest;
-import org.intellij.lang.xpath.psi.XPathToken;
-import org.intellij.lang.xpath.psi.XPathType;
-import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class CompletionLists {
+import javax.xml.namespace.QName;
+import java.util.*;
+
+public final class CompletionLists {
   public static final String INTELLIJ_IDEA_RULEZ = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
   private CompletionLists() {
   }
 
-  public static final Set<String> NODE_TYPE_FUNCS = ContainerUtil.set("text", "node", "comment", "processing-instruction");
+  public static final Set<String> NODE_TYPE_FUNCS = Set.of("text", "node", "comment", "processing-instruction");
 
-  public static final Set<String> NODE_TYPE_FUNCS_V2 = ContainerUtil
-    .set("text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute",
+  public static final Set<String> NODE_TYPE_FUNCS_V2 = Set.of("text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute",
          "document-node");
 
-  public static final Set<String> OPERATORS = ContainerUtil.set("mul", "div", "and", "or");
+  public static final Set<String> OPERATORS = Set.of("mul", "div", "and", "or");
 
-  public static final Set<String> AXIS_NAMES = ContainerUtil.set(
+  public static final Set<String> AXIS_NAMES = Set.of(
     "ancestor",
     "ancestor-or-self",
     "attribute",
@@ -167,7 +148,7 @@ public class CompletionLists {
           final String name = ((PsiNamedElement)o).getName();
           lookups.add(new VariableLookup("$" + name, type, ((PsiNamedElement)o).getIcon(0), (PsiElement)o));
         } else {
-          lookups.add(new VariableLookup("$" + o, PlatformIcons.VARIABLE_ICON));
+          lookups.add(new VariableLookup("$" + o, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable)));
         }
       }
       return lookups;
@@ -221,15 +202,16 @@ public class CompletionLists {
             lp = PsiTreeUtil.getParentOfType(lp == null ? element : lp, XPathLocationPath.class, true);
           } while (lp != null && lp.getPrevSibling() == null);
 
-          check = lp == null || (sibling = lp.getPrevSibling()) != null;
-        }
-        if (check) {
-          if (sibling instanceof XPathToken && XPathTokenTypes.PATH_OPS.contains(((XPathToken)sibling).getTokenType())) {
-            // xx/yy<caret> : prevSibl = /
-          } else {
-            list.addAll(getFunctionCompletions(element));
-            list.addAll(getVariableCompletions(element));
+          if (lp != null) {
+            sibling = lp.getPrevSibling();
           }
+        }
+        if (sibling instanceof XPathToken && XPathTokenTypes.PATH_OPS.contains(((XPathToken)sibling).getTokenType())) {
+          // xx/yy<caret> : prevSibl = /
+        }
+        else {
+          list.addAll(getFunctionCompletions(element));
+          list.addAll(getVariableCompletions(element));
         }
       }
       if (principalType == XPathNodeTest.PrincipalType.ELEMENT && prefixedName.getPrefix() == null) {
@@ -309,8 +291,7 @@ public class CompletionLists {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement e) {
-          if (e instanceof XPathNodeTest) {
-            final XPathNodeTest nodeTest = (XPathNodeTest)e;
+          if (e instanceof XPathNodeTest nodeTest) {
 
             final XPathNodeTest.PrincipalType _principalType = nodeTest.getPrincipalType();
             if (_principalType == principalType) {

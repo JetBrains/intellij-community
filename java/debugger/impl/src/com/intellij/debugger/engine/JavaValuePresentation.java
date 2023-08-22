@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -6,8 +6,6 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XValueNode;
@@ -15,15 +13,8 @@ import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
-import com.sun.jdi.ArrayReference;
-import com.sun.jdi.ArrayType;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class JavaValuePresentation extends XValueExtendedPresentation implements XValueCompactPresentation {
   protected final ValueDescriptorImpl myValueDescriptor;
@@ -56,34 +47,11 @@ public class JavaValuePresentation extends XValueExtendedPresentation implements
       renderer.renderError(errorMessage);
     }
     else {
-      if (compact && node.getValueContainer() instanceof JavaValue) {
-        final JavaValue container = (JavaValue)node.getValueContainer();
-
-        if (container.getDescriptor().isArray()) {
-          final ArrayReference value = (ArrayReference)container.getDescriptor().getValue();
-          final ArrayType type = (ArrayType)container.getDescriptor().getType();
-          if (type != null) {
-            final String typeName = type.componentTypeName();
-            if (TypeConversionUtil.isPrimitive(typeName) || CommonClassNames.JAVA_LANG_STRING.equals(typeName)) {
-              int size = value.length();
-              int max = Math.min(size, CommonClassNames.JAVA_LANG_STRING.equals(typeName) ? 5 : 10);
-              //TODO [eu]: this is a quick fix for IDEA-136606, need to move this away from EDT!!!
-              final List<Value> values = value.getValues(0, max);
-              int i = 0;
-              final List<String> vals = new ArrayList<>(max);
-              while (i < values.size()) {
-                vals.add(StringUtil.first(values.get(i).toString(), 15, true));
-                i++;
-              }
-              String more = "";
-              if (vals.size() < size) {
-                more = ", + " + (size - vals.size()) + " more";
-              }
-
-              renderer.renderValue("{" + StringUtil.join(vals, ", ") + more + "}");
-              return;
-            }
-          }
+      if (compact) {
+        String text = myValueDescriptor.getCompactValueText();
+        if (text != null) {
+          renderer.renderValue(text);
+          return;
         }
       }
 

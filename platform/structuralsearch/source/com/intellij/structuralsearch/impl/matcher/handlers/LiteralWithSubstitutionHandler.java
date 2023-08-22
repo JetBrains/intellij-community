@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -21,11 +22,15 @@ public class LiteralWithSubstitutionHandler extends MatchingHandler {
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    final String text = matchedNode.getText();
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
+    return match(matchedNode, matchedNode.getText(), 0, context);
+  }
+
+  public boolean match(@NotNull PsiElement matchedNode, @NotNull String text, int textOffset, @NotNull MatchContext context) {
     if (myMatcher == null) {
-      myMatcher = Pattern.compile(myRegexp, myCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE).matcher(text);
-    } else {
+      myMatcher = Pattern.compile(myRegexp, (myCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE) | Pattern.DOTALL).matcher(text);
+    }
+    else {
       myMatcher.reset(text);
     }
 
@@ -35,7 +40,7 @@ public class LiteralWithSubstitutionHandler extends MatchingHandler {
     for (int i = 0; i < myHandlers.size(); ++i) {
       final SubstitutionHandler handler = myHandlers.get(i);
 
-      if (!handler.handle(matchedNode, myMatcher.start(i + 1), myMatcher.end(i + 1), context)) {
+      if (!handler.handle(matchedNode, textOffset + myMatcher.start(i + 1), textOffset + myMatcher.end(i + 1), context)) {
         return false;
       }
     }

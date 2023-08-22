@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -15,7 +15,7 @@ public class DuplicateAlternationBranchInspectionTest extends RegExpInspectionTe
   }
 
   public void testMoreBranches() {
-    quickfixTest("<warning descr=\"Duplicate branch in alternation\">a{3}</warning>|<warning descr=\"Duplicate branch in alternation\">a<caret><weak_warning descr=\"Fixed repetition range\">{3,3}</weak_warning></warning>|b|c", "a{3}|b|c", "Remove duplicate branch");
+    quickfixTest("<warning descr=\"Duplicate branch in alternation\">a{3}</warning>|<warning descr=\"Duplicate branch in alternation\">a<caret>{3,3}</warning>|b|c", "a{3}|b|c", "Remove duplicate branch");
   }
 
   public void testOrderIrrelevant() {

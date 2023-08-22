@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,22 +41,18 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
-    public void visitPyCallExpression(final PyCallExpression node) {
-      if (node.getArgumentList() == null) {
+    public void visitPyCallExpression(final @NotNull PyCallExpression node) {
+      if (node.getParent() instanceof PyDecorator) {
         return;
       }
       final List<PyCallable> callables = node.multiResolveCalleeFunction(getResolveContext());
@@ -66,14 +63,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyDecoratorList(final PyDecoratorList node) {
-      PyDecorator[] decorators = node.getDecorators();
-
-      for (PyDecorator decorator: decorators) {
-        if (decorator.hasArgumentList()) {
-          PyExpression[] arguments = decorator.getArguments();
-          checkArguments(decorator, arguments);
-        }
+    public void visitPyDecorator(final @NotNull PyDecorator decorator) {
+      if (decorator.hasArgumentList()) {
+        PyExpression[] arguments = decorator.getArguments();
+        checkArguments(decorator, arguments);
       }
     }
 

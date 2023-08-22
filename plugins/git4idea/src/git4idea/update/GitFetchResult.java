@@ -15,6 +15,8 @@
  */
 package git4idea.update;
 
+import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.openapi.util.text.StringUtil.pluralize;
 
 /**
  * @deprecated Use {@link git4idea.fetch.GitFetchSupport}
@@ -103,9 +104,10 @@ public final class GitFetchResult {
   }
 
   @NotNull
+  @Nls
   public String getAdditionalInfo() {
     if (!myPrunedRefs.isEmpty()) {
-      return "Pruned obsolete remote " + pluralize("reference", myPrunedRefs.size()) + ": " + join(myPrunedRefs, ", ");
+      return GitBundle.message("fetch.pruned.obsolete.remote.references", myPrunedRefs.size(), join(myPrunedRefs, ", "));
     }
     return "";
   }

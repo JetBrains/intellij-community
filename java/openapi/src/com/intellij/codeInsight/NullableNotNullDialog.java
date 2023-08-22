@@ -1,28 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.ide.DataManager;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.util.ui.JBUI;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.HashSet;
 
 public class NullableNotNullDialog extends DialogWrapper {
   private final Project myProject;
   private final AnnotationsPanel myNullablePanel;
   private final AnnotationsPanel myNotNullPanel;
   private final boolean myShowInstrumentationOptions;
+  public static final @NlsSafe String NULLABLE = "Nullable";
+  public static final @NlsSafe String NOT_NULL = "NotNull";
 
   public NullableNotNullDialog(@NotNull Project project) {
     this(project, false);
@@ -35,23 +31,19 @@ public class NullableNotNullDialog extends DialogWrapper {
 
     NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     myNullablePanel = new AnnotationsPanel(project,
-                                           "Nullable",
-                                           manager.getDefaultNullable(),
-                                           manager.getNullables(), manager.getDefaultNullables(),
-                                           Collections.emptySet(), false, true);
+                                           new NullabilityAnnotationPanelModel.NullableModel(manager),
+                                           false, true);
     myNotNullPanel = new AnnotationsPanel(project,
-                                          "NotNull",
-                                          manager.getDefaultNotNull(),
-                                          manager.getNotNulls(), manager.getDefaultNotNulls(),
-                                          new HashSet<>(manager.getInstrumentedNotNulls()), showInstrumentationOptions, true);
+                                          new NullabilityAnnotationPanelModel.NotNullModel(manager),
+                                          showInstrumentationOptions, true);
 
     init();
     setTitle(JavaBundle.message("nullable.notnull.configuration.dialog.title"));
   }
 
-  public static JButton createConfigureAnnotationsButton(Component context) {
+  public static JButton createConfigureAnnotationsButton(@NotNull Project project) {
     final JButton button = new JButton(JavaBundle.message("configure.annotations.option"));
-    button.addActionListener(createActionListener(context));
+    button.addActionListener(createActionListener(project));
     return button;
   }
 
@@ -60,7 +52,7 @@ public class NullableNotNullDialog extends DialogWrapper {
    * @param context  component where project context will be retrieved from
    * @return the action listener
    */
-  public static ActionListener createActionListener(Component context) {
+  private static ActionListener createActionListener(@NotNull Project context) {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -69,25 +61,21 @@ public class NullableNotNullDialog extends DialogWrapper {
     };
   }
 
-  public static void showDialogWithInstrumentationOptions(@NotNull Component context) {
-    showDialog(context, true);
+  public static void showDialogWithInstrumentationOptions(@NotNull Project project) {
+    showDialog(project, true);
   }
 
-  private static void showDialog(Component context, boolean showInstrumentationOptions) {
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(context));
-    if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+  private static void showDialog(@NotNull Project project, boolean showInstrumentationOptions) {
     NullableNotNullDialog dialog = new NullableNotNullDialog(project, showInstrumentationOptions);
     dialog.show();
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    final Splitter splitter = new Splitter(true);
-    splitter.setFirstComponent(myNullablePanel.getComponent());
-    splitter.setSecondComponent(myNotNullPanel.getComponent());
-    splitter.setHonorComponentsMinimumSize(true);
-    splitter.setPreferredSize(JBUI.size(300, 400));
-    return splitter;
+    final var pane = new JBTabbedPane();
+    pane.insertTab(NULLABLE, null, myNullablePanel.getComponent(), "", 0);
+    pane.insertTab(NOT_NULL, null, myNotNullPanel.getComponent(), "", 1);
+    return pane;
   }
 
   @Override

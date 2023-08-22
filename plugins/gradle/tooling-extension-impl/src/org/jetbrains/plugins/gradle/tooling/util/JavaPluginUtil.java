@@ -1,21 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util;
 
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class JavaPluginUtil {
-  @Nullable
-  public static JavaPluginConvention getJavaPluginConvention(@NotNull Project p) {
-    return p.getConvention().findPlugin(JavaPluginConvention.class);
+public final class JavaPluginUtil {
+
+  @NotNull
+  public static JavaPluginAccessor getJavaPluginAccessor(@NotNull Project p) {
+    if (canAccessConventions(p)) {
+      return new ConventionJavaPluginAccessor(p);
+    } else {
+      return new ExtensionJavaPluginAccessor(p);
+    }
   }
 
-  @Nullable
-  public static SourceSetContainer getSourceSetContainer(@NotNull Project p) {
-    final JavaPluginConvention convention = getJavaPluginConvention(p);
-    return (convention == null ? null : convention.getSourceSets());
+  private static boolean canAccessConventions(@NotNull Project p) {
+    return GradleVersion.version(p.getGradle().getGradleVersion()).getBaseVersion().compareTo(GradleVersion.version("8.2")) < 0;
   }
 }

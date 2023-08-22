@@ -21,9 +21,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue<T>, GenericDomValuePattern<T>>{
   private static final InitialPatternCondition CONDITION = new InitialPatternCondition(GenericDomValue.class) {
     @Override
@@ -40,19 +37,18 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
     super(new InitialPatternCondition(aClass) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof GenericDomValue && aClass.equals(DomUtil.getGenericValueParameter(((GenericDomValue)o).getDomElementType()));
+        return o instanceof GenericDomValue && aClass.equals(DomUtil.getGenericValueParameter(((GenericDomValue<?>)o).getDomElementType()));
       }
 
     });
   }
 
   public GenericDomValuePattern<T> withStringValue(final ElementPattern<String> pattern) {
-    return with(new PatternCondition<GenericDomValue<T>>("withStringValue") {
+    return with(new PatternCondition<>("withStringValue") {
       @Override
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
         return pattern.accepts(genericDomValue.getStringValue(), context);
       }
-
     });
   }
 
@@ -61,7 +57,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
   }
 
   public GenericDomValuePattern<T> withValue(final ElementPattern<?> pattern) {
-    return with(new PatternCondition<GenericDomValue<T>>("withValue") {
+    return with(new PatternCondition<>("withValue") {
       @Override
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final ProcessingContext context) {
         return pattern.accepts(genericDomValue.getValue(), context);

@@ -1,16 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi;
 
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class PropertiesResourceBundleUtil {
-  private static final TIntHashSet SYMBOLS_TO_ESCAPE = new TIntHashSet(new int[]{'=', ':'});
-  private static final char        ESCAPE_SYMBOL     = '\\';
-
+public final class PropertiesResourceBundleUtil {
+  private static final char ESCAPE_SYMBOL = '\\';
 
   /**
    * Allows to map given 'raw' property value text to the 'user-friendly' text to show at the resource bundle editor.
@@ -20,8 +17,7 @@ public class PropertiesResourceBundleUtil {
    * @param text  'raw' property value text
    * @return      'user-friendly' text to show at the resource bundle editor
    */
-  @NotNull
-  public static String fromPropertyValueToValueEditor(@NotNull String text) {
+  public static @NotNull String fromPropertyValueToValueEditor(@NotNull String text) {
     StringBuilder buffer = new StringBuilder();
     boolean escaped = false;
     for (int i = 0; i < text.length(); i++) {
@@ -42,9 +38,7 @@ public class PropertiesResourceBundleUtil {
   /**
    * Converts property value from given {@code valueFormat} to 'raw' format (how it should be stored in *.properties file)
    */
-  @NotNull
-  public static String convertValueToFileFormat(@NotNull String value, char delimiter,
-                                                @NotNull PropertyKeyValueFormat valueFormat) {
+  public static @NotNull String convertValueToFileFormat(@NotNull String value, char delimiter, @NotNull PropertyKeyValueFormat valueFormat) {
     if (valueFormat == PropertyKeyValueFormat.FILE) return value;
 
     StringBuilder buffer = new StringBuilder();
@@ -61,7 +55,7 @@ public class PropertiesResourceBundleUtil {
         }
       }
       else if ((i == 0 && (c == ' ' || c == '\t')) // Leading white space
-               || (delimiter == ' ' && SYMBOLS_TO_ESCAPE.contains(c)))   /* Special symbol*/ {
+               || (delimiter == ' ' && (c == '=' || c == ':' /* special symbol */)))  {
         buffer.append(ESCAPE_SYMBOL);
         buffer.append(c);
       }

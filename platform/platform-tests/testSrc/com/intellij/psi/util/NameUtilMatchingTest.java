@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.util;
 
-import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -26,6 +11,8 @@ import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.text.Matcher;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.function.ToIntFunction;
 
 public class NameUtilMatchingTest extends TestCase {
   public void testSimpleCases() {
@@ -53,6 +40,9 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("replmap", "ReplacePathToMacroMap");
     assertMatches("CertificateEx", "CertificateEncodingException");
     assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
+
+    assertMatches("templipa", "template_impl_template_list_panel");
+    assertMatches("templistpa", "template_impl_template_list_panel");
   }
   
   public void testSimpleCasesWithFirstLowercased() {
@@ -233,30 +223,6 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("abc", "aaa:bbb:ccc");
     assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
-  }
-
-  private static MinusculeMatcher fileStructureMatcher(String pattern) {
-    return FileStructureDialog.createFileStructureMatcher(pattern);
-  }
-
-  public void testFileStructure() {
-    assert !fileStructureMatcher("hint").matches("height: int");
-    assert  fileStructureMatcher("Hint").matches("Height:int");
-    assert !fileStructureMatcher("Hint").matches("Height: int");
-    assert  fileStructureMatcher("hI").  matches("Height: int");
-
-    assert  fileStructureMatcher("getColor"). matches("getBackground(): Color");
-    assert  fileStructureMatcher("get color").matches("getBackground(): Color");
-    assert !fileStructureMatcher("getcolor"). matches("getBackground(): Color");
-
-    assert  fileStructureMatcher("get()").matches("getBackground(): Color");
-
-    assert  fileStructureMatcher("setColor").  matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set Color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set(color"). matches("setBackground(Color): void");
-    assert  fileStructureMatcher("set(color)").matches("setBackground(Color): void");
-    assert !fileStructureMatcher("setcolor").  matches("setBackground(Color): void");
   }
 
   public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
@@ -586,10 +552,6 @@ public class NameUtilMatchingTest extends TestCase {
     assertPreference("*icon", "getInitControl", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  public void testPreferBeforeSeparators() {
-    assertPreference(fileStructureMatcher("*point"), "getLocation(): Point", "getPoint(): Point");
-  }
-
   public void testPreferNoWordSkipping() {
     assertPreference("CBP", "CustomProcessBP", "ComputationBatchProcess", NameUtil.MatchingCaseSensitivity.NONE);
   }
@@ -626,8 +588,12 @@ public class NameUtilMatchingTest extends TestCase {
   }
 
   private static void assertPreference(MinusculeMatcher matcher, String less, String more) {
-    int iLess = matcher.matchingDegree(less);
-    int iMore = matcher.matchingDegree(more);
+    assertPreference(less, more, matcher::matchingDegree);
+  }
+
+  private static void assertPreference(String less, String more, ToIntFunction<String> matchingDegree) {
+    int iLess = matchingDegree.applyAsInt(less);
+    int iMore = matchingDegree.applyAsInt(more);
     assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
   }
 
@@ -652,8 +618,9 @@ public class NameUtilMatchingTest extends TestCase {
     assertDoesntMatch("*.ico", "a.i.c.o");
   }
 
-  public void testUsingCapsMeansTheyShouldMatchCaps() {
-    assertDoesntMatch("URLCl", "UrlClassLoader");
+  public void testCapsMayMatchNonCaps() {
+    assertMatches("PDFRe", "PdfRenderer");
+    assertMatches("*pGETPartTimePositionInfo", "dbo.pGetPartTimePositionInfo.sql");
   }
 
   public void testACapitalAfterAnotherCapitalMayMatchALowercaseLetterBecauseShiftWasAccidentallyHeldTooLong() {

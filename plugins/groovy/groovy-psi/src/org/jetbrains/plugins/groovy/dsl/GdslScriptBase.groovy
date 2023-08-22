@@ -1,35 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.dsl.methods.GdslContextMethods
-import org.jetbrains.plugins.groovy.dsl.methods.GdslPointcutMethods
-import org.jetbrains.plugins.groovy.dsl.methods.GdslScopeMethods
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
 import org.jetbrains.plugins.groovy.dsl.toplevel.Context
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.*
 
 @CompileStatic
 @SuppressWarnings(["GrMethodMayBeStatic", "GroovyUnusedDeclaration"])
-abstract class GdslScriptBase extends Script implements GdslScopeMethods, GdslPointcutMethods, GdslContextMethods {
+abstract class GdslScriptBase extends Script {
 
   static final String ideaVersion
   static {
@@ -107,4 +93,61 @@ abstract class GdslScriptBase extends Script implements GdslScopeMethods, GdslPo
   }
 
   private static class InvalidVersionException extends Exception {}
+
+  /**
+   * Auxiliary methods for context definition
+   */
+  Scope closureScope(Map args) { return new ClosureScope(args) }
+
+  Scope scriptScope(Map args) { return new ScriptScope(args) }
+
+  Scope classScope(Map args) { return new ClassScope(args) }
+
+  Scope annotatedScope(Map args) { return new AnnotatedScope(args) }
+
+  /**
+   * Context definition
+   */
+  def context(Map args) { return new Context(args) }
+
+  def hasAnnotation(String annoQName) { PsiJavaPatterns.psiModifierListOwner().withAnnotation(annoQName) }
+
+  def hasField(ElementPattern fieldCondition) { PsiJavaPatterns.psiClass().withField(true, PsiJavaPatterns.psiField().and(fieldCondition)) }
+
+  def hasMethod(ElementPattern methodCondition) {
+    PsiJavaPatterns.psiClass().withMethod(true, PsiJavaPatterns.psiMethod().and(methodCondition))
+  }
+
+  def bind(final Object arg) {
+    DslPointcut.bind(arg)
+  }
+
+  def handleImplicitBind(arg) {
+    if (arg instanceof Map && arg.size() == 1 &&
+        arg.keySet().iterator().next() instanceof String &&
+        arg.values().iterator().next() instanceof DslPointcut) {
+      return DslPointcut.bind(arg)
+    }
+    return arg
+  }
+
+  DslPointcut<GdslType, GdslType> subType(final Object arg) {
+    DslPointcut.subType(handleImplicitBind(arg))
+  }
+
+  DslPointcut<GroovyClassDescriptor, GdslType> currentType(final Object arg) {
+    DslPointcut.currentType(handleImplicitBind(arg))
+  }
+
+  DslPointcut<GroovyClassDescriptor, GdslType> enclosingType(final Object arg) {
+    DslPointcut.enclosingType(handleImplicitBind(arg))
+  }
+
+  DslPointcut<Object, String> name(final Object arg) {
+    DslPointcut.name(handleImplicitBind(arg))
+  }
+
+  DslPointcut<GroovyClassDescriptor, GdslMethod> enclosingMethod(final Object arg) {
+    DslPointcut.enclosingMethod(handleImplicitBind(arg))
+  }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -45,7 +46,7 @@ public class MethodSmartStepTarget extends SmartStepTarget {
       PsiFormatUtilBase.SHOW_TYPE,
       999
     );
-    return label != null? label + formatted : formatted;
+    return label != null ? label + formatted : formatted;
   }
 
   public int getOrdinal() {
@@ -54,5 +55,10 @@ public class MethodSmartStepTarget extends SmartStepTarget {
 
   public void setOrdinal(int ordinal) {
     myOrdinal = ordinal;
+  }
+
+  @Override
+  public @Nullable String getClassName() {
+    return JVMNameUtil.getClassVMName(myMethod.getContainingClass());
   }
 }

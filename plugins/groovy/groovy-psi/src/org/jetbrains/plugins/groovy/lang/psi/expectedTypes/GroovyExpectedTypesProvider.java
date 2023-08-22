@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -53,35 +53,35 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.CallReferenceImplKt.resolveWithArguments;
 
-/**
- * @author ven
- */
-public class GroovyExpectedTypesProvider {
+public final class GroovyExpectedTypesProvider {
+  private static final ExtensionPointName<GroovyExpectedTypesContributor> EP_NAME = new ExtensionPointName<>("org.intellij.groovy.expectedTypesContributor");
 
   public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
-    return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, () -> {
-        MyCalculator calculator = new MyCalculator(expression);
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof GroovyPsiElement) {
-          ((GroovyPsiElement)parent).accept(calculator);
-        }
-        else {
-          parent.accept(new GroovyPsiElementVisitor(calculator));
-        }
-        final TypeConstraint[] result = calculator.getResult();
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, GroovyExpectedTypesProvider::doCalculateTypeConstraints);
+  }
 
-      List<TypeConstraint> custom = new ArrayList<>();
-        for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
-          custom.addAll(contributor.calculateTypeConstraints(expression));
-        }
+  private static TypeConstraint[] doCalculateTypeConstraints(@NotNull GrExpression expression) {
+    MyCalculator calculator = new MyCalculator(expression);
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof GroovyPsiElement) {
+      ((GroovyPsiElement)parent).accept(calculator);
+    }
+    else {
+      parent.accept(new GroovyPsiElementVisitor(calculator));
+    }
+    final TypeConstraint[] result = calculator.getResult();
 
-        if (!custom.isEmpty()) {
-          custom.addAll(0, Arrays.asList(result));
-          return custom.toArray(TypeConstraint.EMPTY_ARRAY);
-        }
+    List<TypeConstraint> custom = new ArrayList<>();
+    for (GroovyExpectedTypesContributor contributor : EP_NAME.getExtensionList()) {
+      custom.addAll(contributor.calculateTypeConstraints(expression));
+    }
 
-        return result;
-      });
+    if (!custom.isEmpty()) {
+      custom.addAll(0, Arrays.asList(result));
+      return custom.toArray(TypeConstraint.EMPTY_ARRAY);
+    }
+
+    return result;
   }
 
   public static List<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {
@@ -186,7 +186,7 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
       if (myExpression.equals(assertStatement.getAssertion())) {
-        myResult = createSimpleSubTypeResult(PsiType.BOOLEAN);
+        myResult = createSimpleSubTypeResult(PsiTypes.booleanType());
       }
 
       if (myExpression.equals(assertStatement.getErrorMessage())) {
@@ -197,7 +197,7 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
       if (myExpression.equals(ifStatement.getCondition())) {
-        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiType.BOOLEAN)};
+        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(ifStatement), PsiTypes.booleanType())};
       }
       else if (myExpression.equals(ifStatement.getThenBranch()) || myExpression.equals(ifStatement.getElseBranch())) {
         checkExitPoint();
@@ -301,8 +301,7 @@ public class GroovyExpectedTypesProvider {
 
     private void checkExitPoint() {
       final PsiElement element = PsiTreeUtil.getParentOfType(myExpression, PsiMethod.class, GrClosableBlock.class);
-      if (element instanceof GrMethod) {
-        final GrMethod method = (GrMethod)element;
+      if (element instanceof GrMethod method) {
         ControlFlowUtils.visitAllExitPoints(method.getBlock(), new ControlFlowUtils.ExitPointVisitor() {
           @Override
           public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
@@ -322,14 +321,14 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitWhileStatement(@NotNull GrWhileStatement whileStatement) {
       if (myExpression.equals(whileStatement.getCondition())) {
-        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiType.BOOLEAN)};
+        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(whileStatement), PsiTypes.booleanType())};
       }
     }
 
     @Override
     public void visitTraditionalForClause(@NotNull GrTraditionalForClause forClause) {
       if (myExpression.equals(forClause.getCondition())) {
-        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(forClause), PsiType.BOOLEAN)};
+        myResult = new TypeConstraint[]{new SubtypeConstraint(TypesUtil.getJavaLangObject(forClause), PsiTypes.booleanType())};
       }
     }
 
@@ -450,7 +449,7 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitUnaryExpression(@NotNull final GrUnaryExpression expression) {
-      TypeConstraint constraint = new TypeConstraint(PsiType.INT) {
+      TypeConstraint constraint = new TypeConstraint(PsiTypes.intType()) {
         @Override
         public boolean satisfied(PsiType type, @NotNull PsiElement context) {
           final PsiType boxed = TypesUtil.boxPrimitiveType(type, context.getManager(), context.getResolveScope());
@@ -461,7 +460,7 @@ public class GroovyExpectedTypesProvider {
         @NotNull
         @Override
         public PsiType getDefaultType() {
-          return PsiType.INT;
+          return PsiTypes.intType();
         }
       };
       myResult = new TypeConstraint[]{constraint};
@@ -507,26 +506,11 @@ public class GroovyExpectedTypesProvider {
     }
 
     @Override
-    public void visitCaseLabel(@NotNull GrCaseLabel caseLabel) {
-      final PsiElement parent = caseLabel.getParent().getParent();
-      if (!(parent instanceof GrSwitchStatement)) return;
-
-      final GrExpression condition = ((GrSwitchStatement)parent).getCondition();
-      if (condition == null) return;
-
-      final PsiType type = condition.getType();
-      if (type == null) return;
-
-      myResult = new TypeConstraint[]{SubtypeConstraint.create(type)};
-    }
-
-    @Override
     public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
       final GrCaseSection[] sections = switchStatement.getCaseSections();
       List<PsiType> types = new ArrayList<>(sections.length);
       for (GrCaseSection section : sections) {
-        for (GrCaseLabel label : section.getCaseLabels()) {
-          final GrExpression value = label.getValue();
+        for (GrExpression value : section.getExpressions()) {
           if (value != null) {
             final PsiType type = value.getType();
             if (type != null) {

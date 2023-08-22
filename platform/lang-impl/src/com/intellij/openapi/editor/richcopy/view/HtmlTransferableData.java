@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.view;
 
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 
-public class HtmlTransferableData extends HtmlSyntaxInfoReader implements RawTextWithMarkup {
+public final class HtmlTransferableData extends HtmlSyntaxInfoReader implements RawTextWithMarkup {
   @NotNull public static final DataFlavor FLAVOR = new DataFlavor("text/html; class=java.io.Reader; charset=UTF-8", "HTML text");
   public static final int PRIORITY = 200;
 
@@ -15,23 +16,8 @@ public class HtmlTransferableData extends HtmlSyntaxInfoReader implements RawTex
   }
 
   @Override
-  public DataFlavor getFlavor() {
+  public @Nullable DataFlavor getFlavor() {
     return FLAVOR;
-  }
-
-  @Override
-  public int getOffsetCount() {
-    return 0;
-  }
-
-  @Override
-  public int getOffsets(int[] offsets, int index) {
-    return index;
-  }
-
-  @Override
-  public int setOffsets(int[] offsets, int index) {
-    return index;
   }
 
   @Override

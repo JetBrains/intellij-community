@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,12 +19,9 @@ import java.util.regex.Pattern;
  * Provides utility methods for building documentation preview.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
-public class DocPreviewUtil {
-
-  private static final TIntHashSet ALLOWED_LINK_SEPARATORS = new TIntHashSet();
+public final class DocPreviewUtil {
+  private static final IntSet ALLOWED_LINK_SEPARATORS = new IntOpenHashSet();
   static {
     ALLOWED_LINK_SEPARATORS.add(',');
     ALLOWED_LINK_SEPARATORS.add(' ');
@@ -44,7 +43,7 @@ public class DocPreviewUtil {
    * There is a possible situation then that we have two replacements where one key is a simple name and another one is a fully qualified
    * one. We want to apply {@code 'from fully qualified name'} replacement first then.
    */
-  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<String>() {
+  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(@NotNull String o1, @NotNull String o2) {
       String shortName1 = extractShortName(o1);
@@ -84,7 +83,9 @@ public class DocPreviewUtil {
    * @param fullText                   full documentation text (if available)
    */
   @NotNull
-  public static String buildPreview(@NotNull final String header, @Nullable final String qName, @Nullable final String fullText) {
+  public static @Nls String buildPreview(@NotNull @Nls final String header,
+                                         @Nullable final String qName,
+                                         @Nullable @Nls final String fullText) {
     if (fullText == null) {
       return header;
     }
@@ -114,7 +115,7 @@ public class DocPreviewUtil {
     List<TextRange> modifiedRanges = new ArrayList<>();
     List<String> sortedReplacements = new ArrayList<>(links.keySet());
     sortedReplacements.sort(REPLACEMENTS_COMPARATOR);
-    StringBuilder buffer = new StringBuilder(header);
+    @Nls StringBuilder buffer = new StringBuilder(header);
     replace(buffer, "\n", "<br/>", modifiedRanges);
     for (String replaceFrom : sortedReplacements) {
       replace(buffer, replaceFrom, String.format("<a href=\"%s\">%s</a>", links.get(replaceFrom), replaceFrom), modifiedRanges);
@@ -213,7 +214,7 @@ public class DocPreviewUtil {
     for (; i < text.length(); i++) {
       char c = text.charAt(i);
       switch (state) {
-        case TEXT:
+        case TEXT -> {
           if (c == '<') {
             if (i > dataStartOffset) {
               if (!callback.onText(text.substring(dataStartOffset, i).replace("&nbsp;", " "))) {
@@ -230,8 +231,8 @@ public class DocPreviewUtil {
               tagNameStartOffset = i + 1;
             }
           }
-          break;
-        case INSIDE_OPEN_TAG:
+        }
+        case INSIDE_OPEN_TAG -> {
           if (c == ' ') {
             tagName = text.substring(tagNameStartOffset, i);
           }
@@ -246,7 +247,6 @@ public class DocPreviewUtil {
               tagName = null;
               state = State.TEXT;
               dataStartOffset = ++i + 1;
-              break;
             }
           }
           else if (c == '>') {
@@ -260,12 +260,10 @@ public class DocPreviewUtil {
             state = State.TEXT;
             dataStartOffset = i + 1;
           }
-          break;
-        case INSIDE_CLOSE_TAG:
+        }
+        case INSIDE_CLOSE_TAG -> {
           if (c == '>') {
-            if (tagName == null) {
-              tagName = text.substring(tagNameStartOffset, i);
-            }
+            tagName = text.substring(tagNameStartOffset, i);
             if (!callback.onCloseTag(tagName, text.substring(dataStartOffset, i + 1))) {
               return dataStartOffset;
             }
@@ -273,6 +271,7 @@ public class DocPreviewUtil {
             state = State.TEXT;
             dataStartOffset = i + 1;
           }
+        }
       }
     }
 
@@ -290,7 +289,7 @@ public class DocPreviewUtil {
     boolean onText(@NotNull String text);
   }
 
-  private static class LinksCollector implements Callback {
+  private static final class LinksCollector implements Callback {
 
     private static final Pattern HREF_PATTERN = Pattern.compile("href=[\"']([^\"']+)");
 

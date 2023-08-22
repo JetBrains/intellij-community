@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -34,18 +20,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class ErrorViewStructure extends AbstractTreeStructure {
   private final ErrorTreeElement myRoot = new MyRootElement();
-  
+
   private final List<String> myGroupNames = new ArrayList<>();
   private final Map<String, GroupingElement> myGroupNameToElementMap = new HashMap<>();
   private final Map<String, List<NavigatableMessageElement>> myGroupNameToMessagesMap = new HashMap<>();
   private final Map<ErrorTreeElementKind, List<ErrorTreeElement>> mySimpleMessages = new EnumMap<>(ErrorTreeElementKind.class);
-  private final Object myLock = new Object(); 
+  private final Object myLock = new Object();
 
   private static final ErrorTreeElementKind[] ourMessagesOrder = {
     ErrorTreeElementKind.INFO,
@@ -62,9 +49,8 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     myCanHideWarnings = canHideWarnings;
   }
 
-  @NotNull
   @Override
-  public Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRoot;
   }
 
@@ -81,12 +67,20 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   public boolean hasMessages(@NotNull Set<ErrorTreeElementKind> kinds) {
+    return hasMessages(kinds, element -> true);
+  }
+
+  public boolean hasMessages(@NotNull Set<ErrorTreeElementKind> kinds, Predicate<? super ErrorTreeElement> filter) {
     synchronized (myLock) {
       for (Map.Entry<ErrorTreeElementKind, List<ErrorTreeElement>> entry : mySimpleMessages.entrySet()) {
         if (kinds.contains(entry.getKey())) {
           final List<ErrorTreeElement> messages = entry.getValue();
           if (messages != null && !messages.isEmpty()) {
-            return true;
+            for (ErrorTreeElement message : messages) {
+              if (filter.test(message)) {
+                return true;
+              }
+            }
           }
         }
       }
@@ -94,7 +88,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         final List<NavigatableMessageElement> messages = entry.getValue();
         if (messages != null && !messages.isEmpty()) {
           for (NavigatableMessageElement message : messages) {
-            if (kinds.contains(message.getKind())) {
+            if (filter.test(message) && kinds.contains(message.getKind())) {
               return true;
             }
           }
@@ -103,7 +97,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
     return false;
   }
-  
+
   @Override
   public ErrorTreeElement @NotNull [] getChildElements(@NotNull Object element) {
     if (element == myRoot) {
@@ -129,7 +123,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       }
       return children.toArray(ErrorTreeElement.EMPTY_ARRAY);
     }
-    
+
     if (element instanceof GroupingElement) {
       synchronized (myLock) {
         final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(((GroupingElement)element).getName());
@@ -147,7 +141,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         }
       }
     }
-    
+
     return ErrorTreeElement.EMPTY_ARRAY;
   }
 
@@ -163,15 +157,11 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     if (!myCanHideWarnings) {
       return false;
     }
-    switch (kind) {
-      case WARNING:
-      case NOTE:
-        return ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
-      case INFO:
-        return ErrorTreeViewConfiguration.getInstance(myProject).isHideInfoMessages();
-      default:
-        return false;
-    }
+    return switch (kind) {
+      case WARNING, NOTE -> ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
+      case INFO -> ErrorTreeViewConfiguration.getInstance(myProject).isHideInfoMessages();
+      default -> false;
+    };
   }
 
   private boolean shouldShowFileElement(GroupingElement groupingElement) {
@@ -204,8 +194,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return new ErrorTreeNodeDescriptor(myProject, parentDescriptor, (ErrorTreeElement)element);
   }
 
@@ -225,29 +214,30 @@ public class ErrorViewStructure extends AbstractTreeStructure {
                          int line,
                          int column,
                          @Nullable Object data) {
-    if (underFileGroup != null || file != null) {
-      if (file == null) {
-        line = column = -1;
-      }
-
-      final int guiline = line < 0 ? -1 : line + 1;
-      final int guicolumn = column < 0 ? -1 : column + 1;
-
-      VirtualFile group = underFileGroup != null ? underFileGroup : file;
-      VirtualFile nav = file != null ? file : underFileGroup;
-
-      return addNavigatableMessage(
-        group.getPresentableUrl(),
-        new OpenFileDescriptor(myProject, nav, line, column),
-        kind,
-        text,
-        data,
-        NewErrorTreeViewPanel.createExportPrefix(guiline),
-        NewErrorTreeViewPanel.createRendererPrefix(guiline, guicolumn),
-        group
-      );
+    if (underFileGroup == null && file == null) {
+      return addSimpleMessageElement(new SimpleMessageElement(kind, text, data));
     }
-    return addSimpleMessage(kind, text, data);
+
+    if (file == null) {
+      line = -1;
+      column = -1;
+    }
+
+    final int guiLine = line < 0 ? -1 : line + 1;
+    final int guiColumn = column < 0 ? -1 : column + 1;
+
+    VirtualFile group = underFileGroup == null ? file : underFileGroup;
+    VirtualFile nav = file == null ? underFileGroup : file;
+    return addNavigatableMessage(
+      group.getPresentableUrl(),
+      new OpenFileDescriptor(myProject, nav, line, column),
+      kind,
+      text,
+      data,
+      NewErrorTreeViewPanel.createExportPrefix(guiLine),
+      NewErrorTreeViewPanel.createRendererPrefix(guiLine, guiColumn),
+      group
+    );
   }
 
   public List<Object> getGroupChildrenData(final String groupName) {
@@ -299,10 +289,9 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return addSimpleMessage(kind, text, data);
   }
 
-  @NotNull
-  public List<NavigatableMessageElement> removeNavigatableMessage(@NotNull String groupName,
-                                                                  @NotNull ErrorTreeElementKind kind,
-                                                                  @NotNull Navigatable navigatable) {
+  public @NotNull List<NavigatableMessageElement> removeNavigatableMessage(@NotNull String groupName,
+                                                                           @NotNull ErrorTreeElementKind kind,
+                                                                           @NotNull Navigatable navigatable) {
     synchronized (myLock) {
       List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupName);
       if (elements == null) return Collections.emptyList();
@@ -321,8 +310,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  @NotNull
-  public List<NavigatableMessageElement> removeAllNavigatableMessagesInGroup(@NotNull String groupName) {
+  public @NotNull List<NavigatableMessageElement> removeAllNavigatableMessagesInGroup(@NotNull String groupName) {
     synchronized (myLock) {
       List<NavigatableMessageElement> elements = myGroupNameToMessagesMap.get(groupName);
       if (elements == null) return Collections.emptyList();
@@ -333,13 +321,13 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   public ErrorTreeElement addNavigatableMessage(@Nullable String groupName,
-                                    Navigatable navigatable,
-                                    @NotNull ErrorTreeElementKind kind,
-                                    final String[] message,
-                                    final Object data,
-                                    String exportText,
-                                    String rendererTextPrefix,
-                                    VirtualFile file) {
+                                                Navigatable navigatable,
+                                                @NotNull ErrorTreeElementKind kind,
+                                                final String[] message,
+                                                final Object data,
+                                                String exportText,
+                                                String rendererTextPrefix,
+                                                VirtualFile file) {
     if (groupName == null) {
       return addSimpleMessageElement(new NavigatableMessageElement(kind, null, message, navigatable, exportText, rendererTextPrefix));
     }
@@ -349,7 +337,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         elements = new ArrayList<>();
         myGroupNameToMessagesMap.put(groupName, elements);
       }
-      final NavigatableMessageElement element = new NavigatableMessageElement(
+      NavigatableMessageElement element = new NavigatableMessageElement(
         kind, getGroupingElement(groupName, data, file), message, navigatable, exportText, rendererTextPrefix
       );
       elements.add(element);
@@ -372,12 +360,11 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-
   private ErrorTreeElement addSimpleMessage(@NotNull ErrorTreeElementKind kind, final String[] text, final Object data) {
     return addSimpleMessageElement(new SimpleMessageElement(kind, text, data));
   }
 
-  private ErrorTreeElement addSimpleMessageElement(ErrorTreeElement element) {
+  public ErrorTreeElement addSimpleMessageElement(ErrorTreeElement element) {
     synchronized (myLock) {
       List<ErrorTreeElement> elements = mySimpleMessages.get(element.getKind());
       if (elements == null) {
@@ -389,13 +376,12 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return element;
   }
 
-  @Nullable
-  public GroupingElement lookupGroupingElement(String groupName) {
+  public @Nullable GroupingElement lookupGroupingElement(String groupName) {
     synchronized (myLock) {
       return myGroupNameToElementMap.get(groupName);
     }
   }
-  
+
   public GroupingElement getGroupingElement(String groupName, Object data, VirtualFile file) {
     synchronized (myLock) {
       GroupingElement element = myGroupNameToElementMap.get(groupName);
@@ -409,8 +395,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  @NotNull
-  protected GroupingElement createGroupingElement(String groupName, Object data, VirtualFile file) {
+  protected @NotNull GroupingElement createGroupingElement(String groupName, Object data, VirtualFile file) {
     return new GroupingElement(groupName, data, file);
   }
 
@@ -430,8 +415,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  @Nullable
-  public ErrorTreeElement getFirstMessage(@NotNull ErrorTreeElementKind kind) {
+  public @Nullable ErrorTreeElement getFirstMessage(@NotNull ErrorTreeElementKind kind) {
     if (shouldHide(kind)) {
       return null; // elements of this kind are hidden
     }
@@ -483,8 +467,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     if (element == myRoot) {
       return;
     }
-    if (element instanceof GroupingElement) {
-      GroupingElement groupingElement = (GroupingElement)element;
+    if (element instanceof GroupingElement groupingElement) {
       removeGroup(groupingElement.getName());
       final VirtualFile virtualFile = groupingElement.getFile();
       if (virtualFile != null) {
@@ -496,8 +479,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
         });
       }
     }
-    else if (element instanceof NavigatableMessageElement){
-      final NavigatableMessageElement navElement = (NavigatableMessageElement)element;
+    else if (element instanceof NavigatableMessageElement navElement){
       final GroupingElement parent = navElement.getParent();
       if (parent != null) {
         synchronized (myLock) {
@@ -518,7 +500,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     }
   }
 
-  private static class MyNavigatableWithDataElement extends NavigatableMessageElement {
+  private static final class MyNavigatableWithDataElement extends NavigatableMessageElement {
     private final VirtualFile myVf;
     private final CustomizeColoredTreeCellRenderer myCustomizeColoredTreeCellRenderer;
 
@@ -526,7 +508,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
                                          @NotNull ErrorTreeElementKind kind,
                                          GroupingElement parent,
                                          String[] message,
-                                         @NotNull final VirtualFile vf,
+                                         final @NotNull VirtualFile vf,
                                          String exportText,
                                          String rendererTextPrefix) {
       super(kind, parent, message, new OpenFileDescriptor(project, vf, -1, -1), exportText, rendererTextPrefix);
@@ -544,7 +526,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
           final Icon icon = myVf.getFileType().getIcon();
           renderer.setIcon(icon);
           final String[] messages = getText();
-          final String text = messages == null || messages.length == 0 ? vf.getPath() : messages[0];
+          final String text = messages == null || messages.length == 0 ? vf.getPresentableUrl() : messages[0];
           renderer.append(text);
         }
       };

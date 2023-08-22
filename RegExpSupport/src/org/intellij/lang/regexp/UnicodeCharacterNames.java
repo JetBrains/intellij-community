@@ -13,8 +13,7 @@ import java.util.function.Consumer;
 /**
  * @author Bas Leijdekkers
  */
-public class UnicodeCharacterNames {
-
+public final class UnicodeCharacterNames {
   public static void iterate(Consumer<? super String> consumer) {
     try {
       final Class<?> aClass = Class.forName("java.lang.CharacterName");

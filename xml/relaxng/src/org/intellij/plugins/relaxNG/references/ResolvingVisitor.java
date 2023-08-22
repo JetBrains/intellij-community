@@ -28,10 +28,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor {
@@ -45,16 +45,14 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
     myPattern = pattern;
     myProcessingContext = context;
 
-    myProcessingContext.put(VISITED_KEY, new THashSet<>());
+    myProcessingContext.put(VISITED_KEY, new HashSet<>());
   }
 
   @Override
-  public void visitXmlDocument(@Nullable XmlDocument document) {
-    if (document != null) {
-      final XmlTag rootTag = document.getRootTag();
-      if (rootTag != null) {
-        visitXmlTag(rootTag);
-      }
+  public void visitXmlDocument(@NotNull XmlDocument document) {
+    final XmlTag rootTag = document.getRootTag();
+    if (rootTag != null) {
+      visitXmlTag(rootTag);
     }
   }
 
@@ -63,7 +61,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
   }
 
   @Override
-  public void visitXmlAttribute(XmlAttribute attribute) {
+  public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
     if (myIncludePattern != null && myIncludePattern.accepts(attribute, myProcessingContext)) {
       final String value = attribute.getValue();
       if (value == null) return;
@@ -82,7 +80,7 @@ class ResolvingVisitor extends XmlElementVisitor implements PsiElementProcessor 
   }
 
   @Override
-  public void visitXmlTag(XmlTag tag) {
+  public void visitXmlTag(@NotNull XmlTag tag) {
     visitAttributes(tag);
   }
 

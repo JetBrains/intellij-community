@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.ide.DataManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -47,9 +44,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public class LossyEncodingInspection extends LocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance(LossyEncodingInspection.class);
-
+public final class LossyEncodingInspection extends LocalInspectionTool {
   @Override
   @Nls
   @NotNull
@@ -101,7 +96,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
     if (!isGoodCharset(virtualFile, charset)) {
       LocalQuickFix[] fixes = getFixes(file, virtualFile, charset);
-      descriptors.add(manager.createProblemDescriptor(file, InspectionsBundle.message("inspection.lossy.encoding.description", charset), true,
+      descriptors.add(manager.createProblemDescriptor(file, LangBundle.message("inspection.lossy.encoding.description", charset), true,
                                                       ProblemHighlightType.GENERIC_ERROR, isOnTheFly, fixes));
       return false;
     }
@@ -181,19 +176,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       bytesToSave = ArrayUtil.mergeArrays(bom, bytesToSave); // for 2-byte encodings String.getBytes(Charset) adds BOM automatically
     }
 
-    boolean equals = Arrays.equals(bytesToSave, loadedBytes);
-    if (!equals && LOG.isDebugEnabled()) {
-      try {
-        String tempDir = FileUtil.getTempDirectory();
-        FileUtil.writeToFile(new File(tempDir, "lossy-bytes-to-save"), bytesToSave);
-        FileUtil.writeToFile(new File(tempDir, "lossy-loaded-bytes"), loadedBytes);
-        LOG.debug("lossy bytes dumped into " + tempDir);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return equals;
+    return Arrays.equals(bytesToSave, loadedBytes);
   }
 
   private static void checkIfCharactersWillBeLostAfterSave(@NotNull PsiFile file,
@@ -229,7 +212,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   }
 
   // returns null if OK
-  // range of the characters either failed to be encoded to bytes or failed to be decoded back or decoded to chars different from the original
+  // range of the characters either failed to be encoded to bytes or failed to be decoded back or decoded to the chars different from the original
   private static TextRange nextUnmappable(@NotNull CharBuffer in,
                                           int position,
                                           @NotNull Ref<ByteBuffer> outRef,
@@ -289,10 +272,10 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     back.rewind();
     int len = StringUtil.commonPrefixLength(in, back);
     if (len == textLength) return null;
-    return TextRange.from(len, 1);  // lets report only the first diff char
+    return TextRange.from(len, 1);  // let's report only the first diff char
   }
 
-  private static class ReloadInAnotherEncodingFix extends ChangeEncodingFix {
+  private static final class ReloadInAnotherEncodingFix extends ChangeEncodingFix {
     ReloadInAnotherEncodingFix(@NotNull PsiFile file) {
       super(file);
     }
@@ -319,6 +302,11 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       super(file);
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     @NotNull
     @Override
     public String getText() {
@@ -340,18 +328,20 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       VirtualFile virtualFile = file.getVirtualFile();
 
       DataContext dataContext = createDataContext(editor, editor == null ? null : editor.getComponent(), virtualFile, project);
-      ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext);
+      ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext, null);
       if (popup != null) {
         popup.showInBestPositionFor(dataContext);
       }
     }
 
     @NotNull
-    static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
-      DataContext parent = DataManager.getInstance().getDataContext(component);
-      DataContext context = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent);
-      DataContext projectContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), project, context);
-      return SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
+    static DataContext createDataContext(@Nullable Editor editor, Component component, VirtualFile selectedFile, @NotNull Project project) {
+      return SimpleDataContext.builder()
+        .setParent(DataManager.getInstance().getDataContext(component))
+        .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor == null ? null : editor.getComponent())
+        .add(CommonDataKeys.PROJECT, project)
+        .add(CommonDataKeys.VIRTUAL_FILE, selectedFile)
+        .build();
     }
   }
 }

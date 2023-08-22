@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -15,21 +16,23 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  private final static int CURR_VERSION = 3;
+  private static final int CURR_VERSION = 8;
 
   public static final String SCHEME_NAME_OTHER = "Other";
-  public final static String[] KNOWN_NAMES = {
+  public static final String[] KNOWN_NAMES = {
     "Default",
+    "Darcula Contrast",
     "Darcula",
     "Obsidian",
     "Visual Studio",
     "Solarized",
     "Wombat",
-    "Monkai",
+    "Monokai",
     "XCode",
     "Sublime",
     "Oblivion",
@@ -42,17 +45,28 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "IdeaLight",
     "High contrast",
     "ReSharper",
-    "Rider"
+    "Rider",
+    "IntelliJ Light",
+    "Light",
+    "Dark",
+    SCHEME_NAME_OTHER
   };
 
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.editor.color.schemes", CURR_VERSION);
+  private static final EventId2<String, Boolean> COLOR_SCHEME =
+    GROUP.registerEvent(
+      "enabled.color.scheme",
+      EventFields.String("scheme", List.of(KNOWN_NAMES)),
+      EventFields.Boolean("is_dark")
+    );
+
   @Override
-  public int getVersion() {
-    return CURR_VERSION;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     EditorColorsScheme currentScheme = EditorColorsManager.getInstance().getGlobalScheme();
     Set<MetricEvent> usages = new HashSet<>();
     if (currentScheme instanceof AbstractColorsScheme) {
@@ -63,27 +77,19 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
           schemeName = original.getName();
         }
       }
-      final FeatureUsageData data = new FeatureUsageData().
-        addData("scheme", getKnownSchemeName(schemeName)).
-        addData("is_dark", ColorUtil.isDark(currentScheme.getDefaultBackground()));
-      usages.add(MetricEventFactoryKt.newMetric("enabled.color.scheme", data));
+      String scheme = getKnownSchemeName(schemeName);
+      boolean isDark = ColorUtil.isDark(currentScheme.getDefaultBackground());
+      usages.add(COLOR_SCHEME.metric(scheme, isDark));
     }
     return usages;
   }
 
-  @NotNull
-  private static String getKnownSchemeName(@NonNls @NotNull String schemeName) {
+  private static @NotNull String getKnownSchemeName(@NonNls @NotNull String schemeName) {
     for (@NonNls String knownName : KNOWN_NAMES) {
       if (StringUtil.toUpperCase(schemeName).contains(StringUtil.toUpperCase(knownName))) {
         return knownName;
       }
     }
     return SCHEME_NAME_OTHER;
-  }
-
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "ui.editor.color.schemes";
   }
 }

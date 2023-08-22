@@ -5,15 +5,11 @@ PyFile:ClassDecorators.py
         PsiElement(Py:AT)('@')
         PyReferenceExpression: foo
           PsiElement(Py:IDENTIFIER)('foo')
-        PyArgumentList
-          <empty list>
       PsiWhiteSpace('\n')
       PyDecorator: @bar
         PsiElement(Py:AT)('@')
         PyReferenceExpression: bar
           PsiElement(Py:IDENTIFIER)('bar')
-        PyArgumentList
-          <empty list>
     PsiWhiteSpace('\n')
     PsiElement(Py:CLASS_KEYWORD)('class')
     PsiWhiteSpace(' ')

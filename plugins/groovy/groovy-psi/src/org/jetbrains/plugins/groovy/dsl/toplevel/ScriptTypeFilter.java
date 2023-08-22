@@ -9,9 +9,6 @@ import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-/**
- * @author peter
- */
 public class ScriptTypeFilter implements ContextFilter {
   private final String myScriptType;
 

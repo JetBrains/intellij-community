@@ -2,6 +2,6 @@
 package com.intellij.openapi.vcs.changes.ignore
 
 internal object IgnoreConfigurationProperty {
-  const val MANAGE_IGNORE_FILES_PROPERTY = "MANAGE_IGNORE_FILES"
-  const val ASKED_MANAGE_IGNORE_FILES_PROPERTY = "ASKED_MANAGE_IGNORE_FILES"
+  const val MANAGE_IGNORE_FILES_PROPERTY = "MANAGE_IGNORE_FILES" // NON-NLS
+  const val ASKED_MANAGE_IGNORE_FILES_PROPERTY = "ASKED_MANAGE_IGNORE_FILES" // NON-NLS
 }

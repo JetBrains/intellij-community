@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
@@ -10,8 +9,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -23,12 +20,16 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -36,28 +37,24 @@ import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
-import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY;
-import static com.intellij.util.concurrency.EdtExecutorService.getScheduledExecutorInstance;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public final class ScopeViewPane extends AbstractProjectViewPane {
@@ -66,14 +63,14 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private final IdeView myIdeView = new IdeViewForProjectViewPane(() -> this);
   private final NamedScopesHolder myDependencyValidationManager;
   private final NamedScopesHolder myNamedScopeManager;
-  private ScopeViewTreeModel myTreeModel;
-  private Comparator<? super NodeDescriptor<?>> myComparator;
-  private LinkedHashMap<String, NamedScopeFilter> myFilters;
+  private final @NotNull AtomicReference<ScopeViewTreeModel> myTreeModel = new AtomicReference<>();
+  private final AtomicReference<Map<String, NamedScopeFilter>> myFilters = new AtomicReference<>();
   private JScrollPane myScrollPane;
 
   private static Project checkApplicability(@NotNull Project project) {
-    if (PlatformUtils.isPyCharmEducational()) {
-      throw ExtensionNotApplicableException.INSTANCE;
+    // TODO: make a proper extension point here
+    if (PlatformUtils.isPyCharmEducational() || PlatformUtils.isRider()) {
+      throw ExtensionNotApplicableException.create();
     }
     return project;
   }
@@ -83,34 +80,43 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
     myDependencyValidationManager = DependencyValidationManager.getInstance(project);
     myNamedScopeManager = NamedScopeManager.getInstance(project);
-    myFilters = map(myDependencyValidationManager, myNamedScopeManager);
+    myFilters.set(map(myDependencyValidationManager, myNamedScopeManager));
 
     NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
       private final AtomicLong counter = new AtomicLong();
 
       @Override
       public void scopesChanged() {
-        if (myProject.isDisposed()) return;
+        if (myProject.isDisposed()) {
+          return;
+        }
+
         long count = counter.incrementAndGet();
-        getScheduledExecutorInstance().schedule(() -> {
+        EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
           // is this request still actual after 10 ms?
-          if (count == counter.get()) {
-            ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
-            if (view == null) return;
-            myFilters = map(myDependencyValidationManager, myNamedScopeManager);
-            String currentId = view.getCurrentViewId();
-            String currentSubId = getSubId();
-            // update changes subIds if needed
-            view.removeProjectPane(ScopeViewPane.this);
-            view.addProjectPane(ScopeViewPane.this);
-            if (currentId == null) return;
-            if (currentId.equals(getId())) {
-              // try to restore selected subId
-              view.changeView(currentId, currentSubId);
-            }
-            else {
-              view.changeView(currentId);
-            }
+          if (count != counter.get()) {
+            return;
+          }
+
+          ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
+          if (view == null) {
+            return;
+          }
+          myFilters.set(map(myDependencyValidationManager, myNamedScopeManager));
+          String currentId = view.getCurrentViewId();
+          String currentSubId = getSubId();
+          // update changes subIds if needed
+          view.removeProjectPane(ScopeViewPane.this);
+          view.addProjectPane(ScopeViewPane.this);
+          if (currentId == null) {
+            return;
+          }
+          if (currentId.equals(getId())) {
+            // try to restore selected subId
+            view.changeView(currentId, currentSubId);
+          }
+          else {
+            view.changeView(currentId);
           }
         }, 10, MILLISECONDS);
       }
@@ -118,7 +124,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
     myDependencyValidationManager.addScopeListener(scopeListener, this);
     myNamedScopeManager.addScopeListener(scopeListener, this);
-    installComparator();
   }
 
   @Override
@@ -153,40 +158,39 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return AllIcons.Ide.LocalScope;
   }
 
+  @Override
+  public boolean isFileNestingEnabled() {
+    return true;
+  }
+
   @NotNull
   @Override
   public JComponent createComponent() {
-    if (myTreeModel == null) {
+    ScopeViewTreeModel myTreeModel;
+    if (this.myTreeModel.get() == null) {
       myTreeModel = new ScopeViewTreeModel(myProject, new ProjectViewSettings.Delegate(myProject, ID));
       myTreeModel.setStructureProvider(CompoundTreeStructureProvider.get(myProject));
       myTreeModel.setNodeDecorator(CompoundProjectViewNodeDecorator.get(myProject));
       myTreeModel.setFilter(getFilter(getSubId()));
-      if (myComparator != null) {
-        myTreeModel.setComparator(myComparator);
-        myComparator = null; // lazy #installComparator
-      }
+      myTreeModel.setComparator(createComparator());
+      this.myTreeModel.set(myTreeModel);
     }
+    else {
+      myTreeModel = this.myTreeModel.get();
+    }
+
     if (myTree == null) {
       myTree = new ProjectViewTree(new AsyncTreeModel(myTreeModel, this));
       myTree.setName("ScopeViewTree");
       myTree.setRootVisible(false);
       myTree.setShowsRootHandles(true);
       myTree.addTreeSelectionListener(new RestoreSelectionListener());
-      myTree.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent event) {
-          if (event.isConsumed()) return;
-          if (KeyEvent.VK_ENTER == event.getKeyCode()) {
-            OpenSourceUtil.openSourcesFrom(ScopeViewPane.this, ScreenReader.isActive());
-            event.consume();
-          }
-        }
-      });
       TreeUtil.installActions(myTree);
       ToolTipManager.sharedInstance().registerComponent(myTree);
       EditSourceOnDoubleClickHandler.install(myTree);
+      EditSourceOnEnterKeyHandler.install(myTree);
       CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
-      new TreeSpeedSearch(myTree);
+      TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
       enableDnD();
       myTree.getEmptyText()
         .setText(IdeBundle.message("scope.view.empty.text"))
@@ -196,24 +200,30 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
         });
     }
     if (myScrollPane == null) {
-      myScrollPane = createScrollPane(myTree, true);
+      myScrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
       ErrorStripePainter painter = new ErrorStripePainter(true);
-      Disposer.register(this, new TreeUpdater<ErrorStripePainter>(painter, myScrollPane, myTree) {
+      Disposer.register(this, new TreeUpdater<>(painter, myScrollPane, myTree) {
         @Override
         protected void update(ErrorStripePainter painter, int index, Object object) {
           super.update(painter, index, myTreeModel.getStripe(object, myTree.isExpanded(index)));
         }
       });
+    } else {
+      SwingUtilities.updateComponentTreeUI(myScrollPane);
     }
     return myScrollPane;
   }
 
-  @NotNull
   @Override
-  public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
-    if (myTreeModel == null) return ActionCallback.REJECTED; // not initialized yet
+  public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
+    var model = myTreeModel.get();
+    if (model == null) {
+      // not initialized yet
+      return ActionCallback.REJECTED;
+    }
+
     saveExpandedPaths();
-    myTreeModel.invalidate(null);
+    model.invalidate(null);
     restoreExpandedPaths(); // TODO:check
     return ActionCallback.DONE;
   }
@@ -226,33 +236,50 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   public void select(Object object, VirtualFile file, boolean requestFocus) {
-    if (myTreeModel == null) return; // not initialized yet
-    PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
-    NamedScopeFilter current = myTreeModel.getFilter();
-    if (select(element, file, requestFocus, current)) return;
-    for (NamedScopeFilter filter : getFilters()) {
-      if (current != filter && select(element, file, requestFocus, filter)) return;
+    if (myTreeModel.get() == null) {
+      // not initialized yet
+      return;
     }
+    if (file == null) {
+      LOG.warn(new IllegalArgumentException("ScopeViewPane.select: file==null, object=" + object));
+      return; // Filters don't accept null files anyway, so just do nothing.
+    }
+
+    PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
+    SmartPsiElementPointer<PsiElement> pointer = null;
+    if (element != null) {
+      if (element.isValid()) {
+        pointer = SmartPointerManager.createPointer(element);
+      }
+      else {
+        LOG.warn("ScopeViewPane.select(object=" + object + ",file=" + file + ",requestFocus=" + requestFocus + "): element invalidated");
+      }
+    }
+    myProject.getService(SelectInProjectViewImpl.class).selectInScopeViewPane(this, pointer, file, requestFocus);
   }
 
   private void selectScopeView(String subId) {
     ProjectView view = myProject.isDisposed() ? null : ProjectView.getInstance(myProject);
-    if (view != null) view.changeView(getId(), subId);
+    if (view != null) {
+      view.changeView(getId(), subId);
+    }
   }
 
-  private boolean select(PsiElement element, VirtualFile file, boolean requestFocus, NamedScopeFilter filter) {
-    if (filter == null || !filter.accept(file)) return false;
+  @ApiStatus.Internal
+  public void select(@Nullable SmartPsiElementPointer<PsiElement> pointer, VirtualFile file, boolean requestFocus, VirtualFileFilter filter) {
     String subId = filter.toString();
     if (!Objects.equals(subId, getSubId())) {
-      if (!requestFocus) return true;
+      if (!requestFocus) return;
       selectScopeView(subId);
     }
-    LOG.debug("select element: ", element, " in file: ", file);
-    TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
-    if (visitor == null) return true;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("select element: ", (pointer == null ? null : pointer.getElement()), " in file: ", file);
+    }
+    TreeVisitor visitor = AbstractProjectViewPane.createVisitorByPointer(pointer, file);
+    if (visitor == null) return;
     JTree tree = myTree;
-    TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
-      if (selectPath(tree, path) || element == null || Registry.is("async.project.view.support.extra.select.disabled")) {
+    myTreeModel.get().getUpdater().updateImmediately(() -> TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
+      if (selectPath(tree, path) || pointer == null || Registry.is("async.project.view.support.extra.select.disabled")) {
         promise.setResult(null);
       }
       else {
@@ -263,12 +290,13 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
           promise.setResult(null);
         });
       }
-    }));
-    return true;
+    })));
   }
 
   private static boolean selectPath(@NotNull JTree tree, TreePath path) {
-    if (path == null) return false;
+    if (path == null) {
+      return false;
+    }
     tree.expandPath(path); // request to expand found path
     TreeUtil.selectPath(tree, path); // select and scroll to center
     return true;
@@ -291,9 +319,12 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
+  @CalledInAny
   public String @NotNull [] getSubIds() {
-    LinkedHashMap<String, NamedScopeFilter> map = myFilters;
-    if (map == null || map.isEmpty()) return EMPTY_STRING_ARRAY;
+    Map<String, NamedScopeFilter> map = myFilters.get();
+    if (map == null || map.isEmpty()) {
+      return EMPTY_STRING_ARRAY;
+    }
     return ArrayUtilRt.toStringArray(map.keySet());
   }
 
@@ -301,7 +332,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   public String getPresentableSubIdName(@NotNull String subId) {
     NamedScopeFilter filter = getFilter(subId);
-    return filter != null ? filter.getScope().getName() : getTitle();
+    return filter == null ? getTitle() : filter.getScope().getPresentableName();
   }
 
   @NotNull
@@ -311,35 +342,37 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return filter != null ? filter.getScope().getIcon() : getIcon();
   }
 
-  @Override
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
-    if (myTreeModel != null) {
-      myTreeModel.setComparator(comparator);
-    }
-    else {
-      myComparator = comparator; // not initialized yet
-    }
-  }
-
   @Nullable
   @Override
   public Object getValueFromNode(@Nullable Object node) {
-    if (myTreeModel == null) return null; // not initialized yet
-    return myTreeModel.getContent(node);
+    var model = myTreeModel.get();
+    if (model == null) {
+      // not initialized yet
+      return null;
+    }
+    return model.getContent(node);
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
+  public Object getData(@NotNull String dataId) {
     Object data = super.getData(dataId);
-    if (data != null) return data;
+    if (data != null) {
+      return data;
+    }
     //TODO:myViewPanel == null ? null : myViewPanel.getData(dataId);
-    if (LangDataKeys.IDE_VIEW.is(dataId)) return myIdeView;
+    if (LangDataKeys.IDE_VIEW.is(dataId)) {
+      return myIdeView;
+    }
     return null;
   }
 
   public void updateSelectedScope() {
-    if (myTreeModel == null) return; // not initialized yet
-    myTreeModel.setFilter(getFilter(getSubId()));
+    // not initialized yet
+    var model = myTreeModel.get();
+    if (model == null) {
+      return;
+    }
+    model.setFilter(getFilter(getSubId()));
   }
 
   @Nullable
@@ -348,25 +381,38 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     return filter == null ? null : filter.getScope();
   }
 
+  @CalledInAny
   @NotNull
-  Iterable<NamedScopeFilter> getFilters() {
-    return myFilters.values();
+  @ApiStatus.Internal
+  public Iterable<NamedScopeFilter> getFilters() {
+    Map<String, NamedScopeFilter> map = myFilters.get();
+    return map == null ? Collections.emptyList() : map.values();
   }
 
+  @CalledInAny
+  @Nullable
+  @ApiStatus.Internal
+  public NamedScopeFilter getCurrentFilter() {
+    var model = myTreeModel.get();
+    return model == null ? null : model.getFilter();
+  }
+
+  @CalledInAny
   @Nullable
   NamedScopeFilter getFilter(@Nullable String subId) {
-    LinkedHashMap<String, NamedScopeFilter> map = myFilters;
+    Map<String, NamedScopeFilter> map = myFilters.get();
     return map == null || subId == null ? null : map.get(subId);
   }
 
-  @NotNull
-  private static LinkedHashMap<String, NamedScopeFilter> map(NamedScopesHolder... holders) {
+  private static @NotNull Map<String, NamedScopeFilter> map(NamedScopesHolder... holders) {
     LinkedHashMap<String, NamedScopeFilter> map = new LinkedHashMap<>();
     for (NamedScopeFilter filter : NamedScopeFilter.list(holders)) {
       NamedScopeFilter old = map.put(filter.toString(), filter);
-      if (old != null) LOG.warn("DUPLICATED: " + filter);
+      if (old != null) {
+        LOG.warn("DUPLICATED: " + filter);
+      }
     }
-    return map;
+    return Collections.unmodifiableMap(map);
   }
 
   @Override

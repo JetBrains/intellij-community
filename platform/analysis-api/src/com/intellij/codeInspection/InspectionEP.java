@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.AbstractBundle;
@@ -35,18 +35,31 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public static final ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = new ExtensionPointName<>("com.intellij.globalInspection");
 
   /**
-   * Usually generated automatically from FQN.
-   * Must be unique among all inspections.
+   * The short name (or rather ID) of the inspection must be unique among all inspections.
+   * It is usually generated automatically from the fully qualified class name.
    * <p>
-   * Short name is used in two cases: {@code \inspectionDescriptions\<short_name>.html} resource may contain short inspection
-   * description to be shown in "Inspect Code..." dialog and also provide some file name convention when using offline
-   * inspection or export to HTML function.
+   * It is used in at least these places:
+   * <ul>
+   *   <li>The inspection profiles in {@code .idea/inspectionProfile} identify the
+   *       inspections by their short name.
+   *   <li>The resource {@code /inspectionDescriptions/<short_name>.html} usually contains
+   *       a short inspection description to be shown in the "Inspect Code&#x2026;" dialog.
+   *   <li>When running the inspections in offline mode or when exporting the inspection results
+   *       to an HTML report, the short name is used in the filename.
+   * </ul>
    */
   @Attribute("shortName")
   public String shortName;
 
-  @NonNls
-  public @NotNull String getShortName() {
+  /**
+   * Shows that the inspection is only applicable in certain project types, e.g. Android.
+   *
+   * @see com.intellij.openapi.project.ProjectTypeService
+   */
+  @Attribute("projectType")
+  public String projectType;
+
+  public @NonNls @NotNull String getShortName() {
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }
@@ -74,7 +87,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
 
   /**
    * Message bundle, e.g. {@code "messages.InspectionsBundle"}.
-   * If unspecified, plugin's {@code <resource-bundle>} is used.
+   * If unspecified, the plugin's {@code <resource-bundle>} is used.
    *
    * @see #key
    */
@@ -82,7 +95,8 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String bundle;
 
   /**
-   * Non-localized display name used in UI (Settings|Editor|Inspections and "Inspection Results" tool window). Use {@link #key} for I18N.
+   * Non-localized display name used in the UI (Settings|Editor|Inspections and "Inspection Results" tool window).
+   * Use {@link #key} for i18n.
    */
   @Attribute("displayName") public @Nls(capitalization = Nls.Capitalization.Sentence) String displayName;
 
@@ -98,6 +112,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
    * If unspecified, will use {@link #bundle}, then plugin's {@code <resource-bundle>} as fallback.
    *
    * @see #groupKey
+   * @see #groupPathKey
    */
   @Attribute("groupBundle")
   public String groupBundle;
@@ -108,9 +123,16 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("groupName") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupDisplayName;
 
   /**
-   * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
+   * Comma-delimited list of parent group names (excluding {@code groupName}) used in the UI (Settings|Editor|Inspections),
+   * e.g. {@code "Java,Java language level migration aids"}.
    */
   @Attribute("groupPath") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupPath;
+
+  /**
+   * Message key for {@link #groupPath}.
+   * @see #groupBundle
+   */
+  @Attribute("groupPathKey") public String groupPathKey;
 
   protected InspectionEP() {
   }
@@ -124,10 +146,17 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String @Nullable [] getGroupPath() {
     String name = getGroupDisplayName();
     if (name == null) return null;
-    if (groupPath == null) {
+    String path = null;
+    if (groupPath != null) {
+      path = groupPath;
+    }
+    else if (groupPathKey != null) {
+      path = getLocalizedString(groupBundle, groupPathKey);
+    }
+    if (path == null) {
       return new String[]{name.isEmpty() ? InspectionProfileEntry.getGeneralGroupName() : name};
     }
-    return ArrayUtil.append(groupPath.split(","), name);
+    return ArrayUtil.append(path.split(","), name);
   }
 
   @Attribute("enabledByDefault")
@@ -174,16 +203,18 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("hasStaticDescription")
   public boolean hasStaticDescription;
 
-  private @Nullable String getLocalizedString(@Nullable String bundleName, String key) {
+  private @Nullable @Nls String getLocalizedString(@Nullable String bundleName, String key) {
+    PluginDescriptor descriptor = getPluginDescriptor();
     String baseName = bundleName != null ? bundleName :
-                      bundle == null ? getPluginDescriptor().getResourceBundleBaseName() : bundle;
+                      bundle != null ? bundle :
+                      descriptor.getResourceBundleBaseName();
     if (baseName == null || key == null) {
       if (bundleName != null) {
         LOG.warn(implementationClass);
       }
       return null;
     }
-    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getPluginDescriptor().getPluginClassLoader());
+    ResourceBundle resourceBundle = DynamicBundle.getResourceBundle(descriptor.getClassLoader(), baseName);
     return AbstractBundle.message(resourceBundle, key);
   }
 
@@ -216,10 +247,18 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String presentation;
 
   /**
-   * Do not show internal inspections if IDE internal mode is off.
+   * Internal inspections are only shown if the IDE is
+   * {@linkplain com.intellij.openapi.application.Application#isInternal() running in internal mode}.
    */
   @Attribute("isInternal")
   public boolean isInternal;
+
+  /**
+   * TextAttributesKey's external name.<br/>
+   * You can find some core predefined attributes in {@link com.intellij.openapi.editor.colors.CodeInsightColors}
+   */
+  @Attribute("editorAttributes")
+  public String editorAttributes;
 
   @Override
   public String toString() {
@@ -236,6 +275,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
            ", applyToDialects=" + applyToDialects +
            ", cleanupTool=" + cleanupTool +
            ", level='" + level + '\'' +
+           ", editorAttributes='" + editorAttributes + '\'' +
            ", hasStaticDescription=" + hasStaticDescription +
            ", presentation='" + presentation + '\'' +
            ", isInternal=" + isInternal +

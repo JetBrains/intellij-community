@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -20,9 +20,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author peter
- */
 class MarkerCache {
   static final Comparator<SelfElementInfo> INFO_COMPARATOR = (info1, info2) -> {
     int o1 = info1.getPsiStartOffset();
@@ -39,11 +36,11 @@ class MarkerCache {
   private final SmartPointerTracker myPointers;
   private UpdatedRanges myUpdatedRanges;
 
-  MarkerCache(SmartPointerTracker pointers) {
+  MarkerCache(@NotNull SmartPointerTracker pointers) {
     myPointers = pointers;
   }
 
-  private UpdatedRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
+  private @NotNull UpdatedRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
     int eventCount = events.size();
     assert eventCount > 0;
 
@@ -65,7 +62,7 @@ class MarkerCache {
     return answer;
   }
 
-  private static ManualRangeMarker @NotNull [] createMarkers(List<? extends SelfElementInfo> infos) {
+  private static ManualRangeMarker @NotNull [] createMarkers(@NotNull List<? extends SelfElementInfo> infos) {
     ManualRangeMarker[] markers = new ManualRangeMarker[infos.size()];
     int i = 0;
     while (i < markers.length) {
@@ -84,17 +81,17 @@ class MarkerCache {
     return markers;
   }
 
-  private static boolean rangeEquals(SelfElementInfo info, int start, int end, boolean greedy) {
+  private static boolean rangeEquals(@NotNull SelfElementInfo info, int start, int end, boolean greedy) {
     return start == info.getPsiStartOffset() && end == info.getPsiEndOffset() && greedy == info.isGreedy();
   }
 
-  private static UpdatedRanges applyEvents(@NotNull List<? extends DocumentEvent> events, final UpdatedRanges struct) {
+  private static @NotNull UpdatedRanges applyEvents(@NotNull List<? extends DocumentEvent> events, @NotNull UpdatedRanges struct) {
     FrozenDocument frozen = struct.myResultDocument;
     ManualRangeMarker[] resultMarkers = struct.myMarkers.clone();
     for (DocumentEvent event : events) {
-      final FrozenDocument before = frozen;
+      FrozenDocument before = frozen;
       frozen = frozen.applyEvent(event, 0);
-      final DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
+      DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
                                                             event.getOldTimeStamp(), event.isWholeTextReplaced(),
                                                             ((DocumentEventImpl)event).getInitialStartOffset(),
                                                             ((DocumentEventImpl)event).getInitialOldLength(),
@@ -143,22 +140,19 @@ class MarkerCache {
     return updated == null ? null : new UnfairTextRange(updated.getStartOffset(), updated.getEndOffset());
   }
 
-  @Nullable
-  static Segment getUpdatedRange(@NotNull PsiFile containingFile,
-                                 @NotNull Segment segment,
-                                 boolean isSegmentGreedy,
-                                 @NotNull FrozenDocument frozen,
-                                 @NotNull List<? extends DocumentEvent> events) {
+  static @Nullable Segment getUpdatedRange(@NotNull PsiFile containingFile,
+                                           @NotNull Segment segment,
+                                           boolean isSegmentGreedy,
+                                           @NotNull FrozenDocument frozen,
+                                           @NotNull List<? extends DocumentEvent> events) {
     SelfElementInfo info = new SelfElementInfo(ProperTextRange.create(segment), new Identikit() {
-      @Nullable
       @Override
-      public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
+      public @Nullable PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
         return null;
       }
 
-      @NotNull
       @Override
-      public Language getFileLanguage() {
+      public @NotNull Language getFileLanguage() {
         throw new IllegalStateException();
       }
 

@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -11,9 +13,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,17 +25,11 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class KeymapUtil {
+import static java.awt.event.InputEvent.ALT_DOWN_MASK;
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
-  @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";
-  @NonNls private static final String BREAK_KEY_TEXT = "Break";
-  @NonNls private static final String SHIFT = "shift";
-  @NonNls private static final String CONTROL = "control";
-  @NonNls private static final String CTRL = "ctrl";
-  @NonNls private static final String META = "meta";
-  @NonNls private static final String ALT = "alt";
-  @NonNls private static final String ALT_GRAPH = "altGraph";
-  @NonNls private static final String DOUBLE_CLICK = "doubleClick";
+public final class KeymapUtil {
+  private static final KeymapTextContext defaultKeymapTextContext = new KeymapTextContext();
 
   private static final Set<Integer> ourTooltipKeys = new HashSet<>();
   private static final Set<Integer> ourOtherTooltipKeys = new HashSet<>();
@@ -44,154 +38,42 @@ public class KeymapUtil {
   private KeymapUtil() {
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortcutText(@NotNull @NonNls String actionId) {
+    return defaultKeymapTextContext.getShortcutText(actionId);
+  }
+
+  @NlsSafe
+  @Nullable
+  public static String getShortcutTextOrNull(@NotNull @NonNls String actionId) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
-    if (shortcut == null) return "<no shortcut>";
+    if (shortcut == null) return null;
     return getShortcutText(shortcut);
   }
 
   @NotNull
-  public static String getShortcutText(@NotNull Shortcut shortcut) {
-    String s = "";
-
-    if (shortcut instanceof KeyboardShortcut) {
-      KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-
-      String acceleratorText = getKeystrokeText(keyboardShortcut.getFirstKeyStroke());
-      if (!acceleratorText.isEmpty()) {
-        s = acceleratorText;
-      }
-
-      acceleratorText = getKeystrokeText(keyboardShortcut.getSecondKeyStroke());
-      if (!acceleratorText.isEmpty()) {
-        s += ", " + acceleratorText;
-      }
-    }
-    else if (shortcut instanceof MouseShortcut) {
-      s = getMouseShortcutText((MouseShortcut)shortcut);
-    }
-    else if (shortcut instanceof KeyboardModifierGestureShortcut) {
-      final KeyboardModifierGestureShortcut gestureShortcut = (KeyboardModifierGestureShortcut)shortcut;
-      s = gestureShortcut.getType() == KeyboardGestureAction.ModifierType.dblClick ? "Press, release and hold " : "Hold ";
-      s += getKeystrokeText(gestureShortcut.getStroke());
-    }
-    else {
-      throw new IllegalArgumentException("unknown shortcut class: " + shortcut.getClass().getCanonicalName());
-    }
-    return s;
+  public static @NlsSafe String getShortcutText(@NotNull Shortcut shortcut) {
+    return defaultKeymapTextContext.getShortcutText(shortcut);
   }
 
   @NotNull
   public static String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
-    if (shortcut instanceof PressureShortcut) return shortcut.toString();
-    return getMouseShortcutText(shortcut.getButton(), shortcut.getModifiers(), shortcut.getClickCount());
-  }
-
-  /**
-   * @param button        target mouse button
-   * @param modifiers     modifiers used within the target click
-   * @param clickCount    target clicks count
-   * @return string representation of passed mouse shortcut.
-   */
-  @NotNull
-  private static String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
-    String resource;
-    if (button == MouseShortcut.BUTTON_WHEEL_UP) {
-      resource = "mouse.wheel.rotate.up.shortcut.text";
-    }
-    else if (button == MouseShortcut.BUTTON_WHEEL_DOWN) {
-      resource = "mouse.wheel.rotate.down.shortcut.text";
-    }
-    else if (clickCount < 2) {
-      resource = "mouse.click.shortcut.text";
-    }
-    else if (clickCount < 3) {
-      resource = "mouse.double.click.shortcut.text";
-    }
-    else {
-      throw new IllegalStateException("unknown clickCount: " + clickCount);
-    }
-    return KeyMapBundle.message(resource, getModifiersText(mapNewModifiers(modifiers)), button);
-  }
-
-  @JdkConstants.InputEventMask
-  private static int mapNewModifiers(@JdkConstants.InputEventMask int modifiers) {
-    if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
-      modifiers |= InputEvent.SHIFT_MASK;
-    }
-    if ((modifiers & InputEvent.ALT_DOWN_MASK) != 0) {
-      modifiers |= InputEvent.ALT_MASK;
-    }
-    if ((modifiers & InputEvent.ALT_GRAPH_DOWN_MASK) != 0) {
-      modifiers |= InputEvent.ALT_GRAPH_MASK;
-    }
-    if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0) {
-      modifiers |= InputEvent.CTRL_MASK;
-    }
-    if ((modifiers & InputEvent.META_DOWN_MASK) != 0) {
-      modifiers |= InputEvent.META_MASK;
-    }
-
-    return modifiers;
+    return defaultKeymapTextContext.getMouseShortcutText(shortcut);
   }
 
   @NotNull
-  public static String getKeystrokeText(KeyStroke accelerator) {
-    if (accelerator == null) return "";
-    if (SystemInfo.isMac) {
-      return MacKeymapUtil.getKeyStrokeText(accelerator);
-    }
-    String acceleratorText = "";
-    int modifiers = accelerator.getModifiers();
-    if (modifiers > 0) {
-      acceleratorText = getModifiersText(modifiers);
-    }
-
-    acceleratorText += getKeyText(accelerator.getKeyCode());
-    return acceleratorText.trim();
+  public static @NlsSafe String getKeystrokeText(KeyStroke accelerator) {
+    return defaultKeymapTextContext.getKeystrokeText(accelerator);
   }
 
   @NotNull
   public static String getKeyText(int code) {
-    switch (code) {
-      case KeyEvent.VK_BACK_QUOTE:     return "`";
-      case KeyEvent.VK_SEPARATOR:      return ",";
-      case KeyEvent.VK_DECIMAL:        return ".";
-      case KeyEvent.VK_SLASH:          return "/";
-      case KeyEvent.VK_BACK_SLASH:     return "\\";
-      case KeyEvent.VK_PERIOD:         return ".";
-      case KeyEvent.VK_SEMICOLON:      return ";";
-      case KeyEvent.VK_CLOSE_BRACKET:  return "]";
-      case KeyEvent.VK_OPEN_BRACKET:   return "[";
-      case KeyEvent.VK_EQUALS:         return "=";
-    }
-
-    String result = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
-    // [vova] this is dirty fix for bug #35092
-    return CANCEL_KEY_TEXT.equals(result) ? BREAK_KEY_TEXT : result;
+    return defaultKeymapTextContext.getKeyText(code);
   }
 
-  @NotNull
-  private static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
-    if (SystemInfo.isMac) {
-      //try {
-      //  Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
-      //  Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT_METHOD, int.class, boolean.class);
-      //  return (String)getModifiers.invoke(appleLaf, modifiers, Boolean.FALSE);
-      //}
-      //catch (Exception e) {
-      //  if (SystemInfo.isMacOSLeopard) {
-      //    return getKeyModifiersTextForMacOSLeopard(modifiers);
-      //  }
-      //
-      //  // OK do nothing here.
-      //}
-      return MacKeymapUtil.getModifiersText(modifiers);
-    }
-
-    final String keyModifiersText = KeyEvent.getKeyModifiersText(modifiers);
-    return keyModifiersText.isEmpty() ? keyModifiersText : keyModifiersText + "+";
+  public static boolean isSimplifiedMacShortcuts() {
+    return defaultKeymapTextContext.isSimplifiedMacShortcuts();
   }
 
   @NotNull
@@ -205,7 +87,7 @@ public class KeymapUtil {
 
   /**
    * @param actionId action to find the shortcut for
-   * @return first keyboard shortcut that activates given action in active keymap; null if not found 
+   * @return first keyboard shortcut that activates given action in active keymap; null if not found
    */
   @Nullable
   public static Shortcut getPrimaryShortcut(@Nullable @NonNls String actionId) {
@@ -215,9 +97,19 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull @NonNls String actionId) {
+  public static @NlsSafe String getFirstKeyboardShortcutText(@NotNull @NonNls String actionId) {
     for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut) {
+        return getShortcutText(shortcut);
+      }
+    }
+    return "";
+  }
+
+  @NotNull
+  public static @NlsSafe String getFirstMouseShortcutText(@NotNull @NonNls String actionId) {
+    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut instanceof MouseShortcut) {
         return getShortcutText(shortcut);
       }
     }
@@ -234,26 +126,26 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull AnAction action) {
+  public static @NlsSafe String getFirstKeyboardShortcutText(@NotNull AnAction action) {
     return getFirstKeyboardShortcutText(action.getShortcutSet());
   }
 
   @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull ShortcutSet set) {
+  public static @NlsSafe String getFirstKeyboardShortcutText(@NotNull ShortcutSet set) {
     Shortcut[] shortcuts = set.getShortcuts();
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut == null ? "" : getShortcutText(shortcut);
   }
 
   @NotNull
-  public static String getPreferredShortcutText(Shortcut @NotNull [] shortcuts) {
+  public static @NlsSafe String getPreferredShortcutText(Shortcut @NotNull [] shortcuts) {
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut != null ? getShortcutText(shortcut) :
            shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";
   }
 
   @NotNull
-  public static String getShortcutsText(Shortcut @NotNull [] shortcuts) {
+  public static @NlsSafe String getShortcutsText(Shortcut @NotNull [] shortcuts) {
     if (shortcuts.length == 0) {
       return "";
     }
@@ -269,46 +161,7 @@ public class KeymapUtil {
    */
   @NotNull
   public static MouseShortcut parseMouseShortcut(@NotNull String keystrokeString) throws InvalidDataException {
-    if (keystrokeString.startsWith("Force touch")) {
-      return new PressureShortcut(2);
-    }
-
-    int button = -1;
-    int modifiers = 0;
-    int clickCount = 1;
-    for (StringTokenizer tokenizer = new StringTokenizer(keystrokeString); tokenizer.hasMoreTokens();) {
-      String token = tokenizer.nextToken();
-      if (SHIFT.equals(token)) {
-        modifiers |= InputEvent.SHIFT_DOWN_MASK;
-      }
-      else if (CONTROL.equals(token) || CTRL.equals(token)) {
-        modifiers |= InputEvent.CTRL_DOWN_MASK;
-      }
-      else if (META.equals(token)) {
-        modifiers |= InputEvent.META_DOWN_MASK;
-      }
-      else if (ALT.equals(token)) {
-        modifiers |= InputEvent.ALT_DOWN_MASK;
-      }
-      else if (ALT_GRAPH.equals(token)) {
-        modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
-      }
-      else if (token.startsWith("button") && token.length() > 6) {
-        try {
-          button = Integer.parseInt(token.substring(6));
-        }
-        catch (NumberFormatException e) {
-          throw new InvalidDataException("unparsable token: " + token);
-        }
-      }
-      else if (DOUBLE_CLICK.equals(token)) {
-        clickCount = 2;
-      }
-      else {
-        throw new InvalidDataException("unknown token: " + token);
-      }
-    }
-    return new MouseShortcut(button, modifiers, clickCount);
+    return defaultKeymapTextContext.parseMouseShortcut(keystrokeString);
   }
 
   /**
@@ -317,66 +170,7 @@ public class KeymapUtil {
    */
   @NotNull
   public static String getMouseShortcutString(@NotNull MouseShortcut shortcut) {
-    if (shortcut instanceof PressureShortcut) {
-      return "Force touch";
-    }
-
-    StringBuilder buffer = new StringBuilder();
-
-    // modifiers
-    int modifiers = shortcut.getModifiers();
-    if ((InputEvent.SHIFT_DOWN_MASK & modifiers) > 0) {
-      buffer.append(SHIFT);
-      buffer.append(' ');
-    }
-    if ((InputEvent.CTRL_DOWN_MASK & modifiers) > 0) {
-      buffer.append(CONTROL);
-      buffer.append(' ');
-    }
-    if ((InputEvent.META_DOWN_MASK & modifiers) > 0) {
-      buffer.append(META);
-      buffer.append(' ');
-    }
-    if ((InputEvent.ALT_DOWN_MASK & modifiers) > 0) {
-      buffer.append(ALT);
-      buffer.append(' ');
-    }
-    if ((InputEvent.ALT_GRAPH_DOWN_MASK & modifiers) > 0) {
-      buffer.append(ALT_GRAPH);
-      buffer.append(' ');
-    }
-
-    // button
-    buffer.append("button").append(shortcut.getButton()).append(' ');
-
-    if (shortcut.getClickCount() > 1) {
-      buffer.append(DOUBLE_CLICK);
-    }
-    return buffer.toString().trim(); // trim trailing space (if any)
-  }
-
-  @NotNull
-  public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
-    StringBuilder buf = new StringBuilder();
-    if ((modifiers & InputEvent.META_MASK) != 0) {
-      buf.append("\u2318");
-    }
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) {
-      buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
-    }
-    if ((modifiers & InputEvent.ALT_MASK) != 0) {
-      buf.append("\u2325");
-    }
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
-      buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
-    }
-    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
-      buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
-    }
-    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
-      buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-    }
-    return buf.toString();
+    return defaultKeymapTextContext.getMouseShortcutString(shortcut);
   }
 
   public static boolean isTooltipRequest(@NotNull KeyEvent keyEvent) {
@@ -387,7 +181,7 @@ public class KeymapUtil {
         public void afterValueChanged(@NotNull RegistryValue value) {
           updateTooltipRequestKey(value);
         }
-      }, Disposer.get("ui"));
+      }, ApplicationManager.getApplication());
 
       updateTooltipRequestKey(ourTooltipKeysProperty);
     }
@@ -444,8 +238,7 @@ public class KeymapUtil {
   @Nullable
   public static KeyStroke getKeyStroke(@NotNull final ShortcutSet shortcutSet) {
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut)) return null;
-    final KeyboardShortcut shortcut = (KeyboardShortcut)shortcuts[0];
+    if (shortcuts.length == 0 || !(shortcuts[0] instanceof KeyboardShortcut shortcut)) return null;
     if (shortcut.getSecondKeyStroke() != null) {
       return null;
     }
@@ -458,12 +251,11 @@ public class KeymapUtil {
     if (shortcuts.length == 0) {
       return Collections.emptySet();
     }
-    Set<KeyStroke> result = new SmartHashSet<>();
+    Set<KeyStroke> result = new HashSet<>();
     for (Shortcut shortcut : shortcuts) {
-      if (!(shortcut instanceof KeyboardShortcut)) {
+      if (!(shortcut instanceof KeyboardShortcut kbShortcut)) {
         continue;
       }
-      KeyboardShortcut kbShortcut = (KeyboardShortcut)shortcut;
       if (kbShortcut.getSecondKeyStroke() != null) {
         continue;
       }
@@ -473,13 +265,13 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static String createTooltipText(@NotNull String name, @NotNull @NonNls String actionId) {
+  public static @NlsContexts.Tooltip String createTooltipText(@NotNull @NlsContexts.Tooltip String name, @NotNull @NonNls String actionId) {
     String text = getFirstKeyboardShortcutText(actionId);
     return text.isEmpty() ? name : name + " (" + text + ")";
   }
 
   @NotNull
-  public static String createTooltipText(@Nullable String name, @NotNull AnAction action) {
+  public static @NlsSafe String createTooltipText(@Nullable String name, @NotNull AnAction action) {
     String toolTipText = name == null ? "" : name;
     while (StringUtil.endsWithChar(toolTipText, '.')) {
       toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
@@ -499,8 +291,7 @@ public class KeymapUtil {
                                                            @NotNull @NonNls String actionId) {
     final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
-      if (shortcut instanceof MouseShortcut) {
-        final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
+      if (shortcut instanceof MouseShortcut mouseShortcut) {
         if (mouseShortcut.getModifiers() == syntheticShortcut.getModifiers()) {
           return true;
         }
@@ -611,21 +402,34 @@ public class KeymapUtil {
   }
 
   /**
-   * Check if {@link AnActionEvent} was called with keyboard shortcut
-   * and if so return string presentation for this shortcut
-   * @param event called event
-   * @return string presentation of shortcut if {@code event} was called with shortcut. In other cases null is returned
-   * @deprecated unused method that is not needed anymore
+   * @deprecated use {@link #getShortcutsForMnemonicChar} or {@link #getShortcutsForMnemonicCode} instead
    */
-  @Nullable
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static String getEventCallerKeystrokeText(@NotNull AnActionEvent event) {
-    if (event.getInputEvent() instanceof KeyEvent) {
-      KeyEvent ke = (KeyEvent)event.getInputEvent();
-      return getKeystrokeText(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
-    }
+  @Nullable
+  public static CustomShortcutSet getMnemonicAsShortcut(int mnemonic) {
+    return getShortcutsForMnemonicCode(mnemonic);
+  }
 
+  public static @Nullable CustomShortcutSet getShortcutsForMnemonicChar(char mnemonic) {
+    return getShortcutsForMnemonicCode(KeyEvent.getExtendedKeyCodeForChar(mnemonic));
+  }
+
+  public static @Nullable CustomShortcutSet getShortcutsForMnemonicCode(int mnemonic) {
+    if (mnemonic != KeyEvent.VK_UNDEFINED) {
+      KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
+      KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);
+      CustomShortcutSet shortcutSet;
+      if (SystemInfo.isMac) {
+        if (Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+          shortcutSet = new CustomShortcutSet(ctrlAltShortcut, altShortcut);
+        } else {
+          shortcutSet = new CustomShortcutSet(ctrlAltShortcut);
+        }
+      } else {
+        shortcutSet = new CustomShortcutSet(altShortcut);
+      }
+      return shortcutSet;
+    }
     return null;
   }
 }

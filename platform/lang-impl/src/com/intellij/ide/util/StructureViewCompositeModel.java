@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.structureView.StructureViewModel;
@@ -39,7 +25,7 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public class StructureViewCompositeModel extends StructureViewModelBase
+public final class StructureViewCompositeModel extends StructureViewModelBase
   implements Disposable,
              StructureViewModel.ElementInfoProvider, 
              StructureViewModel.ExpandInfoProvider {
@@ -52,8 +38,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase
     myViews = views;
   }
   
-  @NotNull
-  private JBIterable<StructureViewModel> getModels() {
+  private @NotNull JBIterable<StructureViewModel> getModels() {
     return JBIterable.from(myViews).map(o -> o.structureModel);
   }
 
@@ -62,9 +47,8 @@ public class StructureViewCompositeModel extends StructureViewModelBase
     return getModels().filterMap(o -> o.getCurrentEditorElement()).first();
   }
 
-  @NotNull
-  private static StructureViewTreeElement createRootNode(@NotNull PsiFile file,
-                                                         @NotNull List<? extends StructureViewComposite.StructureViewDescriptor> views) {
+  private static @NotNull StructureViewTreeElement createRootNode(@NotNull PsiFile file,
+                                                                  @NotNull List<? extends StructureViewComposite.StructureViewDescriptor> views) {
     JBIterable<TreeElement> children = JBIterable.from(views).map(o -> createTreeElementFromView(file, o));
     return new StructureViewTreeElement() {
       @Override
@@ -87,9 +71,8 @@ public class StructureViewCompositeModel extends StructureViewModelBase
         return file.canNavigateToSource();
       }
 
-      @NotNull
       @Override
-      public ItemPresentation getPresentation() {
+      public @NotNull ItemPresentation getPresentation() {
         return file.getPresentation();
       }
 
@@ -101,9 +84,8 @@ public class StructureViewCompositeModel extends StructureViewModelBase
     };
   }
 
-  @NotNull
   @Override
-  public Collection<NodeProvider> getNodeProviders() {
+  public @NotNull Collection<NodeProvider<?>> getNodeProviders() {
     return getModels().filter(ProvidingTreeModel.class).flatMap(ProvidingTreeModel::getNodeProviders).toSet();
   }
 
@@ -148,8 +130,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase
     return result;
   }
 
-  @NotNull
-  private static TreeElement createTreeElementFromView(final PsiFile file, final StructureViewComposite.StructureViewDescriptor view) {
+  private static @NotNull TreeElement createTreeElementFromView(final PsiFile file, final StructureViewComposite.StructureViewDescriptor view) {
     return new StructureViewTreeElement() {
       @Override
       public Object getValue() {
@@ -171,25 +152,16 @@ public class StructureViewCompositeModel extends StructureViewModelBase
         return file.canNavigateToSource();
       }
 
-      @NotNull
       @Override
-      public ItemPresentation getPresentation() {
+      public @NotNull ItemPresentation getPresentation() {
         return new ItemPresentation() {
-          @Nullable
           @Override
-          public String getPresentableText() {
+          public @Nullable String getPresentableText() {
             return view.title;
           }
 
-          @Nullable
           @Override
-          public String getLocationString() {
-            return null;
-          }
-
-          @Nullable
-          @Override
-          public Icon getIcon(boolean unused) {
+          public @Nullable Icon getIcon(boolean unused) {
             return view.icon;
           }
         };

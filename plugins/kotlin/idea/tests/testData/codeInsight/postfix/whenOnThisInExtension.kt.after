@@ -1,0 +1,6 @@
+fun String.foo() {
+    when (this) {
+        <caret> -> {}
+        else -> {}
+    }
+}

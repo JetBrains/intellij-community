@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -33,22 +20,21 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
 
-@SuppressWarnings({"deprecation", "DeprecatedIsStillUsed"})
+/**
+ * A specialized option group for editing indent options.
+ * <p>
+ *   <em>Implementation note:</em> make sure all the necessary Swing components are only created
+ *   in the {@link #createPanel()} and/or {@link #addComponents()} methods and not in the
+ *   constructor or field/property initializers. See {@link OptionGroup} for details.
+ * </p>
+ */
 public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
-  @Deprecated
-  protected JTextField myIndentField;
 
-  @Deprecated
-  protected JCheckBox myCbUseTab;
-
-  @Deprecated
-  protected JTextField myTabSizeField;
-
-  @Deprecated
-  protected JLabel myTabSizeLabel;
-
-  @Deprecated
-  protected JLabel myIndentLabel;
+  private JTextField myIndentField;
+  private JCheckBox myCbUseTab;
+  private JTextField myTabSizeField;
+  private JLabel myTabSizeLabel;
+  private JLabel myIndentLabel;
 
   private final @Nullable LanguageCodeStyleSettingsProvider myProvider;
 
@@ -89,14 +75,6 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     myTabSizeField = createIndentTextField(getTabSizeLabel(), MIN_TAB_SIZE, MAX_TAB_SIZE, DEFAULT_TAB_SIZE);
     myTabSizeLabel = new JLabel(getTabSizeLabel());
     add(myTabSizeLabel, myTabSizeField);
-  }
-
-  /**
-   * @deprecated Use {@link #createIndentTextField(String, int, int, int)}
-   */
-  @Deprecated
-  protected JTextField createIndentTextField() {
-    return createIndentTextField(null, Integer.MIN_VALUE, Integer.MAX_VALUE, 0);
   }
 
   protected IntegerField createIndentTextField(@Nullable String valueName, int minSize, int maxSize, int defaultValue) {
@@ -188,7 +166,7 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   /**
    * @deprecated Create {@link IntegerField} and use {@link IntegerField#getValue()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected int getFieldValue(JTextField field, int minValue, int defValue) {
     if (field instanceof IntegerField) {
       return ((IntegerField)field).getValue();
@@ -219,11 +197,15 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
     myCbUseTab.setVisible(visible);
   }
 
-  private static String getIndentLabel() {
+  private static @NlsContexts.Label String getIndentLabel() {
     return ApplicationBundle.message("editbox.indent.indent");
   }
 
-  private static String getTabSizeLabel() {
+  private static @NlsContexts.Label String getTabSizeLabel() {
     return ApplicationBundle.message("editbox.indent.tab.size");
+  }
+
+  protected final boolean isUseTabsSelected() {
+    return myCbUseTab.isSelected();
   }
 }

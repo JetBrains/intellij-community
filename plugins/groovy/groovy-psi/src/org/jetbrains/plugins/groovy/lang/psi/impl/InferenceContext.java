@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache.AbstractResolver;
 import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -20,9 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
 
-/**
- * @author peter
- */
 public interface InferenceContext {
 
   InferenceContext TOP_CONTEXT = new TopInferenceContext();
@@ -30,11 +27,11 @@ public interface InferenceContext {
   @Nullable
   PsiType getVariableType(@NotNull GrReferenceExpression ref);
 
-  <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull Computable<T> computable);
+  <E extends @NotNull GroovyPsiElement, T>
+  T getCachedValue(E element, @NotNull Function<? super @NotNull E, ? extends T> computation);
 
-  @Nullable
   <T extends PsiReference, R>
-  R resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R> resolver, boolean incomplete);
+  R[] resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R[]> resolver, boolean incomplete);
 
   default <T extends PsiPolyVariantReference>
   GroovyResolveResult @NotNull [] multiResolve(@NotNull T ref, boolean incomplete, @NotNull PolyVariantResolver<T> resolver) {
@@ -45,10 +42,10 @@ public interface InferenceContext {
   @NotNull
   default <T extends GroovyReference>
   Collection<? extends GroovyResolveResult> resolve(@NotNull T ref, boolean incomplete, @NotNull GroovyResolver<T> resolver) {
-    Collection<? extends GroovyResolveResult> results = resolveWithCaching(ref, resolver, incomplete);
-    return results == null ? Collections.emptyList() : results;
+    GroovyResolveResult[] results = resolveWithCaching(ref, resolver, incomplete);
+    return results == null ? Collections.emptyList() : new SmartList<>(results);
   }
 
-  @Nullable
-  <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator);
+  <T extends GroovyPsiElement>
+  @Nullable PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator);
 }

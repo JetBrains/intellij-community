@@ -16,8 +16,7 @@ public class ForkedDebuggerHelper {
 
   // copied from NetUtils
   protected static int findAvailableSocketPort() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(0);
-    try {
+    try (ServerSocket serverSocket = new ServerSocket(0)) {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
       // may result that socket is not closed
@@ -33,17 +32,14 @@ public class ForkedDebuggerHelper {
       }
       return port;
     }
-    finally {
-      serverSocket.close();
-    }
   }
 
-  public void setupDebugger(List parameters) throws IOException {
+  public void setupDebugger(List<String> parameters) throws IOException {
     if (myDebugPort > -1) {
       int debugAddress = findAvailableSocketPort();
       boolean found = false;
       for (int i = 0; i < parameters.size(); i++) {
-        String parameter = (String)parameters.get(i);
+        String parameter = parameters.get(i);
         final int indexOf = Math.max(parameter.indexOf("transport=dt_socket"), parameter.indexOf("transport=dt_shmem"));
         if (indexOf >= 0) {
           if (debugAddress > -1) {
@@ -80,9 +76,9 @@ public class ForkedDebuggerHelper {
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith(DEBUG_SOCKET)) {
-        final List list = new ArrayList(Arrays.asList(args));
+        final List<String> list = new ArrayList<>(Arrays.asList(args));
         list.remove(arg);
-        args = (String[])list.toArray(new String[0]);
+        args = list.toArray(new String[0]);
         myDebugPort = Integer.parseInt(arg.substring(DEBUG_SOCKET.length()));
         break;
       }

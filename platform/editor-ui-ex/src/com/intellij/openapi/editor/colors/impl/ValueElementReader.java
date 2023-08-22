@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -100,7 +101,7 @@ class ValueElementReader {
    * @param value a string value to convert
    * @param <T>   the result type
    */
-  protected <T> T convert(Class<T> type, String value) {
+  protected <T> T convert(@NotNull Class<T> type, @NotNull String value) {
     if (String.class.equals(type)) {
       //noinspection unchecked
       return (T)value;
@@ -137,13 +138,16 @@ class ValueElementReader {
     throw new IllegalArgumentException(value);
   }
 
-  private static Color toColor(String value) {
+  private static Color toColor(@NotNull String value) {
     try {
-      if (6 <= value.length()) return ColorUtil.fromHex(value);
+      if (value.length() >= 6) return ColorUtil.fromHex(value);
       LOG.debug("short color value: ", value);
     }
     catch (Exception exception) {
       LOG.debug("wrong color value: ", value);
+    }
+    if (!StringUtil.isHexDigit(value.charAt(0))) {
+      return null;
     }
     int rgb;
     try {

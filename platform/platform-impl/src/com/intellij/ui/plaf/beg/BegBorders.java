@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 
@@ -14,7 +14,7 @@ import java.awt.*;
 /**
  * @author Eugene Belyaev
  */
-public class BegBorders {
+public final class BegBorders {
   private static Border ourTextFieldBorder;
   private static Border ourScrollPaneBorder;
 

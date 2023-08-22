@@ -1,25 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-class ReprocessContentRootDataActivity : StartupActivity.Background {
-  private val LOG = Logger.getInstance(ReprocessContentRootDataActivity::class.java)
+private class ReprocessContentRootDataActivity : ProjectActivity {
 
-  override fun runActivity(project: Project) {
+  init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      return
+      throw ExtensionNotApplicableException.create()
     }
+  }
+
+  override suspend fun execute(project: Project) {
     if (ExternalSystemUtil.isNewProject(project)) {
-      LOG.info("Ignored reprocess of content root data service for new projects")
+      thisLogger().info("Ignored reprocess of content root data service for new projects")
       return
     }
 
-    val instance = SourceFolderManager.getInstance(project) as SourceFolderManagerImpl
-    instance.rescanAndUpdateSourceFolders()
+    SourceFolderManager.getInstance(project).rescanAndUpdateSourceFolders()
   }
 }

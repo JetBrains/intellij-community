@@ -40,7 +40,8 @@ class NewPropertyAction extends AnAction {
   }
 
   NewPropertyAction(final boolean enabledForce) {
-    super(ResourceBundleEditorBundle.message("new.property.action.text"), null, AllIcons.General.Add);
+    super(ResourceBundleEditorBundle.message("action.NewPropertyAction.text"),
+          ResourceBundleEditorBundle.message("action.NewPropertyAction.description"), AllIcons.General.Add);
     myEnabledForce = enabledForce;
   }
 
@@ -52,7 +53,7 @@ class NewPropertyAction extends AnAction {
     }
     ResourceBundleEditor resourceBundleEditor;
     final DataContext context = e.getDataContext();
-    FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
+    FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (fileEditor instanceof ResourceBundleEditor) {
       resourceBundleEditor = (ResourceBundleEditor)fileEditor;
     } else {
@@ -76,7 +77,7 @@ class NewPropertyAction extends AnAction {
       ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file));
     if (status.hasReadonlyFiles()) {
       Messages.showErrorDialog(bundle.getProject(),
-                               String.format("Resource bundle '%s' has read-only default properties file", bundle.getBaseName()),
+                               ResourceBundleEditorBundle.message("new.property.read.only.error.message", bundle.getBaseName()),
                                ResourceBundleEditorBundle.message("already.exists.dialog.title"));
       return;
     }
@@ -92,8 +93,7 @@ class NewPropertyAction extends AnAction {
       if (selectedElement == null) {
         return;
       }
-      if (selectedElement instanceof PropertiesPrefixGroup) {
-        final PropertiesPrefixGroup group = (PropertiesPrefixGroup)selectedElement;
+      if (selectedElement instanceof PropertiesPrefixGroup group) {
         prefix = group.getPrefix();
         separator = group.getSeparator();
       }
@@ -149,7 +149,7 @@ class NewPropertyAction extends AnAction {
       };
       ResourceBundleEditor finalResourceBundleEditor = resourceBundleEditor;
       ApplicationManager.getApplication().runWriteAction(() -> {
-        WriteCommandAction.runWriteCommandAction(bundle.getProject(), insertionAction);
+        WriteCommandAction.runWriteCommandAction(bundle.getProject(), ResourceBundleEditorBundle.message("action.NewPropertyAction.text"), null, insertionAction);
         finalResourceBundleEditor.flush();
       });
 
@@ -161,9 +161,20 @@ class NewPropertyAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     if (!myEnabledForce) {
-      final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
+      final FileEditor editor = e.getData(PlatformCoreDataKeys.FILE_EDITOR);
       e.getPresentation().setEnabledAndVisible(editor instanceof ResourceBundleEditor);
     }
   }
@@ -171,8 +182,7 @@ class NewPropertyAction extends AnAction {
   @Nullable
   private static String getSelectedPrefixText(@NotNull ResourceBundleEditor resourceBundleEditor) {
     Object item = resourceBundleEditor.getSelectedElementIfOnlyOne();
-    if (item instanceof PropertiesPrefixGroup) {
-      PropertiesPrefixGroup prefixGroup = (PropertiesPrefixGroup)item;
+    if (item instanceof PropertiesPrefixGroup prefixGroup) {
       return prefixGroup.getPrefix() + prefixGroup.getSeparator();
     }
     return null;

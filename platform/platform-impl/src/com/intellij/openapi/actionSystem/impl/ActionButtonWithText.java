@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +20,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentInputMapUIResource;
@@ -26,20 +30,34 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.function.Supplier;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
-  private static final int TEXT_ARROW_SPACE = 1;
+  /**
+   * @see ToolbarComboWidgetUiSizes#getGapBeforeExpandIcon()
+   */
+  private static final int TEXT_ARROW_SPACE = 2;
+  private static final int BUTTONS_GAP = 4;
 
   private int myHorizontalTextPosition = SwingConstants.TRAILING;
   private int myHorizontalTextAlignment = SwingConstants.CENTER;
 
-  public ActionButtonWithText(final AnAction action,
-                              final Presentation presentation,
-                              final String place,
-                              final Dimension minimumSize) {
+  public static final Key<Boolean> SHORTCUT_SHOULD_SHOWN = new Key<>("SHORTCUT_SHOULD_SHOWN");
+
+  public ActionButtonWithText(@NotNull AnAction action,
+                              @Nullable Presentation presentation,
+                              @NotNull String place,
+                              @NotNull Dimension minimumSize) {
+    this(action, presentation, place, () -> minimumSize);
+  }
+
+  public ActionButtonWithText(@NotNull AnAction action,
+                              @Nullable Presentation presentation,
+                              @NotNull String place,
+                              Supplier<? extends @NotNull Dimension> minimumSize) {
     super(action, presentation, place, minimumSize);
-    setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
+    setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());
     myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -49,6 +67,9 @@ public class ActionButtonWithText extends ActionButton {
           int newValue = evt.getNewValue() instanceof Integer ? (Integer)evt.getNewValue() : 0;
           updateMnemonic(oldValue, newValue);
         }
+        if(evt.getPropertyName().equals(SHORTCUT_SHOULD_SHOWN.toString())) {
+          updateToolTipText();
+        }
       }
     });
     getActionMap().put("doClick", new AbstractAction() {
@@ -57,27 +78,26 @@ public class ActionButtonWithText extends ActionButton {
         click();
       }
     });
-    updateMnemonic(0, myPresentation.getMnemonic());
+    updateMnemonic(KeyEvent.VK_UNDEFINED, myPresentation.getMnemonic());
     ComponentUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
   }
 
   @Override
   public void updateUI() {
     super.updateUI();
-    if (myPlace == ActionPlaces.EDITOR_TOOLBAR) {
+    if (ActionPlaces.EDITOR_TOOLBAR.equals(myPlace)) {
       // tweak font & color for editor toolbar to match editor tabs style
       setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
       setForeground(ColorUtil.dimmer(JBColor.BLACK));
     }
     else {
       AnAction action = getAction();
-      setFont(action != null && action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
+      setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     }
   }
 
-  @NotNull
   @Override
-  protected Icon getFallbackIcon(boolean enabled) {
+  protected @NotNull Icon getFallbackIcon(boolean enabled) {
     return EmptyIcon.ICON_0;
   }
 
@@ -100,6 +120,10 @@ public class ActionButtonWithText extends ActionButton {
       }
       windowInputMap.put(KeyStroke.getKeyStroke(mnemonic, mask, false), "doClick");
     }
+  }
+
+  protected @NotNull Insets getMargins() {
+    return JBUI.insets(0, BUTTONS_GAP);
   }
 
   @Override
@@ -127,10 +151,12 @@ public class ActionButtonWithText extends ActionButton {
     int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
     Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
-    rv.width += Math.max(basicSize.height - rv.height, 0);
     if (shallPaintDownArrow()) {
-      rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
+      rv.width += getDownArrowIcon().getIconWidth() + JBUI.scale(TEXT_ARROW_SPACE);
     }
+
+    Insets m = getMargins();
+    JBInsets.addTo(rv, m);
 
     rv.width = Math.max(rv.width, basicSize.width);
     rv.height = Math.max(rv.height, basicSize.height);
@@ -142,8 +168,16 @@ public class ActionButtonWithText extends ActionButton {
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
       HelpTooltip.dispose(this);
-      if (StringUtil.isNotEmpty(description)) {
-        new HelpTooltip().setDescription(description).installOn(this);
+      HelpTooltip tooltip = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
+      if (StringUtil.isNotEmpty(description) && tooltip == null) {
+        tooltip = new HelpTooltip().setDescription(description);
+        Boolean property = myPresentation.getClientProperty(SHORTCUT_SHOULD_SHOWN);
+        if(property != null && property) {
+          tooltip.setShortcut(getShortcutText());
+        }
+      }
+      if (tooltip != null) {
+        tooltip.installOn(this);
       }
     } else {
       setToolTipText(description);
@@ -153,13 +187,14 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
-    Icon arrowIcon = shallPaintDownArrow() ? AllIcons.General.LinkDropTriangle : null;
+    Icon arrowIcon = shallPaintDownArrow() ? getEnableOrDisable(getDownArrowIcon()) : null;
 
     UISettings.setupAntialiasing(g);
 
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
+    JBInsets.removeFrom(viewRect, getMargins());
 
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
@@ -175,19 +210,23 @@ public class ActionButtonWithText extends ActionButton {
       iconRect.x -= dx;
       textRect.x -= dx;
     }
-    ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
+    ActionButtonLook look = getButtonLook();
     look.paintBackground(g, this);
     look.paintIcon(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
-    g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
+    g.setColor(isEnabled() ? getForeground() : getInactiveTextColor());
     UIUtilities.drawStringUnderlineCharAt(this, g, text, getMnemonicCharIndex(text),
                                           textRect.x, textRect.y + fm.getAscent());
     if (arrowIcon != null) {
       int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width) + JBUI.scale(TEXT_ARROW_SPACE);
       int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2 + 1;
-      arrowIcon.paintIcon(this, g, x, y);
+      getButtonLook().paintIcon(g, this, arrowIcon, x, y);
     }
+  }
+
+  protected @NotNull Icon getDownArrowIcon() {
+    return AllIcons.General.LinkDropTriangle;
   }
 
   protected Rectangle getButtonRect() {
@@ -197,13 +236,14 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
     super.presentationPropertyChanged(e);
-    if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
+    if (Presentation.PROP_TEXT_WITH_SUFFIX.equals(e.getPropertyName())) {
       revalidate(); // recalc preferred size & repaint instantly
+      repaint();
     }
   }
 
   public Color getInactiveTextColor() {
-    return UIUtil.getInactiveTextColor();
+    return NamedColorUtil.getInactiveTextColor();
   }
 
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
@@ -227,7 +267,7 @@ public class ActionButtonWithText extends ActionButton {
     return icon instanceof EmptyIcon || icon == null ? 0 : JBUI.scale(ICON_TEXT_SPACE);
   }
 
-  private int getMnemonicCharIndex(String text) {
+  protected int getMnemonicCharIndex(String text) {
     final int mnemonicIndex = myPresentation.getDisplayedMnemonicIndex();
     if (mnemonicIndex != -1) {
       return mnemonicIndex;
@@ -235,9 +275,8 @@ public class ActionButtonWithText extends ActionButton {
     final ShortcutSet shortcutSet = myAction.getShortcutSet();
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
     for (Shortcut shortcut : shortcuts) {
-      if (!(shortcut instanceof KeyboardShortcut)) continue;
+      if (!(shortcut instanceof KeyboardShortcut keyboardShortcut)) continue;
 
-      KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
       if (keyboardShortcut.getSecondKeyStroke() == null) { // we are interested only in "mnemonic-like" shortcuts
         final KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
         final int modifiers = keyStroke.getModifiers();
@@ -251,13 +290,12 @@ public class ActionButtonWithText extends ActionButton {
     return -1;
   }
 
-  @NotNull
-  private String getText() {
-    final String text = myPresentation.getText();
+  protected @NotNull @NlsActions.ActionText String getText() {
+    final String text = myPresentation.getText(true);
     return text != null ? text : "";
   }
 
   public int getMnemonic() {
-    return KeyEvent.getExtendedKeyCodeForChar(myPresentation.getMnemonic());
+    return myPresentation.getMnemonic();
   }
 }

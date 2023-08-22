@@ -68,7 +68,8 @@ abstract class PyExternalDocTest : PyTestCase() {
     urls = listOf(urls!![0].replace("3.7 Mock SDK", "3.7"))
 
     TestCase.assertTrue(
-      (provider as CompositeDocumentationProvider).fetchExternalDocumentation(myFixture.project, element, urls)!!.contains(expectedHtml))
+      (provider as CompositeDocumentationProvider)
+        .fetchExternalDocumentation(myFixture.project, element, urls, false)!!.contains(expectedHtml))
   }
 
     fun doUrl(qname: String, expectedUrl: String) {
@@ -77,11 +78,9 @@ abstract class PyExternalDocTest : PyTestCase() {
     val elementName = qname.substring(ind+1)
     val p = PyStdlibDocumentationLinkProvider()
     TestCase.assertEquals(expectedUrl,
-                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), projectDescriptor.sdk)}.html#${p.fragmentName(
+                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), projectDescriptor!!.sdk)}.html#${p.fragmentName(
                             moduleName)}.$elementName")
   }
-
-  override fun getProjectDescriptor() = ourPy3Descriptor
 }
 
 class PyExternalDocTestPy3 : PyExternalDocTest() {
@@ -146,5 +145,5 @@ class PyExternalDocTestPy2 : PyExternalDocTest() {
     doUrl("pyexpat.ErrorString", "pyexpat.html#xml.parsers.expat.ErrorString")
   }
 
-  override fun getProjectDescriptor() = ourPyDescriptor
+  override fun getProjectDescriptor() = ourPy2Descriptor
 }

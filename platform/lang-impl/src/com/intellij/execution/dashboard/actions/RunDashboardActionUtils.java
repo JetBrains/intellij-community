@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
@@ -9,7 +9,7 @@ import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class RunDashboardActionUtils {
+final class RunDashboardActionUtils {
   private RunDashboardActionUtils() {
   }
 
   @NotNull
-  static JBIterable<RunDashboardRunConfigurationNode> getTargets(@NotNull AnActionEvent e) {
+  static List<RunDashboardRunConfigurationNode> getTargets(@NotNull AnActionEvent e) {
     return ServiceViewActionUtils.getTargets(e, RunDashboardRunConfigurationNode.class);
   }
 
@@ -36,7 +36,7 @@ class RunDashboardActionUtils {
     Project project = e.getProject();
     if (project == null) return JBIterable.empty();
 
-    JBIterable<Object> roots = JBIterable.of(e.getData(PlatformDataKeys.SELECTED_ITEMS));
+    JBIterable<Object> roots = JBIterable.of(e.getData(PlatformCoreDataKeys.SELECTED_ITEMS));
     Set<RunDashboardRunConfigurationNode> result = new LinkedHashSet<>();
     if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
 
@@ -44,12 +44,13 @@ class RunDashboardActionUtils {
   }
 
   private static boolean getLeaves(Project project, AnActionEvent e, List<Object> items, List<Object> valueSubPath,
-                                   Set<RunDashboardRunConfigurationNode> result) {
+                                   Set<? super RunDashboardRunConfigurationNode> result) {
     for (Object item : items) {
       if (item instanceof RunDashboardServiceViewContributor || item instanceof GroupingNode) {
         List<Object> itemSubPath = new ArrayList<>(valueSubPath);
         itemSubPath.add(item);
-        List<Object> children = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).getChildrenSafe(e, itemSubPath);
+        List<Object> children = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project))
+          .getChildrenSafe(e, itemSubPath, RunDashboardServiceViewContributor.class);
         if (!getLeaves(project, e, children, itemSubPath, result)) {
           return false;
         }

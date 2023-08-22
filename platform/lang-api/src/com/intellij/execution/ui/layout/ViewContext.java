@@ -79,4 +79,8 @@ public interface ViewContext extends Disposable {
   boolean isMoveToGridActionEnabled();
 
   boolean isToDisposeRemovedContent();
+
+  static boolean isPopupPlace(String place) {
+    return CELL_POPUP_PLACE.equals(place) || TAB_POPUP_PLACE.equals(place);
+  }
 }

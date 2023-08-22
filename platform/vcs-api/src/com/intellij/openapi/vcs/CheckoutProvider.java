@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.ModalityState;
@@ -20,14 +6,16 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.VcsCloneComponentStub;
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Comparator;
-
-import static com.intellij.ui.GuiUtils.getTextWithoutMnemonicEscaping;
 
 /**
  * Implement this interface and register it as extension to checkoutProvider extension point in order to provide checkout
@@ -37,24 +25,31 @@ public interface CheckoutProvider {
 
   /**
    * @param project current project or default project if no project is open.
+   * @deprecated should not be used outside VcsCloneComponentStub
+   * Migrate to {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog} or {@link VcsCloneComponent}
    */
+  @Deprecated(forRemoval = true)
   void doCheckout(@NotNull final Project project, @Nullable Listener listener);
-  @NonNls String getVcsName();
+
+  @Nls @NotNull String getVcsName();
 
   interface Listener {
+    @RequiresBackgroundThread
     void directoryCheckedOut(File directory, VcsKey vcs);
+
+    @RequiresBackgroundThread
     void checkoutCompleted();
   }
 
   class CheckoutProviderComparator implements Comparator<CheckoutProvider> {
     @Override
     public int compare(@NotNull final CheckoutProvider o1, @NotNull final CheckoutProvider o2) {
-      return getTextWithoutMnemonicEscaping(o1.getVcsName()).compareTo(getTextWithoutMnemonicEscaping(o2.getVcsName()));
+      return UIUtil.removeMnemonic(o1.getVcsName()).compareTo(UIUtil.removeMnemonic(o2.getVcsName()));
     }
   }
 
   @NotNull
-  default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
-    return new VcsCloneComponentStub(this, "Clone");
+  default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+    return new VcsCloneComponentStub(project, this, VcsBundle.message("clone.dialog.clone.button"));
   }
 }

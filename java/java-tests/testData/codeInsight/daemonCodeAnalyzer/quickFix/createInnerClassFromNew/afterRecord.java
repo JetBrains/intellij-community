@@ -1,4 +1,4 @@
-// "Create inner record 'Foo'" "true"
+// "Create inner record 'Foo'" "true-preview"
 public class Test {
     public static void main() {
         new Foo("bar", "baz")

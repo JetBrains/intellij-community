@@ -61,20 +61,22 @@ public class JUnitRerunFailedTestsTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testParameterizedTestNavigation() {
-    myFixture.addClass("package org.junit.runner;\n" +
-                       "public @interface RunWith {\n" +
-                       "    Class<? extends Runner> value();\n" +
-                       "}");
+    myFixture.addClass("""
+                         package org.junit.runner;
+                         public @interface RunWith {
+                             Class<? extends Runner> value();
+                         }""");
     myFixture.addClass("package org.junit.runners; public class Parameterized {}");
 
-    final PsiClass testClass = myFixture.addClass("import org.junit.Test;\n" +
-                                                  "import org.junit.runner.RunWith;\n" +
-                                                  "import org.junit.runners.Parameterized;\n" +
-                                                  "@RunWith(Parameterized.class)\n" +
-                                                  "public class MyTest {\n" +
-                                                  "    @Test\n" +
-                                                  "    public void testName1() {}\n" +
-                                                  "}");
+    final PsiClass testClass = myFixture.addClass("""
+                                                    import org.junit.Test;
+                                                    import org.junit.runner.RunWith;
+                                                    import org.junit.runners.Parameterized;
+                                                    @RunWith(Parameterized.class)
+                                                    public class MyTest {
+                                                        @Test
+                                                        public void testName1() {}
+                                                    }""");
 
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
@@ -127,11 +129,12 @@ public class JUnitRerunFailedTestsTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testInnerClass() {
-    myFixture.addClass("public class TestClass {\n" +
-                       "    public static class Tests extends junit.framework.TestCase {\n" +
-                       "        public void testFoo() throws Exception {}\n" +
-                       "    }\n" +
-                       "}");
+    myFixture.addClass("""
+                         public class TestClass {
+                             public static class Tests extends junit.framework.TestCase {
+                                 public void testFoo() throws Exception {}
+                             }
+                         }""");
 
     final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass$Tests/testFoo");
     final Project project = getProject();
@@ -146,11 +149,10 @@ public class JUnitRerunFailedTestsTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testLocatorForIgnoredClass() {
-    PsiClass aClass = myFixture.addClass("@org.junit.Ignore" +
-                                         "public class TestClass {\n" +
-                                         "    @org.junit.Test" +
-                                         "    public void testFoo() throws Exception {}\n" +
-                                         "}");
+    PsiClass aClass = myFixture.addClass("""
+                                           @org.junit.Ignorepublic class TestClass {
+                                               @org.junit.Test    public void testFoo() throws Exception {}
+                                           }""");
     final SMTestProxy testProxy = new SMTestProxy("TestClass", false, "java:test://TestClass/TestClass");
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
@@ -162,11 +164,10 @@ public class JUnitRerunFailedTestsTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   public void testPresentationForJunit5MethodsWithParameters() {
-    myFixture.addClass("class A {}" +
-                       "public class TestClass {\n" +
-                       "    @org.junit.platform.commons.annotation.Testable" +
-                       "    public void testFoo(A a) throws Exception {}\n" +
-                       "}");
+    myFixture.addClass("""
+                         class A {}public class TestClass {
+                             @org.junit.platform.commons.annotation.Testable    public void testFoo(A a) throws Exception {}
+                         }""");
     final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass/testFoo");
     testProxy.setLocator(JavaTestLocator.INSTANCE);
     final String presentation = TestMethods.getTestPresentation(testProxy, myFixture.getProject(), GlobalSearchScope.projectScope(myFixture.getProject()));

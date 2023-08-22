@@ -15,8 +15,10 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -29,7 +31,7 @@ public abstract class AntDomPropertyDefiningTaskWithDefaultValue extends AntDomP
   public abstract GenericAttributeValue<String> getPropertyValue();
 
   @Override
-  protected final String calcPropertyValue(String propertyName) {
+  protected final @NlsSafe String calcPropertyValue(@NonNls String propertyName) {
     final String value = getPropertyValue().getStringValue();
     return value != null? value : DEFAULT_PROPERTY_VALUE;
   }

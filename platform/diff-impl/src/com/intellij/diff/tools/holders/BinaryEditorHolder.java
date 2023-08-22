@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.holders;
 
 import com.intellij.diff.DiffContext;
@@ -39,15 +25,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.FocusListener;
+import java.util.List;
 
-public class BinaryEditorHolder extends EditorHolder {
+public final class BinaryEditorHolder extends EditorHolder {
   @NotNull private final FileEditor myEditor;
   @Nullable private final FileEditorProvider myEditorProvider;
 
@@ -103,15 +89,15 @@ public class BinaryEditorHolder extends EditorHolder {
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
         VirtualFile file = ((FileContent)content).getFile();
 
-        FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-        if (providers.length == 0) {
+        List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(project, file);
+        if (providers.size() == 0) {
           JComponent component = FileTypeRegistry.getInstance().isFileOfType(file, UnknownFileType.INSTANCE)
                                  ? UnknownFileTypeDiffRequest.createComponent(file.getName(), context)
                                  : DiffUtil.createMessagePanel(DiffBundle.message("error.cant.show.file"));
           return new BinaryEditorHolder(new DumbFileEditor(file, component), null);
         }
 
-        FileEditorProvider provider = providers[0];
+        FileEditorProvider provider = providers.get(0);
         FileEditor editor = provider.createEditor(project, file);
 
         UIUtil.removeScrollBorder(editor.getComponent());
@@ -144,7 +130,7 @@ public class BinaryEditorHolder extends EditorHolder {
       if (content instanceof FileContent) {
         VirtualFile file = ((FileContent)content).getFile();
         if (!file.isValid()) return false;
-        if (file instanceof VirtualFileWithoutContent) return false;
+        if (DiffUtil.isFileWithoutContent(file)) return false;
         return true;
       }
       return false;
@@ -162,7 +148,7 @@ public class BinaryEditorHolder extends EditorHolder {
     }
   }
 
-  private static class DumbFileEditor extends FileEditorBase {
+  private static final class DumbFileEditor extends FileEditorBase {
     @NotNull private final VirtualFile myFile;
     @NotNull private final JComponent myComponent;
 
@@ -192,7 +178,7 @@ public class BinaryEditorHolder extends EditorHolder {
     @NotNull
     @Override
     public String getName() {
-      return "Dumb";
+      return "Dumb"; //NON-NLS
     }
   }
 }

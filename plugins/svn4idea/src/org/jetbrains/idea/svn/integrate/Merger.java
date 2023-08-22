@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -9,9 +9,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.*;
@@ -21,13 +21,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
   @Nullable protected final ProgressTracker myHandler;
   private final ProgressIndicator myProgressIndicator;
   protected final Url myCurrentBranchUrl;
-  private final StringBuilder myCommitMessage;
+  private final @Nls @NotNull StringBuilder myCommitMessage = new StringBuilder();
   protected final SvnConfiguration mySvnConfig;
   private final Project myProject;
   @NotNull protected final SvnVcs myVcs;
@@ -65,7 +68,6 @@ public class Merger implements IMerger {
     myTarget = target;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     myHandler = handler;
-    myCommitMessage = new StringBuilder();
     myRecordOnly = recordOnly;
     myInvertRange = invertRange;
     myGroupSequentialChangeLists = groupSequentialChangeLists;
@@ -89,8 +91,7 @@ public class Merger implements IMerger {
 
   private void setMergeIndicator() {
     if (myProgressIndicator != null) {
-      // TODO: Use values from SvnBundle
-      myProgressIndicator.setText2("Merging changelist(s) " + myMergeChunk);
+      myProgressIndicator.setText2(message("progress.details.merging.changelist.range", myMergeChunk));
     }
   }
 
@@ -123,17 +124,12 @@ public class Merger implements IMerger {
   }
 
   private void appendComment() {
-    appendComment(myCommitMessage, myBranchName, myMergeChunk.changeLists());
-  }
-
-  public static void appendComment(@NotNull StringBuilder builder,
-                                   @NotNull String branch,
-                                   @NotNull Iterable<? extends CommittedChangeList> changeLists) {
-    if (builder.length() == 0) {
-      builder.append("Merged from ").append(branch);
+    if (myCommitMessage.length() == 0) {
+      myCommitMessage.append(message("label.merged.from.branch", myBranchName));
     }
-    for (CommittedChangeList list : changeLists) {
-      builder.append('\n').append(list.getComment().trim()).append(" [from revision ").append(list.getNumber()).append("]");
+    for (CommittedChangeList list : myMergeChunk.changeLists()) {
+      myCommitMessage.append('\n');
+      myCommitMessage.append(message("merge.chunk.changelist.description", list.getComment().trim(), list.getNumber()));
     }
   }
 
@@ -148,51 +144,27 @@ public class Merger implements IMerger {
   @Override
   @Nullable
   public String getInfo() {
-    String result = null;
+    if (myMergeChunk == null) return null;
 
-    if (myMergeChunk != null) {
-      // TODO: Use values from SvnBundle
-      StringBuilder builder = new StringBuilder("Changelist(s) :");
-
-      for (CommittedChangeList list : myMergeChunk.changeLists()) {
-        final String nextComment = list.getComment().trim().replace('\n', '|');
-        builder.append("\n").append(list.getNumber()).append(" (").append(nextComment).append(")");
-      }
-      builder.append(" merging faced problems");
-      result = builder.toString();
-    }
-
-    return result;
+    return message("label.changelists.merging.faced.problems",
+                   join(myMergeChunk.changeLists(), it -> getChangeListDescription(it), "\n"));
   }
 
   @Override
   @Nullable
   public String getSkipped() {
-    return getSkippedMessage(myMergeChunk != null ? myMergeChunk.chunkAndAfterLists() : ContainerUtil.emptyList());
+    List<? extends CommittedChangeList> changeLists = myMergeChunk != null ? myMergeChunk.chunkAndAfterLists() : ContainerUtil.emptyList();
+    if (changeLists.isEmpty()) return null;
+
+    return message("label.skipped.changelists", join(changeLists, it -> getChangeListDescription(it), ","));
   }
 
-  @Nullable
-  public static String getSkippedMessage(@NotNull List<? extends CommittedChangeList> changeLists) {
-    String result = null;
-
-    if (!changeLists.isEmpty()) {
-      final StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < changeLists.size(); i++) {
-        CommittedChangeList list = changeLists.get(i);
-        if (i != 0) {
-          sb.append(',');
-        }
-        sb.append(list.getNumber()).append(" (").append(list.getComment().replace('\n', '|')).append(')');
-      }
-
-      result = SvnBundle.message("action.Subversion.integrate.changes.warning.skipped.lists.text", sb.toString());
-    }
-
-    return result;
+  private static @Nls @NotNull String getChangeListDescription(@NotNull CommittedChangeList changeList) {
+    return changeList.getNumber() + " (" + changeList.getComment().trim().replace('\n', '|') + ")";
   }
 
   @Override
-  public String getComment() {
+  public @NotNull String getComment() {
     return myCommitMessage.toString();
   }
 

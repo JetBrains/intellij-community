@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -15,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Allows to extend the mechanism of locating classes and packages by full-qualified name.
@@ -23,12 +23,6 @@ import java.util.Set;
  */
 public abstract class PsiElementFinder {
   public static final ProjectExtensionPointName<PsiElementFinder> EP = new ProjectExtensionPointName<>("com.intellij.java.elementFinder");
-
-  /**
-   * @deprecated use {@link #EP}
-   */
-  @Deprecated
-  public static final ExtensionPointName<PsiElementFinder> EP_NAME = ExtensionPointName.create("com.intellij.java.elementFinder");
 
   /**
    * Searches the specified scope within the project for a class with the specified full-qualified
@@ -67,11 +61,11 @@ public abstract class PsiElementFinder {
   }
 
   /**
-   * Returns the list of subpackages of the specified package in the specified search scope.
+   * Returns the array of subpackages of the specified package in the specified search scope.
    *
    * @param psiPackage the package to return the list of subpackages for.
    * @param scope the scope in which subpackages are searched.
-   * @return the list of subpackages.
+   * @return the array of subpackages.
    * @see PsiPackage#getSubPackages(GlobalSearchScope)
    */
   public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
@@ -79,11 +73,11 @@ public abstract class PsiElementFinder {
   }
 
   /**
-   * Returns the list of classes in the specified package and in the specified search scope.
+   * Returns the array of classes in the specified package and in the specified search scope.
    *
    * @param psiPackage the package to return the list of classes in.
    * @param scope the scope in which classes are searched.
-   * @return the list of classes.
+   * @return the array of classes.
    * @see PsiPackage#getClasses(GlobalSearchScope)
    */
   public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
@@ -96,17 +90,16 @@ public abstract class PsiElementFinder {
    * @param scope the scope in which classes are searched.
    * @return the filter to use, or null if no additional filtering is necessary
    */
-  @Nullable
-  public Condition<PsiClass> getClassesFilter(@NotNull GlobalSearchScope scope) {
+  public @Nullable Predicate<PsiClass> getClassesFilter(@NotNull GlobalSearchScope scope) {
     return null;
   }
 
   /**
-   * Returns a list of files belonging to the specified package which are not located in any of the package directories.
+   * Returns a array of files belonging to the specified package which are not located in any of the package directories.
    *
    * @param psiPackage the package to return the list of files for.
    * @param scope      the scope in which files are searched.
-   * @return the list of files.
+   * @return the array of files.
    */
   public PsiFile @NotNull [] getPackageFiles(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     return PsiFile.EMPTY_ARRAY;
@@ -141,7 +134,7 @@ public abstract class PsiElementFinder {
       return Collections.emptySet();
     }
 
-    final HashSet<String> names = new HashSet<>();
+    Set<String> names = new HashSet<>(classes.length);
     for (PsiClass aClass : classes) {
       ContainerUtil.addIfNotNull(names, aClass.getName());
     }
@@ -162,12 +155,12 @@ public abstract class PsiElementFinder {
   }
 
   /**
-   * Returns the list of classes in the specified package and in the specified search scope.
+   * Returns the array of classes in the specified package and in the specified search scope.
    *
    * @param className short name of the class
    * @param psiPackage the package to return the list of classes in.
    * @param scope the scope in which classes are searched.
-   * @return the list of classes.
+   * @return the array of classes.
    * @see PsiPackage#getClasses(GlobalSearchScope)
    */
   public PsiClass @NotNull [] getClasses(@Nullable String className, @NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {

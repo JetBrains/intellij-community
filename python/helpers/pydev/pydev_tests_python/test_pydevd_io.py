@@ -1,18 +1,33 @@
 from _pydevd_bundle.pydevd_io import IORedirector
 from _pydevd_bundle.pydevd_comm import NetCommandFactory
+import pytest
 
 
 def test_io_redirector():
 
     class MyRedirection1(object):
-        pass
+        encoding = 'foo'
 
     class MyRedirection2(object):
         pass
 
+    my_redirector = IORedirector(MyRedirection1(), MyRedirection2(), wrap_buffer=True)
+    none_redirector = IORedirector(None, None, wrap_buffer=True)
+
+    assert my_redirector.encoding == 'foo'
+    with pytest.raises(AttributeError):
+        none_redirector.encoding
+
     # Check that we don't fail creating the IORedirector if the original
     # doesn't have a 'buffer'.
-    IORedirector(MyRedirection1(), MyRedirection2(), wrap_buffer=True)
+    for redirector in (
+            my_redirector,
+            none_redirector,
+        ):
+        redirector.write('test')
+        redirector.flush()
+
+    assert not redirector.isatty()
 
 
 class _DummyWriter(object):
@@ -29,12 +44,13 @@ class _DummyWriter(object):
         self.command_meanings.append(meaning)
         self.commands.append(cmd)
 
+
 class _DummyPyDb(object):
-    
+
     def __init__(self):
         self.cmd_factory = NetCommandFactory()
         self.writer = _DummyWriter()
-    
+
 
 def test_debug_console():
     from _pydev_bundle.pydev_console_utils import DebugConsoleStdIn

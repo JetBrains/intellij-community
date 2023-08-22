@@ -1,33 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class ClassDependencyLoader {
-  private final Set<Class<?>> myVisited = new HashSet<Class<?>>();
+  private final Set<Class<?>> myVisited = new HashSet<>();
 
   /**
-   * @param aClass
-   * @return aClass
    * @throws ClassNotFoundException when any of the classes can't be loaded, that's referenced in aClass' fields, methods etc. recursively
    */
   public Class loadDependencies(Class aClass) throws ClassNotFoundException {
@@ -70,6 +52,9 @@ public class ClassDependencyLoader {
           for (Type type : method.getGenericParameterTypes()) {
             loadTypeDependencies(type);
           }
+          for (Annotation[] annotations : method.getParameterAnnotations()) {
+            loadAnnotationAttributes(annotations);
+          }
         }
         for (Constructor method : aClass.getDeclaredConstructors()) {
           for (Type type : method.getGenericExceptionTypes()) {
@@ -78,10 +63,14 @@ public class ClassDependencyLoader {
           for (Type type : method.getGenericParameterTypes()) {
             loadTypeDependencies(type);
           }
+          for (Annotation[] annotations : method.getParameterAnnotations()) {
+            loadAnnotationAttributes(annotations);
+          }
         }
 
         for (Field field : aClass.getDeclaredFields()) {
           loadTypeDependencies(field.getGenericType());
+          loadAnnotationAttributes(field.getDeclaredAnnotations());
         }
 
         Type superclass = aClass.getGenericSuperclass();
@@ -93,17 +82,17 @@ public class ClassDependencyLoader {
           loadTypeDependencies(intf);
         }
 
-        aClass.getAnnotations();
+        loadAnnotationAttributes(aClass.getAnnotations());
         Package aPackage = aClass.getPackage();
         if (aPackage != null) {
-          aPackage.getAnnotations();
+          loadAnnotationAttributes(aPackage.getAnnotations());
         }
       }
       catch (Error e) {
         myVisited.remove(aClass);
         //noinspection InstanceofCatchParameter
         if (e instanceof LinkageError) {
-          throw new ClassNotFoundException(name);
+          throw new ClassNotFoundException(name, e);
         }
         throw e;
       }
@@ -111,11 +100,37 @@ public class ClassDependencyLoader {
         myVisited.remove(aClass);
         //noinspection InstanceofCatchParameter
         if (e instanceof TypeNotPresentException) {
-          throw new ClassNotFoundException(name);
+          throw new ClassNotFoundException(name, e);
         }
         throw e;
       }
     }
   }
 
+  private void loadAnnotationAttributes(Annotation[] annotations) throws ClassNotFoundException {
+    for (Annotation annotation : annotations) {
+      loadAnnotationAttributes(annotation);
+    }
+  }
+
+  private void loadAnnotationAttributes(Annotation annotation) throws ClassNotFoundException {
+    Class<? extends Annotation> annotationType = annotation.annotationType();
+    loadClassDependencies(annotationType);
+    Method[] methods = annotationType.getDeclaredMethods();
+    for (Method method : methods) {
+      try {
+        method.invoke(annotation);
+      }
+      catch (IllegalAccessException e) {
+        // for example internal jdk annotations -> do nothing
+      }
+      catch (InvocationTargetException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof TypeNotPresentException) {
+          throw (TypeNotPresentException)cause;
+        }
+        throw new RuntimeException(e);
+      }
+    }
+  }
 }

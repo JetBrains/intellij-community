@@ -1,22 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ui.ColorChooser;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.picker.ColorListener;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -24,119 +25,99 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
-public class ColorSelectionComponent extends JPanel {
-  private static final String CUSTOM_COLOR_NAME = "Custom";
+public final class ColorSelectionComponent extends JPanel {
   private final Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
   private final ButtonGroup myButtonGroup = new ButtonGroup();
-  private ChangeListener myChangeListener;
+
+  private final static String CUSTOM_COLOR_ID = "Custom";
 
   public ColorSelectionComponent() {
     super(new GridLayout(1, 0, 5, 5));
     setOpaque(false);
   }
 
-  public void setChangeListener(ChangeListener changeListener) {
-    myChangeListener = changeListener;
-  }
-
-  public void setSelectedColor(String colorName) {
+  public void setSelectedColor(@NlsContexts.Button String colorName) {
     AbstractButton button = myColorToButtonMap.get(colorName);
     if (button != null) {
       button.setSelected(true);
     }
   }
 
-  @NotNull
-  public Collection<String> getColorNames() {
-    return myColorToButtonMap.keySet();
-  }
-
-  @Nullable
-  public String getColorName(@Nullable Color color) {
-    if (color == null) return null;
-    for (String name : myColorToButtonMap.keySet()) {
-      if (color.getRGB() == myColorToButtonMap.get(name).getColor().getRGB()) {
-        return name;
-      }
-    }
-    return null;
-  }
-
-  public void addCustomColorButton() {
+  private void addCustomColorButton() {
     CustomColorButton customButton = new CustomColorButton();
     myButtonGroup.add(customButton);
     add(customButton);
-    myColorToButtonMap.put(customButton.getText(), customButton);
+    myColorToButtonMap.put(CUSTOM_COLOR_ID, customButton);
   }
 
-  public void addColorButton(@NotNull String name, @NotNull Color color) {
+  private void addColorButton(@NotNull @NonNls String colorID, @NotNull @NlsContexts.Button String name, @NotNull Color color) {
     ColorButton colorButton = new ColorButton(name, color);
     myButtonGroup.add(colorButton);
     add(colorButton);
-    myColorToButtonMap.put(name, colorButton);
+    myColorToButtonMap.put(colorID, colorButton);
   }
 
   public void setCustomButtonColor(@NotNull Color color) {
-    CustomColorButton button = (CustomColorButton)myColorToButtonMap.get(CUSTOM_COLOR_NAME);
+    CustomColorButton button = (CustomColorButton)myColorToButtonMap.get(CUSTOM_COLOR_ID);
     button.setColor(color);
     button.setSelected(true);
     button.repaint();
   }
 
   @Nullable
+  @NonNls
   public String getSelectedColorName() {
     for (String name : myColorToButtonMap.keySet()) {
       ColorButton button = myColorToButtonMap.get(name);
       if (!button.isSelected()) continue;
       if (button instanceof CustomColorButton) {
-        final String color = ColorUtil.toHex(button.getColor());
-        String colorName  = FileColorManagerImpl.getColorName(button.getColor());
-        return colorName == null ? color : colorName;
+        String colorHexString = ColorUtil.toHex(button.getColor());
+        String colorID  = FileColorManagerImpl.getColorID(button.getColor());
+        return colorID == null ? colorHexString : colorID;
       }
       return name;
     }
     return null;
   }
 
-  public void initDefault(@NotNull FileColorManager manager, @Nullable String selectedColorName) {
-    for (String name : manager.getColorNames()) {
-      addColorButton(name, Objects.requireNonNull(manager.getColor(name)));
+  public void initDefault(@NotNull FileColorManager manager, @Nullable @NlsContexts.Button String selectedColorName) {
+    for (String id : manager.getColorIDs()) {
+      addColorButton(id, manager.getColorName(id), Objects.requireNonNull(manager.getColor(id)));
     }
     addCustomColorButton();
     setSelectedColor(selectedColorName);
   }
 
-  private class ColorButton extends ColorButtonBase {
-    protected ColorButton(String text, Color color) {
+  private static class ColorButton extends ColorButtonBase {
+    protected ColorButton(@NlsContexts.Button String text, Color color) {
       super(text, color);
     }
 
     @Override
-    protected void doPerformAction(ActionEvent e) {
-      stateChanged();
-    }
+    protected void doPerformAction(ActionEvent e) {}
   }
 
-  public void stateChanged() {
-    if (myChangeListener != null) {
-      myChangeListener.stateChanged(new ChangeEvent(this));
-    }
-  }
-
-  private class CustomColorButton extends ColorButton {
+  private static final class CustomColorButton extends ColorButton {
     private CustomColorButton() {
-      super(CUSTOM_COLOR_NAME, JBColor.WHITE);
+      super(IdeBundle.message("settings.file.color.custom.name"), JBColor.WHITE);
       myColor = null;
     }
 
     @Override
     protected void doPerformAction(ActionEvent e) {
-      final Color color = ColorChooser.chooseColor(this, IdeBundle.message("dialog.title.choose.color"), myColor);
-      if (color != null) {
-        myColor = color;
-      }
-      setSelected(myColor != null);
-      stateChanged();
+      RelativePoint location = new RelativePoint(this, new Point(getWidth() / 2, getHeight()));
+      ColorListener listener = new ColorListener() {
+        @Override
+        public void colorChanged(Color color, Object source) {
+          if (color != null) {
+            myColor = color;
+          }
+          setSelected(myColor != null);
+          CustomColorButton.this.revalidate();
+          CustomColorButton.this.repaint();
+        }
+      };
+      ColorChooserService.getInstance().showPopup(null, myColor, listener, location);
     }
 
     @Override

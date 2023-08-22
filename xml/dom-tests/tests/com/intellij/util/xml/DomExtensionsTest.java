@@ -1,18 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Key;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.ParameterizedTypeImpl;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,7 +88,8 @@ public class DomExtensionsTest extends DomTestCase {
     registerDomExtender(FixedDomExtender.class);
     final MyElement myElement = createElement("<a attr=\"xxx\"><xxx>zzz</xxx><yyy attr=\"foo\"/><yyy attr=\"bar\"/></a>", MyElement.class);
     assertUnorderedCollection(getCustomChildren(myElement), element -> {
-      assertEquals(GenericDomValue.class, ReflectionUtil.getRawType(element.getDomElementType()));
+      @NotNull Type type = element.getDomElementType();
+      assertEquals(GenericDomValue.class, ClassUtil.getRawType(type));
       final StringBuffer stringBuffer = ((GenericDomValue<StringBuffer>)element).getValue();
       assertEquals("zzz", stringBuffer.toString());
       assertInstanceOf(((GenericDomValue<StringBuffer>)element).getConverter(), MyStringBufferConverter.class);

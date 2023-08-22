@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.smartEnter;
 
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHand
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -23,24 +24,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SmartEnterAction extends EditorAction {
+public final class SmartEnterAction extends EditorAction {
   public SmartEnterAction() {
     super(new Handler());
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static final class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      if (editor instanceof EditorWindow && editor.isOneLineMode()) {
+        // One-line injection: prefer for host instead
+        return false;
+      }
       return getEnterHandler().isEnabled(editor, caret, dataContext);
     }
 
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null || editor.isOneLineMode()) {
         plainEnter(editor, caret, dataContext);

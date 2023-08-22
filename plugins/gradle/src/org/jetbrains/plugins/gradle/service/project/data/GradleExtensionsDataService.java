@@ -49,7 +49,7 @@ public class GradleExtensionsDataService extends AbstractProjectDataService<Grad
   }
 
   @Override
-  public void importData(@NotNull Collection<DataNode<GradleExtensions>> toImport,
+  public void importData(@NotNull Collection<? extends DataNode<GradleExtensions>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {

@@ -17,26 +17,23 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.ChainedComparisonsQuickFix;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyLiteralExpression;
-import org.jetbrains.annotations.Nls;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -47,20 +44,14 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyChainedComparisonsInspection extends PyInspection {
 
-  protected static final String ourIgnoreConstantOptionText = "Ignore statements with a constant in the middle";
   private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
   public boolean ignoreConstantInTheMiddle = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    JCheckBox checkBox = PythonUiService.getInstance().createInspectionCheckBox(ourIgnoreConstantOptionText, this, "ignoreConstantInTheMiddle");
-    final JPanel rootPanel = new JPanel(new BorderLayout());
-    if (checkBox != null) {
-      rootPanel.add(checkBox,
-                    BorderLayout.PAGE_START);
-    }
-    return rootPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreConstantInTheMiddle", PyPsiBundle.message("INSP.chained.comparisons.ignore.statements.with.constant.in.the.middle"))
+    );
   }
 
   @NotNull
@@ -68,10 +59,10 @@ public class PyChainedComparisonsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoreConstantInTheMiddle);
+    return new Visitor(holder, ignoreConstantInTheMiddle, PyInspectionVisitor.getContext(session));
   }
 
-  private static class Visitor extends PyInspectionVisitor {
+  private class Visitor extends PyInspectionVisitor {
     /**
      * @see ChainedComparisonsQuickFix#ChainedComparisonsQuickFix(boolean, boolean, boolean)
      */
@@ -82,13 +73,15 @@ public class PyChainedComparisonsInspection extends PyInspection {
     boolean isConstantInTheMiddle;
     boolean ignoreConstantInTheMiddle;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreConstantInTheMiddle) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            boolean ignoreConstantInTheMiddle,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
       this.ignoreConstantInTheMiddle = ignoreConstantInTheMiddle;
     }
 
     @Override
-    public void visitPyBinaryExpression(final PyBinaryExpression node) {
+    public void visitPyBinaryExpression(final @NotNull PyBinaryExpression node) {
       myIsLeft = false;
       myIsRight = false;
       myOperator = null;
@@ -118,12 +111,16 @@ public class PyChainedComparisonsInspection extends PyInspection {
         if (applicable) {
           if (isConstantInTheMiddle) {
             if (!ignoreConstantInTheMiddle) {
-              registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
-                              new DontSimplifyStatementsWithConstantInTheMiddleQuickFix());
+              registerProblem(node, PyPsiBundle.message("INSP.simplify.chained.comparison"),
+                              new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
+                              LocalQuickFix.from(new UpdateInspectionOptionFix(
+                                PyChainedComparisonsInspection.this, "ignoreConstantInTheMiddle",
+                                PyPsiBundle.message("INSP.chained.comparisons.ignore.statements.with.constant.in.the.middle"),
+                                true)));
             }
           }
           else {
-            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
+            registerProblem(node, PyPsiBundle.message("INSP.simplify.chained.comparison"), new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
           }
         }
       }
@@ -231,23 +228,6 @@ public class PyChainedComparisonsInspection extends PyInspection {
         result = ((PyBinaryExpression)result).getRightExpression();
       }
       return result;
-    }
-  }
-
-  private static class DontSimplifyStatementsWithConstantInTheMiddleQuickFix implements LocalQuickFix {
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return ourIgnoreConstantOptionText;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiFile file = descriptor.getStartElement().getContainingFile();
-      InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it ->
-        ((PyChainedComparisonsInspection)it.getUnwrappedTool(INSPECTION_SHORT_NAME, file)).ignoreConstantInTheMiddle = true);
     }
   }
 }

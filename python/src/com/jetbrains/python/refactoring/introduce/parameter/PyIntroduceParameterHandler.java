@@ -24,7 +24,7 @@ import java.util.List;
 
 public class PyIntroduceParameterHandler extends IntroduceHandler {
   public PyIntroduceParameterHandler() {
-    super(new VariableValidator(), PyBundle.message("refactoring.introduce.parameter.dialog.title"));
+    super(new VariableValidator(), PyBundle.message("refactoring.extract.parameter.dialog.title"));
   }
 
   @Override
@@ -79,7 +79,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
       }
       new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyReferenceExpression(PyReferenceExpression node) {
+        public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
           super.visitPyReferenceExpression(node);
 
           final String name = node.getName();
@@ -110,11 +110,10 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
   }
 
   private static boolean isResolvedToParameter(PsiElement element) {
-    while (element instanceof PyReferenceExpression) {
-      final PsiReference reference = element.getReference();
-      if (reference != null && reference.resolve() instanceof PyNamedParameter)
+    while (element instanceof PyReferenceExpression ref) {
+      if (ref.getReference().resolve() instanceof PyNamedParameter)
         return true;
-      element = ((PyReferenceExpression)element).getQualifier();
+      element = ref.getQualifier();
     }
     return false;
   }
@@ -137,9 +136,9 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     private final PyNamedParameter myTarget;
 
     PyInplaceParameterIntroducer(PyNamedParameter target,
-                                       IntroduceOperation operation,
-                                       List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), "Introduce Parameter",
+                                 IntroduceOperation operation,
+                                 List<PsiElement> occurrences) {
+      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("refactoring.introduce.parameter.dialog.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
     }

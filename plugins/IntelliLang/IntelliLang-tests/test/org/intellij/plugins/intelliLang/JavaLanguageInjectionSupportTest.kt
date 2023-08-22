@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang
 
 import com.intellij.lang.Language
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parentOfType
@@ -55,8 +55,33 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
     |      }
     |    """.trimMargin())
 
+    assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
     UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
 
+    assertInjectedLangAtCaret(null)
+  }
+
+  fun testTemplateLanguageInjection() {
+    myFixture.configureByText("Foo.java", """
+      class Foo {
+          void bar() {
+              baz("Text with **Mark<caret>down**");
+          }
+
+          void baz(String str){}
+      }
+    """)
+    assertNotNull(myFixture.getAvailableIntention("Inject language or reference"))
+    InjectLanguageAction.invokeImpl(project,
+                                    myFixture.editor,
+                                    myFixture.file,
+                                    Injectable.fromLanguage(Language.findLanguageByID("Markdown"))
+    )
+
+    assertInjectedLangAtCaret("XML")
+
+    assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
+    UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
     assertInjectedLangAtCaret(null)
   }
 
@@ -65,7 +90,7 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
 
     fun currentPrintlnInjection(): BaseInjection? {
       val psiMethod = topLevelFile.findElementAt(topLevelCaretPosition)!!.parentOfType<PsiMethodCallExpression>()!!.resolveMethod()!!
-      val injection = JavaLanguageInjectionSupport.makeParameterInjection(psiMethod, 0, "JSON");
+      val injection = JavaLanguageInjectionSupport.makeParameterInjection(psiMethod, 0, "JSON")
       return InjectorUtils.getEditableInstance(project).findExistingInjection(injection)
     }
 
@@ -107,24 +132,7 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
 
 
   fun testConfigUnInjectionAndUndo() {
-
-    val customInjection = BaseInjection("java").apply {
-      injectedLanguageId = "JSON"
-      setInjectionPlaces(
-        InjectionPlace(compiler.createElementPattern(
-          """psiParameter().ofMethod(0, psiMethod().withName("println").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
-          "println JSOM"), true
-        ),
-        InjectionPlace(compiler.createElementPattern(
-          """psiParameter().ofMethod(0, psiMethod().withName("print").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
-          "print JSON"), true
-        )
-      )
-    }
-
-    Configuration.getInstance().replaceInjections(listOf(customInjection), listOf(), true)
-
-    try {
+    Configuration.getInstance().withInjections(listOf(jsonToPrintlnInjection())) {
       myFixture.configureByText("Foo.java", """
       class Foo {
           void bar() {
@@ -141,21 +149,83 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
       undo(topLevelEditor)
       assertInjectedLangAtCaret(null)
     }
-    finally {
-      Configuration.getInstance().replaceInjections(listOf(), listOf(customInjection), true)
+
+  }
+  
+  fun testPartialJson() {
+    Configuration.getInstance().withInjections(listOf(jsonToPrintlnInjection())) {
+      myFixture.configureByText("Foo.java", """
+      class Foo {
+          void bar() {
+              System.out.println(
+                        "{'id': '0'," +
+                                "'uri': 'http://localhost/'}"
+                                .replaceAll("'", "\""));
+              System.out.println("{ bad_json: 123 }".replaceAll("'", "\""));
+          }
+      }
+    """)
+      injectionTestFixture.assertInjectedContent("'", "{'id': '0',missingValue")
+    }
+  }
+  
+  
+  fun testRegexJson() {
+    Configuration.getInstance().withInjections(listOf(jsonToPrintlnInjection().apply { 
+      setValuePattern("""\((.*?)\)""")
+      isSingleFile = true
+    })) {
+      myFixture.configureByText("Foo.java", """
+      class Foo {
+          void bar() {
+              System.out.println("({'id':1,) bbb ('boo': 3})");
+          }
+      }
+    """)
+      injectionTestFixture.assertInjectedContent("{'id':1,'boo': 3}")
+    }
+  } 
+  
+  fun testRegexJsonNotSingle() {
+    Configuration.getInstance().withInjections(listOf(jsonToPrintlnInjection().apply { 
+      setValuePattern("""\((.*?)\)""")
+      isSingleFile = false
+    })) {
+      myFixture.configureByText("Foo.java", """
+      class Foo {
+          void bar() {
+              System.out.println("({'id':1}) bbb ({'boo': 3})");
+          }
+      }
+    """)
+      injectionTestFixture.assertInjectedContent("{'id':1}", "{'boo': 3}")
     }
   }
 
+  private fun jsonToPrintlnInjection(): BaseInjection = BaseInjection("java").apply {
+     injectedLanguageId = "JSON"
+     setInjectionPlaces(
+       InjectionPlace(compiler.createElementPattern(
+         """psiParameter().ofMethod(0, psiMethod().withName("println").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
+         "println JSOM"), true
+       ),
+       InjectionPlace(compiler.createElementPattern(
+         """psiParameter().ofMethod(0, psiMethod().withName("print").withParameters("java.lang.String").definedInClass("java.io.PrintStream"))""",
+         "print JSON"), true
+       )
+     )
+   }
+
   private fun undo(editor: Editor) {
     UIUtil.invokeAndWaitIfNeeded(Runnable {
-      val oldTestDialog = Messages.setTestDialog(TestDialog.OK)
+      val oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK)
       try {
         val undoManager = UndoManager.getInstance(project)
         val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
         undoManager.undo(textEditor)
       }
       finally {
-        Messages.setTestDialog(oldTestDialog)
+        TestDialogManager.setTestDialog(oldTestDialog)
       }
     })
   }

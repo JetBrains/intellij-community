@@ -19,7 +19,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Scope"/>
+        <border type="none" title-resource-bundle="messages/XPathBundle" title-key="border.title.scope"/>
         <children>
           <component id="fc054" class="javax.swing.JRadioButton" binding="myWholeProjectScope">
             <constraints>
@@ -27,7 +27,7 @@
             </constraints>
             <properties>
               <margin top="0" left="3" bottom="0" right="3"/>
-              <text value="&amp;Whole Project"/>
+              <text resource-bundle="messages/XPathBundle" key="radio.button.whole.project"/>
             </properties>
           </component>
           <component id="9b8af" class="javax.swing.JRadioButton" binding="myDirectoryScope">
@@ -36,7 +36,7 @@
             </constraints>
             <properties>
               <margin top="0" left="3" bottom="0" right="3"/>
-              <text value="&amp;Directory:"/>
+              <text resource-bundle="messages/XPathBundle" key="radio.button.directory"/>
             </properties>
           </component>
           <component id="47ca7" class="javax.swing.JRadioButton" binding="myModuleScope">
@@ -46,7 +46,7 @@
             <properties>
               <contentAreaFilled value="true"/>
               <margin top="0" left="3" bottom="0" right="3"/>
-              <text value="M&amp;odule:"/>
+              <text resource-bundle="messages/XPathBundle" key="radio.button.module"/>
               <verticalAlignment value="0"/>
               <verticalTextPosition value="0"/>
               <visible value="true"/>
@@ -70,7 +70,7 @@
             </constraints>
             <properties>
               <margin top="0" left="3" bottom="0" right="3"/>
-              <text value="&amp;Custom:"/>
+              <text resource-bundle="messages/XPathBundle" key="radio.button.custom"/>
               <visible value="true"/>
             </properties>
           </component>
@@ -88,7 +88,7 @@
             </constraints>
             <properties>
               <margin top="0" left="3" bottom="0" right="3"/>
-              <text value="&amp;Recursively"/>
+              <text resource-bundle="messages/XPathBundle" key="checkbox.recursively"/>
             </properties>
           </component>
         </children>

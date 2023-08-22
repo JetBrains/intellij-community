@@ -1,26 +1,52 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.plugins.github.api.GHGQLRequests
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GHRepositoryPath
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import java.util.concurrent.CompletableFuture
+import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
+import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
+import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import kotlin.properties.Delegates
 
-internal interface GHPRListLoader : GHListLoader {
-  @get:CalledInAwt
-  val outdated: Boolean
-  @get:CalledInAwt
-  val filterNotEmpty: Boolean
+internal class GHPRListLoader(
+  progressManager: ProgressManager,
+  requestExecutor: GithubApiRequestExecutor,
+  repository: GHRepositoryCoordinates,
+) : GHListLoaderBase<GHPullRequestShort>(progressManager) {
 
-  @CalledInAwt
-  fun findData(id: GHPRIdentifier): GHPullRequestShort?
+  var searchQuery by Delegates.observable<GHPRSearchQuery?>(null) { _, _, _ ->
+    reset()
+  }
 
-  @CalledInAwt
-  fun updateData(pullRequest: GHPullRequestShort)
+  private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
+    GHGQLRequests.PullRequest.search(repository.serverPath, buildQuery(repository.repositoryPath, searchQuery), p)
+  }, pageSize = 50)
 
-  @CalledInAwt
-  fun resetFilter()
+  override fun canLoadMore() = !loading && loader.hasNext && error == null
 
-  @CalledInAwt
-  fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit)
+  override fun doLoadMore(indicator: ProgressIndicator, update: Boolean) = loader.loadNext(indicator, update)
+
+  override fun reset() {
+    loader.reset()
+    super.reset()
+  }
+
+  companion object {
+    private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GHPRSearchQuery?): String {
+      return GithubApiSearchQueryBuilder.searchQuery {
+        term(GHPRSearchQuery.QualifierName.type.createTerm(GithubIssueSearchType.pr.name))
+        term(GHPRSearchQuery.QualifierName.repo.createTerm(repoPath.toString()))
+        if (searchQuery != null) {
+          for (term in searchQuery.terms) {
+            this.term(term)
+          }
+        }
+      }
+    }
+  }
 }

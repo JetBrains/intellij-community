@@ -16,6 +16,7 @@
 package com.intellij.designer.palette;
 
 import com.intellij.designer.model.MetaModel;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +27,13 @@ import javax.swing.*;
  */
 public interface PaletteItem {
   @NotNull
-  String getTitle();
+  @NlsSafe String getTitle();
 
   Icon getIcon();
 
-  String getTooltip();
+  @NlsSafe String getTooltip();
 
-  String getVersion();
+  @NlsSafe String getVersion();
 
   boolean isEnabled();
 
@@ -54,17 +55,17 @@ public interface PaletteItem {
   String getDeprecatedHint();
 
   /**
-   * @return the creation data to be used by {@link com.intellij.designer.model.MetaModel#getCreation()}
+   * @return the creation data to be used by {@link MetaModel#getCreation()}
    */
   String getCreation();
 
   /**
-   * Returns the associated {@link com.intellij.designer.model.MetaModel}, if known
+   * Returns the associated {@link MetaModel}, if known
    */
   MetaModel getMetaModel();
 
   /**
-   * Sets the associated {@link com.intellij.designer.model.MetaModel}, if known
+   * Sets the associated {@link MetaModel}, if known
    */
   void setMetaModel(MetaModel metaModel);
 }

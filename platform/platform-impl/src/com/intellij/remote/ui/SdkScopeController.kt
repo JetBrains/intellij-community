@@ -33,7 +33,7 @@ object ApplicationOnlySdkScopeController : SdkScopeController {
   override var isProjectLevel: Boolean
     get() = false
     set(value) {
-      if (value) throw IllegalArgumentException("Project level of SDK is not supported")
+      if (value) throw IllegalArgumentException("Project level of SDK is not supported")//NON-NLS
     }
 
   /**
@@ -42,5 +42,5 @@ object ApplicationOnlySdkScopeController : SdkScopeController {
    *
    * @param listener the listener
    */
-  override fun addListener(listener: SdkScopeController.SdkScopeChangeListener) = Unit
+  override fun addListener(listener: SdkScopeController.SdkScopeChangeListener): Unit = Unit
 }

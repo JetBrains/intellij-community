@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.surround.surrounders.expressions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.IncorrectOperationException
 import com.jetbrains.python.psi.*
@@ -23,7 +24,8 @@ class PyLenExpressionStatementSurrounder : PyExpressionSurrounder() {
 
   override fun isApplicable(expr: PyExpression) = true
 
-  override fun getTemplateDescription()= "len(expr)"
+  @NlsSafe
+  override fun getTemplateDescription() = "len(expr)"
 
   companion object {
     const val FUNCTION_LENGTH = "len()".length

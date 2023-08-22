@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,9 +22,10 @@ import javax.swing.*;
 public abstract class FrameworkSupportProvider {
   public static final ExtensionPointName<FrameworkSupportProvider> EXTENSION_POINT = ExtensionPointName.create("com.intellij.frameworkSupport");
   private final String myId;
-  private final String myTitle;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myTitle;
 
-  protected FrameworkSupportProvider(@NotNull @NonNls final String id, @NotNull final String title) {
+  protected FrameworkSupportProvider(@NotNull @NonNls final String id,
+                                     @NotNull final @Nls(capitalization = Nls.Capitalization.Title) String title) {
     myId = id;
     myTitle = title;
   }
@@ -48,6 +50,7 @@ public abstract class FrameworkSupportProvider {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getTitle() {
     return myTitle;
   }

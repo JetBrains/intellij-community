@@ -1,4 +1,4 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 class a {
     void g() throws Exception {
     }
@@ -7,7 +7,7 @@ class a {
             g();
         } catch (Error e) {
         } catch (Exception e) {
-            <caret><selection>e.printStackTrace();</selection>
+            <caret><selection>throw new RuntimeException(e);</selection>
         }
     }
 }

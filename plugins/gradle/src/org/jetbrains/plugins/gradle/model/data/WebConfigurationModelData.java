@@ -32,10 +32,8 @@ public final class WebConfigurationModelData extends AbstractExternalEntityData 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof WebConfigurationModelData)) return false;
+    if (!(o instanceof WebConfigurationModelData data)) return false;
     if (!super.equals(o)) return false;
-
-    WebConfigurationModelData data = (WebConfigurationModelData)o;
 
     if (!artifacts.equals(data.artifacts)) return false;
 

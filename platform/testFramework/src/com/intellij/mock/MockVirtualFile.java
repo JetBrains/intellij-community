@@ -15,9 +15,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class MockVirtualFile extends VirtualFile {
   public static MockVirtualFile dir(@NotNull String name, MockVirtualFile... children) {
     MockVirtualFile dir = new MockVirtualFile(true, name);
@@ -177,7 +174,7 @@ public class MockVirtualFile extends VirtualFile {
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) { }
 
   @Override
-  public InputStream getInputStream() {
+  public @NotNull InputStream getInputStream() {
     throw new UnsupportedOperationException("Method getInputStream is not yet implemented in " + getClass().getName());
   }
 

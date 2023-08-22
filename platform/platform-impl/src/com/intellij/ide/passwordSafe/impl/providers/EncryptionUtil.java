@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -18,7 +18,7 @@ import java.security.MessageDigest;
  * Utilities used to encrypt/decrypt passwords in case of Java-based implementation of PasswordSafe.
  * The class internal and could change without notice.
  */
-public class EncryptionUtil {
+public final class EncryptionUtil {
   /**
    * The hash algorithm used for keys
    */
@@ -137,8 +137,7 @@ public class EncryptionUtil {
     }
   }
 
-  @NotNull
-  public static OneTimeString decryptText(byte[] password, byte[] data) {
+  public static @NotNull OneTimeString decryptText(byte[] password, byte[] data) {
     byte[] plain = decryptData(password, data);
     int len = ((plain[0] & 0xff) << 24) + ((plain[1] & 0xff) << 16) + ((plain[2] & 0xff) << 8) + (plain[3] & 0xff);
     if (len < 0 || len > plain.length - 4) {

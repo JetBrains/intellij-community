@@ -1,37 +1,23 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -49,13 +35,10 @@ import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
-/**
- * @author peter
- */
-public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDataProvider {
+public abstract class AbstractTableView<T> extends JPanel implements DataProvider {
   private final MyTableView myTable = new MyTableView();
-  private final String myHelpID;
-  private final String myEmptyPaneText;
+  @NonNls private final String myHelpID;
+  @Nls(capitalization = Nls.Capitalization.Sentence) private final String myEmptyPaneText;
   private final JPanel myInnerPanel;
   private final Project myProject;
   private TableCellRenderer[][] myCachedRenderers;
@@ -69,7 +52,9 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     this(project, null, null);
   }
 
-  public AbstractTableView(final Project project, final String emptyPaneText, final String helpID) {
+  public AbstractTableView(final Project project,
+                           @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable final String emptyPaneText,
+                           @NonNls @Nullable final String helpID) {
     super(new BorderLayout());
     myProject = project;
     myTableModel.setSortable(false);
@@ -94,7 +79,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     });
     header.setReorderingAllowed(false);
 
-    myTable.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight());
+    myTable.setRowHeight(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight());
     myTable.setPreferredScrollableViewportSize(JBUI.size(-1, 150));
     myTable.setSelectionMode(allowMultipleRowsSelection() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
@@ -111,11 +96,11 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     ToolTipManager.sharedInstance().registerComponent(myTable);
   }
   protected TableCellRenderer getTableCellRenderer(final int row, final int column, final TableCellRenderer superRenderer, final Object value) {
-    return getTableModel().getColumnInfos()[column].getCustomizedRenderer(value, new StripeTableCellRenderer(superRenderer));
+    return getTableModel().getColumnInfos()[column].getCustomizedRenderer(value, superRenderer);
   }
 
   protected final void installPopup(final String place, final DefaultActionGroup group) {
-    PopupHandler.installPopupHandler(myTable, group, place, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myTable, group, place);
   }
 
   public final void setToolbarActions(final AnAction... actions) {
@@ -146,14 +131,14 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     add(toolbarComponent, position.getPosition());
   }
 
-  protected final void setErrorMessages(String[] messages) {
+  protected final void setErrorMessages(@InspectionMessage String[] messages) {
     final boolean empty = messages.length == 0;
     final String tooltipText = TooltipUtils.getTooltipText(messages);
     if (myEmptyPane != null) {
       myEmptyPane.getComponent().setBackground(empty ? UIUtil.getTreeBackground() : BaseControl.ERROR_BACKGROUND);
       myEmptyPane.getComponent().setToolTipText(tooltipText);
     }
-    final JViewport viewport = (JViewport)myTable.getParent();
+    final JViewport viewport = ComponentUtil.getViewport(myTable);
     final Color tableBackground = empty ? UIUtil.getTableBackground() : BaseControl.ERROR_BACKGROUND;
     viewport.setBackground(tableBackground);
     viewport.setToolTipText(tooltipText);
@@ -198,6 +183,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     return width;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   protected String getEmptyPaneText() {
     return myEmptyPaneText;
   }
@@ -224,11 +210,13 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     return myTableModel;
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (PlatformDataKeys.HELP_ID.equals(key)) {
-      sink.put(PlatformDataKeys.HELP_ID, getHelpId());
+  public Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return getHelpId();
     }
+    return null;
   }
 
   private String getHelpId() {

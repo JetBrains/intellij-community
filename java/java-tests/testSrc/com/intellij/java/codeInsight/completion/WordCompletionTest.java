@@ -21,6 +21,7 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,7 @@ public class WordCompletionTest extends NormalCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/word/";
   }
 
+  @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for txt, properties and xml")
   public void testKeyWordCompletion() {
     configureByFile("1.txt");
     checkResultByFile("1_after.txt");
@@ -52,7 +54,7 @@ public class WordCompletionTest extends NormalCompletionTestCase {
     final PsiReferenceProvider softProvider = new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, true) {
+        return new PsiReference[]{new PsiReferenceBase<>(element, true) {
           @Override
           public PsiElement resolve() {
             return null;
@@ -68,7 +70,7 @@ public class WordCompletionTest extends NormalCompletionTestCase {
     final PsiReferenceProvider hardProvider = new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, false) {
+        return new PsiReference[]{new PsiReferenceBase<>(element, false) {
           @Override
           public PsiElement resolve() {
             return null;
@@ -107,6 +109,7 @@ public class WordCompletionTest extends NormalCompletionTestCase {
 
   public void testTextInComment() { doTest(); }
 
+  @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for txt, properties and xml")
   public void testDollarsInPrefix() {
     configureByFile(getTestName(false) + ".txt");
     checkResultByFile(getTestName(false) + "_after.txt");

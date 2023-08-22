@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -58,8 +59,7 @@ public class ShowNotificationIconsDialogAction extends AnAction implements DumbA
         panel.add(createIconsRow(NotificationType.ERROR, false));
       }
 
-      @NotNull
-      private JPanel createIconsRow(@NotNull NotificationType notificationType, boolean forToolWindow) {
+      private @NotNull JPanel createIconsRow(@NotNull NotificationType notificationType, boolean forToolWindow) {
         JPanel row = new JPanel();
         row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
         for (int i = 0; i <= 10; i++) {
@@ -72,5 +72,10 @@ public class ShowNotificationIconsDialogAction extends AnAction implements DumbA
         return row;
       }
     }.show();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

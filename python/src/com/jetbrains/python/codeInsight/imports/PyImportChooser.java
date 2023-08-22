@@ -3,8 +3,10 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -13,6 +15,7 @@ import com.intellij.util.Consumer;
 import com.jetbrains.python.PyPsiBundle;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,21 +24,22 @@ import java.util.List;
 public class PyImportChooser implements ImportChooser {
 
   @Override
-  public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources,
-                                                     String name,
-                                                     boolean useQualifiedImport) {
+  public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources, boolean useQualifiedImport) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Promises.resolvedPromise(sources.get(0));
+    }
 
     AsyncPromise<ImportCandidateHolder> result = new AsyncPromise<>();
 
     // GUI part
     DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
       .createPopupChooserBuilder(sources)
-      .setRenderer(new CellRenderer(name))
+      .setRenderer(new CellRenderer())
       .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
       .setItemChosenCallback(item -> {
         result.setResult(item);
       })
-      .setNamerForFiltering(o -> o.getPresentableText(name))
+      .setNamerForFiltering(o -> o.getPresentableText())
       .createPopup()
       .showInBestPositionFor(dataContext));
 
@@ -45,12 +49,10 @@ public class PyImportChooser implements ImportChooser {
   // Stolen from FQNameCellRenderer
   private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer<ImportCandidateHolder> {
     private final Font FONT;
-    private final String myName;
 
-    CellRenderer(String name) {
-      myName = name;
+    CellRenderer() {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+      FONT = scheme.getFont(EditorFontType.PLAIN);
       setOpaque(true);
     }
 
@@ -66,7 +68,7 @@ public class PyImportChooser implements ImportChooser {
       if (importable != null) {
         setIcon(importable.getIcon(0));
       }
-      String item_name = value.getPresentableText(myName);
+      String item_name = value.getPresentableText();
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
       setFont(FONT);

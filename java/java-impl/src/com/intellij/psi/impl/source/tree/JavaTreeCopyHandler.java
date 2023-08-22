@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.jsp.JspxLanguage;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -123,7 +123,7 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
 
     PsiFile file = psi.getContainingFile();
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
-    return baseLanguage == StdLanguages.JSPX && file.getLanguage() != baseLanguage;
+    return baseLanguage instanceof JspxLanguage && file.getLanguage() != baseLanguage;
   }
 
   @Override
@@ -207,22 +207,15 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
       PsiJavaCodeReferenceElementImpl.Kind
         kind = ((PsiJavaCodeReferenceElementImpl)original).getKindEnum(((PsiJavaCodeReferenceElementImpl)original).getContainingFile());
       switch (kind) {
-        case CLASS_NAME_KIND:
-        case CLASS_OR_PACKAGE_NAME_KIND:
-        case CLASS_IN_QUALIFIED_NEW_KIND:
+        case CLASS_NAME_KIND, CLASS_OR_PACKAGE_NAME_KIND, CLASS_IN_QUALIFIED_NEW_KIND -> {
           PsiElement target = SourceTreeToPsiMap.<PsiJavaCodeReferenceElement>treeToPsiNotNull(original).resolve();
           if (target instanceof PsiClass) {
             ref.putCopyableUserData(JavaTreeGenerator.REFERENCED_CLASS_KEY, (PsiClass)target);
           }
-          break;
-
-        case PACKAGE_NAME_KIND:
-        case CLASS_FQ_NAME_KIND:
-        case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-          break;
-
-        default:
-          LOG.error("Unknown kind: " + kind);
+        }
+        case PACKAGE_NAME_KIND, CLASS_FQ_NAME_KIND, CLASS_FQ_OR_PACKAGE_NAME_KIND -> {
+        }
+        default -> LOG.error("Unknown kind: " + kind);
       }
     }
     else {

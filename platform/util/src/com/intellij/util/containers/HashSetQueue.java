@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractCollection;
@@ -23,16 +10,23 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 
 /**
- * Unbounded non-thread-safe {@link Queue} with fast add/remove/contains.<br>
- * Differs from the conventional Queue by:<ul>
- * <li>The new method {@link #find(T)} which finds the queue element equivalent to its parameter in O(1) avg. time</li>
- * <li>The {@link #contains(Object)} method is O(1)</li>
- * <li>The {@link #remove(Object)} method is O(1)</li>
+ * Unbounded non-thread-safe {@link Queue} with fast {@link #add}/{@link #remove(Object)}/{@link #contains}.<br>
+ * Differs from the conventional {@link Queue} by:<ul>
+ * <li>The new method {@link #find(T)} which finds the queue element equivalent to its argument in hashmap-like O(1) avg. time</li>
+ * <li>The new {@link #contains(Object)} method which is hashmap-like O(1)</li>
+ * <li>The new {@link #remove(Object)} method which is hashmap-like O(1)</li>
+ * <li>Null elements NOT permitted</li>
  * </ul>
- * Implementation is backed by {@link gnu.trove.THashSet} containing double-linked QueueEntry nodes holding elements themselves.
+ * Differs from the conventional {@link java.util.LinkedHashSet} by additional queue flavor:<ul>
+ * <li>The distinguished "first added" (available via {@link #peek()}/{@link #poll()}) and "last added" elements.
+ * (They are stored in {@link #TOMB} field in its {@link QueueEntry#prev} and {@link QueueEntry#next} fields correspondingly)</li>
+ * <li>Ability to iterate these elements in the modification order by {@link PositionalIterator}</li>
+ * <li>Ability to modify these elements in the queue fashion by {@link #offer(Object)}, {@link #poll()}
+ * </ul>
+ * The implementation is backed by {@link ObjectOpenHashSet} containing double-linked QueueEntry nodes holding elements themselves.
  */
-public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
-  private final OpenTHashSet<QueueEntry<T>> set = new OpenTHashSet<>();
+public final class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
+  private final ObjectOpenHashSet<QueueEntry<T>> set = new ObjectOpenHashSet<>();
   // Entries in the queue are double-linked circularly, the TOMB serving as a sentinel.
   // TOMB.next is the first entry; TOMB.prev is the last entry;
   // TOMB.next == TOMB.prev == TOMB means the queue is empty
@@ -42,8 +36,8 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
     TOMB.next = TOMB.prev = TOMB;
   }
 
-  private static class QueueEntry<T> {
-    @NotNull private final T t;
+  private static final class QueueEntry<T> {
+    private final @NotNull T t;
     private QueueEntry<T> next;
     private QueueEntry<T> prev;
 
@@ -60,6 +54,11 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
     public boolean equals(Object obj) {
       //noinspection unchecked
       return obj instanceof QueueEntry && t.equals(((QueueEntry<T>)obj).t);
+    }
+
+    @Override
+    public String toString() {
+      return t.toString();
     }
   }
 
@@ -84,8 +83,7 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
   }
 
   @Override
-  @NotNull
-  public T remove() {
+  public @NotNull T remove() {
     T poll = poll();
     if (poll == null) throw new NoSuchElementException();
     return poll;
@@ -101,8 +99,7 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
   }
 
   @Override
-  @NotNull
-  public T element() {
+  public @NotNull T element() {
     T peek = peek();
     if (peek == null) throw new NoSuchElementException();
     return peek;
@@ -152,9 +149,8 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
     return (T)o;
   }
 
-  @NotNull
   @Override
-  public PositionalIterator<T> iterator() {
+  public @NotNull PositionalIterator<T> iterator() {
     return new PositionalIterator<T>() {
       private QueueEntry<T> cursor = TOMB;
       private long count;
@@ -176,20 +172,19 @@ public class HashSetQueue<T> extends AbstractCollection<T> implements Queue<T> {
         HashSetQueue.this.remove(cursor.t);
       }
 
-      @NotNull
       @Override
-      public IteratorPosition<T> position() {
+      public @NotNull IteratorPosition<T> position() {
         return new MyIteratorPosition<>(cursor, count, TOMB);
       }
     };
   }
 
-  private static class MyIteratorPosition<T> implements PositionalIterator.IteratorPosition<T> {
+  private static final class MyIteratorPosition<T> implements PositionalIterator.IteratorPosition<T> {
     private final QueueEntry<T> cursor;
     private final long count;
     private final QueueEntry<T> TOMB;
 
-    private MyIteratorPosition(@NotNull QueueEntry<T> cursor, long count, QueueEntry<T> TOMB) {
+    private MyIteratorPosition(@NotNull QueueEntry<T> cursor, long count, @NotNull QueueEntry<T> TOMB) {
       this.cursor = cursor;
       this.count = count;
       this.TOMB = TOMB;

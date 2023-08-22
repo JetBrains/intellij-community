@@ -1,0 +1,8 @@
+// WITH_STDLIB
+// FIX: Convert to 'also'
+
+class C {
+    val x = hashSetOf<C>().<caret>also {
+        it.add(this)
+    }
+}

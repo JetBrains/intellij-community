@@ -1,0 +1,16 @@
+_?curses.color_pair
+webbrowser.MacOSXOSAScript.__init__
+
+# Github Actions on macOS with Python 3.10.5 claims these are missing, but they do exist locally
+(locale.bind_textdomain_codeset)?
+(locale.bindtextdomain)?
+(locale.dcgettext)?
+(locale.dgettext)?
+(locale.gettext)?
+(locale.textdomain)?
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+distutils.command.bdist_msi  # Only available on Windows and Python 3.10 and below

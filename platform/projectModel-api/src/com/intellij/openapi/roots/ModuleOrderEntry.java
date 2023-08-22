@@ -16,20 +16,18 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- *  @author dsl
- */
 @ApiStatus.NonExtendable
 public interface ModuleOrderEntry extends ExportableOrderEntry {
   @Nullable
   Module getModule();
 
   @NotNull
-  String getModuleName();
+  @NlsSafe String getModuleName();
 
   /**
    * If {@code true} test sources roots from the dependency will be included into production classpath for the module containing this entry.

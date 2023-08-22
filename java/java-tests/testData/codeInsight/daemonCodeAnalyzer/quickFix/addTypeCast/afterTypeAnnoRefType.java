@@ -1,4 +1,4 @@
-// "Cast to 'java.util.List<java.lang.Integer>'" "true"
+// "Cast expression to 'java.util.List<java.lang.Integer>'" "true-preview"
 import java.lang.annotation.*;
 import java.util.*;
 import static java.lang.annotation.ElementType.*;

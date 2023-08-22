@@ -16,7 +16,6 @@
 package com.jetbrains.python.intentions;
 
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
@@ -143,27 +142,47 @@ public class PyConvertCollectionLiteralIntentionTest extends PyIntentionTestCase
     doNegativeTest(getConvertListToSet());
   }
 
+  // PY-49288
+  public void testCannotConvertTupleInAnnotationToList() {
+    doNegativeTest(getConvertTupleToList());
+  }
+
+  // PY-49288
+  public void testCannotConvertTupleInTypeCommentToSet() {
+    doNegativeTest(getConvertTupleToSet());
+  }
+
+  // PY-49288
+  public void testCannotConvertTupleInFunctionTypeCommentToSet() {
+    doNegativeTest(getConvertTupleToSet());
+  }
+
+  // PY-49288
+  public void testCannotConvertTupleInTypeAliasToSet() {
+    doNegativeTest(getConvertTupleToSet());
+  }
+
   private static String getConvertTupleToList() {
-    return PyPsiBundle.message("INTN.convert.collection.literal.text", "tuple", "list");
+    return PyPsiBundle.message("INTN.convert.collection.literal", "tuple", "list");
   }
 
   private static String getConvertTupleToSet() {
-    return PyPsiBundle.message("INTN.convert.collection.literal.text", "tuple", "set");
+    return PyPsiBundle.message("INTN.convert.collection.literal", "tuple", "set");
   }
 
   private static String getConvertListToTuple() {
-    return PyPsiBundle.message("INTN.convert.collection.literal.text", "list", "tuple");
+    return PyPsiBundle.message("INTN.convert.collection.literal", "list", "tuple");
   }
 
   private static String getConvertListToSet() {
-    return PyPsiBundle.message("INTN.convert.collection.literal.text", "list", "set");
+    return PyPsiBundle.message("INTN.convert.collection.literal", "list", "set");
   }
 
   private static String getConvertSetToTuple() {
-    return PyPsiBundle.message("INTN.convert.collection.literal.text", "set", "tuple");
+    return PyPsiBundle.message("INTN.convert.collection.literal", "set", "tuple");
   }
 
   private static String getConvertSetToList() {
-    return PyPsiBundle.message("INTN.convert.collection.literal.text", "set", "list");
+    return PyPsiBundle.message("INTN.convert.collection.literal", "set", "list");
   }
 }

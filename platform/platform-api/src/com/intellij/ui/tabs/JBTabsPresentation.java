@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -9,21 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public interface JBTabsPresentation {
-
   boolean isHideTabs();
 
   void setHideTabs(boolean hideTabs);
-
-  /**
-   * @deprecated You should implement {@link JBTabsBorder} abstract class
-   */
-  @Deprecated
-  JBTabsPresentation setPaintBorder(int top, int left, int right, int bottom);
-  /**
-   * @deprecated You should implement {@link JBTabsBorder} abstract class
-   */
-  @Deprecated
-  JBTabsPresentation setTabSidePaintBorder(int size);
 
   JBTabsPresentation setPaintFocus(boolean paintFocus);
 
@@ -45,14 +33,6 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setInnerInsets(Insets innerInsets);
 
-  /**
-   * @deprecated This logic is no longer supported, please remove calls of this method
-   */
-  @Deprecated
-  default JBTabsPresentation setGhostsAlwaysVisible(boolean visible) {
-    return this;
-  }
-
   JBTabsPresentation setFocusCycle(final boolean root);
 
   @NotNull
@@ -66,7 +46,7 @@ public interface JBTabsPresentation {
 
   @NotNull
   JBTabsPresentation setTabLabelActionsAutoHide(boolean autoHide);
-  
+
   @NotNull
   JBTabsPresentation setTabLabelActionsMouseDeadzone(TimedDeadzone.Length length);
 

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
@@ -50,11 +51,35 @@ import java.util.List;
 
 import static org.jetbrains.idea.maven.utils.actions.MavenActionUtil.getProject;
 
+/**
+ * Unlink Maven Projects
+ */
 public class RemoveManagedFilesAction extends MavenAction {
   @Override
-  protected boolean isAvailable(@NotNull AnActionEvent e) {
-    if (!super.isAvailable(e)) return false;
-    return MavenActionUtil.getMavenProjectsFiles(e.getDataContext()).size() > 0;
+  protected boolean isVisible(@NotNull AnActionEvent e) {
+    if (!super.isVisible(e)) return false;
+    final DataContext context = e.getDataContext();
+
+    final Project project = getProject(context);
+    if (project == null) return false;
+
+    List<VirtualFile> selectedFiles = MavenActionUtil.getMavenProjectsFiles(context);
+    if (selectedFiles.size() == 0) return false;
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    for (VirtualFile pomXml : selectedFiles) {
+      MavenProject mavenProject = projectsManager.findProject(pomXml);
+      if (mavenProject == null) return false;
+
+      MavenProject aggregator = projectsManager.findAggregator(mavenProject);
+      while (aggregator != null && !projectsManager.isManagedFile(aggregator.getFile())) {
+        aggregator = projectsManager.findAggregator(aggregator);
+      }
+
+      if (aggregator != null && !selectedFiles.contains(aggregator.getFile())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -103,11 +128,12 @@ public class RemoveManagedFilesAction extends MavenAction {
       return;
     }
 
-    removeModules(ModuleManager.getInstance(project), projectsManager, modulesToRemove);
+    removeModules(ModuleManager.getInstance(project), modulesToRemove);
     projectsManager.removeManagedFiles(removableFiles);
     projectsManager.removeIgnoredFilesPaths(filesToUnIgnore); // hack to remove deleted files from ignore list
   }
 
+  @Nls
   private static String getActionTitle(List<String> names) {
     return StringUtil.pluralize(ExternalSystemBundle.message("action.detach.external.project.text", "Maven"), names.size());
   }
@@ -120,7 +146,7 @@ public class RemoveManagedFilesAction extends MavenAction {
     modulesToRemove.add(module);
   }
 
-  private static void removeModules(ModuleManager moduleManager, MavenProjectsManager mavenProjectsManager,  List<Module> modulesToRemove) {
+  private static void removeModules(ModuleManager moduleManager, List<Module> modulesToRemove) {
     WriteAction.run(() -> {
       List<ModifiableRootModel> usingModels = new SmartList<>();
 
@@ -134,7 +160,6 @@ public class RemoveManagedFilesAction extends MavenAction {
           }
         }
       }
-
 
       final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
       for (Module module : modulesToRemove) {

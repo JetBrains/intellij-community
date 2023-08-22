@@ -1,33 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
 import git4idea.GitFormatException;
 import git4idea.GitUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 /**
  * This class processes output of git log command by feeding it line-by-line to the {@link GitLogParser}.
@@ -39,7 +28,7 @@ class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerList
   @NotNull private final GitLogParser<R> myParser;
   @NotNull private final Consumer<? super R> myRecordConsumer;
 
-  @NotNull private final StringBuilder myErrors = new StringBuilder();
+  @NotNull @Nls private final StringBuilder myErrors = new StringBuilder();
   @Nullable private VcsException myException = null;
 
   GitLogOutputSplitter(@NotNull GitLineHandler handler,
@@ -53,11 +42,11 @@ class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerList
   }
 
   @Override
-  public void onLineAvailable(String line, Key outputType) {
-    if (outputType == ProcessOutputTypes.STDERR) {
+  public void onLineAvailable(@NlsSafe String line, Key outputType) {
+    if (ProcessOutputType.isStderr(outputType)) {
       myErrors.append(GitUtil.cleanupErrorPrefixes(line)).append("\n");
     }
-    else if (outputType == ProcessOutputTypes.STDOUT) {
+    else if (ProcessOutputType.isStdout(outputType)) {
       try {
         processOutputLine(line);
       }
@@ -73,17 +62,18 @@ class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerList
     }
   }
 
-  private void processOutputLine(@NotNull String line) throws VcsException {
+  private void processOutputLine(@NotNull @NlsSafe String line) throws VcsException {
     try {
       R record = myParser.parseLine(line);
       if (record != null) {
         record.setUsedHandler(myHandler);
-        myRecordConsumer.consume(record);
+        myRecordConsumer.accept(record);
       }
     }
     catch (GitFormatException e) {
       myParser.clear();
-      throw new VcsException("Error while parsing line \"" + StringUtil.escapeStringCharacters(line) + "\"", e);
+      throw new VcsException(GitBundle.message("log.parser.exception.message.error.parsing.line",
+                                               StringUtil.escapeStringCharacters(line)), e);
     }
   }
 
@@ -94,14 +84,16 @@ class GitLogOutputSplitter<R extends GitLogRecord> implements GitLineHandlerList
       if (errorMessage.isEmpty()) {
         errorMessage = GitBundle.message("git.error.exit", exitCode);
       }
-      myException = new VcsException(errorMessage + "\nCommand line: [" + myHandler.printableCommandLine() + "]");
+      myException = new VcsException(GitBundle.message("log.parser.exception.message.error.command.line",
+                                                       errorMessage,
+                                                       myHandler.printableCommandLine()));
     }
     else {
       try {
         R record = myParser.finish();
         if (record != null) {
           record.setUsedHandler(myHandler);
-          myRecordConsumer.consume(record);
+          myRecordConsumer.accept(record);
         }
       }
       catch (ProcessCanceledException pce) {

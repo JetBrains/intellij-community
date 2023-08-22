@@ -3,6 +3,7 @@ package com.intellij.diff.merge;
 
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffManagerEx;
+import com.intellij.diff.DiffNotificationIdsHolder;
 import com.intellij.diff.actions.impl.NextDifferenceAction;
 import com.intellij.diff.actions.impl.PrevDifferenceAction;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -35,11 +36,11 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 
 // TODO: support merge request chains
 // idea - to keep in memory all viewers that were modified (so binary conflict is not the case and OOM shouldn't be too often)
@@ -112,17 +115,18 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Update
   //
 
-  @CalledInAwt
+  @RequiresEdt
   public void init(@NotNull MergeRequest request) {
     setTitle(request.getTitle());
 
     myRequest = request;
+    onAssigned(myRequest, true);
     myViewer = createViewerFor(request);
     initViewer();
     installCallbackListener(myRequest);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void init(@NotNull MergeRequestProducer request) {
     setTitle(request.getName());
     initViewer();
@@ -133,7 +137,9 @@ public abstract class MergeRequestProcessor implements Disposable {
         MergeRequest mergeRequest = request.process(myContext, ProgressManager.getInstance().getProgressIndicator());
         ApplicationManager.getApplication().invokeLater(
           () -> {
+            if (myDisposed) return;
             myRequest = mergeRequest;
+            onAssigned(myRequest, true);
             swapViewer(createViewerFor(mergeRequest));
             installCallbackListener(myRequest);
           },
@@ -142,7 +148,10 @@ public abstract class MergeRequestProcessor implements Disposable {
       catch (Throwable e) {
         LOG.warn(e);
         ApplicationManager.getApplication().invokeLater(
-          () -> swapViewer(new MessageMergeViewer(myContext, DiffBundle.message("label.cant.show.merge.with.description", e.getMessage()))),
+          () -> {
+            if (myDisposed) return;
+            swapViewer(new MessageMergeViewer(myContext, DiffBundle.message("label.cant.show.merge.with.description", e.getMessage())));
+          },
           modality);
       }
     });
@@ -159,7 +168,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void initViewer() {
     myContentPanel.setContent(myViewer.getComponent());
 
@@ -172,7 +181,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     updateBottomActions();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void destroyViewer() {
     Disposer.dispose(myViewer);
 
@@ -204,7 +213,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);
     List<Action> rightActions = SystemInfo.isMac ? ContainerUtil.packNullables(cancelAction, resolveAction)
-                                                   : ContainerUtil.packNullables(resolveAction, cancelAction);
+                                                 : ContainerUtil.packNullables(resolveAction, cancelAction);
 
     JRootPane rootPane = getRootPane();
     JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout());
@@ -255,7 +264,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     toolbar.setTargetComponent(toolbar.getComponent());
 
     myToolbarPanel.setContent(toolbar.getComponent());
-    ActionUtil.recursiveRegisterShortcutSet(group, myMainPanel, null);
+    recursiveRegisterShortcutSet(group, myMainPanel, null);
   }
 
   @NotNull
@@ -296,7 +305,7 @@ public abstract class MergeRequestProcessor implements Disposable {
       if (myDisposed) return;
       if (!myNotificationPanel.isNull()) return;
 
-      EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
+      EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error);
       notification.setText(DiffBundle.message("error.conflict.is.not.valid.and.no.longer.can.be.resolved"));
       notification.createActionLabel(DiffBundle.message("button.abort.resolve"), () -> {
         applyRequestResult(MergeResult.CANCEL);
@@ -319,10 +328,14 @@ public abstract class MergeRequestProcessor implements Disposable {
 
       destroyViewer();
       applyRequestResult(MergeResult.CANCEL);
+
+      if (myRequest != null) {
+        onAssigned(myRequest, false);
+      }
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void applyRequestResult(@NotNull MergeResult result) {
     if (myConflictResolved || myRequest == null) return;
     myConflictResolved = true;
@@ -331,11 +344,16 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
     catch (Exception e) {
       LOG.warn(e);
-      new Notification("Merge", DiffBundle.message("can.t.finish.merge.resolve"), e.getMessage(), NotificationType.ERROR).notify(myProject);
+      new Notification("Merge Internal Error",
+                       DiffBundle.message("can.t.finish.merge.resolve"),
+                       e.getMessage(),
+                       NotificationType.ERROR)
+        .setDisplayId(DiffNotificationIdsHolder.MERGE_INTERNAL_ERROR)
+        .notify(myProject);
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void reopenWithTool(@NotNull MergeTool tool) {
     if (myRequest == null) return;
     if (myConflictResolved) {
@@ -368,11 +386,20 @@ public abstract class MergeRequestProcessor implements Disposable {
     });
   }
 
+  private static void onAssigned(@NotNull MergeRequest request, boolean isAssigned) {
+    try {
+      request.onAssigned(isAssigned);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
   //
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
   }
 
@@ -418,7 +445,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     return myContext;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public boolean checkCloseAction() {
     return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
   }
@@ -440,6 +467,11 @@ public abstract class MergeRequestProcessor implements Disposable {
   //
 
   private static class MyNextDifferenceAction extends NextDifferenceAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
@@ -466,6 +498,11 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   private static class MyPrevDifferenceAction extends PrevDifferenceAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
@@ -514,7 +551,7 @@ public abstract class MergeRequestProcessor implements Disposable {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         if (myRequest != null && myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
           return myRequest.getUserData(DiffUserDataKeys.HELP_ID);
         }
@@ -580,7 +617,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void reopenWithTool(@NotNull MergeTool tool) {
       MergeRequestProcessor.this.reopenWithTool(tool);
     }

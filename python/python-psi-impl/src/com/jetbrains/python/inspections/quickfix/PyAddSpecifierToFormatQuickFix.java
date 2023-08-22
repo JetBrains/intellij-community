@@ -43,7 +43,7 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
     if (rightExpression == null) return;
 
     final PsiFile file = element.getContainingFile();
-    final Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+    final Document document = file.getViewProvider().getDocument();
     if (document == null) return;
     final int offset = element.getTextOffset();
     final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);

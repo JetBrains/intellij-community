@@ -9,6 +9,9 @@ import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.NlsContexts.Tooltip;
 import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.*;
 
 public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> implements ListPopupStepEx<JsonSchemaInfo> {
@@ -37,7 +41,7 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
   private static final Icon EMPTY_ICON = JBUIScale.scaleIcon(EmptyIcon.create(AllIcons.General.Add.getIconWidth()));
 
   public JsonSchemaInfoPopupStep(@NotNull List<JsonSchemaInfo> allSchemas, @NotNull Project project, @Nullable VirtualFile virtualFile,
-                                 @NotNull JsonSchemaService service, @Nullable String title) {
+                                 @NotNull JsonSchemaService service, @Nullable @PopupTitle String title) {
     super(title, allSchemas);
     myProject = project;
     myVirtualFile = virtualFile;
@@ -64,6 +68,13 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
       return AllIcons.Actions.Refresh;
     }
 
+    if (value == IGNORE_FILE) {
+      return AllIcons.Vcs.Ignore_file;
+    }
+
+    if (value == STOP_IGNORE_FILE) {
+      return AllIcons.Actions.AddFile;
+    }
     return EMPTY_ICON;
   }
 
@@ -93,6 +104,14 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
       else if (selectedValue == LOAD_REMOTE) {
         return doFinalStep(() -> myService.triggerUpdateRemote());
       }
+      else if (selectedValue == IGNORE_FILE) {
+        markIgnored(myVirtualFile, myProject);
+        return doFinalStep(() -> myService.reset());
+      }
+      else if (selectedValue == STOP_IGNORE_FILE) {
+        unmarkIgnored(myVirtualFile, myProject);
+        return doFinalStep(() -> myService.reset());
+      }
       else {
         setMapping(selectedValue, myVirtualFile, myProject);
         return doFinalStep(() -> myService.reset());
@@ -103,20 +122,20 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
 
   protected void runSchemaEditorForCurrentFile() {
     assert myVirtualFile != null: "override this method to do without a virtual file!";
-    JsonSchemaMappingsConfigurable configurable = new JsonSchemaMappingsConfigurable(myProject);
-    JsonSchemaMappingsProjectConfiguration mappingsConf = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
-
-    ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable, () -> {
-      UserDefinedJsonSchemaConfiguration mappingForFile = mappingsConf.findMappingForFile(myVirtualFile);
-      if (mappingForFile == null) {
-        UserDefinedJsonSchemaConfiguration configuration = configurable.addProjectSchema();
-        String relativePath = VfsUtilCore.getRelativePath(myVirtualFile, myProject.getBaseDir());
-        configuration.patterns.add(new UserDefinedJsonSchemaConfiguration.Item(
-          relativePath == null ? myVirtualFile.getUrl() : relativePath, false, false));
-        mappingForFile = configuration;
-      }
-
-      configurable.selectInTree(mappingForFile);
+    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, JsonSchemaMappingsConfigurable.class, (configurable) -> {
+      // For some reason, JsonSchemaMappingsConfigurable.reset is called right after this callback, leading to resetting the customization.
+      // Workaround: move this logic inside JsonSchemaMappingsConfigurable.reset.
+      configurable.setInitializer(() -> {
+        JsonSchemaMappingsProjectConfiguration mappings = JsonSchemaMappingsProjectConfiguration.getInstance(myProject);
+        UserDefinedJsonSchemaConfiguration configuration = mappings.findMappingForFile(myVirtualFile);
+        if (configuration == null) {
+          configuration = configurable.addProjectSchema();
+          String relativePath = VfsUtilCore.getRelativePath(myVirtualFile, myProject.getBaseDir());
+          configuration.patterns.add(new UserDefinedJsonSchemaConfiguration.Item(
+            relativePath == null ? myVirtualFile.getUrl() : relativePath, false, false));
+        }
+        configurable.selectInTree(configuration);
+      });
     });
   }
 
@@ -127,27 +146,35 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
 
   @Nullable
   @Override
-  public String getTooltipTextFor(JsonSchemaInfo value) {
+  public @Tooltip String getTooltipTextFor(JsonSchemaInfo value) {
     return getDoc(value);
   }
 
   @Nullable
-  private static String getDoc(JsonSchemaInfo schema) {
+  private static @Tooltip String getDoc(JsonSchemaInfo schema) {
     if (schema == null) return null;
     if (schema.getName() == null) return schema.getDocumentation();
     if (schema.getDocumentation() == null) return schema.getName();
-    return "<b>" + schema.getName() + "</b><br/>" + schema.getDocumentation();
+    return new HtmlBuilder()
+      .append(HtmlChunk.tag("b").addText(schema.getName()))
+      .append(HtmlChunk.br())
+      .appendRaw(schema.getDocumentation()).toString();
   }
 
   @Override
   public void setEmptyText(@NotNull StatusText emptyText) {
   }
 
-  @Override
-  public PopupStep onChosen(JsonSchemaInfo selectedValue, boolean finalChoice, int eventModifiers) {
-    return onChosen(selectedValue, finalChoice);
+  private static void markIgnored(@Nullable VirtualFile virtualFile, @NotNull Project project) {
+    JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
+    configuration.markAsIgnored(virtualFile);
   }
 
+  private static void unmarkIgnored(@Nullable VirtualFile virtualFile, @NotNull Project project) {
+    JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);
+    if (!configuration.isIgnoredFile(virtualFile)) return;
+    configuration.unmarkAsIgnored(virtualFile);
+  }
   protected void setMapping(@Nullable JsonSchemaInfo selectedValue, @Nullable VirtualFile virtualFile, @NotNull Project project) {
     assert virtualFile != null: "override this method to do without a virtual file!";
     JsonSchemaMappingsProjectConfiguration configuration = JsonSchemaMappingsProjectConfiguration.getInstance(project);

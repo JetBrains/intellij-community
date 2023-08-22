@@ -1,0 +1,9 @@
+{
+  "icons": {
+    "org.jetbrains.plugins.notebooks.jupyter": {
+      "expui": {
+        "jupyterNotebook.svg": "icons/org.jetbrains.plugins.notebooks.jupyter/jupyterNotebook.svg"
+      }
+    }
+  }
+}

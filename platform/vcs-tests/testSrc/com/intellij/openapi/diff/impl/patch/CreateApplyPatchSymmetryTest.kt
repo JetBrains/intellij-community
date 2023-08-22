@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.diff.HeavyDiffTestCase
@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.SimpleContentRevision
 import com.intellij.vcsUtil.VcsUtil
 import java.io.StringWriter
+import java.nio.file.Paths
 
 class CreateApplyPatchSymmetryTest : HeavyDiffTestCase() {
   val RUNS = 10000
@@ -73,7 +74,7 @@ class CreateApplyPatchSymmetryTest : HeavyDiffTestCase() {
 
     val change = Change(SimpleContentRevision(text1, path, "1"),
                         SimpleContentRevision(text2, path, "2"))
-    val createdPatches = IdeaTextPatchBuilder.buildPatch(project, listOf(change), basePath, false)
+    val createdPatches = IdeaTextPatchBuilder.buildPatch(project, listOf(change), Paths.get(basePath), false)
 
     val writer = StringWriter()
     UnifiedDiffWriter.write(project, createdPatches, writer, "\n", null)

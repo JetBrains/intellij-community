@@ -1,6 +1,15 @@
 import java.util.*;
 
 public class LongRangeMul {
+  void testShift(int n, int sc) {
+    if (n > 0) {
+      if ((sc - 2) != calc(n) << 16)
+      {}
+    }
+  }
+
+  native int calc(int n);
+
   void test(int x, int y) {
     if (<warning descr="Condition 'x == 5 && y == 10 && x * y != 50' is always 'false'">x == 5 && y == 10 && <warning descr="Condition 'x * y != 50' is always 'false'">x * y != 50</warning></warning>) {
     }

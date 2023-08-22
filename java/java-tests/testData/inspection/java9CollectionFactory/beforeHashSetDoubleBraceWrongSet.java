@@ -1,4 +1,4 @@
-// "Replace with 'Set.of' call" "false"
+// "Replace with 'Set.of()' call" "false"
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;

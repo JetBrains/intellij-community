@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.GlobalInspectionContextUtil;
 import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -30,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GlobalInspectionUtil {
+public final class GlobalInspectionUtil {
   private static final String LOC_MARKER = " #loc";
 
   @NotNull
@@ -47,14 +31,12 @@ public class GlobalInspectionUtil {
                                    @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor,
                                    @NotNull GlobalInspectionContext globalContext) {
     List<LocalQuickFix> fixes = new ArrayList<>();
-    if (info.quickFixActionRanges != null) {
-      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRange : info.quickFixActionRanges) {
-        final IntentionAction action = actionRange.getFirst().getAction();
-        if (action instanceof LocalQuickFix) {
-          fixes.add((LocalQuickFix)action);
-        }
+    info.findRegisteredQuickFix((descriptor, fixRange) -> {
+      if (descriptor.getAction() instanceof LocalQuickFix) {
+        fixes.add((LocalQuickFix)descriptor.getAction());
       }
-    }
+      return null;
+    });
     ProblemDescriptor descriptor = manager.createProblemDescriptor(elt, range, createInspectionMessage(StringUtil.notNullize(info.getDescription())),
                                                                    HighlightInfo.convertType(info.type), false,
                                                                    fixes.isEmpty() ? null : fixes.toArray(LocalQuickFix.EMPTY_ARRAY));

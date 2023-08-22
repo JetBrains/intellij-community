@@ -2,21 +2,25 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.RepositoryLocation;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RepositoryLocationGroup implements RepositoryLocation {
+  @NotNull
   private final String myPresentableString;
   private final List<RepositoryLocation> myLocations;
 
-  public RepositoryLocationGroup(final String presentableString) {
+  public RepositoryLocationGroup(@NonNls @NotNull String presentableString) {
     myPresentableString = presentableString;
     myLocations = new ArrayList<>();
   }
 
   @Override
+  @NonNls
+  @NotNull
   public String toPresentableString() {
     return myPresentableString;
   }
@@ -33,6 +37,7 @@ public class RepositoryLocationGroup implements RepositoryLocation {
   }
 
   @Override
+  @NonNls
   public String getKey() {
     final StringBuilder sb = new StringBuilder(myPresentableString);
     // they are ordered

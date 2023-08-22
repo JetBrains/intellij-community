@@ -15,8 +15,11 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 
@@ -33,7 +36,7 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
   }
 
   @Override
-  void revalidateAndRepaint() {
+  protected void revalidateAndRepaint() {
     // no need for this in a renderer
   }
 
@@ -61,5 +64,23 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
     }
 
     super.paintComponent(g);
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleContextDelegateWithContextMenu(super.getAccessibleContext()) {
+        @Override
+        protected void doShowContextMenu() {
+          ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true);
+        }
+
+        @Override
+        protected Container getDelegateParent() {
+          return getParent();
+        }
+      };
+    }
+    return accessibleContext;
   }
 }

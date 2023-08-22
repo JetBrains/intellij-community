@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.search;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -8,10 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *
- * @author yole
- */
+import java.util.Objects;
+
+
 public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   public PyProjectScopeBuilder(Project project) {
     super(project);
@@ -28,7 +27,15 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
-    return new ProjectAndLibrariesScope(myProject);
+    return new ProjectAndLibrariesScope(myProject) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        if (file instanceof ProjectAwareVirtualFile) {
+          return ((ProjectAwareVirtualFile)file).isInProject(Objects.requireNonNull(getProject()));
+        }
+        return super.contains(file);
+      }
+    };
   }
 
   /**
@@ -45,6 +52,9 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
     return new ProjectScopeImpl(myProject, fileIndex) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
+        if (file instanceof ProjectAwareVirtualFile) {
+          return ((ProjectAwareVirtualFile)file).isInProject(Objects.requireNonNull(getProject()));
+        }
         if (file instanceof VirtualFileWindow) return true;
         return fileIndex.isInContent(file);
       }

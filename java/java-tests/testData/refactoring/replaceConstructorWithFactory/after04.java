@@ -1,5 +1,5 @@
 class OuterClass {
-    InnerClass newInnerClass(int _i) {
+    InnerClass createInnerClass(int _i) {
         return new InnerClass(_i);
     }
 
@@ -9,9 +9,9 @@ class OuterClass {
             i = _i;
         }
     }
-    InnerClass myInner = newInnerClass(27);
+    InnerClass myInner = createInnerClass(27);
     static int method() {
         OuterClass test = new OuterClass();
-        InnerClass inner = test.newInnerClass(15);
+        InnerClass inner = test.createInnerClass(15);
     }
 }

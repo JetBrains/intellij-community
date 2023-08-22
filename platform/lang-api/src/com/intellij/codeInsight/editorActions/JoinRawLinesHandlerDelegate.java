@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A delegate which is called when "Join lines" is selected.
  * <br/>
- * User: dcheryasov
  */
 public interface JoinRawLinesHandlerDelegate extends JoinLinesHandlerDelegate {
   /**

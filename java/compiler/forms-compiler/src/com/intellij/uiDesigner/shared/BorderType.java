@@ -1,34 +1,18 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.shared;
 
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class BorderType {
   public static final BorderType NONE = new BorderType("none", "None",null,null);
-  public static final BorderType BEVEL_LOWERED = new BorderType("bevel-lowered", "Bevel Lowered", BorderFactory.createLoweredBevelBorder(), "createLoweredBevelBorder");
-  public static final BorderType BEVEL_RAISED = new BorderType("bevel-raised", "Bevel Raised", BorderFactory.createRaisedBevelBorder(), "createRaisedBevelBorder");
-  public static final BorderType ETCHED = new BorderType("etched", "Etched", BorderFactory.createEtchedBorder(), "createEtchedBorder");
+  private static final BorderType BEVEL_LOWERED = new BorderType("bevel-lowered", "Bevel Lowered", BorderFactory.createLoweredBevelBorder(), "createLoweredBevelBorder");
+  private static final BorderType BEVEL_RAISED = new BorderType("bevel-raised", "Bevel Raised", BorderFactory.createRaisedBevelBorder(), "createRaisedBevelBorder");
+  private static final BorderType ETCHED = new BorderType("etched", "Etched", BorderFactory.createEtchedBorder(), "createEtchedBorder");
   public static final BorderType LINE = new BorderType("line", "Line", BorderFactory.createLineBorder(Color.BLACK), "createLineBorder");
   public static final BorderType EMPTY = new BorderType("empty", "Empty", BorderFactory.createEmptyBorder(0, 0, 0, 0), "createEmptyBorder");
 
@@ -52,7 +36,7 @@ public final class BorderType {
     return myName;
   }
 
-  public Border createBorder(final String title,
+  public Border createBorder(@Nls(capitalization = Nls.Capitalization.Title) final String title,
                              final int titleJustification,
                              final int titlePosition,
                              final Font titleFont,
@@ -100,12 +84,12 @@ public final class BorderType {
 
   public static BorderType[] getAllTypes() {
     return new BorderType[]{
-          BorderType.NONE,
-          BorderType.EMPTY,
-          BorderType.BEVEL_LOWERED,
-          BorderType.BEVEL_RAISED,
-          BorderType.ETCHED,
-          BorderType.LINE
+          NONE,
+          EMPTY,
+          BEVEL_LOWERED,
+          BEVEL_RAISED,
+          ETCHED,
+          LINE
         };
   }
 }

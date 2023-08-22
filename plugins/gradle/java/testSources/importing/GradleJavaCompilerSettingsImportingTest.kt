@@ -1,23 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.util.SystemProperties
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Assume
+import org.junit.Ignore
 import org.junit.Test
 
 class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImportingTestCase() {
-  @Test
-  fun `test project-module sdk replacing`() {
-    createJavaGradleSubProject()
-    importProject()
-    assertSdks(GRADLE_JDK_NAME, "project", "project.main", "project.test")
-
-    setProjectSdk(sdk)
-    assertSdks(sdk.name, "project", "project.main", "project.test")
-
-    importProject()
-    assertSdks(sdk.name, "project", "project.main", "project.test")
-  }
-
   @Test
   fun `test project-module compatibility replacing`() {
     createJavaGradleSubProject(
@@ -79,70 +74,129 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
   @Test
   fun `test language level approximation`() {
-    if (isNotSupportedJava14) return
+    val nonPreviewLevel = LanguageLevel.HIGHEST
+    val preview = LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1]
+    val javaVersion = nonPreviewLevel.toJavaVersion()
+    val feature = javaVersion.feature
+
+    Assume.assumeTrue(GradleJvmSupportMatrix.isSupported(currentGradleVersion, javaVersion))
 
     createJavaGradleSubProject(
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = true
     )
     importProject()
-    assertProjectLanguageLevel(LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_14_PREVIEW)
+    assertProjectLanguageLevel(preview)
+    assertModuleLanguageLevel("project", preview)
+    assertModuleLanguageLevel("project.main", preview)
+    assertModuleLanguageLevel("project.test", preview)
 
     createJavaGradleSubProject(
       "module",
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = true
     )
     createGradleSettingsFile("module")
     importProject()
-    assertProjectLanguageLevel(LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module.test", LanguageLevel.JDK_14_PREVIEW)
+    assertProjectLanguageLevel(preview)
+    assertModuleLanguageLevel("project", preview)
+    assertModuleLanguageLevel("project.main", preview)
+    assertModuleLanguageLevel("project.test", preview)
+    assertModuleLanguageLevel("project.module", preview)
+    assertModuleLanguageLevel("project.module.main", preview)
+    assertModuleLanguageLevel("project.module.test", preview)
 
     createJavaGradleSubProject(
       "module1",
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = false
     )
     createJavaGradleSubProject(
       "module2",
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = false,
       testSourceCompatibilityEnablePreview = true
     )
     createJavaGradleSubProject(
       "module3",
-      projectSourceCompatibility = "14",
+      projectSourceCompatibility = "$feature",
       mainSourceCompatibilityEnablePreview = false,
       testSourceCompatibilityEnablePreview = false
     )
     createGradleSettingsFile("module", "module1", "module2", "module3", "module4")
     importProject()
-    assertProjectLanguageLevel(LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module.test", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module1", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module1.main", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module1.test", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module2", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module2.main", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module2.test", LanguageLevel.JDK_14_PREVIEW)
-    assertModuleLanguageLevel("project.module3", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module3.main", LanguageLevel.JDK_14)
-    assertModuleLanguageLevel("project.module3.test", LanguageLevel.JDK_14)
+    assertProjectLanguageLevel(nonPreviewLevel)
+    assertModuleLanguageLevel("project", preview)
+    assertModuleLanguageLevel("project.main", preview)
+    assertModuleLanguageLevel("project.test", preview)
+    assertModuleLanguageLevel("project.module", preview)
+    assertModuleLanguageLevel("project.module.main", preview)
+    assertModuleLanguageLevel("project.module.test", preview)
+    assertModuleLanguageLevel("project.module1", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module1.main", preview)
+    assertModuleLanguageLevel("project.module1.test", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module2", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module2.main", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module2.test", preview)
+    assertModuleLanguageLevel("project.module3", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module3.main", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module3.test", nonPreviewLevel)
   }
+
+  @Test
+  @Ignore // the test is too slow: it downloads two JDKs. Proper stubs are TBD with Gradle.
+  @TargetVersions("6.7+")
+  fun `simple toolchain support`() {
+    VfsRootAccess.allowRootAccess(testRootDisposable, SystemProperties.getUserHome() + "/.gradle/jdks")
+    allowAccessToDirsIfExists()
+    importProject {
+      withJavaPlugin()
+      addPrefix("""
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(15))
+        compileJava {
+            javaCompiler = javaToolchains.compilerFor {
+                languageVersion = JavaLanguageVersion.of(13)
+            }
+        }
+      """.trimIndent())
+    }
+    assertModules("project", "project.main", "project.test")
+    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_13)
+    assertModuleLanguageLevel("project.test", LanguageLevel.JDK_15)
+    assertModuleSdk("project.main", JavaSdkVersion.JDK_13)
+    assertModuleSdk("project.test", JavaSdkVersion.JDK_15)
+  }
+
+
+  @Test
+  @Ignore // the test is too slow: it downloads two JDKs. Proper stubs are TBD with Gradle.
+  @TargetVersions("6.7+")
+  fun `update toolchain in build script should update it in IDEA`() {
+    VfsRootAccess.allowRootAccess(testRootDisposable, SystemProperties.getUserHome() + "/.gradle/jdks")
+    allowAccessToDirsIfExists()
+    importProject {
+      withJavaPlugin()
+      addPrefix("""
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(13))
+      """.trimIndent())
+    }
+    assertModules("project", "project.main", "project.test")
+    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_13)
+    assertModuleSdk("project.main", JavaSdkVersion.JDK_13)
+
+    importProject {
+      withJavaPlugin()
+      addPrefix("""
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(15))
+      """.trimIndent())
+    }
+
+    assertModules("project", "project.main", "project.test")
+    assertModuleLanguageLevel("project.main", LanguageLevel.JDK_15)
+    assertModuleSdk("project.main", JavaSdkVersion.JDK_15)
+  }
+
 }

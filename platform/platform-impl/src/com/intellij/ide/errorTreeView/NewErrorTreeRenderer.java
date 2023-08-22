@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,6 +11,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AbstractAccessibleContextDelegate;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
-public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
+public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   private final MyWrapperRenderer myWrapperRenderer;
   private final CallingBackColoredTreeCellRenderer myColoredTreeCellRenderer;
   private final MyNotSelectedColoredTreeCellRenderer myRightCellRenderer;
@@ -90,8 +91,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
 
     @Override
-    @Nullable
-    public Object getTag() {
+    public @Nullable Object getTag() {
       return myCurrentCallback == null? null : myCurrentCallback.getTag();
     }
 
@@ -185,9 +185,8 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       }
 
       protected class AccessibleMyPanel extends AbstractAccessibleContextDelegate {
-        @NotNull
         @Override
-        protected AccessibleContext getDelegate() {
+        protected @NotNull AccessibleContext getDelegate() {
           // Most of the accessibility properties come from the right component
           if (myPanel.getComponentCount() >= 2) {
             Component c = myPanel.getComponent(1);
@@ -218,8 +217,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
   }
 
-  @NotNull
-  public static String calcPrefix(@Nullable ErrorTreeElement element) {
+  public static @NotNull @Nls String calcPrefix(@Nullable ErrorTreeElement element) {
     if(element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       String prefix = element.getPresentableText();
 

@@ -15,7 +15,9 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,7 +25,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ModuleSourceSet {
-  public enum Type { PRODUCTION, TEST }
+  public enum Type {
+    PRODUCTION, TEST, RESOURCES, RESOURCES_TEST;
+
+    public boolean isTest() {
+      return this == TEST || this == RESOURCES_TEST;
+    }
+  }
 
   private final Module myModule;
   private final Type myType;
@@ -63,8 +71,9 @@ public class ModuleSourceSet {
   }
 
   @NotNull
-  public String getDisplayName() {
-    return (myType == Type.PRODUCTION ? "" : "Tests of ") + "'" + myModule.getName() + "' module";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getDisplayName() {
+    final int choice = myType.isTest()? 1 : 0;
+    return JavaCompilerBundle.message("module.sources.set.display.name", choice, myModule.getName());
   }
 
   @NotNull

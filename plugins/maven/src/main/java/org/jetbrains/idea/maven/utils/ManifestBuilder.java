@@ -1,25 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.codehaus.plexus.archiver.jar.Manifest;
 import org.codehaus.plexus.archiver.jar.ManifestException;
 import org.jdom.Element;
@@ -43,13 +26,7 @@ import static org.codehaus.plexus.archiver.jar.Manifest.Attribute;
  */
 public class ManifestBuilder {
 
-  private static final Map<String, String> PACKAGING_PLUGINS = ContainerUtil.newHashMap(
-    Pair.create("jar", "maven-jar-plugin"),
-    Pair.create("ejb", "maven-ejb-plugin"),
-    Pair.create("ejb-client", "maven-ejb-plugin"),
-    Pair.create("war", "maven-war-plugin"),
-    Pair.create("ear", "maven-ear-plugin")
-  );
+  private static final Map<String, String> PACKAGING_PLUGINS = Map.of("jar", "maven-jar-plugin", "ejb", "maven-ejb-plugin", "ejb-client", "maven-ejb-plugin", "war", "maven-war-plugin", "ear", "maven-ear-plugin");
 
   @NotNull private final MavenProject myMavenProject;
   @Nullable private String myJdkVersion;
@@ -200,7 +177,6 @@ public class ManifestBuilder {
 
   @Nullable
   private Manifest getUserSuppliedManifest(@Nullable Element mavenArchiveConfiguration) {
-    Manifest manifest = null;
     String manifestPath = MavenJDOMUtil.findChildValueByPath(mavenArchiveConfiguration, "manifestFile");
     if (manifestPath != null) {
       File manifestFile = new File(manifestPath);
@@ -208,20 +184,14 @@ public class ManifestBuilder {
         manifestFile = new File(myMavenProject.getDirectory(), manifestPath);
       }
       if (manifestFile.isFile()) {
-        FileInputStream fis = null;
-        try {
-          fis = new FileInputStream(manifestFile);
-          manifest = new Manifest(fis);
+        try (FileInputStream fis = new FileInputStream(manifestFile)) {
+          return new Manifest(fis);
         }
-        catch (IOException ignore) {
-        }
-        finally {
-          StreamUtil.closeStream(fis);
-        }
+        catch (IOException ignore) { }
       }
     }
 
-    return manifest;
+    return null;
   }
 
   @NotNull
@@ -231,14 +201,14 @@ public class ManifestBuilder {
     final Manifest manifest = new Manifest();
 
     boolean isAddDefaultSpecificationEntries =
-      Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultSpecificationEntries", "false"));
+      Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultSpecificationEntries", "false"));
     if (isAddDefaultSpecificationEntries) {
       addManifestAttribute(manifest, entries, "Specification-Title", mavenProject.getName());
       addManifestAttribute(manifest, entries, "Specification-Version", mavenProject.getMavenId().getVersion());
     }
 
     boolean isAddDefaultImplementationEntries =
-      Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultImplementationEntries", "false"));
+      Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addDefaultImplementationEntries", "false"));
     if (isAddDefaultImplementationEntries) {
       addManifestAttribute(manifest, entries, "Implementation-Title", mavenProject.getName());
       addManifestAttribute(manifest, entries, "Implementation-Version", mavenProject.getMavenId().getVersion());
@@ -255,7 +225,7 @@ public class ManifestBuilder {
       addManifestAttribute(manifest, entries, "Main-Class", mainClass);
     }
 
-    boolean isAddClasspath = Boolean.valueOf(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addClasspath", "false"));
+    boolean isAddClasspath = Boolean.parseBoolean(MavenJDOMUtil.findChildValueByPath(manifestConfiguration, "addClasspath", "false"));
     if (isAddClasspath) {
       final ManifestImporter manifestImporter = ManifestImporter.getManifestImporter(mavenProject.getPackaging());
       String classpath = manifestImporter.getClasspath(mavenProject, manifestConfiguration);

@@ -25,7 +25,7 @@ public class JsonStructureViewBuilderFactory implements PsiStructureViewFactory 
   public JsonStructureViewBuilderFactory() {
     JsonCustomStructureViewFactory.EP_NAME.addChangeListener(
       () -> ApplicationManager.getApplication().getMessageBus().syncPublisher(StructureViewWrapperImpl.STRUCTURE_CHANGED).run(),
-      ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint(null)));
+      ExtensionPointUtil.createKeyedExtensionDisposable(this, PsiStructureViewFactory.EP_NAME.getPoint()));
   }
 
   @Nullable

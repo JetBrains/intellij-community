@@ -1,0 +1,11 @@
+<!-- Jupyter language -->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Jupyter"
+              language="Jupyter"
+              extensions="ipynb"
+              implementationClass="org.jetbrains.plugins.notebooks.jupyter.JupyterFileType"
+              fieldName="INSTANCE"/>
+    <iconMapper mappingFile="JupyterCoreIconMappings.json"/>
+  </extensions>
+</idea-plugin>

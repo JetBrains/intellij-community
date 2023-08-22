@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReadWriteInstruction extends InstructionImpl {
+public final class ReadWriteInstruction extends InstructionImpl {
   final InstructionTypeCallback EXPR_TYPE = new InstructionTypeCallback() {
     @Nullable
     @Override

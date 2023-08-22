@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -42,7 +43,7 @@ public interface WordOptimizer {
           return false;
         }
 
-        final RegExpPredicate predicate = handler.findRegExpPredicate();
+        final RegExpPredicate predicate = handler.findPredicate(RegExpPredicate.class);
         if (predicate != null && predicate.couldBeOptimized()) {
           if (handler.isStrictSubtype() || handler.isSubtype()) {
             final List<String> descendants = getDescendantsOf(predicate.getRegExp(), handler.isSubtype(), compileContext.getProject());
@@ -69,7 +70,8 @@ public interface WordOptimizer {
    * @param className  the name of the class to search for subclasses of
    * @param includeSelf  include the class itself in the search
    */
-  default List<String> getDescendantsOf(String className, boolean includeSelf, Project project) {
+  @NotNull
+  default List<String> getDescendantsOf(@NotNull String className, boolean includeSelf, @NotNull Project project) {
     return Collections.emptyList();
   }
 }

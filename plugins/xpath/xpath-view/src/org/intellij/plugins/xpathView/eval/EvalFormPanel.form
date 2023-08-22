@@ -17,7 +17,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Options"/>
+        <border type="none" title-resource-bundle="messages/XPathBundle" title-key="border.title.options"/>
         <children>
           <component id="5b34b" class="javax.swing.JCheckBox" binding="myUsageViewCheckbox">
             <constraints>
@@ -25,7 +25,7 @@
             </constraints>
             <properties>
               <margin top="0" left="3" bottom="0" right="3"/>
-              <text value="&amp;Show results in Usage View"/>
+              <text resource-bundle="messages/XPathBundle" key="checkbox.show.results.in.usage.view"/>
             </properties>
           </component>
           <component id="1cc25" class="javax.swing.JCheckBox" binding="myHighlightCheckbox">
@@ -34,7 +34,7 @@
             </constraints>
             <properties>
               <margin top="0" left="3" bottom="0" right="3"/>
-              <text value="&amp;Highlight results in Editor"/>
+              <text resource-bundle="messages/XPathBundle" key="checkbox.highlight.results.in.editor"/>
             </properties>
           </component>
         </children>
@@ -50,7 +50,7 @@
         </constraints>
         <properties>
           <margin top="0" left="3" bottom="0" right="3"/>
-          <text value="&amp;Open in new tab"/>
+          <text resource-bundle="messages/XPathBundle" key="checkbox.open.in.new.tab1"/>
         </properties>
       </component>
     </children>

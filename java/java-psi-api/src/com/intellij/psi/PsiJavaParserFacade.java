@@ -235,12 +235,6 @@ public interface PsiJavaParserFacade {
   @NotNull
   PsiType createPrimitiveTypeFromText(@NotNull @NonNls String text) throws IncorrectOperationException;
 
-  /** @deprecated use {@link #createModuleFromText(String, PsiElement)} */
-  @Deprecated
-  default PsiJavaModule createModuleFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
-    return createModuleFromText(text, null);
-  }
-
   /**
    * Creates a Java module declaration from the specified text.
    */

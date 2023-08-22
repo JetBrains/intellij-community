@@ -18,6 +18,7 @@ package com.intellij.facet.impl.ui;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.ui.*;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
@@ -52,7 +53,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
 
   public FacetEditorImpl(final FacetEditorContext context, final FacetConfiguration configuration) {
     myContext = context;
-    myErrorPanel = new FacetErrorPanel();
+    myErrorPanel = new FacetErrorPanel(myDisposable);
     myEditorTabs = configuration.createEditorTabs(context, myErrorPanel.getValidatorsManager());
     for (Configurable configurable : myEditorTabs) {
       add(configurable);
@@ -107,7 +108,8 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
         @Override
         public ValidationResult check() {
           if (isModified()) {
-            String text = ModificationOfImportedModelWarningComponent.getWarningText("Facet '" + myContext.getFacetName() + "'", externalSource);
+            String text = ModificationOfImportedModelWarningComponent.getWarningText(
+              JavaUiBundle.message("facet.banner.text", myContext.getFacetName()), externalSource);
             return new ValidationResult(text);
           }
           return ValidationResult.OK;

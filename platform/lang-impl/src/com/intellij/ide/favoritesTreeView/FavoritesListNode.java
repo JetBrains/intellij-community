@@ -20,14 +20,13 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated(forRemoval = true)
 public class FavoritesListNode extends AbstractTreeNode<String> {
   private static final Logger LOGGER = Logger.getInstance(FavoritesListNode.class);
-  private final Project myProject;
   private final String myDescription;
 
   public FavoritesListNode(Project project, @NotNull String listName, String description) {
     super(project, listName);
-    myProject = project;
     myName = listName;
     myDescription = description;
   }

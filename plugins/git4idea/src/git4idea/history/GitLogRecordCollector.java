@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,16 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static git4idea.history.GitLogParser.GitLogOption.HASH;
 import static git4idea.history.GitLogParser.GitLogOption.TREE;
@@ -43,7 +42,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
   }
 
   @Override
-  public void consume(@NotNull R record) {
+  public void accept(@NotNull R record) {
     if (!record.getHash().equals(myLastHash)) {
       processCollectedRecords();
     }
@@ -68,7 +67,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
         processIncompleteRecord(hash, records);
       }
       else {
-        myConsumer.consume(records);
+        myConsumer.accept(records);
       }
     }
     myHashToRecord.clear();
@@ -104,7 +103,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
     for (String hash : incompleteRecords.keySet()) {
       ArrayList<R> records = new ArrayList<>(Objects.requireNonNull(incompleteRecords.get(hash)));
       fillWithEmptyRecords(records, hashToTreeMap);
-      consumer.consume(records);
+      consumer.accept(records);
     }
   }
 
@@ -125,14 +124,13 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
 
     GitLineHandler handler = GitLogUtil.createGitHandler(project, root);
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, TREE);
-    GitVcs vcs = GitVcs.getInstance(project);
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty());
-    handler.addParameters(GitLogUtil.getNoWalkParameter(vcs));
+    handler.addParameters(GitLogUtil.getNoWalkParameter(project));
     handler.addParameters(GitLogUtil.STDIN);
     handler.endOptions();
 
-    GitLogUtil.sendHashesToStdin(vcs, hashes, handler);
+    GitLogUtil.sendHashesToStdin(hashes, handler);
     String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
     List<GitLogRecord> hashAndTreeRecords = parser.parse(output);

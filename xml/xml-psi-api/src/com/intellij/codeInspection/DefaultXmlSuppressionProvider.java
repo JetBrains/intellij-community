@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -80,9 +79,15 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
   @Nullable
   protected PsiElement findSuppressionLeaf(PsiElement leaf, @Nullable final String id, int offset) {
     while (leaf != null && leaf.getTextOffset() >= offset) {
-      if (leaf instanceof PsiComment || leaf instanceof XmlProlog || leaf instanceof XmlText) {
-        @NonNls String text = leaf.getText();
-        if (isSuppressedFor(text, id)) return leaf;
+      if (isSuppressedInComment(leaf, id)) {
+        return leaf;
+      }
+      else if (leaf instanceof XmlText || leaf instanceof XmlProlog) {
+        for (PsiElement child : leaf.getChildren()) {
+          if (isSuppressedInComment(child, id)) {
+            return leaf;
+          }
+        }
       }
       leaf = leaf.getPrevSibling();
       if (leaf instanceof XmlTag) {
@@ -92,7 +97,10 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
     return null;
   }
 
-  private boolean isSuppressedFor(@NonNls final String text, @Nullable final String id) {
+  private boolean isSuppressedInComment(@NotNull PsiElement element, @Nullable String id) {
+    if (!(element instanceof PsiComment)) return false;
+
+    String text = element.getText();
     if (!text.contains(getPrefix())) {
       return false;
     }
@@ -105,7 +113,8 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
 
   protected void suppress(PsiFile file, final PsiElement suppressionElement, String inspectionId, final int offset) {
     final Project project = file.getProject();
-    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+    //final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+    final Document doc = file.getViewProvider().getDocument();
     assert doc != null;
 
     if (suppressionElement != null) {

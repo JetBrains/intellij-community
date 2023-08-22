@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.CommonBundle.getCancelButtonText
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
 import com.intellij.openapi.components.stateStore
@@ -35,6 +36,10 @@ class BrowseCommittedChangesAction : DumbAwareAction() {
     e.presentation.isEnabled = vcs.allowsRemoteCalls(file) && fileInVcsByFileStatus(vcs.project, file)
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val file = e.getData(VIRTUAL_FILE)!!
@@ -60,7 +65,7 @@ private fun showCommittedChanges(vcs: AbstractVcs, file: VirtualFile, settings: 
 
   val repositoryLocation = CommittedChangesCache.getInstance(vcs.project).locationCache.getLocation(vcs, getFilePath(file), false)
   if (repositoryLocation == null) {
-    showOverVersionControlView(vcs.project, "Repository location not found for ${file.presentableUrl}", MessageType.ERROR)
+    showOverVersionControlView(vcs.project, message("changes.notification.content.repository.location.not.found.for", file.presentableUrl), MessageType.ERROR)
     return
   }
 

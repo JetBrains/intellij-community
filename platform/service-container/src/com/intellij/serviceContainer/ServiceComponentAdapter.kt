@@ -1,31 +1,40 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.ActivityCategory
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CompletableDeferred
 
-internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
-                                       pluginDescriptor: PluginDescriptor,
-                                       componentManager: ComponentManagerImpl,
-                                       implementationClass: Class<*>? = null,
-                                       initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass) {
+private val isDebugEnabled = LOG.isDebugEnabled
+
+internal class ServiceComponentAdapter(
+  @JvmField val descriptor: ServiceDescriptor,
+  pluginDescriptor: PluginDescriptor,
+  componentManager: ComponentManagerImpl,
+  implementationClass: Class<*>? = null,
+  deferred: CompletableDeferred<Any> = CompletableDeferred()
+) : BaseComponentAdapter(componentManager = componentManager,
+                         pluginDescriptor = pluginDescriptor,
+                         deferred = deferred,
+                         implementationClass = implementationClass) {
   override val implementationClassName: String
-    get() = descriptor.implementation!!
+    get() = getServiceImplementation(descriptor, componentManager)
 
-  override fun isImplementationEqualsToInterface() = descriptor.serviceInterface == null || descriptor.serviceInterface == descriptor.implementation
+  override fun isImplementationEqualsToInterface(): Boolean {
+    val serviceInterface = descriptor.serviceInterface ?: return true
+    return serviceInterface == getServiceImplementation(descriptor, componentManager)
+  }
 
-  override fun getComponentKey(): String = descriptor.getInterface()
+  override fun getComponentKey(): String = getServiceInterface(descriptor, componentManager)
 
-  override fun getActivityCategory(componentManager: ComponentManagerImpl) = getServiceActivityCategory(componentManager)
+  override fun getActivityCategory(componentManager: ComponentManagerImpl) = componentManager.getActivityCategory(isExtension = false)
 
-  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
-    if (LOG.isDebugEnabled) {
+  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
+    if (isDebugEnabled) {
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&
           PersistentStateComponent::class.java.isAssignableFrom(implementationClass)) {
@@ -33,20 +42,13 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
       }
     }
 
-    if (indicator == null) {
-      return createAndInitialize(componentManager, implementationClass)
+    val instance = if (pluginId == PluginManagerCore.CORE_ID) {
+      componentManager.instantiateClass(implementationClass, pluginId)
+    }
+    else {
+      componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
     }
 
-    // don't use here computeInNonCancelableSection - it is kotlin and no need of such awkward and stack-trace unfriendly methods
-    var instance: T? = null
-    ProgressManager.getInstance().executeNonCancelableSection {
-      instance = createAndInitialize(componentManager, implementationClass)
-    }
-    return instance!!
-  }
-
-  private fun <T : Any> createAndInitialize(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
-    val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
     if (instance is Disposable) {
       Disposer.register(componentManager.serviceParentDisposable, instance)
     }
@@ -57,11 +59,12 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   override fun toString() = "ServiceAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
 }
 
-internal fun getServiceActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory {
-  val parent = componentManager.picoContainer.parent
-  return when {
-    parent == null -> ActivityCategory.APP_SERVICE
-    parent.parent == null -> ActivityCategory.PROJECT_SERVICE
-    else -> ActivityCategory.MODULE_SERVICE
-  }
+internal fun getServiceInterface(descriptor: ServiceDescriptor, componentManager: ComponentManagerImpl): String {
+  return descriptor.serviceInterface ?: getServiceImplementation(descriptor, componentManager)
+}
+
+internal fun getServiceImplementation(descriptor: ServiceDescriptor, componentManager: ComponentManagerImpl): String {
+  return descriptor.testServiceImplementation?.takeIf { componentManager.getApplication()!!.isUnitTestMode }
+         ?: descriptor.headlessImplementation?.takeIf { componentManager.getApplication()!!.isHeadlessEnvironment }
+         ?: descriptor.serviceImplementation
 }

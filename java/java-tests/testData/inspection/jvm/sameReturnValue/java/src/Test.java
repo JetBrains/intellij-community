@@ -13,6 +13,11 @@ class Test {
     };
   }
 
+  public Void call() {
+    System.out.println("Hello!");
+    return null;
+  }
+
   public static void main(String[] args) {
     System.out.println(new Test().xxx());
     new Test().test();

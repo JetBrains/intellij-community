@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CustomisedActionGroup extends ActionGroup {
-  private final ActionGroup myGroup;
+import java.util.Objects;
+
+public final class CustomisedActionGroup extends ActionGroupWrapper {
   private AnAction[] myChildren;
   private final CustomActionsSchema mySchema;
   private final String myDefaultGroupName;
@@ -16,68 +18,56 @@ public class CustomisedActionGroup extends ActionGroup {
   private int mySchemeModificationStamp = -1;
   private int myGroupModificationStamp = -1;
 
-  public CustomisedActionGroup(String shortName,
-                               final ActionGroup group,
+  public CustomisedActionGroup(@NlsActions.ActionText String shortName,
+                               @NotNull ActionGroup group,
                                CustomActionsSchema schema,
                                String defaultGroupName,
                                String name) {
-    copyFrom(group);
+    super((group));
     getTemplatePresentation().setText(shortName);
-    setPopup(group.isPopup());
 
-    myGroup = group;
     mySchema = schema;
     myDefaultGroupName = defaultGroupName;
     myRootGroupName = name;
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    ActionGroup delegate = getDelegate();
     int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    int currentGroupStamp = myGroup instanceof DefaultActionGroup ? ((DefaultActionGroup)myGroup).getModificationStamp() : -1;
-    if (mySchemeModificationStamp < currentSchemaStamp || myGroupModificationStamp < currentGroupStamp || ArrayUtil.isEmpty(myChildren) ||
-        myGroup instanceof DynamicActionGroup || !(myGroup instanceof DefaultActionGroup)) {
-      myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
+    int currentGroupStamp = delegate instanceof DefaultActionGroup ? ((DefaultActionGroup)delegate).getModificationStamp() : -1;
+    if (mySchemeModificationStamp < currentSchemaStamp ||
+        myGroupModificationStamp < currentGroupStamp ||
+        ArrayUtil.isEmpty(myChildren) ||
+        delegate instanceof DynamicActionGroup ||
+        !(delegate instanceof DefaultActionGroup)) {
+      myChildren = CustomizationUtil.getReordableChildren(delegate, mySchema, myDefaultGroupName, myRootGroupName, e);
       mySchemeModificationStamp = currentSchemaStamp;
       myGroupModificationStamp = currentGroupStamp;
     }
     return myChildren;
   }
 
-  @Override
-  public boolean isPopup() {
-    return myGroup.isPopup();
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    myGroup.update(e);
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return myGroup.isDumbAware();
-  }
-
-  @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return myGroup.canBePerformed(context);
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    myGroup.actionPerformed(e);
-  }
-
-  @Nullable
-  public AnAction getFirstAction() {
-    final AnAction[] children = getChildren(null);
+  public @Nullable AnAction getFirstAction() {
+    AnAction[] children = getChildren(null);
     return children.length > 0 ? children[0] : null;
   }
 
-  public ActionGroup getOrigin() { return myGroup; }
+  /** @deprecated Use {@link #getDelegate()} instead */
+  @Deprecated
+  public @NotNull ActionGroup getOrigin() { return getDelegate(); }
 
   public void resetChildren() {
     myChildren = null;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof CustomisedActionGroup && Objects.equals(((CustomisedActionGroup)obj).getDelegate(), getDelegate());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getDelegate());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,8 +11,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -44,7 +46,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   }
 
   protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
-    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree)).addToTop(createToolbar(mainPanel, tree));
+    JComponent toolbar = createToolbar(mainPanel, tree);
+    tree.setBackground(UIUtil.getToolTipBackground());
+    toolbar.setBackground(UIUtil.getToolTipActionBackground());
+    new WindowMoveListener(mainPanel).installTo(toolbar);
+    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree, true)).addToBottom(toolbar);
   }
 
   private void updateTree() {
@@ -69,7 +75,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     }
   }
 
-  private JComponent createToolbar(JPanel parent, Tree tree) {
+  protected JComponent createToolbar(JPanel parent, Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SetAsRootAction(tree));
 
@@ -81,7 +87,9 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK)), parent);
     group.add(forward);
 
-    return ActionManager.getInstance().createActionToolbar("DebuggerTreeWithHistory", group, true).getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DebuggerTreeWithHistory", group, true);
+    toolbar.setTargetComponent(tree);
+    return toolbar.getComponent();
   }
 
   private class GoForwardAction extends AnAction {
@@ -100,6 +108,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -120,6 +133,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -144,11 +162,16 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object node = path.getLastPathComponent();
-        myTreeCreator.createDescriptorByNode(node, new ResultConsumer<D>() {
+        myTreeCreator.createDescriptorByNode(node, new ResultConsumer<>() {
           @Override
           public void onSuccess(final D value) {
             if (value != null) {

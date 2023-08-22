@@ -24,9 +24,6 @@ import com.intellij.util.xml.reflect.DomGenericInfo;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomNamespacesTest extends DomTestCase {
 
   public void testUseExistingNamespace() {
@@ -158,7 +155,7 @@ public class DomNamespacesTest extends DomTestCase {
   }
 
   public void testNonemptyRootTagPrefix() {
-    getDomManager().registerFileDescription(new DomFileDescription<MyFooElement>(MyFooElement.class, "a", "foons") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyFooElement.class, "a", "foons") {
 
       @Override
       protected void initializeFileDescription() {
@@ -177,7 +174,7 @@ public class DomNamespacesTest extends DomTestCase {
   }
 
   public void testSpringAopLike() {
-    getDomManager().registerFileDescription(new DomFileDescription<MyBeans>(MyBeans.class, "beans", "beans", "aop") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyBeans.class, "beans", "beans", "aop") {
 
       @Override
       protected void initializeFileDescription() {
@@ -201,7 +198,7 @@ public class DomNamespacesTest extends DomTestCase {
   }
 
   public void testSpringUtilLike() {
-    getDomManager().registerFileDescription(new DomFileDescription<MyBeans>(MyBeans.class, "beans", "beans", "util") {
+    getDomManager().registerFileDescription(new DomFileDescription<>(MyBeans.class, "beans", "beans", "util") {
 
       @Override
       protected void initializeFileDescription() {

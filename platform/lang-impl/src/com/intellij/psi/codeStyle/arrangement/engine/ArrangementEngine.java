@@ -1,16 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,8 +29,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,13 +52,12 @@ public final class ArrangementEngine {
   private boolean myCodeChanged;
 
   public static ArrangementEngine getInstance() {
-    return ServiceManager.getService(ArrangementEngine.class);
+    return ApplicationManager.getApplication().getService(ArrangementEngine.class);
   }
 
-  @Nullable
-  public String getUserNotificationInfo() {
+  public @Nullable @NlsContexts.HintText String getUserNotificationInfo() {
     if (myCodeChanged) {
-      return "rearranged code";
+      return CodeInsightBundle.message("hint.text.rearranged.code");
     }
     return null;
   }
@@ -64,11 +66,10 @@ public final class ArrangementEngine {
    * Arranges given PSI root contents that belong to the given ranges.
    * <b>Note:</b> After arrangement editor foldings we'll be preserved.
    *
-   * @param editor
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */
-  public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<TextRange> ranges) {
+  public void arrange(final @NotNull Editor editor, @NotNull PsiFile file, Collection<? extends TextRange> ranges) {
     arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
   }
 
@@ -79,7 +80,7 @@ public final class ArrangementEngine {
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) {
     arrange(file, ranges, null);
   }
 
@@ -89,7 +90,7 @@ public final class ArrangementEngine {
    * @param file    target PSI root
    * @param ranges  target ranges to use within the given root
    */
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable final ArrangementCallback callback) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, final @Nullable ArrangementCallback callback) {
     myCodeChanged = false;
 
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
@@ -214,9 +215,8 @@ public final class ArrangementEngine {
    * @param entryToSection     mapping from arrangement entry to the parent section
    * @return                   arranged list of the given rules
    */
-  @NotNull
-  public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<? extends E> entries,
-                                                             @NotNull List<? extends ArrangementSectionRule> sectionRules,
+  public static @NotNull <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<? extends E> entries,
+                                                             @NotNull List<ArrangementSectionRule> sectionRules,
                                                              @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
                                                              @Nullable Map<E, ArrangementSectionRule> entryToSection)
   {
@@ -293,10 +293,9 @@ public final class ArrangementEngine {
     return arranged;
   }
 
-  @Nullable
-  private static <E extends ArrangementEntry> Collection<E> arrangeByRule(@NotNull List<? super E> arranged,
-                                                                          @NotNull MultiMap<ArrangementMatchRule, E> elementsByRule,
-                                                                          @NotNull ArrangementMatchRule rule) {
+  private static @Nullable <E extends ArrangementEntry> Collection<E> arrangeByRule(@NotNull List<? super E> arranged,
+                                                                                    @NotNull MultiMap<ArrangementMatchRule, E> elementsByRule,
+                                                                                    @NotNull ArrangementMatchRule rule) {
     if (elementsByRule.containsKey(rule)) {
       List<E> arrangedEntries = (List<E>)elementsByRule.remove(rule);
       assert arrangedEntries != null;
@@ -319,7 +318,7 @@ public final class ArrangementEngine {
     if (entries.size() < 2) {
       return;
     }
-    final TObjectIntHashMap<E> weights = new TObjectIntHashMap<>();
+    final Object2IntMap<E> weights = new Object2IntOpenHashMap<>();
     int i = 0;
     for (E e : entries) {
       weights.put(e, ++i);
@@ -331,7 +330,7 @@ public final class ArrangementEngine {
         return name1.compareTo(name2);
       }
       else if (name1 == null && name2 == null) {
-        return weights.get(e1) - weights.get(e2);
+        return weights.getInt(e1) - weights.getInt(e2);
       }
       else if (name2 == null) {
         return -1;
@@ -405,7 +404,7 @@ public final class ArrangementEngine {
     }
   }
 
-  private static class NewSectionInfo<E extends ArrangementEntry> {
+  private static final class NewSectionInfo<E extends ArrangementEntry> {
     private final Map<E, String> mySectionStarts = new HashMap<>();
     private final Map<E, String> mySectionEnds = new HashMap<>();
 
@@ -440,7 +439,7 @@ public final class ArrangementEngine {
 
     public static boolean isSectionEntry(@NotNull ArrangementEntry entry, @NotNull String sectionText) {
       if (entry instanceof TypeAwareArrangementEntry && entry instanceof TextAwareArrangementEntry) {
-        final Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
+        final Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
         if (types.size() == 1) {
           final ArrangementSettingsToken type = types.iterator().next();
           if (type.equals(START_SECTION) || type.equals(END_SECTION)) {
@@ -471,27 +470,25 @@ public final class ArrangementEngine {
       mySectionEnds.put(entry, comment);
     }
 
-    @Nullable
-    public String getStartComment(E entry) {
+    public @Nullable String getStartComment(E entry) {
       return mySectionStarts.get(entry);
     }
 
-    @Nullable
-    public String getEndComment(E entry) {
+    public @Nullable String getEndComment(E entry) {
       return mySectionEnds.get(entry);
     }
   }
 
-  private static class Context<E extends ArrangementEntry> {
+  private static final class Context<E extends ArrangementEntry> {
 
-    @NotNull public final List<ArrangementMoveInfo> moveInfos = new ArrayList<>();
+    public final @NotNull List<ArrangementMoveInfo> moveInfos = new ArrayList<>();
 
-    @NotNull private final Rearranger<E>                         rearranger;
-    @NotNull public final Collection<ArrangementEntryWrapper<E>> wrappers;
-    @NotNull public final Document                               document;
-    @NotNull private final ArrangementSettings                   arrangementSettings;
-    @NotNull public final CodeStyleSettings                      settings;
-    @NotNull public final Changer                                changer;
+    private final @NotNull Rearranger<E>                         rearranger;
+    public final @NotNull Collection<ArrangementEntryWrapper<E>> wrappers;
+    public final @NotNull Document                               document;
+    private final @NotNull ArrangementSettings                   arrangementSettings;
+    public final @NotNull CodeStyleSettings                      settings;
+    public final @NotNull Changer                                changer;
 
     private Context(@NotNull Rearranger<E> rearranger,
                     @NotNull Collection<ArrangementEntryWrapper<E>> wrappers,
@@ -511,8 +508,7 @@ public final class ArrangementEngine {
       moveInfos.add(new ArrangementMoveInfo(oldStart, oldEnd, newStart));
     }
 
-    @NotNull
-    public ArrangementSettings getArrangementSettings(@Nullable Language languageOverride) {
+    public @NotNull ArrangementSettings getArrangementSettings(@Nullable Language languageOverride) {
       if (languageOverride != null) {
         ArrangementSettings languageSettings = ArrangementUtil.getArrangementSettings(this.settings, languageOverride);
         if (languageSettings != null) {
@@ -522,8 +518,7 @@ public final class ArrangementEngine {
       return arrangementSettings;
     }
 
-    @NotNull
-    public Rearranger<E> getRearranger(@Nullable Language language) {
+    public @NotNull Rearranger<E> getRearranger(@Nullable Language language) {
       if (language != null) {
         Rearranger<?> forLanguage = Rearranger.EXTENSION.forLanguage(language);
         if (forLanguage != null) {
@@ -537,7 +532,7 @@ public final class ArrangementEngine {
     public static <T extends ArrangementEntry> Context<T> from(@NotNull Rearranger<T> rearranger,
                                                                @NotNull Document document,
                                                                @NotNull PsiElement root,
-                                                               @NotNull Collection<TextRange> ranges,
+                                                               @NotNull Collection<? extends TextRange> ranges,
                                                                @NotNull ArrangementSettings arrangementSettings,
                                                                @NotNull CodeStyleSettings codeStyleSettings)
     {
@@ -564,7 +559,7 @@ public final class ArrangementEngine {
     }
   }
 
-  private static class StackEntry {
+  private static final class StackEntry {
 
     public int start;
     public int current;
@@ -632,15 +627,15 @@ public final class ArrangementEngine {
 
     private boolean isTypeOf(@Nullable E element, @NotNull ArrangementSettingsToken token) {
       if (element instanceof TypeAwareArrangementEntry) {
-        Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
+        Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
         return types.size() == 1 && token.equals(types.iterator().next());
       }
       return false;
     }
   }
 
-  private static class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
-    @NotNull private String myParentText;
+  private static final class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
+    private @NotNull String myParentText;
     private          int    myParentShift;
 
     @Override
@@ -666,7 +661,7 @@ public final class ArrangementEngine {
     {
       // Calculate blank lines before the arrangement.
       int blankLinesBefore = 0;
-      TIntArrayList lineFeedOffsets = new TIntArrayList();
+      IntList lineFeedOffsets = new IntArrayList();
       int oldStartLine = context.document.getLineNumber(oldWrapper.getStartOffset());
       if (oldStartLine > 0) {
         int lastLineFeed = context.document.getLineStartOffset(oldStartLine) - 1;
@@ -707,7 +702,7 @@ public final class ArrangementEngine {
       }
       else {
         // Cut exceeding blank lines.
-        int replacementStartOffset = lineFeedOffsets.get(-lineFeedsDiff) + 1;
+        int replacementStartOffset = lineFeedOffsets.getInt(-lineFeedsDiff) + 1;
         context.document.replaceString(replacementStartOffset, oldWrapper.getEndOffset(), newEntryText);
       }
 
@@ -773,10 +768,10 @@ public final class ArrangementEngine {
     }
   }
 
-  private static class RangeMarkerAwareChanger<E extends ArrangementEntry> extends Changer<E> {
+  private static final class RangeMarkerAwareChanger<E extends ArrangementEntry> extends Changer<E> {
 
-    @NotNull private final List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<>();
-    @NotNull private final DocumentEx myDocument;
+    private final @NotNull List<ArrangementEntryWrapper<E>> myWrappers = new ArrayList<>();
+    private final @NotNull DocumentEx myDocument;
 
     RangeMarkerAwareChanger(@NotNull DocumentEx document) {
       myDocument = document;

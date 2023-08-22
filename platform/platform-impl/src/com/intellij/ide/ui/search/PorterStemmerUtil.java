@@ -3,7 +3,7 @@ package com.intellij.ide.ui.search;
 
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public final class PorterStemmerUtil {
   private PorterStemmerUtil() {
   }

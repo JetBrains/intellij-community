@@ -29,7 +29,7 @@ import java.util.Map;
 public abstract class LexerBasedIdIndexer implements LexingIdIndexer, IdAndToDoScannerBasedOnFilterLexer {
   @Override
   @NotNull
-  public final Map<IdIndexEntry,Integer> map(@NotNull final FileContent inputData) {
-    return BaseFilterLexerUtil.scanContent(inputData, this).idMap;
+  public final Map<IdIndexEntry,Integer> map(@NotNull FileContent inputData) {
+    return BaseFilterLexerUtil.calcIdEntries(inputData, this);
   }
 }

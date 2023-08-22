@@ -26,6 +26,7 @@ import com.jetbrains.python.PythonFQDNNames;
 import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +36,6 @@ import java.util.*;
 
 /**
  * TODO: Merge PythonDataflowUtil and {@link PyEvaluator} and all its inheritors and improve Abstract Interpretation
- *
- * @author yole
  */
 public class PyEvaluator {
 
@@ -138,7 +137,7 @@ public class PyEvaluator {
   }
 
   @Nullable
-  private Object evaluateBinary(@NotNull PyBinaryExpression expression) {
+  protected Object evaluateBinary(@NotNull PyBinaryExpression expression) {
     final PyElementType op = expression.getOperator();
     final Object lhs = evaluate(expression.getLeftExpression());
     final Object rhs = evaluate(expression.getRightExpression());
@@ -193,6 +192,9 @@ public class PyEvaluator {
   @Nullable
   private static Boolean evaluateBoolean(@NotNull PyExpression expression) {
     if (expression instanceof PyBoolLiteralExpression) {
+      if (PyNames.DEBUG.equals(expression.getText())) {
+        return null;
+      }
       return ((PyBoolLiteralExpression)expression).getValue();
     }
     else if (expression instanceof PyReferenceExpression && LanguageLevel.forElement(expression).isPython2()) {
@@ -270,7 +272,8 @@ public class PyEvaluator {
       if (!myEnableResolve) {
         return null;
       }
-      final ResolveResult[] results = expression.getReference(PyResolveContext.defaultContext()).multiResolve(false);
+      final var context = TypeEvalContext.codeInsightFallback(expression.getProject());
+      final ResolveResult[] results = expression.getReference(PyResolveContext.defaultContext(context)).multiResolve(false);
       if (results.length != 1) {
         return null;
       }
@@ -326,10 +329,9 @@ public class PyEvaluator {
       if (arguments.length > 0) {
         final Map<Object, Object> result = new HashMap<>();
         for (final PyExpression argument : arguments) {
-          if (!(argument instanceof PyKeywordArgument)) {
+          if (!(argument instanceof PyKeywordArgument keywordArgument)) {
             continue;
           }
-          final PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
           final String keyword = keywordArgument.getKeyword();
           if (keyword == null) {
             continue;
@@ -459,10 +461,10 @@ public class PyEvaluator {
       return !((String)result).isEmpty();
     }
     else if (result instanceof Collection) {
-      return !((Collection)result).isEmpty();
+      return !((Collection<?>)result).isEmpty();
     }
     else if (result instanceof Map) {
-      return !((Map)result).isEmpty();
+      return !((Map<?, ?>)result).isEmpty();
     }
 
     return null;

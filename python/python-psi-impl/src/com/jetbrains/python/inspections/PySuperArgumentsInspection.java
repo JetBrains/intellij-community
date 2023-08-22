@@ -27,28 +27,26 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PySuperArgumentsInspection extends PyInspection {
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       final PyExpression callee = node.getCallee();
       if (callee != null) {
         if (PyNames.SUPER.equals(callee.getName())) {
@@ -61,7 +59,7 @@ public class PySuperArgumentsInspection extends PyInspection {
                 if (!secondClass.isSubclass(firstClass, myTypeEvalContext)) {
                   registerProblem(
                     node.getArgumentList(),
-                    PyPsiBundle.message("INSP.$0.is.not.superclass.of.$1",
+                    PyPsiBundle.message("INSP.class.is.not.subtype.of.class",
                                         secondClass.getName(), firstClass.getName())
                   );
                 }

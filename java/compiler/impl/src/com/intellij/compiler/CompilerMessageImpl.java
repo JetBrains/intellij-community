@@ -15,40 +15,51 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.TripleFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public final class CompilerMessageImpl implements CompilerMessage {
 
   private final Project myProject;
   private final CompilerMessageCategory myCategory;
   @Nullable private Navigatable myNavigatable;
-  private final String myMessage;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myMessage;
   private final VirtualFile myFile;
   private final int myRow;
   private final int myColumn;
+  private final Collection<String> myModuleNames;
   @NotNull
   private TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> myColumnAdjuster = (msg, line, col) -> col;
 
-  public CompilerMessageImpl(Project project, CompilerMessageCategory category, String message) {
+  public CompilerMessageImpl(Project project, CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
     this(project, category, message, null, -1, -1, null);
   }
 
   public CompilerMessageImpl(Project project,
                              @NotNull CompilerMessageCategory category,
-                             String message,
+                             @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                              @Nullable final VirtualFile file,
                              int row,
                              int column,
                              @Nullable final Navigatable navigatable) {
+    this(project, category, message, file, row, column, navigatable, Collections.emptyList());
+  }
+
+  public CompilerMessageImpl(Project project, 
+                             @NotNull CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                             @Nullable final VirtualFile file, int row, int column, @Nullable final Navigatable navigatable, @NotNull Collection<String> moduleNames) {
     myProject = project;
     myCategory = category;
     myNavigatable = navigatable;
@@ -56,6 +67,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     myRow = row;
     myColumn = column;
     myFile = file;
+    myModuleNames = Collections.unmodifiableCollection(moduleNames);
   }
 
   public void setColumnAdjuster(@NotNull TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> columnAdjuster) {
@@ -115,6 +127,11 @@ public final class CompilerMessageImpl implements CompilerMessage {
 
   public int getColumn() {
     return myColumn;
+  }
+
+  @Override
+  public Collection<String> getModuleNames() {
+    return myModuleNames;
   }
 
   public boolean equals(Object o) {

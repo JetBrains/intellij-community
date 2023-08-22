@@ -15,21 +15,16 @@
  */
 package git4idea;
 
-import com.intellij.vcs.log.Hash;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class GitStandardRemoteBranch extends GitRemoteBranch {
+public final class GitStandardRemoteBranch extends GitRemoteBranch {
 
   @NotNull private final GitRemote myRemote;
   @NotNull private final String myNameAtRemote;
-
-  @Deprecated
-  public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote, @Nullable Hash hash) {
-    this(remote, nameAtRemote);
-  }
 
   public GitStandardRemoteBranch(@NotNull GitRemote remote, @NotNull String nameAtRemote) {
     super(formStandardName(remote, GitBranchUtil.stripRefsPrefix(nameAtRemote)));
@@ -82,4 +77,12 @@ public class GitStandardRemoteBranch extends GitRemoteBranch {
     return myName;
   }
 
+  @Override
+  public int compareTo(GitReference o) {
+    if (o instanceof GitStandardRemoteBranch) {
+      // optimization: do not build getFullName
+      return StringUtil.compare(myName, o.myName, SystemInfo.isFileSystemCaseSensitive);
+    }
+    return super.compareTo(o);
+  }
 }

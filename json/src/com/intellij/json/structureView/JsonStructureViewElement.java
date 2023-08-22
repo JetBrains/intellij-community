@@ -5,7 +5,6 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.json.psi.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,12 +61,10 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
     else if (PsiTreeUtil.instanceOf(myElement, JsonObject.class, JsonArray.class)) {
       value = myElement;
     }
-    if (value instanceof JsonObject) {
-      final JsonObject object = ((JsonObject)value);
-      return ContainerUtil.map2Array(object.getPropertyList(), TreeElement.class, (Function<JsonProperty, TreeElement>)property -> new JsonStructureViewElement(property));
+    if (value instanceof JsonObject object) {
+      return ContainerUtil.map2Array(object.getPropertyList(), TreeElement.class, property -> new JsonStructureViewElement(property));
     }
-    else if (value instanceof JsonArray) {
-      final JsonArray array = (JsonArray)value;
+    else if (value instanceof JsonArray array) {
       final List<TreeElement> childObjects = ContainerUtil.mapNotNull(array.getValueList(), value1 -> {
         if (value1 instanceof JsonObject && !((JsonObject)value1).getPropertyList().isEmpty()) {
           return new JsonStructureViewElement(value1);

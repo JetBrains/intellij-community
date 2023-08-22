@@ -11,7 +11,7 @@ import com.intellij.execution.configurations.RunConfigurationOptions
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.util.ReflectionUtil
-import gnu.trove.THashMap
+import com.intellij.util.containers.CollectionFactory
 import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.Node
 import org.snakeyaml.engine.v2.nodes.ScalarNode
@@ -35,9 +35,9 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
         continue
       }
 
-      // compute keyToType only if need
+      // compute keyToType only if needed
       if (keyToType == null) {
-        keyToType = THashMap<String, ConfigurationType>()
+        keyToType = CollectionFactory.createSmallMemoryFootprintMap()
         processConfigurationTypes { configurationType, propertyName, _ ->
           keyToType.put(propertyName.toString(), configurationType)
         }
@@ -102,7 +102,6 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
     else if (node is SequenceNode) {
       // array of child
       for (itemNode in node.value) {
-        @Suppress("IfThenToSafeAccess")
         if (itemNode is MappingNode) {
           readRunConfiguration(optionsClass, itemNode, factory)
         }

@@ -1,31 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
-
-public class InferenceVariablesOrder {
+public final class InferenceVariablesOrder {
   public static List<InferenceVariable> resolveOrder(List<InferenceVariable> vars,
                                                      Map<InferenceVariable, Set<InferenceVariable>> depMap) {
     if (vars.size() < 2) return vars;
@@ -40,12 +24,12 @@ public class InferenceVariablesOrder {
                                                           Map<InferenceVariable, Set<InferenceVariable>> depMap) {
     // Fast-path to find the first resolve group if it consists of single var
     InferenceVariable var = vars.get(0);
-    if (var.getInstantiation() != PsiType.NULL || depMap.get(var).isEmpty()) {
+    if (var.getInstantiation() != PsiTypes.nullType() || depMap.get(var).isEmpty()) {
       return var;
     }
     Set<InferenceVariable> visited = new HashSet<>();
     while (visited.add(var)) {
-      if (var.getInstantiation() != PsiType.NULL) {
+      if (var.getInstantiation() != PsiTypes.nullType()) {
         return var;
       }
       Set<InferenceVariable> deps = depMap.get(var);
@@ -70,7 +54,7 @@ public class InferenceVariablesOrder {
   public static Map<InferenceVariable, Set<InferenceVariable>> getDependencies(
     Collection<? extends InferenceVariable> vars, InferenceSession session) {
 
-    Map<InferenceVariable, Set<InferenceVariable>> map = new THashMap<>();
+    Map<InferenceVariable, Set<InferenceVariable>> map = new HashMap<>();
     for (InferenceVariable var : vars) {
       map.put(var, var.getDependencies(session));
     }
@@ -95,7 +79,7 @@ public class InferenceVariablesOrder {
 
     for (Map.Entry<InferenceVariable, InferenceGraphNode<InferenceVariable>> entry : nodes.entrySet()) {
       InferenceVariable var = entry.getKey();
-      if (var.getInstantiation() != PsiType.NULL) continue;
+      if (var.getInstantiation() != PsiTypes.nullType()) continue;
       final InferenceGraphNode<InferenceVariable> node = entry.getValue();
       final Set<InferenceVariable> dependencies = depMap.get(var);
       for (InferenceVariable dependentVariable : dependencies) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import java.awt.Image
+import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
@@ -34,6 +35,7 @@ object GithubApiContentHelper {
       .setTimeZone(TimeZone.getDefault())
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+      .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
       .setSerializationInclusion(JsonInclude.Include.NON_NULL)
       .setVisibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
                                            JsonAutoDetect.Visibility.NONE,
@@ -94,7 +96,7 @@ object GithubApiContentHelper {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun loadImage(stream: InputStream): Image {
+  fun loadImage(stream: InputStream): BufferedImage {
     return ImageIO.read(stream)
   }
 }

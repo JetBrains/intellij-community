@@ -1,23 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.core.CoreBundle;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.util.ObjectUtils;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
 
-public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
+public abstract class Configuration implements JDOMExternalizable {
   @NonNls public static final String CONTEXT_VAR_NAME = "__context__";
 
   public static final Configuration[] EMPTY_ARRAY = {};
@@ -28,19 +36,26 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   @NonNls private static final String DESCRIPTION_ATTRIBUTE_NAME = "description";
   @NonNls private static final String SUPPRESS_ID_ATTRIBUTE_NAME = "suppressId";
   @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
+  @NonNls private static final String CLEANUP_ATTRIBUTE_NAME = "cleanup";
   @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
 
-  private String name;
+  private @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name;
   private String category;
   private boolean predefined;
   private long created;
-  private UUID uuid;
+  private String uuid;
   private String description;
   private String suppressId;
   private String problemDescriptor;
+  private boolean cleanup;
   private int order;
 
-  private transient String myCurrentVariableName = null;
+  /**
+   * String used to refer to this configuration. It should be unique or null.
+   *  - For predefined configurations, the refName is a unique String
+   *  - For user-defined configurations, the refName is null and getRefName returns the template name
+   */
+  private @NonNls String refName;
 
   public Configuration() {
     name = "";
@@ -48,13 +63,13 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     created = -1L;
   }
 
-  public Configuration(String name, String category) {
+  public Configuration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name, @NotNull String category) {
     this.name = name;
     this.category = category;
     created = -1L;
   }
 
-  protected Configuration(Configuration configuration) {
+  protected Configuration(@NotNull Configuration configuration) {
     name = configuration.name;
     category = configuration.category;
     created = -1L; // receives timestamp when added to history
@@ -63,23 +78,35 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     description = configuration.description;
     suppressId = configuration.suppressId;
     problemDescriptor = configuration.problemDescriptor;
+    cleanup = configuration.cleanup;
     order = configuration.order;
+    refName = null; // copy never has a refName
   }
 
+  @NotNull
   public abstract Configuration copy();
 
-  @NotNull
+  @NotNull @Nls
   public String getName() {
     return name;
   }
 
-  public void setName(@NotNull String value) {
+  public void setName(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String value) {
     if (uuid == null) {
-      uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+      getUuid();
     }
     name = value;
   }
 
+  @NotNull @Nls
+  public String getTypeText() {
+    final LanguageFileType type = getFileType();
+    final String name = type == null ? CoreBundle.message("filetype.unknown.display.name") : type.getLanguage().getDisplayName();
+    return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", name)
+                          : SSRBundle.message("predefined.configuration.type.text.user.defined", name);
+  }
+
+  @NotNull
   public String getCategory() {
     return category;
   }
@@ -100,15 +127,18 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   }
 
   @NotNull
-  public UUID getUuid() {
-    return uuid == null ? (uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8))) : uuid;
+  public String getUuid() {
+    if (uuid == null) {
+      uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)).toString();
+    }
+    return uuid;
   }
 
-  public void setUuid(@Nullable UUID uuid) {
+  public void setUuid(@Nullable String uuid) {
     this.uuid = uuid;
   }
 
-  public String getDescription() {
+  public @NlsSafe @Nullable String getDescription() {
     return description;
   }
 
@@ -116,7 +146,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.description = description;
   }
 
-  public String getSuppressId() {
+  public @NlsSafe @Nullable String getSuppressId() {
     return suppressId;
   }
 
@@ -124,12 +154,20 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.suppressId = suppressId;
   }
 
-  public String getProblemDescriptor() {
-    return this.problemDescriptor;
+  public @NlsSafe @Nullable String getProblemDescriptor() {
+    return problemDescriptor;
   }
 
   public void setProblemDescriptor(String problemDescriptor) {
     this.problemDescriptor = problemDescriptor;
+  }
+
+  public boolean isCleanup() {
+    return cleanup;
+  }
+
+  public void setCleanup(boolean cleanup) {
+    this.cleanup = cleanup;
   }
 
   public int getOrder() {
@@ -143,7 +181,8 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
 
   @Override
   public void readExternal(Element element) {
-    name = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
+    //noinspection HardCodedStringLiteral
+    name = ObjectUtils.notNull(element.getAttributeValue(NAME_ATTRIBUTE_NAME), "");
     final Attribute createdAttribute = element.getAttribute(CREATED_ATTRIBUTE_NAME);
     if (createdAttribute != null) {
       try {
@@ -154,7 +193,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     final Attribute uuidAttribute = element.getAttribute(UUID_ATTRIBUTE_NAME);
     if (uuidAttribute != null) {
       try {
-        uuid = UUID.fromString(uuidAttribute.getValue());
+        uuid = uuidAttribute.getValue();
       }
       catch (IllegalArgumentException ignore) {}
     }
@@ -169,6 +208,15 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     final Attribute problemDescriptorAttribute = element.getAttribute(PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME);
     if (problemDescriptorAttribute != null) {
       problemDescriptor = problemDescriptorAttribute.getValue();
+    }
+    Attribute attribute = element.getAttribute(CLEANUP_ATTRIBUTE_NAME);
+    if (attribute != null) {
+      try {
+        cleanup = attribute.getBooleanValue();
+      }
+      catch (DataConversionException e) {
+        cleanup = false;
+      }
     }
     final Attribute mainAttribute = element.getAttribute(ORDER_ATTRIBUTE_NAME);
     if (mainAttribute != null) {
@@ -185,8 +233,8 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     if (created > 0) {
       element.setAttribute(CREATED_ATTRIBUTE_NAME, String.valueOf(created));
     }
-    if (uuid != null && !uuid.equals(UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)))) {
-      element.setAttribute(UUID_ATTRIBUTE_NAME, uuid.toString());
+    if (uuid != null && !uuid.equals(UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)).toString())) {
+      element.setAttribute(UUID_ATTRIBUTE_NAME, uuid);
     }
     if (!StringUtil.isEmpty(description)) {
       element.setAttribute(DESCRIPTION_ATTRIBUTE_NAME, description);
@@ -196,6 +244,9 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     }
     if (!StringUtil.isEmpty(problemDescriptor)) {
       element.setAttribute(PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME, problemDescriptor);
+    }
+    if (cleanup) {
+      element.setAttribute(CLEANUP_ATTRIBUTE_NAME, String.valueOf(cleanup));
     }
     if (order != 0) {
       element.setAttribute(ORDER_ATTRIBUTE_NAME, String.valueOf(order));
@@ -210,38 +261,44 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.predefined = predefined;
   }
 
+  @NotNull
   public abstract MatchOptions getMatchOptions();
 
-  public ReplaceOptions getReplaceOptions() {
-    return null;
-  }
+  @NotNull
+  public abstract ReplaceOptions getReplaceOptions();
 
-  public abstract NamedScriptableDefinition findVariable(String name);
+  public abstract NamedScriptableDefinition findVariable(@NotNull String name);
 
   public abstract void removeUnusedVariables();
 
-  public String getCurrentVariableName() {
-    return myCurrentVariableName;
-  }
-
-  public void setCurrentVariableName(String variableName) {
-    myCurrentVariableName = variableName;
-  }
-
-  @Override
-  public int compareTo(Configuration other) {
-    final int result = StringUtil.naturalCompare(getCategory(), other.getCategory());
-    return result != 0 ? result : StringUtil.naturalCompare(getName(), other.getName());
-  }
-
   public boolean equals(Object configuration) {
-    if (!(configuration instanceof Configuration)) return false;
-    final Configuration other = (Configuration)configuration;
+    if (!(configuration instanceof Configuration other)) return false;
     return Objects.equals(category, other.category) && name.equals(other.name);
   }
 
   @Override
   public int hashCode() {
     return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
+  }
+
+  @NotNull
+  public Icon getIcon() {
+    final LanguageFileType type = getFileType();
+    return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Unknown : type.getIcon();
+  }
+
+  @Nullable
+  public LanguageFileType getFileType() {
+    return getMatchOptions().getFileType();
+  }
+
+  @NotNull @NonNls
+  public String getRefName() {
+    return refName == null || !predefined ? name : refName;
+  }
+
+  public void setRefName(String refName) {
+    if (predefined)
+      this.refName = refName;
   }
 }

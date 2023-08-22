@@ -21,10 +21,9 @@ import static com.intellij.laf.win10.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL;
 public class WinIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (!(c instanceof AbstractButton) || UIUtil.isHelpButton(c)) return;
+    if (!(c instanceof AbstractButton b) || UIUtil.isHelpButton(c)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
-    AbstractButton b = (AbstractButton)c;
     Rectangle outerRect = new Rectangle(x, y, width, height);
     try {
       JBInsets.removeFrom(outerRect, b.getInsets());

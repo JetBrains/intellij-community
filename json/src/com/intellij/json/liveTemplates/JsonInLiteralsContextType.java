@@ -12,7 +12,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class JsonInLiteralsContextType extends TemplateContextType {
   protected JsonInLiteralsContextType() {
-    super("JSON_STRING_VALUES", JsonBundle.message("json.string.values"), JsonContextType.class);
+    super(JsonBundle.message("json.string.values"));
   }
 
   @Override

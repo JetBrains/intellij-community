@@ -1,13 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +20,11 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
-class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
+final class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
 
   private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
@@ -113,7 +118,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     mySelectedTextFormatter.reformatSelectedText(clonedSettings);
   }
 
-  private class SpacesPanelWithoutPreview extends MySpacesPanel {
+  private final class SpacesPanelWithoutPreview extends MySpacesPanel {
     private JPanel myPanel;
 
     SpacesPanelWithoutPreview(CodeStyleSettings settings) {
@@ -172,7 +177,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
     }
   }
 
-  private class WrappingAndBracesPanelWithoutPreview extends MyWrappingAndBracesPanel {
+  private final class WrappingAndBracesPanelWithoutPreview extends MyWrappingAndBracesPanel {
     public JPanel myPanel;
 
     WrappingAndBracesPanelWithoutPreview(CodeStyleSettings settings) {
@@ -215,8 +220,8 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
         if (settingsGroup == null) {
           commonFields.add(fieldName);
         }
-        else if (settingsGroup.title != WRAPPING_KEEP) {
-          commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames);
+        else if (!Strings.areSameInstance(settingsGroup.title(), getInstance().WRAPPING_KEEP)) {
+          commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames());
         }
       }
       return commonFields;
@@ -259,10 +264,10 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       }
 
       @Override
-      public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                                   String fieldName,
-                                   String title,
-                                   @Nullable String groupName,
+      public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                   @NonNls @NotNull String fieldName,
+                                   @NlsContexts.Label @NotNull String title,
+                                   @Nls @Nullable String groupName,
                                    Object... options) {
         if (names.contains(fieldName)) {
           original.showCustomOption(settingsClass, fieldName, title, groupName, options);
@@ -270,19 +275,19 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
       }
 
       @Override
-      public void renameStandardOption(String fieldName, String newTitle) {
+      public void renameStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newTitle) {
         if (names.contains(fieldName)) {
           original.renameStandardOption(fieldName, newTitle);
         }
       }
 
       @Override
-      public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                                   String fieldName,
-                                   String title,
-                                   @Nullable String groupName,
+      public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                   @NonNls @NotNull String fieldName,
+                                   @NlsContexts.Label @NotNull String title,
+                                   @Nls @Nullable String groupName,
                                    @Nullable OptionAnchor anchor,
-                                   @Nullable String anchorFieldName,
+                                   @NonNls @Nullable String anchorFieldName,
                                    Object... options) {
         if (names.contains(fieldName)) {
           original.showCustomOption(settingsClass, fieldName, title, groupName, anchor, anchorFieldName, options);

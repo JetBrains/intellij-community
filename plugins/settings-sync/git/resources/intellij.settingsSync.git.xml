@@ -1,0 +1,9 @@
+<idea-plugin package="com.intellij.settingsSync.git">
+  <dependencies>
+    <plugin id="Git4Idea"/>
+  </dependencies>
+
+  <actions resource-bundle="messages.SettingsSyncBundle">
+    <action class="com.intellij.settingsSync.git.SettingsSyncHistoryAction" id="settingsSync.history" icon="AllIcons.Vcs.History" />
+  </actions>
+</idea-plugin>

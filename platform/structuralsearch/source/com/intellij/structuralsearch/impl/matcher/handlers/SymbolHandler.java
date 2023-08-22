@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Search handler for symbol search
@@ -15,7 +16,7 @@ public class SymbolHandler extends MatchingHandler {
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     return handler.handle(matchedNode, context);
   }
 }

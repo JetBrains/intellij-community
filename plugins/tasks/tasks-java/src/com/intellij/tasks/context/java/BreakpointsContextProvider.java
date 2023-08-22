@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.context.WorkingContextProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public final class BreakpointsContextProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return "Java Debugger breakpoints";
+    return TaskBundle.message("java.debugger.breakpoints");
   }
 
   @Override

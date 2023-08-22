@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -17,13 +17,13 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.ui.JBColor.namedColor;
 
 public abstract class ProgressStripeIcon implements Icon {
   private static final int TRANSLATE = 1;
-  @NotNull
-  private final JComponent myReferenceComponent;
+  private final @NotNull JComponent myReferenceComponent;
   private final int myShift;
 
   private ProgressStripeIcon(@NotNull JComponent component, int shift) {
@@ -54,7 +54,7 @@ public abstract class ProgressStripeIcon implements Icon {
     return myReferenceComponent.getWidth();
   }
 
-  private static class GradientIcon extends ProgressStripeIcon {
+  private static final class GradientIcon extends ProgressStripeIcon {
     private static final Color DARK = new ProgressStripeColor(namedColor("ProgressBar.indeterminateStartColor",
                                                                          new JBColor(new Color(0x4d9ff8),
                                                                                      new Color(0x6a6a6a))), Gray.xD4);
@@ -64,7 +64,7 @@ public abstract class ProgressStripeIcon implements Icon {
                                                                                       new Color(0x838383))),
                                                                new Color(0x989a9e));
     private static final int GRADIENT = 128;
-    private static final int GRADIENT_HEIGHT = 2;
+    private static final int GRADIENT_HEIGHT = 3;
 
     private GradientIcon(@NotNull JComponent component, int shift) {
       super(component, shift);
@@ -90,9 +90,9 @@ public abstract class ProgressStripeIcon implements Icon {
       return JBUIScale.scale(GRADIENT_HEIGHT);
     }
 
-    private static class ProgressStripeColor extends JBColor {
+    private static final class ProgressStripeColor extends JBColor {
       private ProgressStripeColor(@NotNull JBColor defaultColor, @NotNull Color graphiteColor) {
-        super(() -> {
+        super((Supplier<? extends Color>)() -> {
           if (UIUtil.isUnderAquaBasedLookAndFeel() && !StartupUiUtil.isUnderDarcula() && UIUtil.isGraphite()) {
             return graphiteColor;
           }
@@ -102,8 +102,7 @@ public abstract class ProgressStripeIcon implements Icon {
     }
   }
 
-  @NotNull
-  public static AsyncProcessIcon generateIcon(@NotNull JComponent component) {
+  public static @NotNull AsyncProcessIcon generateIcon(@NotNull JComponent component) {
     List<Icon> result = new ArrayList<>();
     for (int i = 0; i < 2 * JBUIScale.scale(GradientIcon.GRADIENT); i += JBUIScale.scale(TRANSLATE)) {
       result.add(new GradientIcon(component, i));

@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author lex
- */
 public interface DebugProcess extends UserDataHolder {
   @NonNls String JAVA_STRATUM = "Java";
 
@@ -46,6 +44,8 @@ public interface DebugProcess extends UserDataHolder {
 
   VirtualMachineProxy getVirtualMachineProxy();
 
+  void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable);
+
   void addDebugProcessListener(DebugProcessListener listener);
 
   void removeDebugProcessListener(DebugProcessListener listener);
@@ -54,6 +54,7 @@ public interface DebugProcess extends UserDataHolder {
    * The usual place to call this method is vmAttachedEvent. No additional actions are needed in this case.
    * If position manager is appended later, when DebugSession is up and running, one might need to call BreakpointManager.updateAllRequests()
    * to ensure that just added position manager was considered when creating breakpoint requests
+   *
    * @param positionManager to be appended
    */
   void appendPositionManager(PositionManager positionManager);

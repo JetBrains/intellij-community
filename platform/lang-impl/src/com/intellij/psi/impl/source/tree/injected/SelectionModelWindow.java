@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class SelectionModelWindow implements SelectionModel {
+final class SelectionModelWindow implements SelectionModel {
   private final SelectionModel myHostModel;
   private final DocumentWindow myDocument;
   private final EditorWindow myInjectedEditor;
@@ -30,15 +30,13 @@ class SelectionModelWindow implements SelectionModel {
     return myInjectedEditor;
   }
 
-  @Nullable
   @Override
-  public VisualPosition getSelectionStartPosition() {
+  public @Nullable VisualPosition getSelectionStartPosition() {
     return myInjectedEditor.offsetToVisualPosition(getSelectionStart());
   }
 
-  @Nullable
   @Override
-  public VisualPosition getSelectionEndPosition() {
+  public @Nullable VisualPosition getSelectionEndPosition() {
     return myInjectedEditor.offsetToVisualPosition(getSelectionEnd());
   }
 
@@ -48,12 +46,12 @@ class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  public void addSelectionListener(@NotNull final SelectionListener listener) {
+  public void addSelectionListener(final @NotNull SelectionListener listener) {
     myHostModel.addSelectionListener(listener);
   }
 
   @Override
-  public void removeSelectionListener(@NotNull final SelectionListener listener) {
+  public void removeSelectionListener(final @NotNull SelectionListener listener) {
     myHostModel.removeSelectionListener(listener);
   }
 
@@ -63,7 +61,7 @@ class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  public void setBlockSelection(@NotNull final LogicalPosition blockStart, @NotNull final LogicalPosition blockEnd) {
+  public void setBlockSelection(final @NotNull LogicalPosition blockStart, final @NotNull LogicalPosition blockEnd) {
     myHostModel.setBlockSelection(myInjectedEditor.injectedToHost(blockStart), myInjectedEditor.injectedToHost(blockEnd));
   }
 

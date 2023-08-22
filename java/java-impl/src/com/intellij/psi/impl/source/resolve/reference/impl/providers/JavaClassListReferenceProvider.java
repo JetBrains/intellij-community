@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -28,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -41,7 +25,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByString(String str, @NotNull final PsiElement position, int offsetInPosition){
     if (position instanceof XmlTag && ((XmlTag)position).getValue().getTextElements().length == 0) {
-      return PsiReference.EMPTY_ARRAY; 
+      return PsiReference.EMPTY_ARRAY;
     }
 
     if (str.length() < 2) {
@@ -55,20 +39,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       }
     }
 
-    NotNullLazyValue<Set<String>> topLevelPackages = new NotNullLazyValue<Set<String>>() {
-      @NotNull
-      @Override
-      protected Set<String> compute() {
-        Set<String> knownTopLevelPackages = new HashSet<>();
-        List<PsiPackage> defaultPackages = getDefaultPackages(position.getProject());
-        for (PsiElement pack : defaultPackages) {
-          if (pack instanceof PsiPackage) {
-            knownTopLevelPackages.add(((PsiPackage)pack).getName());
-          }
-        }
-        return knownTopLevelPackages;
-      }
-    };
+    NotNullLazyValue<Set<String>> topLevelPackages = NotNullLazyValue.createValue(() -> JavaClassReferenceProvider.getDefaultPackagesNames(position.getProject()));
     final List<PsiReference> results = new ArrayList<>();
 
     for(int dot = str.indexOf('.'); dot > 0; dot = str.indexOf('.', dot + 1)) {

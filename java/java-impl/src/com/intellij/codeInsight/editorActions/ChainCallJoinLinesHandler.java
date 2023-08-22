@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -42,8 +42,7 @@ public class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
         result = joinAssignmentAndCall((PsiAssignmentExpression)firstExpression, secondCall);
       }
     }
-    else if (firstStatement instanceof PsiLocalVariable) {
-      PsiLocalVariable var = (PsiLocalVariable)firstStatement;
+    else if (firstStatement instanceof PsiLocalVariable var) {
       result = joinExpressionAndCall(var, var.getInitializer(), secondCall);
     }
     if (!result) return CANNOT_JOIN;

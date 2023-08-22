@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,10 +13,9 @@ import java.util.List;
 /**
  * Policy which defines explicit focus component cycle.
  */
-public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
-
+public final class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   private final Component[] myComponents;
-  private final TObjectIntHashMap<Component> myComponentToIndex;
+  private final ObjectIntMap<Component> myComponentToIndex;
 
   public ListFocusTraversalPolicy(@NotNull List<? extends Component> components) {
     myComponents = components.toArray(new Component[0]);
@@ -42,7 +42,8 @@ public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     if (!myComponentToIndex.containsKey(aComponent)) {
       return null;
     }
-    return getNextComponent(myComponentToIndex.get(aComponent) + 1);
+    int i = myComponentToIndex.get(aComponent);
+    return getNextComponent((i==-1?0:i) + 1);
   }
 
   @Override
@@ -50,7 +51,8 @@ public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     if (!myComponentToIndex.containsKey(aComponent)) {
       return null;
     }
-    return getPreviousComponent(myComponentToIndex.get(aComponent) - 1);
+    int i = myComponentToIndex.get(aComponent);
+    return getPreviousComponent((i==-1 ?0:i) - 1);
   }
 
   @Nullable
@@ -87,15 +89,13 @@ public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return null;
   }
 
-  @NotNull
-  private static <X> TObjectIntHashMap<X> indexMap(X @NotNull [] array) {
-    TObjectIntHashMap<X> map = new TObjectIntHashMap<>(array.length);
+  private static @NotNull <X> ObjectIntMap<X> indexMap(X @NotNull [] array) {
+    ObjectIntMap<X> map = new ObjectIntHashMap<>(array.length);
     for (X x : array) {
-      if (!map.contains(x)) {
+      if (!map.containsKey(x)) {
         map.put(x, map.size());
       }
     }
-    map.compact();
     return map;
   }
 }

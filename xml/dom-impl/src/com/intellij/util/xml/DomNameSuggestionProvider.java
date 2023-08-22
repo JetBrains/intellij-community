@@ -33,8 +33,7 @@ public class DomNameSuggestionProvider implements NameSuggestionProvider {
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, final Set<String> result) {
     if (element instanceof PsiMetaOwner) {
       final PsiMetaData psiMetaData = ((PsiMetaOwner)element).getMetaData();
-      if (psiMetaData instanceof DomMetaData) {
-        final DomMetaData domMetaData = (DomMetaData)psiMetaData;
+      if (psiMetaData instanceof DomMetaData domMetaData) {
         final GenericDomValue value = domMetaData.getNameElement(domMetaData.getElement());
         ContainerUtil.addIfNotNull(result, getNameFromNameValue(value, true));
       }
@@ -47,8 +46,7 @@ public class DomNameSuggestionProvider implements NameSuggestionProvider {
     if (o == null || o instanceof String) {
       return (String)o;
     }
-    else if (o instanceof GenericValue) {
-      final GenericValue value = (GenericValue)o;
+    else if (o instanceof GenericValue value) {
       if (!local) {
         final Object name = value.getValue();
         if (name != null) {

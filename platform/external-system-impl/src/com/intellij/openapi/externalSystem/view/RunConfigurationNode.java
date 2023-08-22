@@ -72,7 +72,7 @@ public class RunConfigurationNode extends ExternalSystemNode {
       hint = shortcutHint + ", " + activatorHint;
     }
 
-    setNameAndTooltip(getName(), StringUtil.join(taskExecutionSettings.getTaskNames(), " "), hint);
+    setNameAndTooltip(presentation, getName(), StringUtil.join(taskExecutionSettings.getTaskNames(), " "), hint);
   }
 
   public RunnerAndConfigurationSettings getSettings() {
@@ -107,7 +107,9 @@ public class RunConfigurationNode extends ExternalSystemNode {
                                            ExternalSystemActionsCollector.ActionId.ExecuteExternalSystemRunConfigurationAction,
                                            place, false, null);
     ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
-    RunManager.getInstance(mySettings.getConfiguration().getProject()).setSelectedConfiguration(mySettings);
+    RunManager runManager = RunManager.getInstance(mySettings.getConfiguration().getProject());
+    runManager.addConfiguration(mySettings);
+    runManager.setSelectedConfiguration(mySettings);
   }
 
   @Nullable

@@ -15,7 +15,8 @@
  */
 package com.jetbrains.python.codeInsight.functionTypeComments;
 
-import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.SyntaxTreeBuilder;
+import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyPsiBundle;
@@ -26,18 +27,16 @@ import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
 public class PyFunctionTypeAnnotationParser extends PyParser {
   @Override
-  protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
-    return new ParsingContext(builder, languageLevel, futureFlag) {
-      private final StatementParsing myStatementParsing = new AnnotationParser(this, futureFlag);
+  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
+    return new ParsingContext(builder, languageLevel) {
+      private final StatementParsing myStatementParsing = new AnnotationParser(this);
       private final ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
         @Override
         protected IElementType getReferenceType() {
@@ -58,8 +57,8 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
   }
 
   private static class AnnotationParser extends StatementParsing {
-    AnnotationParser(ParsingContext context, @Nullable FUTURE futureFlag) {
-      super(context, futureFlag);
+    AnnotationParser(ParsingContext context) {
+      super(context);
     }
 
     @Override
@@ -70,7 +69,7 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
 
     private void parseFunctionType() {
       if (atToken(PyTokenTypes.LPAR)) {
-        final PsiBuilder.Marker funcTypeMark = myBuilder.mark();
+        final SyntaxTreeBuilder.Marker funcTypeMark = myBuilder.mark();
         parseParameterTypeList();
         checkMatches(PyTokenTypes.RARROW, PyPsiBundle.message("rarrow.expected"));
         final boolean parsed = getExpressionParser().parseSingleExpression(false);
@@ -84,7 +83,7 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
 
     private void parseParameterTypeList() {
       assert atToken(PyTokenTypes.LPAR);
-      final PsiBuilder.Marker listMark = myBuilder.mark();
+      final SyntaxTreeBuilder.Marker listMark = myBuilder.mark();
       myBuilder.advanceLexer();
       
       final ExpressionParsing exprParser = getExpressionParser();
@@ -95,13 +94,13 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
         }
         boolean parsed;
         if (atToken(PyTokenTypes.MULT)) {
-          final PsiBuilder.Marker starMarker = myBuilder.mark();
+          final SyntaxTreeBuilder.Marker starMarker = myBuilder.mark();
           myBuilder.advanceLexer();
           parsed = exprParser.parseSingleExpression(false);
           starMarker.done(PyElementTypes.STAR_EXPRESSION);
         }
         else if (atToken(PyTokenTypes.EXP)) {
-          final PsiBuilder.Marker doubleStarMarker = myBuilder.mark();
+          final SyntaxTreeBuilder.Marker doubleStarMarker = myBuilder.mark();
           myBuilder.advanceLexer();
           parsed = exprParser.parseSingleExpression(false);
           doubleStarMarker.done(PyElementTypes.DOUBLE_STAR_EXPRESSION);
@@ -119,8 +118,8 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
       listMark.done(PyFunctionTypeAnnotationElementTypes.PARAMETER_TYPE_LIST);
     }
 
-    private void recoverUntilMatches(@NotNull @Nls String errorMessage, IElementType @NotNull ... types) {
-      final PsiBuilder.Marker errorMarker = myBuilder.mark();
+    private void recoverUntilMatches(@NotNull @ParsingError String errorMessage, IElementType @NotNull ... types) {
+      final SyntaxTreeBuilder.Marker errorMarker = myBuilder.mark();
       boolean hasNonWhitespaceTokens = false;
       while (!(atAnyOfTokens(types) || myBuilder.eof())) {
         // Regular whitespace tokens are already skipped by advancedLexer() 

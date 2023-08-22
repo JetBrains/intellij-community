@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -31,11 +17,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -102,12 +90,12 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
     return new LocalQuickFix[]{new CreateModuleFix(true, myText, myPsiFile), new CreateModuleFix(false, myText, myPsiFile)};
   }
 
-  private static class CreateModuleFix extends LocalQuickFixOnPsiElement {
+  private static final class CreateModuleFix extends LocalQuickFixOnPsiElement {
 
     private final boolean myWithParent;
     private final String myModulePath;
@@ -148,13 +136,13 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
                                                      true);
       }
       catch (IOException e) {
-        MavenUtil.showError(project, "Cannot create a module", e);
+        MavenUtil.showError(project, MavenProjectBundle.message("notification.title.cannot.create.module"), e);
       }
     }
 
     private VirtualFile createModulePom(VirtualFile virtualFile) throws IOException {
       VirtualFile baseDir = virtualFile.getParent();
-      String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myModulePath);
+      String modulePath = FileUtil.toCanonicalPath(baseDir.getPath() + "/" + myModulePath);
       String pomFileName = MavenConstants.POM_XML;
 
       if (!new File(FileUtil.toSystemDependentName(modulePath)).isDirectory()) {

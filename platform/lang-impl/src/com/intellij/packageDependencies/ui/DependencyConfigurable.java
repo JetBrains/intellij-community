@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -7,7 +7,9 @@ import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
@@ -16,6 +18,8 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -27,7 +31,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class DependencyConfigurable implements Configurable {
+public final class DependencyConfigurable implements Configurable, Configurable.NoScroll {
   private final Project myProject;
   private MyTableModel myDenyRulesModel;
   private MyTableModel myAllowRulesModel;
@@ -39,9 +43,6 @@ public class DependencyConfigurable implements Configurable {
   private final ColumnInfo<DependencyRule, NamedScope> ALLOW_USAGES_OF = new LeftColumn(CodeInsightBundle.message("dependency.configurable.allow.table.column1"));
   private final ColumnInfo<DependencyRule, NamedScope> ALLOW_USAGES_ONLY_IN = new RightColumn(CodeInsightBundle.message("dependency.configurable.allow.table.column2"));
 
-  private JPanel myWholePanel;
-  private JPanel myDenyPanel;
-  private JPanel myAllowPanel;
   private JCheckBox mySkipImports;
   private static final Logger LOG = Logger.getInstance(DependencyConfigurable.class);
 
@@ -61,6 +62,12 @@ public class DependencyConfigurable implements Configurable {
 
   @Override
   public JComponent createComponent() {
+    JPanel wholePanel = new JPanel(new GridBagLayout());
+    final GridBag constraint = new GridBag()
+      .setDefaultWeightX(1.0)
+      .setDefaultWeightY(1.0)
+      .setDefaultFill(GridBagConstraints.BOTH);
+
     myDenyRulesModel = new MyTableModel(new ColumnInfo[]{DENY_USAGES_OF, DENY_USAGES_IN}, true);
     myDenyRulesModel.setSortable(false);
 
@@ -68,10 +75,16 @@ public class DependencyConfigurable implements Configurable {
     myAllowRulesModel.setSortable(false);
 
     myDenyTable = new TableView<>(myDenyRulesModel);
-    myDenyPanel.add(createRulesPanel(myDenyTable), BorderLayout.CENTER);
     myAllowTable = new TableView<>(myAllowRulesModel);
-    myAllowPanel.add(createRulesPanel(myAllowTable), BorderLayout.CENTER);
-    return myWholePanel;
+
+    mySkipImports = new JCheckBox(CodeInsightBundle.message("skip.import.statements.checkbox.title"));
+
+    wholePanel.add(createRulesPanel(myDenyTable), constraint.nextLine());
+    wholePanel.add(createRulesPanel(myAllowTable), constraint.nextLine().insets(UIUtil.LARGE_VGAP, 0, UIUtil.DEFAULT_VGAP, 0));
+    wholePanel.add(mySkipImports, constraint.nextLine().weighty(0));
+    wholePanel.setMinimumSize(new Dimension(400, 400));
+
+    return wholePanel;
   }
 
   private JPanel createRulesPanel(TableView<DependencyRule> table) {
@@ -84,7 +97,7 @@ public class DependencyConfigurable implements Configurable {
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myDenyTable;
   }
 
@@ -165,13 +178,13 @@ public class DependencyConfigurable implements Configurable {
                                                      int row,
                                                      int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setText(value == null ? "" : ((NamedScope)value).getName());
+        setText(value == null ? "" : ((NamedScope)value).getPresentableName());
         return this;
       }
     };
 
   public abstract class MyColumnInfo extends ColumnInfo<DependencyRule, NamedScope> {
-    protected MyColumnInfo(String name) {
+    protected MyColumnInfo(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -197,7 +210,7 @@ public class DependencyConfigurable implements Configurable {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-          myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName());
+          myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getScopeId());
           return new CellEditorComponentWithBrowseButton<>(myCombo, this);
         }
       };
@@ -208,8 +221,8 @@ public class DependencyConfigurable implements Configurable {
   }
 
 
-  private class RightColumn extends MyColumnInfo {
-    RightColumn(final String name) {
+  private final class RightColumn extends MyColumnInfo {
+    RightColumn(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -224,8 +237,8 @@ public class DependencyConfigurable implements Configurable {
     }
   }
 
-  private class LeftColumn extends MyColumnInfo {
-    LeftColumn(final String name) {
+  private final class LeftColumn extends MyColumnInfo {
+    LeftColumn(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -240,7 +253,7 @@ public class DependencyConfigurable implements Configurable {
     }
   }
 
-  private static class MyTableModel extends ListTableModel<DependencyRule> implements EditableModel {
+  private static final class MyTableModel extends ListTableModel<DependencyRule> implements EditableModel {
     private final boolean myDenyRule;
 
     MyTableModel(final ColumnInfo[] columnInfos, final boolean isDenyRule) {
@@ -265,5 +278,16 @@ public class DependencyConfigurable implements Configurable {
       newList.set(index2, r1);
       setItems(newList);
     }
+  }
+
+  /**
+   * @return a JButton to open a dialog to edit this configurable
+   */
+  public static JButton getConfigureButton(@NotNull Project project) {
+    var button = new JButton(CodeInsightBundle.message("jvm.inspections.dependency.configure.button.text"));
+    button.addActionListener(e -> {
+      ShowSettingsUtil.getInstance().editConfigurable(button, new DependencyConfigurable(project));
+    });
+    return button;
   }
 }

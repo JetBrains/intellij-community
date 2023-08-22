@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListOwner
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
@@ -28,17 +29,18 @@ import com.intellij.openapi.vcs.changes.ignore.actions.IgnoreFileActionGroup
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.tree.TreePath
 
 
-class ChangesBrowserIgnoredFilesNode(val project: Project,
-                                     files: List<FilePath>,
-                                     private val myUpdatingMode: Boolean) : ChangesBrowserSpecificFilePathsNode(
-  ChangesBrowserNode.IGNORED_FILES_TAG, files, { if (!project.isDisposed) IgnoredViewDialog(project).show() }) {
+class ChangesBrowserIgnoredFilesNode(private val project: Project,
+                                     files: List<FilePath>)
+  : ChangesBrowserSpecificFilePathsNode<ChangesBrowserNode.Tag>(ChangesBrowserNode.IGNORED_FILES_TAG, files,
+                                                                { if (!project.isDisposed) IgnoredViewDialog(project).show() }) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     super.render(renderer, selected, expanded, hasFocus)
-    if (myUpdatingMode) {
+    if (!project.isDisposed && ChangeListManagerImpl.getInstanceImpl(project).isIgnoredInUpdateMode) {
       appendUpdatingState(renderer)
     }
   }
@@ -61,7 +63,10 @@ class ChangesBrowserIgnoredFilesNode(val project: Project,
     }
   }
 
-  override fun getSortWeight() = ChangesBrowserNode.IGNORED_SORT_WEIGHT
+  @Nls
+  override fun getTextPresentation(): String = getUserObject().toString() //NON-NLS
 
-  private fun List<FilePath>.getVcs(): AbstractVcs? = mapNotNull { file -> VcsUtil.getVcsFor(project, file) }.firstOrNull()
+  override fun getSortWeight(): Int = ChangesBrowserNode.IGNORED_SORT_WEIGHT
+
+  private fun List<FilePath>.getVcs(): AbstractVcs? = firstNotNullOfOrNull { file -> VcsUtil.getVcsFor(project, file) }
 }

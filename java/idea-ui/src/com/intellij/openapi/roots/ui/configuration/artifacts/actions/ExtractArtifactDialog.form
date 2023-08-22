@@ -36,7 +36,7 @@
         </constraints>
         <properties>
           <labelFor value="b2bb9"/>
-          <text value="Select artifact &amp;type:"/>
+          <text resource-bundle="messages/JavaUiBundle" key="label.select.artifact.type"/>
         </properties>
       </component>
       <component id="b2bb9" class="javax.swing.JComboBox" binding="myTypeBox">

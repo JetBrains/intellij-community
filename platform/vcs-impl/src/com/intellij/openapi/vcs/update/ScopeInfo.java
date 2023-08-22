@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.project.Project;
@@ -9,12 +9,18 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 public interface ScopeInfo {
   FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo);
-  String getScopeName(VcsContext dataContext, final ActionInfo actionInfo);
+
+  @Nls(capitalization = Title) String getScopeName(VcsContext dataContext, final ActionInfo actionInfo);
+
   boolean filterExistsInVcs();
 
   ScopeInfo PROJECT = new ScopeInfo() {
@@ -50,7 +56,7 @@ public interface ScopeInfo {
     @Override
     public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
       FilePath[] roots = getRoots(dataContext, actionInfo);
-      if (roots == null || roots.length == 0) {
+      if (roots.length == 0) {
         return VcsBundle.message("update.files.scope.name");
       }
       boolean directory = roots[0].isDirectory();
@@ -79,7 +85,7 @@ public interface ScopeInfo {
     }
 
     @Override
-    public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
+    public FilePath @NotNull [] getRoots(VcsContext context, final ActionInfo actionInfo) {
       return context.getSelectedFilePaths();
     }
 

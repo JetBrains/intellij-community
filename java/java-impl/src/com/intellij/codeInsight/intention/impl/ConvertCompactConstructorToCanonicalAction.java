@@ -1,66 +1,81 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.RecordConstructorMember;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class ConvertCompactConstructorToCanonicalAction extends PsiElementBaseIntentionAction {
+public class ConvertCompactConstructorToCanonicalAction extends PsiUpdateModCommandAction<PsiElement> {
+  public ConvertCompactConstructorToCanonicalAction() {
+    super(PsiElement.class);
+  }
+
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiMethod method = getMethod(element);
     if (method == null) return;
     PsiClass recordClass = method.getContainingClass();
     if (recordClass == null) return;
+    PsiMethod prototype = generateCanonicalConstructor(method);
+    PsiCodeBlock oldBody = Objects.requireNonNull(method.getBody());
+    PsiCodeBlock body = Objects.requireNonNull(prototype.getBody());
+    int offset = context.offset();
+    if (oldBody.getTextRange().contains(offset)) {
+      offset += body.getTextRangeInParent().getStartOffset() - oldBody.getTextRangeInParent().getStartOffset();
+    }
+    method.replace(prototype);
+    updater.moveTo(offset);
+  }
+
+  /**
+   * @param compactConstructor compact constructor
+   * @return non-physical canonical constructor
+   */
+  @NotNull
+  public static PsiMethod generateCanonicalConstructor(@NotNull PsiMethod compactConstructor) {
+    if (!JavaPsiRecordUtil.isCompactConstructor(compactConstructor)) {
+      throw new IllegalArgumentException("Compact constructor required");
+    }
+    PsiClass recordClass = Objects.requireNonNull(compactConstructor.getContainingClass());
     PsiMethod prototype = new RecordConstructorMember(recordClass, false).generateRecordConstructor();
-    PsiModifierList modifierList = method.getModifierList();
+    PsiModifierList modifierList = compactConstructor.getModifierList();
     prototype.getModifierList().replace(modifierList);
     PsiElement beforeModifier = modifierList.getPrevSibling();
     if (beforeModifier != null) {
-      prototype.addRangeBefore(method.getFirstChild(), beforeModifier, prototype.getModifierList());
+      prototype.addRangeBefore(compactConstructor.getFirstChild(), beforeModifier, prototype.getModifierList());
     }
-    PsiCodeBlock oldBody = Objects.requireNonNull(method.getBody());
+    PsiCodeBlock oldBody = Objects.requireNonNull(compactConstructor.getBody());
     PsiCodeBlock body = (PsiCodeBlock)Objects.requireNonNull(prototype.getBody()).replace(oldBody);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(compactConstructor.getProject());
     for (PsiRecordComponent component : recordClass.getRecordComponents()) {
       PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
       if (field != null && !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
         body.add(factory.createStatementFromText("this." + field.getName() + "=" + field.getName() + ";", body));
       }
     }
-    int offset = editor.getCaretModel().getOffset();
-    if (oldBody.getTextRange().contains(offset)) {
-      offset += body.getTextRangeInParent().getStartOffset() - oldBody.getTextRangeInParent().getStartOffset();
-    }
-    method.replace(prototype);
-    editor.getCaretModel().moveToOffset(offset);
-  }
-
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Override
-  public @NotNull String getText() {
-    return getFamilyName();
+    return prototype;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     PsiMethod method = getMethod(element);
     return method != null &&
            JavaPsiRecordUtil.isCompactConstructor(method) &&
            method.getBody() != null &&
            method.getContainingClass() != null &&
-           method.getContainingClass().isRecord();
+           method.getContainingClass().isRecord() ? Presentation.of(getFamilyName()) : null;
   }
 
   private static PsiMethod getMethod(@NotNull PsiElement element) {

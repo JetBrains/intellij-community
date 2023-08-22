@@ -18,9 +18,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
   private final XmlTag myXmlTag;
 
@@ -60,7 +57,8 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     super.validate(context, host);
 
     if (context.getParentTag() != null) {
-      host.addMessage(context.getNavigationElement(), "<fx:root> is valid only as the root node of an FXML document",
+      host.addMessage(context.getNavigationElement(),
+                      JavaFXBundle.message("inspection.message.fx.root.valid.only.as.root.node.fxml.document"),
                       ValidationHost.ErrorType.ERROR);
     }
   }
@@ -80,11 +78,6 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
   public static class RootTagTypeAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
     public RootTagTypeAttributeDescriptor() {
       super(FxmlConstants.TYPE, null);
-    }
-
-    @Override
-    public boolean hasIdType() {
-      return false;
     }
 
     @Override

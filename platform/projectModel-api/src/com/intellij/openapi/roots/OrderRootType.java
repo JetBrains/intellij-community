@@ -11,12 +11,11 @@ import java.util.List;
 /**
  * Root types that can be queried from OrderEntry.
  *
- * @author dsl
  * @see OrderEntry
  */
 public class OrderRootType {
   private final String myName;
-  private static boolean ourExtensionsLoaded = false;
+  private static boolean ourExtensionsLoaded;
 
   public static final ExtensionPointName<OrderRootType> EP_NAME = ExtensionPointName.create("com.intellij.orderRootType");
 

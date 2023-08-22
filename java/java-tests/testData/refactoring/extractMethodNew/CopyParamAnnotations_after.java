@@ -21,7 +21,7 @@ class X {
     private X newMethod(@Nullable String b) {
         if (b != null) {
           int x = 1;
-          return fun1(x);
+            return fun1(x);
         }
         return null;
     }

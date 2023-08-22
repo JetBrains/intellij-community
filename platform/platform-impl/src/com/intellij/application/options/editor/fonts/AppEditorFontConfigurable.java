@@ -1,96 +1,53 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
+import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontCache;
-import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
-import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.options.Configurable.NoScroll;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.LazyInstance;
+import com.intellij.openapi.editor.colors.impl.AppFontOptions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+public class AppEditorFontConfigurable extends AppFontConfigurable {
+  public static final @NonNls String ID = "editor.preferences.fonts.default";
+  
+  private AppEditorFontOptionsPanel myPanel;
 
-public final class AppEditorFontConfigurable implements SearchableConfigurable, NoScroll {
-  @NonNls public static final String ID = "editor.preferences.fonts.default";
-  private final LazyInstance<AppEditorFontPanel> myFontPanelInstance = new LazyInstance<AppEditorFontPanel>() {
-    @Override
-    protected Class<AppEditorFontPanel> getInstanceClass() {
-      return AppEditorFontPanel.class;
-    }
-  };
-
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
-    return getFontPanel().getComponent();
-  }
-
-  @Override
-  public boolean isModified() {
-    getFontPanel().getOptionsPanel().updateWarning();
-    return !getStoredPreferences().equals(getUIFontPreferences());
-  }
-
-  @Override
-  public void apply() {
-    FontPreferences fontPreferences = getUIFontPreferences();
-    fontPreferences.copyTo(getStoredPreferences());
-    EditorFontCache.getInstance().reset();
-    ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
-    EditorFactory.getInstance().refreshAllEditors();
-  }
-
-  @NotNull
-  private FontPreferences getUIFontPreferences() {
-    return getFontPanel().getOptionsPanel().getFontPreferences();
-  }
-
-  @Override
-  public void reset() {
-    getStoredPreferences().copyTo(getUIFontPreferences());
-    getFontPanel().getOptionsPanel().updateOnChangedFont();
-  }
-
-  @NotNull
-  private static FontPreferences getStoredPreferences() {
-    return AppEditorFontOptions.getInstance().getFontPreferences();
-  }
-
-  @NotNull
-  private AppEditorFontPanel getFontPanel() {
-    return myFontPanelInstance.getValue();
-  }
-
-  @Nls
-  @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IdeBundle.message("configurable.font.name");
   }
 
   @Override
-  public void disposeUIResources() {
-    if (myFontPanelInstance.isComputed()) {
-      Disposer.dispose(getFontPanel());
-    }
+  protected @NotNull AppFontOptions<?> getFontOptions() {
+    return AppEditorFontOptions.getInstance();
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
-    return "reference.settingsdialog.IDE.editor.colors";
+  protected @NotNull AppFontOptionsPanel createFontOptionsPanel(@NotNull EditorColorsScheme previewScheme) {
+    myPanel = new AppEditorFontOptionsPanel(previewScheme);
+    myPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
+      @Override
+      public void fontChanged() {
+        AppConsoleFontConfigurable consoleConfigurable =
+          (AppConsoleFontConfigurable)findConfigurable(myPanel, AppConsoleFontConfigurable.class);
+        if (consoleConfigurable != null) {
+          consoleConfigurable.updateOnEditorFontChange(myPanel.getFontPreferences());
+        }
+      }
+    });
+    return myPanel;
+  }
+
+  public @Nullable AppEditorFontOptionsPanel getPanel() {
+    return myPanel;
   }
 }

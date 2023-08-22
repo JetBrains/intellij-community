@@ -9,15 +9,20 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.*
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.codeInsight.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.resolvesToOmittedDefault
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
@@ -26,13 +31,6 @@ class PyDataclassInspection : PyInspection() {
 
   companion object {
     private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
-    private val DATACLASSES_HELPERS = setOf("dataclasses.fields", "dataclasses.asdict", "dataclasses.astuple", "dataclasses.replace")
-    private val ATTRS_HELPERS = setOf("attr.fields",
-                                      "attr.fields_dict",
-                                      "attr.asdict",
-                                      "attr.astuple",
-                                      "attr.assoc",
-                                      "attr.evolve")
 
     private enum class ClassOrder {
       MANUALLY, DC_ORDERED, DC_UNORDERED, UNKNOWN
@@ -42,106 +40,101 @@ class PyDataclassInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = Visitor(
-    holder, session)
+    holder,PyInspectionVisitor.getContext(session))
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
-    override fun visitPyTargetExpression(node: PyTargetExpression?) {
+    override fun visitPyTargetExpression(node: PyTargetExpression) {
       super.visitPyTargetExpression(node)
 
-      if (node != null) checkMutatingFrozenAttribute(node)
+      checkMutatingFrozenAttribute(node)
     }
 
-    override fun visitPyDelStatement(node: PyDelStatement?) {
+    override fun visitPyDelStatement(node: PyDelStatement) {
       super.visitPyDelStatement(node)
 
-      if (node != null) {
-        node
-          .targets
-          .asSequence()
-          .filterIsInstance<PyReferenceExpression>()
-          .forEach { checkMutatingFrozenAttribute(it) }
-      }
+      node.targets
+        .asSequence()
+        .filterIsInstance<PyReferenceExpression>()
+        .forEach { checkMutatingFrozenAttribute(it) }
     }
 
-    override fun visitPyClass(node: PyClass?) {
+    override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
 
-      if (node != null) {
-        val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
+      val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
 
-        if (dataclassParameters != null) {
-          if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
-            processDataclassParameters(node, dataclassParameters)
+      if (dataclassParameters != null) {
+        if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
+          processDataclassParameters(node, dataclassParameters)
 
-            val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
-            val localInitVars = mutableListOf<PyTargetExpression>()
+          val postInit = node.findMethodByName(Dataclasses.DUNDER_POST_INIT, false, myTypeEvalContext)
+          val localInitVars = mutableListOf<PyTargetExpression>()
 
-            node.processClassLevelDeclarations { element, _ ->
-              if (element is PyTargetExpression) {
-                if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
-                  processDefaultFieldValue(element)
-                  processAsInitVar(element, postInit)?.let { localInitVars.add(it) }
-                }
-
-                processFieldFunctionCall(element)
+          node.processClassLevelDeclarations { element, _ ->
+            if (element is PyTargetExpression) {
+              if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
+                processDefaultFieldValue(element)
+                processAsInitVar(element, postInit)?.let { localInitVars.add(it) }
               }
 
-              true
+              processFieldFunctionCall(element)
             }
 
-            if (postInit != null) {
-              processPostInitDefinition(node, postInit, dataclassParameters, localInitVars)
-            }
-          }
-          else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-            processAttrsParameters(node, dataclassParameters)
-
-            node
-              .findMethodByName(DUNDER_ATTRS_POST_INIT, false, myTypeEvalContext)
-              ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
-
-            processAttrsDefaultThroughDecorator(node)
-            processAttrsInitializersAndValidators(node)
-            processAttrIbFunctionCalls(node)
+            true
           }
 
-          processAnnotationsExistence(node, dataclassParameters)
-
-          PyNamedTupleInspection.inspectFieldsOrder(
-            node,
-            {
-              val parameters = parseDataclassParameters(it, myTypeEvalContext)
-              parameters != null && !parameters.kwOnly
-            },
-            dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD,
-            myTypeEvalContext,
-            this::registerProblem,
-            {
-              val stub = it.stub
-              val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it)
-              else stub.getCustomStub(PyDataclassFieldStub::class.java)
-
-              (fieldStub == null || fieldStub.initValue()) &&
-              !(fieldStub == null && it.annotationValue == null) && // skip fields that are not annotated
-              !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) // skip classvars
-            },
-            {
-              val fieldStub = PyDataclassFieldStubImpl.create(it)
-
-              if (fieldStub != null) {
-                fieldStub.hasDefault() ||
-                fieldStub.hasDefaultFactory() ||
-                dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS &&
-                node.methods.any { m -> m.decoratorList?.findDecorator("${it.name}.default") != null }
-              }
-              else {
-                val assignedValue = it.findAssignedValue()
-                assignedValue != null && !resolvesToOmittedDefault(assignedValue, dataclassParameters.type)
-              }
-            }
-          )
+          if (postInit != null) {
+            processPostInitDefinition(node, postInit, dataclassParameters, localInitVars)
+          }
         }
+        else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
+          processAttrsParameters(node, dataclassParameters)
+
+          node
+            .findMethodByName(Attrs.DUNDER_POST_INIT, false, myTypeEvalContext)
+            ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
+
+          processAttrsDefaultThroughDecorator(node)
+          processAttrsInitializersAndValidators(node)
+          processAttrIbFunctionCalls(node)
+        }
+
+        processAnnotationsExistence(node, dataclassParameters)
+
+        PyNamedTupleInspection.inspectFieldsOrder(
+          node,
+          {
+            val parameters = parseDataclassParameters(it, myTypeEvalContext)
+            parameters != null && !parameters.kwOnly
+          },
+          dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD,
+          myTypeEvalContext,
+          this::registerProblem,
+          {
+            val stub = it.stub
+            val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it)
+            else stub.getCustomStub(PyDataclassFieldStub::class.java)
+
+            (fieldStub == null || fieldStub.initValue() && !fieldStub.kwOnly()) &&
+            !(fieldStub == null && it.annotationValue == null) && // skip fields that are not annotated
+            !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) // skip classvars
+          },
+          {
+            val fieldStub = PyDataclassFieldStubImpl.create(it)
+
+            if (fieldStub != null) {
+              fieldStub.hasDefault() ||
+              fieldStub.hasDefaultFactory() ||
+              dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS &&
+              node.methods.any { m -> m.decoratorList?.findDecorator("${it.name}.default") != null }
+            }
+            else {
+              val assignedValue = it.findAssignedValue()
+              assignedValue != null && !resolvesToOmittedDefault(assignedValue, dataclassParameters.type)
+            }
+          }
+        )
       }
     }
 
@@ -161,7 +154,7 @@ class PyDataclassInspection : PyInspection() {
         if (leftClass == rightClass) {
           if (leftOrder == ClassOrder.DC_UNORDERED && rightOrder != ClassOrder.MANUALLY) {
             registerProblem(node.psiOperator,
-                            "'$leftOperator' not supported between instances of '${leftClass.name}'",
+                            PyPsiBundle.message("INSP.dataclasses.operator.not.supported.between.instances.of.class", leftOperator, leftClass.name),
                             ProblemHighlightType.GENERIC_ERROR)
           }
         }
@@ -175,54 +168,49 @@ class PyDataclassInspection : PyInspection() {
                 rightClass.isSubclass(leftClass, myTypeEvalContext)) return // attrs allows to compare ancestor and its subclass
 
             registerProblem(node.psiOperator,
-                            "'$leftOperator' not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
+                            PyPsiBundle.message("INSP.dataclasses.operator.not.supported.between.instances.of.classes", leftOperator, leftClass.name, rightClass.name),
                             ProblemHighlightType.GENERIC_ERROR)
           }
         }
       }
     }
 
-    override fun visitPyCallExpression(node: PyCallExpression?) {
-      super.visitPyCallExpression(node)
+    override fun visitPyCallExpression(node: PyCallExpression) {
+      val callees = node.multiResolveCallee(resolveContext)
+      val calleeQName = callees.mapNotNullTo(mutableSetOf()) { it.callable?.qualifiedName }.singleOrNull()
 
-      if (node != null) {
-        val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
-        val callableType = node.multiResolveCallee(resolveContext).singleOrNull()
-        val callee = callableType?.callable
-        val calleeQName = callee?.qualifiedName
+      if (calleeQName != null) {
+        val dataclassType = when (calleeQName) {
+          in Dataclasses.HELPER_FUNCTIONS -> PyDataclassParameters.PredefinedType.STD
+          in Attrs.CLASS_HELPERS_FUNCTIONS, in Attrs.INSTANCE_HELPER_FUNCTIONS -> PyDataclassParameters.PredefinedType.ATTRS
+          else -> return
+        }
 
-        if (callableType != null && callee != null) {
-          val dataclassType = when {
-            DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.STD
-            ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
-            else -> return
-          }
+        val callableType = callees.first()
+        val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
 
-          val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
+        val dataclassParameter = callableType.getParameters(myTypeEvalContext)?.firstOrNull()
+        val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
 
-          val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
-          val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
-
-          if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
-            processHelperDataclassArgument(dataclassArgument, calleeQName!!)
-          }
-          else if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-            processHelperAttrsArgument(dataclassArgument, calleeQName!!)
-          }
+        if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
+          processHelperDataclassArgument(dataclassArgument, calleeQName)
+        }
+        else if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
+          processHelperAttrsArgument(dataclassArgument, calleeQName)
         }
       }
     }
 
-    override fun visitPyReferenceExpression(node: PyReferenceExpression?) {
+    override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       super.visitPyReferenceExpression(node)
 
-      if (node != null && node.isQualified) {
+      if (node.isQualified) {
         val cls = getInstancePyClass(node.qualifier) ?: return
         val resolved = node.getReference(resolveContext).multiResolve(false)
 
         if (resolved.isNotEmpty() && resolved.asSequence().map { it.element }.all { it is PyTargetExpression && isInitVar(it) }) {
           registerProblem(node.lastChild,
-                          "'${cls.name}' object could have no attribute '${node.name}' because it is declared as init-only",
+                          PyPsiBundle.message("INSP.dataclasses.object.could.have.no.attribute.because.it.declared.as.init.only", cls.name, node.name),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
       }
@@ -236,7 +224,7 @@ class PyDataclassInspection : PyInspection() {
           .mapNotNull { parseDataclassParameters(it, myTypeEvalContext) }
           .any { it.frozen }) {
         registerProblem(expression,
-                        "'${cls.name}' object attribute '${expression.name}' is read-only",
+                        PyPsiBundle.message("INSP.dataclasses.object.attribute.read.only", cls.name, expression.name),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -275,7 +263,7 @@ class PyDataclassInspection : PyInspection() {
 
     private fun processDataclassParameters(cls: PyClass, dataclassParameters: PyDataclassParameters) {
       if (!dataclassParameters.eq && dataclassParameters.order) {
-        registerProblem(dataclassParameters.eqArgument, "'eq' must be true if 'order' is true", ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(dataclassParameters.eqArgument, PyPsiBundle.message("INSP.dataclasses.eq.must.be.true.if.order.true"), ProblemHighlightType.GENERIC_ERROR)
       }
 
       var initMethodExists = false
@@ -315,25 +303,25 @@ class PyDataclassInspection : PyInspection() {
 
       useless.forEach {
         registerProblem(it.first,
-                        "'${it.second}' is ignored if the class already defines '${it.third}' method",
+                        PyPsiBundle.message("INSP.dataclasses.argument.ignored.if.class.already.defines.method", it.second, it.third),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
 
       if (dataclassParameters.order && orderMethodsExist) {
         registerProblem(dataclassParameters.orderArgument,
-                        "'order' should be false if the class defines one of order methods",
+                        PyPsiBundle.message("INSP.dataclasses.order.argument.should.be.false.if.class.defines.one.of.order.methods"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
 
       if (dataclassParameters.frozen && mutatingMethodsExist) {
         registerProblem(dataclassParameters.frozenArgument,
-                        "'frozen' should be false if the class defines '__setattr__' or '__delattr__'",
+                        PyPsiBundle.message("INSP.dataclasses.frozen.attribute.should.be.false.if.class.defines.setattr.or.delattr"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
 
       if (dataclassParameters.unsafeHash && hashMethodExists) {
         registerProblem(dataclassParameters.unsafeHashArgument,
-                        "'unsafe_hash' should be false if the class defines '${PyNames.HASH}'",
+                        PyPsiBundle.message("INSP.dataclasses.unsafe.hash.attribute.should.be.false.if.class.defines.hash"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
 
@@ -346,7 +334,7 @@ class PyDataclassInspection : PyInspection() {
         }
         else if (frozenInHierarchy != currentFrozen) {
           registerProblem(dataclassParameters.frozenArgument ?: cls.nameIdentifier,
-                          "Frozen dataclasses can not inherit non-frozen one and vice versa",
+                          PyPsiBundle.message("INSP.dataclasses.frozen.dataclasses.can.not.inherit.non.frozen.one"),
                           ProblemHighlightType.GENERIC_ERROR)
         }
       }
@@ -404,14 +392,14 @@ class PyDataclassInspection : PyInspection() {
       problems.forEach {
         it.first?.apply {
           registerProblem(nameIdentifier,
-                          "'$name' is ignored if the class already defines '${it.second}' parameter",
+                          PyPsiBundle.message("INSP.dataclasses.method.is.ignored.if.class.already.defines.parameter", name, it.second),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         }
       }
 
       if (dataclassParameters.order && dataclassParameters.frozen && hashMethod != null) {
         registerProblem(hashMethod?.nameIdentifier,
-                        "'${PyNames.HASH}' is ignored if the class already defines 'cmp/order' and 'frozen' parameters",
+                        PyPsiBundle.message("INSP.dataclasses.hash.ignored.if.class.already.defines.cmp.or.order.or.frozen.parameters"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
     }
@@ -420,9 +408,25 @@ class PyDataclassInspection : PyInspection() {
       if (field.annotationValue == null) return
 
       val value = field.findAssignedValue()
+
+      if (value is PyCallExpression) {
+        val fieldWithDefaultFactory = value
+          .multiResolveCallee(resolveContext)
+          .filter { it.callable?.qualifiedName == Dataclasses.DATACLASSES_FIELD }
+          .any {
+            PyCallExpressionHelper.mapArguments(value, it, myTypeEvalContext).mappedParameters.values.any { p ->
+              p.name == "default_factory"
+            }
+          }
+
+        if (fieldWithDefaultFactory) {
+          return
+        }
+      }
+
       if (PyUtil.isForbiddenMutableDefault(value, myTypeEvalContext)) {
         registerProblem(value,
-                        "Mutable default '${value?.text}' is not allowed. Use 'default_factory'",
+                        PyPsiBundle.message("INSP.dataclasses.mutable.attribute.default.not.allowed.use.default.factory", value?.text),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -447,7 +451,9 @@ class PyDataclassInspection : PyInspection() {
 
                 val stub = PyDataclassFieldStubImpl.create(attribute)
                 if (stub != null && (stub.hasDefault() || stub.hasDefaultFactory())) {
-                  registerProblem(method.nameIdentifier, "A default is set using 'attr.ib()'", ProblemHighlightType.GENERIC_ERROR)
+                  registerProblem(method.nameIdentifier,
+                                  PyPsiBundle.message("INSP.dataclasses.attribute.default.set.using.method", "${stub.calleeName}()"),
+                                  ProblemHighlightType.GENERIC_ERROR)
                 }
               }
             }
@@ -460,7 +466,9 @@ class PyDataclassInspection : PyInspection() {
         sameAttrInitializers
           .asSequence()
           .drop(1)
-          .forEach { registerProblem(it.nameIdentifier, "A default is set using '${first.name}'", ProblemHighlightType.GENERIC_ERROR) }
+          .forEach { registerProblem(it.nameIdentifier,
+                                     PyPsiBundle.message("INSP.dataclasses.attribute.default.set.using.method", first.name),
+                                     ProblemHighlightType.GENERIC_ERROR) }
       }
     }
 
@@ -484,8 +492,7 @@ class PyDataclassInspection : PyInspection() {
 
                 val actualParameters = method.parameterList
                 if (actualParameters.parameters.size != expectedParameters) {
-                  val message = "'${method.name}' should take only $expectedParameters parameter" +
-                                if (expectedParameters > 1) "s" else ""
+                  val message = PyPsiBundle.message("INSP.dataclasses.method.should.take.only.n.parameter", method.name, expectedParameters)
 
                   registerProblem(actualParameters, message, ProblemHighlightType.GENERIC_ERROR)
                 }
@@ -504,7 +511,8 @@ class PyDataclassInspection : PyInspection() {
           PyEvaluator.evaluateAsBoolean(PyUtil.peelArgument(dataclassParameters.others["auto_attribs"]), false)) {
         cls.processClassLevelDeclarations { element, _ ->
           if (element is PyTargetExpression && element.annotation == null && PyDataclassFieldStubImpl.create(element) != null) {
-            registerProblem(element, "Attribute '${element.name}' lacks a type annotation", ProblemHighlightType.GENERIC_ERROR)
+            registerProblem(element, PyPsiBundle.message("INSP.dataclasses.attribute.lacks.type.annotation", element.name),
+                            ProblemHighlightType.GENERIC_ERROR)
           }
 
           true
@@ -521,7 +529,8 @@ class PyDataclassInspection : PyInspection() {
           if (call != null && stub != null) {
             if (stub.hasDefaultFactory()) {
               if (stub.hasDefault()) {
-                registerProblem(call.argumentList, "Cannot specify both 'default' and 'factory'", ProblemHighlightType.GENERIC_ERROR)
+                registerProblem(call.argumentList, PyPsiBundle.message("INSP.dataclasses.cannot.specify.both.default.and.factory"),
+                                ProblemHighlightType.GENERIC_ERROR)
               }
               else {
                 // at least covers the following case: `attr.ib(default=attr.Factory(...), factory=...)`
@@ -530,7 +539,8 @@ class PyDataclassInspection : PyInspection() {
                 val factory = call.getKeywordArgument("factory")
 
                 if (default != null && factory != null && !resolvesToOmittedDefault(default, PyDataclassParameters.PredefinedType.ATTRS)) {
-                  registerProblem(call.argumentList, "Cannot specify both 'default' and 'factory'", ProblemHighlightType.GENERIC_ERROR)
+                  registerProblem(call.argumentList, PyPsiBundle.message("INSP.dataclasses.cannot.specify.both.default.and.factory"),
+                                  ProblemHighlightType.GENERIC_ERROR)
                 }
               }
             }
@@ -545,7 +555,7 @@ class PyDataclassInspection : PyInspection() {
       if (isInitVar(field)) {
         if (postInit == null) {
           registerProblem(field,
-                          "Attribute '${field.name}' is useless until '$DUNDER_POST_INIT' is declared",
+                          PyPsiBundle.message("INSP.dataclasses.attribute.useless.until.post.init.declared", field.name),
                           ProblemHighlightType.LIKE_UNUSED_SYMBOL)
         }
 
@@ -562,12 +572,13 @@ class PyDataclassInspection : PyInspection() {
       if (PyTypingTypeProvider.isClassVar(field, myTypeEvalContext) || isInitVar(field)) {
         if (fieldStub.hasDefaultFactory()) {
           registerProblem(call.getKeywordArgument("default_factory"),
-                          "Field cannot have a default factory",
+                          PyPsiBundle.message("INSP.dataclasses.field.cannot.have.default.factory"),
                           ProblemHighlightType.GENERIC_ERROR)
         }
       }
       else if (fieldStub.hasDefault() && fieldStub.hasDefaultFactory()) {
-        registerProblem(call.argumentList, "Cannot specify both 'default' and 'default_factory'", ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(call.argumentList, PyPsiBundle.message("INSP.dataclasses.cannot.specify.both.default.and.default.factory"),
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
@@ -577,11 +588,13 @@ class PyDataclassInspection : PyInspection() {
                                           localInitVars: List<PyTargetExpression>) {
       if (!dataclassParameters.init) {
         registerProblem(postInit.nameIdentifier,
-                        "'$DUNDER_POST_INIT' would not be called until 'init' parameter is set to True",
+                        PyPsiBundle.message("INSP.dataclasses.post.init.would.not.be.called.until.init.parameter.set.to.true"),
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL)
 
         return
       }
+
+      if (ParamHelper.isSelfArgsKwargsCallable(postInit, myTypeEvalContext)) return
 
       val allInitVars = mutableListOf<PyTargetExpression>()
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext).asReversed()) {
@@ -599,10 +612,14 @@ class PyDataclassInspection : PyInspection() {
 
       val implicitParameters = postInit.getParameters(myTypeEvalContext)
       val parameters = if (implicitParameters.isEmpty()) emptyList<PyCallableParameter>() else ContainerUtil.subList(implicitParameters, 1)
-      val message = "'$DUNDER_POST_INIT' " +
-                    "should take all init-only variables" +
-                    "${if (allInitVars.size != localInitVars.size) " (incl. inherited)" else ""} " +
-                    "in the same order as they are defined"
+
+      val message = if (allInitVars.size != localInitVars.size) {
+        PyPsiBundle.message("INSP.dataclasses.post.init.should.take.all.init.only.variables.including.inherited.in.same.order.they.defined")
+      }
+      else {
+        PyPsiBundle.message("INSP.dataclasses.post.init.should.take.all.init.only.variables.in.same.order.they.defined")
+      }
+
 
       if (parameters.size != allInitVars.size) {
         registerProblem(postInit.parameterList, message, ProblemHighlightType.GENERIC_ERROR)
@@ -619,13 +636,13 @@ class PyDataclassInspection : PyInspection() {
     private fun processAttrsPostInitDefinition(postInit: PyFunction, dataclassParameters: PyDataclassParameters) {
       if (!dataclassParameters.init) {
         registerProblem(postInit.nameIdentifier,
-                        "'$DUNDER_ATTRS_POST_INIT' would not be called until 'init' parameter is set to True",
+                        PyPsiBundle.message("INSP.dataclasses.attrs.post.init.would.not.be.called.until.init.parameter.set.to.true"),
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL)
       }
 
       if (postInit.getParameters(myTypeEvalContext).size != 1) {
         registerProblem(postInit.parameterList,
-                        "'$DUNDER_ATTRS_POST_INIT' should not take any parameters except '${PyNames.CANONICAL_SELF}'",
+                        PyPsiBundle.message("INSP.dataclasses.attrs.post.init.should.not.take.any.parameters.except.self"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -633,12 +650,17 @@ class PyDataclassInspection : PyInspection() {
     private fun processHelperDataclassArgument(argument: PyExpression?, calleeQName: String) {
       if (argument == null) return
 
-      val allowDefinition = calleeQName == "dataclasses.fields"
+      val allowDefinition = calleeQName == Dataclasses.DATACLASSES_FIELDS
 
       val type = myTypeEvalContext.getType(argument)
-      val allowSubclass = calleeQName != "dataclasses.asdict"
+      val allowSubclass = calleeQName != Dataclasses.DATACLASSES_ASDICT
       if (!isExpectedDataclass(type, PyDataclassParameters.PredefinedType.STD, allowDefinition, true, allowSubclass)) {
-        val message = "'$calleeQName' method should be called on dataclass instances" + if (allowDefinition) " or types" else ""
+        val message = if (allowDefinition) {
+          PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.dataclass.instances.or.types", calleeQName)
+        }
+        else {
+          PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.dataclass.instances", calleeQName)
+        }
 
         registerProblem(argument, message)
       }
@@ -647,18 +669,23 @@ class PyDataclassInspection : PyInspection() {
     private fun processHelperAttrsArgument(argument: PyExpression?, calleeQName: String) {
       if (argument == null) return
 
-      val instance = calleeQName != "attr.fields" && calleeQName != "attr.fields_dict"
+      val instance = calleeQName in Attrs.INSTANCE_HELPER_FUNCTIONS
 
       val type = myTypeEvalContext.getType(argument)
       if (!isExpectedDataclass(type, PyDataclassParameters.PredefinedType.ATTRS, !instance, instance, true)) {
-        val message = "'$calleeQName' method should be called on attrs " + if (instance) "instances" else "types"
+        val message = if (instance) {
+          PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.attrs.instances", calleeQName)
+        }
+        else {
+          PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.attrs.types", calleeQName)
+        }
 
         registerProblem(argument, message)
       }
     }
 
     private fun isInitVar(field: PyTargetExpression): Boolean {
-      return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == DATACLASSES_INITVAR_TYPE
+      return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == Dataclasses.DATACLASSES_INITVAR
     }
 
     private fun isExpectedDataclass(type: PyType?,

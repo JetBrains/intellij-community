@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl.actions;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -10,9 +9,9 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateCustomAction;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -44,9 +43,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      if (lookup == null) {
-        throw new AssertionError("The last lookup disposed at: " + LookupImpl.getLastLookupDisposeTrace() + "\n-----------------------\n");
-      }
+      assert lookup != null;
 
       if ((finishingChar == Lookup.NORMAL_SELECT_CHAR || finishingChar == Lookup.REPLACE_SELECT_CHAR) &&
           hasTemplatePrefix(lookup, finishingChar)) {
@@ -55,18 +52,6 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
         ExpandLiveTemplateCustomAction.createExpandTemplateHandler(finishingChar).execute(editor, null, dataContext);
 
         return;
-      }
-
-      if (finishingChar == Lookup.NORMAL_SELECT_CHAR) {
-        if (!lookup.isFocused()) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER);
-        }
-      } else if (finishingChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER);
-      } else if (finishingChar == Lookup.REPLACE_SELECT_CHAR) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_REPLACE);
-      } else if (finishingChar == '.')  {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT);
       }
 
       lookup.finishLookup(finishingChar);
@@ -78,6 +63,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null) return false;
       if (!lookup.isAvailableToUser()) return false;
+      if (lookup.getCurrentItemOrEmpty() == null) return false;
       if (focusedOnly && lookup.getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED) return false;
       if (finishingChar == Lookup.REPLACE_SELECT_CHAR) {
         return !lookup.getItems().isEmpty();
@@ -108,16 +94,18 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
     if (liveTemplateLookup == null || !liveTemplateLookup.sudden) {
-      // Lookup doesn't contain sudden live templates. It means that 
+      // Lookup doesn't contain sudden live templates. It means that
       // - there are no live template with given key:
-      //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action). 
+      //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action).
       // - completion provider worked too long:
       //    in this case we should check custom templates that provides completion lookup.
       if (LiveTemplateCompletionContributor.customTemplateAvailableAndHasCompletionItem(shortcutChar, editor, file, offset)) {
         return true;
       }
 
-      List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, false);
+      List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(
+        TemplateActionContext.expanding(file, editor)
+      );
       TemplateImpl template = LiveTemplateCompletionContributor.findFullMatchedApplicableTemplate(editor, offset, templates);
       if (template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template)) {
         return true;
@@ -128,25 +116,25 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
     return liveTemplateLookup.getTemplateShortcut() == shortcutChar;
   }
 
-  public static class FocusedOnly extends ChooseItemAction {
+  public static final class FocusedOnly extends ChooseItemAction {
     public FocusedOnly() {
       super(new Handler(true, Lookup.NORMAL_SELECT_CHAR));
     }
   }
 
-  public static class Replacing extends ChooseItemAction {
+  public static final class Replacing extends ChooseItemAction {
     public Replacing() {
       super(new Handler(false, Lookup.REPLACE_SELECT_CHAR));
     }
   }
 
-  public static class CompletingStatement extends ChooseItemAction {
+  public static final class CompletingStatement extends ChooseItemAction {
     public CompletingStatement() {
       super(new Handler(true, Lookup.COMPLETE_STATEMENT_SELECT_CHAR));
     }
   }
 
-  public static class ChooseWithDot extends ChooseItemAction {
+  public static final class ChooseWithDot extends ChooseItemAction {
     public ChooseWithDot() {
       super(new Handler(false, '.'));
     }

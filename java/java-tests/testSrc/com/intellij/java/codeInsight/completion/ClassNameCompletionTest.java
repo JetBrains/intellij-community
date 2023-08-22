@@ -8,13 +8,17 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.TestDataPath;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -32,11 +36,13 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/className/";
   }
 
+  @NeedsIndex.Full
   public void testImportAfterNew() {
     createClass("package pack; public class AAClass {}");
-    createClass("package pack; public class WithInnerAClass{\n" +
-                "  public static class Inner{}\n" +
-                "}");
+    createClass("""
+                  package pack; public class WithInnerAClass{
+                    public static class Inner{}
+                  }""");
 
     String path = "/importAfterNew";
 
@@ -60,11 +66,12 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
       myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset())
     );
 
-    assertEquals(doc,
-                 "<html>Candidates for new <b>Time</b>() are:<br>&nbsp;&nbsp;<a href=\"psi_element://Time#Time()\">Time()</a><br>&nbsp;" +
-                 "&nbsp;<a href=\"psi_element://Time#Time(long)\">Time(long time)</a><br></html>");
+    assertEquals("<html>Candidates for new <b>Time</b>() are:<br>&nbsp;&nbsp;<a href=\"psi_element://Time#Time()\">Time()</a>" +
+                 "<br>&nbsp;&nbsp;<a href=\"psi_element://Time#Time(long)\">Time(long time)</a><br></html>",
+                 doc);
   }
 
+  @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testTypeParametersTemplate() {
     createClass("package pack; public interface Foo<T> {void foo(T t};");
 
@@ -77,20 +84,23 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     type("String");
     assert state != null;
     state.gotoEnd(false);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(path + "/after1.java");
 
     configureByFile(path + "/before2.java");
     selectItem(myItems[0]);
     assert TemplateManagerImpl.getTemplateState(myFixture.getEditor()) == null;
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(path +"/after2.java");
 
     configureByFile(path + "/before3.java");
     selectItem(myItems[0]);
     assert TemplateManagerImpl.getTemplateState(myFixture.getEditor()) == null;
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(path +"/after3.java");
   }
 
-  private void createClass(String text) {
+  private void createClass(@NotNull @Language("JAVA") String text) {
     myFixture.addClass(text);
   }
 
@@ -105,12 +115,14 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   private void addClassesForAfterNewThrowable() {
     createClass("public class OurException extends Throwable{}");
-    createClass("public class OurNotException {\n" +
-                "  public static class InnerException extends Throwable{}\n" +
-                "  public static class InnerNonException{}\n" +
-                "}");
+    createClass("""
+                  public class OurNotException {
+                    public static class InnerException extends Throwable{}
+                    public static class InnerNonException{}
+                  }""");
   }
 
+  @NeedsIndex.Full
   public void testAfterNewThrowable2() {
     addClassesForAfterNewThrowable();
     String path = "/afterNewThrowable";
@@ -126,6 +138,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testBracesAfterNew() { doTest(); }
 
+  @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode not supported for property files")
   public void testInPropertiesFile() {
     myFixture.configureByText("a.properties", "abc = StrinBui<caret>");
     complete();
@@ -144,6 +157,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     assertNull(myItems);
   }
 
+  @NeedsIndex.Full
   public void testReplaceReferenceExpressionWithTypeElement() {
     createClass("package foo.bar; public class ABCDEF {}");
     doTest();
@@ -194,6 +208,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/implements3-result.java");
   }
 
+  @NeedsIndex.Full
   public void testAnnotationFiltering() {
     createClass("@interface MyObjectType {}");
 
@@ -276,16 +291,20 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/varType-result.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testExtraSpace() { doJavaTest('\n'); }
 
   public void testAnnotation() { doJavaTest('\n'); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testInStaticImport() { doJavaTest('\n'); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testInCommentWithPackagePrefix() { doJavaTest('\n'); }
 
   public void testNestedAnonymousTab() { doJavaTest('\t');}
 
+  @NeedsIndex.Full
   public void testClassStartsWithUnderscore() {
     myFixture.addClass("package foo; public class _SomeClass {}");
     doJavaTest('\n');
@@ -294,6 +313,34 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   public void testNoInnerInaccessibleClass() {
     myFixture.addClass("package foo; interface Intf { interface InnerInterface {} }");
     doAntiTest();
+  }
+
+  @NeedsIndex.Full
+  public void testPublicClassInPrivateSuper() {
+    myFixture.addClass("""
+                         package pkg;
+                         public class Sub extends Super {
+                         }
+                         class Super {
+                           public static class Foo {
+                           }
+                         }""");
+    myFixture.configureByText("Main.java",
+                              """
+                                import pkg.*;
+                                public class Main {
+                                  public static void main(String[] args) {
+                                    Sub.F<caret>
+                                  }
+                                }""");
+    myFixture.completeBasic();
+    myFixture.checkResult("""
+                            import pkg.*;
+                            public class Main {
+                              public static void main(String[] args) {
+                                Sub.Foo
+                              }
+                            }""");
   }
 
   private void doJavaTest(char toType) {

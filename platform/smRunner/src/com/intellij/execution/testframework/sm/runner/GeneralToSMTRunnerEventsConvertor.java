@@ -14,12 +14,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
-
 /**
  * This class fires events to SMTRunnerEventsListener in event dispatch thread.
  *
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
@@ -58,7 +56,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeEnded(String suiteName) {
-    myBuildTreeRunnables.add(() -> mySuitesStack.popSuite(suiteName));
+    myBuildTreeRunnables.add(() -> {
+      mySuitesStack.popSuite(suiteName);
+      myEventPublisher.onSuiteTreeEnded(myTestsRootProxy, suiteName);
+    });
     super.onSuiteTreeEnded(suiteName);
   }
 
@@ -137,7 +138,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     SMTestProxy parentSuite = getCurrentSuite();
     SMTestProxy testProxy = findChild(parentSuite, locationUrl != null ? locationUrl : fullName, false);
 
-    if (testProxy != null && CLASS_CONFIGURATION.equals(fullName)) {
+    if (testProxy != null && TestListenerProtocol.CLASS_CONFIGURATION.equals(fullName)) {
       parentSuite = testProxy;
       testProxy = null;
     }
@@ -296,6 +297,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onUncapturedOutput(final @NotNull String text, final Key outputType) {
     final SMTestProxy currentProxy = findCurrentTestOrSuite();
     currentProxy.addOutput(text, outputType);
+    myEventPublisher.onUncapturedOutput(currentProxy, text, outputType);
   }
 
   @Override
@@ -424,6 +426,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       return;
     }
     testProxy.addOutput(text, outputType);
+    myEventPublisher.onTestOutput(testProxy, testOutputEvent);
   }
 
   @Override

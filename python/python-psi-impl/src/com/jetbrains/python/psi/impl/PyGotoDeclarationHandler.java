@@ -21,14 +21,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyUserInitiatedResolvableReference;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyReferenceOwner;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * {@link com.intellij.codeInsight.navigation.actions.GotoDeclarationAction} uses {@link PsiElement#findReferenceAt(int)}.
@@ -47,8 +49,8 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
     if (sourceElement == null) {
       return null;
     }
-    final PyResolveContext context = PyResolveContext.defaultContext()
-      .withTypeEvalContext(TypeEvalContext.userInitiated(sourceElement.getProject(), sourceElement.getContainingFile()));
+    final PyResolveContext context =
+      PyResolveContext.defaultContext(TypeEvalContext.userInitiated(sourceElement.getProject(), sourceElement.getContainingFile()));
 
     PyReferenceOwner referenceOwner = null;
     final PsiElement parent = sourceElement.getParent();
@@ -59,12 +61,11 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
       referenceOwner = (PyReferenceOwner)parent; //Reference expression may be parent of IDENTIFIER
     }
     if (referenceOwner != null) {
-      final PsiElement resolved = referenceOwner.getReference(context).resolve();
-      if (resolved instanceof PyiFile) {
-        final PsiElement original = PyiUtil.getOriginalElement(((PyElement)resolved));
-        return ObjectUtils.chooseNotNull(original, resolved);
+      PsiElement resolved = PyResolveUtil.resolveDeclaration(referenceOwner.getReference(context), context);
+      if (resolved != null && resolved.getContainingFile() instanceof PyiFile) {
+        return ObjectUtils.chooseNotNull(PyiUtil.getOriginalElement((PyElement)resolved), resolved);
       }
-      return resolved;
+      return resolved != referenceOwner ? resolved : null;
     }
     // If element is not ref owner, it still may have provided references, lets find some
     final PsiElement element = findProvidedReferenceAndResolve(sourceElement);
@@ -82,7 +83,7 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
     for (final PsiReference reference : sourceElement.getReferences()) {
       if (reference instanceof PyUserInitiatedResolvableReference) {
         final PsiElement element = ((PyUserInitiatedResolvableReference)reference).userInitiatedResolve();
-        if (element != null) {
+        if (element != null && element != sourceElement) {
           return element;
         }
       }

@@ -24,6 +24,8 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
+import java.nio.file.Path
+
 /**
  * @author Max Medvedev
  */
@@ -33,8 +35,8 @@ abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase {
 
     String rootBefore = "$root/before"
     PsiTestUtil.removeAllRoots(module, IdeaTestUtil.mockJdk17)
-    ArrayList<File> filesToDelete = new ArrayList<File>()
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, module, rootBefore, filesToDelete)
+    List<Path> filesToDelete = new ArrayList<Path>()
+    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, getModule(), rootBefore, filesToDelete, true)
     def localFileSystem = LocalFileSystem.instance
     localFileSystem.refresh(false)
     if (!perform(rootDir, destination, names)) return

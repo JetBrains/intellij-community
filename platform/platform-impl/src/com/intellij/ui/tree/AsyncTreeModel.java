@@ -1,20 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LoadingNode;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.Command;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -27,18 +30,19 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.IntFunction;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.*;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-public final class AsyncTreeModel extends AbstractTreeModel implements Identifiable, Searchable, Navigatable, TreeVisitor.Acceptor {
+public final class AsyncTreeModel extends AbstractTreeModel implements Searchable, TreeVisitor.Acceptor {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
-  private final Command.Processor processor;
+  private final AtomicInteger runningCommands = new AtomicInteger(0);
+  private final Invoker foreground;
+  private final Invoker background;
   private final Tree tree = new Tree();
   private final TreeModel model;
   private final boolean showLoadingNode;
@@ -48,7 +52,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       TreePath path = event.getTreePath();
       if (path == null) {
         // request a new root from model according to the specification
-        processor.process(new CmdGetRoot("Reload root", null));
+        submit(new CmdGetRoot("Reload root", null));
         return;
       }
       Object object = path.getLastPathComponent();
@@ -58,13 +62,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       }
       if (path.getParentPath() == null && type == EventType.StructureChanged) {
         // set a new root object according to the specification
-        processor.process(new CmdGetRoot("Update root", object));
+        submit(new CmdGetRoot("Update root", object));
         return;
       }
       onValidThread(() -> {
         Node node = tree.map.get(object);
         if (node == null) {
-          LOG.debug("ignore updating of nonexistent node: ", object);
+          if (LOG.isTraceEnabled()) LOG.debug("ignore updating of nonexistent node: ", object);
         }
         else if (type == EventType.NodesChanged) {
           // the object is already updated, so we should not start additional command to update
@@ -75,96 +79,62 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
           AsyncTreeModel.this.treeNodesChanged(event.getTreePath(), null, null);
         }
         else if (type == EventType.NodesInserted) {
-          processor.process(new CmdGetChildren("Insert children", node, false));
+          submit(new CmdGetChildren("Insert children", node, false));
         }
         else if (type == EventType.NodesRemoved) {
-          processor.process(new CmdGetChildren("Remove children", node, false));
+          submit(new CmdGetChildren("Remove children", node, false));
         }
         else {
-          processor.process(new CmdGetChildren("Update children", node, true));
+          submit(new CmdGetChildren("Update children", node, true));
         }
       });
     }
   };
-
-  /**
-   * @deprecated use {@link #AsyncTreeModel(TreeModel, Disposable)} instead
-   */
-  @Deprecated
-  public AsyncTreeModel(@NotNull TreeModel model) {
-    this(model, true);
-  }
-
-  /**
-   * @deprecated use {@link #AsyncTreeModel(TreeModel, boolean, Disposable)} instead
-   */
-  @Deprecated
-  public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode) {
-    if (model instanceof Disposable) {
-      Disposer.register(this, (Disposable)model);
-    }
-    Invoker foreground = Invoker.forEventDispatchThread(this);
-    Invoker background = foreground;
-    if (model instanceof InvokerSupplier) {
-      InvokerSupplier supplier = (InvokerSupplier)model;
-      background = supplier.getInvoker();
-    }
-    this.processor = new Command.Processor(foreground, background);
-    this.model = model;
-    this.model.addTreeModelListener(listener);
-    this.showLoadingNode = showLoadingNode;
-  }
 
   public AsyncTreeModel(@NotNull TreeModel model, @NotNull Disposable parent) {
     this(model, true, parent);
   }
 
   public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode, @NotNull Disposable parent) {
-    this(model, showLoadingNode);
+    if (model instanceof Disposable) {
+      Disposer.register(this, (Disposable)model);
+    }
+    foreground = Invoker.forEventDispatchThread(this);
+    if (model instanceof InvokerSupplier supplier) {
+      background = supplier.getInvoker();
+    }
+    else {
+      background = foreground;
+    }
+    if (background instanceof Invoker.EDT && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error(new Throwable("Background invoker shall not be EDT. Please implement InvokerSupplier in your TreeModel"));
+    }
+    this.model = model;
+    this.model.addTreeModelListener(listener);
+    this.showLoadingNode = showLoadingNode;
     Disposer.register(parent, this);
   }
 
   @Override
   public void dispose() {
+    EDT.assertIsEdt();
     super.dispose();
     model.removeTreeModelListener(listener);
   }
 
   @Override
-  public Object getUniqueID(@NotNull TreePath path) {
-    return model instanceof Identifiable ? ((Identifiable)model).getUniqueID(path) : null;
-  }
-
-  @NotNull
-  @Override
-  public Promise<TreePath> getTreePath(Object object) {
+  public @NotNull Promise<TreePath> getTreePath(Object object) {
     if (disposed) return rejectedPromise();
     return resolve(model instanceof Searchable ? ((Searchable)model).getTreePath(object) : null);
   }
 
-  @NotNull
-  @Override
-  public Promise<TreePath> nextTreePath(@NotNull TreePath path, Object object) {
-    if (disposed) return rejectedPromise();
-    return resolve(model instanceof Navigatable ? ((Navigatable)model).nextTreePath(path, object) : null);
-  }
-
-  @NotNull
-  @Override
-  public Promise<TreePath> prevTreePath(@NotNull TreePath path, Object object) {
-    if (disposed) return rejectedPromise();
-    return resolve(model instanceof Navigatable ? ((Navigatable)model).prevTreePath(path, object) : null);
-  }
-
-  @NotNull
-  public Promise<TreePath> resolve(TreePath path) {
+  public @NotNull Promise<TreePath> resolve(TreePath path) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
     onValidThread(() -> resolve(async, path));
     return async;
   }
 
-  @NotNull
-  private Promise<TreePath> resolve(Promise<? extends TreePath> promise) {
+  private @NotNull Promise<TreePath> resolve(Promise<? extends TreePath> promise) {
     if (promise == null && isValidThread()) {
       return rejectedPromise();
     }
@@ -180,7 +150,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   }
 
   private void resolve(@NotNull AsyncPromise<? super TreePath> async, TreePath path) {
-    LOG.debug("resolve path: ", path);
+    if (LOG.isTraceEnabled()) LOG.debug("resolve path: ", path);
     if (path == null) {
       async.setError("path is null");
       return;
@@ -233,7 +203,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
   @Override
   public void valueForPathChanged(@NotNull TreePath path, Object value) {
-    processor.background.invoke(() -> model.valueForPathChanged(path, value));
+    background.invoke(() -> model.valueForPathChanged(path, value));
   }
 
   @Override
@@ -254,8 +224,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
    * @return a promise that will be resolved when visiting is finished
    */
   @Override
-  @NotNull
-  public Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
+  public @NotNull Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
     return accept(visitor, true);
   }
 
@@ -266,21 +235,11 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
    * @param allowLoading load all needed children if {@code true}
    * @return a promise that will be resolved when visiting is finished
    */
-  @NotNull
-  public Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
-    AbstractTreeWalker<Node> walker = new AbstractTreeWalker<Node>(visitor, node -> node.object) {
-      @Override
-      protected Collection<Node> getChildren(@NotNull Node node) {
-        if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
-        promiseChildren(node)
-          .onSuccess(parent -> setChildren(parent.getChildren()))
-          .onError(this::setError);
-        return null;
-      }
-    };
+  public @NotNull Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
+    var walker = createWalker(visitor, allowLoading);
     if (allowLoading) {
       // start visiting on the background thread to ensure that root node is already invalidated
-      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).onError(walker::setError)));
+      background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).onError(walker::setError)));
     }
     else {
       onValidThread(() -> walker.start(tree.root));
@@ -288,40 +247,89 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     return walker.promise();
   }
 
+  private TreeWalkerBase<Node> createWalker(@NotNull TreeVisitor visitor, boolean allowLoading) {
+    if (visitor.visitThread() == TreeVisitor.VisitThread.BGT) {
+      return new BgtTreeWalker<>(visitor, background, foreground, node -> node.object) {
+        @Override
+        protected @Nullable Collection<Node> getChildren(@NotNull AsyncTreeModel.Node node) {
+          return getChildrenForWalker(node, this, allowLoading);
+        }
+      };
+    }
+    else {
+      return new AbstractTreeWalker<>(visitor, node -> node.object) {
+        @Override
+        protected @Nullable Collection<Node> getChildren(@NotNull Node node) {
+          return getChildrenForWalker(node, this, allowLoading);
+        }
+      };
+    }
+  }
+
+  private @Nullable Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
+    if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
+    promiseChildren(node)
+      .onSuccess(parent -> walker.setChildren(parent.getChildren()))
+      .onError(walker::setError);
+    return null;
+  }
+
   /**
    * @return {@code true} if this model is updating its structure
    */
   public boolean isProcessing() {
-    if (processor.getTaskCount() > 0) return true;
-    ObsolescentCommand command = tree.queue.get();
+    if (foreground.getTaskCount() > 0) return true;
+    if (background.getTaskCount() > 0) return true;
+    if (runningCommands.get() != 0) return true;
+    Command command = tree.queue.get();
     return command != null && command.isPending();
   }
 
+  /**
+   * Lets the specified command to produce a value on the background thread
+   * and to accept the resulting value on the foreground thread.
+   */
+  private void submit(@NotNull Command command) {
+    runningCommands.incrementAndGet();
+    background.compute(command).thenAsync(value -> {
+      if (value != null && value.object instanceof AsyncCommandResult r) {
+        return r.promise.thenAsync(value2 -> accept(command, value2));
+      }
+      else {
+        return accept(command, value);
+      }
+    }).onProcessed(x -> runningCommands.decrementAndGet());
+  }
+
+  private Promise<Void> accept(@NotNull Command command, Node value) {
+    return foreground.compute(() -> {
+      command.accept(value);
+      return null;
+    });
+  }
+
   private boolean isValidThread() {
-    if (processor.foreground.isValidThread()) return true;
+    if (foreground.isValidThread()) return true;
     LOG.warn(new IllegalStateException("AsyncTreeModel is used from unexpected thread"));
     return false;
   }
 
   public void onValidThread(@NotNull Runnable runnable) {
-    processor.foreground.invoke(runnable);
+    foreground.invoke(runnable);
   }
 
-  @NotNull
-  private <T> java.util.function.Consumer<T> onValidThread(@NotNull Consumer<? super T> consumer) {
-    return value -> onValidThread(() -> consumer.consume(value));
+  private @NotNull <T> Consumer<T> onValidThread(@NotNull Consumer<? super T> consumer) {
+    return value -> onValidThread(() -> consumer.accept(value));
   }
 
-  @NotNull
-  private Promise<Node> promiseRootEntry() {
+  private @NotNull Promise<Node> promiseRootEntry() {
     if (disposed) return rejectedPromise();
-    return tree.queue.promise(processor, () -> new CmdGetRoot("Load root", null));
+    return tree.queue.promise(this::submit, () -> new CmdGetRoot("Load root", null));
   }
 
-  @NotNull
-  private Promise<Node> promiseChildren(@NotNull Node node) {
+  private @NotNull Promise<Node> promiseChildren(@NotNull Node node) {
     if (disposed) return rejectedPromise();
-    return node.queue.promise(processor, () -> {
+    return node.queue.promise(this::submit, () -> {
       node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), LeafState.ALWAYS));
       return new CmdGetChildren("Load children", node, false);
     });
@@ -331,16 +339,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     return disposed || object == null || !isValidThread() ? null : tree.map.get(object);
   }
 
-  @NotNull
-  private List<Node> getEntryChildren(Object object) {
+  private @NotNull List<Node> getEntryChildren(Object object) {
     Node node = getEntry(object);
     if (node == null) return emptyList();
     if (node.isLoadingRequired()) promiseChildren(node);
     return node.getChildren();
   }
 
-  @NotNull
-  private TreeModelEvent createEvent(@NotNull TreePath path, Map<Object, Integer> map) {
+  private @NotNull TreeModelEvent createEvent(@NotNull TreePath path, Map<Object, Integer> map) {
     if (map == null || map.isEmpty()) return new TreeModelEvent(this, path, null, null);
     int i = 0;
     int size = map.size();
@@ -378,8 +384,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
   }
 
-  @NotNull
-  private static LinkedHashMap<Object, Integer> getIndices(@NotNull List<Node> children, @Nullable ToIntFunction<? super Node> function) {
+  private static @NotNull LinkedHashMap<Object, Integer> getIndices(@NotNull List<Node> children, @Nullable ToIntFunction<? super Node> function) {
     LinkedHashMap<Object, Integer> map = new LinkedHashMap<>();
     for (int i = 0; i < children.size(); i++) {
       Node child = children.get(i);
@@ -406,8 +411,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     return count;
   }
 
-  @NotNull
-  private static List<Object> getIntersection(@NotNull Map<Object, Integer> indices, @NotNull Iterable<Object> objects) {
+  private static @NotNull List<Object> getIntersection(@NotNull Map<Object, Integer> indices, @NotNull Iterable<Object> objects) {
     List<Object> list = new ArrayList<>(indices.size());
     int last = -1;
     for (Object object : objects) {
@@ -420,8 +424,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     return list;
   }
 
-  @NotNull
-  private static List<Object> getIntersection(@NotNull Map<Object, Integer> removed, @NotNull Map<Object, Integer> inserted) {
+  private static @NotNull List<Object> getIntersection(@NotNull Map<Object, Integer> removed, @NotNull Map<Object, Integer> inserted) {
     if (removed.isEmpty() || inserted.isEmpty()) return emptyList();
     int countOne = getIntersectionCount(removed, inserted.keySet());
     int countTwo = getIntersectionCount(inserted, removed.keySet());
@@ -431,16 +434,16 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   }
 
 
-  private abstract static class ObsolescentCommand implements Obsolescent, Command<Node> {
+  private abstract static class Command implements Obsolescent, Supplier<Node>, Consumer<Node> {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
     final String name;
     final Object object;
     volatile boolean started;
 
-    ObsolescentCommand(@NotNull String name, Object object) {
+    Command(@NotNull @NonNls String name, Object object) {
       this.name = name;
       this.object = object;
-      LOG.debug("create command: ", this);
+      if (LOG.isTraceEnabled()) LOG.debug("create command: ", this);
     }
 
     abstract Node getNode(Object object);
@@ -460,11 +463,11 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     public Node get() {
       started = true;
       if (isObsolete()) {
-        LOG.debug("obsolete command: ", this);
+        if (LOG.isTraceEnabled()) LOG.debug("obsolete command: ", this);
         return null;
       }
       else {
-        LOG.debug("background command: ", this);
+        if (LOG.isTraceEnabled()) LOG.debug("background command: ", this);
         return getNode(object);
       }
     }
@@ -472,17 +475,17 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     @Override
     public void accept(Node node) {
       if (isObsolete()) {
-        LOG.debug("obsolete command: ", this);
+        if (LOG.isTraceEnabled()) LOG.debug("obsolete command: ", this);
       }
       else {
-        LOG.debug("foreground command: ", this);
+        if (LOG.isTraceEnabled()) LOG.debug("foreground command: ", this);
         setNode(node);
       }
     }
   }
 
-  private final class CmdGetRoot extends ObsolescentCommand {
-    private CmdGetRoot(@NotNull String name, Object object) {
+  private final class CmdGetRoot extends Command {
+    private CmdGetRoot(@NotNull @NonNls String name, Object object) {
       super(name, object);
       tree.queue.add(this, old -> old.started || old.object != object);
     }
@@ -503,15 +506,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     void setNode(Node loaded) {
       Node root = tree.root;
       if (root == null && loaded == null) {
-        LOG.debug("no root");
+        if (LOG.isTraceEnabled()) LOG.debug("no root");
         tree.queue.done(this, null);
         return;
       }
 
       if (root != null && loaded != null && root.object.equals(loaded.object)) {
         tree.fixEqualButNotSame(root, loaded.object);
-        LOG.debug("same root: ", root.object);
-        if (!root.isLoadingRequired()) processor.process(new CmdGetChildren("Update root children", root, true));
+        if (LOG.isTraceEnabled()) LOG.debug("same root: ", root.object);
+        if (!root.isLoadingRequired()) submit(new CmdGetChildren("Update root children", root, true));
         tree.queue.done(this, root);
         return;
       }
@@ -530,25 +533,25 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       tree.root = loaded;
       if (loaded != null) {
         tree.map.put(loaded.object, loaded);
-        TreePath path = new TreePath(loaded.object);
+        TreePath path = new CachingTreePath(loaded.object);
         loaded.insertPath(path);
         treeStructureChanged(path, null, null);
-        LOG.debug("new root: ", loaded.object);
+        if (LOG.isTraceEnabled()) LOG.debug("new root: ", loaded.object);
         tree.queue.done(this, loaded);
       }
       else {
         treeStructureChanged(null, null, null);
-        LOG.debug("root removed");
+        if (LOG.isTraceEnabled()) LOG.debug("root removed");
         tree.queue.done(this, null);
       }
     }
   }
 
-  private final class CmdGetChildren extends ObsolescentCommand {
+  private final class CmdGetChildren extends Command {
     private final Node node;
     private volatile boolean deep;
 
-    CmdGetChildren(@NotNull String name, @NotNull Node node, boolean deep) {
+    CmdGetChildren(@NotNull @NonNls String name, @NotNull Node node, boolean deep) {
       super(name, node.object);
       this.node = node;
       if (deep) this.deep = true;
@@ -568,11 +571,19 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
-      if (model instanceof ChildrenProvider) {
-        ChildrenProvider<?> provider = (ChildrenProvider<?>)model;
-        List<?> children = provider.getChildren(object);
-        if (children == null) throw new ProcessCanceledException(); // cancel this command
-        loaded.children = load(children.size(), index -> children.get(index));
+      if (model instanceof AsyncChildrenProvider<?> provider) {
+        Promise<? extends List<?>> childrenPromise = provider.getChildrenAsync(object);
+        if (childrenPromise == null) throw new ProcessCanceledException(); // cancel this command
+        if (childrenPromise.getState() == Promise.State.PENDING) {
+          return new Node(new AsyncCommandResult(childrenPromise.then(children -> {
+            loaded.children = load(children);
+            return loaded;
+          })), LeafState.ALWAYS);
+        }
+        loaded.children = load(getImmediately(childrenPromise));
+      }
+      else if (model instanceof ChildrenProvider<?> provider) {
+        loaded.children = load(provider.getChildren(object));
       }
       else {
         loaded.children = load(model.getChildCount(object), index -> model.getChild(object, index));
@@ -581,16 +592,35 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
 
     @Nullable
-    private List<Node> load(int count, @NotNull IntFunction<?> function) {
+    private static <T> T getImmediately(Promise<T> promise) {
+      try {
+        return promise.blockingGet(0);
+      }
+      catch (TimeoutException e) {
+        throw new ProcessCanceledException();
+      }
+      catch (ExecutionException e) {
+        ExceptionUtil.rethrow(e.getCause());
+        throw new ProcessCanceledException();
+      }
+    }
+
+    @Nullable
+    private List<Node> load(@Nullable List<?> children) {
+      if (children == null) throw new ProcessCanceledException(); // cancel this command
+      return load(children.size(), index -> children.get(index));
+    }
+
+    private @Nullable List<Node> load(int count, @NotNull IntFunction<?> childGetter) {
       if (count < 0) LOG.warn("illegal child count: " + count);
       if (count <= 0) return emptyList();
 
-      SmartHashSet<Object> set = new SmartHashSet<>(count);
+      Set<Object> set = count == 1 ? new SmartHashSet<>() : new HashSet<>(count);
       List<Node> children = new ArrayList<>(count);
       for (int i = 0; i < count; i++) {
         ProgressManager.checkCanceled();
         if (isObsolete()) return null;
-        Object child = function.apply(i);
+        Object child = childGetter.apply(i);
         if (child == null) {
           LOG.warn("ignore null child at " + i);
         }
@@ -608,7 +638,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     @Override
     void setNode(Node loaded) {
       if (loaded == null || loaded.isLoadingRequired()) {
-        LOG.debug("cancelled command: ", this);
+        if (LOG.isTraceEnabled()) LOG.debug("cancelled command: ", this);
         return;
       }
       if (node != tree.map.get(loaded.object)) {
@@ -621,7 +651,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (oldChildren.isEmpty() && newChildren.isEmpty()) {
         node.setLeafState(loaded.leafState);
         treeNodesChanged(node, null);
-        LOG.debug("no children: ", node.object);
+        if (LOG.isTraceEnabled()) LOG.debug("no children: ", node.object);
         node.queue.done(this, node);
         return;
       }
@@ -631,7 +661,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         oldChildren.forEach(child -> child.removeMapping(node, tree));
         node.setLeafState(loaded.leafState);
         treeNodesRemoved(node, removed);
-        LOG.debug("children removed: ", node.object);
+        if (LOG.isTraceEnabled()) LOG.debug("children removed: ", node.object);
         node.queue.done(this, node);
         return;
       }
@@ -666,7 +696,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         newChildren.forEach(child -> child.insertMapping(node));
         node.setChildren(newChildren);
         treeNodesInserted(node, inserted);
-        LOG.debug("children inserted: ", node.object);
+        if (LOG.isTraceEnabled()) LOG.debug("children inserted: ", node.object);
         node.queue.done(this, node);
         return;
       }
@@ -702,13 +732,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       if (!removed.isEmpty()) treeNodesRemoved(node, removed);
       if (!inserted.isEmpty()) treeNodesInserted(node, inserted);
       if (!contained.isEmpty()) treeNodesChanged(node, contained);
-      if (removed.isEmpty() && inserted.isEmpty()) treeNodesChanged(node, null);
-      LOG.debug("children changed: ", node.object);
+      if (removed.isEmpty() && inserted.isEmpty() && contained.isEmpty()) treeNodesChanged(node, null);
+      if (LOG.isTraceEnabled()) LOG.debug("children changed: ", node.object);
 
       if (!reload.isEmpty()) {
         for (Node child : newChildren) {
           if (reload.contains(child.object)) {
-            processor.process(new CmdGetChildren("Update children recursively", child, true));
+            submit(new CmdGetChildren("Update children recursively", child, true));
           }
         }
       }
@@ -716,8 +746,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
   }
 
-  private static final class CommandQueue<T extends ObsolescentCommand> {
-    private final Deque<T> deque = new ArrayDeque<>();
+  private static final class CommandQueue<T extends Command> {
+    private final Deque<T> deque = new LinkedList<>();
     private volatile boolean closed;
 
     T get() {
@@ -727,14 +757,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
 
     @NotNull
-    Promise<Node> promise(@NotNull Command.Processor processor, @NotNull Supplier<? extends T> supplier) {
+    Promise<Node> promise(@NotNull Consumer<? super Command> submitter, @NotNull Supplier<? extends T> supplier) {
       T command;
       synchronized (deque) {
         command = deque.peekFirst();
         if (command != null) return command.promise;
         command = supplier.get();
       }
-      processor.process(command);
+      submitter.accept(command);
       return command.promise;
     }
 
@@ -769,8 +799,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       promises.forEach(promise -> promise.setError("cancel loading"));
     }
 
-    @NotNull
-    private Iterable<AsyncPromise<Node>> getPromises(T command) {
+    private @NotNull Iterable<AsyncPromise<Node>> getPromises(T command) {
       ArrayList<AsyncPromise<Node>> list = new ArrayList<>();
       while (true) {
         T last = deque.pollLast();
@@ -815,8 +844,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     private final Set<TreePath> paths = new SmartHashSet<>();
     private volatile Object object;
     private volatile LeafState leafState;
-    @Nullable
-    private volatile List<Node> children;
+    private volatile @Nullable List<Node> children;
     private volatile Node loading;
 
     private Node(@NotNull Object object, @NotNull LeafState leafState) {
@@ -838,7 +866,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
     private void setLoading(Node loading) {
       this.leafState = LeafState.NEVER;
-      this.children = loading != null ? singletonList(loading) : emptyList();
+      this.children = ContainerUtil.createMaybeSingletonList(loading);
       this.loading = loading;
     }
 
@@ -846,15 +874,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       return leafState != LeafState.ALWAYS && children == null;
     }
 
-    @NotNull
-    private List<Node> getChildren() {
+    private @NotNull List<Node> getChildren() {
       List<Node> list = children;
       return list != null ? list : emptyList();
     }
 
     private void forEachChildExceptLoading(Consumer<? super Node> consumer) {
       for (Node node : getChildren()) {
-        if (node != loading) consumer.consume(node);
+        if (node != loading) consumer.accept(node);
       }
     }
 
@@ -867,7 +894,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
     private void insertMapping(Node parent) {
       if (parent == null) {
-        insertPath(new TreePath(object));
+        insertPath(new CachingTreePath(object));
       }
       else if (parent.loading == this) {
         LOG.warn("insert loading node unexpectedly");
@@ -889,7 +916,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
     private void removeMapping(Node parent, @NotNull Tree tree) {
       if (parent == null) {
-        removePath(new TreePath(object));
+        removePath(new CachingTreePath(object));
         tree.removeEmpty(this);
       }
       else if (parent.loading == this) {
@@ -905,7 +932,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
 
     private void updatePaths(@NotNull Object oldObject, @NotNull Object newObject) {
-      if (paths.stream().anyMatch(path -> contains(path, oldObject))) {
+      if (ContainerUtil.exists(paths, path -> contains(path, oldObject))) {
         // replace instance of user's object in all internal maps to avoid memory leaks
         List<TreePath> updated = ContainerUtil.map(paths, path -> update(path, oldObject, newObject));
         paths.clear();
@@ -914,10 +941,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       }
     }
 
-    @NotNull
-    private static TreePath update(@NotNull TreePath path, @NotNull Object oldObject, @NotNull Object newObject) {
+    private static @NotNull TreePath update(@NotNull TreePath path, @NotNull Object oldObject, @NotNull Object newObject) {
       if (!contains(path, oldObject)) return path;
-      LOG.debug("update path: ", path);
+      if (LOG.isTraceEnabled()) LOG.debug("update path: ", path);
       Object[] objects = TreePathUtil.convertTreePathToArray(path);
       for (int i = 0; i < objects.length; i++) {
         if (oldObject == objects[i]) objects[i] = newObject;
@@ -944,6 +970,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
   }
 
+  public void treeStructureChanged(TreePath path) {
+    treeStructureChanged(path, null, null);
+  }
+
   @Override
   protected void treeNodesChanged(TreePath path, int[] indices, Object[] children) {
     try {
@@ -952,6 +982,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     catch (Throwable throwable) {
       LOG.error("custom model: " + model, throwable);
     }
+  }
+
+  public void treeNodesChanged(TreePath path) {
+    treeNodesChanged(path, null, null);
   }
 
   @Override
@@ -964,6 +998,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
   }
 
+  public void treeNodesInserted(TreePath path) {
+    treeNodesInserted(path, null, null);
+  }
+
   @Override
   protected void treeNodesRemoved(TreePath path, int[] indices, Object[] children) {
     try {
@@ -974,14 +1012,25 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
   }
 
+  public void treeNodesRemoved(TreePath path) {
+    treeNodesRemoved(path, null, null);
+  }
+
   /**
    * @deprecated do not use
    */
   @Deprecated
   public void setRootImmediately(@NotNull Object object) {
     Node node = new Node(object, LeafState.NEVER);
-    node.insertPath(new TreePath(object));
+    node.insertPath(new CachingTreePath(object));
     tree.root = node;
     tree.map.put(object, node);
   }
+
+  @ApiStatus.Internal
+  public interface AsyncChildrenProvider<T> {
+    Promise<? extends List<? extends T>> getChildrenAsync(Object parent);
+  }
+
+  private record AsyncCommandResult(Promise<Node> promise) {}
 }

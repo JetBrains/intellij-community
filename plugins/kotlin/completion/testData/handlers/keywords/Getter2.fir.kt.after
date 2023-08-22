@@ -1,0 +1,6 @@
+// FIR_COMPARISON
+val v: Int
+    get() {<caret>}
+
+// ELEMENT: "get"
+// TAIL_TEXT: "() {...}"

@@ -1,27 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
-import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
-import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.await
 
 class SingleChangeListCommitWorkflowHandler(
-  override val workflow: SingleChangeListCommitWorkflow,
+  override val workflow: CommitChangeListDialogWorkflow,
   override val ui: SingleChangeListCommitWorkflowUi
-) : AbstractCommitWorkflowHandler<SingleChangeListCommitWorkflow, SingleChangeListCommitWorkflowUi>(),
+) : AbstractCommitWorkflowHandler<CommitChangeListDialogWorkflow, SingleChangeListCommitWorkflowUi>(),
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener {
 
   override val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
     override fun setCommitMessage(currentDescription: String?) {
-      commitMessagePolicy.defaultNameChangeListMessage = currentDescription
-
+      commitMessagePolicy.onCommitMessageReset(currentDescription)
       super.setCommitMessage(currentDescription)
     }
   }
@@ -47,14 +53,12 @@ class SingleChangeListCommitWorkflowHandler(
     ui.addChangeListListener(this, this)
   }
 
-  override fun vcsesChanged() = Unit
-
   fun activate(): Boolean {
     initCommitHandlers()
 
     ui.addInclusionListener(this, this)
-    ui.defaultCommitActionName = getCommitActionName()
-    initCommitMessage()
+    updateDefaultCommitActionName()
+    setCommitMessage(commitMessagePolicy.init(getChangeList(), getIncludedChanges()))
     initCommitOptions()
 
     amendCommitHandler.initialMessage = getCommitMessage()
@@ -64,43 +68,74 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun cancelled() {
     commitOptions.saveChangeListSpecificOptions()
-    saveCommitMessage(false)
+    commitMessagePolicy.onDialogClosed(getCommitState(), false)
 
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
   }
 
-  override fun changeListChanged() {
-    updateCommitMessage()
+  override fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
+    commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, ui.commitMessageUi)
     updateCommitOptions()
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
-    super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (result == CheckinHandler.ReturnResult.COMMIT) {
+  override fun updateDefaultCommitActionName() {
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
+  }
+
+  override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
+    super.beforeCommitChecksEnded(sessionInfo, result)
+    if (result.shouldCommit) {
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
 
-      if (isDefaultCommit) ui.deactivate()
+      if (sessionInfo.isVcsCommit) ui.deactivate()
     }
   }
 
-  override fun updateWorkflow() {
+  override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
+    super.isExecutorEnabled(executor) && (!executor.areChangesRequired() || !isCommitEmpty())
+
+  override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean =
+    super.checkCommit(sessionInfo) &&
+    (
+      getCommitMessage().isNotEmpty() ||
+      ui.confirmCommitWithEmptyMessage()
+    )
+
+  override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
+    if (!addUnversionedFiles(sessionInfo)) return false
+
+    refreshLocalChanges()
+
     workflow.commitState = getCommitState()
+    return configureCommitSession(project, sessionInfo,
+                                  workflow.commitState.changes,
+                                  workflow.commitState.commitMessage)
   }
 
-  override fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
-
-  private fun initCommitMessage() {
-    commitMessagePolicy.init(getChangeList(), getIncludedChanges())
-    setCommitMessage(commitMessagePolicy.commitMessage)
+  private suspend fun addUnversionedFiles(sessionInfo: CommitSessionInfo): Boolean {
+    if (sessionInfo.isVcsCommit) {
+      return withModalProgressIndicator(project, VcsBundle.message("progress.title.adding.files.to.vcs")) {
+        withContext(Dispatchers.EDT) {
+          addUnversionedFiles(project, getIncludedUnversionedFiles(), getChangeList(), ui.getInclusionModel())
+        }
+      }
+    }
+    return true
   }
 
-  private fun updateCommitMessage() {
-    commitMessagePolicy.update(getChangeList(), getCommitMessage())
-    setCommitMessage(commitMessagePolicy.commitMessage)
+  private suspend fun refreshLocalChanges() {
+    withModalProgressIndicator(project, VcsBundle.message("commit.progress.title")) {
+      ChangeListManagerEx.getInstanceEx(project).promiseWaitForUpdate().await()
+      withContext(Dispatchers.EDT) {
+        ui.refreshDataBeforeCommit()
+      }
+    }
   }
 
-  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitState(), success)
+  override fun saveCommitMessageBeforeCommit() {
+    commitMessagePolicy.onDialogClosed(getCommitState(), true)
+  }
 
   private fun initCommitOptions() {
     workflow.initCommitOptions(createCommitOptions())
@@ -116,13 +151,13 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun updateCommitOptionsVisibility() {
-    val unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
-    val vcses = getAffectedVcses(getChangeList().changes, project) + getAffectedVcsesForFiles(unversionedFiles, project)
+    val unversionedFiles = ChangeListManager.getInstance(project).unversionedFilesPaths
+    val vcses = getAffectedVcses(getChangeList().changes, project) + getAffectedVcsesForFilePaths(unversionedFiles, project)
 
     ui.commitOptionsUi.setVisible(vcses)
   }
 
-  private inner class CommitCustomListener : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = ui.deactivate()
+  private inner class CommitCustomListener : CommitterResultHandler {
+    override fun onSuccess() = ui.deactivate()
   }
 }

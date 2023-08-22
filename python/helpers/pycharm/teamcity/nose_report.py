@@ -169,9 +169,10 @@ class TeamcityReport(Plugin):
             details = details[:start_index] + details[end_index + len(_captured_output_end_marker):]
 
         try:
-            error = err[1]
-            if isinstance(error, EqualsAssertionError):
-                details = convert_error_to_string(err, 2)
+            from .jb_local_exc_store import get_exception
+            error = get_exception()
+            if isinstance(err[1], AssertionError) and isinstance(error, EqualsAssertionError):
+                details = convert_error_to_string(err, 1)
                 self.messages.testFailed(test_id, message=error.msg, details=details, flowId=test_id, comparison_failure=error)
                 return
         except Exception:

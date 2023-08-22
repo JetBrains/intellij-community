@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.IdeBundle;
@@ -10,6 +10,7 @@ import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -84,7 +85,7 @@ public final class TodoPackageNode extends PackageElementNode {
     }
     catch (IndexNotReadyException e) {
       LOG.info(e);
-      data.setPresentableText("N/A");
+      data.setPresentableText(JavaBundle.message("todo.index.not.available"));
     }
   }
 
@@ -187,7 +188,10 @@ public final class TodoPackageNode extends PackageElementNode {
             PsiPackage _package = JavaDirectoryService.getInstance().getPackage(_dir);
             if (_package != null && psiPackage.equals(_package.getParentPackage())) {
               _package = TodoJavaTreeHelper.findNonEmptyPackage(_package, module, project, myBuilder, scope); //compact empty middle packages
-              final String name = psiPackage.equals(Objects.requireNonNull(_package).getParentPackage())
+              if (_package == null) {
+                break;
+              }
+              final String name = psiPackage.equals(_package.getParentPackage())
                                   ? null //non compacted
                                   : _package.getQualifiedName().substring(psiPackage.getQualifiedName().length() + 1);
               TodoPackageNode todoPackageNode = new TodoPackageNode(project, new PackageElement(module, _package, false), myBuilder, name);

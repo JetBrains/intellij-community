@@ -81,6 +81,14 @@ public class IdeaTitledBorder extends TitledBorder {
                                    Math.max(minimumSize.height, c.getMinimumSize().height)));
   }
 
+  public Insets getInsideInsets() {
+    return insideInsets;
+  }
+
+  public Insets getOutsideInsets() {
+    return outsideInsets;
+  }
+
   @Override
   public Dimension getMinimumSize(Component c) {
     Insets insets = getBorderInsets(c);

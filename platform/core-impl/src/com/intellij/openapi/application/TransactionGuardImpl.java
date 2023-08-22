@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.LoadingState;
@@ -8,55 +8,56 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author peter
- */
-public class TransactionGuardImpl extends TransactionGuard {
+public final class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance(TransactionGuardImpl.class);
 
   /**
    * Remembers the value of {@link #myWritingAllowed} at the start of each modality. If writing wasn't allowed at that moment
    * (e.g. inside SwingUtilities.invokeLater), it won't be allowed for all dialogs inside such modality, even from user activity.
    */
-  private final Map<ModalityState, Boolean> myWriteSafeModalities = ContainerUtil.createConcurrentWeakMap();
+  private final Map<ModalityState, Boolean> myWriteSafeModalities = CollectionFactory.createConcurrentWeakMap();
   private boolean myWritingAllowed;
   private boolean myErrorReported;
 
   public TransactionGuardImpl() {
-    myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
+    myWriteSafeModalities.put(ModalityState.nonModal(), true);
     myWritingAllowed = SwingUtilities.isEventDispatchThread(); // consider app startup a user activity
   }
 
   @Override
-  public void submitTransaction(@NotNull Disposable parentDisposable, @Nullable TransactionId expectedContext, @NotNull Runnable transaction) {
-    ModalityState modality = expectedContext == null ? ModalityState.NON_MODAL : ((TransactionIdImpl)expectedContext).myModality;
+  public void submitTransaction(@NotNull Disposable parentDisposable,
+                                @Nullable TransactionId expectedContext,
+                                @NotNull Runnable transaction) {
+    ModalityState modality = expectedContext == null ? ModalityState.nonModal() : ((TransactionIdImpl)expectedContext).myModality;
     Application app = ApplicationManager.getApplication();
-    if (app.isWriteThread() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
+    if (app.isWriteIntentLockAcquired() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
       if (!Disposer.isDisposed(parentDisposable)) {
         transaction.run();
       }
-    } else {
-      AppUIExecutor.onWriteThread(modality).later().expireWith(parentDisposable).submit(transaction);
+    }
+    else {
+      AppUIExecutor.onWriteThread(modality).later().expireWith(parentDisposable).execute(transaction);
     }
   }
 
   @Override
-  public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
+  public void submitTransactionAndWait(final @NotNull Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
-    if (app.isWriteThread()) {
+    if (app.isWriteIntentLockAcquired()) {
       if (!myWritingAllowed) {
-        String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
-                         "Please use asynchronous submit*Transaction. " +
-                         "See TransactionGuard FAQ for details.\nTransaction: " + runnable;
+        @NonNls String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
+                                 "Please use asynchronous submit*Transaction. " +
+                                 "See TransactionGuard FAQ for details.\nTransaction: " + runnable;
         if (!isWriteSafeModality(ModalityState.current())) {
           message += "\nUnsafe modality: " + ModalityState.current();
         }
@@ -73,71 +74,62 @@ public class TransactionGuardImpl extends TransactionGuard {
     if (!isWriteSafeModality(state)) {
       LOG.error("Cannot run synchronous submitTransactionAndWait from a background thread created in a write-unsafe context");
     }
-    WriteThread.invokeAndWait(runnable);
+    app.invokeAndWait(runnable, state);
   }
 
   /**
    * An absolutely guru method!<p/>
-   *
+   * <p>
    * Executes the given code and marks it as a user activity, to allow write actions to be run without requiring transactions.
    * This is only to be called from UI infrastructure, during InputEvent processing and wrap the point where the control
    * goes to custom input event handlers for the first time.<p/>
-   *
+   * <p>
    * If you wish to invoke some actionPerformed,
    * please consider using {@code ActionManager.tryToExecute()} instead, or ensure in some other way that the action is enabled
    * and can be invoked in the current modality state.
    */
+  @ApiStatus.Internal
   public void performUserActivity(Runnable activity) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    AccessToken token = startActivity(true);
-    try {
-      activity.run();
-    }
-    finally {
-      token.finish();
-    }
+    performActivity(true, activity);
   }
 
   /**
-   * An absolutely guru method, only intended to be used from Swing event processing. Please consult Peter if you think you need to invoke this.
+   * An absolute guru method, only intended to be used from Swing event processing. Please consult Peter if you think you need to invoke this.
    */
-  @NotNull
-  public AccessToken startActivity(boolean userActivity) {
+  @ApiStatus.Internal
+  public void performActivity(boolean userActivity, @NotNull Runnable runnable) {
     myErrorReported = false;
     boolean allowWriting = userActivity && isWriteSafeModality(ModalityState.current());
     if (myWritingAllowed == allowWriting) {
-      return AccessToken.EMPTY_ACCESS_TOKEN;
+      runnable.run();
+      return;
     }
 
-    if (allowWriting) {
-      ApplicationManager.getApplication().assertIsWriteThread();
-    }
-    else if (!EventQueue.isDispatchThread()) {
-      LOG.error("must be swing thread");
-    }
-    final boolean prev = myWritingAllowed;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    boolean prev = myWritingAllowed;
     myWritingAllowed = allowWriting;
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        myWritingAllowed = prev;
-      }
-    };
+    try {
+      runnable.run();
+    }
+    finally {
+      myWritingAllowed = prev;
+    }
   }
 
   @Override
   public boolean isWritingAllowed() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     return myWritingAllowed;
   }
 
   @Override
-  public boolean isWriteSafeModality(ModalityState state) {
+  public boolean isWriteSafeModality(@NotNull ModalityState state) {
     return Boolean.TRUE.equals(myWriteSafeModalities.get(state));
   }
 
   public void assertWriteActionAllowed() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (!myWritingAllowed && areAssertionsEnabled() && !myErrorReported) {
       // please assign exceptions here to Peter
       LOG.error(reportWriteUnsafeContext(ModalityState.current()));
@@ -145,7 +137,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  private static String reportWriteUnsafeContext(@NotNull ModalityState modality) {
+  private static @NonNls String reportWriteUnsafeContext(@NotNull ModalityState modality) {
     return "Write-unsafe context! Model changes are allowed from write-safe contexts only. " +
            "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
            "See TransactionGuard documentation for details." +
@@ -165,18 +157,19 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
+  public void submitTransactionLater(final @NotNull Disposable parentDisposable, final @NotNull Runnable transaction) {
     TransactionIdImpl ctx = getContextTransaction();
-    ApplicationManager.getApplication().invokeLaterOnWriteThread(transaction, ctx == null ? ModalityState.NON_MODAL : ctx.myModality);
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(transaction, ctx == null ? ModalityState.nonModal() : ctx.myModality);
   }
 
   @Override
   public TransactionIdImpl getContextTransaction() {
-    if (ApplicationManager.getApplication().isWriteThread()) {
+    if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       if (!myWritingAllowed) {
         return null;
       }
-    } else if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+    }
+    else if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
       return null;
     }
 
@@ -188,31 +181,35 @@ public class TransactionGuardImpl extends TransactionGuard {
     myWriteSafeModalities.put(modality, myWritingAllowed);
   }
 
-  @NotNull
-  public Runnable wrapLaterInvocation(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
-    if (isWriteSafeModality(modalityState)) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().assertIsWriteThread();
-          final boolean prev = myWritingAllowed;
-          myWritingAllowed = true;
-          try {
-            runnable.run();
-          }
-          finally {
-            myWritingAllowed = prev;
-          }
+  public @NotNull Runnable wrapLaterInvocation(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        if (isWriteSafeModality(modalityState)) {
+          ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+          runWithWritingAllowed(runnable);
         }
+        else {
+          runnable.run();
+        }
+      }
 
-        @Override
-        public String toString() {
-          return runnable.toString();
-        }
-      };
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
+    };
+  }
+
+  private void runWithWritingAllowed(@NotNull Runnable runnable) {
+    final boolean prev = myWritingAllowed;
+    myWritingAllowed = true;
+    try {
+      runnable.run();
     }
-
-    return runnable;
+    finally {
+      myWritingAllowed = prev;
+    }
   }
 
   @Override
@@ -220,7 +217,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     return "TransactionGuardImpl{myWritingAllowed=" + myWritingAllowed + '}';
   }
 
-  private static class TransactionIdImpl implements TransactionId {
+  private static final class TransactionIdImpl implements TransactionId {
     final ModalityState myModality;
 
     private TransactionIdImpl(ModalityState modality) {

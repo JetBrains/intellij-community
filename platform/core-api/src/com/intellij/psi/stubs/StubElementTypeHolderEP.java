@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,20 +23,18 @@ import java.util.List;
  * and all other language's element types are kept in a separate interface that can be loaded later.
  * <p>
  * Also consider specifying {@link #externalIdPrefix} for further speedup.
- *
- * @author yole
  */
-public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
+public final class StubElementTypeHolderEP {
   private static final Logger LOG = Logger.getInstance(StubElementTypeHolderEP.class);
 
-  public static final ExtensionPointName<StubElementTypeHolderEP> EP_NAME = ExtensionPointName.create("com.intellij.stubElementTypeHolder");
+  public static final ExtensionPointName<StubElementTypeHolderEP> EP_NAME = new ExtensionPointName<>("com.intellij.stubElementTypeHolder");
 
   @Attribute("class")
   @RequiredElement
   public String holderClass;
 
   /**
-   * Allows to avoid class initialization by declaring that the stub element type holder obeys the following contract:
+   * Allows avoiding class initialization by declaring that the stub element type holder obeys the following contract:
    * <ul>
    * <li>It's an interface</li>
    * <li>All stub element types to load are declared as fields in the interface itself, not in super-interfaces</li>
@@ -51,37 +49,40 @@ public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
    * <li>For all other fields, if any, the same {@code prefix+debugName} concatenation doesn't produce an external id used by any other stub element type</li>
    * </ul>
    */
-  @Attribute("externalIdPrefix")
-  @Nullable
-  public String externalIdPrefix;
+  @Attribute("externalIdPrefix") public @Nullable String externalIdPrefix;
 
-  List<StubFieldAccessor> initializeOptimized() {
+  int initializeOptimized(@NotNull PluginDescriptor pluginDescriptor,
+                          @NotNull List<? super StubFieldAccessor> result) {
+    int resultSizeBefore = result.size();
     try {
-      if (externalIdPrefix != null) {
-        List<StubFieldAccessor> result = new ArrayList<>();
-        Class<?> aClass = Class.forName(holderClass, false, getLoaderForClass());
+      Class<?> aClass = ApplicationManager.getApplication().loadClass(holderClass, pluginDescriptor);
+      if (externalIdPrefix == null) {
+        // force init
+        Class<?> initializedClass = Class.forName(aClass.getName(), true, aClass.getClassLoader());
+        assert initializedClass == aClass;
+      }
+      else {
         assert aClass.isInterface();
         for (Field field : aClass.getDeclaredFields()) {
-          result.add(new StubFieldAccessor(externalIdPrefix + field.getName(), field));
+          if (!field.isSynthetic()) {
+            result.add(new StubFieldAccessor(externalIdPrefix + field.getName(), field));
+          }
         }
-        return result;
-      } else {
-        findExtensionClass(holderClass);
       }
     }
     catch (ClassNotFoundException e) {
-      LOG.error(new PluginException(e, getPluginId()));
+      if (result.size() > resultSizeBefore) {
+        result.subList(resultSizeBefore, result.size()).clear();
+      }
+      LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
     }
-    return Collections.emptyList();
-  }
-
-  /**
-   * @deprecated please don't use this extension to ensure something is initialized as a side effect of stub element type loading,
-   * create your own narrow-scoped extension instead
-   */
-  @Deprecated
-  public void initialize() {
-    findClassNoExceptions(holderClass);
+    catch (PluginException e) {
+      if (result.size() > resultSizeBefore) {
+        result.subList(resultSizeBefore, result.size()).clear();
+      }
+      LOG.error(e);
+    }
+    return result.size() - resultSizeBefore;
   }
 
   @Override

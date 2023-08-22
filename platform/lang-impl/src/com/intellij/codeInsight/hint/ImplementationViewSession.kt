@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -12,10 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
-import com.intellij.usageView.UsageInfo
-import com.intellij.usages.Usage
-import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.util.Processor
 
 interface ImplementationViewSession : Disposable {
@@ -56,7 +54,7 @@ interface ImplementationViewSessionFactory {
   ): ImplementationViewSession?
 
   companion object {
-    @JvmField val EP_NAME = ExtensionPointName.create<ImplementationViewSessionFactory>("com.intellij.implementationViewSessionFactory")
+    @JvmField val EP_NAME: ExtensionPointName<ImplementationViewSessionFactory> = ExtensionPointName.create("com.intellij.implementationViewSessionFactory")
   }
 }
 
@@ -86,7 +84,7 @@ class PsiImplementationSessionViewFactory : ImplementationViewSessionFactory {
       if (containingFile == null || !containingFile.viewProvider.isPhysical) return null
 
       impls = getSelfAndImplementations(editor, element, PsiImplementationViewSession.createImplementationsSearcher(isSearchDeep))
-      text = SymbolPresentationUtil.getSymbolPresentableText(element)
+      text = SymbolPresentationUtil.getSymbolPresentableText(element) ?: (element as? PsiNamedElement)?.name ?: element.text
     }
 
     return PsiImplementationViewSession(project, element, impls, text, editor, file, isSearchDeep, alwaysIncludeSelf)

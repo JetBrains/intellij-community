@@ -1,0 +1,34 @@
+// FILE: first.before.kt
+// "Import function 'foo'" "true"
+// ERROR: Not enough information to infer type variable T
+// ACTION: Create type parameter in function 'shade'
+/* IGNORE_FIR */
+
+package pack_one
+
+fun <T> foo() {}
+fun main() {
+    foo<caret>()
+}
+
+// FILE: second.kt
+package pack_one.sub
+
+fun foo() {}
+
+// FILE: first.after.kt
+// "Import function 'foo'" "true"
+// ERROR: Not enough information to infer type variable T
+// ACTION: Create type parameter in function 'shade'
+/* IGNORE_FIR */
+
+package pack_one
+
+import pack_one.sub.foo
+
+fun <T> foo() {}
+fun main() {
+    foo<caret>()
+}
+
+

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -8,25 +8,25 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.IndexingBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public class JavaFindUsagesProvider implements FindUsagesProvider {
   @Override
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
-      return psiPackage != null && psiPackage.getQualifiedName().length() != 0;
+      return psiPackage != null && !psiPackage.getQualifiedName().isEmpty();
     }
 
     return element instanceof PsiClass ||
@@ -68,52 +68,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (ThrowSearchUtil.isSearchable(element)) {
       return JavaBundle.message("java.terms.exception");
     }
-    if (element instanceof PsiPackage) {
-      return JavaPsiBundle.message("java.terms.package");
-    }
-    if (element instanceof PsiLabeledStatement) {
-      return JavaBundle.message("java.terms.label");
-    }
-    if (element instanceof PsiClass) {
-      if (((PsiClass)element).isAnnotationType()) {
-        return JavaBundle.message("java.terms.annotation.interface");
-      }
-      if (((PsiClass)element).isEnum()) {
-        return JavaBundle.message("java.terms.enum");
-      }
-      if (((PsiClass)element).isInterface()) {
-        return JavaPsiBundle.message("java.terms.interface");
-      }
-      if (element instanceof PsiTypeParameter) {
-        return JavaBundle.message("java.terms.type.parameter");
-      }
-      return JavaPsiBundle.message("java.terms.class");
-    }
-    if (element instanceof PsiField) {
-      return JavaPsiBundle.message("java.terms.field");
-    }
-    if (element instanceof PsiParameter) {
-      return JavaPsiBundle.message("java.terms.parameter");
-    }
-    if (element instanceof PsiLocalVariable) {
-      return JavaPsiBundle.message("java.terms.variable");
-    }
-    if (element instanceof PsiMethod) {
-      final PsiMethod psiMethod = (PsiMethod)element;
-      final boolean isConstructor = psiMethod.isConstructor();
-      if (isConstructor) {
-        return JavaBundle.message("java.terms.constructor");
-      }
-      return JavaPsiBundle.message("java.terms.method");
-    }
-    if (element instanceof PsiExpression) {
-      return JavaBundle.message("java.terms.expression");
-    }
-    if (element instanceof PsiJavaModule) {
-      return JavaBundle.message("java.terms.module");
-    }
-    if (element instanceof PsiRecordComponent) {
-      return JavaBundle.message("java.terms.record.component");
+    JavaElementKind kind = JavaElementKind.fromElement(element);
+    if (kind != JavaElementKind.UNKNOWN) {
+      return kind.subject();
     }
 
     final String name = TypePresentationService.getService().getTypePresentableName(element.getClass());
@@ -145,16 +102,16 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (element instanceof PsiAnonymousClass) {
         String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
         return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name) 
-                            : JavaPsiBundle.message("java.terms.anonymous.class");
+                            : JavaElementKind.ANONYMOUS_CLASS.subject();
       }
       else {
         PsiClass aClass = (PsiClass)element;
         String qName = aClass.getQualifiedName();
-        return qName != null ? qName : ObjectUtils.notNull(aClass.getName(), "");
+        @Nullable String value = aClass.getName();
+        return qName != null ? qName : value == null ? "" : value;
       }
     }
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)element;
+    if (element instanceof PsiMethod psiMethod) {
       String formatted = PsiFormatUtil.formatMethod(psiMethod,
                                                     PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                                     PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_RAW_NON_TOP_TYPE);
@@ -165,8 +122,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
 
       return formatted;
     }
-    if (element instanceof PsiField) {
-      PsiField psiField = (PsiField)element;
+    if (element instanceof PsiField psiField) {
       String formatted = PsiFormatUtil.formatVariable(psiField, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
       PsiClass psiClass = psiField.getContainingClass();
       if (psiClass != null) {
@@ -188,7 +144,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return "";
   }
 
-  private static String getContainingClassDescription(PsiClass aClass, String formatted) {
+  private static @NlsSafe String getContainingClassDescription(PsiClass aClass, String formatted) {
     if (aClass instanceof PsiAnonymousClass) {
       return JavaBundle.message("java.terms.of.anonymous.class", formatted);
     }
@@ -239,8 +195,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (name != null) return name;
     }
 
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)element;
+    if (element instanceof PsiMethod psiMethod) {
       if (useFullName) {
         int options = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
         String s = PsiFormatUtil.formatMethod((PsiMethod)element, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
@@ -252,8 +207,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       }
     }
 
-    if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)((PsiParameter)element).getDeclarationScope();
+    if (element instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod method) {
       int varOptions = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME;
       int methodOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
       String s = JavaBundle.message("java.terms.variable.of.method",
@@ -262,8 +216,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       return appendClassName(s, method.getContainingClass());
     }
 
-    if (element instanceof PsiField) {
-      PsiField psiField = (PsiField)element;
+    if (element instanceof PsiField psiField) {
       int options = PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME;
       String s = PsiFormatUtil.formatVariable(psiField, options, PsiSubstitutor.EMPTY);
       return appendClassName(s, psiField.getContainingClass());
@@ -277,7 +230,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return "";
   }
 
-  private static String appendClassName(String s, PsiClass psiClass) {
+  private static @Nls String appendClassName(@Nls String s, PsiClass psiClass) {
     if (psiClass != null) {
       String qName = psiClass.getQualifiedName();
       if (qName != null) {
@@ -287,7 +240,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return s;
   }
 
-  public static String getPackageName(PsiDirectory directory, boolean includeRootDir) {
+  public static @NlsSafe String getPackageName(PsiDirectory directory, boolean includeRootDir) {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage == null) {
       return directory.getVirtualFile().getPresentableUrl();
@@ -319,12 +272,12 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     return null;
   }
 
-  public static String getPackageName(PsiPackage psiPackage) {
+  public static @NlsSafe String getPackageName(PsiPackage psiPackage) {
     if (psiPackage == null) {
       return null;
     }
     String name = psiPackage.getQualifiedName();
-    if (name.length() > 0) {
+    if (!name.isEmpty()) {
       return name;
     }
     return getDefaultPackageName();

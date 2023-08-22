@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern<T,Self>> extends PsiModifierListOwnerPattern<T,Self> {
   public PsiMemberPattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
@@ -30,7 +27,7 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   public Self inClass(final ElementPattern pattern) {
     return with(new PatternConditionPlus<T, PsiClass>("inClass", pattern) {
       @Override
-      public boolean processValues(T t, ProcessingContext context, PairProcessor<PsiClass, ProcessingContext> processor) {
+      public boolean processValues(T t, ProcessingContext context, PairProcessor<? super PsiClass, ? super ProcessingContext> processor) {
         return processor.process(t.getContainingClass(), context);
       }
     });

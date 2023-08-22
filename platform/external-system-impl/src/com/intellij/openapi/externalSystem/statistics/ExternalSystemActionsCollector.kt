@@ -1,21 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.execution.Executor
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunConfigurationExecutorUtilValidator
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.Companion.ACTION_INVOKED_EVENT_ID
-import com.intellij.internal.statistic.eventLog.EventFields
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 
-class ExternalSystemActionsCollector : CounterUsagesCollector() {
+object ExternalSystemActionsCollector : CounterUsagesCollector() {
   enum class ActionId {
     RunExternalSystemTaskAction,
     ExecuteExternalSystemRunConfigurationAction
@@ -23,45 +22,54 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("build.tools.actions", 2)
-    private val EXTERNAL_SYSTEM_ID = EventFields.String("system_id").withCustomEnum("build_tools")
-    private val ACTION_INVOKED = ActionsEventLogGroup.registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, EXTERNAL_SYSTEM_ID)
+  private val GROUP = EventLogGroup("build.tools.actions", 7)
+  val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("system_id", "build_tools")
+  private val ACTION_EXECUTOR_FIELD =
+    EventFields.StringValidatedByCustomRule("executor", RunConfigurationExecutorUtilValidator::class.java)
+  private val DELEGATE_ACTION_ID = EventFields.Enum<ActionId>("action_id")
 
-    @JvmStatic
-    fun trigger(project: Project?,
-                systemId: ProjectSystemId?,
-                actionId: ActionId,
-                place: String?,
-                isFromContextMenu: Boolean,
-                executor : Executor? = null) {
-      val data = FeatureUsageData().addProject(project)
+  private val ACTION_INVOKED = ActionsEventLogGroup.registerActionEvent(GROUP, "action.invoked", EXTERNAL_SYSTEM_ID)
+  private val DELEGATE_ACTION_INVOKED = GROUP.registerVarargEvent(
+    "action.invoked", DELEGATE_ACTION_ID, EventFields.ActionPlace,
+    ActionsEventLogGroup.CONTEXT_MENU, ACTION_EXECUTOR_FIELD, EXTERNAL_SYSTEM_ID
+  )
 
-      if (place != null) {
-        data.addPlace(place).addData("context_menu", isFromContextMenu)
-      }
-      executor?.let { data.addData("executor", it.id) }
+  @JvmStatic
+  fun trigger(project: Project?,
+              systemId: ProjectSystemId?,
+              actionId: ActionId,
+              place: String?,
+              isFromContextMenu: Boolean,
+              executor: Executor? = null) {
+    val data: MutableList<EventPair<*>> = arrayListOf(DELEGATE_ACTION_ID.with(actionId))
 
-      addExternalSystemId(data, systemId)
-
-      FUCounterUsageLogger.getInstance().logEvent("build.tools.actions", actionId.name, data)
+    if (place != null) {
+      data.add(EventFields.ActionPlace.with(place))
+      data.add(ActionsEventLogGroup.CONTEXT_MENU.with(isFromContextMenu))
     }
+    executor?.let { data.add(ACTION_EXECUTOR_FIELD.with(it.id)) }
 
-    @JvmStatic
-    fun trigger(project: Project?,
-                systemId: ProjectSystemId?,
-                action: AnAction,
-                event: AnActionEvent) {
-      ActionsCollectorImpl.record(ACTION_INVOKED, project, action, event, listOf(EXTERNAL_SYSTEM_ID with anonymizeSystemId(systemId)))
-    }
+    data.add(EXTERNAL_SYSTEM_ID.with(anonymizeSystemId(systemId)))
 
-    @JvmStatic
-    fun trigger(project: Project?,
-                systemId: ProjectSystemId?,
-                action: ActionId,
-                event: AnActionEvent,
-                executor : Executor? = null) {
-      trigger(project, systemId, action, event.place, event.isFromContextMenu, executor)
+    DELEGATE_ACTION_INVOKED.log(project, *data.toTypedArray())
+  }
+
+  @JvmStatic
+  fun trigger(project: Project?,
+              systemId: ProjectSystemId?,
+              action: AnAction,
+              event: AnActionEvent) {
+    ActionsCollectorImpl.record(ACTION_INVOKED, project, action, event) { eventPairs ->
+      eventPairs.add(EXTERNAL_SYSTEM_ID with anonymizeSystemId(systemId))
     }
+  }
+
+  @JvmStatic
+  fun trigger(project: Project?,
+              systemId: ProjectSystemId?,
+              action: ActionId,
+              event: AnActionEvent,
+              executor: Executor? = null) {
+    trigger(project, systemId, action, event.place, event.isFromContextMenu, executor)
   }
 }

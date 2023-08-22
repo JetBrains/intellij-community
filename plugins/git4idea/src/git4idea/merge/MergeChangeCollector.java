@@ -14,15 +14,18 @@ import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Collect changes for merge or pull operations
@@ -40,15 +43,6 @@ public class MergeChangeCollector {
     myProject = project;
     myRoot = repository.getRoot();
     myRepository = repository;
-  }
-
-  /**
-   * @deprecated use constructor with GitRepository
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public MergeChangeCollector(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRevisionNumber start) {
-    this(project, Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)), start);
   }
 
   /**
@@ -72,19 +66,6 @@ public class MergeChangeCollector {
     addAll(updatedFiles, FileGroup.UPDATED_ID, updated);
     addAll(updatedFiles, FileGroup.CREATED_ID, created);
     addAll(updatedFiles, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
-  }
-
-  /**
-   * @deprecated Use {@link #collect(UpdatedFiles)}
-   */
-  @Deprecated
-  public void collect(@NotNull UpdatedFiles updatedFiles, List<? super VcsException> exceptions) {
-    try {
-      collect(updatedFiles);
-    }
-    catch (VcsException e) {
-      exceptions.add(e);
-    }
   }
 
   public int calcUpdatedFilesCount() throws VcsException {
@@ -132,7 +113,7 @@ public class MergeChangeCollector {
    */
   @Nullable
   public String getRevisionsForDiff() throws VcsException {
-    GitRevisionNumber currentHead = GitRevisionNumber.resolve(myProject, myRoot, "HEAD");
+    GitRevisionNumber currentHead = GitRevisionNumber.resolve(myProject, myRoot, GitUtil.HEAD);
     if (currentHead.equals(myStart)) {
       // The head has not advanced. This means that this is a merge that did not commit.
       // This could be caused by --no-commit option or by failed two-head merge. The MERGE_HEAD
@@ -154,14 +135,14 @@ public class MergeChangeCollector {
         }
       }
       catch (IOException e) {
-        throw new VcsException("Unable to read the file " + mergeHeadsFile + ": " + e.getMessage(), e);
+        throw new VcsException(GitBundle.message("merge.error.unable.to.read.merge.head", mergeHeadsFile, e.getLocalizedMessage()), e);
       }
     }
     else {
       // Otherwise this is a merge that did created a commit. And because of this the incoming changes
       // are diffs between old head and new head. The commit could have been multihead commit,
       // and the expression below considers it as well.
-      return myStart.getRev() + "..HEAD";
+      return myStart.getRev() + ".." + GitUtil.HEAD;
     }
     return null;
   }
@@ -192,19 +173,13 @@ public class MergeChangeCollector {
         continue;
       }
       String path = root + "/" + GitUtil.unescapePath(relative);
-      switch (status) {
-        case 'M':
-          updated.add(path);
-          break;
-        case 'A':
-          created.add(path);
-          break;
-        case 'D':
-          removed.add(path);
-          break;
-        default:
-          throw new IllegalStateException("Unexpected status: " + status);
-      }
+      Collection<? super String> collection = switch (status) {
+        case 'M' -> updated;
+        case 'A' -> created;
+        case 'D' -> removed;
+        default -> throw new IllegalStateException("Unexpected status: " + status);
+      };
+      collection.add(path);
     }
   }
 

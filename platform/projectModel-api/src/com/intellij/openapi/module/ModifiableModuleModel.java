@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
@@ -7,8 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.nio.file.Path;
 
 /**
  * Represents the model for the list of modules in a project, or a temporary copy
@@ -25,17 +26,20 @@ public interface ModifiableModuleModel {
    */
   Module @NotNull [] getModules();
 
+  @NotNull Module newModule(@NotNull String filePath, @NotNull String moduleTypeId);
+
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.
    *
-   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
+   * @param file         path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @NotNull
-  Module newModule(@NotNull String filePath, @NotNull String moduleTypeId);
+  default @NotNull Module newModule(@NotNull Path file, @NotNull String moduleTypeId) {
+    return newModule(file.toAbsolutePath().normalize().toString().replace(File.separatorChar, '/'), moduleTypeId);
+  }
 
   /**
    * Creates a non-persistent module of the specified type and adds it to the project
@@ -53,13 +57,6 @@ public interface ModifiableModuleModel {
   }
 
   /**
-   * @deprecated use {@link #newModule(String, String)} instead
-   */
-  @Deprecated
-  @NotNull
-  Module newModule(@NotNull String filePath, @NotNull String moduleTypeId, @Nullable Map<String, String> options);
-
-  /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
    * {@link #commit()} must be called to bring the changes in effect.
    *
@@ -70,6 +67,8 @@ public interface ModifiableModuleModel {
    */
   @NotNull
   Module loadModule(@NotNull @SystemIndependent String filePath) throws IOException, ModuleWithNameAlreadyExists;
+
+  Module loadModule(@NotNull Path file) throws IOException;
 
   /**
    * Disposes of the specified module and removes it from the project. {@link #commit()}
@@ -140,8 +139,20 @@ public interface ModifiableModuleModel {
 
   String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
+  /**
+   * Returns {@code true} if at least one of the modules has an explicitly specified module group. Note that explicit module groups are 
+   * replaced by automatic grouping, so this method is left for compatibility with some old projects only.
+   */
+  @ApiStatus.Internal
   boolean hasModuleGroups();
 
+  /**
+   * Set or remove explicit module group for {@code module}.
+   * @deprecated explicit module groups are replaced by automatic module grouping accordingly to qualified names of modules 
+   * ([IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details), so this method must not be used anymore, group names 
+   * must be prepended to the module name, separated by dots, instead.
+   */
+  @Deprecated
   void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath);
 
   @NotNull

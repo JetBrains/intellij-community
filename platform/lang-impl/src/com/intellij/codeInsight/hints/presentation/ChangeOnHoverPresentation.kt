@@ -10,7 +10,7 @@ import java.awt.event.MouseEvent
  * @param onHoverPredicate predicate, that considers state is hovered (additional to fact, that it is in bounds)
  */
 open class ChangeOnHoverPresentation(
-  val noHover: InlayPresentation,
+  private val noHover: InlayPresentation,
   private val hover: () -> InlayPresentation,
   private val onHoverPredicate: (MouseEvent) -> Boolean = { true }
 ) : StatefulPresentation<ChangeOnHoverPresentation.State>(State(false), STATE_MARK) {
@@ -48,6 +48,6 @@ open class ChangeOnHoverPresentation(
 
   companion object {
     @JvmStatic
-    val STATE_MARK = StateMark<State>("OnHover")
+    val STATE_MARK: StateMark<State> = StateMark("OnHover")
   }
 }

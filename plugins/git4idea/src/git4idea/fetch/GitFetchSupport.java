@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.fetch;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.CalledInAny;
@@ -36,6 +36,12 @@ public interface GitFetchSupport {
   GitFetchResult fetch(@NotNull GitRepository repository, @NotNull GitRemote remote);
 
   /**
+   * Fetches the given remotes.
+   */
+  @NotNull
+  GitFetchResult fetchRemotes(@NotNull Collection<Pair<GitRepository, GitRemote>> remotes);
+
+  /**
    * Fetches the given remote using provided refspec.
    */
   @NotNull
@@ -56,6 +62,6 @@ public interface GitFetchSupport {
 
   @NotNull
   static GitFetchSupport fetchSupport(@NotNull Project project) {
-    return ServiceManager.getService(project, GitFetchSupport.class);
+    return project.getService(GitFetchSupport.class);
   }
 }

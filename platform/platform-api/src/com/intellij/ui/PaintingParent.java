@@ -35,25 +35,20 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public interface PaintingParent {
-
   /**
    * Returns rectangle of a child component for further repainting
    * @param c a component
    * @return a rectangle, if null -- the whole component will be repainted
    */
   @Nullable
-  Rectangle getChildRec(@NotNull Component c);
+  default Rectangle getChildRec(@NotNull Component c) {
+    return null;
+  }
 
   class Wrapper extends JPanel implements PaintingParent {
     public Wrapper(@NotNull Component component) {
       super(new BorderLayout(0,0));
       add(component);
     }
-
-    @Override
-    public Rectangle getChildRec(@NotNull Component c) {
-      return null;
-    }
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.SystemInfo
@@ -7,20 +7,23 @@ import com.intellij.util.text.nullize
 import com.sun.jna.*
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 val isMacOsCredentialStoreSupported: Boolean
-  get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
+  get() = SystemInfo.isMac
 
 private const val errSecSuccess = 0
 private const val errSecItemNotFound = -25300
 private const val errSecInvalidRecord = -67701
+
 // or if Deny clicked on access dialog
 private const val errUserNameNotCorrect = -25293
+
 // https://developer.apple.com/documentation/security/1542001-security_framework_result_codes/errsecusercanceled?language=objc
 private const val errSecUserCanceled = -128
 private const val kSecFormatUnknown = 0
-private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 8 or 'c'.toInt()) shl 8 or 't'.toInt()
+private const val kSecAccountItemAttr = (('a'.code shl 8 or 'c'.code) shl 8 or 'c'.code) shl 8 or 't'.code
 
 internal class KeyChainCredentialStore : CredentialStore {
   companion object {
@@ -71,7 +74,7 @@ internal class KeyChainCredentialStore : CredentialStore {
       }
       else {
         val buf = CharArray(library.CFStringGetLength(translated).toInt())
-        for (i in 0 until buf.size) {
+        for (i in buf.indices) {
           buf[i] = library.CFStringGetCharacterAtIndex(translated, i.toLong())
         }
         library.CFRelease(translated)
@@ -193,7 +196,6 @@ internal class SecKeychainAttributeInfo : Structure() {
   @JvmField var format: Pointer? = null
 }
 
-@Suppress("FunctionName")
 private fun SecKeychainAttributeInfo(vararg ids: Int): SecKeychainAttributeInfo {
   val info = SecKeychainAttributeInfo()
   val length = ids.size
@@ -233,8 +235,8 @@ internal class SecKeychainAttribute : Structure, Structure.ByReference {
   internal constructor() : super()
 }
 
-private fun readAttributes(list: SecKeychainAttributeList): TIntObjectHashMap<String> {
-  val map = TIntObjectHashMap<String>()
+private fun readAttributes(list: SecKeychainAttributeList): Int2ObjectMap<String> {
+  val map = Int2ObjectOpenHashMap<String>()
   val attrList = SecKeychainAttribute(list.attr!!)
   attrList.read()
   @Suppress("UNCHECKED_CAST")

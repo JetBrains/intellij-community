@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.popup;
 
@@ -6,21 +6,24 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
+public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
   private final Stack<JBPopup> myStack = new Stack<>();
   private final Collection<JBPopup> myPersistentPopups = new WeakList<>();
@@ -98,6 +101,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     Point point = (Point) mouseEvent.getPoint().clone();
     SwingUtilities.convertPointToScreen(point, mouseEvent.getComponent());
 
+    boolean needStopFurtherEventProcessing = false;
     while (true) {
       if (popup != null && !popup.isDisposed()) {
         Window window = ComponentUtil.getWindow(mouseEvent.getComponent());
@@ -124,11 +128,14 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
           return false;
         }
 
+        if (needStopFurtherEventProcessing(popup, mouseEvent)) {
+          needStopFurtherEventProcessing = true;
+        }
         popup.cancel(mouseEvent);
       }
 
-      if (myStack.isEmpty()) {
-        return false;
+      if (myStack.isEmpty() || needStopFurtherEventProcessing) {
+        return needStopFurtherEventProcessing;
       }
 
       popup = (AbstractPopup)myStack.peek();
@@ -138,8 +145,8 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     }
   }
 
-  @Nullable
-  private JBPopup findPopup() {
+  @ApiStatus.Internal
+  public @Nullable JBPopup findPopup() {
     while (!myStack.isEmpty()) {
       final AbstractPopup each = (AbstractPopup)myStack.peek();
       if (each != null && !each.isDisposed()) {
@@ -167,14 +174,12 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   }
 
   @Override
-  @Nullable
-  public Component getComponent() {
+  public @Nullable Component getComponent() {
     return myStack.isEmpty() || myStack.peek().isDisposed() ? null : myStack.peek().getContent();
   }
 
-  @NotNull
   @Override
-  public Stream<JBPopup> getPopupStream() {
+  public @NotNull Stream<JBPopup> getPopupStream() {
     return myStack.stream();
   }
 
@@ -240,10 +245,31 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     return getFocusedPopup() != null;
   }
 
-  private JBPopup getFocusedPopup() {
+  @Override
+  public @Nullable JBPopup getFocusedPopup() {
     for (JBPopup each : myAllPopups) {
       if (each != null && each.isFocused()) return each;
     }
     return null;
+  }
+
+  private static boolean needStopFurtherEventProcessing(@NotNull AbstractPopup popup, @NotNull MouseEvent mouseEvent) {
+    if (popup.isDisposed()) {
+      return false;
+    }
+    int modifiers = mouseEvent.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK |
+                                                   InputEvent.CTRL_DOWN_MASK |
+                                                   InputEvent.ALT_DOWN_MASK |
+                                                   InputEvent.META_DOWN_MASK);
+    if (mouseEvent.getButton() != MouseEvent.BUTTON1 || modifiers != 0) { // on right mouse in most cases we can customize corresponding toolbar
+      return false;
+    }
+    Component toggleButton = PopupUtil.getPopupToggleComponent(popup);
+    Component c = mouseEvent.getComponent();
+    if (toggleButton == null || c == null) {
+      return false;
+    }
+    Point pointRelativeToButton = SwingUtilities.convertPoint(c, mouseEvent.getX(), mouseEvent.getY(), toggleButton);
+    return toggleButton.contains(pointRelativeToButton);
   }
 }

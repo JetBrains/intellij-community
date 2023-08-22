@@ -1,18 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
@@ -24,17 +22,17 @@ import java.awt.*;
 import java.util.List;
 
 class QuickListPanel {
-  private final CollectionListModel<Object> actionsModel;
+  private final CollectionListModel<String> myActionsModel;
   private JPanel myPanel;
-  private final JBList myActionsList;
+  private final JBList<String> myActionsList;
   JTextField myName;
   private JTextField myDescription;
   private JPanel myListPanel;
   QuickList item;
 
-  QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
-    actionsModel = new CollectionListModel<>();
-    myActionsList = new JBList(actionsModel);
+  QuickListPanel(final @NotNull CollectionListModel<QuickList> model) {
+    myActionsModel = new MyCollectionListModel();
+    myActionsList = new JBList<>(myActionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
     myActionsList.setEnabled(true);
@@ -51,7 +49,7 @@ class QuickListPanel {
                             for (String id : ids) {
                               includeActionId(id);
                             }
-                            List<Object> list = actionsModel.getItems();
+                            List<String> list = myActionsModel.getItems();
                             int size = list.size();
                             ListSelectionModel selectionModel = myActionsList.getSelectionModel();
                             if (size > 0) {
@@ -66,14 +64,22 @@ class QuickListPanel {
                           }
                         }
                       })
-                      .addExtraAction(new AnActionButton(KeyMapBundle.messagePointer("action.AnActionButton.text.add.separator"),
-                                                         AllIcons.General.SeparatorH) {
+                      .addExtraAction(new AnActionButton(KeyMapBundle.message("keymap.action.add.separator"), AllIcons.General.SeparatorH) {
                         @Override
                         public void actionPerformed(@NotNull AnActionEvent e) {
-                          actionsModel.add(QuickList.SEPARATOR_ID);
+                          myActionsModel.add(QuickList.SEPARATOR_ID);
+                        }
+                        @Override
+                        public @NotNull ActionUpdateThread getActionUpdateThread() {
+                          return ActionUpdateThread.BGT;
                         }
                       })
-                      .setButtonComparator("Add", "Add Separator", "Remove", "Up", "Down")
+                      .setButtonComparator(
+                        CommonActionsPanel.Buttons.ADD.getText(),
+                        KeyMapBundle.message("keymap.action.add.separator"),
+                        CommonActionsPanel.Buttons.REMOVE.getText(),
+                        CommonActionsPanel.Buttons.UP.getText(),
+                        CommonActionsPanel.Buttons.DOWN.getText())
                       .createPanel(), BorderLayout.CENTER);
   }
 
@@ -85,7 +91,7 @@ class QuickListPanel {
     item.setName(myName.getText().trim());
     item.setDescription(myDescription.getText().trim());
 
-    ListModel model = myActionsList.getModel();
+    ListModel<String> model = myActionsList.getModel();
     int size = model.getSize();
     String[] ids;
     if (size == 0) {
@@ -94,7 +100,7 @@ class QuickListPanel {
     else {
       ids = new String[size];
       for (int i = 0; i < size; i++) {
-        ids[i] = (String)model.getElementAt(i);
+        ids[i] = model.getElementAt(i);
       }
     }
 
@@ -109,19 +115,19 @@ class QuickListPanel {
       return;
     }
 
-    myName.setText(item.getName());
+    myName.setText(item.getDisplayName());
     myName.setEnabled(QuickListsManager.getInstance().getSchemeManager().isMetadataEditable(item));
     myDescription.setText(item.getDescription());
 
-    actionsModel.removeAll();
+    myActionsModel.removeAll();
     for (String id : item.getActionIds()) {
       includeActionId(id);
     }
   }
 
   private void includeActionId(@NotNull String id) {
-    if (QuickList.SEPARATOR_ID.equals(id) || actionsModel.getElementIndex(id) == -1) {
-      actionsModel.add(id);
+    if (QuickList.SEPARATOR_ID.equals(id) || myActionsModel.getElementIndex(id) == -1) {
+      myActionsModel.add(id);
     }
   }
 
@@ -129,15 +135,19 @@ class QuickListPanel {
     return myPanel;
   }
 
-  private static class MyListCellRenderer extends DefaultListCellRenderer {
-    @NotNull
+  private static class MyCollectionListModel extends CollectionListModel<String> {
     @Override
-    public Component getListCellRendererComponent(@NotNull JList list,
-                                                  Object value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    public void exchangeRows(int oldIndex, int newIndex) {
+      String element = getElementAt(oldIndex);
+      remove(oldIndex);
+      add(newIndex, element);
+    }
+  }
+
+  private static class MyListCellRenderer extends DefaultListCellRenderer {
+    @Override
+    public @NotNull Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean selected, boolean focused) {
+      super.getListCellRendererComponent(list, value, index, selected, focused);
       Icon icon = null;
       String actionId = (String)value;
       if (QuickList.SEPARATOR_ID.equals(actionId)) {
@@ -165,5 +175,5 @@ class QuickListPanel {
     public Dimension getPreferredSize() {
       return UIUtil.updateListRowHeight(super.getPreferredSize());
     }
-   }
+  }
 }

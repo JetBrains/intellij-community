@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
@@ -11,8 +11,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.popup.async.AsyncPopupImpl;
-import com.intellij.ui.popup.async.AsyncPopupStep;
+import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
@@ -38,9 +38,12 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected static final int STEP_X_PADDING = 2;
 
   private final WizardPopup myParent;
+  private boolean alignByParentBounds = true;
 
   protected final PopupStep<Object> myStep;
   protected WizardPopup myChild;
+
+  private  boolean myIsActiveRoot = true;
 
   private final Timer myAutoSelectionTimer =
     TimerUtil.createNamedTimer("Wizard auto-selection", Registry.intValue("ide.popup.auto.delay", 500), this);
@@ -55,10 +58,12 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final ActionMap myActionMap = new ActionMap();
   private final InputMap myInputMap = new InputMap();
 
+  private boolean myKeyPressedReceived;
+
   /**
    * @deprecated use {@link #WizardPopup(Project, JBPopup, PopupStep)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public WizardPopup(@NotNull PopupStep<Object> aStep) {
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep);
   }
@@ -70,18 +75,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     mySpeedSearch.setEnabled(myStep.isSpeedSearchEnabled());
 
     final JComponent content = createContent();
+    content.putClientProperty(KEY, this);
+    JComponent popupComponent = createPopupComponent(content);
 
-    JScrollPane scrollPane = createScrollPane(content);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getHorizontalScrollBar().setBorder(null);
-
-    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
-    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
-
-    scrollPane.setBorder(JBUI.Borders.empty());
-
-    init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
+    init(project, popupComponent, getPreferredFocusableComponent(), true, true, true, null,
          isResizable(), aStep.getTitle(), null, true, Collections.emptySet(), false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
          null, null, false, true, true, null, true, null);
@@ -118,8 +115,20 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   }
 
-  @NotNull
-  protected JScrollPane createScrollPane(JComponent content) {
+  protected @NotNull JComponent createPopupComponent(JComponent content) {
+    JScrollPane scrollPane = createScrollPane(content);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.getHorizontalScrollBar().setBorder(null);
+
+    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
+    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
+
+    scrollPane.setBorder(JBUI.Borders.empty());
+    return scrollPane;
+  }
+
+  protected @NotNull JScrollPane createScrollPane(JComponent content) {
     return ScrollPaneFactory.createScrollPane(content);
   }
 
@@ -170,12 +179,17 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  public void show(@NotNull final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  public void show(final @NotNull Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+    if (UiInterceptors.tryIntercept(this)) return;
+
     LOG.assertTrue (!isDisposed());
+    Dimension size = getContent().getPreferredSize();
+    Dimension minimumSize = getMinimumSize();
+    size.width = Math.max(size.width, minimumSize.width);
+    size.height = Math.max(size.height, minimumSize.height);
+    Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), size);
 
-    Rectangle targetBounds = new Rectangle(new Point(aScreenX, aScreenY), getContent().getPreferredSize());
-
-    if (getParent() != null) {
+    if (getParent() != null && alignByParentBounds) {
       final Rectangle parentBounds = getParent().getBounds();
       parentBounds.x += STEP_X_PADDING;
       parentBounds.width -= STEP_X_PADDING * 2;
@@ -189,7 +203,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX + 1, aScreenY + 1), null);
     }
 
-    if (getParent() == null) {
+    if (getParent() == null && myIsActiveRoot) {
       PopupDispatcher.setActiveRoot(this);
     }
     else {
@@ -281,8 +295,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  @NotNull
-  protected MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
+  protected @NotNull MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(border);
   }
 
@@ -290,7 +303,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return false;
   }
 
-  private static class MyContainer extends MyContentPanel {
+  private static final class MyContainer extends MyContentPanel {
     private MyContainer(@NotNull PopupBorder border) {
       super(border);
       setOpaque(true);
@@ -311,16 +324,19 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
     }
 
-    private Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
-      int resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
-      if (locationOnScreen != null) {
-        final Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
-        resultHeight = ofContent.height > r.height - (r.height / 4) ? r.height - (r.height / 4) : ofContent.height;
+    private static Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
+      int resultHeight;
+      if (locationOnScreen == null) {
+        resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
+      }
+      else {
+        Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
+        resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
       }
 
-      int resultWidth = ofContent.width > MAX_SIZE.width ? MAX_SIZE.width : ofContent.width;
+      int resultWidth = Math.min(ofContent.width, MAX_SIZE.width);
 
-      if (ofContent.height > MAX_SIZE.height) {
+      if (ofContent.height > resultHeight) {
         resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
       }
 
@@ -332,22 +348,30 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return myParent;
   }
 
+  public void setAlignByParentBounds(boolean alignByParentBounds) {
+    this.alignByParentBounds = alignByParentBounds;
+  }
+
+  public boolean isAlignByParentBounds() {
+    return alignByParentBounds;
+  }
+
   public PopupStep getStep() {
     return myStep;
   }
 
   public final boolean dispatch(KeyEvent event) {
-    if (event.getID() != KeyEvent.KEY_PRESSED &&
-        event.getID() != KeyEvent.KEY_RELEASED &&
-        event.getID() != KeyEvent.KEY_TYPED) {
-      // do not dispatch these events to Swing
-      event.consume();
-      return true;
+    if (anyModalWindowsKeepPopupOpen()) {
+      return false; // Popups should not process key events if there's a modal dialog on top of them.
     }
-
     if (event.getID() == KeyEvent.KEY_PRESSED) {
+      myKeyPressedReceived = true;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
       if (proceedKeyEvent(event, stroke)) return true;
+    }
+    else if (!myKeyPressedReceived && !(this instanceof ComboBoxPopup)) {
+      // key was pressed while this popup wasn't active, ignore the event
+      return false;
     }
 
     if (event.getID() == KeyEvent.KEY_RELEASED) {
@@ -356,11 +380,15 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
 
     myMnemonicsSearch.processKeyEvent(event);
-    mySpeedSearch.processKeyEvent(event);
+    processKeyEvent(event);
 
     if (event.isConsumed()) return true;
     process(event);
     return event.isConsumed();
+  }
+
+  protected void processKeyEvent(@NotNull KeyEvent e) {
+    mySpeedSearch.processKeyEvent(e);
   }
 
   private boolean proceedKeyEvent(KeyEvent event, KeyStroke stroke) {
@@ -380,13 +408,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public Rectangle getBounds() {
-    return new Rectangle(getContent().getLocationOnScreen(), getContent().getSize());
+    JComponent content = isDisposed() ? null : getContent();
+    return content == null ? null : new Rectangle(content.getLocationOnScreen(), content.getSize());
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    if (step instanceof AsyncPopupStep) {
-      return new AsyncPopupImpl(getProject(), parent, (AsyncPopupStep)step, parentValue);
-    }
     if (step instanceof ListPopupStep) {
       return new ListPopupImpl(getProject(), parent, (ListPopupStep)step, parentValue);
     }
@@ -456,6 +482,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     public void componentMoved(final ComponentEvent e) {
       processParentWindowMoved();
     }
+  }
+
+  public void setActiveRoot(boolean activeRoot) {
+    myIsActiveRoot = activeRoot;
   }
 
   @Override

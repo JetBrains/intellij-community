@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-public class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, AnnotatedPackagesSearch.Parameters> {
+public final class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, AnnotatedPackagesSearch.Parameters> {
   public static final AnnotatedPackagesSearch INSTANCE = new AnnotatedPackagesSearch();
 
   public static class Parameters {
@@ -21,10 +21,12 @@ public class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, 
       myScope = scope;
     }
 
+    @NotNull
     public PsiClass getAnnotationClass() {
       return myAnnotationClass;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
@@ -32,10 +34,12 @@ public class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, 
 
   private AnnotatedPackagesSearch() {}
 
+  @NotNull
   public static Query<PsiPackage> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return INSTANCE.createQuery(new Parameters(annotationClass, scope));
   }
 
+  @NotNull
   public static Query<PsiPackage> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }

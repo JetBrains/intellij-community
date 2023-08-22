@@ -50,6 +50,32 @@ public class PyNoneFunctionAssignmentInspectionTest extends PyInspectionTestCase
     doTest();
   }
 
+  // PY-28729
+  public void testGenericSubstitutedWithNone() {
+    doTestByText(
+      """
+        test1 = max([])
+        test2 = max([], default=None)
+        test3 = max([], default=0)"""
+    );
+  }
+
+  // PY-30467
+  public void testAssigningAbstractMethodResult() {
+    doTestByText("""
+                   from abc import ABC, abstractmethod
+
+                   class A(ABC):
+                       def get_something(self):
+                           something = self.get_another_thing()
+                           return something
+
+                       @abstractmethod
+                       def get_another_thing(self):
+                           pass
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

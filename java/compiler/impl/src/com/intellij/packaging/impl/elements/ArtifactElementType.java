@@ -24,7 +24,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
   public static final ArtifactElementType ARTIFACT_ELEMENT_TYPE = new ArtifactElementType();
 
   ArtifactElementType() {
-    super("artifact", JavaCompilerBundle.message("element.type.name.artifact"));
+    super("artifact", JavaCompilerBundle.messagePointer("element.type.name.artifact"));
   }
 
   @Override
@@ -55,7 +55,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
   public static List<? extends Artifact> getAvailableArtifacts(@NotNull final ArtifactEditorContext context,
                                                                @NotNull final Artifact artifact,
                                                                final boolean notIncludedOnly) {
-    final Set<Artifact> result = ContainerUtil.set(context.getArtifactModel().getArtifacts());
+    final Set<Artifact> result = ContainerUtil.newHashSet(context.getArtifactModel().getArtifacts());
     if (notIncludedOnly) {
       ArtifactUtil.processPackagingElements(artifact, ARTIFACT_ELEMENT_TYPE, artifactPackagingElement -> {
         result.remove(artifactPackagingElement.findArtifact(context));
@@ -86,6 +86,6 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
 
   @Override
   public String getShowContentActionText() {
-    return "Show Content of Included Artifacts";
+    return JavaCompilerBundle.message("show.content.of.included.artifacts");
   }
 }
