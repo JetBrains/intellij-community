@@ -32,7 +32,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val ho
 
     internal fun collectHighlights(infos: HighlightInfoHolder) {
         val profile = InspectionProjectProfileManager.getInstance(ktFile.project).getCurrentProfile().let { p ->
-            InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.let { it.apply(p).inspectionProfile } ?: p
+            InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.apply(p)?.inspectionProfile ?: p
         }
 
         val deadCodeKey = HighlightDisplayKey.find("UnusedSymbol") ?: return
@@ -40,7 +40,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val ho
 
         val deadCodeInfoType =
             HighlightInfoType.HighlightInfoTypeImpl(
-                profile.getErrorLevel(deadCodeKey, ktFile).getSeverity(),
+              profile.getErrorLevel(deadCodeKey, ktFile).severity,
                 ((profile.getEditorAttributes(deadCodeKey.toString(), ktFile)) ?: HighlightInfoType.UNUSED_SYMBOL.getAttributesKey())
             )
         if (!profile.isToolEnabled(deadCodeKey, ktFile)) return
@@ -117,7 +117,7 @@ class KotlinRefsHolder {
 
     fun registerLocalRef(declaration: PsiElement?, reference: KtElement) {
         if (declaration is KtDeclaration) {
-            localRefs.put(declaration, reference)
+            localRefs[declaration] = reference
         }
     }
 
