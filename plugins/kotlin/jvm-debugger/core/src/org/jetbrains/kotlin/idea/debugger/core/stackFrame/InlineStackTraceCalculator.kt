@@ -14,21 +14,24 @@ import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
-import org.jetbrains.kotlin.idea.debugger.core.VariableWithLocation
-import org.jetbrains.kotlin.idea.debugger.core.filterRepeatedVariables
-import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
-import org.jetbrains.kotlin.idea.debugger.core.sortedVariablesWithLocation
+import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 
 object InlineStackTraceCalculator {
-    fun calculateInlineStackTrace(descriptor: StackFrameDescriptorImpl): List<XStackFrame>  =
+    fun calculateInlineStackTrace(descriptor: StackFrameDescriptorImpl): List<XStackFrame> =
         descriptor.frameProxy.stackFrame.computeKotlinStackFrameInfos().map {
             it.toXStackFrame(descriptor)
         }.reversed()
 
     // Calculate the variables that are visible in the top stack frame.
-    fun calculateVisibleVariables(frameProxy: StackFrameProxyImpl): List<LocalVariableProxyImpl> =
-        frameProxy.stackFrame.computeKotlinStackFrameInfos().last().visibleVariableProxies(frameProxy)
+    fun calculateVisibleVariables(frameProxy: StackFrameProxyImpl): List<LocalVariableProxyImpl> {
+        // This is called from CoroutineStackFrame even for Java frames. We only need to compute for Kotlin frames.
+        return if (frameProxy.location().isInKotlinSources()) {
+            frameProxy.stackFrame.computeKotlinStackFrameInfos().last().visibleVariableProxies(frameProxy)
+        } else {
+            frameProxy.visibleVariables()
+        }
+    }
 }
 
 private val INLINE_LAMBDA_REGEX =
