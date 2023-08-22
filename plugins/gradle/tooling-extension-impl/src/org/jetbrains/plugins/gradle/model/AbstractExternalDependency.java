@@ -36,7 +36,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
                                     Collection<? extends ExternalDependency> dependencies) {
     myId = new DefaultExternalDependencyId(id);
     mySelectionReason = selectionReason;
-    myDependencies = dependencies == null ? new ArrayList<ExternalDependency>(0) : ModelFactory.createCopy(dependencies);
+    myDependencies = dependencies == null ? new ArrayList<>(0) : ModelFactory.createCopy(dependencies);
   }
 
   public AbstractExternalDependency(ExternalDependency dependency) {
@@ -109,6 +109,10 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     return mySelectionReason;
   }
 
+  public void setSelectionReason(String selectionReason) {
+    this.mySelectionReason = selectionReason;
+  }
+
   @Override
   public int getClasspathOrder() {
     return myClasspathOrder;
@@ -116,10 +120,6 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
 
   public void setClasspathOrder(int order) {
     myClasspathOrder = order;
-  }
-
-  public void setSelectionReason(String selectionReason) {
-    this.mySelectionReason = selectionReason;
   }
 
   @Override
@@ -190,7 +190,7 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     private final ArrayList<Integer> myProcessedStructure;
 
     private DependenciesIterator(@NotNull Collection<ExternalDependency> dependencies) {
-      mySeenDependencies = Collections.newSetFromMap(new IdentityHashMap<AbstractExternalDependency, Boolean>());
+      mySeenDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
       myToProcess = new ArrayDeque<>(dependencies);
       myProcessedStructure = new ArrayList<>();
     }
@@ -217,11 +217,6 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
       else {
         return next();
       }
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("remove");
     }
   }
 }
