@@ -369,8 +369,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     @Override
     public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
       try {
-        boolean isCheckCanceledNeeded = LoadingState.COMPONENTS_LOADED.isOccurred() &&
-                                        ApplicationManager.getApplication().isReadAccessAllowed();
+        boolean isCheckCanceledNeeded = isCheckCanceledNeeded();
 
         final int bufferSize = DEFAULT_FULL_SCAN_BUFFER_BYTES;
         final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
@@ -448,6 +447,10 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
   }
 
+  private static boolean isCheckCanceledNeeded() {
+    return LoadingState.COMPONENTS_LOADED.isOccurred() && ApplicationManager.getApplication().isReadAccessAllowed();
+  }
+
   /**
    * 'OverMappedFile' is a bit of abstraction leak, since implementation really uses specialized
    * FileAttribute ({@link SpecializedFileAttributes#specializeAsFastShort(FSRecordsImpl, FileAttribute)}).
@@ -517,10 +520,10 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     @Override
     public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
       try {
-        boolean isReadAction = ApplicationManager.getApplication().isReadAccessAllowed();
+        boolean isCheckCanceledNeeded = isCheckCanceledNeeded();
         int maxAllocatedID = FSRecords.getInstance().connection().getRecords().maxAllocatedID();
         for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-          if (isReadAction) {
+          if (isCheckCanceledNeeded) {
             ProgressManager.checkCanceled();
           }
           short value = readImpl(fileId);
