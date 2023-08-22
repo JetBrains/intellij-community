@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core
 
+import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
@@ -68,7 +69,12 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
     val startOffsets = mutableMapOf<Long, MutableList<LocalVariable>>()
     val replacements = mutableMapOf<LocalVariable, LocalVariable>()
     for (variable in allVariables) {
-        val startOffset = variable.getBorders()?.start ?: continue
+        val borders = variable.getBorders() ?: continue
+        val startOffset = borders.start
+        if (variable.name().isEmpty() && startOffset.codeIndex() == 0L && borders.endInclusive.codeIndex() == -1L) {
+            // See https://youtrack.jetbrains.com/issue/IDEA-330481
+            continue
+        }
         startOffsets.getOrPut(startOffset.codeIndex()) { mutableListOf() } += variable
     }
     for (variable in allVariables) {
@@ -89,8 +95,20 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
     }
     return allVariables.mapNotNull { variable ->
         var alias = variable
+        var i = 0
         while (true) {
             alias = replacements[alias] ?: break
+            i++
+            if (i > replacements.size) {
+                // This prevents an infinite loop if `replacements` contains a circular reference.
+                Logger.getInstance("sortedVariablesWithLocation").warn(buildString {
+                    append("Circular reference detected in ${this@sortedVariablesWithLocation}\n")
+                    replacements.forEach { (key, value) ->
+                        append("  (${key.toDebugString()}) -> (${value.toDebugString()})\n")
+                    }
+                })
+                break
+            }
         }
 
         if (variable != alias) {
@@ -110,3 +128,12 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
 // Kotlin this needs to be done separately for every (inline) stack frame.
 fun filterRepeatedVariables(sortedVariables: List<LocalVariable>): List<LocalVariable> =
     sortedVariables.associateBy { it.name() }.values.toList()
+
+private fun LocalVariable.toDebugString() : String {
+    val scope = this.getBorders()?.let {
+        it.start.codeIndex()..it.endInclusive.codeIndex()
+    }
+    return buildString {
+        append("name='${name()}' type=${typeName()} scope=$scope")
+    }
+}
