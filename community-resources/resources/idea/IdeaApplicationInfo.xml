@@ -17,9 +17,5 @@
 
   <whatsnew show-on-update="true"/>
 
-  <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
-              service="https://www.jetbrains.com/idea/statistics/index.jsp"
-              fus-settings="https://www.jetbrains.com/idea/statistics/fus-assistant.xml"
-              event-log-settings="https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json"
-  />
+  <statistics event-log-settings="https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json"/>
 </component>

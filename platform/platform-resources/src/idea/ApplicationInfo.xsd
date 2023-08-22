@@ -447,10 +447,38 @@
     <xs:attribute type="xs:string" name="depends"/>
   </xs:complexType>
   <xs:complexType name="statisticsType">
-    <xs:attribute type="xs:string" name="settings"/>
-    <xs:attribute type="xs:string" name="service"/>
-    <xs:attribute type="xs:string" name="service-key"/>
-    <xs:attribute type="xs:string" name="fus-settings"/>
+    <xs:attribute type="xs:string" name="settings">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="service">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="service-key">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="fus-settings">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:string" name="event-log-settings"/>
   </xs:complexType>
   <xs:complexType name="default-lafType">
