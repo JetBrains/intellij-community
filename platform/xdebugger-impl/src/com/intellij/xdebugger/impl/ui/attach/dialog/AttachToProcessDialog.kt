@@ -527,8 +527,11 @@ open class AttachToProcessDialog(
     return AttachViewActionWrapper(view, action)
   }
 
-  fun setShowLocalView(localViewDefault: Boolean) {
-    val viewToSelect = if (localViewDefault) localAttachView else externalAttachViews.firstOrNull() ?: localAttachView
+  fun setAttachView(hostType: AttachDialogHostType) {
+    val viewToSelect = when (hostType) {
+      AttachDialogHostType.LOCAL -> localAttachView
+      else -> externalAttachViews.firstOrNull { it.getHostType() == hostType } ?: localAttachView
+    }
     if (currentAttachView.get() == viewToSelect) {
       return
     }

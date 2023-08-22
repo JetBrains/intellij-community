@@ -31,7 +31,7 @@ class AttachToProcessDialogFactory(private val project: Project) {
 
     val currentDialogInstance = getOpenDialog()
     if (currentDialogInstance != null) {
-      currentDialogInstance.setShowLocalView(defaultViewHostType == AttachDialogHostType.LOCAL)
+      currentDialogInstance.setAttachView(defaultViewHostType)
       return
     }
 
