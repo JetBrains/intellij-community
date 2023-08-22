@@ -83,7 +83,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myHasContextHelp = true;
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private final List<PluginId> essentialPluginsIds = new ArrayList<>();
-  private String myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
   private String myJetBrainsTvUrl;
 
   private String mySubscriptionFormId;
@@ -226,11 +225,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
           if (id != null && !id.isEmpty()) {
             essentialPluginsIds.add(PluginId.getId(id));
           }
-        }
-        break;
-
-        case "statistics": {
-          myEventLogSettingsUrl = child.getAttributeValue("event-log-settings");
         }
         break;
 
@@ -567,10 +561,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getCopyrightStart() {
     return myCopyrightStart;
-  }
-
-  public String getEventLogSettingsUrl() {
-    return myEventLogSettingsUrl;
   }
 
   @Override

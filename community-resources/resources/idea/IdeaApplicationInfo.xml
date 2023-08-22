@@ -16,6 +16,4 @@
            builtin-url="__BUILTIN_PLUGINS_URL__"/>
 
   <whatsnew show-on-update="true"/>
-
-  <statistics event-log-settings="https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json"/>
 </component>

@@ -3,11 +3,9 @@ package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class EventLogInternalApplicationInfo implements EventLogApplicationInfo {
   private static final DataCollectorDebugLogger LOG =
     new InternalDataCollectorDebugLogger(Logger.getInstance(EventLogStatisticsService.class));
+  private static final String EVENT_LOG_SETTINGS_URL_TEMPLATE = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
 
   private final boolean myIsTest;
   private final DataCollectorSystemEventLogger myEventLogger;
@@ -44,7 +43,7 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public String getTemplateUrl() {
-    return ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
+    return EVENT_LOG_SETTINGS_URL_TEMPLATE;
   }
 
   @NotNull
