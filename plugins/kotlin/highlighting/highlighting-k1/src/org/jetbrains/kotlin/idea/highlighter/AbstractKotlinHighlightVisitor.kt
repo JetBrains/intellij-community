@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Predicates
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.CommonProcessors
@@ -85,8 +86,8 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
     private fun analyze(file: KtFile, holder: HighlightInfoHolder) {
         val dividedElements: List<Divider.DividedElements> = ArrayList()
         Divider.divideInsideAndOutsideAllRoots(
-            file, file.textRange, file.textRange, { true },
-            CommonProcessors.CollectProcessor(dividedElements)
+          file, file.textRange, file.textRange, Predicates.alwaysTrue(),
+          CommonProcessors.CollectProcessor(dividedElements)
         )
         // TODO: for the sake of check that element belongs to the file
         //  for some reason analyzeWithAllCompilerChecks could return psiElements those do not belong to the file
