@@ -503,11 +503,29 @@
   </xs:complexType>
   <xs:complexType name="zendeskFormType">
     <xs:sequence>
-      <xs:element name="field" type="zendeskFieldType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="field" type="zendeskFieldType" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            Deprecated and no longer used since 2023.3, override ExternalProductResourceUrls::feedbackReporter instead.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
     </xs:sequence>
     <xs:attribute type="xs:string" name="url"/>
-    <xs:attribute type="xs:string" name="zendesk-form-id"/>
-    <xs:attribute type="xs:string" name="zendesk-url"/>
+    <xs:attribute type="xs:string" name="zendesk-form-id">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated and no longer used since 2023.3, override ExternalProductResourceUrls::feedbackReporter instead.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="zendesk-url">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated and no longer used since 2023.3, override ExternalProductResourceUrls::feedbackReporter instead.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="zendeskFieldType">
     <xs:attribute type="xs:long" name="id" use="required"/>
