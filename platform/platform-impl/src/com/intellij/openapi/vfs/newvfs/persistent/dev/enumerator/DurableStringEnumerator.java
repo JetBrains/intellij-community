@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.IntRef;
@@ -17,6 +17,7 @@ import org.jsoup.UncheckedIOException;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -46,7 +47,7 @@ public class DurableStringEnumerator implements ScannableDataEnumeratorEx<String
     //fill the in-memory mapping:
     //MAYBE RC: could be filled async -- to not delay initialization
     this.valuesLog.forEachRecord((logId, buffer) -> {
-      String value = IOUtil.readString(buffer);
+      String value = readString(buffer);
       int id = Math.toIntExact(logId);
       int valueHash = hashOf(value);
       valueHashToId.put(valueHash, id);
@@ -138,7 +139,7 @@ public class DurableStringEnumerator implements ScannableDataEnumeratorEx<String
   @Override
   public boolean processAllDataObjects(@NotNull Processor<? super String> processor) throws IOException {
     return valuesLog.forEachRecord((recordId, buffer) -> {
-      String value = IOUtil.readString(buffer);
+      String value = readString(buffer);
       return processor.process(value);
     });
   }
@@ -154,7 +155,7 @@ public class DurableStringEnumerator implements ScannableDataEnumeratorEx<String
     IntRef foundIdRef = new IntRef(NULL_ID);
     valueHashToId.lookup(hash, candidateId -> {
       try {
-        String candidateValue = valuesLog.read(candidateId, IOUtil::readString);
+        String candidateValue = valuesLog.read(candidateId, DurableStringEnumerator::readString);
         if (candidateValue.equals(value)) {
           foundIdRef.set(candidateId);
           return false;//stop
@@ -166,5 +167,12 @@ public class DurableStringEnumerator implements ScannableDataEnumeratorEx<String
       }
     });
     return foundIdRef.get();
+  }
+
+  private static @NotNull String readString(@NotNull ByteBuffer buffer) {
+    //MAYBE RC: instead of converting string bytes to/from UTF8 -- maybe just store String fields as-is?
+    //          i.e. access private .value and .coder fields, and write/read their values? -- this allows
+    //          to bypass 1 array copy, and probably also a character encoding/decoding
+    return IOUtil.readString(buffer);
   }
 }

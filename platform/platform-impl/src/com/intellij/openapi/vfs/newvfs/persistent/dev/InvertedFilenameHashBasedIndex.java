@@ -82,7 +82,7 @@ public class InvertedFilenameHashBasedIndex {
    */
   @ApiStatus.Internal
   public static class Int2IntMultimap {
-    protected static final int NO_VALUE = 0;
+    public static final int NO_VALUE = 0;
 
     private final float loadFactor;
 
