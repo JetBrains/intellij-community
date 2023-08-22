@@ -291,6 +291,8 @@
                              groupId="build" />
     <trustedProjectsLocator implementation="com.intellij.ide.trustedProjects.impl.DefaultTrustedProjectsLocator"/>
 
+    <activityInProgressPredicate implementation="com.intellij.openapi.project.DumbServiceInProgressPredicate"/>
+
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <statistics.notificationIdsHolder implementation="com.intellij.diff.DiffNotificationIdsHolder"/>
