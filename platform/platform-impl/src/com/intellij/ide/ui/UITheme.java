@@ -82,13 +82,11 @@ public final class UITheme {
     .disable(JSON.Feature.HANDLE_JAVA_BEANS)
     .build();
 
-  public static @NotNull UITheme loadFromJson(@NotNull InputStream stream,
-                                              @NotNull @NonNls String themeId,
-                                              @Nullable ClassLoader provider,
-                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
+  @ApiStatus.Internal
+  public static @NotNull UITheme loadFromJson(@NotNull InputStream stream, @NotNull @NonNls String themeId) throws IOException {
     UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, stream);
     theme.id = themeId;
-    return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
+    return postProcessTheme(theme, findParentTheme(theme), null, Function.identity());
   }
 
   public static @NotNull UITheme loadFromJson(byte[] data,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.UITheme;
@@ -33,7 +33,6 @@ import java.util.function.Function;
  */
 @ApiStatus.Internal
 public final class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo {
-
   private static final Logger LOG = Logger.getInstance(TempUIThemeBasedLookAndFeelInfo.class);
   private static final @NonNls String ID = "Temp theme";
 
@@ -109,12 +108,8 @@ public final class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFe
     }
   }
 
-  public static @NotNull UITheme loadTempTheme(@NotNull InputStream stream,
-                                               @NotNull IconPathPatcher patcher) throws IOException {
-    UITheme theme = UITheme.loadFromJson(stream,
-                                         ID,
-                                         null,
-                                         Function.identity());
+  public static @NotNull UITheme loadTempTheme(@NotNull InputStream stream, @NotNull IconPathPatcher patcher) throws IOException {
+    UITheme theme = UITheme.loadFromJson(stream, ID);
 
     IconPathPatcher oldPatcher = theme.getPatcher();
     if (oldPatcher != null) {

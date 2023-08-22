@@ -170,7 +170,8 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
       // it is important to use class loader of a current instance class (LaF in plugin)
       val classLoader = javaClass.getClassLoader()
       // macOS light theme uses theme file from core plugin
-      val data = ResourceUtil.getResourceAsBytes(filename, classLoader,  /* checkParents */true) ?: throw RuntimeException("Can't load $filename")
+      val data = ResourceUtil.getResourceAsBytes(filename, classLoader,  /* checkParents */true)
+                 ?: throw RuntimeException("Can't load $filename")
       val theme = UITheme.loadFromJson(data, "Darcula", classLoader, Function.identity())
       theme.applyProperties(defaults)
     }
