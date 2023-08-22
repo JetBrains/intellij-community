@@ -43,9 +43,9 @@ import javax.swing.event.DocumentEvent
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
-  val COMPONENT_SCOPE_KEY = Key.create<CoroutineScope>("Collaboration.Component.Coroutine.Scope")
+  val COMPONENT_SCOPE_KEY: Key<CoroutineScope> = Key.create("Collaboration.Component.Coroutine.Scope")
 
-  val animatedLoadingIcon = AnimatedIcon.Default.INSTANCE
+  val animatedLoadingIcon: Icon = AnimatedIcon.Default.INSTANCE
 
   /**
    * Connects [searchTextField] to a [list] to be used as a filter
