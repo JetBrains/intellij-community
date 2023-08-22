@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +14,8 @@ import java.util.Collections;
 
 public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
 
+  private String myThrowsClause;
+
   @Override
   public boolean startInWriteAction() {
     return true;
@@ -23,7 +24,7 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("add.runtime.exception.to.throws.text");
+    return QuickFixBundle.message("add.runtime.exception.to.throws.text", myThrowsClause);
   }
 
   @Override
@@ -57,9 +58,10 @@ public class AddRuntimeExceptionToThrowsAction implements IntentionAction {
     if (exception == null) return false;
 
     PsiMethod method = PsiTreeUtil.getParentOfType(elementAtCaret(editor, file), PsiMethod.class, true, PsiLambdaExpression.class);
-    if (method == null || !method.getThrowsList().isPhysical()) return false;
+    if (method == null || !method.getThrowsList().isPhysical() || isMethodThrows(method, exception)) return false;
 
-    return !isMethodThrows(method, exception);
+    myThrowsClause = "throws " + exception.getPresentableText();
+    return true;
   }
 
   private static PsiClassType getRuntimeExceptionAtCaret(Editor editor, PsiFile file) {
