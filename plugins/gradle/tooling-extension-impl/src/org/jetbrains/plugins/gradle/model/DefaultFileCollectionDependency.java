@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.internal.impldep.com.google.common.base.Objects;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
 import org.jetbrains.plugins.gradle.tooling.util.BooleanBiFunction;
@@ -25,11 +24,13 @@ public final class DefaultFileCollectionDependency extends AbstractExternalDepen
   public DefaultFileCollectionDependency(Collection<File> files) {
     super(new DefaultExternalDependencyId(null, files.toString(), null), null, null);
     this.files = new ArrayList<>(files);
+    excludedFromIndexing = false;
   }
 
   public DefaultFileCollectionDependency(FileCollectionDependency dependency) {
     super(dependency);
     files = new ArrayList<>(dependency.getFiles());
+    excludedFromIndexing = dependency.isExcludedFromIndexing();
   }
 
   @NotNull
@@ -38,12 +39,11 @@ public final class DefaultFileCollectionDependency extends AbstractExternalDepen
     return files;
   }
 
-  @ApiStatus.Experimental
+  @Override
   public boolean isExcludedFromIndexing() {
     return excludedFromIndexing;
   }
 
-  @ApiStatus.Experimental
   public void setExcludedFromIndexing(boolean excludedFromIndexing) {
     this.excludedFromIndexing = excludedFromIndexing;
   }

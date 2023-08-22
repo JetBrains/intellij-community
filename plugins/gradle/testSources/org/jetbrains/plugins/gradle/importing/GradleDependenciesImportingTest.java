@@ -638,6 +638,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     String[] excludedRoots = isNewDependencyResolutionApplicable() ? new String[]{root} : ArrayUtil.EMPTY_STRING_ARRAY;
     assertLibraryExcludedRoots("project.main", depName, excludedRoots);
+    assertLibraryExcludedRoots("project.test", depName, excludedRoots);
 
     VirtualFile depJar = createProjectJarSubFile("lib/dep.jar");
     TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
@@ -651,6 +652,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     );
 
     assertLibraryExcludedRoots("project.main", depName, excludedRoots);
+    assertLibraryExcludedRoots("project.test", depName, excludedRoots);
     assertLibraryExcludedRoots("project.main", depJar.getPresentableUrl(), ArrayUtil.EMPTY_STRING_ARRAY);
     assertLibraryExcludedRoots("project.main", "Gradle: junit:junit:4.11", ArrayUtil.EMPTY_STRING_ARRAY);
   }
