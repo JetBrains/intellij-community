@@ -94,7 +94,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(CollectFilesNotMarkedAsIndex.PREFIX, CollectFilesNotMarkedAsIndex::new),
       Map.entry(RemoveBreakpointCommand.PREFIX, RemoveBreakpointCommand::new),
       Map.entry(DropErrorCommand.PREFIX, DropErrorCommand::new),
-      Map.entry(SaveDocumentsAndSettingsCommand.PREFIX, SaveDocumentsAndSettingsCommand::new)
+      Map.entry(SaveDocumentsAndSettingsCommand.PREFIX, SaveDocumentsAndSettingsCommand::new),
+      Map.entry(FreezeUICommand.PREFIX, FreezeUICommand::new)
     );
   }
 }
