@@ -182,15 +182,16 @@ internal fun getAndUnsetSplashProjectFrame(): JFrame? {
 }
 
 fun hideSplashBeforeShow(window: Window) {
-  splashJob.get().cancel()
-  if (SPLASH_WINDOW != null || PROJECT_FRAME != null) {
-    window.addWindowListener(object : WindowAdapter() {
-      override fun windowOpened(e: WindowEvent) {
-        hideSplash()
-        window.removeWindowListener(this)
-      }
-    })
+  if (splashJob.get().isCompleted) {
+    return
   }
+
+  window.addWindowListener(object : WindowAdapter() {
+    override fun windowOpened(e: WindowEvent) {
+      window.removeWindowListener(this)
+      hideSplash()
+    }
+  })
 }
 
 internal fun hasSplash(): Boolean = SPLASH_WINDOW != null
