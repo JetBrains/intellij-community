@@ -235,7 +235,7 @@ private fun resetLafSettingsToDefault() {
   val defaultLightLaf = lafManager.defaultLightLaf ?: return
   val defaultDarkLaf = lafManager.defaultDarkLaf ?: return
   val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
-  lafManager.currentLookAndFeel = laf
+  lafManager.currentUIThemeLookAndFeel = laf
   if (lafManager.autodetect) {
     lafManager.setPreferredLightLaf(defaultLightLaf)
     lafManager.setPreferredDarkLaf(defaultDarkLaf)

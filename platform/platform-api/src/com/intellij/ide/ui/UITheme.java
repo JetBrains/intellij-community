@@ -5,7 +5,7 @@ import com.fasterxml.jackson.jr.ob.JSON;
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -102,9 +102,17 @@ public final class UITheme {
                                               byte[] data,
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
-                                              @NotNull Function<? super String, String> iconsMapper) throws IOException {
+                                              @NotNull Function<? super String, String> iconsMapper,
+                                              @Nullable UITheme defaultDarkParent,
+                                              @Nullable UITheme defaultLightParent) throws IOException {
     UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, data);
     theme.id = themeId;
+    if (theme.dark && parentTheme == null) {
+      return postProcessTheme(theme, defaultDarkParent, provider, iconsMapper);
+    }
+    if (!theme.dark && parentTheme == null) {
+      return postProcessTheme(theme, defaultLightParent, provider, iconsMapper);
+    }
     return postProcessTheme(theme, parentTheme, provider, iconsMapper);
   }
 
@@ -124,8 +132,8 @@ public final class UITheme {
     String parentTheme = theme.parentTheme;
     if (parentTheme != null) {
       for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
-        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
-          UITheme uiTheme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
+        if (laf instanceof UIThemeLookAndFeelInfo) {
+          UITheme uiTheme = ((UIThemeLookAndFeelInfo)laf).getTheme();
           if (uiTheme.getName().equals(parentTheme)) {
             return uiTheme;
           }

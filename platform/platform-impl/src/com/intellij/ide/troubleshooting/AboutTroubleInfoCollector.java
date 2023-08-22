@@ -43,7 +43,7 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += '\n';
 
     output += "Theme: ";
-    output += LafManager.getInstance().getCurrentLookAndFeel().getName();
+    output += LafManager.getInstance().getCurrentUIThemeLookAndFeel().getName();
     output += '\n';
 
     output += "JRE: ";

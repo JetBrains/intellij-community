@@ -53,7 +53,16 @@ public final class UIThemeProvider implements PluginAware {
     return ResourceUtil.getResourceAsBytes(path, pluginDescriptor.getClassLoader());
   }
 
-  public @Nullable UITheme createTheme(@Nullable UITheme parentTheme) {
+  public @Nullable UITheme createTheme(
+    @Nullable UITheme parentTheme,
+    @Nullable UITheme defaultDarkParent,
+    @Nullable UITheme defaultLightParent) {
+    if (defaultDarkParent != null && defaultDarkParent.getId().equals(id)) {
+      return defaultDarkParent;
+    }
+    if (defaultLightParent != null && defaultLightParent.getId().equals(id)) {
+      return defaultLightParent;
+    }
     try {
       ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
       byte[] stream = getThemeJson();
@@ -64,7 +73,7 @@ public final class UIThemeProvider implements PluginAware {
         ));
         return null;
       }
-      return UITheme.loadFromJson(parentTheme, stream, id, classLoader, Function.identity());
+      return UITheme.loadFromJson(parentTheme, stream, id, classLoader, Function.identity(), defaultDarkParent, defaultLightParent);
     }
     catch (Throwable e) {
       Logger.getInstance(getClass()).warn(new PluginException(

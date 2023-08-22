@@ -6,8 +6,10 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Use theme instead of IntelliJLaf customization
  * @author Konstantin Bulenkov
  */
+@Deprecated(forRemoval = true)
 public class IntelliJLaf extends DarculaLaf {
   public static final @NlsSafe String NAME = "IntelliJ";
 
@@ -18,6 +20,6 @@ public class IntelliJLaf extends DarculaLaf {
 
   @Override
   protected @NotNull String getPrefix() {
-    return "com/intellij/ide/ui/laf/intellijlaf";
+    return "themes/intellijlaf";
   }
 }

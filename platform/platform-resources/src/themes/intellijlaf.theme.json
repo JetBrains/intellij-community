@@ -99,6 +99,8 @@
       }
     },
 
+    "AppInspector.GraphNode.background" : "#fdfdfd",
+
     "BookmarkMnemonicAssigned": {
       "background": "#F7C777",
       "borderColor": "#F7C777",
@@ -144,6 +146,8 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
     },
 
+    "Canvas.Tooltip.background": "#F7F7F7",
+
     "SegmentedButton": {
       "selectedStartBorderColor": "componentBorder",
       "selectedEndBorderColor": "componentBorder",
@@ -167,6 +171,8 @@
       "Avatar.foreground": "foreground"
     },
 
+    "CodeWithMe.Avatar.foreground": "#1D1D1D",
+
     "ComboBox": {
       "ArrowButton": {
         "background": "grey18",
@@ -188,12 +194,19 @@
     },
 
     "CompletionPopup": {
+      "Advertiser": {
+        "background": "#f2f2f2",
+        "foreground": "#808080"
+      },
+      "background": "#EBF4FE",
       "foreground": "foreground",
       "matchForeground": "#2470b3",
       "selectionBackground": "#c5dffc",
       "selectionInactiveBackground": "grey12",
       "nonFocusedState": true
     },
+
+    "ComplexPopup.Header.background" : "#FFFFFF",
 
     "Component": {
       "borderColor": "componentBorder",
@@ -209,6 +222,8 @@
       "hoverIconColor": "#7F8B91e5",
       "iconColor": "#7f8b917f"
     },
+
+    "Content.background": "#ffffff",
 
     "ContextHelp": {
       "fontSizeOffset": {
@@ -236,6 +251,8 @@
       "modifyingValueForeground": "#0000ff",
       "valueForeground":  "#800000"
     },
+
+    "Debugger.EvaluateExpression.background": "white",
 
     "DefaultTabs": {
       "background": "panel",
@@ -279,6 +296,11 @@
       "underlinedTabForeground": "foreground"
     },
 
+    "Editor.ToolTip" :{
+      "background": "#f7f7f7",
+      "foreground": "#000000"
+    },
+
     "FileColor": {
       "Blue": "#eaf6ff",
       "Green": "#effae7",
@@ -298,6 +320,8 @@
     },
 
     "GotItTooltip": {
+      "Button.foreground": "white",
+      "Header.foreground": "#000000",
       "background": "grey17",
       "borderColor": "grey05",
       "foreground": "foreground",
@@ -312,6 +336,14 @@
     "GutterTooltip": {
       "infoForeground": "infoPanelForeground",
       "lineSeparatorColor": "grey12"
+    },
+
+    "HelpBrowser": {
+      "AiEditor.background": "#FAF5FF",
+      "HelpBrowserMessage.Snippet.MoreLines.background": "#F2F2F2",
+      "HelpBrowserMessage.Snippet.MoreLines.foreground": "#808080",
+      "UserMessage.background": "#E2E6EC",
+      "UserMessage.Snippet.MoreLines.foreground": "#808080"
     },
 
     "HelpTooltip": {
@@ -335,6 +367,7 @@
     },
 
     "Label": {
+      "foreground": "black",
       "disabledText": "disabledForeground",
       "errorForeground": "#C7222D",
       "infoForeground": "infoPanelForeground",
@@ -344,6 +377,8 @@
     },
 
     "Link": {
+      "background": "white",
+      "foreground": "black",
       "activeForeground": "linkForeground",
       "hoverForeground": "linkForeground",
       "pressedForeground": "linkForeground",
@@ -352,6 +387,8 @@
     },
 
     "List": {
+      "Tag.background": "#EBECF0",
+      "Tag.foreground": "#494B57",
       "background": "contentBackground",
       "hoverBackground": "#EDF5FC",
       "hoverInactiveBackground": "grey16",
@@ -363,6 +400,11 @@
     "MemoryIndicator": {
       "allocatedBackground": "grey10",
       "usedBackground": "grey06"
+    },
+
+    "MainMenu": {
+      "background": "#f2f2f2",
+      "foreground": "#000000"
     },
 
     "Menu": {
@@ -403,6 +445,8 @@
       "SearchField.background": "contentBackground",
       "separatorWidth": 10
     },
+
+    "NewUiOnboarding.Dialog.background": "panel",
 
     "Ide.Shadow": {
       "borderInsets": "16,16,16,16",
@@ -516,6 +560,7 @@
 
     "Plugins": {
       "background": "contentBackground",
+      "borderColor": "#d1d1d1",
       "disabledForeground": "disabledForeground",
       "eapTagBackground": "#F2D2CF",
       "hoverBackground": "#EDF6FE",
@@ -562,6 +607,7 @@
         "borderColor": "grey17"
       },
 
+      "background": "#FFFFFF",
       "borderColor": "grey05",
       "inactiveBorderColor": "grey05",
       "separatorColor": "lightBorder",
@@ -616,11 +662,18 @@
       "State": {
         "Background": "grey15",
         "Foreground": "grey02"
-      }
+      },
+      "Timeline.Thread.Diff.AnchorLine": "#FBF1D1"
     },
 
     "RootPaneUI":{
       "os.windows": "com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI"
+    },
+
+    "ScreenView": {
+      "defaultBorderColor": "#000000",
+      "selectedBorderColor": "#3573f0",
+      "hoveredBorderColor": "#3573f0"
     },
 
     "ScrollBar": {
@@ -699,8 +752,17 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI"
     },
 
+    "Space.Review": {
+      "acceptedOutline": "#4DBB5F",
+      "workingOutline": "#FD7823",
+      "waitForResponseOutline": "#8CD3EC"
+    },
+
     "SpeedSearch": {
-      "background": "contentBackground"
+      "background": "contentBackground",
+      "borderColor": "#C0C0C0",
+      "foreground": "#000000",
+      "errorForeground": "#ff0000"
     },
 
     "Spinner": {
@@ -716,6 +778,9 @@
     "SplitPane.highlight": "panel",
 
     "StatusBar": {
+      "Widget.foreground": "black",
+      "Breadcrumbs.foreground": "#000000",
+      "background": "panel",
       "LightEditBackground": "#e3eefc",
       "borderColor": "border",
       "hoverBackground": "grey12"
@@ -773,6 +838,7 @@
       "disabledForeground": "disabledForeground",
       "focusCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "focusSelectedCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
+      "foreground": "black",
       "gridColor": "grey17",
       "hoverBackground": "#edf5fc",
       "hoverInactiveBackground": "grey16",
@@ -850,7 +916,12 @@
     "Toolbar.Floating.background": "grey14",
 
     "ToolTip": {
+      "Learning": {
+        "background": "grey17",
+        "foreground": "foreground"
+      },
       "background": "grey17",
+      "foreground": "#000000",
 
       "Actions.background": "grey14",
       "Actions.infoForeground": "#99a4ad",
@@ -908,6 +979,7 @@
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI",
 
       "background": "contentBackground",
+      "foreground": "black",
       "errorForeground": "#ff0000",
       "hash": "#grey13",
       "hoverBackground": "#edf5fc",
@@ -949,6 +1021,10 @@
       "HgLog.tagIconColor": "grey01",
       "HgLog.tipIconColor": "#ffd100",
 
+      "Log.Commit.Reference.foreground": "#7a7a7a",
+
+      "MarkerPopup.Toolbar.background": "panel",
+
       "RefLabel.backgroundBase": "black",
       "RefLabel.foreground": "foreground"
     },
@@ -963,6 +1039,7 @@
     "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
 
     "WelcomeScreen": {
+      "background": "#f7f7f7",
       "Details.background": "white",
       "SidePanel.background": "panel",
       "Projects.actions.selectionBackground": "#3587E5",
@@ -983,6 +1060,7 @@
     },
 
     "MainToolbar": {
+      "foreground": "black",
       "background": "#f2f2f2",
       "Icon": {
         "background": "#f2f2f2",
@@ -1052,6 +1130,8 @@
       "pressedBackground": "#00000028"
     },
 
+    "MainWindow.FullScreeControl.Background": "#7A7B80",
+
     "MainWindow.Tab" : {
       "selectedForeground": "black",
       "selectedBackground": "grey15",
@@ -1114,5 +1194,36 @@
         "foreground" : "#B0B0B0"
       }
     }
+  },
+
+  "UIDesigner": {
+    "ColorPicker": {
+      "background": "#FCFCFC",
+      "foreground": "#FCFCFC"
+    },
+
+    "Component": {
+      "background": "#fafafa",
+      "borderColor": "#a7a7a7",
+      "foreground": "#a7a7a7",
+      "hoverBorderColor": "#a7a7a7"
+    },
+    "Connector": {
+      "borderColor": "#a7a7a7",
+      "hoverBorderColor": "#a7a7a7"
+    },
+    "Placeholder": {
+      "background": "#fdfdfd",
+      "borderColor": "#cccccc",
+      "foreground": "#cccccc",
+      "selectedForeground": "#1886f7"
+    },
+    "Activity.borderColor": "#a7a7a7",
+    "Canvas.background": "#f5f5f5",
+    "highStroke.foreground": "#B0B0B0",
+    "Label.foreground": "#656565",
+    "List.selectionBackground": "#dbdbdb",
+    "Panel.background": "#fcfcfc",
+    "percent.foreground": "#C0C0C0"
   }
 }

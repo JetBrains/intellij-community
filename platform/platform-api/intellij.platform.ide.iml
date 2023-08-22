@@ -32,5 +32,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
   </component>
 </module>

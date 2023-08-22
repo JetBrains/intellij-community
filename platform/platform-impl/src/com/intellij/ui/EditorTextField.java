@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettingsUtils;
-import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -715,19 +714,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   protected void setupBorder(@NotNull EditorEx editor) {
-    if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      LafManager lafManager = LafManager.getInstance();
-      UIManager.LookAndFeelInfo lafInfo = lafManager.getCurrentLookAndFeel();
-      if (lafInfo instanceof PluggableLafInfo) {
-        editor.setBorder(((PluggableLafInfo)lafInfo).createEditorTextFieldBorder(this, editor));
-      }
-      else {
-        editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
-      }
-    }
-    else {
       editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
-    }
   }
 
   private void setupEditorFont(final EditorEx editor) {

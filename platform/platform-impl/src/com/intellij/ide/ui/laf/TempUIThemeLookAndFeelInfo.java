@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -32,26 +31,26 @@ import java.util.function.Function;
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-public final class TempUIThemeBasedLookAndFeelInfo extends UIThemeBasedLookAndFeelInfo {
-  private static final Logger LOG = Logger.getInstance(TempUIThemeBasedLookAndFeelInfo.class);
+public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl {
+  private static final Logger LOG = Logger.getInstance(TempUIThemeLookAndFeelInfo.class);
   private static final @NonNls String ID = "Temp theme";
 
   private final @Nullable VirtualFile mySchemeFile;
-  private final @Nullable UIManager.LookAndFeelInfo myPreviousLaf;
+  private final @Nullable UIThemeLookAndFeelInfo myPreviousLaf;
 
-  public TempUIThemeBasedLookAndFeelInfo(@NotNull UITheme theme,
-                                         @Nullable VirtualFile editorSchemeFile,
-                                         @Nullable UIManager.LookAndFeelInfo previousLaf) {
+  public TempUIThemeLookAndFeelInfo(@NotNull UITheme theme,
+                                    @Nullable VirtualFile editorSchemeFile,
+                                    @Nullable UIThemeLookAndFeelInfo previousLaf) {
     super(theme);
     assert ID.equals(theme.getId());
 
     mySchemeFile = editorSchemeFile;
-    myPreviousLaf = previousLaf instanceof TempUIThemeBasedLookAndFeelInfo ?
-                    ((TempUIThemeBasedLookAndFeelInfo)previousLaf).getPreviousLaf() :
+    myPreviousLaf = previousLaf instanceof TempUIThemeLookAndFeelInfo ?
+                    ((TempUIThemeLookAndFeelInfo)previousLaf).getPreviousLaf() :
                     previousLaf;
   }
 
-  public @Nullable UIManager.LookAndFeelInfo getPreviousLaf() {
+  public @Nullable UIThemeLookAndFeelInfo getPreviousLaf() {
     return myPreviousLaf;
   }
 

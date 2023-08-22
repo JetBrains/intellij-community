@@ -61,6 +61,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -79,10 +82,6 @@ public final class UIUtil {
   public static final @NlsSafe String BR = "<br/>";
   public static final @NlsSafe String HR = "<hr/>";
   public static final @NlsSafe String LINE_SEPARATOR = "\n";
-
-  public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
-  public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
-
   private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
@@ -1058,16 +1057,28 @@ public final class UIUtil {
     return SystemInfoRt.isMac && (StartupUiUtil.isUnderDarcula() || isUnderIntelliJLaF());
   }
 
+  /**
+   * Do not use it. Use theme properties instead of it.
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderDefaultMacTheme() {
-    return StartupUiUtil.isUnderDefaultMacTheme();
+    return false;
   }
 
+  /**
+   * Do not use it. Use theme properties instead of it.
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderWin10LookAndFeel() {
-    return StartupUiUtil.isUnderWin10LookAndFeel();
+    return false;
   }
 
+  /**
+   * @deprecated Do not use it. Use {@link StartupUiUtil#isDarkTheme}
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderDarcula() {
-    return StartupUiUtil.isUnderDarcula();
+    return StartupUiUtil.isDarkTheme();
   }
 
   public static boolean isUnderIntelliJLaF() {

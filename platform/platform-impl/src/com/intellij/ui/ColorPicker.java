@@ -88,7 +88,7 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentLookAndFeel();
+      UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
       if (info != null && info.getName().contains("Windows"))
         size.width += 10;
       return size;

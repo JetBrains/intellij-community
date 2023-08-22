@@ -5,17 +5,17 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.TargetUIType
 import com.intellij.ide.ui.ThemesListProvider
 import com.intellij.ui.ExperimentalUI
-import javax.swing.UIManager
 
 class ThemesListProviderImpl : ThemesListProvider {
-  override fun getShownThemes(): List<List<UIManager.LookAndFeelInfo>> {
+  override fun getShownThemes(): List<List<UIThemeLookAndFeelInfo>> {
     val lmi = LafManager.getInstance() as? LafManagerImpl ?: return listOf()
-    val result = mutableListOf<List<UIManager.LookAndFeelInfo>>()
+    val result = mutableListOf<List<UIThemeLookAndFeelInfo>>()
 
     if (ExperimentalUI.isNewUI()) {
-      result.add(lmi.getLafListForTargetUI(TargetUIType.NEW).sortedBy { it.name })
+      result.add(lmi.getThemeListForTargetUI(TargetUIType.NEW).sortedBy { it.name })
     }
-    result.add((lmi.getLafListForTargetUI(TargetUIType.CLASSIC) + lmi.getLafListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name })
+    result.add((lmi.getThemeListForTargetUI(TargetUIType.CLASSIC).filterNot { it.theme.id == "IntelliJ" }
+                + lmi.getThemeListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name })
     return result
   }
 

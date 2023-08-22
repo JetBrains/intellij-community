@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.NlsContexts;
@@ -24,9 +25,15 @@ public abstract class LafManager {
   public abstract @NotNull CollectionComboBoxModel<LafReference> getLafComboBoxModel();
 
   @ApiStatus.Internal
-  public abstract UIManager.LookAndFeelInfo findLaf(LafReference reference);
+  public abstract UIThemeLookAndFeelInfo findLaf(LafReference reference);
 
+  /**
+   * @deprecated Use {@link LafManager#getCurrentUIThemeLookAndFeel()}
+   */
+  @Deprecated(forRemoval = true)
   public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
+
+  public abstract UIThemeLookAndFeelInfo getCurrentUIThemeLookAndFeel();
 
   @ApiStatus.Internal
   public abstract LafReference getLookAndFeelReference();
@@ -37,7 +44,15 @@ public abstract class LafManager {
   @ApiStatus.Internal
   public abstract @NotNull JComponent getSettingsToolbar();
 
+  /**
+   * @deprecated Use {@link LafManager#setCurrentUIThemeLookAndFeel(UIThemeLookAndFeelInfo)}
+   */
+  @Deprecated(forRemoval = true)
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    setCurrentLookAndFeel(lookAndFeelInfo, false);
+  }
+
+  public void setCurrentUIThemeLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
   }
 
@@ -56,12 +71,12 @@ public abstract class LafManager {
 
   public abstract boolean getAutodetectSupported();
 
-  public abstract void setPreferredDarkLaf(@NotNull UIManager.LookAndFeelInfo value);
+  public abstract void setPreferredDarkLaf(@NotNull UIThemeLookAndFeelInfo value);
 
-  public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo value);
+  public abstract void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value);
 
   @ApiStatus.Internal
-  public abstract @Nullable EditorColorsScheme getPreviousSchemeForLaf(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo);
+  public abstract @Nullable EditorColorsScheme getPreviousSchemeForLaf(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo);
 
   @ApiStatus.Internal
   public abstract void setRememberSchemeForLaf(boolean rememberSchemeForLaf);
@@ -86,22 +101,16 @@ public abstract class LafManager {
 
   public static final class LafReference {
     private final String name;
-    private final String className;
     private final String themeId;
 
-    public LafReference(@NotNull String name, @Nullable String className, @Nullable String themeId) {
+    public LafReference(@NotNull String name, @Nullable String themeId) {
       this.name = name;
-      this.className = className;
       this.themeId = themeId;
     }
 
     @Override
     public @NlsSafe @NlsContexts.Label String toString() {
       return name;
-    }
-
-    public String getClassName() {
-      return className;
     }
 
     public String getThemeId() {
@@ -114,19 +123,19 @@ public abstract class LafManager {
       if (o == null || getClass() != o.getClass()) return false;
       LafReference reference = (LafReference)o;
       return name.equals(reference.name) &&
-             Objects.equals(className, reference.className) &&
              Objects.equals(themeId, reference.themeId);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(name, className, themeId);
+      return Objects.hash(name, themeId);
     }
+
   }
 
   @Nullable
-  public abstract UIManager.LookAndFeelInfo getDefaultLightLaf();
+  public abstract UIThemeLookAndFeelInfo getDefaultLightLaf();
 
   @Nullable
-  public abstract UIManager.LookAndFeelInfo getDefaultDarkLaf();
+  public abstract UIThemeLookAndFeelInfo getDefaultDarkLaf();
 }
