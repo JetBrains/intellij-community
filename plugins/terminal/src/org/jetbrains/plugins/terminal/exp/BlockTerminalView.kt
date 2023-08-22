@@ -27,13 +27,13 @@ class BlockTerminalView(
 ) : JPanel(), TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
 
-  private val outputView: TerminalOutputView
-  private val promptView: TerminalPromptView
+  private val outputView: TerminalOutputView = TerminalOutputView(project, session, settings)
+  private val promptView: TerminalPromptView = TerminalPromptView(project, settings, session, this)
   private var alternateBufferView: SimpleTerminalView? = null
 
   init {
-    outputView = TerminalOutputView(project, session, settings)
-    promptView = TerminalPromptView(project, settings, session, this)
+    Disposer.register(this, outputView)
+    Disposer.register(this, promptView)
 
     promptView.controller.addListener(object : PromptStateListener {
       override fun promptVisibilityChanged(visible: Boolean) {
@@ -144,10 +144,7 @@ class BlockTerminalView(
     return outputView.component.hasFocus() || promptView.component.hasFocus()
   }
 
-  override fun dispose() {
-    Disposer.dispose(outputView)
-    Disposer.dispose(promptView)
-  }
+  override fun dispose() {}
 
   override fun getComponent(): JComponent = this
 
