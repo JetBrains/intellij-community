@@ -68,6 +68,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   private PsiFile myFile;
   private VirtualFile myVFile;
   private TestIndexingModeSupporter.IndexingMode myIndexingMode = IndexingMode.SMART;
+  private IndexingMode.ShutdownToken indexingModeShutdownToken;
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
@@ -277,7 +278,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    getIndexingMode().setUpTest(getProject(), getTestRootDisposable());
+    indexingModeShutdownToken = getIndexingMode().setUpTest(getProject(), getTestRootDisposable());
   }
 
   @Before  // runs after (all overrides of) setUp()
@@ -290,7 +291,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     try {
       Project project = getProject();
       if (myIndexingMode != null && project != null) {
-        myIndexingMode.tearDownTest(project);
+        if (indexingModeShutdownToken != null) {
+          myIndexingMode.tearDownTest(project, indexingModeShutdownToken);
+        }
 
         FileEditorManager editorManager = FileEditorManager.getInstance(project);
         for (VirtualFile openFile : editorManager.getOpenFiles()) {
