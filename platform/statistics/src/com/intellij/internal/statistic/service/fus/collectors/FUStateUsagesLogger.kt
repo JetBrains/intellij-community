@@ -219,10 +219,6 @@ class ProjectFUStateUsagesLogger(
     }
   }
 
-  fun scheduleLogProjectState(): Job = cs.launch {
-    logProjectState()
-  }
-
   private suspend fun logProjectState(): Unit = coroutineScope {
     val recorderLoggers = HashMap<String, StatisticsEventLogger>()
     for (usagesCollector in UsageCollectors.getProjectCollectors(this@ProjectFUStateUsagesLogger)) {
