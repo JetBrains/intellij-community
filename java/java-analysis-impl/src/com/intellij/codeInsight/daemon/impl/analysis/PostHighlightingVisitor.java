@@ -19,7 +19,6 @@ import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -46,9 +45,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 class PostHighlightingVisitor {
@@ -82,50 +81,49 @@ class PostHighlightingVisitor {
 
   void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    boolean errorFound = false;
+    AtomicBoolean errorFound = new AtomicBoolean();
 
     if (isToolEnabled(myDeadCodeKey)) {
       GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection);
-      FileViewProvider viewProvider = myFile.getViewProvider();
-      Set<Language> relevantLanguages = viewProvider.getLanguages();
-      for (Language language : relevantLanguages) {
+      Divider.divideInsideAndOutsideAllRoots(myFile, myFile.getTextRange(), myFile.getTextRange(), __->true, dividedElements -> {
         ProgressManager.checkCanceled();
-        PsiElement psiRoot = viewProvider.getPsi(language);
+        PsiFile psiRoot = dividedElements.psiRoot();
         HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
-        if (!highlightingLevelManager.shouldInspect(psiRoot) || highlightingLevelManager.runEssentialHighlightingOnly(psiRoot)) continue;
-        List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, 0, myFile.getTextLength());
-        for (PsiElement element : elements) {
+        if (!highlightingLevelManager.shouldInspect(psiRoot) || highlightingLevelManager.runEssentialHighlightingOnly(psiRoot)) {
+          return true;
+        }
+        for (PsiElement element : dividedElements.inside()) {
           ProgressManager.checkCanceled();
           if (element instanceof PsiIdentifier identifier) {
             HighlightInfo.Builder builder = processIdentifier(identifier, progress, globalUsageHelper);
-            if (builder != null) {
-              HighlightInfo info = builder.create();
-              errorFound |= info != null && info.getSeverity() == HighlightSeverity.ERROR;
-              result.add(info);
-            }
+            addInfo(result, builder, errorFound);
           }
         }
-      }
+        for (PsiElement element : dividedElements.outside()) {
+          ProgressManager.checkCanceled();
+          if (element instanceof PsiIdentifier identifier) {
+            HighlightInfo.Builder builder = processIdentifier(identifier, progress, globalUsageHelper);
+            addInfo(result, builder, errorFound);
+          }
+        }
+        return true;
+      });
     }
 
     HighlightDisplayKey unusedImportKey = HighlightDisplayKey.find(UnusedImportInspection.SHORT_NAME);
-    if (isUnusedImportEnabled(unusedImportKey)) {
+    if (unusedImportKey != null && isUnusedImportEnabled(unusedImportKey)) {
       PsiImportList importList = ((PsiJavaFile)myFile).getImportList();
       if (importList != null) {
         PsiImportStatementBase[] imports = importList.getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
           ProgressManager.checkCanceled();
           HighlightInfo.Builder builder = processImport(statement, unusedImportKey);
-          if (builder != null) {
-            HighlightInfo info = builder.create();
-            errorFound |= info != null && info.getSeverity() == HighlightSeverity.ERROR;
-            result.add(info);
-          }
+          addInfo(result, builder, errorFound);
         }
       }
     }
 
-    if (errorFound) {
+    if (errorFound.get()) {
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
@@ -136,7 +134,17 @@ class PostHighlightingVisitor {
     }
   }
 
-  private boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey) {
+  private static void addInfo(@NotNull HighlightInfoHolder result, @Nullable HighlightInfo.Builder builder, @NotNull AtomicBoolean errorFound) {
+    if (builder != null) {
+      HighlightInfo info = builder.create();
+      if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
+        errorFound.set(true);
+      }
+      result.add(info);
+    }
+  }
+
+  private boolean isUnusedImportEnabled(@NotNull HighlightDisplayKey unusedImportKey) {
     if (isToolEnabled(unusedImportKey)) return true;
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof UnusedImportProvider && ((UnusedImportProvider)provider).isUnusedImportEnabled(myFile)) return true;
@@ -220,8 +228,7 @@ class PostHighlightingVisitor {
     return false;
   }
 
-  private HighlightInfo.Builder processLocalVariable(@NotNull PsiLocalVariable variable,
-                                                     @NotNull PsiIdentifier identifier) {
+  private HighlightInfo.Builder processLocalVariable(@NotNull PsiLocalVariable variable, @NotNull PsiIdentifier identifier) {
     if (variable.isUnnamed() || PsiUtil.isIgnoredName(variable.getName())) return null;
     if (UnusedSymbolUtil.isImplicitUsage(myProject, variable)) return null;
 
@@ -256,10 +263,10 @@ class PostHighlightingVisitor {
 
   @Nullable
   private HighlightInfo.Builder processField(@NotNull Project project,
-                                     @NotNull PsiField field,
-                                     @NotNull PsiIdentifier identifier,
-                                     @NotNull ProgressIndicator progress,
-                                     @NotNull GlobalUsageHelper helper) {
+                                             @NotNull PsiField field,
+                                             @NotNull PsiIdentifier identifier,
+                                             @NotNull ProgressIndicator progress,
+                                             @NotNull GlobalUsageHelper helper) {
     if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
       return null;
     }

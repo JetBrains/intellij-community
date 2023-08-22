@@ -105,12 +105,12 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);
              queryProviders(
-               elements.inside, root, providersList, (__, info) -> {
+               elements.inside(), root, providersList, (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);
                  LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
                });
-             queryProviders(elements.outside, root, providersList,
+             queryProviders(elements.outside(), root, providersList,
                (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);

@@ -102,10 +102,10 @@ final class InspectionRunner {
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myPsiFile, myRestrictRange, myPriorityRange,
                                            file -> shouldInspect(file), new CommonProcessors.CollectProcessor<>(allDivided));
-    List<PsiElement> inside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
+    List<PsiElement> inside = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
     // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
     long finalPriorityRange = finalPriorityRange(myPriorityRange, allDivided);
-    List<PsiElement> outside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.outside, d.parents)));
+    List<PsiElement> outside = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.outside(), d.parents())));
     List<InspectionContext> injectedContexts = Collections.synchronizedList(new ArrayList<>());
 
     List<LocalInspectionToolWrapper> applicableByLanguage =
@@ -167,10 +167,10 @@ final class InspectionRunner {
   }
 
   private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<Divider.DividedElements> allDivided) {
-    long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange;
+    long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange();
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
-      finalPriorityRange = TextRangeScalarUtil.union(finalPriorityRange, dividedElements.priorityRange);
+      finalPriorityRange = TextRangeScalarUtil.union(finalPriorityRange, dividedElements.priorityRange());
     }
     return finalPriorityRange;
   }

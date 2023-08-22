@@ -181,9 +181,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       List<Divider.DividedElements> dividedElements = new ArrayList<>();
       Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER,
                                              new CommonProcessors.CollectProcessor<>(dividedElements));
-      List<PsiElement> allInsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(dividedElements,
+      List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
                                             dividedForRoot -> {
-                                              List<PsiElement> inside = dividedForRoot.inside;
+                                              List<? extends PsiElement> inside = dividedForRoot.inside();
                                               PsiElement lastInside = ContainerUtil.getLastItem(inside);
                                               return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? inside
                                                 .subList(0, inside.size() - 1) : inside;
@@ -192,26 +192,26 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
       List<LongList> map = ContainerUtil.map(dividedElements,
                                              dividedForRoot -> {
-                                               LongList insideRanges = dividedForRoot.insideRanges;
-                                               PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
+                                               LongList insideRanges = dividedForRoot.insideRanges();
+                                               PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
                                                return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment)
                                                       ? insideRanges.subList(0, insideRanges.size() - 1) : insideRanges;
                                              });
 
       LongList allInsideRanges = ContainerUtil.reduce(map, new LongArrayList(map.isEmpty() ? 1 : map.get(0).size()), (l1, l2)->{ l1.addAll(l2); return l1;});
 
-      List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(dividedElements,
+      List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
                                                   dividedForRoot -> {
-                                                    List<PsiElement> outside = dividedForRoot.outside;
-                                                    PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
+                                                    List<? extends PsiElement> outside = dividedForRoot.outside();
+                                                    PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
                                                     return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outside,
                                                       lastInside) : outside;
                                                   }));
       List<LongList> map1 = ContainerUtil.map(dividedElements,
                                                            dividedForRoot -> {
-                                                             LongList outsideRanges = dividedForRoot.outsideRanges;
-                                                             PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
-                                                             long lastInsideRange = dividedForRoot.insideRanges.isEmpty() ? -1 : dividedForRoot.insideRanges.getLong(dividedForRoot.insideRanges.size()-1);
+                                                             LongList outsideRanges = dividedForRoot.outsideRanges();
+                                                             PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
+                                                             long lastInsideRange = dividedForRoot.insideRanges().isEmpty() ? -1 : dividedForRoot.insideRanges().getLong(dividedForRoot.insideRanges().size()-1);
                                                              if (lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) && lastInsideRange != -1) {
                                                                LongArrayList r = new LongArrayList(outsideRanges);
                                                                r.add(lastInsideRange);
