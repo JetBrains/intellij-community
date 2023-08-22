@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.breadcrumbs;
 
 import com.intellij.openapi.Disposable;
@@ -24,13 +24,6 @@ public abstract class FileBreadcrumbsCollector {
    * Checks if this collector handles the given file.
    */
   public abstract boolean handlesFile(@NotNull VirtualFile virtualFile);
-
-  /**
-   * Checks if the breadcrumbs should be shown for the given file.
-   */
-  public boolean isShownForFile(@NotNull Editor editor, @NotNull VirtualFile file) {
-    return true;
-  }
 
   /**
    * Adds event listeners required to redraw the breadcrumbs when the contents of the file changes.
