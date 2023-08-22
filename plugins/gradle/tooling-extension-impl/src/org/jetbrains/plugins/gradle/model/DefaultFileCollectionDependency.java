@@ -14,11 +14,11 @@ import java.util.Collection;
 public final class DefaultFileCollectionDependency extends AbstractExternalDependency implements FileCollectionDependency {
   private static final long serialVersionUID = 1L;
 
-  private final Collection<File> files;
+  private Collection<File> files;
   private boolean excludedFromIndexing;
 
   public DefaultFileCollectionDependency() {
-    this(new ArrayList<File>());
+    this(new ArrayList<>());
   }
 
   public DefaultFileCollectionDependency(Collection<File> files) {
@@ -33,10 +33,13 @@ public final class DefaultFileCollectionDependency extends AbstractExternalDepen
     excludedFromIndexing = dependency.isExcludedFromIndexing();
   }
 
-  @NotNull
   @Override
-  public Collection<File> getFiles() {
+  public @NotNull Collection<File> getFiles() {
     return files;
+  }
+
+  public void setFiles(@NotNull Collection<File> files) {
+    this.files = new ArrayList<>(files);
   }
 
   @Override
