@@ -16,7 +16,6 @@ import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.ui.NewUiValue
-import com.intellij.util.io.*
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.nio.file.FileVisitResult
