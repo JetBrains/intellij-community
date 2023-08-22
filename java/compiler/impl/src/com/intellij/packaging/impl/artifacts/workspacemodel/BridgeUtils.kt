@@ -60,7 +60,7 @@ internal fun createArtifactBridge(it: ArtifactEntity, entityStorage: VersionedEn
   val unknownProperty = it.customProperties.firstOrNull { ArtifactPropertiesProvider.findById(it.providerType) == null }
   if (unknownProperty != null) {
     return createInvalidArtifact(it, entityStorage, project,
-                                 JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty))
+                                 JavaCompilerBundle.message("unknown.artifact.properties.0", unknownProperty.providerType))
   }
 
   return ArtifactBridge(it.symbolicId, entityStorage, project, null, null)
