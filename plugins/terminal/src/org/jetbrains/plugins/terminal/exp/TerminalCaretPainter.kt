@@ -3,9 +3,11 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -27,15 +29,17 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 class TerminalCaretPainter(private val caretModel: TerminalCaretModel,
-                           private val editor: EditorEx) : TerminalCaretModel.CaretListener {
+                           private val editor: EditorEx) : TerminalCaretModel.CaretListener, FocusChangeListener {
   private var caretHighlighter: RangeHighlighter? = null
   private var caretUpdater: BlinkingCaretUpdater? = null
+  private var isFocused: Boolean = false
 
   private val caretColor: Color
     get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CARET_DARK, CARET_LIGHT)
 
   init {
     caretModel.addListener(this)
+    editor.addFocusListener(this, caretModel)
   }
 
   @RequiresEdt
@@ -59,11 +63,21 @@ class TerminalCaretPainter(private val caretModel: TerminalCaretModel,
     }
   }
 
+  override fun focusGained(editor: Editor) {
+    isFocused = true
+    repaint()
+  }
+
+  override fun focusLost(editor: Editor) {
+    isFocused = false
+    updateCaretHighlighter(null, caretModel.isBlinking)
+  }
+
   private fun updateCaretHighlighter(newPosition: LogicalPosition?, isBlinking: Boolean) {
     removeHighlighter()
     caretUpdater?.let { Disposer.dispose(it) }
     caretUpdater = null
-    if (newPosition != null) {
+    if (newPosition != null && isFocused) {
       installCaretHighlighter(newPosition)
       if (isBlinking) {
         caretUpdater = BlinkingCaretUpdater(newPosition)
